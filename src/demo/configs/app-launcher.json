@@ -1,0 +1,19 @@
+{
+    "devtools_port": 9090,
+    "startup_app": {
+        "name": "FDC3 Launcher POC",
+        "description": "OpenFin FDC3 Sample Application",
+        "url": "http://localhost:3012/demo/index.html",
+        "icon": "http://localhost:3012/demo/img/app-icons/launcher.ico",
+        "uuid": "fdc3-launcher",
+        "autoShow": true,
+        "saveWindowState": false,
+        "defaultWidth": 906,
+        "defaultHeight": 357
+    },
+    "services":[{"name": "fdc3", "manifestUrl": "http://localhost:3012/app.json"}],
+    "runtime": {
+        "arguments": "",
+        "version": "8.56.30.55"
+    }
+}

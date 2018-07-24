@@ -1,0 +1,20 @@
+{
+    "extends": "./node_modules/gts/tsconfig-google.json",
+    "compilerOptions": {
+        "rootDir": ".",
+        "outDir": "build",
+        "jsx": "react",
+        "declaration": false,
+        "strict": false,
+        "lib": [
+            "es2016",
+            "dom"
+        ]
+    },
+    "include": [
+        "src/*.ts",
+        "src/**/*.ts",
+        "test/*.ts",
+        "test/**/*.ts"
+    ]
+}

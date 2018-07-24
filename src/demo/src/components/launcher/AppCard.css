@@ -1,0 +1,24 @@
+.app-card {
+    display: inline-block;
+    width: 128px;
+    margin: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    vertical-align: top;
+}
+
+.app-card img {
+    width: 128px;
+    height: 128px;
+    padding: 10%;
+}
+
+.app-card div {
+    height: 82px;
+}
+
+.app-card p {
+    margin: 5px 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}

@@ -1,0 +1,48 @@
+{
+  "name": "openfin-fdc3",
+  "version": "1.0.0",
+  "description": "OpenFin FDC3 API",
+  "main": "module_dist/client/index.js",
+  "types": "module_dist/client/index.d.ts",
+  "scripts": {
+    "build": "webpack --mode production",
+    "build:demo": "webpack --mode development && cd ./src/demo && npm install && npm run build",
+    "start": "node server.js",
+    "prepare": "npm run compile",
+    "check": "gts check",
+    "clean": "gts clean",
+    "compile": "tsc -p .",
+    "fix": "gts fix",
+    "pretest": "npm run compile",
+    "posttest": "npm run check"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HadoukenIO/fdc3-service.git"
+  },
+  "author": "OpenFin",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^10.5.2",
+    "@types/react": "^16.4.6",
+    "@types/react-dom": "^16.0.6",
+    "copy-webpack-plugin": "^4.5.2",
+    "css-loader": "^1.0.0",
+    "express": "^4.16.3",
+    "gts": "^0.8.0",
+    "hadouken-js-adapter": "^0.32.1-alpha.5",
+    "mini-css-extract-plugin": "^0.4.1",
+    "npm": "^5.7.1",
+    "react": "^16.4.1",
+    "react-dom": "^16.4.1",
+    "ts-loader": "^4.4.2",
+    "typescript": "^2.9.2",
+    "webpack": "^4.16.0",
+    "webpack-cli": "^3.0.8"
+  },
+  "bugs": {
+    "url": "https://github.com/HadoukenIO/fdc3-service/issues"
+  },
+  "homepage": "https://github.com/HadoukenIO/fdc3-service#readme"
+}
