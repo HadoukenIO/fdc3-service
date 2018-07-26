@@ -1,0 +1,8 @@
+{
+    "extends": "./node_modules/gts/tslint.json",
+    "rules": {
+        "interface-name": false,
+        "member-access": true,
+        "no-inferrable-types": false
+    }
+}

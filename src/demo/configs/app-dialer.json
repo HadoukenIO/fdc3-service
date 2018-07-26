@@ -1,0 +1,18 @@
+{
+    "devtools_port": 9090,
+    "startup_app": {
+        "name": "FDC3 Dialer POC",
+        "description": "OpenFin FDC3 Sample Application",
+        "url": "http://localhost:3012/demo/index.html",
+        "icon": "http://localhost:3012/demo/img/app-icons/dialer.ico",
+        "uuid": "fdc3-dialer",
+        "autoShow": true,
+        "resizable": false,
+        "defaultWidth": 240,
+        "defaultHeight": 269
+    },
+    "runtime": {
+        "arguments": "",
+        "version": "8.56.30.55"
+    }
+}

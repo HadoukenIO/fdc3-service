@@ -1,0 +1,51 @@
+<html>
+<head>
+    <!-- Font Awesome -->
+    <script src="https://use.fontawesome.com/ef47d18271.js"></script>
+
+    <link href="react-bundle.css" rel="stylesheet">
+    <style>
+        .context-menu {
+            border: solid lightgray 1px;
+        }
+        .context-menu>* {
+            width: 100%;
+            min-height: 22px;
+            max-height: 22px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .context-menu button {
+            padding: 0 10px;
+            text-align: left;
+        }
+
+        .context-menu .spinner {
+            text-align: center;
+        }
+
+        .context-menu hr {
+            min-height: 0;
+            margin: 3px 0;
+        }
+
+        .context-menu .children::after {
+            content: '\f0da';
+            font-family: FontAwesome;
+            margin: 0 2px 0 0;
+            font-weight: normal;
+            font-style: normal;
+            text-decoration: none;
+            text-align: right;
+            float: right;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="react-app"></div>
+    <script src="menu-bundle.js"></script>
+</body>
+
+</html>
