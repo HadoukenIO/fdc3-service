@@ -1,6 +1,6 @@
 {
   "name": "openfin-fdc3",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "OpenFin FDC3 API",
   "main": "module_dist/client/index.js",
   "types": "module_dist/client/index.d.ts",
