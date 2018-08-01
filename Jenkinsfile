@@ -16,6 +16,8 @@ pipeline {
                     STAGING_JSON = env.DSERVICE_S3_ROOT + "fdc3/" + "app.staging.json"
                 }
                 sh "npm i"
+                sh "npm run check"
+                sh "npm test"
                 sh "GIT_SHORT_SHA=${GIT_SHORT_SHA} npm run build"
                 sh "echo ${GIT_SHORT_SHA} > ./build/SHA.txt"
                 sh "aws s3 cp ./build ${S3_LOC}/ --recursive"
@@ -35,6 +37,7 @@ pipeline {
             when { not { branch "develop" } }
             steps {
                 sh "npm i"
+                sh "npm run check"
                 sh "npm test"
             }
         }
