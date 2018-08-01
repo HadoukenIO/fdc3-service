@@ -158,8 +158,8 @@ class FDC3 {
         const service = await fin.desktop.Service.register();
 
         // handle client connections
-        service.onConnection((a,b) => {
-            console.log(`connection from client: ${a.name}, version: ${b.version}`);
+        service.onConnection((app,payload) => {
+            console.log(`connection from client: ${app.name}, version: ${payload.version}`);
         });
 
 
