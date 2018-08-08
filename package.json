@@ -1,14 +1,14 @@
 {
   "name": "openfin-fdc3",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "OpenFin FDC3 API",
-  "main": "module_dist/client/index.js",
-  "types": "module_dist/client/index.d.ts",
+  "main": "module_dist/index.js",
+  "types": "module_dist/index.d.ts",
   "scripts": {
     "build": "webpack --mode production",
     "build:demo": "webpack --mode development && cd ./src/demo && npm install && npm run build",
     "start": "node server.js",
-    "prepare": "npm run compile",
+    "prepare": "tsc --outDir module_dist src/client/index.ts --lib DOM,ES6 --declaration --target ES2017 --module commonjs src/client/index.ts src/client/fin.d.ts",
     "check": "gts check",
     "clean": "gts clean",
     "compile": "tsc -p .",
