@@ -4,6 +4,15 @@ pipeline {
 
     stages {
 
+        stage ('test'){
+            agent { label 'linux-slave' }
+            steps {
+                sh "npm i"
+                sh "npm run check"
+                sh "npm test"
+            }
+        }
+
         stage ('build') {
             agent { label 'linux-slave' }
             when { branch "develop" }
@@ -16,8 +25,6 @@ pipeline {
                     STAGING_JSON = env.DSERVICE_S3_ROOT + "fdc3/" + "app.staging.json"
                 }
                 sh "npm i"
-                sh "npm run check"
-                sh "npm test"
                 sh "GIT_SHORT_SHA=${GIT_SHORT_SHA} npm run build"
                 sh "echo ${GIT_SHORT_SHA} > ./build/SHA.txt"
                 sh "aws s3 cp ./build ${S3_LOC}/ --recursive"
@@ -29,16 +36,6 @@ pipeline {
                 sh "npm version --no-git-tag-version " + PREREL_VERSION
                 sh "npm publish --tag alpha"
                 sh "npm version --no-git-tag-version " + VERSION
-            }
-        }
-
-        stage ('test'){
-            agent { label 'linux-slave' }
-            when { not { branch "develop" } }
-            steps {
-                sh "npm i"
-                sh "npm run check"
-                sh "npm test"
             }
         }
     }
