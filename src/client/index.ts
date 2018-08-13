@@ -11,7 +11,7 @@ export type Context = Payload;
 console.log('the client has landed, connecting to provider...');
 
 
-const pkg = require('../../package.json');
+const version = require('./version');
 
 /**
  * Launches/links to an app by name.
@@ -168,7 +168,7 @@ export class ContextListener {
 // Code below here initialises/manages the connection between the application and the OpenFin Desktop Agent
 
 const servicePromise: Promise<fin.OpenFinServiceClient> =
-    fin.desktop.Service.connect({uuid: 'fdc3-service', name: 'FDC3 Service', payload: {version: pkg.version}});
+    fin.desktop.Service.connect({uuid: 'fdc3-service', name: 'FDC3 Service', payload: {version: version}});
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
