@@ -1,4 +1,4 @@
-src/client/version.js
-module_dist
+dist
 node_modules
 build
+staging

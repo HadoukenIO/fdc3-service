@@ -1,20 +1,23 @@
 {
   "name": "openfin-fdc3",
-  "version": "0.0.3",
+  "version": "0.0.4-alpha.11",
   "description": "OpenFin FDC3 API",
-  "main": "module_dist/index.js",
-  "types": "module_dist/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "build": "genversion src/client/version.js && webpack --mode production",
-    "build:demo": "genversion src/client/version.js && webpack --mode development && cd ./src/demo && npm install && npm run build",
-    "start": "node server.js",
-    "prepare": "tsc -p tsconfig.npm.json && genversion module_dist/version.js",
     "check": "gts check",
     "clean": "gts clean",
-    "compile": "tsc -p .",
+    "compile": "npm run compile:client && npm run compile:provider",
     "fix": "gts fix",
+    "prepare": "npm run compile",
     "pretest": "npm run compile",
-    "posttest": "npm run check"
+    "posttest": "npm run check",
+    "compile:client": "tsc -p tsconfig.npm.json && genversion dist/version.js",
+    "compile:provider": "tsc -p tsconfig.json",
+    "package": "webpack --mode development",
+    "build": "npm run compile && npm run package && rm -Rf ./staging",
+    "build:demo": "webpack --mode development && cd ./src/demo && npm install && npm run build",
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",

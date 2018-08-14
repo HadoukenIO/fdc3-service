@@ -1,8 +1,8 @@
 {
     "extends": "./node_modules/gts/tsconfig-google.json",
     "compilerOptions": {
-        "rootDir": ".",
-        "outDir": "build",
+        "rootDir": "src",
+        "outDir": "staging",
         "jsx": "react",
         "declaration": false,
         "strict": false,
@@ -12,9 +12,7 @@
         ]
     },
     "include": [
-        "src/*.ts",
-        "src/**/*.ts",
-        "test/*.ts",
-        "test/**/*.ts"
+        "src/provider/index.ts",
+        "src/client/fin.d.ts"
     ]
 }
