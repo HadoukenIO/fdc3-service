@@ -2,8 +2,6 @@ const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
-var gv = require('genversion');
-
 function createWebpackConfigForProviderUI() {
     return Object.assign({
         entry: {
