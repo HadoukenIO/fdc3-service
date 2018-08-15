@@ -6,10 +6,6 @@
       "target": "es2017",
       "module": "commonjs",
       "sourceMap": true,
-      "lib": [
-        "dom",
-        "es2017"
-      ],
       "declaration": true,
       "skipLibCheck": true
     },

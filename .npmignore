@@ -1,14 +1,9 @@
-# standard ignores
-
-node_modules/
-
 # ignore everything
 
 *
 */**
 
-# override above and  files
+# except the dist dir where we've staged all the npm stuff
 
 !dist/*
 !dist/**/*
-!package.json

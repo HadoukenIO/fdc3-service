@@ -6,6 +6,9 @@
     "build": "webpack --mode development"
   },
   "author": "openfin",
+  "dependencies": {
+    "openfin-fdc3": "file:../../dist"
+  },
   "devDependencies": {
     "@types/openfin": "^17.0.4",
     "@types/react": "^16.3.14",

@@ -1,0 +1,10 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "strict": false
+    },
+    "include": [
+        "src/provider/index.ts",
+        "src/client/fin.d.ts"
+    ]
+}

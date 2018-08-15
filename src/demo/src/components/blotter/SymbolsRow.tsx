@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as fdc3 from '../../../../client/index';
+import * as fdc3 from 'openfin-fdc3';
 import { SecurityPayload } from '../../../../client/context';
 import { IApplication } from '../../../../client/directory';
 
