@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "check": "gts check",
-    "clean": "gts clean && rimraf ./dist && rimraf ./staging",
+    "clean": "gts clean && rimraf dist staging",
     "compile": "npm run compile:client && npm run compile:provider",
     "compile:client": "tsc -p tsconfig.client.json && genversion dist/version.js",
     "compile:provider": "tsc -p tsconfig.provider.json",

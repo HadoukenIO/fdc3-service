@@ -8,7 +8,7 @@
         "lib": [
             "dom",
             "es2017"
-        ],
+        ]
     },
     "include": [
         "src/provider/index.ts",
