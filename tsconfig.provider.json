@@ -1,0 +1,11 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "outDir": "staging",
+        "strict": false
+    },
+    "include": [
+        "src/provider/index.ts",
+        "src/client/fin.d.ts"
+    ]
+}

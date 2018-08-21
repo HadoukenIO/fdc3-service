@@ -1,3 +1,5 @@
-module_dist
+.vscode
+dist
 node_modules
 build
+staging

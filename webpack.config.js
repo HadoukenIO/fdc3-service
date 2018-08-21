@@ -43,68 +43,39 @@ function createWebpackConfigForProviderUI() {
                 }
             ]
         },
-        plugins: [new MiniCssExtractPlugin({ filename: 'bundle.css' })]
-    });
-}
-/**
- * build rudimentary webpack config for typescript (client/provider)
- * @param {string} infile The entry point to the application (usually a js file)
- * @param {string} outfile The name of the packed output file
- * @return {Object} A webpack module
- */
-function createWebpackConfigForTS(infile, outfile) {
-    return Object.assign({
-        entry: infile,
-        output: {
-            path: path.join(__dirname, "build"),
-            filename: outfile + '.js'
-        },
-        resolve: {
-            extensions: ['.ts', '.tsx', '.js']
-        },
-        module: {
-            rules: [
-                {
-                    test: /\.tsx?$/,
-                    loader: 'ts-loader'
-                }
-            ]
-        }
+        plugins: [
+            new MiniCssExtractPlugin({ filename: 'bundle.css' })
+        ]
     });
 }
 
-/**
- * build webpack config for the client side
- * @return {Object} A webpack module
- */
-function createWebpackConfigForClient() {
-    return createWebpackConfigForTS('./src/client/index.ts', 'client');
-}
 
 /**
  * build webpack config for the provider side
  * @return {Object} A webpack module
  */
 function createWebpackConfigForProvider() {
-    return Object.assign(
-        createWebpackConfigForTS('./src/provider/index.ts', 'provider'),
-        { 
-            plugins: [
-                new CopyWebpackPlugin([
-                    { from: './src/ui', to: 'ui/' },
-                    { from: './src/provider.html' }
-                ]),
-                new CopyWebpackPlugin([
-                    { from: './src/app.template.json', to: 'app.json', transform: (content) => {
-                        const config = JSON.parse(content);
-                        const newConfig = prepConfig(config);
-                        return JSON.stringify(newConfig);
-                    }}
-                ])
-
-            ]
-        }
-    )
+    return {  
+        entry: {
+            'provider': './staging/provider/index.js'
+        },
+        output: {
+            path: path.resolve(__dirname, './build')
+        },
+        plugins: [
+            new CopyWebpackPlugin([
+                { from: './src/ui', to: 'ui/' },
+                { from: './src/provider.html' }
+            ]),
+            new CopyWebpackPlugin([
+                { from: './src/app.template.json', to: 'app.json', transform: (content) => {
+                    const config = JSON.parse(content);
+                    const newConfig = prepConfig(config);
+                    return JSON.stringify(newConfig, null, 4);
+                }}
+            ])
+        ]
+    };
 }
 
 function prepConfig(config) {
@@ -124,7 +95,6 @@ function prepConfig(config) {
  * Modules to be exported
  */
 module.exports = [
-    createWebpackConfigForClient(),
     createWebpackConfigForProvider(),
     createWebpackConfigForProviderUI(),
 ];

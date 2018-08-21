@@ -159,7 +159,11 @@ class FDC3 {
 
         // handle client connections
         service.onConnection((app, payload) => {
-            console.log(`connection from client: ${app.name}, version: ${payload.version}`);
+            if (payload && payload.version && payload.version.length > 0) {
+                console.log(`connection from client: ${app.name}, version: ${payload.version}`);
+            } else {
+                console.log(`connection from client: ${app.name}, unable to determin version`);
+            }
         });
 
 
