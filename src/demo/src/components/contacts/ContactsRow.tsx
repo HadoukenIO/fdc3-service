@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as fdc3 from 'openfin-fdc3';
+import * as fdc3 from '../../../../client/index';
 import { ContactPayload } from '../../../../client/context';
 
 import './ContactsRow.css';

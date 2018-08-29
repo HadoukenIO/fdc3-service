@@ -1,7 +1,7 @@
 {
     "devtools_port": 9090,
     "startup_app": {
-        "name": "fdc3",
+        "name": "FDC3-Service",
         "description": "OpenFin FDC3 Desktop Service",
         "url": "https://cdn.openfin.co/services/openfin/fdc3/index.html",
         "uuid": "fdc3-service",
@@ -11,7 +11,7 @@
         "defaultWidth": 500
     },
     "runtime": {
-        "arguments": "--v=1 --enable-crash-reporting",
+        "arguments": "--enable-aggressive-domstorage-flushing",
         "version": "9.61.33.32"
     }
 }

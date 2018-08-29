@@ -4,6 +4,7 @@
         "outDir": "build",
         "rootDir": "src",
         "jsx": "react",
+        "target": "es2017",
         "strict": false,
         "lib": [
             "dom",

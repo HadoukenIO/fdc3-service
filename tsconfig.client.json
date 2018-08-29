@@ -1,16 +1,16 @@
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
-      "rootDir": "src/client",
-      "outDir": "dist",
-      "target": "es2017",
-      "module": "commonjs",
-      "sourceMap": true,
-      "declaration": true,
-      "skipLibCheck": true
+        "rootDir": "src/client",
+        "outDir": "dist",
+        "target": "es2017",
+        "module": "commonjs",
+        "sourceMap": true,
+        "declaration": true,
+        "skipLibCheck": true
     },
     "include": [
-      "src/client/fin.d.ts",
-      "src/client/index.ts"
+        "src/client/fin.d.ts",
+        "src/client/index.ts"
     ]
-  }
+}

@@ -8,10 +8,12 @@ export * from './intents';
 
 export type Context = Payload;
 
-console.log('the client has landed, connecting to provider...');
+import {version} from './version';
 
-
-const version = require('./version');
+const IDENTITY = {
+    uuid: 'fdc3-service',
+    name: 'FDC3-Service'
+};
 
 /**
  * Launches/links to an app by name.
@@ -167,12 +169,12 @@ export class ContextListener {
 // ------------------------------------------------------------------------------------
 // Code below here initialises/manages the connection between the application and the OpenFin Desktop Agent
 
-const servicePromise: Promise<fin.OpenFinServiceClient> = fin.desktop.Service.connect({uuid: 'fdc3-service', name: 'FDC3 Service', payload: {version}});
+const servicePromise: Promise<fin.OpenFinServiceClient> = fin.desktop.Service.connect({...IDENTITY, payload: {version}});
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
 
-fin.desktop.InterApplicationBus.subscribe('fdc3-service', 'intent', (payload: Intent, uuid: string, name: string) => {
+fin.desktop.InterApplicationBus.subscribe(IDENTITY.uuid, 'intent', (payload: Intent, uuid: string, name: string) => {
     intentListeners.forEach((listener: IntentListener) => {
         if (payload.intent === listener.intent) {
             listener.handler(payload.context);
@@ -180,7 +182,7 @@ fin.desktop.InterApplicationBus.subscribe('fdc3-service', 'intent', (payload: In
     });
 });
 
-fin.desktop.InterApplicationBus.subscribe('fdc3-service', 'context', (payload: Context, uuid: string, name: string) => {
+fin.desktop.InterApplicationBus.subscribe(IDENTITY.uuid, 'context', (payload: Context, uuid: string, name: string) => {
     contextListeners.forEach((listener: ContextListener) => {
         listener.handler(payload);
     });

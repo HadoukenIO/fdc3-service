@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as fdc3 from 'openfin-fdc3';
+import * as fdc3 from '../../../client/index';
 
 import '../../public/css/w3.css';
 
