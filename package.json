@@ -18,7 +18,7 @@
     "build": "npm run compile && npm run package",
     "build:demo": "npm run build:demo:prep && npm run build:demo:package",
     "build:demo:prep": "npm run build",
-    "build:demo:package": "cd ./src/demo && npm i && npm run build",
+    "build:demo:package": "cd ./src/demo && webpack --mode development",
     "start": "node server.js"
   },
   "repository": {
@@ -30,6 +30,7 @@
   "dependencies": {},
   "devDependencies": {
     "@types/node": "^10.5.2",
+    "@types/openfin": "^39.0.1",
     "@types/react": "^16.4.6",
     "@types/react-dom": "^16.0.6",
     "copy-webpack-plugin": "^4.5.2",

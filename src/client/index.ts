@@ -15,6 +15,8 @@ const IDENTITY = {
     name: 'FDC3-Service'
 };
 
+export const SERVICE_CHANNEL = 'of-fdc3-service-v1';
+
 /**
  * Launches/links to an app by name.
  *
@@ -26,7 +28,7 @@ const IDENTITY = {
  * @param context Optional context to pass to the application once opened
  */
 export async function open(name: string, context?: Context): Promise<void> {
-    const service: fin.OpenFinServiceClient = await servicePromise;
+    const service = await servicePromise;
 
     return service.dispatch('FDC3.Open', {name, context}).catch(errorHandler);
 }
@@ -44,7 +46,7 @@ export async function open(name: string, context?: Context): Promise<void> {
  * @param context The context you intend to attach to the intent
  */
 export async function resolve(intent: IntentType, context?: Context): Promise<IApplication[]> {
-    const service: fin.OpenFinServiceClient = await servicePromise;
+    const service = await servicePromise;
 
     return service.dispatch('FDC3.Resolve', {intent, context}).catch(errorHandler);
 }
@@ -57,7 +59,7 @@ export async function resolve(intent: IntentType, context?: Context): Promise<IA
  * @param context The context of the active application, that will be broadcast to other open applications
  */
 export async function broadcast(context: Context): Promise<void> {
-    const service: fin.OpenFinServiceClient = await servicePromise;
+    const service = await servicePromise;
 
     return service.dispatch('FDC3.Broadcast', context).catch(errorHandler);
 }
@@ -98,7 +100,7 @@ export class Intent {
      * @param target Can optionally override the target on this intent. The target on the intent will remain un-modified.
      */
     public async send(context?: Context, target?: AppIdentifier): Promise<void> {
-        const service: fin.OpenFinServiceClient = await servicePromise;
+        const service = await servicePromise;
 
         if (arguments.length === 0) {
             return service.dispatch('FDC3.Intent', this).catch(errorHandler);
@@ -169,12 +171,12 @@ export class ContextListener {
 // ------------------------------------------------------------------------------------
 // Code below here initialises/manages the connection between the application and the OpenFin Desktop Agent
 
-const servicePromise: Promise<fin.OpenFinServiceClient> = fin.desktop.Service.connect({...IDENTITY, payload: {version}});
+const servicePromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version}});
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
 
-fin.desktop.InterApplicationBus.subscribe(IDENTITY.uuid, 'intent', (payload: Intent, uuid: string, name: string) => {
+fin.InterApplicationBus.subscribe(IDENTITY, 'intent', (payload: Intent, uuid: string, name: string) => {
     intentListeners.forEach((listener: IntentListener) => {
         if (payload.intent === listener.intent) {
             listener.handler(payload.context);
@@ -182,7 +184,7 @@ fin.desktop.InterApplicationBus.subscribe(IDENTITY.uuid, 'intent', (payload: Int
     });
 });
 
-fin.desktop.InterApplicationBus.subscribe(IDENTITY.uuid, 'context', (payload: Context, uuid: string, name: string) => {
+fin.InterApplicationBus.subscribe(IDENTITY, 'context', (payload: Context, uuid: string, name: string) => {
     contextListeners.forEach((listener: ContextListener) => {
         listener.handler(payload);
     });

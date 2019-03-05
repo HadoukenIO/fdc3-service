@@ -5,7 +5,6 @@ pipeline {
     stages {
 
         stage ('test'){
-            agent { label 'linux-slave' }
             steps {
                 sh "npm i"
                 sh "npm run check"
@@ -14,7 +13,6 @@ pipeline {
         }
 
         stage ('build') {
-            agent { label 'linux-slave' }
             when { branch "develop" }
             steps {
                 script {
@@ -40,7 +38,6 @@ pipeline {
         }
 
         stage ('build-prod') {
-            agent { label 'linux-slave' }
             when { branch "master" }
             steps {
                 script {

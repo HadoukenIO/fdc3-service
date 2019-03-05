@@ -1,4 +1,5 @@
 import {IApplication} from '../client/directory';
+import { Application } from 'openfin/_v2/main';
 
 export interface IAppMetadata {
     /**
@@ -98,9 +99,9 @@ export class MetadataStore {
      * @param appData An FDC3 application directory record
      * @param app An OpenFin application that has been created from 'appData'
      */
-    public update(appData: IApplication, app: fin.OpenFinApplication): void {
+    public update(appData: IApplication, app: Application): void {
         if (!this.appData.hasOwnProperty(appData.id)) {
-            this.appData[appData.id] = {uuid: app.uuid, name: app.getWindow().name, directoryId: appData.id};
+            this.appData[appData.id] = {uuid: app.identity.uuid, name: app.identity.name, directoryId: appData.id};
         }
     }
 }
