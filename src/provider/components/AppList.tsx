@@ -20,7 +20,7 @@ interface IIntentData {
     applications: IApplication[];
 }
 
-const servicePromise = fin.InterApplicationBus.Channel.connect('fdc3');
+const servicePromise = fin.InterApplicationBus.Channel.connect(fdc3.SERVICE_CHANNEL);
 
 export class AppList extends React.Component<{}, IAppListState> {
     constructor(props: {}) {
@@ -39,7 +39,7 @@ export class AppList extends React.Component<{}, IAppListState> {
         this.onCancel = this.onCancel.bind(this);
 
         fin.Application.getCurrentSync().getWindow().then(w => w.getOptions().then((options) => {
-            let data: IIntentData = options.customData;
+            let data: IIntentData = JSON.parse(options.customData);
 
             if (data && data.intent && data.applications) {
                 this.setState({

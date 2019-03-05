@@ -1,5 +1,5 @@
 import { IApplication } from '../client/directory';
-import { Payload, Intent } from '../client/index';
+import { Payload, Intent, SERVICE_CHANNEL } from '../client/index';
 import { AppDirectory } from './AppDirectory';
 import { IAppMetadata, MetadataStore } from './MetadataStore';
 import { PreferencesStore } from './PreferencesStore';
@@ -28,7 +28,7 @@ export class FDC3 {
     }
     public async register(): Promise<void> {
         console.log('registering the service.');
-        const service = await fin.InterApplicationBus.Channel.create('fdc3');
+        const service = await fin.InterApplicationBus.Channel.create(SERVICE_CHANNEL);
         // handle client connections
         service.onConnection((app, payload) => {
             if (payload && payload.version && payload.version.length > 0) {
@@ -198,7 +198,7 @@ export class FDC3 {
                     const timeout = setTimeout(() => {
                         console.warn('Timeout whilst waiting for application to start');
                         reject(new Error('Timeout whilst waiting for application to start: ' + appInfo.name));
-                    }, 5000);
+                    }, 15000);
                     // Populate mapping between app directory ID's and app uuid's from the manifest
                     this.metadata.update(appInfo, app);
                     // Start application

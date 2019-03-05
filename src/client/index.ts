@@ -15,6 +15,8 @@ const IDENTITY = {
     name: 'FDC3-Service'
 };
 
+export const SERVICE_CHANNEL = 'of-fdc3-service-v1';
+
 /**
  * Launches/links to an app by name.
  *
@@ -169,7 +171,7 @@ export class ContextListener {
 // ------------------------------------------------------------------------------------
 // Code below here initialises/manages the connection between the application and the OpenFin Desktop Agent
 
-const servicePromise = fin.InterApplicationBus.Channel.connect('fdc3', {payload: {version}});
+const servicePromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version}});
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
