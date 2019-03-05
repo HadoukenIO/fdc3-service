@@ -13,7 +13,6 @@
     },
     "include": [
         "src/provider/index.ts",
-        "src/client/index.ts",
-        "src/client/fin.d.ts"
+        "src/client/index.ts"
     ]
 }

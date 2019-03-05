@@ -10,7 +10,6 @@
         "skipLibCheck": true
     },
     "include": [
-        "src/client/fin.d.ts",
         "src/client/index.ts"
     ]
 }

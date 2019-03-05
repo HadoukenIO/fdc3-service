@@ -20,7 +20,7 @@ interface IIntentData {
     applications: IApplication[];
 }
 
-const servicePromise: Promise<fin.OpenFinServiceClient> = fin.desktop.Service.connect({uuid: "fdc3-service", name: "FDC3 Service"});
+const servicePromise = fin.InterApplicationBus.Channel.connect('fdc3');
 
 export class AppList extends React.Component<{}, IAppListState> {
     constructor(props: {}) {
@@ -38,7 +38,7 @@ export class AppList extends React.Component<{}, IAppListState> {
         this.onOpen = this.onOpen.bind(this);
         this.onCancel = this.onCancel.bind(this);
 
-        fin.desktop.Application.getCurrent().getWindow().getOptions((options: fin.WindowOptions) => {
+        fin.Application.getCurrentSync().getWindow().then(w => w.getOptions().then((options) => {
             let data: IIntentData = options.customData;
 
             if (data && data.intent && data.applications) {
@@ -53,10 +53,10 @@ export class AppList extends React.Component<{}, IAppListState> {
                 //customData was missing
                 this.sendError(0, "No intent data");
             }
-        }, (reason: string) => {
+        }).catch((reason: string) => {
             //Couldn't fetch window options
             this.sendError(0, "No window data");
-        });
+        }));
     }
 
     public render(): JSX.Element {
@@ -107,13 +107,13 @@ export class AppList extends React.Component<{}, IAppListState> {
     }
 
     private sendSuccess(handle: number, app: IApplication, defaultAction: string): void {
-        servicePromise.then((service: fin.OpenFinServiceClient) => {
+        servicePromise.then((service) => {
             service.dispatch("FDC3.SelectorResult", {success: true, handle, app, defaultAction});
         });
     }
 
     private sendError(handle: number, reason: string): void {
-        servicePromise.then((service: fin.OpenFinServiceClient) => {
+        servicePromise.then((service) => {
             service.dispatch("FDC3.SelectorResult", {success: false, handle, reason});
         });
     }
