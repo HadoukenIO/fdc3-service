@@ -1,56 +1,71 @@
 {
   "name": "openfin-fdc3",
-  "version": "0.0.5",
-  "description": "OpenFin FDC3 Service",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "version": "0.9.6",
+  "description": "",
+  "main": "dist/client/index.js",
+  "types": "dist/client/index.d.ts",
   "scripts": {
+    "test": "jest",
     "check": "gts check",
-    "clean": "gts clean && rimraf dist staging",
-    "compile": "npm run compile:client && npm run compile:provider",
-    "compile:client": "genversion --es6 --semi src/client/version.ts && tsc -p tsconfig.client.json",
-    "compile:provider": "tsc -p tsconfig.provider.json",
     "fix": "gts fix",
-    "prepare": "npm run compile",
-    "pretest": "npm run compile",
+    "clean": "gts clean",
+    "docs": "typedoc --name \"OpenFin FDC3\" --out ./dist/docs --excludeNotExported --excludePrivate --excludeProtected --hideGenerator --tsconfig src/client/tsconfig.json --readme none",
     "posttest": "npm run check",
-    "package": "webpack --mode development",
-    "build": "npm run compile && npm run package",
-    "build:demo": "npm run build:demo:prep && npm run build:demo:package",
-    "build:demo:prep": "npm run build",
-    "build:demo:package": "cd ./src/demo && webpack --mode development",
+    "build": "webpack --mode production",
+    "build:dev": "webpack --mode development",
     "start": "node server.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/HadoukenIO/fdc3-service.git"
   },
-  "author": "OpenFin",
+  "author": "",
   "license": "ISC",
-  "dependencies": {},
-  "devDependencies": {
-    "@types/node": "^10.5.2",
-    "@types/openfin": "^39.0.1",
-    "@types/react": "^16.4.6",
-    "@types/react-dom": "^16.0.6",
-    "copy-webpack-plugin": "^4.5.2",
-    "css-loader": "^1.0.0",
-    "express": "^4.16.3",
-    "genversion": "^2.1.0",
-    "gts": "^0.8.0",
-    "hadouken-js-adapter": "^0.32.1-alpha.5",
-    "mini-css-extract-plugin": "^0.4.1",
-    "npm": "^5.7.1",
-    "react": "^16.4.1",
-    "react-dom": "^16.4.1",
-    "rimraf": "^2.6.2",
-    "ts-loader": "^4.4.2",
-    "typescript": "^2.9.2",
-    "webpack": "^4.16.0",
-    "webpack-cli": "^3.0.8"
-  },
   "bugs": {
     "url": "https://github.com/HadoukenIO/fdc3-service/issues"
   },
-  "homepage": "https://github.com/HadoukenIO/fdc3-service#readme"
+  "homepage": "https://github.com/HadoukenIO/fdc3-service#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/jest": "^22.2.0",
+    "@types/moment": "^2.13.0",
+    "@types/node": "^9.4.6",
+    "@types/openfin": "^37.0.4",
+    "@types/react": "^16.8.6",
+    "@types/react-dom": "^16.8.2",
+    "copy-webpack-plugin": "^4.5.1",
+    "css-loader": "^1.0.0",
+    "express": "^4.16.2",
+    "file-loader": "^3.0.1",
+    "gts": "^0.8.0",
+    "hadouken-js-adapter": "^0.36.1-alpha.1",
+    "jest": "^22.4.2",
+    "jest-util": "^23.4.0",
+    "moment": "^2.22.1",
+    "react": "^16.8.3",
+    "react-dom": "^16.8.3",
+    "style-loader": "^0.21.0",
+    "ts-jest": "^23.10.4",
+    "ts-loader": "^4.4.2",
+    "typedoc": "^0.14.2",
+    "typescript": "^3.1.1",
+    "url-loader": "^1.0.1",
+    "webpack": "^4.16.1",
+    "webpack-cli": "^3.0.8",
+    "webpack-dev-middleware": "^3.6.0"
+  },
+  "jest": {
+    "verbose": true,
+    "testURL": "http://localhost",
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "ts-jest"
+    },
+    "testMatch": [
+      "**/test/provider/**/*.(ts|tsx)"
+    ]
+  }
 }

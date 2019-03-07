@@ -21,7 +21,7 @@ export class AppDirectory {
      */
     private static MAX_CACHE_AGE: number = 1000 * 60 * 60 * 24;  // 24 hours (in milliseconds)
 
-    private applications: IApplication[];
+    private applications: IApplication[]|null;
     private timestamp: number;
 
     constructor() {

@@ -8,7 +8,12 @@ export * from './intents';
 
 export type Context = Payload;
 
-import {version} from './version';
+/**
+ * The version of the NPM package.
+ *
+ * Webpack replaces any instances of this constant with a hard-coded string at build time.
+ */
+declare const PACKAGE_VERSION: string;
 
 const IDENTITY = {
     uuid: 'fdc3-service',
@@ -81,12 +86,12 @@ export class Intent {
     /**
      * Name of app to target for the Intent. Use if creating an explicit intent that bypasses resolver and goes directly to an app.
      */
-    public target: AppIdentifier;
+    public target: AppIdentifier|null;
 
-    constructor(intent?: IntentType, context?: Context, target?: AppIdentifier) {
+    constructor(intent: IntentType, context: Context, target?: AppIdentifier) {
         this.intent = intent;
         this.context = context;
-        this.target = target;
+        this.target = target || null;
     }
 
     /**
@@ -171,7 +176,7 @@ export class ContextListener {
 // ------------------------------------------------------------------------------------
 // Code below here initialises/manages the connection between the application and the OpenFin Desktop Agent
 
-const servicePromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version}});
+const servicePromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}});
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
