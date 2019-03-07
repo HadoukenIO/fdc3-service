@@ -1,6 +1,7 @@
 import {Payload} from './context';
 import {AppIdentifier, IApplication} from './directory';
 import {IntentType} from './intents';
+import { ChannelClient } from 'openfin/_v2/api/interappbus/channel/client';
 
 export * from './context';
 export * from './directory';
@@ -176,24 +177,28 @@ export class ContextListener {
 // ------------------------------------------------------------------------------------
 // Code below here initialises/manages the connection between the application and the OpenFin Desktop Agent
 
-const servicePromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}});
+let servicePromise: Promise<ChannelClient>;
+
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
+if (fin.Window.me.uuid !== 'fdc3-service') {
+    servicePromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}});
 
-fin.InterApplicationBus.subscribe(IDENTITY, 'intent', (payload: Intent, uuid: string, name: string) => {
-    intentListeners.forEach((listener: IntentListener) => {
-        if (payload.intent === listener.intent) {
-            listener.handler(payload.context);
-        }
+    fin.InterApplicationBus.subscribe(IDENTITY, 'intent', (payload: Intent, uuid: string, name: string) => {
+        intentListeners.forEach((listener: IntentListener) => {
+            if (payload.intent === listener.intent) {
+                listener.handler(payload.context);
+            }
+        });
     });
-});
 
-fin.InterApplicationBus.subscribe(IDENTITY, 'context', (payload: Context, uuid: string, name: string) => {
-    contextListeners.forEach((listener: ContextListener) => {
-        listener.handler(payload);
+    fin.InterApplicationBus.subscribe(IDENTITY, 'context', (payload: Context, uuid: string, name: string) => {
+        contextListeners.forEach((listener: ContextListener) => {
+            listener.handler(payload);
+        });
     });
-});
+}
 
 /**
  * Wrapper around any objects coming back from the API.
