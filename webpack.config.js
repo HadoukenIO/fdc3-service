@@ -44,10 +44,6 @@ function createConfig(outPath, entryPoint, options, ...plugins) {
                 {
                     test: /\.css$/,
                     loader: 'css-loader',
-                    query: {
-                      modules: true,
-                      localIdentName: '[name]__[local]___[hash:base64:5]'
-                    }
                 },
                 {
                     test: /\.(png|jpg|gif|otf|svg)$/,

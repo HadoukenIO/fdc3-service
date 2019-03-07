@@ -3,8 +3,8 @@
     "startup_app": {
         "name": "FDC3 Blotter POC",
         "description": "OpenFin FDC3 Sample Application",
-        "url": "http://localhost:3012/demo/index.html",
-        "icon": "http://localhost:3012/demo/img/app-icons/blotter.ico",
+        "url": "http://localhost:3923/demo/index.html",
+        "icon": "http://localhost:3923/demo/img/app-icons/blotter.ico",
         "uuid": "fdc3-blotter",
         "autoShow": true
     },

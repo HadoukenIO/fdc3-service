@@ -6,8 +6,6 @@ import { ContactsApp } from './apps/ContactsApp';
 import { DialerApp } from './apps/DialerApp';
 import { LauncherApp } from './apps/LauncherApp';
 
-import '../../res/demo/css/w3.css';
-
 /*
  * This file defines the entry point for all of the applications in this project. This "bootstrap" is intended to allow
  * the creation of many small, simple applications whilst avoiding boilerplate.

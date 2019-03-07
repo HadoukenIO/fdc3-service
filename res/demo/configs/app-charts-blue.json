@@ -1,11 +1,11 @@
 {
     "devtools_port": 9090,
     "startup_app": {
-        "name": "FDC3 Green Charts POC",
+        "name": "FDC3 Blue Charts POC",
         "description": "OpenFin FDC3 Sample Application",
-        "url": "http://localhost:3012/demo/index.html",
-        "icon": "http://localhost:3012/demo/img/app-icons/charts.ico",
-        "uuid": "fdc3-charts-green",
+        "url": "http://localhost:3923/demo/index.html",
+        "icon": "http://localhost:3923/demo/img/app-icons/charts.ico",
+        "uuid": "fdc3-charts-blue",
         "autoShow": true
     },
     "runtime": {

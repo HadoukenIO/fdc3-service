@@ -170,29 +170,24 @@ export class FDC3 {
     private async openApplication(requestedApp: IApplication, context?: Payload): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             const metadata: IAppMetadata|null = this.metadata.lookupFromDirectoryId(requestedApp.id);
+            const uuid = (metadata && metadata.uuid) || "";
 
-            if(metadata){
-                this.isAppRunning(metadata && metadata.uuid).then((isRunning: boolean) => {
-                    if (!isRunning) {
-                        // Start application and pass context to it
-                        this.startApplication(requestedApp, context).then(() => {
-                            resolve();
-                        }, reject);
-                    }
-                    else if (context) {
-                        // Pass new context to existing application instance and focus
-                        this.sendContext(context).then(resolve, reject);
-                        this.focusApplication(metadata);
-                    }
-                    else {
-                        // Bring application to foreground and then resolve
-                        this.focusApplication(metadata);
+            this.isAppRunning(uuid).then((isRunning: boolean) => {
+                if (!isRunning) {
+                    // Start application and pass context to it
+                    this.startApplication(requestedApp, context).then(() => {
                         resolve();
-                    }
-                }, reject);
-            } else {
-                reject();
-            }
+                    }, reject);
+                } else if (context) {
+                    // Pass new context to existing application instance and focus
+                    this.sendContext(context).then(resolve, reject);
+                    this.focusApplication(metadata!);
+                } else {
+                    // Bring application to foreground and then resolve
+                    this.focusApplication(metadata!);
+                    resolve();
+                }
+            }, reject);
 
         });
     }
