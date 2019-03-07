@@ -13,7 +13,7 @@ export class AppDirectory {
      *
      * This URL is currently hard-coded but will eventually be defined in a place that can be controlled by the desktop owner.
      */
-    private static URL: string = 'https://app-directory.openfin.co/api/v1/apps/';
+    private static URL: string = 'http://localhost:3012/demo/app-directory.json';
 
     /**
      * If cached application list is older than this duration, the next request to fetch the list of applications
