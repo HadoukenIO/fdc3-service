@@ -18,7 +18,7 @@ declare const PACKAGE_VERSION: string;
 
 const IDENTITY = {
     uuid: 'fdc3-service',
-    name: 'FDC3-Service'
+    name: 'fdc3-service'
 };
 
 export const SERVICE_CHANNEL = 'of-fdc3-service-v1';
