@@ -171,24 +171,27 @@ export class ContextListener {
 // ------------------------------------------------------------------------------------
 // Code below here initialises/manages the connection between the application and the OpenFin Desktop Agent
 
-const servicePromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version}});
+let servicePromise;
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
-
-fin.InterApplicationBus.subscribe(IDENTITY, 'intent', (payload: Intent, uuid: string, name: string) => {
-    intentListeners.forEach((listener: IntentListener) => {
-        if (payload.intent === listener.intent) {
-            listener.handler(payload.context);
-        }
+if (fin.Window.me.uuid !== 'fdc3-service'){
+    servicePromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version}});   
+    
+    fin.InterApplicationBus.subscribe(IDENTITY, 'intent', (payload: Intent, uuid: string, name: string) => {
+        intentListeners.forEach((listener: IntentListener) => {
+            if (payload.intent === listener.intent) {
+                listener.handler(payload.context);
+            }
+        });
     });
-});
-
-fin.InterApplicationBus.subscribe(IDENTITY, 'context', (payload: Context, uuid: string, name: string) => {
-    contextListeners.forEach((listener: ContextListener) => {
-        listener.handler(payload);
+    
+    fin.InterApplicationBus.subscribe(IDENTITY, 'context', (payload: Context, uuid: string, name: string) => {
+        contextListeners.forEach((listener: ContextListener) => {
+            listener.handler(payload);
+        });
     });
-});
+}
 
 /**
  * Wrapper around any objects coming back from the API.

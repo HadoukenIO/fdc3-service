@@ -1,8 +1,9 @@
 import {IApplication} from '../client/directory';
-import * as fdc3 from '../client/index';
 
 import {FDC3} from './FDC3';
 import {IAppMetadata} from './MetadataStore';
+import { IntentType } from '../client/intents';
+import { Intent } from '../client';
 
 console.log('the provider has landed.');
 
@@ -40,7 +41,7 @@ export interface IOpenArgs {
     context?: any;  // tslint:disable-line
 }
 export interface IResolveArgs {
-    intent: fdc3.IntentType;
+    intent: IntentType;
     context?: any;  // tslint:disable-line
 }
 export interface ISelectorResultArgs {
@@ -90,7 +91,7 @@ export interface IQueuedIntent {
     /**
      * The original intent, launched by the user
      */
-    intent: fdc3.Intent;
+    intent: Intent;
 
     /**
      * UUID of the application that fired this intent
