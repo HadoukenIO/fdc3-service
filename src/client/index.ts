@@ -175,9 +175,9 @@ let servicePromise;
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
-if (fin.Window.me.uuid !== 'fdc3-service'){
-    servicePromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version}});   
-    
+if (fin.Window.me.uuid !== 'fdc3-service') {
+    servicePromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version}});
+
     fin.InterApplicationBus.subscribe(IDENTITY, 'intent', (payload: Intent, uuid: string, name: string) => {
         intentListeners.forEach((listener: IntentListener) => {
             if (payload.intent === listener.intent) {
@@ -185,7 +185,7 @@ if (fin.Window.me.uuid !== 'fdc3-service'){
             }
         });
     });
-    
+
     fin.InterApplicationBus.subscribe(IDENTITY, 'context', (payload: Context, uuid: string, name: string) => {
         contextListeners.forEach((listener: ContextListener) => {
             listener.handler(payload);
