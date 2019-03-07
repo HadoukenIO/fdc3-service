@@ -20,7 +20,7 @@ export class CallTimer extends React.Component<{}, ICallTimerState> {
     }
 
     public componentDidMount() {
-        let timer: number = setInterval(this.tick, 1000) as any;
+        const timer: number = setInterval(this.tick, 1000) as unknown as number;
         this.setState({timer, counter: 0});
     }
 
@@ -30,9 +30,9 @@ export class CallTimer extends React.Component<{}, ICallTimerState> {
     }
 
     public render(): JSX.Element {
-        let time: number = this.state.counter;
+        const time: number = this.state.counter;
 
-        let seconds: number = (time % 60),
+        const seconds: number = (time % 60),
             minutes: number = Math.floor(time / 60) % 60,
             hours: number = Math.floor(time / 3600);
 

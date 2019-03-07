@@ -39,7 +39,7 @@ export class AppList extends React.Component<{}, IAppListState> {
         this.onCancel = this.onCancel.bind(this);
 
         fin.Application.getCurrentSync().getWindow().then(w => w.getOptions().then((options) => {
-            let data: IIntentData = JSON.parse(options.customData);
+            const data: IIntentData = JSON.parse(options.customData);
 
             if (data && data.intent && data.applications) {
                 this.setState({

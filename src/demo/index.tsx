@@ -19,11 +19,11 @@ import { LauncherApp } from './apps/LauncherApp';
  * applications, likely made by different vendors, that are both capable of providing the same funcionality.
  */
 
-var uuid: string, color: string;
-var app: JSX.Element;
+let uuid: string, color: string;
+let app: JSX.Element;
 
 if (window.hasOwnProperty("fin")) {
-    uuid = (fin.desktop.Application.getCurrent() as any).uuid;
+    uuid = fin.desktop.Application.getCurrent().uuid;
 
     //Colours are used to simulate having multiple apps capable of handling the same intent.
     //In this sample they are re-skins of the same application, but in a real scenario they would be completely unrelated applications.
@@ -37,7 +37,7 @@ if (window.hasOwnProperty("fin")) {
     }
 
     //Add an extra stylesheet to the document, to change the app's appearance
-    var link = document.createElement("link");
+    const link = document.createElement("link");
     link.type = "text/css";
     link.rel = "stylesheet";
     link.href = "https://www.w3schools.com/lib/w3-theme-" + color + ".css";

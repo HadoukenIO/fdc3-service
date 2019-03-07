@@ -7,7 +7,7 @@ import '../../../res/demo/css/w3.css';
 import { AppCard } from '../components/launcher/AppCard';
 
 interface IAppState {
-    applications: IApplication[]
+    applications: IApplication[];
 }
 
 export class LauncherApp extends React.Component<{}, IAppState> {

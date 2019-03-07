@@ -5,7 +5,7 @@ import './Number.css';
 interface INumberProps {
     inCall?: boolean;
     number?: string;
-    handleChange?: (number: string) => void;
+    handleChange?: (num: string) => void;
 }
 
 interface INumberState {
@@ -38,11 +38,11 @@ export class Number extends React.Component<INumberProps, INumberState> {
     }
 
     private handleChange(event: React.ChangeEvent<HTMLInputElement>): void {
-        var handler: ((key: string) => void)|undefined = this.props.handleChange,
+        const handler: ((key: string) => void)|undefined = this.props.handleChange,
             input: string = event.target.value,
             filteredInput: string = input.replace(this.inputFilter, "");
 
-        if (filteredInput != input) {
+        if (filteredInput !== input) {
             event.target.value = filteredInput;
         } else if (handler) {
             handler(input);
@@ -50,7 +50,7 @@ export class Number extends React.Component<INumberProps, INumberState> {
     }
 
     private handleClear(event: React.MouseEvent<HTMLElement>): void {
-        var handler: ((key: string) => void)|undefined = this.props.handleChange,
+        const handler: ((key: string) => void)|undefined = this.props.handleChange,
             input: HTMLInputElement = document.getElementsByClassName("number-input")[0] as HTMLInputElement;
 
         if (handler) {

@@ -52,18 +52,24 @@ export class ContactsRow extends React.Component<IContactRowProps> {
         this.sendIntent(event.currentTarget, false);
 
         event.stopPropagation();
-        this.props.handleSelect && this.props.handleSelect(null);
+
+        if(this.props.handleSelect) {
+            this.props.handleSelect(null);
+        }
     }
 
     private handleCall(event: React.MouseEvent<HTMLButtonElement>): void {
         this.sendIntent(event.currentTarget, true);
 
         event.stopPropagation();
-        this.props.handleSelect && this.props.handleSelect(null);
+
+        if(this.props.handleSelect) {
+            this.props.handleSelect(null);
+        }
     }
 
     private getContext(): ContactPayload {
-        let item: IContact = this.props.item;
+        const item: IContact = this.props.item;
 
         return {
             type: "contact",
@@ -76,9 +82,10 @@ export class ContactsRow extends React.Component<IContactRowProps> {
     }
 
     private sendIntent(button: HTMLButtonElement, startCall: boolean): void {
-        var icon: Element = button.firstElementChild!,
-            iconClass: string = startCall ? "fa fa-phone" : "fa fa-tty",
-            intent: fdc3.Intent;
+        const icon: Element = button.firstElementChild!,
+            iconClass: string = startCall ? "fa fa-phone" : "fa fa-tty";
+
+            let intent: fdc3.Intent;
 
         //Create the appropriate intent
         intent = new fdc3.Intent(startCall ? fdc3.Intents.START_CALL : fdc3.Intents.DIAL_CALL, this.getContext());

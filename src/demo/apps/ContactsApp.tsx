@@ -53,7 +53,7 @@ export class ContactsApp extends React.Component<{}, IAppState> {
         const saveContactListener = new fdc3.IntentListener(fdc3.Intents.SAVE_CONTACT, (context: Payload): Promise<void> => {
             return new Promise((resolve: ()=>void, reject: (reason?: Error)=>void) => {
                 if (context && context.name) {
-                    var contacts: IContact[] = this.state.contacts;
+                    const contacts: IContact[] = this.state.contacts;
 
                     this.setState({
                         contacts: contacts.concat({

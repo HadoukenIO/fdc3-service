@@ -20,7 +20,7 @@ export class AppCard extends React.Component<IAppCardProps> {
     }
 
     public render(): JSX.Element {
-        let app: IApplication = this.props.app;
+        const app: IApplication = this.props.app;
 
         return (
             <div className={"app-card w3-card w3-round-large w3-button" + (this.props.selected ? " selected" : "")} onClick={this.clickHandler} onDoubleClick={this.doubleClickHandler}>
@@ -32,7 +32,7 @@ export class AppCard extends React.Component<IAppCardProps> {
     }
 
     private clickHandler(event: React.MouseEvent<HTMLDivElement>): void {
-        let handler = this.props.selectHandler;
+        const handler = this.props.selectHandler;
 
         if (handler) {
             handler(this.props.app);
@@ -40,7 +40,7 @@ export class AppCard extends React.Component<IAppCardProps> {
     }
 
     private doubleClickHandler(event: React.MouseEvent<HTMLDivElement>): void {
-        let handler = this.props.openHandler;
+        const handler = this.props.openHandler;
 
         if (handler) {
             handler(this.props.app);

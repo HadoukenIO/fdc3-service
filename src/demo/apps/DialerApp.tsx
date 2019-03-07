@@ -52,7 +52,7 @@ export class DialerApp extends React.Component<IAppProps, IAppState> {
             }
         });
         const contextListener = new fdc3.ContextListener((context: Payload): void => {
-            if (context.type == "contact") {
+            if (context.type === "contact") {
                 if (!this.state.inCall) {
                     this.handleIntent(context as ContactPayload, false);
                 }
@@ -61,7 +61,7 @@ export class DialerApp extends React.Component<IAppProps, IAppState> {
     }
 
     public render(): JSX.Element {
-        let pendingCall: ContactPayload = this.state.pendingCall!;
+        const pendingCall: ContactPayload = this.state.pendingCall!;
 
         return (
             <div>
@@ -76,8 +76,8 @@ export class DialerApp extends React.Component<IAppProps, IAppState> {
         );
     }
 
-    private onNumberEntry(number: string): void {
-        this.setState({phoneNumber: number});
+    private onNumberEntry(phoneNumber: string): void {
+        this.setState({phoneNumber});
     }
 
     private onDialerEntry(key: string): void {

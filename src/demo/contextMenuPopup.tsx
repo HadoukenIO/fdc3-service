@@ -5,7 +5,7 @@ import '../../res/demo/css/w3.css';
 
 import { eContextMenuItem, ContextMenu, ContextMenuMessage } from './components/common/ContextMenu';
 
-var uuid: string = fin.desktop.Application.getCurrent().uuid;
+const uuid: string = fin.desktop.Application.getCurrent().uuid;
 
 /**
  * Simplification of IContextMenuItem - contains just the information required by the UI.
@@ -39,8 +39,8 @@ class ContextMenuPopup extends React.Component<{}, IPopupState> {
 
     public render(): JSX.Element {
         //Create menu components
-        let menuItems: IMenuItem[] = this.state.items;
-        let components: JSX.Element[] = [];
+        const menuItems: IMenuItem[] = this.state.items;
+        const components: JSX.Element[] = [];
         let windowHeight: number = 2;   //Initial height is to account for top/bottom borders
 
         menuItems.forEach((item: IMenuItem) => {
@@ -66,7 +66,7 @@ class ContextMenuPopup extends React.Component<{}, IPopupState> {
             windowHeight += itemHeight;
         });
 
-        if (window.innerHeight != windowHeight) {
+        if (window.innerHeight !== windowHeight) {
             fin.desktop.Window.getCurrent().resizeTo(150, windowHeight, "top-left");
         }
 
@@ -91,7 +91,7 @@ class ContextMenuPopup extends React.Component<{}, IPopupState> {
     }
 
     private handleMenuMessage(message: ContextMenuMessage): void {
-        if (message.action == "update") {
+        if (message.action === "update") {
             this.setState({items: message.items});
 
             const ofWindow: fin.OpenFinWindow = fin.desktop.Window.getCurrent();

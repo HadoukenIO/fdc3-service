@@ -34,7 +34,7 @@ export class SymbolsTable extends React.Component<ISymbolTableProps, ISymbolTabl
                     </tr>
                 </thead>
                 <tbody>
-                    {this.props.items && this.props.items.map((item) => <SymbolsRow key={item.name} item={item} selected={item == this.state.selectedItem} handleSelect={this.handleSelect} />)}
+                    {this.props.items && this.props.items.map((item) => <SymbolsRow key={item.name} item={item} selected={item === this.state.selectedItem} handleSelect={this.handleSelect} />)}
                 </tbody>
             </table>
         );

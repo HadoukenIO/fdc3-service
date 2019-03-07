@@ -100,7 +100,9 @@ export class SymbolsRow extends React.Component<ISymbolsRowProps> {
 
         //Clear table row selection
         event.stopPropagation();
-        this.props.handleSelect && this.props.handleSelect(null);
+        if(this.props.handleSelect){
+            this.props.handleSelect(null);
+        }
     }
 
     private handleContextSelection(type: eContextMenuItem, userData: string): void {

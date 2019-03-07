@@ -24,14 +24,14 @@ export class Chart extends React.Component {
         let y: number = (Math.random() * 0.3) + 0.3;
         let height: number, delta: number;
 
-        for(var i=0; i<100; i++) {
+        for(let i=0; i<100; i++) {
             delta = (Math.random() * 0.2) - 0.1;
             height = (Math.random() * 0.2);
             y = Math.min(Math.max(y + delta, 0), 1);
 
             this.data.push({
                 y: y - (height / 2),
-                height: height,
+                height,
                 error1: (Math.random() * 0.1),
                 error2: (Math.random() * 0.1),
                 style: (delta >= 0) ? "#00ff00" : "#ff0000"
@@ -54,20 +54,20 @@ export class Chart extends React.Component {
 
     private redraw(): void {
         //Assumes window only contains a single canvas element
-        let chart: HTMLCanvasElement = document.getElementsByTagName("canvas")[0];
-        let ctx: CanvasRenderingContext2D = chart.getContext("2d")!;
-        let padding: number = parseInt(window.getComputedStyle(chart.parentElement!).padding!) || 0;
+        const chart: HTMLCanvasElement = document.getElementsByTagName("canvas")[0];
+        const ctx: CanvasRenderingContext2D = chart.getContext("2d")!;
+        const padding: number = Number.parseInt(window.getComputedStyle(chart.parentElement!).padding!, 10) || 0;
 
         //Set Dimensions
-        let w = window.innerWidth - (padding * 2);
-        let h = window.innerHeight - chart.offsetTop - padding;
+        const w = window.innerWidth - (padding * 2);
+        const h = window.innerHeight - chart.offsetTop - padding;
         chart.width = w;
         chart.height = h;
 
         //Draw Data
         let x = w - Chart.BAR_SPACING;
-        for(var i=0; i<100 && x > -Chart.BAR_WIDTH; i++) {
-            let data = this.data[i];
+        for(let i=0; i<100 && x > -Chart.BAR_WIDTH; i++) {
+            const data = this.data[i];
 
             ctx.beginPath();
             ctx.moveTo(x + (Chart.BAR_WIDTH / 2), (data.y - data.error1) * h);
