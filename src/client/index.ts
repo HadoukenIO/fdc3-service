@@ -1,4 +1,4 @@
-import {Payload} from './context';
+import {ContextBase} from './context';
 import {AppIdentifier, IApplication} from './directory';
 import {IntentType} from './intents';
 
@@ -6,7 +6,7 @@ export * from './context';
 export * from './directory';
 export * from './intents';
 
-export type Context = Payload;
+export type Context = ContextBase;
 
 import {version} from './version';
 

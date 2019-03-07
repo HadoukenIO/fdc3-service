@@ -1,5 +1,5 @@
 import { IApplication } from '../client/directory';
-import { Payload, Intent, SERVICE_CHANNEL } from '../client/index';
+import { ContextBase, Intent, SERVICE_CHANNEL } from '../client/index';
 import { AppDirectory } from './AppDirectory';
 import { IAppMetadata, MetadataStore } from './MetadataStore';
 import { PreferencesStore } from './PreferencesStore';
@@ -68,7 +68,7 @@ export class FDC3 {
             return applications;
         }
     }
-    private async onBroadcast(context: Payload): Promise<void> {
+    private async onBroadcast(context: ContextBase): Promise<void> {
         return this.sendContext(context);
     }
     private async onIntent(intent: Intent, source: Identity): Promise<void> {
@@ -167,7 +167,7 @@ export class FDC3 {
      * @param requestedApp The application to open
      * @param context Context data to pass to the application
      */
-    private async openApplication(requestedApp: IApplication, context?: Payload): Promise<void> {
+    private async openApplication(requestedApp: IApplication, context?: ContextBase): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             const metadata: IAppMetadata = this.metadata.lookupFromDirectoryId(requestedApp.id);
             this.isAppRunning(metadata && metadata.uuid).then((isRunning: boolean) => {
@@ -190,7 +190,7 @@ export class FDC3 {
             }, reject);
         });
     }
-    private async startApplication(appInfo: IApplication, context?: Payload): Promise<void> {
+    private async startApplication(appInfo: IApplication, context?: ContextBase): Promise<void> {
         return new Promise<void>((resolve: () => void, reject: (reason: Error) => void) => {
             if (appInfo) {
                 fin.Application.createFromManifest(appInfo.manifest_url).then((app) => {
@@ -304,7 +304,7 @@ export class FDC3 {
             queuedIntent.selector = selector;
         });
     }
-    private async sendContext(context: Payload): Promise<void> {
+    private async sendContext(context: ContextBase): Promise<void> {
         return fin.InterApplicationBus.publish('context', context);
     }
     private async sendIntent(intent: Intent, targetApp: IAppMetadata): Promise<void> {
