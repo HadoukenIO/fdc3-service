@@ -2,21 +2,21 @@ import * as React from 'react';
 
 import './Number.css';
 
-interface INumberProps {
+interface NumberProps {
     inCall?: boolean;
     number?: string;
     handleChange?: (num: string) => void;
 }
 
-interface INumberState {
+interface NumberState {
     inCall: boolean;
     number: string;
 }
 
-export class Number extends React.Component<INumberProps, INumberState> {
+export class Number extends React.Component<NumberProps, NumberState> {
     private inputFilter: RegExp = /[^0-9*#]/g;
 
-    constructor(props: INumberProps) {
+    constructor(props: NumberProps) {
         super(props);
 
         this.state = {
@@ -29,9 +29,10 @@ export class Number extends React.Component<INumberProps, INumberState> {
     }
 
     public render(): JSX.Element {
+        const {inCall} = this.props;
         return (
             <div className="number">
-                <i className={"fa fa-close w3-button w3-text-gray" + (this.props.inCall ? " w3-hide" : "")} onClick={this.handleClear}></i>
+                <i className={"fa fa-close w3-button w3-text-gray" + (inCall ? " w3-hide" : "")} onClick={this.handleClear} />
                 <input className="number-input w3-input w3-border" type="text" value={this.props.number} onChange={this.handleChange} readOnly={this.props.inCall} />
             </div>
         );

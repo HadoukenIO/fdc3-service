@@ -1,14 +1,14 @@
 import * as React from 'react';
 
-import { ISymbol } from '../../apps/BlotterApp';
+import { Symbol } from '../../apps/BlotterApp';
 import { SymbolsRow } from './SymbolsRow';
 
 interface ISymbolTableProps {
-    items?: ISymbol[];
+    items?: Symbol[];
 }
 
 interface ISymbolTableState {
-    selectedItem: ISymbol|null;
+    selectedItem: Symbol|null;
 }
 
 export class SymbolsTable extends React.Component<ISymbolTableProps, ISymbolTableState> {
@@ -30,7 +30,7 @@ export class SymbolsTable extends React.Component<ISymbolTableProps, ISymbolTabl
                         <th>Bid Price</th>
                         <th>Ask Size</th>
                         <th>Ask Price</th>
-                        <th></th>
+                        <th>{}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -40,7 +40,7 @@ export class SymbolsTable extends React.Component<ISymbolTableProps, ISymbolTabl
         );
     }
 
-    private handleSelect(item: ISymbol|null): void {
+    private handleSelect(item: Symbol|null): void {
         if (item !== this.state.selectedItem) {
             this.setState({selectedItem: item});
         }

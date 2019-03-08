@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { IMenuItem } from '../../contextMenuPopup';
+import { MenuItem } from '../../contextMenuPopup';
 
 declare const window: Window & {ContextMenu: ContextMenu | null};
 
@@ -94,7 +94,7 @@ interface ISelectMessage { action: "select"; id: string; anchor: {x: number; y: 
 interface IBlurMessage { action: "blur"; }
 
 //Outgoing messages (from ContextMenu to ContextMenuPopup)
-interface IUpdateMessage { action: "update"; items: IMenuItem[]; }
+interface IUpdateMessage { action: "update"; items: MenuItem[]; }
 
 //Alias for any valid context menu message. All messages are sent along the IAB using ContextMenu.TOPIC as the topic.
 export type ContextMenuMessage = ISelectMessage | IBlurMessage | IUpdateMessage;
@@ -284,7 +284,7 @@ export class ContextMenu extends React.Component<IContextMenuProps> {
         });
     }
 
-    private createMenuItems(items: IParsedMenuItem[]): IMenuItem[] {
+    private createMenuItems(items: IParsedMenuItem[]): MenuItem[] {
         return items.map((item: IParsedMenuItem) => ({
             id: item.id,
             type: item.type,
@@ -399,7 +399,7 @@ export class ContextMenu extends React.Component<IContextMenuProps> {
             const parent: IParsedMenuItem = (placeholder.parent || this.menu!.root);
             const siblings: IParsedMenuItem[] = parent.children;
             const index: number = siblings.indexOf(placeholder);
-            let menuItems: IMenuItem[]|null = null;
+            let menuItems: MenuItem[]|null = null;
 
             if (index >= 0) {
                 //Replace placeholder with values returned by promise

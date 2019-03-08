@@ -3,16 +3,16 @@ import * as React from 'react';
 import { IContact } from '../../apps/ContactsApp';
 import { ContactsRow } from './ContactsRow';
 
-interface IContactTableProps {
+interface ContactTableProps {
     items?: IContact[];
 }
 
-interface IContactTableState {
+interface ContactTableState {
     selectedItem: IContact|null;
 }
 
-export class ContactsTable extends React.Component<IContactTableProps, IContactTableState> {
-    constructor(props: IContactTableProps) {
+export class ContactsTable extends React.Component<ContactTableProps, ContactTableState> {
+    constructor(props: ContactTableProps) {
         super(props);
 
         this.state = {selectedItem: null};
@@ -28,7 +28,7 @@ export class ContactsTable extends React.Component<IContactTableProps, IContactT
                         <th>Name</th>
                         <th>E-mail</th>
                         <th>Phone</th>
-                        <th></th>
+                        <th>{}</th>
                     </tr>
                 </thead>
                 <tbody>

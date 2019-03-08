@@ -5,17 +5,17 @@ import { IApplication } from '../../../client/directory';
 
 import './SymbolsRow.css';
 
-import { ISymbol } from '../../apps/BlotterApp';
+import { Symbol } from '../../apps/BlotterApp';
 import { ContextMenu, IContextMenuItem, eContextMenuItem, AsyncContextMenuItem } from '../common/ContextMenu';
 
-interface ISymbolsRowProps {
-    item?: ISymbol;
+interface SymbolsRowProps {
+    item?: Symbol;
     selected?: boolean;
-    handleSelect?: (item: ISymbol|null) => void;
+    handleSelect?: (item: Symbol|null) => void;
 }
 
-export class SymbolsRow extends React.Component<ISymbolsRowProps> {
-    constructor(props: ISymbolsRowProps) {
+export class SymbolsRow extends React.Component<SymbolsRowProps> {
+    constructor(props: SymbolsRowProps) {
         super(props);
 
         this.handleClick = this.handleClick.bind(this);
@@ -24,7 +24,7 @@ export class SymbolsRow extends React.Component<ISymbolsRowProps> {
     }
 
     public render(): JSX.Element {
-        const item: ISymbol = this.props.item!;
+        const item: Symbol = this.props.item!;
 
         const menuItems: AsyncContextMenuItem[] = [
             {caption: "View Quote", userData: "quote"},
@@ -66,7 +66,7 @@ export class SymbolsRow extends React.Component<ISymbolsRowProps> {
     }
 
     private handleClick(event: React.MouseEvent<HTMLTableRowElement>): void {
-        const handler: (item: ISymbol)=>void = this.props.handleSelect!;
+        const handler: (item: Symbol)=>void = this.props.handleSelect!;
 
         if (handler) {
             handler(this.props.item!);
@@ -133,7 +133,7 @@ export class SymbolsRow extends React.Component<ISymbolsRowProps> {
     }
 
     private getContext(): SecurityPayload {
-        const item: ISymbol = this.props.item!;
+        const item: Symbol = this.props.item!;
 
         return {
             type: "security",

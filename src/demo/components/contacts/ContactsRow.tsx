@@ -30,8 +30,12 @@ export class ContactsRow extends React.Component<IContactRowProps> {
                 <td>{item.email || ""}</td>
                 <td>{item.phone || ""}</td>
                 <td>
-                    <button onClick={this.handleDial}><i className="fa fa-tty" title="Dial"></i></button>
-                    <button onClick={this.handleCall}><i className="fa fa-phone" title="Call"></i></button>
+                    <button onClick={this.handleDial}>
+                        <i className="fa fa-tty" title="Dial" />
+                    </button>
+                    <button onClick={this.handleCall}>
+                        <i className="fa fa-phone" title="Call" />
+                    </button>
                 </td>
             </tr>
         );

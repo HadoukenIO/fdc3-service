@@ -4,13 +4,13 @@ import './AppCard.css';
 
 import { IApplication } from '../../../client/directory';
 
-interface IAppCardProps {
+interface AppCardProps {
     app: IApplication;
     handleClick?: (app: IApplication) => void;
 }
 
-export class AppCard extends React.Component<IAppCardProps> {
-    constructor(props: IAppCardProps) {
+export class AppCard extends React.Component<AppCardProps> {
+    constructor(props: AppCardProps) {
         super(props);
 
         this.handleClick = this.handleClick.bind(this);

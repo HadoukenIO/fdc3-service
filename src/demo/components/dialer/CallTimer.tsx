@@ -2,12 +2,12 @@ import * as React from 'react';
 
 import './CallTimer.css';
 
-interface ICallTimerState {
+interface CallTimerState {
     timer: number|null;
     counter: number;
 }
 
-export class CallTimer extends React.Component<{}, ICallTimerState> {
+export class CallTimer extends React.Component<{}, CallTimerState> {
     constructor(props: {}) {
         super(props);
 

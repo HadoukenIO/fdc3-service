@@ -4,40 +4,42 @@ import '../../../res/demo/css/w3.css';
 
 import { SymbolsTable } from '../components/blotter/SymbolsTable';
 
-interface IAppState {
-    symbols: ISymbol[];
+interface AppState {
+    symbols: Symbol[];
 }
 
-export interface ISymbol {
+export interface Symbol {
     name: string;
 }
 
-export class BlotterApp extends React.Component<{}, IAppState> {
+const initialState: AppState = {
+    symbols: [
+        {"name":"AAPL"},
+        {"name":"AMD"},
+        {"name":"AMZN"},
+        {"name":"CMCSA"},
+        {"name":"CSCO"},
+        {"name":"FB"},
+        {"name":"GOOG"},
+        {"name":"INTC"},
+        {"name":"MSFT"},
+        {"name":"NFLX"},
+        {"name":"NVDA"},
+        {"name":"PYPL"},
+        {"name":"QCOM"},
+        {"name":"ROKU"},
+        {"name":"TSLA"}
+    ]
+};
+
+export class BlotterApp extends React.Component<{}, AppState> {
     constructor(props: {}) {
         super(props);
-
+        
         document.title = "Blotter";
 
         //Initial set of symbols is hard-coded.
-        this.state = {
-            symbols: [
-                {"name":"AAPL"},
-                {"name":"AMD"},
-                {"name":"AMZN"},
-                {"name":"CMCSA"},
-                {"name":"CSCO"},
-                {"name":"FB"},
-                {"name":"GOOG"},
-                {"name":"INTC"},
-                {"name":"MSFT"},
-                {"name":"NFLX"},
-                {"name":"NVDA"},
-                {"name":"PYPL"},
-                {"name":"QCOM"},
-                {"name":"ROKU"},
-                {"name":"TSLA"}
-            ]
-        };
+        this.state = initialState;
     }
 
     public render(): JSX.Element {

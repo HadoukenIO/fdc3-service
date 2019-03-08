@@ -10,18 +10,18 @@ const uuid: string = fin.desktop.Application.getCurrent().uuid;
 /**
  * Simplification of IContextMenuItem - contains just the information required by the UI.
  */
-export interface IMenuItem {
+export interface MenuItem {
     id: string;
     type: eContextMenuItem;
     caption: string;
     hasChildren: boolean;
 }
 
-interface IPopupState {
-    items: IMenuItem[];
+interface PopupState {
+    items: MenuItem[];
 }
 
-class ContextMenuPopup extends React.Component<{}, IPopupState> {
+class ContextMenuPopup extends React.Component<{}, PopupState> {
     constructor(props: {}) {
         super(props);
 
@@ -39,16 +39,16 @@ class ContextMenuPopup extends React.Component<{}, IPopupState> {
 
     public render(): JSX.Element {
         //Create menu components
-        const menuItems: IMenuItem[] = this.state.items;
+        const menuItems: MenuItem[] = this.state.items;
         const components: JSX.Element[] = [];
         let windowHeight: number = 2;   //Initial height is to account for top/bottom borders
 
-        menuItems.forEach((item: IMenuItem) => {
+        menuItems.forEach((item: MenuItem) => {
             let itemHeight: number = 22;
 
             switch(item.type) {
                 case eContextMenuItem.SPINNER:
-                    components.push(<button key={item.id} className="spinner w3-button w3-disabled"><i className="fa fa-spinner fa-spin"></i></button>);
+                    components.push(<button key={item.id} className="spinner w3-button w3-disabled"><i className="fa fa-spinner fa-spin" /></button>);
                     break;
                 case eContextMenuItem.SEPARATOR:
                     components.push(<hr key={item.id} />);
@@ -73,7 +73,7 @@ class ContextMenuPopup extends React.Component<{}, IPopupState> {
         return (<div className="context-menu">{components}</div>);
     }
     
-    private onClick(item: IMenuItem, event: React.MouseEvent<HTMLButtonElement>): void {
+    private onClick(item: MenuItem, event: React.MouseEvent<HTMLButtonElement>): void {
         const anchor: {x: number; y: number;} = {
             x: window.screenX + outerWidth - 10, 
             y: window.screenY + event.currentTarget.offsetTop

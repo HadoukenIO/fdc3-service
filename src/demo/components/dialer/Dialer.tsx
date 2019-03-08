@@ -2,11 +2,11 @@ import * as React from 'react';
 
 import './Dialer.css';
 
-interface IDialerProps {
+interface DialerProps {
     handleKeyPress?: (key: string) => void;
 }
 
-export class Dialer extends React.Component<IDialerProps> {
+export class Dialer extends React.Component<DialerProps> {
     constructor(props: {}) {
         super(props);
 

@@ -26,7 +26,7 @@ export class AppCard extends React.Component<IAppCardProps> {
             <div className={"app-card w3-card w3-round-large w3-button" + (this.props.selected ? " selected" : "")} onClick={this.clickHandler} onDoubleClick={this.doubleClickHandler}>
                 <img className="" src={app.icon} />
                 <h3>{app.title}</h3>
-                <div className="w3-clear"></div>
+                <div className="w3-clear" />
             </div>
         );
     }
