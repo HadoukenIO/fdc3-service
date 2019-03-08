@@ -62,15 +62,13 @@ export class DialerApp extends React.Component<IAppProps, IAppState> {
 
     public render(): JSX.Element {
         const pendingCall: ContactPayload = this.state.pendingCall!;
-
+        const {inCall, phoneNumber} = this.state;
         return (
             <div>
-                <Number inCall={this.state.inCall} number={this.state.phoneNumber} handleChange={this.onNumberEntry} />
-                { this.state.inCall
-                    ? <CallTimer />
-                    : <Dialer handleKeyPress={this.onDialerEntry} />
-                }
-                <CallButton canCall={this.state.phoneNumber.length > 0} inCall={this.state.inCall} handleClick={this.toggleCall} />
+                <Number inCall={this.state.inCall} number={phoneNumber} handleChange={this.onNumberEntry} />
+                {inCall && <CallTimer />}
+                {!inCall && <Dialer handleKeyPress={this.onDialerEntry} />}
+                <CallButton canCall={phoneNumber.length > 0} inCall={inCall} handleClick={this.toggleCall} />
                 <Dialog show={!!pendingCall} title="Replace call?" body={"Hang up and call " + (pendingCall && pendingCall.id.phone) + "?"} options={["No", "Yes"]} handleOption={this.handleDialog} />
             </div>
         );

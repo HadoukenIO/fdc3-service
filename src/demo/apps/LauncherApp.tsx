@@ -23,12 +23,13 @@ export class LauncherApp extends React.Component<{}, IAppState> {
     }
 
     public render(): JSX.Element {
+        const {applications} = this.state;
         return (
             <div>
                 <h1>Launcher</h1>
 
-                {this.state.applications.map(
-                    (app) => <AppCard key={app.id} app={app} handleClick={this.openApp.bind(null, app)} />
+                {
+                    applications.map((app) => <AppCard key={app.id} app={app} handleClick={this.openApp.bind(null, app)} />
                 )}
             </div>
         );

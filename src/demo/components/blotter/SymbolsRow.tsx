@@ -52,9 +52,13 @@ export class SymbolsRow extends React.Component<ISymbolsRowProps> {
                 <td>##.##</td>
                 <td>##.##</td>
                 <td>
-                    <button onClick={this.handleChart}><i className="fa fa-line-chart" title="View Chart"></i></button>
+                    <button onClick={this.handleChart}>
+                        <i className="fa fa-line-chart" title="View Chart" />
+                    </button>
                     <ContextMenu items={menuItems} handleSelection={this.handleContextSelection}>
-                        <button><i className="fa fa-ellipsis-v" title="Options"></i></button>
+                        <button>
+                            <i className="fa fa-ellipsis-v" title="Options" />
+                        </button>
                     </ContextMenu>
                 </td>
             </tr>
