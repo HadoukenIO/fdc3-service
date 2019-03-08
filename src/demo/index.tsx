@@ -21,7 +21,7 @@ import { LauncherApp } from './apps/LauncherApp';
 
 
 // tslint:disable-next-line:variable-name
-const App = (): JSX.Element => {
+const App: React.FunctionComponent = () => {
     const hasFin = window.hasOwnProperty("fin");
     let uuid = fin.desktop.Application.getCurrent().uuid;
     let color = uuid.split("-")[2];
@@ -47,7 +47,7 @@ const App = (): JSX.Element => {
 };
 
 // tslint:disable-next-line:variable-name
-const SelectApp = (props: {uuid: string}): JSX.Element =>{
+const SelectApp: React.FunctionComponent<{uuid: string}> = (props) => {
     const {uuid} = props;
     let selectedApp: JSX.Element;
 
