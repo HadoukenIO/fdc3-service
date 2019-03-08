@@ -1,24 +1,28 @@
 import * as React from 'react';
-import * as fdc3 from '../../client/index';
+import * as fdc3 from '../../client';
 import { IApplication } from '../../client/directory';
 
 import '../../../res/demo/css/w3.css';
 
 import { AppCard } from '../components/launcher/AppCard';
 
-interface IAppState {
+interface AppState {
     applications: IApplication[];
 }
 
-export class LauncherApp extends React.Component<{}, IAppState> {
+export class LauncherApp extends React.Component<{}, AppState> {
     constructor(props: {}) {
         super(props);
 
         document.title = "Launcher";
         this.state = {applications: []};
 
-        fdc3.resolve(null!).then((applications: IApplication[]) => {
+        fdc3.resolve(null!)
+        .then((applications: IApplication[]) => {
             this.setState({applications});
+        })
+        .catch(err =>{
+            console.log(err);
         });
     }
 
@@ -27,7 +31,6 @@ export class LauncherApp extends React.Component<{}, IAppState> {
         return (
             <div>
                 <h1>Launcher</h1>
-
                 {
                     applications.map((app) => <AppCard key={app.id} app={app} handleClick={this.openApp.bind(null, app)} />
                 )}
@@ -36,7 +39,12 @@ export class LauncherApp extends React.Component<{}, IAppState> {
     }
 
     private openApp(app: IApplication): void {
-        console.log("Opening app " + app.title);
-        fdc3.open(app.name);
+        fdc3.open(app.name)
+        .then(value => {
+            console.log("Opening app " + app.title);
+        })
+        .catch(err => {
+            console.log("Failed opening " + app.title, err, app);
+        });
     }
 }

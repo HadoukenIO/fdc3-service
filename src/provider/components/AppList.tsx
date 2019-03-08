@@ -7,14 +7,14 @@ import { IApplication } from '../../client/directory';
 import { AppCard } from './AppCard';
 import { eDefaultAction } from '../index';
 
-interface IAppListState {
+interface AppListState {
     handle: number;
     defaultAction: string;
     applications: IApplication[];
     selectedApplication: IApplication|null;
 }
 
-interface IIntentData {
+interface IntentData {
     handle: number;
     intent: fdc3.Intent;
     applications: IApplication[];
@@ -22,7 +22,7 @@ interface IIntentData {
 
 const servicePromise = fin.InterApplicationBus.Channel.connect(fdc3.SERVICE_CHANNEL);
 
-export class AppList extends React.Component<{}, IAppListState> {
+export class AppList extends React.Component<{}, AppListState> {
     constructor(props: {}) {
         super(props);
 
@@ -39,7 +39,7 @@ export class AppList extends React.Component<{}, IAppListState> {
         this.onCancel = this.onCancel.bind(this);
 
         fin.Application.getCurrentSync().getWindow().then(w => w.getOptions().then((options) => {
-            const data: IIntentData = JSON.parse(options.customData);
+            const data: IntentData = JSON.parse(options.customData);
 
             if (data && data.intent && data.applications) {
                 this.setState({
