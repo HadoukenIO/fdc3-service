@@ -4,7 +4,7 @@ import { MenuItem } from '../../contextMenuPopup';
 
 declare const window: Window & {ContextMenu: ContextMenu | null};
 
-export enum eContextMenuItem {
+export enum ContextMenuItemType {
     BUTTON,     ///< A normal context menu button
     LABEL,      ///< Static text that can't be selected
     SEPARATOR,  ///< A separator between two parts of the context menu
@@ -16,13 +16,13 @@ export enum eContextMenuItem {
  * 
  * @see IAsyncContextMenuItem A similar interface, which allows the use of a promise to specify menu items asynchronously
  */
-export interface IContextMenuItem {
+export interface StaticContextMenuItem {
     /**
      * Determines the appearance and interactivity of the menu item.
      * 
      * Will default to BUTTON.
      */
-    type?: eContextMenuItem;
+    type?: ContextMenuItemType;
 
     /**
      * User-visible text to display on the menu item. Only applies to BUTTON and LABEL types.
@@ -37,7 +37,7 @@ export interface IContextMenuItem {
     /**
      * Optional set of child items to nest under this item
      */
-    children?: IContextMenuItem[];
+    children?: StaticContextMenuItem[];
 
     /**
      * Function to call when this item is clicked. Applies only to BUTTON types.
@@ -51,7 +51,7 @@ export interface IContextMenuItem {
  * The type used for specifying context menu items. This allows for static items, as well as promises that can return 
  * one or more items.
  */
-export type AsyncContextMenuItem = IContextMenuItem | IAsyncContextMenuItem | Promise<IContextMenuItem | IContextMenuItem[]>;
+export type ContextMenuItem = StaticContextMenuItem | AsyncContextMenuItem | Promise<StaticContextMenuItem | StaticContextMenuItem[]>;
 
 // tslint:disable-next-line: no-any Its user data
 export type UserData = any;
@@ -59,13 +59,13 @@ export type UserData = any;
 /**
  * Interface used to populate a context menu with items asynchronously.
  * 
- * @see IAsyncContextMenuItem A similar interface, which allows the use of a promise to specify menu items asynchronously
+ * @see ContextMenuItem 
  */
-export interface IAsyncContextMenuItem {
-    type?: eContextMenuItem;
+export interface AsyncContextMenuItem {
+    type?: ContextMenuItemType;
     caption?: string;
     userData?: UserData;
-    children?: AsyncContextMenuItem[];
+    children?: ContextMenuItem[];
     callback?: () => void;
 }
 
@@ -76,33 +76,33 @@ export interface IAsyncContextMenuItem {
  * This is essentially a simplified version of the original menu definition, only promises have been replaced with 
  * 'spinner' elements, and any unspecified fields have been filled-in with default values.
  * 
- * @see IContextMenuItem
+ * @see ContextMenuItem
  * @see AsyncContextMenuItem
  */
-export interface IParsedMenuItem {
+export interface ParsedMenuItem {
     id: string;
-    type: eContextMenuItem;
+    type: ContextMenuItemType;
     caption: string;
     userData: UserData;
-    parent: IParsedMenuItem;
-    children: IParsedMenuItem[];
+    parent: ParsedMenuItem;
+    children: ParsedMenuItem[];
     callback: () => void;
 }
 
 //Incoming messages (from ContextMenuPopup to ContextMenu)
-interface ISelectMessage { action: "select"; id: string; anchor: {x: number; y: number;}; }
-interface IBlurMessage { action: "blur"; }
+interface SelectMessage { action: "select"; id: string; anchor: {x: number; y: number;}; }
+interface BlurMessage { action: "blur"; }
 
 //Outgoing messages (from ContextMenu to ContextMenuPopup)
-interface IUpdateMessage { action: "update"; items: MenuItem[]; }
+interface UpdateMessage { action: "update"; items: MenuItem[]; }
 
 //Alias for any valid context menu message. All messages are sent along the IAB using ContextMenu.TOPIC as the topic.
-export type ContextMenuMessage = ISelectMessage | IBlurMessage | IUpdateMessage;
+export type ContextMenuMessage = SelectMessage | BlurMessage | UpdateMessage;
 
 /**
  * Contains the state of a ContextMenu. This is lazily-created when the user first triggers the context menu.
  */
-interface IMenu {
+interface Menu {
     /**
      * Uniquely identifies a specific context menu, as there may be many ContextMenu components on a page
      */
@@ -114,26 +114,26 @@ interface IMenu {
      * Any promises within the original item list will have been replaced with spinner items. When the promise 
      * resolves, the spinners will be replaced with whatever is returned.
      */
-    root: IParsedMenuItem;
+    root: ParsedMenuItem;
 
     /**
      * Lookup-map for quickly finding items by their ID.
      */
-    map: {[id: string]: IParsedMenuItem};
+    map: {[id: string]: ParsedMenuItem};
 }
 
 /**
  * Wrapper object that manages the state of a single child window.
  */
-interface IPopup {
-    menuState: IMenu;
-    item: IParsedMenuItem;
+interface Popup {
+    menuState: Menu;
+    item: ParsedMenuItem;
     window: fin.OpenFinWindow;
 }
 
-interface IContextMenuProps {
-    items: AsyncContextMenuItem[];
-    handleSelection?: (type: eContextMenuItem, userData: UserData)=>void;
+interface ContextMenuProps {
+    items: ContextMenuItem[];
+    handleSelection?: (type: ContextMenuItemType, userData: UserData)=>void;
 }
 
 /**
@@ -148,25 +148,25 @@ interface IContextMenuProps {
  * known at the time the page is created, the context menu definition can use a promise to specify menu items (or a 
  * subset of menu items) asynchronously.
  */
-export class ContextMenu extends React.Component<IContextMenuProps> {
+export class ContextMenu extends React.Component<ContextMenuProps> {
     public static TOPIC: string = "ContextMenu";
 
     private static UUID: string = fin.desktop.Application.getCurrent().uuid;
-    private static POOL: {active: IPopup[]; free: IPopup[]} = {active: [], free: []};
+    private static POOL: {active: Popup[]; free: Popup[]} = {active: [], free: []};
     private static URL: string = window.location.href.replace("index", "contextMenu").split("?")[0];
 
-    private menu: IMenu|null = null;
+    private menu: Menu|null = null;
 
     private static reserveWindows(count: number): void {
-        const free: IPopup[] = this.POOL.free;
+        const free: Popup[] = this.POOL.free;
 
         while(free.length < count) {
             free.push(this.createPopup());
         }
     }
 
-    private static getOrCreatePopup(callback?: (popup: IPopup)=>void): IPopup {
-        let popup: IPopup|undefined = this.POOL.free.pop();
+    private static getOrCreatePopup(callback?: (popup: Popup)=>void): Popup {
+        let popup: Popup|undefined = this.POOL.free.pop();
 
         if (popup) {
             //Window is now active
@@ -184,9 +184,9 @@ export class ContextMenu extends React.Component<IContextMenuProps> {
         return popup;
     }
 
-    private static createPopup(callback?: (popup: IPopup)=>void): IPopup {
+    private static createPopup(callback?: (popup: Popup)=>void): Popup {
         let window: fin.OpenFinWindow;
-        let popup: IPopup;
+        let popup: Popup;
         
         //Create window
         window = new fin.desktop.Window({
@@ -216,10 +216,10 @@ export class ContextMenu extends React.Component<IContextMenuProps> {
         return [prefix, Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)].join("-");
     }
 
-    private static releasePopup(popup: IPopup): void {
-        const free: IPopup[] = this.POOL.free;
-        const active: IPopup[] = this.POOL.active;
-        const index: number = active.findIndex((activePopup: IPopup) => activePopup.window.name === popup.window.name);
+    private static releasePopup(popup: Popup): void {
+        const free: Popup[] = this.POOL.free;
+        const active: Popup[] = this.POOL.active;
+        const index: number = active.findIndex((activePopup: Popup) => activePopup.window.name === popup.window.name);
 
         if (index >= 0) {
             popup.item = null!;
@@ -233,7 +233,7 @@ export class ContextMenu extends React.Component<IContextMenuProps> {
         }
     }
 
-    constructor(props: IContextMenuProps) {
+    constructor(props: ContextMenuProps) {
         super(props);
 
         if (!window.ContextMenu) {
@@ -263,13 +263,13 @@ export class ContextMenu extends React.Component<IContextMenuProps> {
         );
     }
 
-    private openMenu(item: IParsedMenuItem, screenX: number, screenY: number): IPopup {
+    private openMenu(item: ParsedMenuItem, screenX: number, screenY: number): Popup {
         if (!window.ContextMenu) {
             window.ContextMenu = this;
         }
 
         //Fetch window from pool
-        return ContextMenu.getOrCreatePopup((popup: IPopup) => {
+        return ContextMenu.getOrCreatePopup((popup: Popup) => {
             if (popup.item || popup.menuState) {
                 console.warn("Popup menu wasn't fully freed from previous usage");
             }
@@ -284,8 +284,8 @@ export class ContextMenu extends React.Component<IContextMenuProps> {
         });
     }
 
-    private createMenuItems(items: IParsedMenuItem[]): MenuItem[] {
-        return items.map((item: IParsedMenuItem) => ({
+    private createMenuItems(items: ParsedMenuItem[]): MenuItem[] {
+        return items.map((item: ParsedMenuItem) => ({
             id: item.id,
             type: item.type,
             caption: item.caption,
@@ -300,7 +300,7 @@ export class ContextMenu extends React.Component<IContextMenuProps> {
                 id: "contextMenu-" + Date.now(),
                 root: {
                     id: "[root]",
-                    type: eContextMenuItem.BUTTON,
+                    type: ContextMenuItemType.BUTTON,
                     caption: "",
                     userData: undefined,
                     parent: null!,
@@ -328,29 +328,29 @@ export class ContextMenu extends React.Component<IContextMenuProps> {
      * Listeners are added to the promises that will replace the spinner components with the necessary items once the
      * promise has resolved.
      */
-    private mapItem(item: AsyncContextMenuItem, parent: IParsedMenuItem): IParsedMenuItem {
-        let mappedItem: IParsedMenuItem;
+    private mapItem(item: ContextMenuItem, parent: ParsedMenuItem): ParsedMenuItem {
+        let mappedItem: ParsedMenuItem;
         const idPrefix: string = parent ? (parent.id + "/") : "";
 
-        if ((item as Promise<IContextMenuItem | IContextMenuItem[]>).then) {
+        if ((item as Promise<StaticContextMenuItem | StaticContextMenuItem[]>).then) {
             //Item is a promise
-            const promise: Promise<IContextMenuItem | IContextMenuItem[]> = item as Promise<IContextMenuItem | IContextMenuItem[]>;
+            const promise: Promise<StaticContextMenuItem | StaticContextMenuItem[]> = item as Promise<StaticContextMenuItem | StaticContextMenuItem[]>;
             const placeholderId: string = idPrefix + ContextMenu.createId("promise");
 
             //Add promise listener
             Promise.all([
                 promise,
                 new Promise<void>((resolve: ()=>void) => setTimeout(resolve, 500))
-            ]).then((result: [IContextMenuItem | IContextMenuItem[], void]) => {
+            ]).then((result: [StaticContextMenuItem | StaticContextMenuItem[], void]) => {
                 this.replacePlaceholder(placeholderId, result[0]);
             }, (reason: string) => {
-                this.replacePlaceholder(placeholderId, {type: eContextMenuItem.LABEL, caption: "Error"});
+                this.replacePlaceholder(placeholderId, {type: ContextMenuItemType.LABEL, caption: "Error"});
             });
 
             //Return a placeholder "SPINNER" item, which will be replaced once the promise resolves
             mappedItem = {
                 id: placeholderId,
-                type: eContextMenuItem.SPINNER,
+                type: ContextMenuItemType.SPINNER,
                 parent,
                 caption: placeholderId,     //Use caption field to store a temporary identifier. Lets us find the placeholder again later, so we can swap it out.
                 userData: undefined,
@@ -358,16 +358,16 @@ export class ContextMenu extends React.Component<IContextMenuProps> {
                 callback: null!
             };
         } else {
-            const sourceItem: IAsyncContextMenuItem = item as IAsyncContextMenuItem;
+            const sourceItem: AsyncContextMenuItem = item as AsyncContextMenuItem;
 
             //Must first create mapped item without any children
             mappedItem = Object.assign({
                 //Additional fields
-                id: idPrefix + (sourceItem.caption || ContextMenu.createId(eContextMenuItem[sourceItem.type || eContextMenuItem.BUTTON].toLowerCase())),
+                id: idPrefix + (sourceItem.caption || ContextMenu.createId(ContextMenuItemType[sourceItem.type || ContextMenuItemType.BUTTON].toLowerCase())),
                 parent,
 
                 //Enusre all optional fields are set
-                type: eContextMenuItem.BUTTON,
+                type: ContextMenuItemType.BUTTON,
                 caption: "",
                 userData: undefined,
                 callback: null
@@ -386,18 +386,18 @@ export class ContextMenu extends React.Component<IContextMenuProps> {
         return mappedItem;
     }
 
-    private mapItems(items: AsyncContextMenuItem[], parent: IParsedMenuItem): IParsedMenuItem[] {
-        return items.map((childItem: AsyncContextMenuItem) => this.mapItem(childItem, parent));
+    private mapItems(items: ContextMenuItem[], parent: ParsedMenuItem): ParsedMenuItem[] {
+        return items.map((childItem: ContextMenuItem) => this.mapItem(childItem, parent));
     }
 
-    private replacePlaceholder(placeholderId: string, value: IContextMenuItem | IContextMenuItem[]): void {
-        const placeholder: IParsedMenuItem = this.menu!.map[placeholderId];
-        const replacement: IContextMenuItem[] = (value instanceof Array) ? value : [value];
+    private replacePlaceholder(placeholderId: string, value: StaticContextMenuItem | StaticContextMenuItem[]): void {
+        const placeholder: ParsedMenuItem = this.menu!.map[placeholderId];
+        const replacement: StaticContextMenuItem[] = (value instanceof Array) ? value : [value];
 
         if (value && placeholder) {
-            const parsedItems: IParsedMenuItem[] = this.mapItems(replacement, placeholder.parent);
-            const parent: IParsedMenuItem = (placeholder.parent || this.menu!.root);
-            const siblings: IParsedMenuItem[] = parent.children;
+            const parsedItems: ParsedMenuItem[] = this.mapItems(replacement, placeholder.parent);
+            const parent: ParsedMenuItem = (placeholder.parent || this.menu!.root);
+            const siblings: ParsedMenuItem[] = parent.children;
             const index: number = siblings.indexOf(placeholder);
             let menuItems: MenuItem[]|null = null;
 
@@ -411,7 +411,7 @@ export class ContextMenu extends React.Component<IContextMenuProps> {
                 delete this.menu!.map[placeholderId];
 
                 //Refresh window
-                ContextMenu.POOL.active.forEach((popup: IPopup) => {
+                ContextMenu.POOL.active.forEach((popup: Popup) => {
                     if (popup.item === parent) {
                         if (!menuItems) {
                             menuItems = this.createMenuItems(parent.children);
@@ -431,11 +431,11 @@ export class ContextMenu extends React.Component<IContextMenuProps> {
     }
 
     private onMenuMessage(message: ContextMenuMessage, uuid: string, name: string): void {
-        const popup: IPopup|undefined = ContextMenu.POOL.active.find((popup: IPopup) => popup.window.name === name);
+        const popup: Popup|undefined = ContextMenu.POOL.active.find((popup: Popup) => popup.window.name === name);
 
         if (popup && popup.menuState === this.menu) {
             if (message.action === "select") {
-                const item: IParsedMenuItem = this.menu.map[message.id];
+                const item: ParsedMenuItem = this.menu.map[message.id];
                 const handler = this.props.handleSelection;
 
                 if (item) {
@@ -456,11 +456,11 @@ export class ContextMenu extends React.Component<IContextMenuProps> {
                     console.error("Clicked an item that wasn't in the menu map: " + message.id);
                 }
             } else if (message.action === "blur") {
-                const activePopups: IPopup[] = ContextMenu.POOL.active;
-                const blurredPopup: IPopup|undefined = activePopups.find((activePopup: IPopup) => activePopup.window.name === name);
-                const childIds: string[] = blurredPopup ? blurredPopup.item.children.map((childItem: IParsedMenuItem) => childItem.id) : [];
+                const activePopups: Popup[] = ContextMenu.POOL.active;
+                const blurredPopup: Popup|undefined = activePopups.find((activePopup: Popup) => activePopup.window.name === name);
+                const childIds: string[] = blurredPopup ? blurredPopup.item.children.map((childItem: ParsedMenuItem) => childItem.id) : [];
 
-                if (activePopups.findIndex((activePopup: IPopup) => (activePopup !== blurredPopup && childIds.indexOf(activePopup.item.id) >= 0)) === -1) {
+                if (activePopups.findIndex((activePopup: Popup) => (activePopup !== blurredPopup && childIds.indexOf(activePopup.item.id) >= 0)) === -1) {
                     //Menu has been blurred, and not because we've just opened a child menu.
                     this.closeMenu();
                 }
@@ -471,17 +471,17 @@ export class ContextMenu extends React.Component<IContextMenuProps> {
     }
 
     private closeMenu(): void {
-        const activePopups: IPopup[] = ContextMenu.POOL.active;
+        const activePopups: Popup[] = ContextMenu.POOL.active;
 
         //Close all popups that belong to this menu
-        activePopups.slice().forEach((activePopup: IPopup) => {
+        activePopups.slice().forEach((activePopup: Popup) => {
             if (activePopup.menuState === this.menu) {
                 ContextMenu.releasePopup(activePopup);
             }
         });
     }
 
-    private sendMessage(popup: IPopup, message: ContextMenuMessage): void {
+    private sendMessage(popup: Popup, message: ContextMenuMessage): void {
         fin.desktop.InterApplicationBus.send(ContextMenu.UUID, popup.window.name, ContextMenu.TOPIC, message);
     }
 }

@@ -3,7 +3,7 @@ import * as ReactDOM from 'react-dom';
 
 import '../../res/demo/css/w3.css';
 
-import { eContextMenuItem, ContextMenu, ContextMenuMessage } from './components/common/ContextMenu';
+import { ContextMenuItemType, ContextMenu, ContextMenuMessage } from './components/common/ContextMenu';
 
 const uuid: string = fin.desktop.Application.getCurrent().uuid;
 
@@ -12,7 +12,7 @@ const uuid: string = fin.desktop.Application.getCurrent().uuid;
  */
 export interface MenuItem {
     id: string;
-    type: eContextMenuItem;
+    type: ContextMenuItemType;
     caption: string;
     hasChildren: boolean;
 }
@@ -47,17 +47,17 @@ class ContextMenuPopup extends React.Component<{}, PopupState> {
             let itemHeight: number = 22;
 
             switch(item.type) {
-                case eContextMenuItem.SPINNER:
+                case ContextMenuItemType.SPINNER:
                     components.push(<button key={item.id} className="spinner w3-button w3-disabled"><i className="fa fa-spinner fa-spin" /></button>);
                     break;
-                case eContextMenuItem.SEPARATOR:
+                case ContextMenuItemType.SEPARATOR:
                     components.push(<hr key={item.id} />);
                     itemHeight = 7;
                     break;
-                case eContextMenuItem.LABEL:
+                case ContextMenuItemType.LABEL:
                     components.push(<span key={item.id} className="w3-button">{item.caption}</span>);
                     break;
-                case eContextMenuItem.BUTTON:
+                case ContextMenuItemType.BUTTON:
                     components.push(<button key={item.id} className={"w3-button" + (item.hasChildren ? " children" : "")} onClick={this.onClick.bind(this, item)}>{item.caption}</button>);
                     break;
                 default:

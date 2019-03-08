@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import './Dialog.css';
 
-interface IDialogProps {
+interface DialogProps {
     show?: boolean;
     title?: string;
     body?: string;
@@ -11,22 +11,23 @@ interface IDialogProps {
     handleOption?: (option: string)=>void;
 }
 
-export class Dialog extends React.Component<IDialogProps> {
-    constructor(props: IDialogProps) {
+export class Dialog extends React.Component<DialogProps> {
+    constructor(props: DialogProps) {
         super(props);
 
         this.onClick = this.onClick.bind(this);
     }
 
     public render(): JSX.Element|null {
-        if (this.props.show) {
+        const {show, title, body, options} = this.props;
+        if (show) {
             return (
-                <div className={"dialog w3-modal" + (this.props.show ? " w3-show" : "")}>
+                <div className={"dialog w3-modal" + (show ? " w3-show" : "")}>
                     <div className="w3-modal-content w3-center w3-round-xlarge">
-                        {this.props.title ? <h2>{this.props.title}</h2> : null}
-                        {this.props.body ? <p>{this.props.body}</p> : null}
+                        {title && <h2>{title}</h2>}
+                        {body && <p>{body}</p>}
 
-                        {this.props.options && this.props.options.map((option: string, index: number) => (
+                        {options && options.map((option: string, index: number) => (
                             <button className="w3-button w3-border w3-round" key={index} onClick={this.onClick}>{option}</button>
                         ))}
                     </div>

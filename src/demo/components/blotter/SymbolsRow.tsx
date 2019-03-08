@@ -2,11 +2,10 @@ import * as React from 'react';
 import * as fdc3 from '../../../client/index';
 import { SecurityPayload } from '../../../client/context';
 import { IApplication } from '../../../client/directory';
+import { Symbol } from '../../apps/BlotterApp';
+import { ContextMenu, StaticContextMenuItem, ContextMenuItemType, ContextMenuItem } from '../common/ContextMenu';
 
 import './SymbolsRow.css';
-
-import { Symbol } from '../../apps/BlotterApp';
-import { ContextMenu, IContextMenuItem, eContextMenuItem, AsyncContextMenuItem } from '../common/ContextMenu';
 
 interface SymbolsRowProps {
     item?: Symbol;
@@ -26,22 +25,22 @@ export class SymbolsRow extends React.Component<SymbolsRowProps> {
     public render(): JSX.Element {
         const item: Symbol = this.props.item!;
 
-        const menuItems: AsyncContextMenuItem[] = [
+        const menuItems: ContextMenuItem[] = [
             {caption: "View Quote", userData: "quote"},
             {caption: "View News", userData: "news"},
             {caption: "View Chart", children: [
                 {caption: "Use Default", userData: "chart"},
-                {type: eContextMenuItem.SEPARATOR},
-                new Promise<IContextMenuItem[]>((resolve, reject) => {
+                {type: ContextMenuItemType.SEPARATOR},
+                new Promise<StaticContextMenuItem[]>((resolve, reject) => {
                     fdc3.resolve(fdc3.Intents.VIEW_CHART).then((value: IApplication[]) => {
-                        resolve(value.map((app: IApplication): IContextMenuItem => ({
-                            type: eContextMenuItem.BUTTON,
+                        resolve(value.map((app: IApplication): StaticContextMenuItem => ({
+                            type: ContextMenuItemType.BUTTON,
                             caption: app.title,
                             userData: app.name
                         })));
                     }, reject);
                 })
-            ] as AsyncContextMenuItem[]}
+            ] as ContextMenuItem[]}
         ];
 
         return (
@@ -109,7 +108,7 @@ export class SymbolsRow extends React.Component<SymbolsRowProps> {
         }
     }
 
-    private handleContextSelection(type: eContextMenuItem, userData: string): void {
+    private handleContextSelection(type: ContextMenuItemType, userData: string): void {
         let intent: fdc3.Intent|null = null;
 
         //Create an intent of the requested type
