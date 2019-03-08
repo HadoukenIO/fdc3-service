@@ -4,16 +4,16 @@ import { ContactPayload } from '../../../client/context';
 
 import './ContactsRow.css';
 
-import { IContact } from '../../apps/ContactsApp';
+import { IContact as Contact } from '../../apps/ContactsApp';
 
-interface IContactRowProps {
-    item: IContact;
+interface ContactRowProps {
+    item: Contact;
     selected: boolean;
-    handleSelect: (item: IContact|null) => void;
+    handleSelect: (item: Contact|null) => void;
 }
 
-export class ContactsRow extends React.Component<IContactRowProps> {
-    constructor(props: IContactRowProps) {
+export class ContactsRow extends React.Component<ContactRowProps> {
+    constructor(props: ContactRowProps) {
         super(props);
 
         this.handleClick = this.handleClick.bind(this);
@@ -22,7 +22,7 @@ export class ContactsRow extends React.Component<IContactRowProps> {
     }
 
     public render(): JSX.Element {
-        const item: IContact = this.props.item!;
+        const item: Contact = this.props.item!;
 
         return (
             <tr className={"contacts-row" + (this.props.selected ? " w3-theme-l2" : "")} onClick={this.handleClick}>
@@ -42,7 +42,7 @@ export class ContactsRow extends React.Component<IContactRowProps> {
     }
 
     private handleClick(event: React.MouseEvent<HTMLTableRowElement>): void {
-        const handler: (item: IContact)=>void = this.props.handleSelect;
+        const handler: (item: Contact)=>void = this.props.handleSelect;
 
         if (handler) {
             handler(this.props.item);
@@ -73,7 +73,7 @@ export class ContactsRow extends React.Component<IContactRowProps> {
     }
 
     private getContext(): ContactPayload {
-        const item: IContact = this.props.item;
+        const item: Contact = this.props.item;
 
         return {
             type: "contact",
