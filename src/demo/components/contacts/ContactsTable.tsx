@@ -1,14 +1,14 @@
 import * as React from 'react';
 
-import { IContact } from '../../apps/ContactsApp';
+import { Contact } from '../../apps/ContactsApp';
 import { ContactsRow } from './ContactsRow';
 
 interface ContactTableProps {
-    items?: IContact[];
+    items?: Contact[];
 }
 
 interface ContactTableState {
-    selectedItem: IContact|null;
+    selectedItem: Contact|null;
 }
 
 export class ContactsTable extends React.Component<ContactTableProps, ContactTableState> {
@@ -38,7 +38,7 @@ export class ContactsTable extends React.Component<ContactTableProps, ContactTab
         );
     }
 
-    private handleSelect(item: IContact|null): void {
+    private handleSelect(item: Contact|null): void {
         if (item !== this.state.selectedItem) {
             this.setState({selectedItem: item});
         }

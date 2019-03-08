@@ -4,7 +4,7 @@ import { ContactPayload } from '../../../client/context';
 
 import './ContactsRow.css';
 
-import { IContact as Contact } from '../../apps/ContactsApp';
+import { Contact } from '../../apps/ContactsApp';
 
 interface ContactRowProps {
     item: Contact;
