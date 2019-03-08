@@ -1,21 +1,20 @@
 import * as React from 'react';
 import * as fdc3 from '../../client/index';
-
-import '../../../res/demo/css/w3.css';
-
 import { Chart } from '../components/charts/Chart';
 import { SecurityPayload, Payload } from '../../client/context';
 
-interface IAppProps {
+import '../../../res/demo/css/w3.css';
+
+interface AppProps {
     symbolName?: string;
 }
 
-interface IAppState {
+interface AppState {
     symbolName: string;
 }
 
-export class ChartsApp extends React.Component<IAppProps, IAppState> {
-    constructor(props: IAppState) {
+export class ChartsApp extends React.Component<AppProps, AppState> {
+    constructor(props: AppState) {
         super(props);
 
         document.title = "Charts";

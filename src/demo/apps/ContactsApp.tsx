@@ -1,10 +1,9 @@
 import * as React from 'react';
 import * as fdc3 from '../../client/index';
-
-import '../../../res/demo/css/w3.css';
-
 import { ContactsTable } from '../components/contacts/ContactsTable';
 import { Payload, ContactPayload } from '../../client/index';
+
+import '../../../res/demo/css/w3.css';
 
 interface AppState {
     contacts: Contact[];

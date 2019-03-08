@@ -1,8 +1,7 @@
 import * as React from 'react';
+import { IApplication } from '../../client/directory';
 
 import './AppCard.css';
-
-import { IApplication } from '../../client/directory';
 
 interface AppCardProps {
     app: IApplication;

@@ -1,10 +1,9 @@
 import * as React from 'react';
 import * as fdc3 from '../../client';
 import { IApplication } from '../../client/directory';
+import { AppCard } from '../components/launcher/AppCard';
 
 import '../../../res/demo/css/w3.css';
-
-import { AppCard } from '../components/launcher/AppCard';
 
 interface AppState {
     applications: IApplication[];

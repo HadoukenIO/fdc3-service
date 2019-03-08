@@ -1,11 +1,10 @@
 import * as React from 'react';
 import * as fdc3 from '../../client/index';
-
-import './AppList.css';
-
 import { IApplication } from '../../client/directory';
 import { AppCard } from './AppCard';
 import { eDefaultAction } from '../index';
+
+import './AppList.css';
 
 interface AppListState {
     handle: number;

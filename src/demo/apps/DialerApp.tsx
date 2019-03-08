@@ -1,8 +1,5 @@
 import * as React from 'react';
 import * as fdc3 from '../../client/index';
-
-import '../../../res/demo/css/w3.css';
-
 import { Number } from '../components/dialer/Number';
 import { Dialer } from '../components/dialer/Dialer';
 import { CallTimer } from '../components/dialer/CallTimer';
@@ -10,18 +7,20 @@ import { CallButton } from '../components/dialer/CallButton';
 import { ContactPayload, Payload } from '../../client/context';
 import { Dialog } from '../components/common/Dialog';
 
-interface IAppProps {
+import '../../../res/demo/css/w3.css';
+
+interface AppProps {
     phoneNumber?: string;
 }
 
-interface IAppState {
+interface AppState {
     inCall: boolean;
     phoneNumber: string;
     pendingCall: ContactPayload|null;
 }
 
-export class DialerApp extends React.Component<IAppProps, IAppState> {
-    constructor(props: IAppProps) {
+export class DialerApp extends React.Component<AppProps, AppState> {
+    constructor(props: AppProps) {
         super(props);
 
         //Initialise App UI
