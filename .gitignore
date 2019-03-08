@@ -2,7 +2,7 @@
 .vscode
 .DS_STORE
 npm-debug.log
-openfin-notifications-*.tgz
+openfin-fdc3-*.tgz
 Thumbs.db
 dist
 gen

@@ -63,7 +63,7 @@ pipeline {
 
                     BUILD_VERSION = PKG_VERSION
                     CHANNEL = "stable"
-                    SERVICE_NAME = "notifications"
+                    SERVICE_NAME = "fdc3"
                     MANIFEST_NAME = "app.json"
 
                     S3_LOC = env.DSERVICE_S3_ROOT + SERVICE_NAME + "/" + BUILD_VERSION

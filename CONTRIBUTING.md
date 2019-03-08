@@ -1,6 +1,6 @@
 # Introduction
 
-Thank you for your interest in contributing to [HadoukenIO FDC3 Service](https://github.com/HadoukenIO/). Default behaviors of a project like Notifications Service greatly benefit from the opinions and contributions of the community.
+Thank you for your interest in contributing to [HadoukenIO FDC3 Service](https://github.com/HadoukenIO/). Default behaviors of a project like FDC3 Service greatly benefit from the opinions and contributions of the community.
 
 Following these guidelines will expedite any changes you propose by providing clarity around both the goals of the service and the development process.
 
@@ -10,7 +10,7 @@ Following these guidelines will expedite any changes you propose by providing cl
 * If your change would update either this guide or the README, include relevant changes in your PR.
 
 ## Getting started
-To build the project locally, follow the steps in the README [here](https://github.com/HadoukenIO/notifications-service#run-locally).
+To build the project locally, follow the steps in the README [here](https://github.com/HadoukenIO/fdc3-service#run-locally).
 1. Create your own fork of the code
 2. Do the changes in your fork
 3. If you like the change and think the project could use it:
@@ -33,14 +33,14 @@ Add your issue to the repository issues.
 
 ## Roadmap
 
-The project README includes the current [roadmap](https://github.com/HadoukenIO/notifications-service#roadmap)
+The project README includes the current [roadmap](https://github.com/HadoukenIO/fdc3-service#roadmap)
 
 ## Issues
 
-The project README inlcudes a list of [known issues](https://github.com/HadoukenIO/notifications-service#known-issues). Other issues can found in the [issues tab](https://github.com/HadoukenIO/notifications-service/issues).
+The project README inlcudes a list of [known issues](https://github.com/HadoukenIO/fdc3-service#known-issues). Other issues can found in the [issues tab](https://github.com/HadoukenIO/fdc3-service/issues).
 
 # How to suggest a feature or enhancement
 
 Before suggesting an improvement, please see the README for current roadmap items and known issues.
 
-The goal of this project is to provide robust notification management as an out of the box solution for applications running on OpenFin. Feature requests are welcome and should include rational.
+The goal of this project is to provide robust fdc3 management as an out of the box solution for applications running on OpenFin. Feature requests are welcome and should include rational.

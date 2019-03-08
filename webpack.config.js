@@ -116,7 +116,7 @@ const versionPlugin = new webpack.DefinePlugin({PACKAGE_VERSION: `'${version}'`}
  */
 module.exports = [
     createConfig(`${outputDir}/client`, './src/client/index.ts', undefined, versionPlugin),
-    createConfig(`${outputDir}/client`, './src/client/index.ts', {minify: true, isLibrary: true, libraryName: 'OpenFinNotifications', outputFilename: "openfin-notifications"}, versionPlugin),
+    createConfig(`${outputDir}/client`, './src/client/index.ts', {minify: true, isLibrary: true, libraryName: 'OpenfinFDC3', outputFilename: "openfin-fdc3"}, versionPlugin),
     createConfig(`${outputDir}/provider`, './src/provider/index.ts', undefined, manifestPlugin, versionPlugin),
     createConfig(`${outputDir}/provider/ui`, {
         'ui': './src/provider/Selector.tsx'
