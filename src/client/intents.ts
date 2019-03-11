@@ -30,5 +30,6 @@ export enum Intents {
  *
  * Since applications are free to define their own intents, it is not possible for TypeScript to verify that only valid
  * intent names are passed to the FDC3 API. This type definition is more a hint to the callee, over a plain "string"
+ * argument.
  */
 export type IntentType = (keyof typeof Intents)|Intents|string;

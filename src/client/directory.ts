@@ -9,7 +9,6 @@
 
 /**
  * Type definition that is used wherever the API expects the name of an application to be passed.
- * application to be passed.
  *
  * It is not possible for TypeScript to verify that only valid application names are passed to the FDC3 API. This type
  * definition is more a hint to the callee, over a plain "string" argument.
