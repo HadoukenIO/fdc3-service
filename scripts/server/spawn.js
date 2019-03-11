@@ -54,7 +54,7 @@ function createCustomManifestMiddleware() {
             }
         };
         if (useService) {
-            const service = {name: 'layouts'};
+            const service = {name: 'fdc3'};
             if (provider !== 'default') {
                 service.manifestUrl = getProviderUrl(provider);
             }
