@@ -7,10 +7,6 @@ interface ContactTableProps {
     items?: Contact[];
 }
 
-interface ContactTableState {
-    selectedItem: Contact | null;
-}
-
 // tslint:disable-next-line:variable-name
 export const ContactsTable: React.FunctionComponent<ContactTableProps> = (props) => {
     const {items} = props;
