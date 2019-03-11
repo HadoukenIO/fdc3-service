@@ -1,46 +1,35 @@
 import * as React from 'react';
 
-import { Contact } from '../../apps/ContactsApp';
-import { ContactsRow } from './ContactsRow';
+import {Contact} from '../../apps/ContactsApp';
+import {ContactsRow} from './ContactsRow';
 
 interface ContactTableProps {
     items?: Contact[];
 }
 
 interface ContactTableState {
-    selectedItem: Contact|null;
+    selectedItem: Contact | null;
 }
 
-export class ContactsTable extends React.Component<ContactTableProps, ContactTableState> {
-    constructor(props: ContactTableProps) {
-        super(props);
+// tslint:disable-next-line:variable-name
+export const ContactsTable: React.FunctionComponent<ContactTableProps> = (props) => {
+    const {items} = props;
+    const [selectedItem, setSelectedItem] = React.useState<Contact | null>(null);
 
-        this.state = {selectedItem: null};
-
-        this.handleSelect = this.handleSelect.bind(this);
-    }
-
-    public render(): JSX.Element {
-        return (
-            <table className="w3-table-all w3-hoverable">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>E-mail</th>
-                        <th>Phone</th>
-                        <th>{}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {this.props.items!.map((item) => <ContactsRow key={item.name} item={item} selected={item === this.state.selectedItem} handleSelect={this.handleSelect} />)}
-                </tbody>
-            </table>
-        );
-    }
-
-    private handleSelect(item: Contact|null): void {
-        if (item !== this.state.selectedItem) {
-            this.setState({selectedItem: item});
-        }
-    }
-}
+    return (
+        <table className="w3-table-all w3-hoverable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>E-mail</th>
+                    <th>Phone</th>
+                    <th>{}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {
+                    items!.map((item) => <ContactsRow key={item.name} item={item} selected={item === selectedItem} handleSelect={setSelectedItem} />)}
+            </tbody>
+        </table>
+    );
+};
