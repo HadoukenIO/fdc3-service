@@ -47,7 +47,7 @@ export async function open(name: string, context?: Context): Promise<void> {
  * Resolve is effectively granting programmatic access to the Desktop Agent's resolver.
  * Returns a promise that resolves to an Array. The resolved dataset & metadata is Desktop Agent-specific.
  * If the resolution errors, it returns an `Error` with a string from the `ResolveError` enumeration.
- * 
+ *
  * @todo Enumerate all possible errors, create custom error type and constants, and document within the spec
  *
  * @param intent The intent to query the application directory for
