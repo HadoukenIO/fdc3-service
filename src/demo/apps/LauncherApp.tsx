@@ -1,49 +1,34 @@
 import * as React from 'react';
 import * as fdc3 from '../../client';
-import { IApplication } from '../../client/directory';
-import { AppCard } from '../components/launcher/AppCard';
+import {IApplication} from '../../client/directory';
+import {AppCard} from '../components/launcher/AppCard';
 
 import '../../../res/demo/css/w3.css';
 
-interface AppState {
-    applications: IApplication[];
-}
+// tslint:disable-next-line:variable-name
+export const LauncherApp: React.FunctionComponent = () => {
+    const [applications, setApplications] = React.useState<IApplication[]>([]);
 
-export class LauncherApp extends React.Component<{}, AppState> {
-    constructor(props: {}) {
-        super(props);
-
+    React.useEffect(() => {
         document.title = "Launcher";
-        this.state = {applications: []};
+    });
 
+    React.useEffect(() => {
         fdc3.resolve(null!)
-        .then((applications: IApplication[]) => {
-            this.setState({applications});
-        })
-        .catch(err =>{
-            console.log(err);
-        });
-    }
+            .then(setApplications)
+            .catch(console.log);
+    });
 
-    public render(): JSX.Element {
-        const {applications} = this.state;
-        return (
-            <div>
-                <h1>Launcher</h1>
-                {
-                    applications.map((app) => <AppCard key={app.id} app={app} handleClick={this.openApp.bind(null, app)} />
-                )}
-            </div>
-        );
-    }
-
-    private openApp(app: IApplication): void {
+    const openApp = (app: IApplication) => {
         fdc3.open(app.name)
-        .then(value => {
-            console.log("Opening app " + app.title);
-        })
-        .catch(err => {
-            console.log("Failed opening " + app.title, err, app);
-        });
-    }
-}
+            .then(() => console.log(`Opening app ${app.title}`))
+            .catch(console.log);
+    };
+
+    return (
+        <div>
+            <h1>Launcher</h1>
+            {applications.map((app, index) => <AppCard key={app.id + index} app={app} handleClick={openApp} />)}
+        </div>
+    );
+};
