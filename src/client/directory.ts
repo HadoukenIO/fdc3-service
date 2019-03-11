@@ -22,24 +22,24 @@ export type AppIdentifier = string;
  * An application in the app directory
  */
 export interface IApplication {
-  id: number;
-  name: AppIdentifier;
-  title: string;
-  manifest_url: string;
-  description: string;
-  contact_email: string;
-  support_email: string;
-  signature: string;
-  publisher: string;
-  icon: string;
-  appPage: string;
-  images: {url: string}[];
+    id: number;
+    name: AppIdentifier;
+    title: string;
+    manifest_url: string;
+    description: string;
+    contact_email: string;
+    support_email: string;
+    signature: string;
+    publisher: string;
+    icon: string;
+    appPage: string;
+    images: {url: string}[];
 
-  /**
-   * A list of the intents supported by this application.
-   *
-   * Some intents are defined as part of the FDC3 spec, and applications may
-   * also define their own intents.
-   */
-  intents: string[];
+    /**
+     * A list of the intents supported by this application.
+     *
+     * Some intents are defined as part of the FDC3 spec, and applications may
+     * also define their own intents.
+     */
+    intents: string[];
 }

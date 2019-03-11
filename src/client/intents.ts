@@ -16,16 +16,16 @@
  * constants if they prefer.
  */
 export enum Intents {
-  DIAL_CALL = 'DialCall',
-  SAVE_CONTACT = 'SaveContact',
-  SAVE_INSTRUMENT = 'SaveInstrument',
-  SHARE_CONTEXT = 'ShareContext',
-  START_CALL = 'StartCall',
-  START_CHAT = 'StartChat',
-  VIEW_CONTACT = 'ViewContact',
-  VIEW_CHART = 'ViewChart',
-  VIEW_QUOTE = 'ViewQuote',
-  VIEW_NEWS = 'ViewNews'
+    DIAL_CALL = 'DialCall',
+    SAVE_CONTACT = 'SaveContact',
+    SAVE_INSTRUMENT = 'SaveInstrument',
+    SHARE_CONTEXT = 'ShareContext',
+    START_CALL = 'StartCall',
+    START_CHAT = 'StartChat',
+    VIEW_CONTACT = 'ViewContact',
+    VIEW_CHART = 'ViewChart',
+    VIEW_QUOTE = 'ViewQuote',
+    VIEW_NEWS = 'ViewNews'
 }
 
 /**

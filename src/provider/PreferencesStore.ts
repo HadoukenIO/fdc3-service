@@ -11,7 +11,7 @@ type ApplicationID = number;
  * that intent.
  */
 type IntentPreferences = {
-  [intentType: string]: ApplicationID
+    [intentType: string]: ApplicationID
 };
 
 /**
@@ -29,56 +29,51 @@ type IntentPreferences = {
  * storage, and so are lost when the service is terminated.
  */
 export class PreferencesStore {
-  private globalPrefs: IntentPreferences;
-  private appIntentPrefs: {[appId: string]: IntentPreferences};
+    private globalPrefs: IntentPreferences;
+    private appIntentPrefs: {[appId: string]: IntentPreferences};
 
-  constructor() {
-    this.globalPrefs = {};
-    this.appIntentPrefs = {};
-  }
-
-  public getPreferredApp(sourceApp: ApplicationID, intent: fdc3.IntentType):
-      ApplicationID|null {
-    const appPrefs: IntentPreferences = this.appIntentPrefs[sourceApp];
-    return (appPrefs && appPrefs[intent]) || this.globalPrefs[intent] || null;
-  }
-
-  public setGlobalPreference(intent: fdc3.IntentType, targetApp: ApplicationID):
-      void {
-    this.globalPrefs[intent] = targetApp;
-    this.save();
-  }
-
-  public clearGlobalPreference(intent: fdc3.IntentType): void {
-    delete this.globalPrefs[intent];
-    this.save();
-  }
-
-  public setAppPreference(
-      sourceApp: ApplicationID, intent: fdc3.IntentType,
-      targetApp: ApplicationID): void {
-    let appPrefs: IntentPreferences = this.appIntentPrefs[sourceApp];
-
-    if (!appPrefs) {
-      appPrefs = {};
-      this.appIntentPrefs[sourceApp] = appPrefs;
+    constructor() {
+        this.globalPrefs = {};
+        this.appIntentPrefs = {};
     }
 
-    appPrefs[intent] = targetApp;
-    this.save();
-  }
-
-  public clearAppPreference(sourceApp: ApplicationID, intent: fdc3.IntentType):
-      void {
-    const appPrefs: IntentPreferences = this.appIntentPrefs[sourceApp];
-
-    if (appPrefs) {
-      delete appPrefs[sourceApp];
-      this.save();
+    public getPreferredApp(sourceApp: ApplicationID, intent: fdc3.IntentType): ApplicationID|null {
+        const appPrefs: IntentPreferences = this.appIntentPrefs[sourceApp];
+        return (appPrefs && appPrefs[intent]) || this.globalPrefs[intent] || null;
     }
-  }
 
-  private save(): void {
-    // TODO...
-  }
+    public setGlobalPreference(intent: fdc3.IntentType, targetApp: ApplicationID): void {
+        this.globalPrefs[intent] = targetApp;
+        this.save();
+    }
+
+    public clearGlobalPreference(intent: fdc3.IntentType): void {
+        delete this.globalPrefs[intent];
+        this.save();
+    }
+
+    public setAppPreference(sourceApp: ApplicationID, intent: fdc3.IntentType, targetApp: ApplicationID): void {
+        let appPrefs: IntentPreferences = this.appIntentPrefs[sourceApp];
+
+        if (!appPrefs) {
+            appPrefs = {};
+            this.appIntentPrefs[sourceApp] = appPrefs;
+        }
+
+        appPrefs[intent] = targetApp;
+        this.save();
+    }
+
+    public clearAppPreference(sourceApp: ApplicationID, intent: fdc3.IntentType): void {
+        const appPrefs: IntentPreferences = this.appIntentPrefs[sourceApp];
+
+        if (appPrefs) {
+            delete appPrefs[sourceApp];
+            this.save();
+        }
+    }
+
+    private save(): void {
+        // TODO...
+    }
 }

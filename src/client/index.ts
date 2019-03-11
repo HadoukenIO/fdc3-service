@@ -19,8 +19,8 @@ export type Context = Payload;
 declare const PACKAGE_VERSION: string;
 
 const IDENTITY = {
-  uuid: 'fdc3-service',
-  name: 'fdc3-service'
+    uuid: 'fdc3-service',
+    name: 'fdc3-service'
 };
 
 export const SERVICE_CHANNEL = 'of-fdc3-service-v1';
@@ -39,9 +39,9 @@ export const SERVICE_CHANNEL = 'of-fdc3-service-v1';
  * @param context Optional context to pass to the application once opened
  */
 export async function open(name: string, context?: Context): Promise<void> {
-  const service = await servicePromise;
+    const service = await servicePromise;
 
-  return service.dispatch('FDC3.Open', {name, context}).catch(errorHandler);
+    return service.dispatch('FDC3.Open', {name, context}).catch(errorHandler);
 }
 
 /**
@@ -58,12 +58,10 @@ export async function open(name: string, context?: Context): Promise<void> {
  * @param intent The intent to query the application directory for
  * @param context The context you intend to attach to the intent
  */
-export async function resolve(
-    intent: IntentType, context?: Context): Promise<IApplication[]> {
-  const service = await servicePromise;
+export async function resolve(intent: IntentType, context?: Context): Promise<IApplication[]> {
+    const service = await servicePromise;
 
-  return service.dispatch('FDC3.Resolve', {intent, context})
-      .catch(errorHandler);
+    return service.dispatch('FDC3.Resolve', {intent, context}).catch(errorHandler);
 }
 
 /**
@@ -76,119 +74,116 @@ export async function resolve(
  * to other open applications
  */
 export async function broadcast(context: Context): Promise<void> {
-  const service = await servicePromise;
+    const service = await servicePromise;
 
-  return service.dispatch('FDC3.Broadcast', context).catch(errorHandler);
+    return service.dispatch('FDC3.Broadcast', context).catch(errorHandler);
 }
 
 export class Intent {
-  /**
-   * Defines the type of this intent.
-   *
-   * Can be one of the intent types defined by the FDC3 specification, or a
-   * custom/app-specific intent type.
-   */
-  public intent: IntentType;
+    /**
+     * Defines the type of this intent.
+     *
+     * Can be one of the intent types defined by the FDC3 specification, or a
+     * custom/app-specific intent type.
+     */
+    public intent: IntentType;
 
-  /**
-   * Name of app to target for the Intent. Use if creating an explicit intent
-   * that bypasses resolver and goes directly to an app.
-   */
-  public context: Context;
+    /**
+     * Name of app to target for the Intent. Use if creating an explicit intent
+     * that bypasses resolver and goes directly to an app.
+     */
+    public context: Context;
 
-  /**
-   * Name of app to target for the Intent. Use if creating an explicit intent
-   * that bypasses resolver and goes directly to an app.
-   */
-  public target: AppIdentifier|null;
+    /**
+     * Name of app to target for the Intent. Use if creating an explicit intent
+     * that bypasses resolver and goes directly to an app.
+     */
+    public target: AppIdentifier|null;
 
-  constructor(intent: IntentType, context: Context, target?: AppIdentifier) {
-    this.intent = intent;
-    this.context = context;
-    this.target = target || null;
-  }
-
-  /**
-   * Dispatches the intent with the Desktop Agent.
-   *
-   * Accepts context data and target (if an explicit Intent) as optional args.
-   * Returns a Promise - resolving if the intent successfully results in
-   * launching an App. If the resolution errors, it returns an `Error` with a
-   * string from the `ResolveError` enumeration.
-   *
-   * @param context Can optionally override the context on this intent. The
-   * context on the intent will remain un-modified.
-   * @param target Can optionally override the target on this intent. The target
-   * on the intent will remain un-modified.
-   */
-  public async send(context?: Context, target?: AppIdentifier): Promise<void> {
-    const service = await servicePromise;
-
-    if (arguments.length === 0) {
-      return service.dispatch('FDC3.Intent', this).catch(errorHandler);
-    } else {
-      const intentData = {
-        context: context || this.context || null,
-        target: target || this.target || null
-      };
-
-      return service.dispatch('FDC3.Intent', intentData).catch(errorHandler);
+    constructor(intent: IntentType, context: Context, target?: AppIdentifier) {
+        this.intent = intent;
+        this.context = context;
+        this.target = target || null;
     }
-  }
+
+    /**
+     * Dispatches the intent with the Desktop Agent.
+     *
+     * Accepts context data and target (if an explicit Intent) as optional args.
+     * Returns a Promise - resolving if the intent successfully results in
+     * launching an App. If the resolution errors, it returns an `Error` with a
+     * string from the `ResolveError` enumeration.
+     *
+     * @param context Can optionally override the context on this intent. The
+     * context on the intent will remain un-modified.
+     * @param target Can optionally override the target on this intent. The target
+     * on the intent will remain un-modified.
+     */
+    public async send(context?: Context, target?: AppIdentifier): Promise<void> {
+        const service = await servicePromise;
+
+        if (arguments.length === 0) {
+            return service.dispatch('FDC3.Intent', this).catch(errorHandler);
+        } else {
+            const intentData = {context: context || this.context || null, target: target || this.target || null};
+
+            return service.dispatch('FDC3.Intent', intentData).catch(errorHandler);
+        }
+    }
 }
 
 /**
  * Listens to incoming Intents from the Agent.
  */
 export class IntentListener {
-  public readonly intent: IntentType;
-  public readonly handler: (context: Context) => void;
+    public readonly intent: IntentType;
+    public readonly handler: (context: Context) => void;
 
-  constructor(intent: IntentType, handler: (context: Context) => void) {
-    this.intent = intent;
-    this.handler = handler;
+    constructor(intent: IntentType, handler: (context: Context) => void) {
+        this.intent = intent;
+        this.handler = handler;
 
-    intentListeners.push(this);
-  }
-
-  /**
-   * Unsubscribe the listener object.
-   */
-  public unsubscribe(): boolean {
-    const index: number = intentListeners.indexOf(this);
-
-    if (index >= 0) {
-      intentListeners.splice(index, 1);
+        intentListeners.push(this);
     }
 
-    return index >= 0;
-  }
+    /**
+     * Unsubscribe the listener object.
+     */
+    public unsubscribe(): boolean {
+        const index: number = intentListeners.indexOf(this);
+
+        if (index >= 0) {
+            intentListeners.splice(index, 1);
+        }
+
+        return index >= 0;
+    }
 }
 
 /**
  * Listens to incoming context broadcast from the Desktop Agent.
  */
 export class ContextListener {
-  public readonly handler: (context: Context) => void;
+    public readonly handler: (context: Context) => void;
 
-  constructor(handler: (context: Context) => void) {
-    this.handler = handler;
+    constructor(handler: (context: Context) => void) {
+        this.handler = handler;
 
-    contextListeners.push(this);
-  }
-
-  /**
-   * Unsubscribe the listener object.
-   */
-  public unsubscribe(): boolean {
-    const index: number = contextListeners.indexOf(this);
-
-    if (index >= 0) {
-      contextListeners.splice(index, 1);
+        contextListeners.push(this);
     }
 
-    return index >= 0;
-  }
+    /**
+     * Unsubscribe the listener object.
+     */
+    public unsubscribe(): boolean {
+        const index: number = contextListeners.indexOf(this);
+
+        if (index >= 0) {
+            contextListeners.splice(index, 1);
+        }
+
+        return index >= 0;
+    }
 }
 
 
@@ -203,24 +198,21 @@ const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
 if (fin.Window.me.uuid !== 'fdc3-service') {
-  servicePromise = fin.InterApplicationBus.Channel.connect(
-      SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}});
+    servicePromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}});
 
-  fin.InterApplicationBus.subscribe(
-      IDENTITY, 'intent', (payload: Intent, uuid: string, name: string) => {
+    fin.InterApplicationBus.subscribe(IDENTITY, 'intent', (payload: Intent, uuid: string, name: string) => {
         intentListeners.forEach((listener: IntentListener) => {
-          if (payload.intent === listener.intent) {
-            listener.handler(payload.context);
-          }
+            if (payload.intent === listener.intent) {
+                listener.handler(payload.context);
+            }
         });
-      });
+    });
 
-  fin.InterApplicationBus.subscribe(
-      IDENTITY, 'context', (payload: Context, uuid: string, name: string) => {
+    fin.InterApplicationBus.subscribe(IDENTITY, 'context', (payload: Context, uuid: string, name: string) => {
         contextListeners.forEach((listener: ContextListener) => {
-          listener.handler(payload);
+            listener.handler(payload);
         });
-      });
+    });
 }
 
 /**
@@ -231,6 +223,6 @@ if (fin.Window.me.uuid !== 'fdc3-service') {
  * @param reason Error object or description
  */
 function errorHandler(reason: string): never {
-  // Re-throw error from service
-  throw new Error(reason);
+    // Re-throw error from service
+    throw new Error(reason);
 }
