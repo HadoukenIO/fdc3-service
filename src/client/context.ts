@@ -2,10 +2,9 @@
 /**
  * TypeScript definitions for envelope and context objects.
  *
- * These structures are defined by the Contexts FDC3 working group. he
- * definitions here are based on current proposals and are not final. There may
- * be minor differences between the current spec and the definitions here, in
- * order to support this demo.
+ * These structures are defined by the Contexts FDC3 working group. he definitions here are based on current
+ * proposals and are not final. There may be minor differences between the current spec and the definitions here,
+ * in order to support this demo.
  */
 
 export interface Envelope<T extends Payload> {
