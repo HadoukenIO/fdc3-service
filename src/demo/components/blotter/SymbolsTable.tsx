@@ -1,48 +1,36 @@
 import * as React from 'react';
 
-import { Symbol } from '../../apps/BlotterApp';
-import { SymbolsRow } from './SymbolsRow';
+import {Symbol} from '../../apps/BlotterApp';
+import {SymbolsRow} from './SymbolsRow';
 
-interface ISymbolTableProps {
+interface SymbolsTableProps {
     items?: Symbol[];
 }
 
-interface ISymbolTableState {
-    selectedItem: Symbol|null;
-}
 
-export class SymbolsTable extends React.Component<ISymbolTableProps, ISymbolTableState> {
-    constructor(props: ISymbolTableProps) {
-        super(props);
+// tslint:disable-next-line:variable-name
+export const SymbolsTable: React.FunctionComponent<SymbolsTableProps> = (props) => {
+    const {items} = props;
+    const [selectedItem, setSelectedItem] = React.useState<Symbol | null>(items![0] || null);
+    const handleSelect = (item: Symbol | null) => {
+        setSelectedItem(item);
+    };
 
-        this.state = {selectedItem: null};
-
-        this.handleSelect = this.handleSelect.bind(this);
-    }
-
-    public render(): JSX.Element {
-        return (
-            <table className="w3-table-all w3-hoverable">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Bid Size</th>
-                        <th>Bid Price</th>
-                        <th>Ask Size</th>
-                        <th>Ask Price</th>
-                        <th>{}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {this.props.items && this.props.items.map((item) => <SymbolsRow key={item.name} item={item} selected={item === this.state.selectedItem} handleSelect={this.handleSelect} />)}
-                </tbody>
-            </table>
-        );
-    }
-
-    private handleSelect(item: Symbol|null): void {
-        if (item !== this.state.selectedItem) {
-            this.setState({selectedItem: item});
-        }
-    }
-}
+    return (
+        <table className="w3-table-all w3-hoverable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Bid Size</th>
+                    <th>Bid Price</th>
+                    <th>Ask Size</th>
+                    <th>Ask Price</th>
+                    <th>{}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {items && items.map((item) => <SymbolsRow key={item.name} item={item} selected={item === selectedItem} handleSelect={handleSelect} />)}
+            </tbody>
+        </table>
+    );
+};
