@@ -13,12 +13,6 @@ interface AppProps {
     phoneNumber?: string;
 }
 
-interface AppState {
-    inCall: boolean;
-    phoneNumber: string;
-    pendingCall: ContactPayload | null;
-}
-
 // tslint:disable-next-line:variable-name
 export const DialerApp: React.FunctionComponent<AppProps> = (props) => {
     const [inCall, setInCall] = React.useState(false);
