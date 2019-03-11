@@ -1,5 +1,6 @@
+import {Application} from 'openfin/_v2/main';
+
 import {IApplication} from '../client/directory';
-import { Application } from 'openfin/_v2/main';
 
 export interface IAppMetadata {
     /**
@@ -19,11 +20,13 @@ export interface IAppMetadata {
 }
 
 /**
- * The FDC3 service has to act as a bridge between the "FDC3" and "OpenFin" worlds. This requires a mapping from
- * application ID's within the FDC3 directory to/from application UUID's and window names within OpenFin.
+ * The FDC3 service has to act as a bridge between the "FDC3" and "OpenFin"
+ * worlds. This requires a mapping from application ID's within the FDC3
+ * directory to/from application UUID's and window names within OpenFin.
  *
- * This store should be updated whenever the service opens an application. It is only at the point where an OpenFin
- * application has just been launched that all the necessary data is available.
+ * This store should be updated whenever the service opens an application. It is
+ * only at the point where an OpenFin application has just been launched that
+ * all the necessary data is available.
  */
 export class MetadataStore {
     private appData: {[dirId: number]: IAppMetadata};
@@ -67,8 +70,8 @@ export class MetadataStore {
     /**
      * Maps an FDC3 App Directory ID directly into the corresponding OpenFin UUID.
      *
-     * Returns null if the store doesn't contain the relevant metadata. This can also happen if the given FDC3 app
-     * isn't an OpenFin application.
+     * Returns null if the store doesn't contain the relevant metadata. This can
+     * also happen if the given FDC3 app isn't an OpenFin application.
      *
      * @param directoryId The FDC3 app ID to map
      */
@@ -92,16 +95,17 @@ export class MetadataStore {
     }
 
     /**
-     * Whenever the service has an OpenFin application instance and it's corresponding FDC3 record, it should call
-     * this method to update the metadata cache. This will link the two records and save the necessary data for future
-     * use.
+     * Whenever the service has an OpenFin application instance and it's
+     * corresponding FDC3 record, it should call this method to update the
+     * metadata cache. This will link the two records and save the necessary data
+     * for future use.
      *
      * @param appData An FDC3 application directory record
      * @param app An OpenFin application that has been created from 'appData'
      */
     public update(appData: IApplication, app: Application): void {
         if (!this.appData.hasOwnProperty(appData.id)) {
-            this.appData[appData.id] = {uuid: app.identity.uuid, name: app.identity.name, directoryId: appData.id};
+            this.appData[appData.id] = {uuid: app.identity.uuid, name: app.identity.name!, directoryId: appData.id};
         }
     }
 }

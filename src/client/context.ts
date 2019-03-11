@@ -17,7 +17,7 @@ export interface Envelope<T extends Payload> {
 export interface Payload {
     type: string;
     name: string;
-    id: {[key: string]: string};
+    id: {[key: string]: string|undefined};
 }
 
 export interface SecurityPayload extends Payload {

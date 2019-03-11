@@ -1,0 +1,101 @@
+[{
+    "id": 100,
+    "name": "blotter",
+    "title": "Blotter",
+    "manifest_url": "http://localhost:3923/demo/configs/app-blotter.json",
+    "description": "Sample blotter app",
+    "contact_email": "support@openfin.co",
+    "support_email": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icon": "http://localhost:3923/demo/img/app-icons/blotter.svg",
+    "appPage": "",
+    "images": [],
+    "intents": []
+},
+{
+    "id": 200,
+    "name": "contacts",
+    "title": "Contacts",
+    "manifest_url": "http://localhost:3923/demo/configs/app-contacts.json",
+    "description": "Sample contacts app",
+    "contact_email": "support@openfin.co",
+    "support_email": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icon": "http://localhost:3923/demo/img/app-icons/contacts.svg",
+    "appPage": "",
+    "images": [],
+    "intents": [
+        "SaveContact"
+    ]
+},
+{
+    "id": 300,
+    "name": "dialer",
+    "title": "Dialer",
+    "manifest_url": "http://localhost:3923/demo/configs/app-dialer.json",
+    "description": "Sample dialer app",
+    "contact_email": "support@openfin.co",
+    "support_email": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icon": "http://localhost:3923/demo/img/app-icons/dialer.svg",
+    "appPage": "",
+    "images": [],
+    "intents": [
+        "DialCall",
+        "StartCall"
+    ]
+},
+{
+    "id": 400,
+    "name": "charts-red",
+    "title": "Charts: Red",
+    "manifest_url": "http://localhost:3923/demo/configs/app-charts-red.json",
+    "description": "A charting app",
+    "contact_email": "support@openfin.co",
+    "support_email": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icon": "http://localhost:3923/demo/img/app-icons/charts.svg",
+    "appPage": "",
+    "images": [],
+    "intents": [
+        "ViewChart"
+    ]
+},
+{
+    "id": 401,
+    "name": "charts-green",
+    "title": "Charts: Green",
+    "manifest_url": "http://localhost:3923/demo/configs/app-charts-green.json",
+    "description": "Another charting app",
+    "contact_email": "support@openfin.co",
+    "support_email": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icon": "http://localhost:3923/demo/img/app-icons/charts.svg",
+    "appPage": "",
+    "images": [],
+    "intents": [
+        "ViewChart"
+    ]
+},
+{
+    "id": 402,
+    "name": "charts-blue",
+    "title": "Charts: Blue",
+    "manifest_url": "http://localhost:3923/demo/configs/app-charts-blue.json",
+    "description": "Another charting app",
+    "contact_email": "support@openfin.co",
+    "support_email": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icon": "http://localhost:3923/demo/img/app-icons/charts.svg",
+    "appPage": "",
+    "images": [],
+    "intents": [
+        "ViewChart"
+    ]
+}]
