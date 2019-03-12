@@ -57,5 +57,5 @@ export interface BroadcastPayload {
 export interface RaiseIntentPayload {
     intent: string;
     context: Context;
-    target: string;
+    target?: string;
 }
