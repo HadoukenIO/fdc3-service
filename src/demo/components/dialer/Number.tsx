@@ -5,12 +5,12 @@ import './Number.css';
 interface NumberProps {
     inCall: boolean;
     number: string;
-    handleValueChange?: (num: string) => void;
+    onValueChange?: (num: string) => void;
 }
 
 // tslint:disable-next-line:variable-name
-export const Number2: React.FunctionComponent<NumberProps> = (props) => {
-    const {handleValueChange, inCall, number: phoneNumber} = props;
+export const Number: React.FunctionComponent<NumberProps> = (props) => {
+    const {onValueChange: handleValueChange, inCall, number: phoneNumber} = props;
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const inputFilter: RegExp = /[^0-9*#]/g;
         const {value} = event.currentTarget;
