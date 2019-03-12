@@ -1,4 +1,4 @@
-import { tryServiceDispatch } from "./connection";
+import { tryServiceDispatch, channelPromise } from "./connection";
 import { APITopic } from "./internal";
 import { Context } from './context';
 
