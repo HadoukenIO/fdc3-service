@@ -2,7 +2,7 @@ var fs = require('fs');
 var path = require('path');
 var archiver = require('archiver');
 
-var output = fs.createWriteStream(path.resolve(__dirname,'..','dist','provider','layouts-service.zip'));
+var output = fs.createWriteStream(path.resolve(__dirname,'..','dist','provider','fdc3-service.zip'));
 var archive = archiver('zip', {zlib: {level: 9}});
 
 output.on('close', () => {

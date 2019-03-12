@@ -28,8 +28,6 @@ This project consist of 2 parts:
 ## Roadmap
 This is a WIP living implementation of the FDC3 API.
 
-## Known Issues
-
 ### Usage
 
 An in-depth usage guide and additional documentation will be published in due course.
@@ -94,7 +92,7 @@ The service client is deployed as an NPM module, so that it can be included as a
 The service provider is a standard OpenFin application, only its lifecycle is controlled by the RVM (based upon the requirements of user-launched applications) rather than being launched by users. The provider is deployed to the OpenFin CDN; a zip file is also provided to assist with re-deploying the provider to an alternate location. Direct links to each build are listed in the release notes, available on the [services versions page](https://developer.openfin.co/versions/?product=Services).
 
 ## Known Issues
-A list of known issues can be found on our [Versions page.]https://developer.openfin.co/versions/?product=Services
+A list of known issues can be found on our [Versions page](https://developer.openfin.co/versions/?product=Services).
 
 ## License
 This project uses the [Apache2 license](https://www.apache.org/licenses/LICENSE-2.0)

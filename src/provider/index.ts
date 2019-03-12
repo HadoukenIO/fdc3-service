@@ -18,56 +18,56 @@ service.register();
  * This enum defines the options available to users.
  */
 export const enum eDefaultAction {
-  /**
-   * Service should always show the app selection UI, to allow the user to
-   * choose which application to use.
-   */
-  ALWAYS_ASK = 'ALWAYS_ASK',
+    /**
+     * Service should always show the app selection UI, to allow the user to
+     * choose which application to use.
+     */
+    ALWAYS_ASK = 'ALWAYS_ASK',
 
-  /**
-   * The service should always use the current selection when the intent is
-   * coming from the app that fired the current intent.
-   */
-  ALWAYS_FOR_APP = 'ALWAYS_FOR_APP',
+    /**
+     * The service should always use the current selection when the intent is
+     * coming from the app that fired the current intent.
+     */
+    ALWAYS_FOR_APP = 'ALWAYS_FOR_APP',
 
-  /**
-   * The service should always use the current selection, whenever an intent of
-   * this type is fired.
-   */
-  ALWAYS_FOR_INTENT = 'ALWAYS_FOR_INTENT'
+    /**
+     * The service should always use the current selection, whenever an intent of
+     * this type is fired.
+     */
+    ALWAYS_FOR_INTENT = 'ALWAYS_FOR_INTENT'
 }
 
 // Message definitions
 export interface IOpenArgs {
-  name: string;
-  context?: any;  // tslint:disable-line
+    name: string;
+    context?: any;  // tslint:disable-line
 }
 export interface IResolveArgs {
-  intent: IntentType;
-  context?: any;  // tslint:disable-line
+    intent: IntentType;
+    context?: any;  // tslint:disable-line
 }
 export interface ISelectorResultArgs {
-  handle: number;
-  success: boolean;
+    handle: number;
+    success: boolean;
 
-  /**
-   * The application that was selected by the user.
-   *
-   * Only specified when success is true.
-   */
-  app?: IApplication;
+    /**
+     * The application that was selected by the user.
+     *
+     * Only specified when success is true.
+     */
+    app?: IApplication;
 
-  /**
-   * The reason that an app wasn't selected.
-   *
-   * Only specified when success is false.
-   */
-  reason?: string;
+    /**
+     * The reason that an app wasn't selected.
+     *
+     * Only specified when success is false.
+     */
+    reason?: string;
 
-  /**
-   * Determines the future behaviour of this intent
-   */
-  defaultAction: eDefaultAction;
+    /**
+     * Determines the future behaviour of this intent
+     */
+    defaultAction: eDefaultAction;
 }
 
 /**
@@ -85,47 +85,47 @@ export interface ISelectorResultArgs {
  * application available, will always be handled immediately.
  */
 export interface IQueuedIntent {
-  /**
-   * A unique identifier for this intent.
-   *
-   * This is created when the service first recives the intent, and is used to
-   * manage communication across between the service back-end and front-end.
-   */
-  handle: number;
+    /**
+     * A unique identifier for this intent.
+     *
+     * This is created when the service first recives the intent, and is used to
+     * manage communication across between the service back-end and front-end.
+     */
+    handle: number;
 
-  /**
-   * The original intent, launched by the user
-   */
-  intent: Intent;
+    /**
+     * The original intent, launched by the user
+     */
+    intent: Intent;
 
-  /**
-   * UUID of the application that fired this intent
-   */
-  source: IAppMetadata;
+    /**
+     * UUID of the application that fired this intent
+     */
+    source: IAppMetadata;
 
-  /**
-   * List of available applications that are capable of handling the intent
-   */
-  applications: IApplication[];
+    /**
+     * List of available applications that are capable of handling the intent
+     */
+    applications: IApplication[];
 
-  /**
-   * The application spawned by the service to allow the user to decide how to
-   * handle the intent.
-   *
-   * If there are multiple simultanous intents that require a user selection,
-   * they will be queued. Only the first item in the queue will have an
-   * application - selector will be null until the intent reaches the front of
-   * the queue.
-   */
-  selector: fin.OpenFinApplication|null;
+    /**
+     * The application spawned by the service to allow the user to decide how to
+     * handle the intent.
+     *
+     * If there are multiple simultanous intents that require a user selection,
+     * they will be queued. Only the first item in the queue will have an
+     * application - selector will be null until the intent reaches the front of
+     * the queue.
+     */
+    selector: fin.OpenFinApplication|null;
 
-  /**
-   * Function to use to resolve this intent
-   */
-  resolve: (selectedApp: IApplication) => void;
+    /**
+     * Function to use to resolve this intent
+     */
+    resolve: (selectedApp: IApplication) => void;
 
-  /**
-   * Function to use to reject this intent
-   */
-  reject: (reason: Error) => void;
+    /**
+     * Function to use to reject this intent
+     */
+    reject: (reason: Error) => void;
 }
