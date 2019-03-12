@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as fdc3 from '../../client/index';
 import { IApplication } from '../../client/directory';
 import { AppCard } from './AppCard';
-import { eDefaultAction } from '../index';
+import { DefaultAction } from '../index';
 
 import './AppList.css';
 
@@ -72,9 +72,9 @@ export class AppList extends React.Component<{}, AppListState> {
                     <h2>Set default action:</h2>
                     <div id="actions" className={this.state.selectedApplication ? "" : "w3-disabled"}>
                         <select className="default-action w3-select" onChange={this.onSelectDefault}>
-                            <option value={eDefaultAction.ALWAYS_ASK}>Always ask</option>
-                            <option value={eDefaultAction.ALWAYS_FOR_INTENT}>Remember my selection</option>
-                            <option value={eDefaultAction.ALWAYS_FOR_APP}>Remember for this application only</option>
+                            <option value={DefaultAction.ALWAYS_ASK}>Always ask</option>
+                            <option value={DefaultAction.ALWAYS_FOR_INTENT}>Remember my selection</option>
+                            <option value={DefaultAction.ALWAYS_FOR_APP}>Remember for this application only</option>
                         </select>
 
                         <div className="open-btn w3-button w3-bar w3-green w3-large" onClick={this.onOpen}>Open Application</div>
