@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { MenuItem } from '../../contextMenuPopup';
+import {MenuItem} from '../../ContextMenuPopup';
 
 declare const window: Window & {ContextMenu: ContextMenu | null};
 
@@ -90,11 +90,11 @@ export interface ParsedMenuItem {
 }
 
 //Incoming messages (from ContextMenuPopup to ContextMenu)
-interface SelectMessage { action: "select"; id: string; anchor: {x: number; y: number;}; }
-interface BlurMessage { action: "blur"; }
+interface SelectMessage {action: "select"; id: string; anchor: {x: number; y: number;};}
+interface BlurMessage {action: "blur";}
 
 //Outgoing messages (from ContextMenu to ContextMenuPopup)
-interface UpdateMessage { action: "update"; items: MenuItem[]; }
+interface UpdateMessage {action: "update"; items: MenuItem[];}
 
 //Alias for any valid context menu message. All messages are sent along the IAB using ContextMenu.TOPIC as the topic.
 export type ContextMenuMessage = SelectMessage | BlurMessage | UpdateMessage;
@@ -133,7 +133,7 @@ interface Popup {
 
 interface ContextMenuProps {
     items: ContextMenuItem[];
-    handleSelection?: (type: ContextMenuItemType, userData: UserData)=>void;
+    handleSelection?: (type: ContextMenuItemType, userData: UserData) => void;
 }
 
 /**
@@ -155,39 +155,39 @@ export class ContextMenu extends React.Component<ContextMenuProps> {
     private static POOL: {active: Popup[]; free: Popup[]} = {active: [], free: []};
     private static URL: string = window.location.href.replace("index", "contextMenu").split("?")[0];
 
-    private menu: Menu|null = null;
+    private menu: Menu | null = null;
 
     private static reserveWindows(count: number): void {
         const free: Popup[] = this.POOL.free;
 
-        while(free.length < count) {
+        while (free.length < count) {
             free.push(this.createPopup());
         }
     }
 
-    private static getOrCreatePopup(callback?: (popup: Popup)=>void): Popup {
-        let popup: Popup|undefined = this.POOL.free.pop();
+    private static getOrCreatePopup(callback?: (popup: Popup) => void): Popup {
+        let popup: Popup | undefined = this.POOL.free.pop();
 
         if (popup) {
             //Window is now active
-            if(callback){
+            if (callback) {
                 callback(popup);
             }
         } else {
             //Create a new (active) window
             popup = this.createPopup(callback);
         }
-        
+
         //Add to active list
         this.POOL.active.push(popup);
 
         return popup;
     }
 
-    private static createPopup(callback?: (popup: Popup)=>void): Popup {
+    private static createPopup(callback?: (popup: Popup) => void): Popup {
         let window: fin.OpenFinWindow;
         let popup: Popup;
-        
+
         //Create window
         window = new fin.desktop.Window({
             name: this.createId("menu"),     //Window names must be unique
@@ -198,10 +198,10 @@ export class ContextMenu extends React.Component<ContextMenuProps> {
             resizable: false,
             showTaskbarIcon: false,
             saveWindowState: false
-        }, () => { 
-            if(callback){
+        }, () => {
+            if (callback) {
                 callback(popup);
-            }  
+            }
         });
         popup = {
             menuState: null!,
@@ -316,7 +316,7 @@ export class ContextMenu extends React.Component<ContextMenuProps> {
             //Listen to any messages coming from popup windows
             fin.desktop.InterApplicationBus.subscribe(ContextMenu.UUID, ContextMenu.TOPIC, this.onMenuMessage);
         }
-        
+
         this.openMenu(this.menu.root, event.screenX, event.screenY);
 
         event.stopPropagation();
@@ -340,7 +340,7 @@ export class ContextMenu extends React.Component<ContextMenuProps> {
             //Add promise listener
             Promise.all([
                 promise,
-                new Promise<void>((resolve: ()=>void) => setTimeout(resolve, 500))
+                new Promise<void>((resolve: () => void) => setTimeout(resolve, 500))
             ]).then((result: [StaticContextMenuItem | StaticContextMenuItem[], void]) => {
                 this.replacePlaceholder(placeholderId, result[0]);
             }, (reason: string) => {
@@ -372,8 +372,8 @@ export class ContextMenu extends React.Component<ContextMenuProps> {
                 userData: undefined,
                 callback: null
             }, sourceItem, {
-                children: []
-            });
+                    children: []
+                });
 
             //Once item has been created, can map each of it's children
             if (sourceItem.children) {
@@ -399,11 +399,11 @@ export class ContextMenu extends React.Component<ContextMenuProps> {
             const parent: ParsedMenuItem = (placeholder.parent || this.menu!.root);
             const siblings: ParsedMenuItem[] = parent.children;
             const index: number = siblings.indexOf(placeholder);
-            let menuItems: MenuItem[]|null = null;
+            let menuItems: MenuItem[] | null = null;
 
             if (index >= 0) {
                 //Replace placeholder with values returned by promise
-                
+
                 // tslint:disable-next-line: no-any
                 siblings.splice.apply(siblings, ([index, 1] as any).concat(parsedItems));
 
@@ -431,7 +431,7 @@ export class ContextMenu extends React.Component<ContextMenuProps> {
     }
 
     private onMenuMessage(message: ContextMenuMessage, uuid: string, name: string): void {
-        const popup: Popup|undefined = ContextMenu.POOL.active.find((popup: Popup) => popup.window.name === name);
+        const popup: Popup | undefined = ContextMenu.POOL.active.find((popup: Popup) => popup.window.name === name);
 
         if (popup && popup.menuState === this.menu) {
             if (message.action === "select") {
@@ -457,7 +457,7 @@ export class ContextMenu extends React.Component<ContextMenuProps> {
                 }
             } else if (message.action === "blur") {
                 const activePopups: Popup[] = ContextMenu.POOL.active;
-                const blurredPopup: Popup|undefined = activePopups.find((activePopup: Popup) => activePopup.window.name === name);
+                const blurredPopup: Popup | undefined = activePopups.find((activePopup: Popup) => activePopup.window.name === name);
                 const childIds: string[] = blurredPopup ? blurredPopup.item.children.map((childItem: ParsedMenuItem) => childItem.id) : [];
 
                 if (activePopups.findIndex((activePopup: Popup) => (activePopup !== blurredPopup && childIds.indexOf(activePopup.item.id) >= 0)) === -1) {
