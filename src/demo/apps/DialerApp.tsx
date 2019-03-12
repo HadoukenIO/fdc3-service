@@ -8,6 +8,7 @@ import {ContactPayload, Payload} from '../../client/context';
 import {Dialog} from '../components/common/Dialog';
 
 import '../../../res/demo/css/w3.css';
+import {ColorLinker} from '../components/common/ColorLinker';
 
 interface AppProps {
     phoneNumber?: string;
@@ -22,7 +23,7 @@ export const DialerApp: React.FunctionComponent<AppProps> = (props) => {
     const [callListener, setCallListener] = React.useState<fdc3.IntentListener>();
     const [contextListener, setContextListener] = React.useState<fdc3.ContextListener>();
 
-    const onNumberEntry = (phoneNumber: string) => setPhoneNumber;
+    const onNumberEntry = (phoneNumber: string) => setPhoneNumber(phoneNumber);
     const onDialerEntry = (key: string) => setPhoneNumber(phoneNumber + key);
     const toggleCall = () => setInCall(!inCall);
     const handleDialog = (option: string) => {
@@ -41,6 +42,9 @@ export const DialerApp: React.FunctionComponent<AppProps> = (props) => {
         } else {
             throw new Error("Contact doesn't have a phone number");
         }
+    };
+    const handleColorIntentChange = (color: string) => {
+        console.log("Color changed" + color);
     };
 
     React.useEffect(() => {
@@ -88,6 +92,7 @@ export const DialerApp: React.FunctionComponent<AppProps> = (props) => {
 
     return (
         <div>
+            <ColorLinker selected="red" onColorChange={handleColorIntentChange} />
             <Number inCall={inCall} number={phoneNumber} handleChange={onNumberEntry} />
             {inCall && <CallTimer />}
             {!inCall && <Dialer handleKeyPress={onDialerEntry} />}
