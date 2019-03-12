@@ -1,0 +1,50 @@
+import { ActionHandlerMap } from "./APIHandler";
+import { APITopic, TopicPayloadMap, TopicResponseMap, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, RaiseIntentPayload } from "../client/internal";
+import { ProviderIdentity } from "openfin/_v2/api/interappbus/channel/channel";
+import { AppIntent, IntentResolution } from "../client/main";
+
+export const actionHandlerMap: ActionHandlerMap<APITopic, TopicPayloadMap, TopicResponseMap> = {
+    [APITopic.OPEN]: handleOpen,
+    [APITopic.FIND_INTENT]: handleFindIntent,
+    [APITopic.FIND_INTENTS_BY_CONTEXT]: handleFindIntentsByContext,
+    [APITopic.BROADCAST]: handleBroadcast,
+    [APITopic.RAISE_INTENT]: handleRaiseIntent,
+};
+
+async function handleOpen(payload: OpenPayload, source: ProviderIdentity): Promise<void> {
+    // This should be filled in once provider re-structuring is complete
+
+    throw new NotImplementedError('handleOpen');
+}
+
+async function handleFindIntent(payload: FindIntentPayload, source: ProviderIdentity): Promise<AppIntent> {
+    // This should be filled in once provider re-structuring is complete
+
+    throw new NotImplementedError('handleFindIntent');
+}
+
+async function handleFindIntentsByContext(payload: FindIntentsByContextPayload, source: ProviderIdentity): Promise<AppIntent[]> {
+    // This should be filled in once provider re-structuring is complete
+
+    throw new NotImplementedError('handleFindIntentsByContext');
+}
+
+async function handleBroadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {
+    // This should be filled in once provider re-structuring is complete
+
+    throw new NotImplementedError('handleBroadcast');
+}
+
+async function handleRaiseIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<IntentResolution> {
+    // This should be filled in once provider re-structuring is complete
+
+    throw new NotImplementedError('handleRaiseIntent');
+}
+
+// This should probably be put into a seperate file somewhere, but it's only temporary....
+class NotImplementedError extends Error {
+    constructor(message = "") {
+        message = message + " has not yet been implemented.";
+        super(message);
+    }
+}
