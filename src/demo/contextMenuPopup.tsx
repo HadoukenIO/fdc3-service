@@ -17,24 +17,15 @@ export interface MenuItem {
     hasChildren: boolean;
 }
 
-
-function sendMessage(message: ContextMenuMessage): void {
-    fin.desktop.InterApplicationBus.send(uuid, ContextMenu.TOPIC, message);
+interface ContextMenuPopupProps {
+    items?: MenuItem[];
+    children?: React.ReactNode;
 }
-
-function onClick(item: MenuItem, offsetTop: number): void {
-    const anchor: {x: number; y: number;} = {
-        x: window.screenX + outerWidth - 10,
-        y: window.screenY + offsetTop
-    };
-    sendMessage({action: "select", id: item.id, anchor});
-}
-
 
 // tslint:disable-next-line:variable-name
-const ContextMenuPopup: React.FunctionComponent = () => {
+export const ContextMenuPopup: React.FunctionComponent<ContextMenuPopupProps> = (props) => {
     const [menuItems, setMenuItems] = React.useState<MenuItem[]>([]);
-    let windowHeight = 22;
+    let windowHeight = 2;
 
     React.useEffect(() => {
         const handleMenuMessage = (message: ContextMenuMessage) => {
@@ -58,16 +49,20 @@ const ContextMenuPopup: React.FunctionComponent = () => {
 
         //Cleanup
         return () => {
+            fin.desktop.InterApplicationBus.unsubscribe(uuid, ContextMenu.TOPIC, handleMenuMessage);
             fin.desktop.Window.getCurrent().removeEventListener('blurred', listener);
         };
-    });
+    }, []);
 
     //Generate the menu items
     const items = React.useMemo(() => {
         return menuItems.map((item) => {
             let component: JSX.Element;
             let itemHeight = 22;
-            const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => onClick(item, event.currentTarget.offsetTop);
+            const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+                event.preventDefault();
+                onClick(item, event.currentTarget.offsetTop);
+            };
 
             switch (item.type) {
                 case ContextMenuItemType.SPINNER:
@@ -85,22 +80,34 @@ const ContextMenuPopup: React.FunctionComponent = () => {
                     break;
                 default:
                     component = <></>;
+                    itemHeight = 0;
             }
 
             windowHeight += itemHeight;
-
             return component;
         });
     }, [menuItems]);
 
-    React.useEffect(() => {
-        if (window.innerHeight !== windowHeight) {
-            fin.desktop.Window.getCurrent().resizeTo(150, windowHeight, "top-left");
-        }
-    }, [windowHeight, window.innerHeight]);
+    if (window.innerHeight !== windowHeight) {
+        fin.desktop.Window.getCurrent().resizeTo(150, windowHeight, "top-left");
+    }
 
 
     return (<div className="context-menu">{items}</div>);
 };
+
+
+function sendMessage(message: ContextMenuMessage): void {
+    fin.desktop.InterApplicationBus.send(uuid, ContextMenu.TOPIC, message);
+}
+
+function onClick(item: MenuItem, offsetTop: number): void {
+    const anchor: {x: number; y: number;} = {
+        x: window.screenX + outerWidth - 10,
+        y: window.screenY + offsetTop
+    };
+    sendMessage({action: "select", id: item.id, anchor});
+}
+
 
 ReactDOM.render(<ContextMenuPopup />, document.getElementById('react-app'));

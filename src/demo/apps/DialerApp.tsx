@@ -81,7 +81,6 @@ export const DialerApp: React.FunctionComponent<AppProps> = (props) => {
 
     return (
         <div>
-            <ColorLinker selected="red" onColorChange={handleColorIntentChange} />
             <Number inCall={inCall} number={phoneNumber} onValueChange={onNumberEntry} />
             {inCall && <CallTimer />}
             {!inCall && <Dialer handleKeyPress={onDialerEntry} />}
