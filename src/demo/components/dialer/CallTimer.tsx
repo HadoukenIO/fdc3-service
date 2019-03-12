@@ -4,18 +4,15 @@ import './CallTimer.css';
 
 // tslint:disable-next-line:variable-name
 export const CallTimer: React.FunctionComponent = () => {
-    const [timer, setTimer] = React.useState();
     const [counter, setCounter] = React.useState(0);
     const seconds: number = (counter % 60),
         minutes: number = Math.floor(counter / 60) % 60,
         hours: number = Math.floor(counter / 3600);
-    const tick = () => {
-        setCounter(counter + 1);
-    };
 
     React.useEffect(() => {
-        setTimer(setInterval(tick, 1000));
-
+        const timer = setInterval(() => {
+            setCounter(counter => counter + 1);
+        }, 1000);
         //Cleanup
         return () => {
             clearInterval(timer);
