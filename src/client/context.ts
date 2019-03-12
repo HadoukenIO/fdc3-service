@@ -61,7 +61,7 @@ export interface ContextBase {
      * context type, e.g. ISIN, CUSIP, etc. for an instrument.
      */
     id?: {
-        [k:string]: string;
+        [k:string]: string | undefined;
     };
 
     /**

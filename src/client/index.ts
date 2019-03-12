@@ -1,6 +1,7 @@
 import {ContextBase} from './context';
 import {AppIdentifier, IApplication} from './directory';
 import {IntentType} from './intents';
+import { ChannelClient } from 'openfin/_v2/api/interappbus/channel/client';
 
 export * from './context';
 export * from './directory';
@@ -8,11 +9,17 @@ export * from './intents';
 
 export type Context = ContextBase;
 
-import {version} from './version';
+/**
+ * The version of the NPM package.
+ *
+ * Webpack replaces any instances of this constant with a hard-coded string at
+ * build time.
+ */
+declare const PACKAGE_VERSION: string;
 
 const IDENTITY = {
     uuid: 'fdc3-service',
-    name: 'FDC3-Service'
+    name: 'fdc3-service'
 };
 
 export const SERVICE_CHANNEL = 'of-fdc3-service-v1';
@@ -73,26 +80,24 @@ export class Intent {
     public intent: IntentType;
 
     /**
-     * Name of app to target for the Intent. Use if creating an explicit intent
-     * that bypasses resolver and goes directly to an app.
+     * Name of app to target for the Intent. Use if creating an explicit intent that bypasses resolver and goes directly to an app.
      */
     public context: Context;
 
     /**
      * Name of app to target for the Intent. Use if creating an explicit intent that bypasses resolver and goes directly to an app.
      */
-    public target: AppIdentifier;
+    public target: AppIdentifier|null;
 
-    constructor(intent?: IntentType, context?: Context, target?: AppIdentifier) {
+    constructor(intent: IntentType, context: Context, target?: AppIdentifier) {
         this.intent = intent;
         this.context = context;
-        this.target = target;
+        this.target = target || null;
     }
 
     /**
      * Dispatches the intent with the Desktop Agent.
      *
-     * Accepts context data and target (if an explicit Intent) as optional args.
      * Returns a Promise - resolving if the intent successfully results in launching an App.
      * If the resolution errors, it returns an `Error` with a string from the `ResolveError` enumeration.
      *
@@ -167,16 +172,15 @@ export class ContextListener {
 }
 
 
-// Code above here defines the API that is exposed to applications
-// ------------------------------------------------------------------------------------
 // Code below here initialises/manages the connection between the application and the OpenFin Desktop Agent
 
-let servicePromise;
+let servicePromise: Promise<ChannelClient>;
+
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
 if (fin.Window.me.uuid !== 'fdc3-service') {
-    servicePromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version}});
+    servicePromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}});
 
     fin.InterApplicationBus.subscribe(IDENTITY, 'intent', (payload: Intent, uuid: string, name: string) => {
         intentListeners.forEach((listener: IntentListener) => {

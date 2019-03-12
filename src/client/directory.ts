@@ -30,7 +30,7 @@ export interface IApplication {
     publisher: string;
     icon: string;
     appPage: string;
-    images: Array<{url: string}>;
+    images: {url: string}[];
 
     /**
      * A list of the intents supported by this application.

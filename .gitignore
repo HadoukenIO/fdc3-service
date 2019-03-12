@@ -1,6 +1,10 @@
+.vs
 .vscode
+.DS_STORE
+npm-debug.log
+openfin-fdc3-*.tgz
+Thumbs.db
 dist
+gen
 node_modules
-build
-staging
-src/client/version.ts
+test/coverage

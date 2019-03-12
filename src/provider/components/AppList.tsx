@@ -11,7 +11,7 @@ interface IAppListState {
     handle: number;
     defaultAction: string;
     applications: IApplication[];
-    selectedApplication: IApplication;
+    selectedApplication: IApplication|null;
 }
 
 interface IIntentData {
@@ -39,7 +39,7 @@ export class AppList extends React.Component<{}, IAppListState> {
         this.onCancel = this.onCancel.bind(this);
 
         fin.Application.getCurrentSync().getWindow().then(w => w.getOptions().then((options) => {
-            let data: IIntentData = JSON.parse(options.customData);
+            const data: IIntentData = JSON.parse(options.customData);
 
             if (data && data.intent && data.applications) {
                 this.setState({
@@ -65,7 +65,7 @@ export class AppList extends React.Component<{}, IAppListState> {
                 <h2 className="app-header">Select an appliction:</h2>
                 <div className="list-section app-container">
                     {this.state.applications.map((app: IApplication) => (
-                        <AppCard key={app.id} app={app} selectHandler={this.onAppSelect} openHandler={this.onAppOpen} selected={this.state.selectedApplication == app} />
+                        <AppCard key={app.id} app={app} selectHandler={this.onAppSelect} openHandler={this.onAppOpen} selected={this.state.selectedApplication === app} />
                     ))}
                 </div>
                 
@@ -99,7 +99,7 @@ export class AppList extends React.Component<{}, IAppListState> {
     }
 
     private onOpen(event: React.MouseEvent<HTMLDivElement>): void {
-        this.sendSuccess(this.state.handle, this.state.selectedApplication, this.state.defaultAction);
+        this.sendSuccess(this.state.handle, this.state.selectedApplication!, this.state.defaultAction);
     }
 
     private onCancel(event: React.MouseEvent<HTMLDivElement>): void {
