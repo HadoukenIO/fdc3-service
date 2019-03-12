@@ -7,7 +7,7 @@ interface DialerProps {
 }
 
 // tslint:disable-next-line:variable-name
-const Dialer: React.FunctionComponent<DialerProps> = (props) => {
+export const Dialer: React.FunctionComponent<DialerProps> = (props) => {
     const {handleKeyPress} = props;
     return (
         <div className="dialer">

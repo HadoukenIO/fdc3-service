@@ -36,9 +36,7 @@ export interface Contact {
 
 // tslint:disable-next-line:variable-name
 export const ContactsApp: React.FunctionComponent = () => {
-    const [intentListener, setIntentListener] = React.useState<fdc3.IntentListener>();
     const [contacts, setContacts] = React.useState(initialContactsState);
-
     function handleIntent(context: ContactPayload) {
         if (context && context.name) {
             const newContact: Contact = {
@@ -65,14 +63,9 @@ export const ContactsApp: React.FunctionComponent = () => {
                 }
             });
         });
-
-        setIntentListener(intent);
-
         //Cleanup
         return () => {
-            if (intentListener) {
-                intentListener.unsubscribe();
-            }
+            intent.unsubscribe();
         };
     }, []);
 

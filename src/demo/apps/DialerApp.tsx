@@ -19,9 +19,6 @@ export const DialerApp: React.FunctionComponent<AppProps> = (props) => {
     const [inCall, setInCall] = React.useState(false);
     const [phoneNumber, setPhoneNumber] = React.useState<string>("");
     const [pendingCall, setPendingCall] = React.useState<ContactPayload | null>(null);
-    const [dialListener, setDialListener] = React.useState<fdc3.IntentListener>();
-    const [callListener, setCallListener] = React.useState<fdc3.IntentListener>();
-    const [contextListener, setContextListener] = React.useState<fdc3.ContextListener>();
 
     const onNumberEntry = (phoneNumber: string) => setPhoneNumber(phoneNumber);
     const onDialerEntry = (key: string) => setPhoneNumber(phoneNumber + key);
@@ -74,19 +71,11 @@ export const DialerApp: React.FunctionComponent<AppProps> = (props) => {
                 }
             }
         });
-
-
-        setDialListener(dial);
-        setCallListener(call);
-        setContextListener(context);
-
         // Cleanup
         return () => {
-            if (dialListener && callListener && contextListener) {
-                dialListener.unsubscribe();
-                callListener.unsubscribe();
-                contextListener.unsubscribe();
-            }
+            dial.unsubscribe();
+            call.unsubscribe();
+            context.unsubscribe();
         };
     }, []);
 

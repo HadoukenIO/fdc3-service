@@ -12,8 +12,6 @@ interface AppProps {
 // tslint:disable-next-line:variable-name
 export const ChartsApp: React.FunctionComponent<AppProps> = (props) => {
     const [symbolName, setSymbolName] = React.useState("AAPL");
-    const [intentListener, setIntentListener] = React.useState<fdc3.IntentListener>();
-    const [contextListener, setContextListener] = React.useState<fdc3.ContextListener>();
 
     function handleIntent(context: SecurityPayload): void {
         if (context && context.name) {
@@ -45,15 +43,9 @@ export const ChartsApp: React.FunctionComponent<AppProps> = (props) => {
             }
         });
 
-        // store listeners in state
-        setIntentListener(intent);
-        setContextListener(context);
-
         return function cleanUp() {
-            if (contextListener && intentListener) {
-                intentListener.unsubscribe();
-                contextListener.unsubscribe();
-            }
+            intent.unsubscribe();
+            context.unsubscribe();
         };
     }, []);
 
