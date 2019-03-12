@@ -1,7 +1,4 @@
 import { AppIntent, IntentResolution, Context } from "./main";
-import { ProviderIdentity } from "openfin/_v2/api/interappbus/channel/channel";
-
-// tslint:disable:no-any Temporary while e
 
 /**
  * The identity of the main application window of the service provider
@@ -28,11 +25,11 @@ export enum APITopic {
 }
 
 export interface TopicPayloadMap {
-    [APITopic.OPEN]: {name: string; context?: Context};
-    [APITopic.FIND_INTENT]: {intent: string; context?: Context};
-    [APITopic.FIND_INTENTS_BY_CONTEXT]: {context: Context};
-    [APITopic.BROADCAST]: {context: Context};
-    [APITopic.RAISE_INTENT]: {intent: string; context: Context, target?: string};
+    [APITopic.OPEN]: OpenPayload;
+    [APITopic.FIND_INTENT]: FindIntentPayload;
+    [APITopic.FIND_INTENTS_BY_CONTEXT]: FindIntentsByContextPayload;
+    [APITopic.BROADCAST]: BroadcastPayload;
+    [APITopic.RAISE_INTENT]: RaiseIntentPayload;
 }
 
 export interface TopicResponseMap {
@@ -43,17 +40,22 @@ export interface TopicResponseMap {
     [APITopic.RAISE_INTENT]: IntentResolution;
 }
 
-export type Handler<T extends APITopic> = (() => TopicResponseMap[T]) | 
-    ((payload: TopicPayloadMap[T]) => TopicResponseMap[T]) | 
-    ((payload: TopicPayloadMap[T], source: ProviderIdentity) => TopicResponseMap[T]);
-
-
-export type ActionsMap = {[T in APITopic]: Handler<T>};
-
-const temp: ActionsMap = {
-    [APITopic.OPEN]: () => {},
-    [APITopic.FIND_INTENT]: () => {},
-    [APITopic.FIND_INTENTS_BY_CONTEXT]: () => {},
-    [APITopic.BROADCAST]: () => {},
-    [APITopic.RAISE_INTENT]: () => {},
-};
+export interface OpenPayload {
+    name: string;
+    context?: Context;
+}
+export interface FindIntentPayload {
+    intent: string;
+    context?: Context;
+}
+export interface FindIntentsByContextPayload {
+    context: Context;
+}
+export interface BroadcastPayload {
+    context: Context;
+}
+export interface RaiseIntentPayload {
+    intent: string;
+    context: Context;
+    target: string;
+}
