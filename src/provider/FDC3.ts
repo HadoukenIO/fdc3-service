@@ -1,9 +1,9 @@
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 import {Identity} from 'openfin/_v2/main';
 
+import {ContextBase} from '../client/context';
 import {IApplication} from '../client/directory';
 import {APITopic, BroadcastPayload, FindIntentPayload, RaiseIntentPayload, TopicPayloadMap, TopicResponseMap} from '../client/internal';
-import {ContextBase} from '../client/context';
 import {AppIntent, AppMetadata} from '../client/main';
 
 import {ActionHandlerMap, APIHandler} from './APIHandler';

@@ -1,7 +1,7 @@
 import {channelPromise, tryServiceDispatch} from './connection';
 import {Context} from './context';
 import {IntentType} from './intents';
-import {APITopic, SERVICE_IDENTITY, RaiseIntentPayload} from './internal';
+import {APITopic, RaiseIntentPayload, SERVICE_IDENTITY} from './internal';
 
 /**
  * This file was copied from the FDC3 v1 specification.
@@ -83,7 +83,7 @@ export interface IntentResolution {
     version: string;
 }
 
-export type Listener = ContextListener | IntentListener;
+export type Listener = ContextListener|IntentListener;
 
 export interface ContextListener {
     handler: (context: Context) => void;
@@ -251,7 +251,7 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
             if (index >= 0) {
                 contextListeners.splice(index, 1);
             }
-    
+
             return index >= 0;
         }
     };
@@ -271,7 +271,7 @@ export function addContextListener(handler: (context: Context) => void): Context
             if (index >= 0) {
                 contextListeners.splice(index, 1);
             }
-    
+
             return index >= 0;
         }
     };

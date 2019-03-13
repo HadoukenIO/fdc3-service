@@ -1,10 +1,10 @@
 import {IApplication} from '../client/directory';
 import {IntentType} from '../client/intents';
+import {RaiseIntentPayload} from '../client/internal';
 import {Context} from '../client/main';
 
 import {FDC3} from './FDC3';
 import {IAppMetadata} from './MetadataStore';
-import { RaiseIntentPayload } from '../client/internal';
 
 console.log('the provider has landed.');
 
