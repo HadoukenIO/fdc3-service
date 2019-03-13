@@ -84,17 +84,12 @@ export class ContactsRow extends React.Component<IContactRowProps> {
     private sendIntent(button: HTMLButtonElement, startCall: boolean): void {
         const icon: Element = button.firstElementChild!,
             iconClass: string = startCall ? "fa fa-phone" : "fa fa-tty";
-
-            let intent: fdc3.Intent;
-
-        //Create the appropriate intent
-        intent = new fdc3.Intent(startCall ? fdc3.Intents.START_CALL : fdc3.Intents.DIAL_CALL, this.getContext());
-
+            
         //Convert icon to spinner whilst we are waiting for the intent
         icon.className = "fa fa-spinner fa-spin";
 
         //Send intent and wait for it to resolve
-        intent.send().then(() => {
+        fdc3.raiseIntent(startCall ? fdc3.Intents.START_CALL : fdc3.Intents.DIAL_CALL, this.getContext()).then(() => {
             //Revert icon to it's initial state
             button.className = "";
             icon.className = iconClass;

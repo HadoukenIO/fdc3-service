@@ -3,7 +3,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {IApplication} from '../client/directory';
 import {APITopic, BroadcastPayload, FindIntentPayload, RaiseIntentPayload, TopicPayloadMap, TopicResponseMap} from '../client/internal';
-import {ContextBase, Intent} from '../client/main';
+import {ContextBase} from '../client/context';
 import {AppIntent, AppMetadata} from '../client/main';
 
 import {ActionHandlerMap, APIHandler} from './APIHandler';
@@ -86,21 +86,20 @@ export class FDC3 {
         return this.sendContext(payload.context);
     }
     private async onIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<void> {
-        const intent = new Intent(payload.intent, payload.context, payload.target);
-        let applications: AppMetadata[] = (await this.onResolve({intent: intent.intent, context: intent.context})).apps;
+        let applications: AppMetadata[] = (await this.onResolve({intent: payload.intent, context: payload.context})).apps;
         if (applications.length > 1) {
-            applications = this.applyIntentPreferences(intent, applications, source);
+            applications = this.applyIntentPreferences(payload, applications, source);
         }
         if (applications.length === 1) {
             // Return all applications within the manifest that can handle the given
             // intent
             return this.onOpen({name: applications[0].name}).then(() => {
-                return this.sendIntent(intent, this.metadata.lookupFromDirectoryId(applications[0].id)!);
+                return this.sendIntent(payload, this.metadata.lookupFromDirectoryId(applications[0].id)!);
             });
         } else if (applications.length > 1) {
             // Ask user to manually select an application
-            return this.resolveIntent(intent, source, applications).then((selectedApp: IApplication) => {
-                return this.sendIntent(intent, this.metadata.lookupFromDirectoryId(selectedApp.id)!);
+            return this.resolveIntent(payload, source, applications).then((selectedApp: IApplication) => {
+                return this.sendIntent(payload, this.metadata.lookupFromDirectoryId(selectedApp.id)!);
             });
         } else {
             throw new Error('No applications available to handle this intent');
@@ -124,7 +123,7 @@ export class FDC3 {
      * intent
      * @param source The application that fired the intent
      */
-    private applyIntentPreferences(intent: Intent, applications: IApplication[], source: Identity): IApplication[] {
+    private applyIntentPreferences(intent: RaiseIntentPayload, applications: IApplication[], source: Identity): IApplication[] {
         // Check for any explicit target set within the intent
         if (intent.target) {
             const preferredApplication: IApplication|undefined = applications.find((app: IApplication) => app.name === intent.target);
@@ -263,7 +262,7 @@ export class FDC3 {
      * @param applications A pre-filtered list of applications that are capable of
      * handling the intent
      */
-    private async resolveIntent(intent: Intent, source: Identity, applications: IApplication[]): Promise<IApplication> {
+    private async resolveIntent(intent: RaiseIntentPayload, source: Identity, applications: IApplication[]): Promise<IApplication> {
         const removeFromQueue = (intent: IQueuedIntent): void => {
             const index: number = this.uiQueue.indexOf(intent);
             if (index >= 0) {
@@ -333,7 +332,7 @@ export class FDC3 {
     private async sendContext(context: ContextBase): Promise<void> {
         return fin.InterApplicationBus.publish('context', context);
     }
-    private async sendIntent(intent: Intent, targetApp: IAppMetadata): Promise<void> {
+    private async sendIntent(intent: RaiseIntentPayload, targetApp: IAppMetadata): Promise<void> {
         if (targetApp) {
             console.log('c1a: ', targetApp, intent);
             return fin.InterApplicationBus.send(targetApp, 'intent', intent);

@@ -77,16 +77,11 @@ export class SymbolsRow extends React.Component<ISymbolsRowProps> {
             icon: Element = button.firstElementChild!,
             iconClass: string = "fa fa-line-chart";
 
-        let intent: fdc3.Intent;
-
-        //Create the appropriate intent
-        intent = new fdc3.Intent(fdc3.Intents.VIEW_CHART, this.getContext());
-
         //Convert icon to spinner whilst we are waiting for the intent
         icon.className = "fa fa-spinner fa-spin";
 
         //Send intent, and revert button state once resolved/rejected
-        intent.send().then(() => {
+        fdc3.raiseIntent(fdc3.Intents.VIEW_CHART, this.getContext()).then(() => {
             //Revert icon to it's initial state
             button.className = "";
             icon.className = iconClass;
@@ -106,26 +101,21 @@ export class SymbolsRow extends React.Component<ISymbolsRowProps> {
     }
 
     private handleContextSelection(type: eContextMenuItem, userData: string): void {
-        let intent: fdc3.Intent|null = null;
-
-        //Create an intent of the requested type
+        //Send intent of the requested type, "fire and forget" style
         switch(userData) {
             case "quote":
-                intent = new fdc3.Intent(fdc3.Intents.VIEW_QUOTE, this.getContext());
+            fdc3.raiseIntent(fdc3.Intents.VIEW_QUOTE, this.getContext());
                 break;
             case "news":
-                intent = new fdc3.Intent(fdc3.Intents.VIEW_NEWS, this.getContext());
+                 fdc3.raiseIntent(fdc3.Intents.VIEW_NEWS, this.getContext());
                 break;
             case "chart":
-                intent = new fdc3.Intent(fdc3.Intents.VIEW_CHART, this.getContext());
+                 fdc3.raiseIntent(fdc3.Intents.VIEW_CHART, this.getContext());
                 break;
             default:
-                intent = new fdc3.Intent(fdc3.Intents.VIEW_CHART, this.getContext(), userData);
+                 fdc3.raiseIntent(fdc3.Intents.VIEW_CHART, this.getContext(), userData);
                 break;
         }
-
-        //Send intent, "fire and forget" style
-        intent.send();
     }
 
     private getContext(): SecurityContext {

@@ -6,7 +6,7 @@ import './AppList.css';
 import { IApplication } from '../../client/directory';
 import { AppCard } from './AppCard';
 import { eDefaultAction } from '../index';
-import { SERVICE_CHANNEL } from '../../client/internal';
+import { SERVICE_CHANNEL, RaiseIntentPayload } from '../../client/internal';
 
 interface IAppListState {
     handle: number;
@@ -17,7 +17,7 @@ interface IAppListState {
 
 interface IIntentData {
     handle: number;
-    intent: fdc3.Intent;
+    intent: RaiseIntentPayload;
     applications: IApplication[];
 }
 

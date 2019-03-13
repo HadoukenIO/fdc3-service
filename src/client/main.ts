@@ -1,7 +1,7 @@
 import {channelPromise, tryServiceDispatch} from './connection';
 import {Context} from './context';
 import {IntentType} from './intents';
-import {APITopic, SERVICE_IDENTITY} from './internal';
+import {APITopic, SERVICE_IDENTITY, RaiseIntentPayload} from './internal';
 
 /**
  * This file was copied from the FDC3 v1 specification.
@@ -83,7 +83,9 @@ export interface IntentResolution {
     version: string;
 }
 
-export interface Listener {
+export type Listener = ContextListener | IntentListener;
+
+export interface ContextListener {
     handler: (context: Context) => void;
     /**
      * Unsubscribe the listener object.
@@ -91,49 +93,13 @@ export interface Listener {
     unsubscribe: () => void;
 }
 
-export class Intent {
+export interface IntentListener {
+    intent: string;
+    handler: (context: Context) => void;
     /**
-     * Defines the type of this intent.
-     *
-     * Can be one of the intent types defined by the FDC3 specification, or a custom/app-specific intent type.
+     * Unsubscribe the listener object.
      */
-    public intent: IntentType;
-
-    /**
-     * Name of app to target for the Intent. Use if creating an explicit intent that bypasses resolver and goes directly to an app.
-     */
-    public context: Context;
-
-    /**
-     * Name of app to target for the Intent. Use if creating an explicit intent that bypasses resolver and goes directly to an app.
-     */
-    public target: string|null;
-
-    constructor(intent: IntentType, context: Context, target?: string) {
-        this.intent = intent;
-        this.context = context;
-        this.target = target || null;
-    }
-
-    /**
-     * Dispatches the intent with the Desktop Agent.
-     *
-     * Returns a Promise - resolving if the intent successfully results in launching an App.
-     * If the resolution errors, it returns an `Error` with a string from the `ResolveError` enumeration.
-     *
-     * @param context Can optionally override the context on this intent. The context on the intent will remain un-modified.
-     * @param target Can optionally override the target on this intent. The target on the intent will remain un-modified.
-     */
-    public async send(context?: Context, target?: string): Promise<void> {
-        if (arguments.length === 0) {
-            console.log('Sending intent with payload: ', {intent: this.intent, context: this.context, target: this.target || undefined});
-            return tryServiceDispatch(APITopic.RAISE_INTENT, {intent: this.intent, context: this.context, target: this.target || undefined});
-        } else {
-            const intentData = {intent: this.intent, context: context || this.context, target: target || this.target || undefined};
-
-            return tryServiceDispatch(APITopic.RAISE_INTENT, intentData);
-        }
-    }
+    unsubscribe: () => void;
 }
 
 /**
@@ -253,61 +219,11 @@ export async function raiseIntent(intent: string, context: Context, target?: str
     return tryServiceDispatch(APITopic.RAISE_INTENT, {intent, context, target});
 }
 
-class IntentListener implements Listener {
-    public readonly intent: IntentType;
-    public readonly handler: (context: Context) => void;
-
-    constructor(intent: IntentType, handler: (context: Context) => void) {
-        this.intent = intent;
-        this.handler = handler;
-
-        intentListeners.push(this);
-    }
-
-    /**
-     * Unsubscribe the listener object.
-     */
-    public unsubscribe(): boolean {
-        const index: number = intentListeners.indexOf(this);
-
-        if (index >= 0) {
-            intentListeners.splice(index, 1);
-        }
-
-        return index >= 0;
-    }
-}
-
-/**
- * Listens to incoming context broadcast from the Desktop Agent.
- */
-class ContextListener implements Listener {
-    public readonly handler: (context: Context) => void;
-
-    constructor(handler: (context: Context) => void) {
-        this.handler = handler;
-
-        contextListeners.push(this);
-    }
-
-    /**
-     * Unsubscribe the listener object.
-     */
-    public unsubscribe(): boolean {
-        const index: number = contextListeners.indexOf(this);
-
-        if (index >= 0) {
-            contextListeners.splice(index, 1);
-        }
-
-        return index >= 0;
-    }
-}
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
 if (channelPromise) {
-    fin.InterApplicationBus.subscribe(SERVICE_IDENTITY, 'intent', (payload: Intent, uuid: string, name: string) => {
+    fin.InterApplicationBus.subscribe(SERVICE_IDENTITY, 'intent', (payload: RaiseIntentPayload, uuid: string, name: string) => {
         intentListeners.forEach((listener: IntentListener) => {
             if (payload.intent === listener.intent) {
                 listener.handler(payload.context);
@@ -325,15 +241,40 @@ if (channelPromise) {
 /**
  * Adds a listener for incoming Intents from the Agent.
  */
-export function addIntentListener(intent: string, handler: (context: Context) => void): Listener {
-    // TODO: Implementation
-    return new IntentListener(intent, handler);
+export function addIntentListener(intent: string, handler: (context: Context) => void): IntentListener {
+    const listener = {
+        intent,
+        handler,
+        unsubscribe: () => {
+            const index: number = contextListeners.indexOf(listener);
+
+            if (index >= 0) {
+                contextListeners.splice(index, 1);
+            }
+    
+            return index >= 0;
+        }
+    };
+    intentListeners.push(listener);
+    return listener;
 }
 
 /**
  * Adds a listener for incoming context broadcast from the Desktop Agent.
  */
-export function addContextListener(handler: (context: Context) => void): Listener {
-    // TODO: Implementation
-    return new ContextListener(handler);
+export function addContextListener(handler: (context: Context) => void): ContextListener {
+    const listener = {
+        handler,
+        unsubscribe: () => {
+            const index: number = contextListeners.indexOf(listener);
+
+            if (index >= 0) {
+                contextListeners.splice(index, 1);
+            }
+    
+            return index >= 0;
+        }
+    };
+    contextListeners.push(listener);
+    return listener;
 }

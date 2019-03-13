@@ -1,10 +1,10 @@
 import {IApplication} from '../client/directory';
 import {IntentType} from '../client/intents';
-import {Intent} from '../client/main';
 import {Context} from '../client/main';
 
 import {FDC3} from './FDC3';
 import {IAppMetadata} from './MetadataStore';
+import { RaiseIntentPayload } from '../client/internal';
 
 console.log('the provider has landed.');
 
@@ -97,7 +97,7 @@ export interface IQueuedIntent {
     /**
      * The original intent, launched by the user
      */
-    intent: Intent;
+    intent: RaiseIntentPayload;
 
     /**
      * UUID of the application that fired this intent
