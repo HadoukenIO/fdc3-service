@@ -19,36 +19,36 @@ export const actionHandlerMap: ActionHandlerMap<APITopic, TopicPayloadMap, Topic
 };
 
 async function handleOpen(payload: OpenPayload, source: ProviderIdentity): Promise<void> {
-    // This should be filled in once provider re-structuring is complete
+    // TODO: This should be filled in once provider re-structuring is complete (SERVICE-392)
 
     throw new NotImplementedError('handleOpen');
 }
 
 async function handleFindIntent(payload: FindIntentPayload, source: ProviderIdentity): Promise<AppIntent> {
-    // This should be filled in once provider re-structuring is complete
+    // TODO: This should be filled in once provider re-structuring is complete (SERVICE-392)
 
     throw new NotImplementedError('handleFindIntent');
 }
 
 async function handleFindIntentsByContext(payload: FindIntentsByContextPayload, source: ProviderIdentity): Promise<AppIntent[]> {
-    // This should be filled in once provider re-structuring is complete
+    // TODO: This should be filled in once provider re-structuring is complete (SERVICE-392)
 
     throw new NotImplementedError('handleFindIntentsByContext');
 }
 
 async function handleBroadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {
-    // This should be filled in once provider re-structuring is complete
+    // TODO: This should be filled in once provider re-structuring is complete (SERVICE-392)
 
     throw new NotImplementedError('handleBroadcast');
 }
 
 async function handleRaiseIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<void> {
-    // This should be filled in once provider re-structuring is complete
+    // TODO: This should be filled in once provider re-structuring is complete (SERVICE-392)
 
     throw new NotImplementedError('handleRaiseIntent');
 }
 
-// This should probably be put into a seperate file somewhere, but it's only temporary....
+// This should probably be put into a seperate file somewhere, but it's only temporary.
 class NotImplementedError extends Error {
     constructor(message = '') {
         message = message + ' has not yet been implemented.';

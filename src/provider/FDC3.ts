@@ -68,7 +68,7 @@ export class FDC3 {
             // intent
             const filteredApps = applications.filter((app: IApplication) => app.intents.includes(payload.intent));
             return {
-                // TODO: update this to handle display names once provider is updated to include them
+                // TODO: update this to handle display names once provider is updated to include them (SERVICE-392?)
                 intent: {name: payload.intent, displayName: payload.intent},
                 apps: filteredApps,
             };
@@ -76,7 +76,7 @@ export class FDC3 {
             // Return all applications. Used by the demo to populate the launcher, but
             // may not be to-spec.
             return {
-                // TODO: update this to handle display names once provider is updated to include them
+                // TODO: update this to handle display names once provider is updated to include them (SERVICE-392?)
                 intent: {name: payload.intent, displayName: payload.intent},
                 apps: applications,
             };
