@@ -12,9 +12,9 @@
  * This file is excluded from the public-facing TypeScript documentation.
  */
 import {EventEmitter} from 'events';
-import { ChannelClient } from 'openfin/_v2/api/interappbus/channel/client';
+import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
-import {APITopic, SERVICE_CHANNEL, TopicResponseMap, TopicPayloadMap, SERVICE_IDENTITY} from './internal';
+import {APITopic, SERVICE_CHANNEL, SERVICE_IDENTITY, TopicPayloadMap, TopicResponseMap} from './internal';
 
 /**
  * The version of the NPM package.
@@ -26,7 +26,7 @@ declare const PACKAGE_VERSION: string;
 /**
  * Defines all events that are fired by the service
  */
-export type FDC3Event = any; // tslint:disable-line:no-any
+export type FDC3Event = any;  // tslint:disable-line:no-any
 
 /**
  * The event emitter to emit events received from the service.  All addEventListeners will tap into this.
@@ -36,7 +36,7 @@ export const eventEmitter = new EventEmitter();
 /**
  * Promise to the channel object that allows us to connect to the client
  */
-export let channelPromise: Promise<ChannelClient> ;
+export let channelPromise: Promise<ChannelClient>;
 // Currently a runtime bug when provider connects to itself. Ideally the provider would never import a file
 // that includes this, but for now it is easier to put a guard in place.
 if (fin.Window.me.uuid !== SERVICE_IDENTITY.uuid || fin.Window.me.name !== SERVICE_IDENTITY.name) {
@@ -50,7 +50,7 @@ if (fin.Window.me.uuid !== SERVICE_IDENTITY.uuid || fin.Window.me.name !== SERVI
             });
             // Any unregistered action will simply return false
             channel.setDefaultAction(() => false);
-    
+
             return channel;
         });
 }

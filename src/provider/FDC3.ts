@@ -1,14 +1,17 @@
-import { IApplication } from '../client/directory';
-import { ContextBase, Intent } from '../client/main';
-import { AppDirectory } from './AppDirectory';
-import { IAppMetadata, MetadataStore } from './MetadataStore';
-import { PreferencesStore } from './PreferencesStore';
-import { IQueuedIntent, IOpenArgs, ISelectorResultArgs, eDefaultAction } from './index';
-import { Identity } from 'openfin/_v2/main';
-import { APIHandler } from './APIHandler';
-import { APITopic, TopicPayloadMap, TopicResponseMap, BroadcastPayload, RaiseIntentPayload, FindIntentPayload } from '../client/internal';
-import { ProviderIdentity } from 'openfin/_v2/api/interappbus/channel/channel';
-import { AppIntent, AppMetadata } from '../client/main';
+import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
+import {Identity} from 'openfin/_v2/main';
+
+import {IApplication} from '../client/directory';
+import {APITopic, BroadcastPayload, FindIntentPayload, RaiseIntentPayload, TopicPayloadMap, TopicResponseMap} from '../client/internal';
+import {ContextBase, Intent} from '../client/main';
+import {AppIntent, AppMetadata} from '../client/main';
+
+import {ActionHandlerMap, APIHandler} from './APIHandler';
+import {AppDirectory} from './AppDirectory';
+import {eDefaultAction, IOpenArgs, IQueuedIntent, ISelectorResultArgs} from './index';
+import {IAppMetadata, MetadataStore} from './MetadataStore';
+import {PreferencesStore} from './PreferencesStore';
+
 /**
  * FDC3 service implementation
  *
@@ -30,15 +33,21 @@ export class FDC3 {
         this.uiQueue = [];
     }
     public async register(): Promise<void> {
-        console.log('registering the service.');
-        await this.apiHandler.registerListeners({
+        // Define a custom handler mapping here. Ideally this will be replaced with the one in
+        // APIMappings once the provider is more modularized.
+        const actionHandlerMap: ActionHandlerMap<APITopic, TopicPayloadMap, TopicResponseMap> = {
             [APITopic.OPEN]: this.onOpen.bind(this),
             [APITopic.FIND_INTENT]: this.onResolve.bind(this),
             [APITopic.FIND_INTENTS_BY_CONTEXT]: () => new Promise<AppIntent[]>(() => {}),
             [APITopic.BROADCAST]: this.onBroadcast.bind(this),
             [APITopic.RAISE_INTENT]: this.onIntent.bind(this),
-        });
+        };
+
+        console.log('registering the service.');
+        await this.apiHandler.registerListeners(actionHandlerMap);
         console.log('registered the service.');
+        // Special handler for responses from the resolver UI. Should come up with a better way of
+        // managing these comms
         this.apiHandler.channel.register(FDC3.MSG_SELECTOR_RESULT, this.onSelectorResult.bind(this));
     }
     private async onOpen(payload: IOpenArgs): Promise<void> {

@@ -1,10 +1,10 @@
-import {Intent} from '../client/main';
 import {IApplication} from '../client/directory';
 import {IntentType} from '../client/intents';
+import {Intent} from '../client/main';
+import {Context} from '../client/main';
 
 import {FDC3} from './FDC3';
 import {IAppMetadata} from './MetadataStore';
-import { Context } from '../client/main';
 
 console.log('the provider has landed.');
 

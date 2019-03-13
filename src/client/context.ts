@@ -8,12 +8,12 @@
  */
 
 /**
- * Union of currently supported context types. 
- * 
+ * Union of currently supported context types.
+ *
  * The inclusion of ContextBase allows the use of any other contexts which implement
  * the specification correctly.
  */
-export type Context = SecurityContext | OrganizationContext | ContactContext | ContextBase;
+export type Context = SecurityContext|OrganizationContext|ContactContext|ContextBase;
 
 export interface SecurityContext extends ContextBase {
     type: 'security';
@@ -31,14 +31,14 @@ export interface ContactContext extends ContextBase {
     id: {email?: string; twitter?: string; phone?: string};
 }
 
-    /**
-     * Base object that all contexts must extend.
-     * 
-     * A context object is open for extension with any custom properties/metadata.
-     */
+/**
+ * Base object that all contexts must extend.
+ *
+ * A context object is open for extension with any custom properties/metadata.
+ */
 export interface ContextBase {
     /**
-     * The type of the context that uniquely identifies it, e.g. "fdc3.instrument"     
+     * The type of the context that uniquely identifies it, e.g. "fdc3.instrument"
      * Used to refer to the accepted context(s) when declaring intents.
      */
     type: string;
@@ -53,12 +53,10 @@ export interface ContextBase {
      * An optional map of any equivalent identifiers for the
      * context type, e.g. ISIN, CUSIP, etc. for an instrument.
      */
-    id?: {
-        [k:string]: string | undefined;
-    };
+    id?: {[k: string]: string|undefined;};
 
     /**
      * A context object is open for extension with any custom properties/metadata.
      */
-    [k: string]: any; // tslint:disable-line:no-any
+    [k: string]: any;  // tslint:disable-line:no-any
 }

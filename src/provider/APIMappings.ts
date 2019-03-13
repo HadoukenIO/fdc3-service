@@ -1,10 +1,12 @@
-import { ActionHandlerMap } from "./APIHandler";
-import { APITopic, TopicPayloadMap, TopicResponseMap, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, RaiseIntentPayload } from "../client/internal";
-import { ProviderIdentity } from "openfin/_v2/api/interappbus/channel/channel";
-import { AppIntent } from "../client/main";
+import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
+
+import {APITopic, BroadcastPayload, FindIntentPayload, FindIntentsByContextPayload, OpenPayload, RaiseIntentPayload, TopicPayloadMap, TopicResponseMap} from '../client/internal';
+import {AppIntent} from '../client/main';
+
+import {ActionHandlerMap} from './APIHandler';
 
 /**
- * For the time being this file is not used. Expectation is that the provider restructure 
+ * For the time being this file is not used. Expectation is that the provider restructure
  * would include modularising enough that these end-points could be wired up.
  */
 
@@ -48,8 +50,8 @@ async function handleRaiseIntent(payload: RaiseIntentPayload, source: ProviderId
 
 // This should probably be put into a seperate file somewhere, but it's only temporary....
 class NotImplementedError extends Error {
-    constructor(message = "") {
-        message = message + " has not yet been implemented.";
+    constructor(message = '') {
+        message = message + ' has not yet been implemented.';
         super(message);
     }
 }

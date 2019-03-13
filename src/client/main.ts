@@ -1,11 +1,11 @@
-import { tryServiceDispatch, channelPromise } from "./connection";
-import { APITopic, SERVICE_IDENTITY } from "./internal";
-import { Context } from './context';
-import { IntentType } from "./intents";
+import {channelPromise, tryServiceDispatch} from './connection';
+import {Context} from './context';
+import {IntentType} from './intents';
+import {APITopic, SERVICE_IDENTITY} from './internal';
 
 /**
  * This file was copied from the FDC3 v1 specification.
- * 
+ *
  * Original file: https://github.com/FDC3/FDC3/blob/master/src/api/interface.ts
  */
 
@@ -13,18 +13,18 @@ import { IntentType } from "./intents";
 export * from './context';
 export * from './directory';
 export * from './intents';
- 
+
 export enum OpenError {
-    AppNotFound = "AppNotFound",
-    ErrorOnLaunch = "ErrorOnLaunch",
-    AppTimeout = "AppTimeout",
-    ResolverUnavailable = "ResolverUnavailable"
+    AppNotFound = 'AppNotFound',
+    ErrorOnLaunch = 'ErrorOnLaunch',
+    AppTimeout = 'AppTimeout',
+    ResolverUnavailable = 'ResolverUnavailable'
 }
 
 export enum ResolveError {
-    NoAppsFound = "NoAppsFound",
-    ResolverUnavailable = "ResolverUnavailable",
-    ResolverTimeout = "ResolverTimeout"
+    NoAppsFound = 'NoAppsFound',
+    ResolverUnavailable = 'ResolverUnavailable',
+    ResolverTimeout = 'ResolverTimeout'
 }
 
 /**
@@ -125,13 +125,12 @@ export class Intent {
      * @param target Can optionally override the target on this intent. The target on the intent will remain un-modified.
      */
     public async send(context?: Context, target?: string): Promise<void> {
-
         if (arguments.length === 0) {
             console.log('Sending intent with payload: ', {intent: this.intent, context: this.context, target: this.target || undefined});
             return tryServiceDispatch(APITopic.RAISE_INTENT, {intent: this.intent, context: this.context, target: this.target || undefined});
         } else {
             const intentData = {intent: this.intent, context: context || this.context, target: target || this.target || undefined};
-            
+
             return tryServiceDispatch(APITopic.RAISE_INTENT, intentData);
         }
     }
@@ -140,7 +139,7 @@ export class Intent {
 /**
  * A Desktop Agent is a desktop component (or aggregate of components) that serves as a
  * launcher and message router (broker) for applications in its domain.
- * 
+ *
  * A Desktop Agent can be connected to one or more App Directories and will use directories for application
  * identity and discovery. Typically, a Desktop Agent will contain the proprietary logic of
  * a given platform, handling functionality like explicit application interop workflows where
@@ -150,12 +149,12 @@ export class Intent {
 
 /**
  * Launches/links to an app by name.
- * 
+ *
  * If a Context object is passed in, this object will be provided to the opened application via a contextListener.
  * The Context argument is functionally equivalent to opening the target app with no context and broadcasting the context directly to it.
  *
  * If opening errors, it returns an `Error` with a string from the `OpenError` export enumeration.
- * 
+ *
  *  ```javascript
  *     //no context
  *     agent.open('myApp');
@@ -170,22 +169,22 @@ export async function open(name: string, context?: Context): Promise<void> {
 /**
  * Find out more information about a particular intent by passing its name, and optionally its context.
  *
- * findIntent is effectively granting programmatic access to the Desktop Agent's resolver. 
+ * findIntent is effectively granting programmatic access to the Desktop Agent's resolver.
  * A promise resolving to the intent, its metadata and metadata about the apps that registered it is returned.
  * This can be used to raise the intent against a specific app.
- * 
+ *
  * If the resolution fails, the promise will return an `Error` with a string from the `ResolveError` export enumeration.
- * 
+ *
  * ```javascript
  * // I know 'StartChat' exists as a concept, and want to know more about it ...
  * const appIntent = await agent.findIntent("StartChat");
- * 
+ *
  * // returns a single AppIntent:
  * // {
  * //     intent: { name: "StartChat", displayName: "Chat" },
  * //     apps: [{ name: "Skype" }, { name: "Symphony" }, { name: "Slack" }]
  * // }
- * 
+ *
  * // raise the intent against a particular app
  * await agent.raiseIntent(appIntent.intent.name, context, appIntent.apps[0].name);
  * ```
@@ -197,16 +196,16 @@ export async function findIntent(intent: string, context?: Context): Promise<App
 /**
  * Find all the avalable intents for a particular context.
  *
- * findIntents is effectively granting programmatic access to the Desktop Agent's resolver. 
+ * findIntents is effectively granting programmatic access to the Desktop Agent's resolver.
  * A promise resolving to all the intents, their metadata and metadata about the apps that registered it is returned,
  * based on the context export types the intents have registered.
- * 
+ *
  * If the resolution fails, the promise will return an `Error` with a string from the `ResolveError` export enumeration.
  *
  * ```javascript
  * // I have a context object, and I want to know what I can do with it, hence, I look for for intents...
  * const appIntents = await agent.findIntentsForContext(context);
- * 
+ *
  * // returns for example:
  * // [{
  * //     intent: { name: "StartCall", displayName: "Call" },
@@ -216,13 +215,13 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  * //     intent: { name: "StartChat", displayName: "Chat" },
  * //     apps: [{ name: "Skype" }, { name: "Symphony" }, { name: "Slack" }]
  * // }];
- * 
+ *
  * // select a particular intent to raise
  * const startChat = appIntents[1];
- * 
+ *
  * // target a particular app
  * const selectedApp = startChat.apps[0];
- * 
+ *
  * // raise the intent, passing the given context, targeting the app
  * await agent.raiseIntent(startChat.intent.name, context, selectedApp.name);
  * ```
@@ -254,7 +253,7 @@ export async function raiseIntent(intent: string, context: Context, target?: str
     return tryServiceDispatch(APITopic.RAISE_INTENT, {intent, context, target});
 }
 
-class IntentListener implements Listener{
+class IntentListener implements Listener {
     public readonly intent: IntentType;
     public readonly handler: (context: Context) => void;
 

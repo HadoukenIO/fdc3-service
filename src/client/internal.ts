@@ -1,4 +1,4 @@
-import { AppIntent, IntentResolution, Context } from "./main";
+import {AppIntent, Context, IntentResolution} from './main';
 
 /**
  * The identity of the main application window of the service provider
@@ -40,7 +40,7 @@ export interface TopicResponseMap {
     // This is not strictly to spec as target should be able to return data.
     // Needs a not-insignificant amount of provider changes to allow the two-way
     // transmission of data before it can be put back to IntentResponse
-    [APITopic.RAISE_INTENT]: void; 
+    [APITopic.RAISE_INTENT]: void;
 }
 
 export interface OpenPayload {
