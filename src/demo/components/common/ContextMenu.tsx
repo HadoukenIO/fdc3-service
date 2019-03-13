@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import {MenuItem} from '../../temp';
+import {MenuItem} from '../../ContextMenuPopup';
 
 declare const window: Window & {ContextMenu: ContextMenu | null};
 
