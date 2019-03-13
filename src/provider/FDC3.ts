@@ -1,10 +1,14 @@
 import { IApplication } from '../client/directory';
-import { ContextBase, Intent, SERVICE_CHANNEL } from '../client/index';
+import { ContextBase, Intent } from '../client/main';
 import { AppDirectory } from './AppDirectory';
 import { IAppMetadata, MetadataStore } from './MetadataStore';
 import { PreferencesStore } from './PreferencesStore';
-import { IQueuedIntent, IOpenArgs, IResolveArgs, ISelectorResultArgs, eDefaultAction } from './index';
+import { IQueuedIntent, IOpenArgs, ISelectorResultArgs, eDefaultAction } from './index';
 import { Identity } from 'openfin/_v2/main';
+import { APIHandler } from './APIHandler';
+import { APITopic, TopicPayloadMap, TopicResponseMap, BroadcastPayload, RaiseIntentPayload, FindIntentPayload } from '../client/internal';
+import { ProviderIdentity } from 'openfin/_v2/api/interappbus/channel/channel';
+import { AppIntent, AppMetadata } from '../client/main';
 /**
  * FDC3 service implementation
  *
@@ -12,38 +16,30 @@ import { Identity } from 'openfin/_v2/main';
  * applications.
  */
 export class FDC3 {
-    public static MSG_RESOLVE: string = 'FDC3.Resolve';
-    public static MSG_OPEN: string = 'FDC3.Open';
-    public static MSG_BROADCAST: string = 'FDC3.Broadcast';
-    public static MSG_INTENT: string = 'FDC3.Intent';
     public static MSG_SELECTOR_RESULT: string = 'FDC3.SelectorResult';
     private directory: AppDirectory;
     private metadata: MetadataStore;
     private preferences: PreferencesStore;
     private uiQueue: IQueuedIntent[];
+    private apiHandler: APIHandler<APITopic, TopicPayloadMap, TopicResponseMap>;
     constructor() {
         this.directory = new AppDirectory();
         this.metadata = new MetadataStore();
         this.preferences = new PreferencesStore();
+        this.apiHandler = new APIHandler();
         this.uiQueue = [];
     }
     public async register(): Promise<void> {
         console.log('registering the service.');
-        const service = await fin.InterApplicationBus.Channel.create(SERVICE_CHANNEL);
-        // handle client connections
-        service.onConnection((app, payload) => {
-            if (payload && payload.version && payload.version.length > 0) {
-                console.log(`connection from client: ${app.name}, version: ${payload.version}`);
-            } else {
-                console.log(`connection from client: ${app.name}, unable to determin version`);
-            }
+        await this.apiHandler.registerListeners({
+            [APITopic.OPEN]: this.onOpen.bind(this),
+            [APITopic.FIND_INTENT]: this.onResolve.bind(this),
+            [APITopic.FIND_INTENTS_BY_CONTEXT]: () => new Promise<AppIntent[]>(() => {}),
+            [APITopic.BROADCAST]: this.onBroadcast.bind(this),
+            [APITopic.RAISE_INTENT]: this.onIntent.bind(this),
         });
         console.log('registered the service.');
-        service.register(FDC3.MSG_OPEN, this.onOpen.bind(this));
-        service.register(FDC3.MSG_RESOLVE, this.onResolve.bind(this));
-        service.register(FDC3.MSG_BROADCAST, this.onBroadcast.bind(this));
-        service.register(FDC3.MSG_INTENT, this.onIntent.bind(this));
-        service.register(FDC3.MSG_SELECTOR_RESULT, this.onSelectorResult.bind(this));
+        this.apiHandler.channel.register(FDC3.MSG_SELECTOR_RESULT, this.onSelectorResult.bind(this));
     }
     private async onOpen(payload: IOpenArgs): Promise<void> {
         const applications: IApplication[] = await this.directory.getApplications();
@@ -56,23 +52,33 @@ export class FDC3 {
             }
         });
     }
-    private async onResolve(payload: IResolveArgs): Promise<IApplication[]> {
+    private async onResolve(payload: FindIntentPayload): Promise<AppIntent> {
         const applications: IApplication[] = await this.directory.getApplications();
         if (payload.intent) {
             // Return all applications within the manifest that can handle the given
             // intent
-            return applications.filter((app: IApplication) => app.intents.includes(payload.intent));
+            const filteredApps = applications.filter((app: IApplication) => app.intents.includes(payload.intent));
+            return {
+                // TODO: update this to handle display names once provider is updated to include them
+                intent: {name: payload.intent, displayName: payload.intent},
+                apps: filteredApps,
+            };
         } else {
             // Return all applications. Used by the demo to populate the launcher, but
             // may not be to-spec.
-            return applications;
+            return {
+                // TODO: update this to handle display names once provider is updated to include them
+                intent: {name: payload.intent, displayName: payload.intent},
+                apps: applications,
+            };
         }
     }
-    private async onBroadcast(context: ContextBase): Promise<void> {
-        return this.sendContext(context);
+    private async onBroadcast(payload: BroadcastPayload): Promise<void> {
+        return this.sendContext(payload.context);
     }
-    private async onIntent(intent: Intent, source: Identity): Promise<void> {
-        let applications: IApplication[] = await this.onResolve({intent: intent.intent, context: intent.context});
+    private async onIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<void> {
+        const intent = new Intent(payload.intent, payload.context, payload.target);
+        let applications: AppMetadata[] = (await this.onResolve({intent: intent.intent, context: intent.context})).apps;
         if (applications.length > 1) {
             applications = this.applyIntentPreferences(intent, applications, source);
         }
@@ -320,6 +326,7 @@ export class FDC3 {
     }
     private async sendIntent(intent: Intent, targetApp: IAppMetadata): Promise<void> {
         if (targetApp) {
+            console.log('c1a: ', targetApp, intent);
             return fin.InterApplicationBus.send(targetApp, 'intent', intent);
         } else {
             // Intents should be one-to-one, but as a fallback broadcast this intent

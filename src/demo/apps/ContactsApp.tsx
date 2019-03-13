@@ -1,10 +1,10 @@
 import * as React from 'react';
-import * as fdc3 from '../../client/index';
+import * as fdc3 from '../../client/main';
 
 import '../../../res/demo/css/w3.css';
 
 import { ContactsTable } from '../components/contacts/ContactsTable';
-import { Payload, ContactPayload } from '../../client/index';
+import { Context, ContactContext } from '../../client/context';
 
 interface IAppState {
     contacts: IContact[];
@@ -50,7 +50,7 @@ export class ContactsApp extends React.Component<{}, IAppState> {
         };
 
         //Add FDC3 listeners
-        const saveContactListener = new fdc3.IntentListener(fdc3.Intents.SAVE_CONTACT, (context: Payload): Promise<void> => {
+        const saveContactListener = fdc3.addIntentListener(fdc3.Intents.SAVE_CONTACT, (context: Context): Promise<void> => {
             return new Promise((resolve: ()=>void, reject: (reason?: Error)=>void) => {
                 if (context && context.name) {
                     const contacts: IContact[] = this.state.contacts;
@@ -58,8 +58,8 @@ export class ContactsApp extends React.Component<{}, IAppState> {
                     this.setState({
                         contacts: contacts.concat({
                             name: context.name,
-                            phone: context.id.phone || null,
-                            email: context.id.email || null
+                            phone: context.id && context.id.phone || null,
+                            email: context.id && context.id.email || null
                         })
                     });
 

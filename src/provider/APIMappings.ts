@@ -1,7 +1,12 @@
 import { ActionHandlerMap } from "./APIHandler";
 import { APITopic, TopicPayloadMap, TopicResponseMap, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, RaiseIntentPayload } from "../client/internal";
 import { ProviderIdentity } from "openfin/_v2/api/interappbus/channel/channel";
-import { AppIntent, IntentResolution } from "../client/main";
+import { AppIntent } from "../client/main";
+
+/**
+ * For the time being this file is not used. Expectation is that the provider restructure 
+ * would include modularising enough that these end-points could be wired up.
+ */
 
 export const actionHandlerMap: ActionHandlerMap<APITopic, TopicPayloadMap, TopicResponseMap> = {
     [APITopic.OPEN]: handleOpen,
@@ -35,7 +40,7 @@ async function handleBroadcast(payload: BroadcastPayload, source: ProviderIdenti
     throw new NotImplementedError('handleBroadcast');
 }
 
-async function handleRaiseIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<IntentResolution> {
+async function handleRaiseIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<void> {
     // This should be filled in once provider re-structuring is complete
 
     throw new NotImplementedError('handleRaiseIntent');

@@ -105,7 +105,7 @@ export class MetadataStore {
      */
     public update(appData: IApplication, app: Application): void {
         if (!this.appData.hasOwnProperty(appData.id)) {
-            this.appData[appData.id] = {uuid: app.identity.uuid, name: app.identity.name!, directoryId: appData.id};
+            this.appData[appData.id] = {uuid: app.identity.uuid, name: app.identity.uuid, directoryId: appData.id};
         }
     }
 }

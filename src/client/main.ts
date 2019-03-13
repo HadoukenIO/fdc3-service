@@ -1,6 +1,7 @@
 import { tryServiceDispatch, channelPromise } from "./connection";
-import { APITopic } from "./internal";
+import { APITopic, SERVICE_IDENTITY } from "./internal";
 import { Context } from './context';
+import { IntentType } from "./intents";
 
 /**
  * This file was copied from the FDC3 v1 specification.
@@ -8,8 +9,10 @@ import { Context } from './context';
  * Original file: https://github.com/FDC3/FDC3/blob/master/src/api/interface.ts
  */
 
-// Re-export valid contexts at top-level
-export {Context};
+// Re-export types/enums at top-level
+export * from './context';
+export * from './directory';
+export * from './intents';
  
 export enum OpenError {
     AppNotFound = "AppNotFound",
@@ -44,7 +47,24 @@ export interface AppIntent {
  * App metadata is Desktop Agent specific - but should support a name property.
  */
 export interface AppMetadata {
+    id: number;
     name: string;
+    title: string;
+    manifest_url: string;
+    description: string;
+    contact_email: string;
+    support_email: string;
+    signature: string;
+    publisher: string;
+    icon: string;
+    appPage: string;
+    images: {url: string}[];
+    /**
+     * A list of the intents supported by this application.
+     *
+     * Some intents are defined as part of the FDC3 spec, and applications may also define their own intents.
+     */
+    intents: string[];
 }
 
 /**
@@ -64,10 +84,57 @@ export interface IntentResolution {
 }
 
 export interface Listener {
+    handler: (context: Context) => void;
     /**
      * Unsubscribe the listener object.
      */
     unsubscribe: () => void;
+}
+
+export class Intent {
+    /**
+     * Defines the type of this intent.
+     *
+     * Can be one of the intent types defined by the FDC3 specification, or a custom/app-specific intent type.
+     */
+    public intent: IntentType;
+
+    /**
+     * Name of app to target for the Intent. Use if creating an explicit intent that bypasses resolver and goes directly to an app.
+     */
+    public context: Context;
+
+    /**
+     * Name of app to target for the Intent. Use if creating an explicit intent that bypasses resolver and goes directly to an app.
+     */
+    public target: string|null;
+
+    constructor(intent: IntentType, context: Context, target?: string) {
+        this.intent = intent;
+        this.context = context;
+        this.target = target || null;
+    }
+
+    /**
+     * Dispatches the intent with the Desktop Agent.
+     *
+     * Returns a Promise - resolving if the intent successfully results in launching an App.
+     * If the resolution errors, it returns an `Error` with a string from the `ResolveError` enumeration.
+     *
+     * @param context Can optionally override the context on this intent. The context on the intent will remain un-modified.
+     * @param target Can optionally override the target on this intent. The target on the intent will remain un-modified.
+     */
+    public async send(context?: Context, target?: string): Promise<void> {
+
+        if (arguments.length === 0) {
+            console.log('Sending intent with payload: ', {intent: this.intent, context: this.context, target: this.target || undefined});
+            return tryServiceDispatch(APITopic.RAISE_INTENT, {intent: this.intent, context: this.context, target: this.target || undefined});
+        } else {
+            const intentData = {intent: this.intent, context: context || this.context, target: target || this.target || undefined};
+            
+            return tryServiceDispatch(APITopic.RAISE_INTENT, intentData);
+        }
+    }
 }
 
 /**
@@ -183,8 +250,77 @@ export function broadcast(context: Context): void {
  * agent.raiseIntent("StartChat", newContext, intentR.source);
  * ```
  */
-export async function raiseIntent(intent: string, context: Context, target?: string): Promise<IntentResolution> {
+export async function raiseIntent(intent: string, context: Context, target?: string): Promise<void> {
     return tryServiceDispatch(APITopic.RAISE_INTENT, {intent, context, target});
+}
+
+class IntentListener implements Listener{
+    public readonly intent: IntentType;
+    public readonly handler: (context: Context) => void;
+
+    constructor(intent: IntentType, handler: (context: Context) => void) {
+        this.intent = intent;
+        this.handler = handler;
+
+        intentListeners.push(this);
+    }
+
+    /**
+     * Unsubscribe the listener object.
+     */
+    public unsubscribe(): boolean {
+        const index: number = intentListeners.indexOf(this);
+
+        if (index >= 0) {
+            intentListeners.splice(index, 1);
+        }
+
+        return index >= 0;
+    }
+}
+
+/**
+ * Listens to incoming context broadcast from the Desktop Agent.
+ */
+class ContextListener implements Listener {
+    public readonly handler: (context: Context) => void;
+
+    constructor(handler: (context: Context) => void) {
+        this.handler = handler;
+
+        contextListeners.push(this);
+    }
+
+    /**
+     * Unsubscribe the listener object.
+     */
+    public unsubscribe(): boolean {
+        const index: number = contextListeners.indexOf(this);
+
+        if (index >= 0) {
+            contextListeners.splice(index, 1);
+        }
+
+        return index >= 0;
+    }
+}
+const intentListeners: IntentListener[] = [];
+const contextListeners: ContextListener[] = [];
+
+if (channelPromise) {
+    fin.InterApplicationBus.subscribe(SERVICE_IDENTITY, 'intent', (payload: Intent, uuid: string, name: string) => {
+        intentListeners.forEach((listener: IntentListener) => {
+            if (payload.intent === listener.intent) {
+                listener.handler(payload.context);
+            }
+        });
+    });
+
+    fin.InterApplicationBus.subscribe(SERVICE_IDENTITY, 'context', (payload: Context, uuid: string, name: string) => {
+        contextListeners.forEach((listener: ContextListener) => {
+            listener.handler(payload);
+        });
+    });
 }
 
 /**
@@ -192,9 +328,7 @@ export async function raiseIntent(intent: string, context: Context, target?: str
  */
 export function addIntentListener(intent: string, handler: (context: Context) => void): Listener {
     // TODO: Implementation
-    return {
-        unsubscribe: () => { }
-    };
+    return new IntentListener(intent, handler);
 }
 
 /**
@@ -202,7 +336,5 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
  */
 export function addContextListener(handler: (context: Context) => void): Listener {
     // TODO: Implementation
-    return {
-        unsubscribe: () => { }
-    };
+    return new ContextListener(handler);
 }

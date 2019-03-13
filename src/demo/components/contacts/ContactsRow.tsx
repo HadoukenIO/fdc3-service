@@ -1,6 +1,6 @@
 import * as React from 'react';
-import * as fdc3 from '../../../client/index';
-import { ContactPayload } from '../../../client/context';
+import * as fdc3 from '../../../client/main';
+import { ContactContext } from '../../../client/context';
 
 import './ContactsRow.css';
 
@@ -68,7 +68,7 @@ export class ContactsRow extends React.Component<IContactRowProps> {
         }
     }
 
-    private getContext(): ContactPayload {
+    private getContext(): ContactContext {
         const item: IContact = this.props.item;
 
         return {

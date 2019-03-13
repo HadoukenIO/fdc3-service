@@ -1,10 +1,10 @@
 import * as React from 'react';
-import * as fdc3 from '../../client/index';
+import * as fdc3 from '../../client/main';
 
 import '../../../res/demo/css/w3.css';
 
 import { Chart } from '../components/charts/Chart';
-import { SecurityPayload, Payload } from '../../client/context';
+import { SecurityContext, Context } from '../../client/context';
 
 interface IAppProps {
     symbolName?: string;
@@ -24,19 +24,19 @@ export class ChartsApp extends React.Component<IAppProps, IAppState> {
         };
 
         //Add FDC3 listeners
-        const chartListener = new fdc3.IntentListener(fdc3.Intents.VIEW_CHART, (context: Payload): Promise<void> => {
+        const chartListener = fdc3.addIntentListener(fdc3.Intents.VIEW_CHART, (context: Context): Promise<void> => {
             return new Promise((resolve: ()=>void, reject: (reason?: Error)=>void) => {
                 try {
-                    this.handleIntent(context as SecurityPayload);
+                    this.handleIntent(context as SecurityContext);
                     resolve();
                 } catch(e) {
                     reject(e);
                 }
             });
         });
-        const contextListener = new fdc3.ContextListener((context: Payload): void => {
+        const contextListener = fdc3.addContextListener((context: Context): void => {
             if (context.type === "security") {
-                this.handleIntent(context as SecurityPayload);
+                this.handleIntent(context as SecurityContext);
             }
         });
     }
@@ -50,7 +50,7 @@ export class ChartsApp extends React.Component<IAppProps, IAppState> {
         );
     }
 
-    private handleIntent(context: SecurityPayload): void {
+    private handleIntent(context: SecurityContext): void {
         if (context && context.name) {
             this.setState({
                 symbolName: context.name

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as fdc3 from '../../client/index';
+import * as fdc3 from '../../client/main';
 import { IApplication } from '../../client/directory';
 
 import '../../../res/demo/css/w3.css';
@@ -17,8 +17,8 @@ export class LauncherApp extends React.Component<{}, IAppState> {
         document.title = "Launcher";
         this.state = {applications: []};
 
-        fdc3.resolve(null!).then((applications: IApplication[]) => {
-            this.setState({applications});
+        fdc3.findIntent(null!).then((response: fdc3.AppIntent) => {
+            this.setState({applications: response.apps});
         });
     }
 

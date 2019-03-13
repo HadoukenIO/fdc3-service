@@ -1,9 +1,10 @@
-import {Intent} from '../client';
+import {Intent} from '../client/main';
 import {IApplication} from '../client/directory';
 import {IntentType} from '../client/intents';
 
 import {FDC3} from './FDC3';
 import {IAppMetadata} from './MetadataStore';
+import { Context } from '../client/main';
 
 console.log('the provider has landed.');
 
@@ -40,11 +41,11 @@ export const enum eDefaultAction {
 // Message definitions
 export interface IOpenArgs {
     name: string;
-    context?: any;  // tslint:disable-line
+    context?: Context;
 }
 export interface IResolveArgs {
     intent: IntentType;
-    context?: any;  // tslint:disable-line
+    context?: Context;
 }
 export interface ISelectorResultArgs {
     handle: number;

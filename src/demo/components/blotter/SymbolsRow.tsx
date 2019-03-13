@@ -1,6 +1,6 @@
 import * as React from 'react';
-import * as fdc3 from '../../../client/index';
-import { SecurityPayload } from '../../../client/context';
+import * as fdc3 from '../../../client/main';
+import { SecurityContext } from '../../../client/context';
 import { IApplication } from '../../../client/directory';
 
 import './SymbolsRow.css';
@@ -33,8 +33,8 @@ export class SymbolsRow extends React.Component<ISymbolsRowProps> {
                 {caption: "Use Default", userData: "chart"},
                 {type: eContextMenuItem.SEPARATOR},
                 new Promise<IContextMenuItem[]>((resolve, reject) => {
-                    fdc3.resolve(fdc3.Intents.VIEW_CHART).then((value: IApplication[]) => {
-                        resolve(value.map((app: IApplication): IContextMenuItem => ({
+                    fdc3.findIntent(fdc3.Intents.VIEW_CHART).then((response: fdc3.AppIntent) => {
+                        resolve(response.apps.map((app: IApplication): IContextMenuItem => ({
                             type: eContextMenuItem.BUTTON,
                             caption: app.title,
                             userData: app.name
@@ -128,7 +128,7 @@ export class SymbolsRow extends React.Component<ISymbolsRowProps> {
         intent.send();
     }
 
-    private getContext(): SecurityPayload {
+    private getContext(): SecurityContext {
         const item: ISymbol = this.props.item!;
 
         return {

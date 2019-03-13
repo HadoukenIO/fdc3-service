@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as fdc3 from '../../client/index';
+import * as fdc3 from '../../client/main';
 
 import '../../../res/demo/css/w3.css';
 
@@ -7,7 +7,7 @@ import { Number } from '../components/dialer/Number';
 import { Dialer } from '../components/dialer/Dialer';
 import { CallTimer } from '../components/dialer/CallTimer';
 import { CallButton } from '../components/dialer/CallButton';
-import { ContactPayload, Payload } from '../../client/context';
+import { ContactContext, Context } from '../../client/context';
 import { Dialog } from '../components/common/Dialog';
 
 interface IAppProps {
@@ -17,7 +17,7 @@ interface IAppProps {
 interface IAppState {
     inCall: boolean;
     phoneNumber: string;
-    pendingCall: ContactPayload|null;
+    pendingCall: ContactContext|null;
 }
 
 export class DialerApp extends React.Component<IAppProps, IAppState> {
@@ -37,31 +37,31 @@ export class DialerApp extends React.Component<IAppProps, IAppState> {
         this.handleDialog = this.handleDialog.bind(this);
 
         //Add FDC3 listeners
-        const dialListener = new fdc3.IntentListener(fdc3.Intents.DIAL_CALL, (context: Payload): void => {
+        const dialListener = fdc3.addIntentListener(fdc3.Intents.DIAL_CALL, (context: Context): void => {
             if (!this.state.inCall) {
-                this.handleIntent(context as ContactPayload, false);
-            } else if (context.id.phone) {
-                this.setState({pendingCall: context as ContactPayload});
+                this.handleIntent(context as ContactContext, false);
+            } else if (context.id && context.id.phone) {
+                this.setState({pendingCall: context as ContactContext});
             }
         });
-        const callListener = new fdc3.IntentListener(fdc3.Intents.START_CALL, (context: Payload): void => {
+        const callListener = fdc3.addIntentListener(fdc3.Intents.START_CALL, (context: Context): void => {
             if (!this.state.inCall) {
-                this.handleIntent(context as ContactPayload, true);
-            } else if (context.id.phone) {
-                this.setState({pendingCall: context as ContactPayload});
+                this.handleIntent(context as ContactContext, true);
+            } else if (context.id && context.id.phone) {
+                this.setState({pendingCall: context as ContactContext});
             }
         });
-        const contextListener = new fdc3.ContextListener((context: Payload): void => {
+        const contextListener = fdc3.addContextListener((context: Context): void => {
             if (context.type === "contact") {
                 if (!this.state.inCall) {
-                    this.handleIntent(context as ContactPayload, false);
+                    this.handleIntent(context as ContactContext, false);
                 }
             }
         });
     }
 
     public render(): JSX.Element {
-        const pendingCall: ContactPayload = this.state.pendingCall!;
+        const pendingCall: ContactContext = this.state.pendingCall!;
 
         return (
             <div>
@@ -99,7 +99,7 @@ export class DialerApp extends React.Component<IAppProps, IAppState> {
         }
     }
 
-    private handleIntent(context: ContactPayload, startCall: boolean): void {
+    private handleIntent(context: ContactContext, startCall: boolean): void {
         const phoneNumber: string = context.id.phone!;
 
         if (phoneNumber) {

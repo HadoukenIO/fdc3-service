@@ -7,13 +7,6 @@
  * in order to support this demo.
  */
 
-export interface Envelope<T extends ContextBase> {
-    type: 'fdc-context';
-    definition: 'https://fdc3.org/context/1.0.0/';
-    version: string;
-    data: T[];
-}
-
 /**
  * Union of currently supported context types. 
  * 
