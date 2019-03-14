@@ -1,0 +1,100 @@
+[{
+    "id": 100,
+    "name": "test-app-1",
+    "title": "Test App 1",
+    "manifest_url": "http://localhost:3923/test/configs/test-app-1.json",
+    "description": "App for testing fdc3 service",
+    "contact_email": "support@openfin.co",
+    "support_email": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icon": "http://localhost:3923/demo/img/app-icons/blotter.svg",
+    "appPage": "",
+    "images": [],
+    "intents": [
+        "DialCall",
+        "StartCall",
+        "SaveContact",
+        "ViewChart"
+    ]
+},
+{
+    "id": 200,
+    "name": "test-app-2",
+    "title": "Test App 2",
+    "manifest_url": "http://localhost:3923/test/configs/test-app-2.json",
+    "description": "App for testing fdc3 service",
+    "contact_email": "support@openfin.co",
+    "support_email": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icon": "http://localhost:3923/demo/img/app-icons/blotter.svg",
+    "appPage": "",
+    "images": [],
+    "intents": [
+        "DialCall",
+        "StartCall",
+        "SaveContact",
+        "ViewChart"
+    ]
+},
+{
+    "id": 300,
+    "name": "test-app-3",
+    "title": "Test App 3",
+    "manifest_url": "http://localhost:3923/test/configs/test-app-3.json",
+    "description": "App for testing fdc3 service",
+    "contact_email": "support@openfin.co",
+    "support_email": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icon": "http://localhost:3923/demo/img/app-icons/blotter.svg",
+    "appPage": "",
+    "images": [],
+    "intents": [
+        "DialCall",
+        "StartCall",
+        "SaveContact",
+        "ViewChart"
+    ]
+},
+{
+    "id": 400,
+    "name": "test-app-4",
+    "title": "Test App 4",
+    "manifest_url": "http://localhost:3923/test/configs/test-app-4.json",
+    "description": "App for testing fdc3 service",
+    "contact_email": "support@openfin.co",
+    "support_email": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icon": "http://localhost:3923/demo/img/app-icons/blotter.svg",
+    "appPage": "",
+    "images": [],
+    "intents": [
+        "DialCall",
+        "StartCall",
+        "SaveContact",
+        "ViewChart"
+    ]
+},
+{
+    "id": 500,
+    "name": "test-app-5",
+    "title": "Test App 5",
+    "manifest_url": "http://localhost:3923/test/configs/test-app-5.json",
+    "description": "App for testing fdc3 service",
+    "contact_email": "support@openfin.co",
+    "support_email": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icon": "http://localhost:3923/demo/img/app-icons/blotter.svg",
+    "appPage": "",
+    "images": [],
+    "intents": [
+        "DialCall",
+        "StartCall",
+        "SaveContact",
+        "ViewChart"
+    ]
+}]
