@@ -25,9 +25,11 @@
     "url": "https://github.com/HadoukenIO/fdc3-service/issues"
   },
   "homepage": "https://github.com/HadoukenIO/fdc3-service#readme",
-  "dependencies": {},
+  "dependencies": {
+    "jest-junit": "^6.3.0"
+  },
   "devDependencies": {
-    "@types/jest": "^22.2.0",
+    "@types/jest": "^22.2.3",
     "@types/moment": "^2.13.0",
     "@types/node": "^9.4.6",
     "@types/openfin": "^37.0.4",
@@ -55,17 +57,29 @@
     "webpack-dev-middleware": "^3.6.0"
   },
   "jest": {
-    "verbose": true,
-    "testURL": "http://localhost",
+    "testURL": "http://localhost/",
+    "transform": {
+      "^.+\\.tsx?$": "<rootDir>/../node_modules/ts-jest"
+    },
+    "rootDir": "test",
+    "testRegex": "\\.test\\.ts$",
+    "modulePaths": [
+      "<rootDir>/../node_modules"
+    ],
     "moduleFileExtensions": [
       "ts",
-      "js"
-    ],
-    "transform": {
-      "^.+\\.(ts|tsx)$": "ts-jest"
-    },
-    "testMatch": [
-      "**/test/provider/**/*.(ts|tsx)"
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
     ]
+  },
+  "jest-junit": {
+    "outputDirectory": "./dist/test",
+    "outputName": "results-unit.xml",
+    "classNameTemplate": "{classname} > {title}",
+    "titleTemplate": "{title}",
+    "ancestorSeparator": " > "
   }
 }
