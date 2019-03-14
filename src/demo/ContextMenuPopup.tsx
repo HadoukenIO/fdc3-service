@@ -22,7 +22,6 @@ interface ContextMenuPopupProps {
     children?: React.ReactNode;
 }
 
-// tslint:disable-next-line:variable-name
 export const ContextMenuPopup: React.FunctionComponent<ContextMenuPopupProps> = (props) => {
     const [menuItems, setMenuItems] = React.useState<MenuItem[]>([]);
     let windowHeight = 2;
@@ -31,8 +30,8 @@ export const ContextMenuPopup: React.FunctionComponent<ContextMenuPopupProps> = 
         const handleMenuMessage = (message: ContextMenuMessage) => {
             if (message.action === "update") {
                 setMenuItems(message.items);
-                const ofWindow: fin.OpenFinWindow = fin.desktop.Window.getCurrent();
-                ofWindow.isShowing((showing) => {
+                const ofWindow = fin.Window.getCurrentSync();
+                ofWindow.isShowing().then(showing => {
                     if (!showing) {
                         ofWindow.show();
                         ofWindow.focus();

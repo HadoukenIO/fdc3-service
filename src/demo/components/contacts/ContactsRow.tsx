@@ -13,7 +13,6 @@ interface ContactRowProps {
     handleSelect: (item: Contact | null) => void;
 }
 
-// tslint:disable-next-line:variable-name
 export const ContactsRow: React.FunctionComponent<ContactRowProps> = (props) => {
     const {item, selected, handleSelect} = props;
 

@@ -6,7 +6,6 @@ interface DialerProps {
     handleKeyPress?: (key: string) => void;
 }
 
-// tslint:disable-next-line:variable-name
 export const Dialer: React.FunctionComponent<DialerProps> = (props) => {
     const {handleKeyPress} = props;
     return (
@@ -40,7 +39,6 @@ interface KeyPadButtonProps {
     handleKeyPress?: (value: string) => void;
 }
 
-// tslint:disable-next-line:variable-name
 const KeyPadButton: React.FC<KeyPadButtonProps> = (props) => {
     const {value, handleKeyPress} = props;
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {

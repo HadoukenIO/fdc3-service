@@ -5,7 +5,6 @@ import {AppCard} from '../components/launcher/AppCard';
 
 import '../../../res/demo/css/w3.css';
 
-// tslint:disable-next-line:variable-name
 export const LauncherApp: React.FunctionComponent = () => {
     const [applications, setApplications] = React.useState<IApplication[]>([]);
 

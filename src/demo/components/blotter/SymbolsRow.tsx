@@ -33,7 +33,6 @@ const menuItems: ContextMenuItem[] = [
     }
 ];
 
-// tslint:disable-next-line:variable-name
 export const SymbolsRow: React.FunctionComponent<SymbolsRowProps> = (props) => {
     const {item, selected, handleSelect} = props;
     const handleClick = (event: React.MouseEvent<HTMLTableRowElement>) => {

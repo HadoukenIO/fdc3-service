@@ -1,10 +1,10 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { BlotterApp } from './apps/BlotterApp';
-import { ChartsApp } from './apps/ChartsApp';
-import { ContactsApp } from './apps/ContactsApp';
-import { DialerApp } from './apps/DialerApp';
-import { LauncherApp } from './apps/LauncherApp';
+import {BlotterApp} from './apps/BlotterApp';
+import {ChartsApp} from './apps/ChartsApp';
+import {ContactsApp} from './apps/ContactsApp';
+import {DialerApp} from './apps/DialerApp';
+import {LauncherApp} from './apps/LauncherApp';
 
 /*
  * This file defines the entry point for all of the applications in this project. This "bootstrap" is intended to allow
@@ -20,24 +20,23 @@ import { LauncherApp } from './apps/LauncherApp';
  */
 
 
-// tslint:disable-next-line:variable-name
 const App: React.FunctionComponent = () => {
     const hasFin = window.hasOwnProperty("fin");
-    let uuid = fin.desktop.Application.getCurrent().uuid;
+    let uuid = fin.Window.me.uuid;
     let color = uuid.split("-")[2];
-    if(color){
-        uuid = uuid.slice(0, uuid.length - color.length -1);
+    if (color) {
+        uuid = uuid.slice(0, uuid.length - color.length - 1);
     }
-    else{
+    else {
         color = "blue-grey";
     }
     const cssURL = `https://www.w3schools.com/lib/w3-theme-${color}.css`;
 
     return (
         <React.Fragment>
-            <link rel="stylesheet" type="text/css" href={cssURL}/>
+            <link rel="stylesheet" type="text/css" href={cssURL} />
             {hasFin &&
-                <SelectApp uuid={uuid} />  
+                <SelectApp uuid={uuid} />
             }
             {!hasFin &&
                 <div>You cannot run this sample in the browser. Run this application through OpenFin by following the instructions in the readme.</div>
@@ -46,12 +45,11 @@ const App: React.FunctionComponent = () => {
     );
 };
 
-// tslint:disable-next-line:variable-name
 const SelectApp: React.FunctionComponent<{uuid: string}> = (props) => {
     const {uuid} = props;
     let selectedApp: JSX.Element;
 
-    switch(uuid) {
+    switch (uuid) {
         case "fdc3-launcher":
             selectedApp = <LauncherApp />;
             break;

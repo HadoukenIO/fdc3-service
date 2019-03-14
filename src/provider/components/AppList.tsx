@@ -25,8 +25,6 @@ const sendSuccess = (service: Promise<ChannelClient>, handle: number, app: IAppl
     });
 };
 
-
-// tslint:disable-next-line:variable-name
 export const AppList: React.FunctionComponent = () => {
     const [service, setService] = React.useState<Promise<ChannelClient>>();
     const [handle, setHandle] = React.useState<number>(0);

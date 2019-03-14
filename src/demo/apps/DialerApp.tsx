@@ -14,7 +14,6 @@ interface AppProps {
     phoneNumber?: string;
 }
 
-// tslint:disable-next-line:variable-name
 export const DialerApp: React.FunctionComponent<AppProps> = (props) => {
     const [inCall, setInCall] = React.useState(false);
     const [phoneNumber, setPhoneNumber] = React.useState<string>("");
@@ -39,9 +38,6 @@ export const DialerApp: React.FunctionComponent<AppProps> = (props) => {
         } else {
             throw new Error("Contact doesn't have a phone number");
         }
-    };
-    const handleColorIntentChange = (color: string) => {
-        console.log("Color changed" + color);
     };
 
     React.useEffect(() => {

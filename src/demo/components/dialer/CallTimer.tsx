@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import './CallTimer.css';
 
-// tslint:disable-next-line:variable-name
 export const CallTimer: React.FunctionComponent = () => {
     const [counter, setCounter] = React.useState(0);
     const seconds: number = (counter % 60),

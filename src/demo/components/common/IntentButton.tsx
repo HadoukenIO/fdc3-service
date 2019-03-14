@@ -13,7 +13,6 @@ enum ButtonStateType {
   ERROR
 }
 
-// tslint:disable-next-line:variable-name
 export const IntentButton: React.FunctionComponent<IntentButtonProps> = (props) => {
   const {action, title, iconClassName} = props;
   const [buttonState, setButtonState] = React.useState(ButtonStateType.DEFAULT);

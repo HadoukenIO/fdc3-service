@@ -6,7 +6,6 @@ interface ColorLinkerProps {
   onColorChange?: (color: string) => void;
 }
 
-// tslint:disable-next-line:variable-name
 export const ColorLinker: React.FunctionComponent<ColorLinkerProps> = (props) => {
   const {selected} = props;
   const colors: string[] = ['red', 'blue', 'orange', 'purple'];

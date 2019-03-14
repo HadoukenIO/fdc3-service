@@ -8,7 +8,6 @@ interface NumberProps {
     onValueChange?: (num: string) => void;
 }
 
-// tslint:disable-next-line:variable-name
 export const Number: React.FunctionComponent<NumberProps> = (props) => {
     const {onValueChange: handleValueChange, inCall, number: phoneNumber} = props;
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {

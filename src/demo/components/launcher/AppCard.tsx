@@ -9,7 +9,6 @@ interface AppCardProps {
     handleClick?: (app: IApplication) => void;
 }
 
-// tslint:disable-next-line:variable-name
 export const AppCard: React.FunctionComponent<AppCardProps> = (props) => {
     const {app, handleClick: handler} = props;
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {

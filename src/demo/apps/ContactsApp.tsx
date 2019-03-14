@@ -34,7 +34,7 @@ export interface Contact {
     email: string | null;
 }
 
-// tslint:disable-next-line:variable-name
+
 export const ContactsApp: React.FunctionComponent = () => {
     const [contacts, setContacts] = React.useState(initialContactsState);
     function handleIntent(context: ContactPayload) {

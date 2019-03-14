@@ -9,7 +9,6 @@ interface AppProps {
     symbolName?: string;
 }
 
-// tslint:disable-next-line:variable-name
 export const ChartsApp: React.FunctionComponent<AppProps> = (props) => {
     const [symbolName, setSymbolName] = React.useState("AAPL");
 

@@ -10,7 +10,6 @@ interface AppCardProps {
     openHandler: (app: IApplication) => void;
 }
 
-// tslint:disable-next-line:variable-name
 export const AppCard: React.FunctionComponent<AppCardProps> = (props) => {
     const {app, selected, openHandler, selectHandler} = props;
     const clickHandler = (event: React.MouseEvent<HTMLElement>) => {

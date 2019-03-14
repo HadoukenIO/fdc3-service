@@ -8,7 +8,6 @@ interface SymbolsTableProps {
 }
 
 
-// tslint:disable-next-line:variable-name
 export const SymbolsTable: React.FunctionComponent<SymbolsTableProps> = (props) => {
     const {items} = props;
     const [selectedItem, setSelectedItem] = React.useState<Symbol | null>(items![0] || null);

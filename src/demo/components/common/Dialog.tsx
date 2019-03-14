@@ -10,7 +10,6 @@ interface DialogProps {
     handleOption?: (option: string) => void;
 }
 
-// tslint:disable-next-line:variable-name
 export const Dialog: React.FunctionComponent<DialogProps> = (props) => {
     const {show, title, body, options, handleOption} = props;
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {

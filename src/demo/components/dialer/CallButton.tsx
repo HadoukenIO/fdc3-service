@@ -8,7 +8,6 @@ interface CallButtonProps {
     handleClick?: () => void;
 }
 
-// tslint:disable-next-line:variable-name
 export const CallButton: React.FunctionComponent<CallButtonProps> = (props) => {
     const {handleClick: handler, canCall, inCall} = props;
     const isEnabled: boolean = inCall || canCall;
