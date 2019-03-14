@@ -62,7 +62,7 @@
       "^.+\\.tsx?$": "<rootDir>/../node_modules/ts-jest"
     },
     "rootDir": "test",
-    "testRegex": "\\.test\\.ts$",
+    "testRegex": "\\.unittest\\.ts$",
     "modulePaths": [
       "<rootDir>/../node_modules"
     ],
