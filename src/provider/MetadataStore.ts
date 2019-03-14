@@ -104,6 +104,9 @@ export class MetadataStore {
      * @param app An OpenFin application that has been created from 'appData'
      */
     public update(appData: IApplication, app: Application): void {
+        if (typeof appData.id !== 'number') {
+            throw new TypeError('Invalid appData passed to MetadataStore. "id" must be a number.');
+        }
         if (!this.appData.hasOwnProperty(appData.id)) {
             this.appData[appData.id] = {uuid: app.identity.uuid, name: app.identity.name!, directoryId: appData.id};
         }
