@@ -1,5 +1,5 @@
 {
-    "extends": "gts/tslint.json",
+    "extends": "./node_modules/gts/tslint.json",
     "rules": {
         "array-type": [true, "array"],
         "interface-name": false,

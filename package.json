@@ -7,7 +7,7 @@
   "scripts": {
     "test": "jest",
     "check": "gts check",
-    "fix": "gts fix",
+    "fix": "gts fix && cd test && gts fix",
     "clean": "gts clean",
     "docs": "typedoc --name \"OpenFin FDC3\" --out ./dist/docs --excludeNotExported --excludePrivate --excludeProtected --hideGenerator --tsconfig src/client/tsconfig.json --readme none",
     "posttest": "npm run check",
