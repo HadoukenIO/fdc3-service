@@ -3,7 +3,7 @@ pipeline {
     agent { label 'linux-slave' }
 
     stages {
-        stage ('Integration Tests'){
+        stage ('Unit Tests'){
             agent { label 'linux-slave' }
             steps {
                 sh "npm i"
