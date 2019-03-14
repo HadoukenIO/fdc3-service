@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import './CallTimer.css';
 
-export const CallTimer: React.FunctionComponent = () => {
+export function CallTimer(): React.ReactElement {
     const [counter, setCounter] = React.useState(0);
     const seconds: number = (counter % 60),
         minutes: number = Math.floor(counter / 60) % 60,
@@ -23,4 +23,4 @@ export const CallTimer: React.FunctionComponent = () => {
             {hours < 10 ? "0" + hours : hours} : {minutes < 10 ? "0" + minutes : minutes} : {seconds < 10 ? "0" + seconds : seconds}
         </div>
     );
-};
+}

@@ -13,7 +13,7 @@ interface ContactRowProps {
     handleSelect: (item: Contact | null) => void;
 }
 
-export const ContactsRow: React.FunctionComponent<ContactRowProps> = (props) => {
+export function ContactsRow(props: ContactRowProps): React.ReactElement {
     const {item, selected, handleSelect} = props;
 
     const handleDial = (): Promise<void> => {
@@ -59,4 +59,4 @@ export const ContactsRow: React.FunctionComponent<ContactRowProps> = (props) => 
             </td>
         </tr>
     );
-};
+}

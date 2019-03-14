@@ -35,7 +35,7 @@ export interface Contact {
 }
 
 
-export const ContactsApp: React.FunctionComponent = () => {
+export function ContactsApp(): React.ReactElement {
     const [contacts, setContacts] = React.useState(initialContactsState);
     function handleIntent(context: ContactPayload) {
         if (context && context.name) {
@@ -73,4 +73,4 @@ export const ContactsApp: React.FunctionComponent = () => {
     return (
         <ContactsTable items={contacts} />
     );
-};
+}

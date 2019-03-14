@@ -8,7 +8,7 @@ interface SymbolsTableProps {
 }
 
 
-export const SymbolsTable: React.FunctionComponent<SymbolsTableProps> = (props) => {
+export function SymbolsTable(props: SymbolsTableProps): React.ReactElement {
     const {items} = props;
     const [selectedItem, setSelectedItem] = React.useState<Symbol | null>(items![0] || null);
     const handleSelect = (item: Symbol | null) => {
@@ -32,4 +32,4 @@ export const SymbolsTable: React.FunctionComponent<SymbolsTableProps> = (props) 
             </tbody>
         </table>
     );
-};
+}

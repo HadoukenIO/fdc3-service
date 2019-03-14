@@ -5,7 +5,7 @@ import {AppCard} from '../components/launcher/AppCard';
 
 import '../../../res/demo/css/w3.css';
 
-export const LauncherApp: React.FunctionComponent = () => {
+export function LauncherApp(): React.ReactElement {
     const [applications, setApplications] = React.useState<IApplication[]>([]);
 
     React.useEffect(() => {
@@ -30,4 +30,4 @@ export const LauncherApp: React.FunctionComponent = () => {
             {applications.map((app, index) => <AppCard key={app.id + index} app={app} handleClick={openApp} />)}
         </div>
     );
-};
+}

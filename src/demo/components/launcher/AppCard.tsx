@@ -9,7 +9,7 @@ interface AppCardProps {
     handleClick?: (app: IApplication) => void;
 }
 
-export const AppCard: React.FunctionComponent<AppCardProps> = (props) => {
+export function AppCard(props: AppCardProps): React.ReactElement {
     const {app, handleClick: handler} = props;
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
         if (handler) {
@@ -26,4 +26,4 @@ export const AppCard: React.FunctionComponent<AppCardProps> = (props) => {
             </div>
         </div>
     );
-};
+}

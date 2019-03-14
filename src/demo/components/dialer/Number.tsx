@@ -8,7 +8,7 @@ interface NumberProps {
     onValueChange?: (num: string) => void;
 }
 
-export const Number: React.FunctionComponent<NumberProps> = (props) => {
+export function Number(props: NumberProps) {
     const {onValueChange: handleValueChange, inCall, number: phoneNumber} = props;
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const inputFilter: RegExp = /[^0-9*#]/g;
@@ -31,4 +31,4 @@ export const Number: React.FunctionComponent<NumberProps> = (props) => {
             <input className="number-input w3-input w3-border" type="text" value={phoneNumber} onChange={handleChange} readOnly={inCall} />
         </div>
     );
-};
+}

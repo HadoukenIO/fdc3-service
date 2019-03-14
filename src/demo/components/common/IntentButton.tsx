@@ -13,7 +13,7 @@ enum ButtonStateType {
   ERROR
 }
 
-export const IntentButton: React.FunctionComponent<IntentButtonProps> = (props) => {
+export function IntentButton(props: IntentButtonProps): React.ReactElement {
   const {action, title, iconClassName} = props;
   const [buttonState, setButtonState] = React.useState(ButtonStateType.DEFAULT);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -38,4 +38,4 @@ export const IntentButton: React.FunctionComponent<IntentButtonProps> = (props) 
       <i className={buttonState === ButtonStateType.SPIN ? "fa fa-spinner fa-spin" : `fa ${iconClassName}`} title={title} />
     </button>
   );
-};
+}

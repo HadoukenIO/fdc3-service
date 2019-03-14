@@ -10,7 +10,7 @@ interface DialogProps {
     handleOption?: (option: string) => void;
 }
 
-export const Dialog: React.FunctionComponent<DialogProps> = (props) => {
+export function Dialog(props: DialogProps): React.ReactElement {
     const {show, title, body, options, handleOption} = props;
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
         if (handleOption) {
@@ -34,4 +34,4 @@ export const Dialog: React.FunctionComponent<DialogProps> = (props) => {
             </div>
         </div>
     );
-};
+}

@@ -24,10 +24,10 @@ const symbols: Symbol[] = [
     {"name": "TSLA"}
 ];
 
-export const BlotterApp: React.FunctionComponent = () => {
+export function BlotterApp(): React.ReactElement {
     React.useEffect(() => {
         document.title = "Blotter";
     });
 
     return (<SymbolsTable items={symbols} />);
-};
+}

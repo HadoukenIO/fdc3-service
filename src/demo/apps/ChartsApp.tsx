@@ -9,7 +9,7 @@ interface AppProps {
     symbolName?: string;
 }
 
-export const ChartsApp: React.FunctionComponent<AppProps> = (props) => {
+export function ChartsApp(props: AppProps): React.ReactElement {
     const [symbolName, setSymbolName] = React.useState("AAPL");
 
     function handleIntent(context: SecurityPayload): void {
@@ -55,4 +55,4 @@ export const ChartsApp: React.FunctionComponent<AppProps> = (props) => {
             <Chart />
         </div>
     );
-};
+}

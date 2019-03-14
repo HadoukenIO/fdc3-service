@@ -20,7 +20,7 @@ import {LauncherApp} from './apps/LauncherApp';
  */
 
 
-const App: React.FunctionComponent = () => {
+function App(): React.ReactElement {
     const hasFin = window.hasOwnProperty("fin");
     let uuid = fin.Window.me.uuid;
     let color = uuid.split("-")[2];
@@ -43,9 +43,13 @@ const App: React.FunctionComponent = () => {
             }
         </React.Fragment>
     );
-};
+}
 
-const SelectApp: React.FunctionComponent<{uuid: string}> = (props) => {
+interface SelectAppProps {
+    uuid: string;
+}
+
+function SelectApp(props: SelectAppProps): React.ReactElement {
     const {uuid} = props;
     let selectedApp: JSX.Element;
 
@@ -70,6 +74,6 @@ const SelectApp: React.FunctionComponent<{uuid: string}> = (props) => {
             selectedApp = (<div>Unknown application uuid: "{uuid}". Add application to index.tsx</div>);
     }
     return selectedApp;
-};
+}
 
 ReactDOM.render(<App />, document.getElementById('react-app'));

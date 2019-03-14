@@ -14,7 +14,7 @@ interface AppProps {
     phoneNumber?: string;
 }
 
-export const DialerApp: React.FunctionComponent<AppProps> = (props) => {
+export function DialerApp(props: AppProps): React.ReactElement {
     const [inCall, setInCall] = React.useState(false);
     const [phoneNumber, setPhoneNumber] = React.useState<string>("");
     const [pendingCall, setPendingCall] = React.useState<ContactPayload | null>(null);
@@ -84,4 +84,4 @@ export const DialerApp: React.FunctionComponent<AppProps> = (props) => {
             <Dialog show={!!pendingCall} title="Replace call?" body={"Hang up and call " + (pendingCall && pendingCall.id.phone) + "?"} options={["No", "Yes"]} handleOption={handleDialog} />
         </div>
     );
-};
+}

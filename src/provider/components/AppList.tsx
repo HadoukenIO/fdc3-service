@@ -25,7 +25,7 @@ const sendSuccess = (service: Promise<ChannelClient>, handle: number, app: IAppl
     });
 };
 
-export const AppList: React.FunctionComponent = () => {
+export function AppList(): React.ReactElement {
     const [service, setService] = React.useState<Promise<ChannelClient>>();
     const [handle, setHandle] = React.useState<number>(0);
     const [applications, setApplications] = React.useState<IApplication[]>([]);
@@ -93,4 +93,4 @@ export const AppList: React.FunctionComponent = () => {
             </div>
         </div>
     );
-};
+}

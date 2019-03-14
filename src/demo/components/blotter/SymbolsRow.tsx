@@ -33,7 +33,7 @@ const menuItems: ContextMenuItem[] = [
     }
 ];
 
-export const SymbolsRow: React.FunctionComponent<SymbolsRowProps> = (props) => {
+export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     const {item, selected, handleSelect} = props;
     const handleClick = (event: React.MouseEvent<HTMLTableRowElement>) => {
         event.preventDefault();
@@ -97,4 +97,4 @@ export const SymbolsRow: React.FunctionComponent<SymbolsRowProps> = (props) => {
             </td>
         </tr>
     );
-};
+}

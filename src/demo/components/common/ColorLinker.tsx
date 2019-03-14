@@ -6,7 +6,7 @@ interface ColorLinkerProps {
   onColorChange?: (color: string) => void;
 }
 
-export const ColorLinker: React.FunctionComponent<ColorLinkerProps> = (props) => {
+export function ColorLinker(props: ColorLinkerProps): React.ReactElement {
   const {selected} = props;
   const colors: string[] = ['red', 'blue', 'orange', 'purple'];
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -24,4 +24,4 @@ export const ColorLinker: React.FunctionComponent<ColorLinkerProps> = (props) =>
       </select>
     </div>
   );
-};
+}

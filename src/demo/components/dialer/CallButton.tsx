@@ -8,7 +8,7 @@ interface CallButtonProps {
     handleClick?: () => void;
 }
 
-export const CallButton: React.FunctionComponent<CallButtonProps> = (props) => {
+export function CallButton(props: CallButtonProps): React.ReactElement {
     const {handleClick: handler, canCall, inCall} = props;
     const isEnabled: boolean = inCall || canCall;
     const handleClick = () => {
@@ -19,4 +19,4 @@ export const CallButton: React.FunctionComponent<CallButtonProps> = (props) => {
     return (
         <button className={"call-btn w3-button " + (inCall ? "w3-red" : "w3-green")} disabled={!isEnabled} onClick={handleClick}>{inCall ? "End Call" : "Call"}</button>
     );
-};
+}

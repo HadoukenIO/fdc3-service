@@ -10,7 +10,7 @@ interface AppCardProps {
     openHandler: (app: IApplication) => void;
 }
 
-export const AppCard: React.FunctionComponent<AppCardProps> = (props) => {
+export function AppCard(props: AppCardProps): React.ReactElement {
     const {app, selected, openHandler, selectHandler} = props;
     const clickHandler = (event: React.MouseEvent<HTMLElement>) => {
         event.preventDefault();
@@ -27,4 +27,4 @@ export const AppCard: React.FunctionComponent<AppCardProps> = (props) => {
             <div className="w3-clear" />
         </div>
     );
-};
+}

@@ -6,7 +6,7 @@ interface DialerProps {
     handleKeyPress?: (key: string) => void;
 }
 
-export const Dialer: React.FunctionComponent<DialerProps> = (props) => {
+export function Dialer(props: DialerProps): React.ReactElement {
     const {handleKeyPress} = props;
     return (
         <div className="dialer">
@@ -32,14 +32,14 @@ export const Dialer: React.FunctionComponent<DialerProps> = (props) => {
             </div>
         </div>
     );
-};
+}
 
 interface KeyPadButtonProps {
     value: string;
     handleKeyPress?: (value: string) => void;
 }
 
-const KeyPadButton: React.FC<KeyPadButtonProps> = (props) => {
+function KeyPadButton(props: KeyPadButtonProps): React.ReactElement {
     const {value, handleKeyPress} = props;
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
@@ -48,4 +48,4 @@ const KeyPadButton: React.FC<KeyPadButtonProps> = (props) => {
         }
     };
     return (<button key={value} onClick={handleClick} value={value}>{value}</button>);
-};
+}

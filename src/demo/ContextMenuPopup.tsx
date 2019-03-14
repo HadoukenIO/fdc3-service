@@ -22,7 +22,7 @@ interface ContextMenuPopupProps {
     children?: React.ReactNode;
 }
 
-export const ContextMenuPopup: React.FunctionComponent<ContextMenuPopupProps> = (props) => {
+export function ContextMenuPopup(props: ContextMenuPopupProps): React.ReactElement {
     const [menuItems, setMenuItems] = React.useState<MenuItem[]>([]);
     let windowHeight = 2;
 
@@ -93,7 +93,7 @@ export const ContextMenuPopup: React.FunctionComponent<ContextMenuPopupProps> = 
 
 
     return (<div className="context-menu">{items}</div>);
-};
+}
 
 
 function sendMessage(message: ContextMenuMessage): void {

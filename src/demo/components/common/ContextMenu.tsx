@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import {MenuItem} from '../../ContextMenuPopup';
+import {_Window} from 'openfin/_v2/api/window/window';
 
 declare const window: Window & {ContextMenu: ContextMenu | null};
 
@@ -128,7 +129,7 @@ interface Menu {
 interface Popup {
     menuState: Menu;
     item: ParsedMenuItem;
-    window: fin.OpenFinWindow;
+    window: _Window;
 }
 
 interface ContextMenuProps {
@@ -161,7 +162,7 @@ export class ContextMenu extends React.Component<ContextMenuProps> {
         const free: Popup[] = this.POOL.free;
 
         while (free.length < count) {
-            free.push(this.createPopup());
+            free.push(await this.createPopup());
         }
     }
 
@@ -184,12 +185,31 @@ export class ContextMenu extends React.Component<ContextMenuProps> {
         return popup;
     }
 
-    private static createPopup(callback?: (popup: Popup) => void): Popup {
-        let window: fin.OpenFinWindow;
+    private static async createPopup(callback?: (popup: Popup) => void): Popup {
         let popup: Popup;
 
         //Create window
-        window = new fin.desktop.Window({
+        const window = await fin.Window.create({
+            name: this.createId("menu"),     //Window names must be unique
+            url: ContextMenu.URL,
+            autoShow: false,
+            alwaysOnTop: true,
+            frame: false,
+            resizable: false,
+            showTaskbarIcon: false,
+            saveWindowState: false
+        });
+        popup = {
+            menuState: null!,
+            item: null!,
+            window
+        };
+        if (callback) {
+            callback(popup);
+        }
+
+
+        const w = new fin.desktop.Window({
             name: this.createId("menu"),     //Window names must be unique
             url: ContextMenu.URL,
             autoShow: false,

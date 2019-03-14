@@ -7,7 +7,7 @@ interface ContactTableProps {
     items?: Contact[];
 }
 
-export const ContactsTable: React.FunctionComponent<ContactTableProps> = (props) => {
+export function ContactsTable(props: ContactTableProps): React.ReactElement {
     const {items} = props;
     const [selectedItem, setSelectedItem] = React.useState<Contact | null>(null);
 
@@ -27,4 +27,4 @@ export const ContactsTable: React.FunctionComponent<ContactTableProps> = (props)
             </tbody>
         </table>
     );
-};
+}
