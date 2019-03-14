@@ -160,7 +160,7 @@ export async function findIntent(intent: string, context?: Context): Promise<App
 }
 
 /**
- * Find all the avalable intents for a particular context.
+ * Find all the available intents for a particular context.
  *
  * findIntents is effectively granting programmatic access to the Desktop Agent's resolver.
  * A promise resolving to all the intents, their metadata and metadata about the apps that registered it is returned,
