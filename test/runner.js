@@ -7,7 +7,10 @@ const path = require('path');
 const {launch} = require('hadouken-js-adapter');
 
 let port;
+
+// Should be cmd-line args at some point
 const debugMode = true;
+const skipBuild = false;
 
 const cleanup = async res => {
     if (os.platform().match(/^win/)) {
@@ -59,7 +62,9 @@ async function serve() {
     });
 }
 
-build()
+const buildStep = skipBuild ? Promise.resolve() : build();
+
+buildStep
     .then(() => serve())
     .then(async () => {
         port = await launch({manifestUrl: 'http://localhost:3923/test/test-app-main.json'});
@@ -67,3 +72,6 @@ build()
         return port
     })
     .catch(fail)
+    .then(OF_PORT => run('jest' ,['--config', 'jest-int.config.json'] , { env: { OF_PORT } }))
+    .then(cleanup)
+    .catch(cleanup);
