@@ -1,0 +1,20 @@
+
+{
+    "testURL": "http://localhost/",
+    "transform": {
+      "^.+\\.tsx?$": "<rootDir>/../node_modules/ts-jest"
+    },
+    "rootDir": "test",
+    "testRegex": "\\.unittest\\.ts$",
+    "modulePaths": [
+      "<rootDir>/../node_modules"
+    ],
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ]
+  }
