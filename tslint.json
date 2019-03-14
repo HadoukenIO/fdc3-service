@@ -10,11 +10,6 @@
         ],
         "interface-name": false,
         "member-access": true,
-        "variable-name": {
-            "options": [
-                "allow-pascal-case"
-            ]
-        },
         "no-inferrable-types": false,
         "jsx-no-multiline-js": false
     }
