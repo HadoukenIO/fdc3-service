@@ -19,12 +19,11 @@ export interface MenuItem {
 
 interface ContextMenuPopupProps {
     items?: MenuItem[];
-    children?: React.ReactNode;
 }
 
 export function ContextMenuPopup(props: ContextMenuPopupProps): React.ReactElement {
-    const [menuItems, setMenuItems] = React.useState<MenuItem[]>([]);
-    let windowHeight = 2;
+    const {items = []} = props;
+    const [menuItems, setMenuItems] = React.useState<MenuItem[]>(items);
 
     React.useEffect(() => {
         const handleMenuMessage = (message: ContextMenuMessage) => {
@@ -45,7 +44,6 @@ export function ContextMenuPopup(props: ContextMenuPopupProps): React.ReactEleme
             sendMessage({action: "blur"});
         };
         fin.desktop.Window.getCurrent().addEventListener("blurred", listener);
-
         //Cleanup
         return () => {
             fin.desktop.InterApplicationBus.unsubscribe(uuid, ContextMenu.TOPIC, handleMenuMessage);
@@ -54,45 +52,43 @@ export function ContextMenuPopup(props: ContextMenuPopupProps): React.ReactEleme
     }, []);
 
     //Generate the menu items
-    const items = React.useMemo(() => {
-        return menuItems.map((item) => {
-            let component: JSX.Element;
-            let itemHeight = 22;
-            const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-                event.preventDefault();
-                onClick(item, event.currentTarget.offsetTop);
-            };
+    let windowHeight = 2;
+    const menuItemComponents = menuItems.map((item) => {
+        let component: JSX.Element;
+        let itemHeight = 22;
+        const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+            event.preventDefault();
+            onClick(item, event.currentTarget.offsetTop);
+        };
 
-            switch (item.type) {
-                case ContextMenuItemType.SPINNER:
-                    component = <button key={item.id} className="spinner w3-button w3-disabled"><i className="fa fa-spinner fa-spin" /></button>;
-                    break;
-                case ContextMenuItemType.SEPARATOR:
-                    component = <hr key={item.id} />;
-                    itemHeight = 7;
-                    break;
-                case ContextMenuItemType.LABEL:
-                    component = <span key={item.id} className="w3-button">{item.caption}</span>;
-                    break;
-                case ContextMenuItemType.BUTTON:
-                    component = <button key={item.id} className={"w3-button" + (item.hasChildren ? " children" : "")} onClick={handleClick}>{item.caption}</button>;
-                    break;
-                default:
-                    component = <></>;
-                    itemHeight = 0;
-            }
-
-            windowHeight += itemHeight;
-            return component;
-        });
-    }, [menuItems]);
+        switch (item.type) {
+            case ContextMenuItemType.SPINNER:
+                component = <button key={item.id} className="spinner w3-button w3-disabled"><i className="fa fa-spinner fa-spin" /></button>;
+                break;
+            case ContextMenuItemType.SEPARATOR:
+                component = <hr key={item.id} />;
+                itemHeight = 7;
+                break;
+            case ContextMenuItemType.LABEL:
+                component = <span key={item.id} className="w3-button">{item.caption}</span>;
+                break;
+            case ContextMenuItemType.BUTTON:
+                component = <button key={item.id} className={"w3-button" + (item.hasChildren ? " children" : "")} onClick={handleClick}>{item.caption}</button>;
+                break;
+            default:
+                component = <></>;
+                itemHeight = 0;
+        }
+        windowHeight += itemHeight;
+        return component;
+    });
 
     if (window.innerHeight !== windowHeight) {
         fin.desktop.Window.getCurrent().resizeTo(150, windowHeight, "top-left");
     }
 
 
-    return (<div className="context-menu">{items}</div>);
+    return (<div className="context-menu">{menuItemComponents}</div>);
 }
 
 
