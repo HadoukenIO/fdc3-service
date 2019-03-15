@@ -8,7 +8,7 @@ pipeline {
             steps {
                 sh "npm i"
                 sh "npm run check"
-                sh "npm test"
+                sh "npm run test:unit"
             }
         }
 
