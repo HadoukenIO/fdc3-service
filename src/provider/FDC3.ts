@@ -1,6 +1,6 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {IApplication} from '../client/directory';
+import {DirectoryApplication} from '../client/directory';
 import {Intent, Payload, SERVICE_CHANNEL} from '../client/index';
 
 import {AppDirectory} from './AppDirectory';
@@ -49,8 +49,8 @@ export class FDC3 {
         service.register(FDC3.MSG_SELECTOR_RESULT, this.onSelectorResult.bind(this));
     }
     private async onOpen(payload: IOpenArgs): Promise<void> {
-        const applications: IApplication[] = await this.directory.getApplications();
-        const requestedApp: IApplication|undefined = applications.find((app: IApplication) => app.name === payload.name);
+        const applications: DirectoryApplication[] = await this.directory.getApplications();
+        const requestedApp: DirectoryApplication|undefined = applications.find((app: DirectoryApplication) => app.name === payload.name);
         return new Promise<void>((resolve: () => void, reject: (reason: Error) => void) => {
             if (requestedApp) {
                 this.openApplication(requestedApp, payload.context).then(resolve, reject);
@@ -59,12 +59,12 @@ export class FDC3 {
             }
         });
     }
-    private async onResolve(payload: IResolveArgs): Promise<IApplication[]> {
-        const applications: IApplication[] = await this.directory.getApplications();
+    private async onResolve(payload: IResolveArgs): Promise<DirectoryApplication[]> {
+        const applications: DirectoryApplication[] = await this.directory.getApplications();
         if (payload.intent) {
             // Return all applications within the manifest that can handle the given
             // intent
-            return applications.filter((app: IApplication) => app.intents.includes(payload.intent));
+            return applications.filter((app: DirectoryApplication) => app.intents && app.intents.some(intent => intent.name === payload.intent));
         } else {
             // Return all applications. Used by the demo to populate the launcher, but
             // may not be to-spec.
@@ -75,7 +75,7 @@ export class FDC3 {
         return this.sendContext(context);
     }
     private async onIntent(intent: Intent, source: Identity): Promise<void> {
-        let applications: IApplication[] = await this.onResolve({intent: intent.intent, context: intent.context});
+        let applications: DirectoryApplication[] = await this.onResolve({intent: intent.intent, context: intent.context});
         if (applications.length > 1) {
             applications = this.applyIntentPreferences(intent, applications, source);
         }
@@ -83,12 +83,12 @@ export class FDC3 {
             // Return all applications within the manifest that can handle the given
             // intent
             return this.onOpen({name: applications[0].name}).then(() => {
-                return this.sendIntent(intent, this.metadata.lookupFromDirectoryId(applications[0].id)!);
+                return this.sendIntent(intent, this.metadata.lookupFromDirectoryId(applications[0].appId)!);
             });
         } else if (applications.length > 1) {
             // Ask user to manually select an application
-            return this.resolveIntent(intent, source, applications).then((selectedApp: IApplication) => {
-                return this.sendIntent(intent, this.metadata.lookupFromDirectoryId(selectedApp.id)!);
+            return this.resolveIntent(intent, source, applications).then((selectedApp: DirectoryApplication) => {
+                return this.sendIntent(intent, this.metadata.lookupFromDirectoryId(selectedApp.appId)!);
             });
         } else {
             throw new Error('No applications available to handle this intent');
@@ -112,18 +112,18 @@ export class FDC3 {
      * intent
      * @param source The application that fired the intent
      */
-    private applyIntentPreferences(intent: Intent, applications: IApplication[], source: Identity): IApplication[] {
+    private applyIntentPreferences(intent: Intent, applications: DirectoryApplication[], source: Identity): DirectoryApplication[] {
         // Check for any explicit target set within the intent
         if (intent.target) {
-            const preferredApplication: IApplication|undefined = applications.find((app: IApplication) => app.name === intent.target);
+            const preferredApplication: DirectoryApplication|undefined = applications.find((app: DirectoryApplication) => app.name === intent.target);
             if (preferredApplication) {
                 return [preferredApplication];
             }
         }
         // Check for any user preferences
-        const preferredAppId: number = this.preferences.getPreferredApp(this.metadata.mapUUID(source.uuid)!, intent.intent)!;
+        const preferredAppId: string = this.preferences.getPreferredApp(this.metadata.mapUUID(source.uuid)!, intent.intent)!;
         if (applications.length > 1 && preferredAppId) {
-            const preferredApplication: IApplication|undefined = applications.find((app: IApplication) => app.id === preferredAppId);
+            const preferredApplication: DirectoryApplication|undefined = applications.find((app: DirectoryApplication) => app.appId === preferredAppId);
             if (preferredApplication) {
                 // We found an applicable user preference, ignore the other applications
                 return [preferredApplication];
@@ -141,11 +141,11 @@ export class FDC3 {
                 // Remember the user's selection
                 switch (result.defaultAction) {
                     case eDefaultAction.ALWAYS_FOR_INTENT:
-                        this.preferences.setGlobalPreference(queuedIntent.intent.intent, result.app.id);
+                        this.preferences.setGlobalPreference(queuedIntent.intent.intent, result.app.appId);
                         break;
                     case eDefaultAction.ALWAYS_FOR_APP:
                         if (queuedIntent.source) {
-                            this.preferences.setAppPreference(queuedIntent.source.directoryId, queuedIntent.intent.intent, result.app.id);
+                            this.preferences.setAppPreference(queuedIntent.source.directoryId, queuedIntent.intent.intent, result.app.appId);
                         }
                         break;
                     default:
@@ -172,9 +172,9 @@ export class FDC3 {
      * @param requestedApp The application to open
      * @param context Context data to pass to the application
      */
-    private async openApplication(requestedApp: IApplication, context?: Payload): Promise<void> {
+    private async openApplication(requestedApp: DirectoryApplication, context?: Payload): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            const metadata: IAppMetadata|null = this.metadata.lookupFromDirectoryId(requestedApp.id);
+            const metadata: IAppMetadata|null = this.metadata.lookupFromDirectoryId(requestedApp.appId);
             const uuid = (metadata && metadata.uuid) || '';
 
             this.isAppRunning(uuid).then((isRunning: boolean) => {
@@ -195,10 +195,10 @@ export class FDC3 {
             }, reject);
         });
     }
-    private async startApplication(appInfo: IApplication, context?: Payload): Promise<void> {
+    private async startApplication(appInfo: DirectoryApplication, context?: Payload): Promise<void> {
         return new Promise<void>((resolve: () => void, reject: (reason: Error) => void) => {
             if (appInfo) {
-                fin.Application.createFromManifest(appInfo.manifest_url)
+                fin.Application.createFromManifest(appInfo.manifest)
                     .then((app) => {
                         // Setup a timeout for the registration of an intent listener
                         const timeout = setTimeout(() => {
@@ -251,7 +251,7 @@ export class FDC3 {
      * @param applications A pre-filtered list of applications that are capable of
      * handling the intent
      */
-    private async resolveIntent(intent: Intent, source: Identity, applications: IApplication[]): Promise<IApplication> {
+    private async resolveIntent(intent: Intent, source: Identity, applications: DirectoryApplication[]): Promise<DirectoryApplication> {
         const removeFromQueue = (intent: IQueuedIntent): void => {
             const index: number = this.uiQueue.indexOf(intent);
             if (index >= 0) {
@@ -263,7 +263,7 @@ export class FDC3 {
                 }
             }
         };
-        return new Promise<IApplication>((resolve, reject) => {
+        return new Promise<DirectoryApplication>((resolve, reject) => {
             // Add to queue
             const queuedIntent: IQueuedIntent = {
                 handle: this.createHandle(),
@@ -271,7 +271,7 @@ export class FDC3 {
                 source: this.metadata.lookupFromAppUUID(source.uuid)!,
                 applications,
                 selector: null,
-                resolve: (selectedApp: IApplication) => {
+                resolve: (selectedApp: DirectoryApplication) => {
                     removeFromQueue(queuedIntent);
                     resolve(selectedApp);
                 },

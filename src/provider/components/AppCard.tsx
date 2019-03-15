@@ -2,13 +2,13 @@ import * as React from 'react';
 
 import './AppCard.css';
 
-import { IApplication } from '../../client/directory';
+import { DirectoryApplication } from '../../client/directory';
 
 interface IAppCardProps {
-    app: IApplication;
+    app: DirectoryApplication;
     selected: boolean;
-    selectHandler: (app: IApplication) => void;
-    openHandler: (app: IApplication) => void;
+    selectHandler: (app: DirectoryApplication) => void;
+    openHandler: (app: DirectoryApplication) => void;
 }
 
 export class AppCard extends React.Component<IAppCardProps> {
@@ -20,11 +20,11 @@ export class AppCard extends React.Component<IAppCardProps> {
     }
 
     public render(): JSX.Element {
-        const app: IApplication = this.props.app;
+        const app: DirectoryApplication = this.props.app;
 
         return (
             <div className={"app-card w3-card w3-round-large w3-button" + (this.props.selected ? " selected" : "")} onClick={this.clickHandler} onDoubleClick={this.doubleClickHandler}>
-                <img className="" src={app.icon} />
+                {(app.icons && app.icons.length > 0) && <img className="" src={app.icons![0].icon} />}
                 <h3>{app.title}</h3>
                 <div className="w3-clear"></div>
             </div>

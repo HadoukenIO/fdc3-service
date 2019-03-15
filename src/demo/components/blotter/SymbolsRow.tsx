@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as fdc3 from '../../../client/index';
 import { SecurityPayload } from '../../../client/context';
-import { IApplication } from '../../../client/directory';
+import { DirectoryApplication } from '../../../client/directory';
 
 import './SymbolsRow.css';
 
@@ -33,8 +33,8 @@ export class SymbolsRow extends React.Component<ISymbolsRowProps> {
                 {caption: "Use Default", userData: "chart"},
                 {type: eContextMenuItem.SEPARATOR},
                 new Promise<IContextMenuItem[]>((resolve, reject) => {
-                    fdc3.resolve(fdc3.Intents.VIEW_CHART).then((value: IApplication[]) => {
-                        resolve(value.map((app: IApplication): IContextMenuItem => ({
+                    fdc3.resolve(fdc3.Intents.VIEW_CHART).then((value: DirectoryApplication[]) => {
+                        resolve(value.map((app: DirectoryApplication): IContextMenuItem => ({
                             type: eContextMenuItem.BUTTON,
                             caption: app.title,
                             userData: app.name

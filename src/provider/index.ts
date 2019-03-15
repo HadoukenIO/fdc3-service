@@ -1,5 +1,5 @@
 import {Intent} from '../client';
-import {IApplication} from '../client/directory';
+import {DirectoryApplication} from '../client/directory';
 import {IntentType} from '../client/intents';
 
 import {FDC3} from './FDC3';
@@ -55,7 +55,7 @@ export interface ISelectorResultArgs {
      *
      * Only specified when success is true.
      */
-    app?: IApplication;
+    app?: DirectoryApplication;
 
     /**
      * The reason that an app wasn't selected.
@@ -106,7 +106,7 @@ export interface IQueuedIntent {
     /**
      * List of available applications that are capable of handling the intent
      */
-    applications: IApplication[];
+    applications: DirectoryApplication[];
 
     /**
      * The application spawned by the service to allow the user to decide how to
@@ -122,7 +122,7 @@ export interface IQueuedIntent {
     /**
      * Function to use to resolve this intent
      */
-    resolve: (selectedApp: IApplication) => void;
+    resolve: (selectedApp: DirectoryApplication) => void;
 
     /**
      * Function to use to reject this intent

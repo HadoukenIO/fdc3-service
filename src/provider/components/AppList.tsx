@@ -3,21 +3,21 @@ import * as fdc3 from '../../client/index';
 
 import './AppList.css';
 
-import { IApplication } from '../../client/directory';
+import { DirectoryApplication } from '../../client/directory';
 import { AppCard } from './AppCard';
 import { eDefaultAction } from '../index';
 
 interface IAppListState {
     handle: number;
     defaultAction: string;
-    applications: IApplication[];
-    selectedApplication: IApplication|null;
+    applications: DirectoryApplication[];
+    selectedApplication: DirectoryApplication|null;
 }
 
 interface IIntentData {
     handle: number;
     intent: fdc3.Intent;
-    applications: IApplication[];
+    applications: DirectoryApplication[];
 }
 
 const servicePromise = fin.InterApplicationBus.Channel.connect(fdc3.SERVICE_CHANNEL);
@@ -64,8 +64,8 @@ export class AppList extends React.Component<{}, IAppListState> {
             <div className="app-list">
                 <h2 className="app-header">Select an appliction:</h2>
                 <div className="list-section app-container">
-                    {this.state.applications.map((app: IApplication) => (
-                        <AppCard key={app.id} app={app} selectHandler={this.onAppSelect} openHandler={this.onAppOpen} selected={this.state.selectedApplication === app} />
+                    {this.state.applications.map((app: DirectoryApplication) => (
+                        <AppCard key={app.appId} app={app} selectHandler={this.onAppSelect} openHandler={this.onAppOpen} selected={this.state.selectedApplication === app} />
                     ))}
                 </div>
                 
@@ -86,11 +86,11 @@ export class AppList extends React.Component<{}, IAppListState> {
         );
     }
 
-    private onAppSelect(app: IApplication): void {
+    private onAppSelect(app: DirectoryApplication): void {
         this.setState({selectedApplication: app});
     }
 
-    private onAppOpen(app: IApplication): void {
+    private onAppOpen(app: DirectoryApplication): void {
         this.sendSuccess(this.state.handle, app, "ALWAYS_ASK");
     }
 
@@ -106,7 +106,7 @@ export class AppList extends React.Component<{}, IAppListState> {
         this.sendError(this.state.handle, "Cancelled");
     }
 
-    private sendSuccess(handle: number, app: IApplication, defaultAction: string): void {
+    private sendSuccess(handle: number, app: DirectoryApplication, defaultAction: string): void {
         servicePromise.then((service) => {
             service.dispatch("FDC3.SelectorResult", {success: true, handle, app, defaultAction});
         });

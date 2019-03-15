@@ -1,10 +1,10 @@
-import {IApplication} from '../client/directory';
+import {DirectoryApplication} from '../client/directory';
 import * as fdc3 from '../client/index';
 
 /**
  * The type given to application identifiers
  */
-type ApplicationID = number;
+type ApplicationID = string;
 
 /**
  * Maps an intent ID to the ID of the user's preferred application for handling

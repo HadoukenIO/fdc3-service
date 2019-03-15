@@ -1,7 +1,7 @@
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
 import {Payload} from './context';
-import {AppIdentifier, IApplication} from './directory';
+import {DirectoryAppName, DirectoryApplication} from './directory';
 import {IntentType} from './intents';
 
 export * from './context';
@@ -53,7 +53,7 @@ export async function open(name: string, context?: Context): Promise<void> {
  * @param intent The intent to query the application directory for
  * @param context The context you intend to attach to the intent
  */
-export async function resolve(intent: IntentType, context?: Context): Promise<IApplication[]> {
+export async function resolve(intent: IntentType, context?: Context): Promise<DirectoryApplication[]> {
     const service = await servicePromise;
 
     return service.dispatch('FDC3.Resolve', {intent, context}).catch(errorHandler);
@@ -88,9 +88,9 @@ export class Intent {
     /**
      * Name of app to target for the Intent. Use if creating an explicit intent that bypasses resolver and goes directly to an app.
      */
-    public target: AppIdentifier|null;
+    public target: DirectoryAppName|null;
 
-    constructor(intent: IntentType, context: Context, target?: AppIdentifier) {
+    constructor(intent: IntentType, context: Context, target?: DirectoryAppName) {
         this.intent = intent;
         this.context = context;
         this.target = target || null;
@@ -105,7 +105,7 @@ export class Intent {
      * @param context Can optionally override the context on this intent. The context on the intent will remain un-modified.
      * @param target Can optionally override the target on this intent. The target on the intent will remain un-modified.
      */
-    public async send(context?: Context, target?: AppIdentifier): Promise<void> {
+    public async send(context?: Context, target?: DirectoryAppName): Promise<void> {
         const service = await servicePromise;
 
         if (arguments.length === 0) {
