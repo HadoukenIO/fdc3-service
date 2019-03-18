@@ -197,40 +197,55 @@ export class FDC3 {
     }
     private async startApplication(appInfo: DirectoryApplication, context?: Payload): Promise<void> {
         return new Promise<void>((resolve: () => void, reject: (reason: Error) => void) => {
-            if (appInfo) {
-                fin.Application.createFromManifest(appInfo.manifest)
-                    .then((app) => {
-                        // Setup a timeout for the registration of an intent listener
-                        const timeout = setTimeout(() => {
-                            console.warn('Timeout whilst waiting for application to start');
-                            reject(new Error('Timeout whilst waiting for application to start: ' + appInfo.name));
-                        }, 15000);
-                        // Populate mapping between app directory ID's and app uuid's
-                        // from the manifest
-                        this.metadata.update(appInfo, app);
-                        // Start application
-                        app.run()
-                            .then(() => {
-                                clearTimeout(timeout);
-                                if (context) {
-                                    // Pass context to application before resolving
-                                    fin.InterApplicationBus.publish('context', {context}).then(resolve).catch((reason: string) => reject(new Error(reason)));
-                                } else {
-                                    // Application started successfully - can now resolve
-                                    resolve();
-                                }
-                            })
-                            .catch((reason: string) => {
-                                clearTimeout(timeout);
-                                reject(new Error(reason || 'App startup failure'));
-                            });
-                    })
-                    .catch((reason: string) => {
-                        reject(new Error(reason));
-                    });
-            } else {
+            if (!appInfo) {
                 reject(new Error('No app details given'));
             }
+
+            if (appInfo.manifestType !== 'openfin') {
+                reject(new Error(`Manifest type ${appInfo.manifestType} not supported`));
+            }
+
+            let isJson = false;
+            try {
+                JSON.parse(appInfo.manifest);
+                isJson = true;
+            } catch (e) {
+            }
+
+            if (isJson) {
+                reject(new Error('Inline JSON manifests not supported'));
+            }
+
+            fin.Application.createFromManifest(appInfo.manifest)
+                .then((app) => {
+                    // Setup a timeout for the registration of an intent listener
+                    const timeout = setTimeout(() => {
+                        console.warn('Timeout whilst waiting for application to start');
+                        reject(new Error('Timeout whilst waiting for application to start: ' + appInfo.name));
+                    }, 15000);
+                    // Populate mapping between app directory ID's and app uuid's
+                    // from the manifest
+                    this.metadata.update(appInfo, app);
+                    // Start application
+                    app.run()
+                        .then(() => {
+                            clearTimeout(timeout);
+                            if (context) {
+                                // Pass context to application before resolving
+                                fin.InterApplicationBus.publish('context', {context}).then(resolve).catch((reason: string) => reject(new Error(reason)));
+                            } else {
+                                // Application started successfully - can now resolve
+                                resolve();
+                            }
+                        })
+                        .catch((reason: string) => {
+                            clearTimeout(timeout);
+                            reject(new Error(reason || 'App startup failure'));
+                        });
+                })
+                .catch((reason: string) => {
+                    reject(new Error(reason));
+                });
         });
     }
     private focusApplication(app: IAppMetadata): void {
