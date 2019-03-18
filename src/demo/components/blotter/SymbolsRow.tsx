@@ -37,7 +37,7 @@ export class SymbolsRow extends React.Component<ISymbolsRowProps> {
                         resolve(value.map((app: DirectoryApplication): IContextMenuItem => ({
                             type: eContextMenuItem.BUTTON,
                             caption: app.title,
-                            userData: app.name
+                            userData: app.appId
                         })));
                     }, reject);
                 })

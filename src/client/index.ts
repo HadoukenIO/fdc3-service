@@ -1,7 +1,7 @@
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
 import {Payload} from './context';
-import {DirectoryAppName, DirectoryApplication} from './directory';
+import {DirectoryAppId, DirectoryApplication} from './directory';
 import {IntentType} from './intents';
 
 export * from './context';
@@ -35,10 +35,10 @@ export const SERVICE_CHANNEL = 'of-fdc3-service-v1';
  * @param name Name of the application to open - must be the ID of an application within the App Directory
  * @param context Optional context to pass to the application once opened
  */
-export async function open(name: string, context?: Context): Promise<void> {
+export async function open(appId: DirectoryAppId, context?: Context): Promise<void> {
     const service = await servicePromise;
 
-    return service.dispatch('FDC3.Open', {name, context}).catch(errorHandler);
+    return service.dispatch('FDC3.Open', {appId, context}).catch(errorHandler);
 }
 
 /**
@@ -88,9 +88,9 @@ export class Intent {
     /**
      * Name of app to target for the Intent. Use if creating an explicit intent that bypasses resolver and goes directly to an app.
      */
-    public target: DirectoryAppName|null;
+    public target: DirectoryAppId|null;
 
-    constructor(intent: IntentType, context: Context, target?: DirectoryAppName) {
+    constructor(intent: IntentType, context: Context, target?: DirectoryAppId) {
         this.intent = intent;
         this.context = context;
         this.target = target || null;
@@ -105,7 +105,7 @@ export class Intent {
      * @param context Can optionally override the context on this intent. The context on the intent will remain un-modified.
      * @param target Can optionally override the target on this intent. The target on the intent will remain un-modified.
      */
-    public async send(context?: Context, target?: DirectoryAppName): Promise<void> {
+    public async send(context?: Context, target?: DirectoryAppId): Promise<void> {
         const service = await servicePromise;
 
         if (arguments.length === 0) {

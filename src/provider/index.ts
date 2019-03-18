@@ -1,5 +1,5 @@
 import {Intent} from '../client';
-import {DirectoryApplication} from '../client/directory';
+import {DirectoryApplication, DirectoryAppId} from '../client/directory';
 import {IntentType} from '../client/intents';
 
 import {FDC3} from './FDC3';
@@ -39,7 +39,7 @@ export const enum eDefaultAction {
 
 // Message definitions
 export interface IOpenArgs {
-    name: string;
+    appId: DirectoryAppId;
     context?: any;  // tslint:disable-line
 }
 export interface IResolveArgs {

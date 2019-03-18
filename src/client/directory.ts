@@ -7,12 +7,12 @@
  */
 
 /**
- * Type definition that is used wherever the API expects the name of an application to be passed.
+ * Type definition that is used wherever the API expects the ID of an application to be passed.
  *
  * It is not possible for TypeScript to verify that only valid application names are passed to the FDC3 API. This type
  * definition is more a hint to the callee, over a plain "string" argument.
  */
-export type DirectoryAppName = string;
+export type DirectoryAppId = string;
 
 export interface DirectoryAppImage {
     url: string;
@@ -42,8 +42,8 @@ export interface DirectoryIntent {
  * An application in the app directory
  */
 export interface DirectoryApplication {
-    appId: string;
-    name: DirectoryAppName;
+    appId: DirectoryAppId;
+    name: string;
     manifest: string;
     manifestType: string;
 

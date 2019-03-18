@@ -36,6 +36,6 @@ export class LauncherApp extends React.Component<{}, IAppState> {
 
     private openApp(app: DirectoryApplication): void {
         console.log("Opening app " + app.title);
-        fdc3.open(app.name);
+        fdc3.open(app.appId);
     }
 }

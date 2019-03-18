@@ -50,12 +50,12 @@ export class FDC3 {
     }
     private async onOpen(payload: IOpenArgs): Promise<void> {
         const applications: DirectoryApplication[] = await this.directory.getApplications();
-        const requestedApp: DirectoryApplication|undefined = applications.find((app: DirectoryApplication) => app.name === payload.name);
+        const requestedApp: DirectoryApplication|undefined = applications.find((app: DirectoryApplication) => app.appId === payload.appId);
         return new Promise<void>((resolve: () => void, reject: (reason: Error) => void) => {
             if (requestedApp) {
                 this.openApplication(requestedApp, payload.context).then(resolve, reject);
             } else {
-                reject(new Error('No app with name \'' + payload.name + '\''));
+                reject(new Error('No app with appId \'' + payload.appId + '\''));
             }
         });
     }
@@ -82,7 +82,7 @@ export class FDC3 {
         if (applications.length === 1) {
             // Return all applications within the manifest that can handle the given
             // intent
-            return this.onOpen({name: applications[0].name}).then(() => {
+            return this.onOpen({appId: applications[0].appId}).then(() => {
                 return this.sendIntent(intent, this.metadata.lookupFromDirectoryId(applications[0].appId)!);
             });
         } else if (applications.length > 1) {
@@ -115,7 +115,7 @@ export class FDC3 {
     private applyIntentPreferences(intent: Intent, applications: DirectoryApplication[], source: Identity): DirectoryApplication[] {
         // Check for any explicit target set within the intent
         if (intent.target) {
-            const preferredApplication: DirectoryApplication|undefined = applications.find((app: DirectoryApplication) => app.name === intent.target);
+            const preferredApplication: DirectoryApplication|undefined = applications.find((app: DirectoryApplication) => app.appId === intent.target);
             if (preferredApplication) {
                 return [preferredApplication];
             }
