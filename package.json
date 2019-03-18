@@ -2,8 +2,11 @@
   "name": "openfin-fdc3",
   "version": "0.1.0",
   "description": "",
-  "main": "dist/client/index.js",
   "types": "dist/client/index.d.ts",
+  "main": "dist/client/main-bundle.js",
+  "files": [
+    "dist/client"
+  ],
   "scripts": {
     "test": "jest",
     "check": "eslint src --ext .ts --ext .tsx",
@@ -11,8 +14,10 @@
     "clean": "gts clean",
     "docs": "typedoc --name \"OpenFin FDC3\" --out ./dist/docs --excludeNotExported --excludePrivate --excludeProtected --hideGenerator --tsconfig src/client/tsconfig.json --readme none",
     "posttest": "npm run check",
+    "prepack": "npm run clean && npm run build && tsc -p src/client/tsconfig.types.json",
     "build": "webpack --mode production",
     "build:dev": "webpack --mode development",
+    "zip": "node scripts/createProviderZip.js",
     "start": "node server.js"
   },
   "repository": {
@@ -35,6 +40,7 @@
     "@types/react-dom": "^16.8.2",
     "@typescript-eslint/eslint-plugin": "^1.4.2",
     "@typescript-eslint/parser": "^1.4.2",
+    "archiver": "^3.0.0",
     "copy-webpack-plugin": "^4.5.1",
     "css-loader": "^1.0.0",
     "eslint": "^5.15.1",
