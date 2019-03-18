@@ -33,6 +33,8 @@ export interface DirectoryIntent {
     name: string;
     displayName?: string;
     contexts: string[];
+
+    // Sepcification is ambigous on type of customConfig, so leaving as 'any'
     customConfig: any;
 }
 
