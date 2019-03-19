@@ -16,5 +16,8 @@
       "jsx",
       "json",
       "node"
-    ]
+    ],
+    "globalSetup": "./demo/utils/globalSetup.ts",
+    "globalTeardown": "./demo/utils/globalTeardown.ts",
+    "testEnvironment": "./demo/utils/integrationTestEnv.js"
   }

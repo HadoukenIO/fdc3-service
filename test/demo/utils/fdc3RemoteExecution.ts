@@ -11,23 +11,24 @@
 
 import { Identity } from "openfin/_v2/main";
 import { Context, IntentType, IApplication } from "../../../src/client";
-import { executeOnWindow, TestWindowContext, getPage, mountFunctionOnWindow } from "./puppeteer";
+import { OFPuppeteerBrowser, TestWindowContext } from "./puppeteer";
 
+const ofBrowser = new OFPuppeteerBrowser(); // Port is had-coded. TODO: make port use some env var.
 
 export async function open(executionTarget: Identity, name: string, context?: Context): Promise<void> {
-    return executeOnWindow(executionTarget, function(this: TestWindowContext, name: string, context?: Context): Promise<void> {
+    return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, name: string, context?: Context): Promise<void> {
         return this.OpenfinFDC3.open(name, context);
     }, name, context);
 }
 
 export async function resolve(executionTarget: Identity, intent: IntentType, context?: Context): Promise<IApplication[]> {
-    return executeOnWindow(executionTarget, function(this: TestWindowContext, intent: IntentType, context?: Context): Promise<IApplication[]> {
+    return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, intent: IntentType, context?: Context): Promise<IApplication[]> {
         return this.OpenfinFDC3.resolve(intent, context);
     }, intent, context);
 }
 
 export async function broadcast(executionTarget: Identity, context: Context): Promise<void> {
-    return executeOnWindow(executionTarget, function(this: TestWindowContext, context: Context): Promise<void> {
+    return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, context: Context): Promise<void> {
         return this.OpenfinFDC3.broadcast(context);
     }, context);
 }
@@ -40,9 +41,9 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
  * 
  */
 export async function addContextListener(executionTarget: Identity, handler: (context: Context) => void): Promise<void> {
-    await mountFunctionOnWindow(executionTarget, 'contextCallback', handler);
+    await ofBrowser.mountFunctionOnWindow(executionTarget, 'contextCallback', handler);
 
-    return executeOnWindow(executionTarget, async function(this: TestWindowContext & {contextCallback: typeof handler}): Promise<void> {
+    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext & {contextCallback: typeof handler}): Promise<void> {
         const listener = new this.OpenfinFDC3.ContextListener(this.contextCallback);
         return;
     });

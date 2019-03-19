@@ -1,25 +1,18 @@
 import "jest";
-import { browserPromise } from "./utils/puppeteer";
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import { getFinConnection } from "./utils/fin";
 
-describe('basic puppeteer functionality', () => {
+
+describe('advanced puppeteer functionality', () => {
     jest.setTimeout(300000);
 
     const testManagerIdentity = {uuid: 'test-app', name: 'test-app'};
     const testIdentity1 = {uuid: 'test-app-1', name: 'test-app-1'};
     const testIdentity2 = {uuid: 'test-app-2', name: 'test-app-2'};
 
-    it('can connect to the main test-app', async () => {
+    it('can can register and trigger a context listener', async () => {
         const fin = await getFinConnection();
-        
-        // Connect to the main openfin process using puppeteer.
-        const browser = await browserPromise;
-        expect(browser).toBeTruthy();
-        
-        // Slight delay to allow the fin object to register on the main window
-        await new Promise(res => setTimeout(res, 100));
-        
+
         // Check to see that the main window started correctly
         expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
         
@@ -40,13 +33,11 @@ describe('basic puppeteer functionality', () => {
         await fdc3Remote.broadcast(testIdentity1, broadcastPayload);
 
         // Check that the listener received the context with expected value
-        console.log(`Received: ${JSON.stringify(callbackSpy.mock.calls[0][0])} - Sent: ${JSON.stringify(broadcastPayload)}`);
         await new Promise(res => setTimeout(res, 100));
         expect(callbackSpy).toHaveBeenCalledTimes(1);
         expect(callbackSpy).toHaveBeenCalledWith(broadcastPayload);
 
         // Cleanup
         jest.clearAllMocks();
-        browser.disconnect();
     });
 });
