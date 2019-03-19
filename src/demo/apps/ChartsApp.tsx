@@ -22,7 +22,7 @@ export function ChartsApp(props: AppProps): React.ReactElement {
 
     React.useEffect(() => {
         document.title = "Charts";
-    });
+    }, []);
 
     React.useEffect(() => {
         const intent = new fdc3.IntentListener(fdc3.Intents.VIEW_CHART, (context: Payload): Promise<void> => {

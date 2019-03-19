@@ -42,7 +42,7 @@ export function DialerApp(props: AppProps): React.ReactElement {
 
     React.useEffect(() => {
         document.title = "Dialer";
-    });
+    }, []);
 
     // Setup listeners
     React.useEffect(() => {

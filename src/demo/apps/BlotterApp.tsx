@@ -27,7 +27,7 @@ const symbols: Symbol[] = [
 export function BlotterApp(): React.ReactElement {
     React.useEffect(() => {
         document.title = "Blotter";
-    });
+    }, []);
 
     return (<SymbolsTable items={symbols} />);
 }

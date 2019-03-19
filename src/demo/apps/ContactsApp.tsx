@@ -50,7 +50,7 @@ export function ContactsApp(): React.ReactElement {
 
     React.useEffect(() => {
         document.title = "Contacts";
-    });
+    }, []);
 
     React.useEffect(() => {
         const intent = new fdc3.IntentListener(fdc3.Intents.SAVE_CONTACT, (context: Payload): Promise<void> => {

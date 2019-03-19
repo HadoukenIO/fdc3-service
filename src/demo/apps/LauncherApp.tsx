@@ -10,7 +10,7 @@ export function LauncherApp(): React.ReactElement {
 
     React.useEffect(() => {
         document.title = "Launcher";
-    });
+    }, []);
 
     React.useEffect(() => {
         fdc3.resolve(null!)
