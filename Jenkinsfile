@@ -9,7 +9,7 @@ pipeline {
                     agent { label 'linux-slave' }
                     steps {
                         sh "npm i"
-                        sh "npm run test:unit -- --color=false --reporters=default --reporters=jest-junit"
+                        sh "npm run test:unit"
                         sh "npm run check"
                     }
                     post {
@@ -27,7 +27,7 @@ pipeline {
                     }
                     post {
                         always {
-                            junit "dist/test/results-y.xml"
+                            junit "dist/test/results-int.xml"
                         }
                     }
                 }
