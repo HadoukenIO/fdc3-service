@@ -1,5 +1,5 @@
 import 'jest';
-import {OFPuppeteerBrowser, TestWindowContext} from './utils/puppeteer';
+import {OFPuppeteerBrowser, TestWindowContext} from './utils/ofPuppeteer';
 
 // This file is exactly the same as testUtils.test.ts
 // It is here to ensure that we can use the utils from multiple test files with
