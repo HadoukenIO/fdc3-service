@@ -123,6 +123,5 @@ module.exports = [
     }, undefined, versionPlugin),
     createConfig(`${outputDir}/demo`, {
         app: './src/demo/index.tsx',
-        menu: './src/demo/ContextMenuPopup.tsx'
     }, undefined, versionPlugin)
 ];

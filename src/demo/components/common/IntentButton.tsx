@@ -1,5 +1,4 @@
 import * as React from 'react';
-import {Payload} from '../../../client/context';
 
 interface IntentButtonProps {
   title?: string;
@@ -18,6 +17,7 @@ export function IntentButton(props: IntentButtonProps): React.ReactElement {
   const [buttonState, setButtonState] = React.useState(ButtonStateType.DEFAULT);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
+    event.stopPropagation();
     setButtonState(ButtonStateType.SPIN);
     //Send intent
     action()

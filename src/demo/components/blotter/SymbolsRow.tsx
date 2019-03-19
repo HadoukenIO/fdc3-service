@@ -2,41 +2,63 @@ import * as React from 'react';
 import * as fdc3 from '../../../client/index';
 import {IApplication} from '../../../client/directory';
 import {Symbol} from '../../apps/BlotterApp';
-import {ContextMenu, StaticContextMenuItem, ContextMenuItemType, ContextMenuItem} from '../common/ContextMenu';
 import {IntentButton} from '../common/IntentButton';
+import {showContextMenu, ContextMenuItem, ContextMenuPayload} from '../common/ContextMenu';
 
 import './SymbolsRow.css';
 
 interface SymbolsRowProps {
     item: Symbol;
+    chartApps: IApplication[];
     selected?: boolean;
     handleSelect?: (item: Symbol | null) => void;
 }
 
 const menuItems: ContextMenuItem[] = [
-    {caption: "View Quote", userData: "quote"},
-    {caption: "View News", userData: "news"},
     {
-        caption: "View Chart", children: [
-            {caption: "Use Default", userData: "chart"},
-            {type: ContextMenuItemType.SEPARATOR},
-            new Promise<StaticContextMenuItem[]>((resolve, reject) => {
-                fdc3.resolve(fdc3.Intents.VIEW_CHART).then((value: IApplication[]) => {
-                    resolve(value.map((app: IApplication): StaticContextMenuItem => ({
-                        type: ContextMenuItemType.BUTTON,
-                        caption: app.title,
-                        userData: app.name
-                    })));
-                }, reject);
-            })
-        ] as ContextMenuItem[]
+        text: "View Quote",
+        payload: {
+            userData: "quote"
+        }
+    },
+    {
+        text: "View News",
+        payload: {
+            userData: "news"
+        }
+    },
+    {
+        text: "View Chart",
+        children: []
     }
 ];
 
+const defaultViewChart: ContextMenuItem = {
+    text: "Use Default",
+    payload: {
+        userData: "charts"
+    }
+};
+
+
 export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
-    const {item, selected, handleSelect} = props;
+    const {item, chartApps, selected, handleSelect} = props;
+
+    React.useEffect(() => {
+        const appItems = chartApps.map(app => {
+            return {
+                text: "View " + app.title,
+                payload: {
+                    userData: app.name
+                }
+            };
+        });
+        menuItems[2].children! = [defaultViewChart, ...appItems];
+    }, [chartApps]);
+
     const handleClick = (event: React.MouseEvent<HTMLTableRowElement>) => {
         event.preventDefault();
+        event.stopPropagation();
         if (handleSelect) {
             handleSelect(item);
             fdc3.broadcast(getContext());
@@ -50,7 +72,18 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
         return new fdc3.Intent(fdc3.Intents.VIEW_CHART, getContext()).send();
     };
 
-    const handleContextMenuSelection = (type: ContextMenuItemType, userData: string) => {
+    const getContext = () => {
+        return {
+            type: "security",
+            name: item.name,
+            id: {
+                default: item.name
+            }
+        };
+    };
+
+    const handleContextMenuSelection = (payload: ContextMenuPayload) => {
+        const userData = payload.userData;
         let intent: fdc3.Intent | null = null;
         switch (userData) {
             case "quote":
@@ -70,14 +103,13 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
         intent.send();
     };
 
-    const getContext = () => {
-        return {
-            type: "security",
-            name: item.name,
-            id: {
-                default: item.name
-            }
-        };
+
+    const handleContextClick = (event: React.MouseEvent<HTMLElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const offset = {x: 10, y: -10};
+        const position = {x: event.screenX + offset.x, y: event.screenY + offset.y};
+        showContextMenu(position, menuItems, handleContextMenuSelection);
     };
 
     return (
@@ -89,11 +121,9 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
             <td>##.##</td>
             <td>
                 <IntentButton action={chartIntentAction} title="View Chart" iconClassName="fa-line-chart" />
-                <ContextMenu items={menuItems} handleSelection={handleContextMenuSelection}>
-                    <button>
-                        <i className="fa fa-ellipsis-v" title="Options" />
-                    </button>
-                </ContextMenu>
+                <button onClick={handleContextClick}>
+                    <i className="fa fa-ellipsis-v" title="Options" />
+                </button>
             </td>
         </tr>
     );
