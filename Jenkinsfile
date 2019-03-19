@@ -12,7 +12,7 @@ pipeline {
             }
         }
         stage('Run Tests') {
-            paralell {
+            parallel {
                 stage('Unit Tests') {
                     agent { label 'linux-slave' }
                     steps {
@@ -35,7 +35,7 @@ pipeline {
                     }
                     post {
                         always {
-                            junit "dist/test/results-int.xml"
+                            junit "dist/test/results-y.xml"
                         }
                     }
                 }
