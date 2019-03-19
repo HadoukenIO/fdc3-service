@@ -11,7 +11,6 @@ export function ColorLinker(props: ColorLinkerProps): React.ReactElement {
   const colors: string[] = ['red', 'blue', 'orange', 'purple'];
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const {value} = event.currentTarget;
-    console.log('change');
   };
   return (
     <div>

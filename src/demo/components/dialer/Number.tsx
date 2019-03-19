@@ -19,6 +19,7 @@ export function Number(props: NumberProps) {
         }
     };
     const handleClear = (event: React.MouseEvent<HTMLElement>) => {
+        event.stopPropagation();
         event.currentTarget.focus();
         if (handleValueChange) {
             handleValueChange("");

@@ -30,7 +30,8 @@ export function ContactsRow(props: ContactRowProps): React.ReactElement {
         return new fdc3.Intent(fdc3.Intents.START_CALL, getContext()).send();
     };
 
-    const handleClick = () => {
+    const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+        event.stopPropagation();
         if (handleSelect) {
             handleSelect(item);
             fdc3.broadcast(getContext());
