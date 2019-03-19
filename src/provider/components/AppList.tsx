@@ -35,8 +35,14 @@ export function AppList(): React.ReactElement {
     const onAppSelect = (app: IApplication) => setSelectedApplication(app);
     const onAppOpen = (app: IApplication) => sendSuccess(service!, handle, app, "ALWAYS_ASK");
     const onSelectDefault = (event: React.ChangeEvent<HTMLSelectElement>) => setDefaultAction(event.currentTarget.value);
-    const onOpen = (event: React.MouseEvent<HTMLDivElement>) => sendSuccess(service!, handle, selectedApplication!, defaultAction);
-    const onCancel = (event: React.MouseEvent<HTMLDivElement>) => sendError(service!, handle, "Cancelled");
+    const onOpen = (event: React.MouseEvent<HTMLDivElement>) => {
+        event.stopPropagation();
+        sendSuccess(service!, handle, selectedApplication!, defaultAction);
+    };
+    const onCancel = (event: React.MouseEvent<HTMLDivElement>) => {
+        event.stopPropagation();
+        sendError(service!, handle, "Cancelled");
+    };
 
 
     React.useEffect(() => {

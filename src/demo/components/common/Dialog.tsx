@@ -13,6 +13,7 @@ interface DialogProps {
 export function Dialog(props: DialogProps): React.ReactElement {
     const {show, title, body, options, handleOption} = props;
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.stopPropagation();
         if (handleOption) {
             handleOption(event.currentTarget.innerText);
         }

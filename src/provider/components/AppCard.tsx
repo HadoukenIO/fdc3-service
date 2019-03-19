@@ -14,10 +14,12 @@ export function AppCard(props: AppCardProps): React.ReactElement {
     const {app, selected, openHandler, selectHandler} = props;
     const clickHandler = (event: React.MouseEvent<HTMLElement>) => {
         event.preventDefault();
+        event.stopPropagation();
         selectHandler(app);
     };
     const doubleClickHandler = (event: React.MouseEvent<HTMLElement>) => {
         event.preventDefault();
+        event.stopPropagation();
         openHandler(app);
     };
     return (

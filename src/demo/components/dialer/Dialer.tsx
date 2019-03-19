@@ -43,6 +43,7 @@ function KeyPadButton(props: KeyPadButtonProps): React.ReactElement {
     const {value, handleKeyPress} = props;
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
+        event.stopPropagation();
         if (handleKeyPress) {
             handleKeyPress(value);
         }
