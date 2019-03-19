@@ -21,9 +21,8 @@ import {LauncherApp} from './apps/LauncherApp';
 
 
 function App(): React.ReactElement {
-    const hasFin = window.hasOwnProperty("fin");
-    let uuid = fin.Window.me.uuid;
-    let color = uuid.split("-")[2];
+    let uuid: string = fin.Window.me.uuid;
+    let color: string = uuid.split("-")[2];
     if (color) {
         uuid = uuid.slice(0, uuid.length - color.length - 1);
     }
@@ -35,12 +34,7 @@ function App(): React.ReactElement {
     return (
         <React.Fragment>
             <link rel="stylesheet" type="text/css" href={cssURL} />
-            {hasFin &&
-                <SelectApp uuid={uuid} />
-            }
-            {!hasFin &&
-                <div>You cannot run this sample in the browser. Run this application through OpenFin by following the instructions in the readme.</div>
-            }
+            <SelectApp uuid={uuid} />
         </React.Fragment>
     );
 }
