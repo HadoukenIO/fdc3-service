@@ -3,14 +3,6 @@ pipeline {
     agent { label 'linux-slave' }
 
     stages {
-        stage ('Unit Tests'){
-            agent { label 'linux-slave' }
-            steps {
-                sh "npm i"
-                sh "npm run check"
-                sh "npm run test:unit"
-            }
-        }
         stage('Run Tests') {
             parallel {
                 stage('Unit Tests') {
