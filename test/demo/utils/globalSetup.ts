@@ -1,4 +1,3 @@
-// setup.js
 import * as puppeteer from 'puppeteer';
 import * as mkdirp from 'mkdirp';
 import * as path from 'path';
@@ -11,7 +10,6 @@ declare const global: NodeJS.Global & {__BROWSER_GLOBAL__: puppeteer.Browser};
 const DIR = path.join(os.tmpdir(), 'jest_puppeteer_global_setup');
 
 module.exports = async() => {
-    console.log('global-setup');
     // Openfin should be running at this point
     const browserWSEndpoint = (await (await fetch(`http://localhost:9222/json/version`)).json()).webSocketDebuggerUrl;
     if (!browserWSEndpoint) {

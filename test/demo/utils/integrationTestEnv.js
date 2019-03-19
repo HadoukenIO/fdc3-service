@@ -1,3 +1,4 @@
+// Had problems with this as a typescript file, so leaving as js for now
 const NodeEnvironment = require('jest-environment-node');
 const fs = require('fs');
 const path = require('path');
