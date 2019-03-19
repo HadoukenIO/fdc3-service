@@ -1,12 +1,12 @@
 import * as os from 'os';
-import * as rimraf from 'rimraf';
 import * as path from 'path';
 import * as puppeteer from 'puppeteer';
+import * as rimraf from 'rimraf';
 
-declare const global: NodeJS.Global & {__BROWSER_GLOBAL__: puppeteer.Browser};
+declare const global: NodeJS.Global&{__BROWSER_GLOBAL__: puppeteer.Browser};
 
 const DIR = path.join(os.tmpdir(), 'jest_puppeteer_global_setup');
-module.exports = async() => {
+module.exports = async () => {
   // close the browser instance
   await global.__BROWSER_GLOBAL__.disconnect();
 
