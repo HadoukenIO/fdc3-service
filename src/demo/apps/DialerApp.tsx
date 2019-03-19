@@ -1,114 +1,87 @@
 import * as React from 'react';
 import * as fdc3 from '../../client/index';
+import {Number} from '../components/dialer/Number';
+import {Dialer} from '../components/dialer/Dialer';
+import {CallTimer} from '../components/dialer/CallTimer';
+import {CallButton} from '../components/dialer/CallButton';
+import {ContactPayload, Payload} from '../../client/context';
+import {Dialog} from '../components/common/Dialog';
 
 import '../../../res/demo/css/w3.css';
+import {ColorLinker} from '../components/common/ColorLinker';
 
-import { Number } from '../components/dialer/Number';
-import { Dialer } from '../components/dialer/Dialer';
-import { CallTimer } from '../components/dialer/CallTimer';
-import { CallButton } from '../components/dialer/CallButton';
-import { ContactPayload, Payload } from '../../client/context';
-import { Dialog } from '../components/common/Dialog';
-
-interface IAppProps {
+interface AppProps {
     phoneNumber?: string;
 }
 
-interface IAppState {
-    inCall: boolean;
-    phoneNumber: string;
-    pendingCall: ContactPayload|null;
-}
+export function DialerApp(props: AppProps): React.ReactElement {
+    const [inCall, setInCall] = React.useState(false);
+    const [phoneNumber, setPhoneNumber] = React.useState<string>("");
+    const [pendingCall, setPendingCall] = React.useState<ContactPayload | null>(null);
 
-export class DialerApp extends React.Component<IAppProps, IAppState> {
-    constructor(props: IAppProps) {
-        super(props);
-
-        //Initialise App UI
-        document.title = "Dialer";
-        this.state = {
-            inCall: false,
-            phoneNumber: props.phoneNumber || "",
-            pendingCall: null
-        };
-        this.onNumberEntry = this.onNumberEntry.bind(this);
-        this.onDialerEntry = this.onDialerEntry.bind(this);
-        this.toggleCall = this.toggleCall.bind(this);
-        this.handleDialog = this.handleDialog.bind(this);
-
-        //Add FDC3 listeners
-        const dialListener = new fdc3.IntentListener(fdc3.Intents.DIAL_CALL, (context: Payload): void => {
-            if (!this.state.inCall) {
-                this.handleIntent(context as ContactPayload, false);
-            } else if (context.id.phone) {
-                this.setState({pendingCall: context as ContactPayload});
-            }
-        });
-        const callListener = new fdc3.IntentListener(fdc3.Intents.START_CALL, (context: Payload): void => {
-            if (!this.state.inCall) {
-                this.handleIntent(context as ContactPayload, true);
-            } else if (context.id.phone) {
-                this.setState({pendingCall: context as ContactPayload});
-            }
-        });
-        const contextListener = new fdc3.ContextListener((context: Payload): void => {
-            if (context.type === "contact") {
-                if (!this.state.inCall) {
-                    this.handleIntent(context as ContactPayload, false);
-                }
-            }
-        });
-    }
-
-    public render(): JSX.Element {
-        const pendingCall: ContactPayload = this.state.pendingCall!;
-
-        return (
-            <div>
-                <Number inCall={this.state.inCall} number={this.state.phoneNumber} handleChange={this.onNumberEntry} />
-                { this.state.inCall
-                    ? <CallTimer />
-                    : <Dialer handleKeyPress={this.onDialerEntry} />
-                }
-                <CallButton canCall={this.state.phoneNumber.length > 0} inCall={this.state.inCall} handleClick={this.toggleCall} />
-                <Dialog show={!!pendingCall} title="Replace call?" body={"Hang up and call " + (pendingCall && pendingCall.id.phone) + "?"} options={["No", "Yes"]} handleOption={this.handleDialog} />
-            </div>
-        );
-    }
-
-    private onNumberEntry(phoneNumber: string): void {
-        this.setState({phoneNumber});
-    }
-
-    private onDialerEntry(key: string): void {
-        this.setState({phoneNumber: this.state.phoneNumber + key});
-    }
-
-    private toggleCall(): void {
-        this.setState({inCall: !this.state.inCall});
-    }
-
-    private handleDialog(option: string): void {
+    const onNumberEntry = (phoneNumber: string) => setPhoneNumber(phoneNumber);
+    const onDialerEntry = (key: string) => setPhoneNumber(phoneNumber + key);
+    const toggleCall = () => setInCall(!inCall);
+    const handleDialog = (option: string) => {
         if (option === "Yes") {
-            this.setState({
-                phoneNumber: this.state.pendingCall!.id.phone!,
-                pendingCall: null
-            });
+            setPhoneNumber(pendingCall!.id.phone!);
+            setPendingCall(null);
         } else {
-            this.setState({pendingCall: null});
+            setPendingCall(null);
         }
-    }
-
-    private handleIntent(context: ContactPayload, startCall: boolean): void {
+    };
+    const handleIntent = (context: ContactPayload, startCall: boolean) => {
         const phoneNumber: string = context.id.phone!;
-
         if (phoneNumber) {
-            this.setState({
-                phoneNumber: context.id.phone!,
-                inCall: startCall
-            });
+            setPhoneNumber(context.id.phone!);
+            setInCall(startCall);
         } else {
             throw new Error("Contact doesn't have a phone number");
         }
-    }
+    };
+
+    React.useEffect(() => {
+        document.title = "Dialer";
+    }, []);
+
+    // Setup listeners
+    React.useEffect(() => {
+        const dial = new fdc3.IntentListener(fdc3.Intents.DIAL_CALL, (context: Payload) => {
+            if (!inCall) {
+                handleIntent(context as ContactPayload, false);
+            } else if (context.id.phone) {
+                setPendingCall(context as ContactPayload);
+            }
+        });
+        const call = new fdc3.IntentListener(fdc3.Intents.DIAL_CALL, (context: Payload) => {
+            if (!inCall) {
+                handleIntent(context as ContactPayload, true);
+            } else if (context.id.phone) {
+                setPendingCall(context as ContactPayload);
+            }
+        });
+        const context = new fdc3.ContextListener((context: Payload) => {
+            if (context.type === "contact") {
+                if (!inCall) {
+                    handleIntent(context as ContactPayload, false);
+                }
+            }
+        });
+        // Cleanup
+        return () => {
+            dial.unsubscribe();
+            call.unsubscribe();
+            context.unsubscribe();
+        };
+    }, []);
+
+    return (
+        <div>
+            <Number inCall={inCall} number={phoneNumber} onValueChange={onNumberEntry} />
+            {inCall && <CallTimer />}
+            {!inCall && <Dialer handleKeyPress={onDialerEntry} />}
+            <CallButton canCall={phoneNumber.length > 0} inCall={inCall} handleClick={toggleCall} />
+            <Dialog show={!!pendingCall} title="Replace call?" body={"Hang up and call " + (pendingCall && pendingCall.id.phone) + "?"} options={["No", "Yes"]} handleOption={handleDialog} />
+        </div>
+    );
 }

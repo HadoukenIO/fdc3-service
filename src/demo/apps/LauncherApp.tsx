@@ -1,41 +1,33 @@
 import * as React from 'react';
-import * as fdc3 from '../../client/index';
-import { IApplication } from '../../client/directory';
+import * as fdc3 from '../../client';
+import {IApplication} from '../../client/directory';
+import {AppCard} from '../components/launcher/AppCard';
 
 import '../../../res/demo/css/w3.css';
 
-import { AppCard } from '../components/launcher/AppCard';
+export function LauncherApp(): React.ReactElement {
+    const [applications, setApplications] = React.useState<IApplication[]>([]);
 
-interface IAppState {
-    applications: IApplication[];
-}
-
-export class LauncherApp extends React.Component<{}, IAppState> {
-    constructor(props: {}) {
-        super(props);
-
+    React.useEffect(() => {
         document.title = "Launcher";
-        this.state = {applications: []};
+    }, []);
 
-        fdc3.resolve(null!).then((applications: IApplication[]) => {
-            this.setState({applications});
-        });
-    }
+    React.useEffect(() => {
+        fdc3.resolve(null!)
+            .then(setApplications)
+            .catch(console.log);
+    });
 
-    public render(): JSX.Element {
-        return (
-            <div>
-                <h1>Launcher</h1>
+    const openApp = (app: IApplication) => {
+        fdc3.open(app.name)
+            .then(() => console.log(`Opening app ${app.title}`))
+            .catch(console.log);
+    };
 
-                {this.state.applications.map(
-                    (app) => <AppCard key={app.id} app={app} handleClick={this.openApp.bind(null, app)} />
-                )}
-            </div>
-        );
-    }
-
-    private openApp(app: IApplication): void {
-        console.log("Opening app " + app.title);
-        fdc3.open(app.name);
-    }
+    return (
+        <div>
+            <h1>Launcher</h1>
+            {applications.map((app, index) => <AppCard key={app.id + index} app={app} handleClick={openApp} />)}
+        </div>
+    );
 }
