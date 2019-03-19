@@ -12,6 +12,7 @@ interface AppCardProps {
 export function AppCard(props: AppCardProps): React.ReactElement {
     const {app, handleClick: handler} = props;
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+        event.stopPropagation();
         if (handler) {
             handler(app);
         }
