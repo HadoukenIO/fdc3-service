@@ -11,6 +11,36 @@ pipeline {
                 sh "npm run test:unit"
             }
         }
+        stage('Run Tests') {
+            paralell {
+                stage('Unit Tests') {
+                    agent { label 'linux-slave' }
+                    steps {
+                        sh "npm i"
+                        sh "npm run test:unit -- --color=false --reporters=default --reporters=jest-junit"
+                        sh "npm run check"
+                    }
+                    post {
+                        always {
+                            junit "dist/test/results-unit.xml"
+                        }
+                    }
+                }
+
+                stage('Integation Tests') {
+                    agent { label 'win10-dservices' }
+                    steps {
+                        bat "npm i"
+                        bat "npm run test:int"
+                    }
+                    post {
+                        always {
+                            junit "dist/test/results-int.xml"
+                        }
+                    }
+                }
+            }
+        }
 
         stage('Build & Deploy (Staging)') {
             agent { label 'linux-slave' }

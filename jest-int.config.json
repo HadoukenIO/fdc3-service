@@ -19,5 +19,18 @@
     ],
     "globalSetup": "./demo/utils/globalSetup.ts",
     "globalTeardown": "./demo/utils/globalTeardown.ts",
-    "testEnvironment": "./demo/utils/integrationTestEnv.js"
+    "testEnvironment": "./demo/utils/integrationTestEnv.js",
+    "reporters": [
+      "default",
+      [
+        "jest-junit",
+        {
+          "outputDirectory": "./dist/test",
+          "outputName": "results-int.xml",
+          "classNameTemplate": "{classname} > {title}",
+          "titleTemplate": "{title}",
+          "ancestorSeparator": " > "
+        }
+      ]
+    ]
   }

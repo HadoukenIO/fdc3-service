@@ -66,12 +66,5 @@
     "webpack": "^4.16.1",
     "webpack-cli": "^3.0.8",
     "webpack-dev-middleware": "^3.6.0"
-  },
-  "jest-junit": {
-    "outputDirectory": "./dist/test",
-    "outputName": "results-unit.xml",
-    "classNameTemplate": "{classname} > {title}",
-    "titleTemplate": "{title}",
-    "ancestorSeparator": " > "
   }
 }
