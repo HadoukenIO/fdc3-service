@@ -116,10 +116,17 @@ class ContextMenu {
    */
   public static async create(name?: string, isRoot: boolean = false) {
     name = name || (Math.random() * 1000).toString();
-    const win = await this.createWindow({...defaultWindowOptions, name});
+    const win: fin.OpenFinWindow = await this.createWindow({...defaultWindowOptions, name});
     return new ContextMenu({win, isRoot});
   }
 
+  /**
+   * Check if [menuItems] has an children.
+   *
+   * @param {ContextMenuItem[]} menuItems
+   * @returns
+   * @memberof ContextMenu
+   */
   public childCheck(menuItems: ContextMenuItem[]) {
     return menuItems.some(item => item.children !== undefined);
   }
@@ -194,7 +201,9 @@ class ContextMenu {
    * @memberof ContextMenu
    */
   public async destroy() {
-    await this._child.destroy();
+    if (this._child) {
+      await this._child.destroy();
+    }
     this._window.close();
   }
 
@@ -276,14 +285,14 @@ class ContextMenu {
 
 let contextMenu: ContextMenu;
 
-// Load the context menu
-(async () => {
-  contextMenu = await ContextMenu.create("root", true);
-})();
+window.onunload = async (event) => {
+  await contextMenu.destroy();
+};
 
-
-// tslint:disable-next-line:no-any
-export async function showContextMenu(position: Point, items: ContextMenuItem[], handleClick: (payload: any) => void) {
+export async function showContextMenu(position: Point, items: ContextMenuItem[], handleClick: (payload: ContextMenuPayload) => void) {
+  if (!contextMenu) {
+    contextMenu = await ContextMenu.create("root", true);
+  }
   await contextMenu.setContent(items, handleClick);
   contextMenu.showAt(position, true);
 }
