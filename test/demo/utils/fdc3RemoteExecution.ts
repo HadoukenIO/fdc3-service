@@ -10,7 +10,7 @@
  */
 
 import { Identity } from "openfin/_v2/main";
-import { Context, IntentType, IApplication } from "../../../src/client";
+import { Context, IntentType, IApplication, Payload } from "../../../src/client";
 import { OFPuppeteerBrowser, TestWindowContext } from "./puppeteer";
 
 const ofBrowser = new OFPuppeteerBrowser(); // Port is had-coded. TODO: make port use some env var.
@@ -34,17 +34,18 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
 }
 
 /**
- * The handler argument can take any invokable object which accepts a single Context argument. 
+ * This will register a simple contextListener on the window.
  * 
- * This uses puppeteer.
- * 
- * 
+ * Returns a promise which resolves to the context passed to the listener
  */
 export async function addContextListener(executionTarget: Identity, handler: (context: Context) => void): Promise<void> {
-    await ofBrowser.mountFunctionOnWindow(executionTarget, 'contextCallback', handler);
-
-    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext & {contextCallback: typeof handler}): Promise<void> {
-        const listener = new this.OpenfinFDC3.ContextListener(this.contextCallback);
-        return;
+    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext): Promise<Payload> {
+        return new Promise<Payload>(res => {
+            const listener = new this.OpenfinFDC3.ContextListener((context: Payload) => {
+                res(context);
+            });
+        });
+    }).then(async (result) => {
+        handler(await result);
     });
 }

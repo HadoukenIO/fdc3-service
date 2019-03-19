@@ -24,9 +24,10 @@ describe('advanced puppeteer functionality', () => {
         expect(fin.Application.wrapSync(testIdentity1).isRunning()).resolves.toBe(true);
         expect(fin.Application.wrapSync(testIdentity2).isRunning()).resolves.toBe(true);
         
-        const callbackSpy = jest.fn((context) => context);
-        await fdc3Remote.addContextListener(testIdentity2, callbackSpy);
-        await new Promise(res => setTimeout(res, 100)); // Slight delay to ensure callback is properly registered
+        // Register a listener. We don't await as the promise won't resolve until the listener is triggered
+        const callbackSpy = jest.fn();
+        const callbackResponse = fdc3Remote.addContextListener(testIdentity2, callbackSpy);
+        await new Promise(res => setTimeout(res, 1000)); // Slight delay to ensure callback is properly registered
 
         // Send a context on app-1
         const broadcastPayload = {type: 'test-context', name: 'contextName1', id: {name: 'contextID1'}};
@@ -34,6 +35,7 @@ describe('advanced puppeteer functionality', () => {
 
         // Check that the listener received the context with expected value
         await new Promise(res => setTimeout(res, 100));
+        await expect(callbackResponse).resolves;
         expect(callbackSpy).toHaveBeenCalledTimes(1);
         expect(callbackSpy).toHaveBeenCalledWith(broadcastPayload);
 

@@ -86,15 +86,18 @@ export class OFPuppeteerBrowser {
         return page.evaluate(fn as (...args: any[]) => R, ...args);
     }
     
-    public async mountFunctionOnWindow(executionTarget: Identity, name: string, fn: Function) {
-        const page = await this.getPage(executionTarget);
-        if (!page) {
-            throw new Error('could not find specified executionTarget');
-        }
+    // Using this function from multiple test files causes big issues with this version of puppeteer. Should be fixed in later versions, but
+    // v1.3 is the latest version that works with OF v10. TODO: Revisit with newer version of puppeteer once v11 runtime is out (or at least usable)
+
+    // public async mountFunctionOnWindow(executionTarget: Identity, name: string, fn: Function) {
+    //     const page = await this.getPage(executionTarget);
+    //     if (!page) {
+    //         throw new Error('could not find specified executionTarget');
+    //     }
     
-        // tslint:disable-next-line: no-any Explicit cast needed to appease typescript. Puppeteer types make liberal use of any, which confuses things here.
-        return page.exposeFunction(name, fn as (...args: any[]) => any);
-    }
+    //     // tslint:disable-next-line: no-any Explicit cast needed to appease typescript. Puppeteer types make liberal use of any, which confuses things here.
+    //     return page.exposeFunction(name, fn as (...args: any[]) => any);
+    // }
 }
 
 function getIdString(identity: Identity): string {
