@@ -1,5 +1,5 @@
 import 'jest';
-import {OFPuppeteerBrowser, TestWindowContext} from './utils/puppeteer';
+import {OFPuppeteerBrowser, TestWindowContext} from './utils/ofPuppeteer';
 
 
 

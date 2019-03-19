@@ -14,7 +14,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {Context, IApplication, IntentType, Payload} from '../../../src/client';
 
-import {OFPuppeteerBrowser, TestWindowContext} from './puppeteer';
+import {OFPuppeteerBrowser, TestWindowContext} from './ofPuppeteer';
 
 const ofBrowser = new OFPuppeteerBrowser();  // Port is had-coded. TODO: make
                                              // port use some env var.
