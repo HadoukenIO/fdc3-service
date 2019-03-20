@@ -1,41 +1,35 @@
 import * as React from 'react';
-import * as fdc3 from '../../client/index';
-import { DirectoryApplication } from '../../client/directory';
+import * as fdc3 from '../../client/main';
+import {AppMetadata} from '../../client/main';
+import {DirectoryApplication} from '../../client/directory';
+import {AppCard} from '../components/launcher/AppCard';
 
 import '../../../res/demo/css/w3.css';
 
-import { AppCard } from '../components/launcher/AppCard';
+export function LauncherApp(): React.ReactElement {
+    const [applications, setApplications] = React.useState<AppMetadata[]>([]);
 
-interface IAppState {
-    applications: DirectoryApplication[];
-}
-
-export class LauncherApp extends React.Component<{}, IAppState> {
-    constructor(props: {}) {
-        super(props);
-
+    React.useEffect(() => {
         document.title = "Launcher";
-        this.state = {applications: []};
+    }, []);
 
-        fdc3.resolve(null!).then((applications: DirectoryApplication[]) => {
-            this.setState({applications});
-        });
-    }
+    React.useEffect(() => {
+        fdc3.findIntent(null!)
+            .then(async (appIntent) => setApplications(appIntent.apps))
+            .catch(console.log);
+    });
 
-    public render(): JSX.Element {
-        return (
-            <div>
-                <h1>Launcher</h1>
+    const openApp = (app: DirectoryApplication) => {
+        console.log(`Opening app ${app.title}`);
+        fdc3.open(app.appId)
+            .then(() => console.log(`Opened app ${app.title}`))
+            .catch(console.log);
+    };
 
-                {this.state.applications.map(
-                    (app) => <AppCard key={app.appId} app={app} handleClick={this.openApp.bind(null, app)} />
-                )}
-            </div>
-        );
-    }
-
-    private openApp(app: DirectoryApplication): void {
-        console.log("Opening app " + app.title);
-        fdc3.open(app.appId);
-    }
+    return (
+        <div>
+            <h1>Launcher</h1>
+            {applications.map((app, index) => <AppCard key={app.id + index} app={app} handleClick={openApp} />)}
+        </div>
+    );
 }

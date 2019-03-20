@@ -1,5 +1,5 @@
 import {DirectoryApplication} from '../client/directory';
-import * as fdc3 from '../client/index';
+import * as fdc3 from '../client/main';
 
 /**
  * The type given to application identifiers

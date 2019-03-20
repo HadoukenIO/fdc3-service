@@ -2,7 +2,7 @@ import {Application} from 'openfin/_v2/main';
 
 import {DirectoryApplication, DirectoryAppId} from '../client/directory';
 
-export interface IAppMetadata {
+export interface AppMetadata {
     /**
      * The application's UUID, as defined by it's app.json file.
      */
@@ -29,7 +29,7 @@ export interface IAppMetadata {
  * all the necessary data is available.
  */
 export class MetadataStore {
-    private appData: {[dirId: string]: IAppMetadata};
+    private appData: {[dirId: string]: AppMetadata};
 
     constructor() {
         this.appData = {};
@@ -42,7 +42,7 @@ export class MetadataStore {
      *
      * @param directoryId The ID of an application within the FDC3 directory
      */
-    public lookupFromDirectoryId(directoryId: DirectoryAppId): IAppMetadata|null {
+    public lookupFromDirectoryId(directoryId: DirectoryAppId): AppMetadata|null {
         return this.appData[directoryId] || null;
     }
 
@@ -53,10 +53,10 @@ export class MetadataStore {
      *
      * @param uuid The UUID of an OpenFin application
      */
-    public lookupFromAppUUID(uuid: string): IAppMetadata|null {
+    public lookupFromAppUUID(uuid: string): AppMetadata|null {
         for (const directoryId in this.appData) {
             if (this.appData.hasOwnProperty(directoryId)) {
-                const metadata: IAppMetadata = this.appData[directoryId];
+                const metadata: AppMetadata = this.appData[directoryId];
 
                 if (metadata.uuid === uuid) {
                     return metadata;
@@ -105,7 +105,7 @@ export class MetadataStore {
      */
     public update(appData: DirectoryApplication, app: Application): void {
         if (!this.appData.hasOwnProperty(appData.appId)) {
-            this.appData[appData.appId] = {uuid: app.identity.uuid, name: app.identity.name!, directoryId: appData.appId};
+            this.appData[appData.appId] = {uuid: app.identity.uuid, name: app.identity.uuid, directoryId: appData.appId};
         }
     }
 }
