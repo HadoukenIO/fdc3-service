@@ -70,6 +70,8 @@
     ]
   },
   "precommit": {
-    "run": []
+    "run": [
+      "check"
+    ]
   }
 }
