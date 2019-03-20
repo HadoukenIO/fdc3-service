@@ -8,8 +8,8 @@ import {AppIntent, AppMetadata} from '../client/main';
 
 import {ActionHandlerMap, APIHandler} from './APIHandler';
 import {AppDirectory} from './AppDirectory';
-import {eDefaultAction, IOpenArgs, IQueuedIntent, ISelectorResultArgs} from './index';
-import {IAppMetadata, MetadataStore} from './MetadataStore';
+import {DefaultAction, OpenArgs, QueuedIntent, ResolveArgs, SelectorResultArgs} from './index';
+import {AppMetadata as StoreAppMetadata, MetadataStore} from './MetadataStore';
 import {PreferencesStore} from './PreferencesStore';
 
 /**
@@ -23,7 +23,7 @@ export class FDC3 {
     private directory: AppDirectory;
     private metadata: MetadataStore;
     private preferences: PreferencesStore;
-    private uiQueue: IQueuedIntent[];
+    private uiQueue: QueuedIntent[];
     private apiHandler: APIHandler<APITopic, TopicPayloadMap, TopicResponseMap>;
     constructor() {
         this.directory = new AppDirectory();
@@ -50,7 +50,7 @@ export class FDC3 {
         // managing these comms
         this.apiHandler.channel.register(FDC3.MSG_SELECTOR_RESULT, this.onSelectorResult.bind(this));
     }
-    private async onOpen(payload: IOpenArgs): Promise<void> {
+    private async onOpen(payload: OpenArgs): Promise<void> {
         const applications: IApplication[] = await this.directory.getApplications();
         const requestedApp: IApplication|undefined = applications.find((app: IApplication) => app.name === payload.name);
         return new Promise<void>((resolve: () => void, reject: (reason: Error) => void) => {
@@ -143,18 +143,18 @@ export class FDC3 {
         // No applicable preferences. User will have to select an app manually.
         return applications;
     }
-    private onSelectorResult(result: ISelectorResultArgs): void {
-        const queuedIntent: IQueuedIntent = this.uiQueue[0];
+    private onSelectorResult(result: SelectorResultArgs): void {
+        const queuedIntent: QueuedIntent = this.uiQueue[0];
         if (queuedIntent && queuedIntent.handle === result.handle) {
             // Hide selector UI
             queuedIntent.selector!.close();
             if (result.success && result.app) {
                 // Remember the user's selection
                 switch (result.defaultAction) {
-                    case eDefaultAction.ALWAYS_FOR_INTENT:
+                    case DefaultAction.ALWAYS_FOR_INTENT:
                         this.preferences.setGlobalPreference(queuedIntent.intent.intent, result.app.id);
                         break;
-                    case eDefaultAction.ALWAYS_FOR_APP:
+                    case DefaultAction.ALWAYS_FOR_APP:
                         if (queuedIntent.source) {
                             this.preferences.setAppPreference(queuedIntent.source.directoryId, queuedIntent.intent.intent, result.app.id);
                         }
@@ -185,7 +185,7 @@ export class FDC3 {
      */
     private async openApplication(requestedApp: IApplication, context?: ContextBase): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            const metadata: IAppMetadata|null = this.metadata.lookupFromDirectoryId(requestedApp.id);
+            const metadata: StoreAppMetadata|null = this.metadata.lookupFromDirectoryId(requestedApp.id);
             const uuid = (metadata && metadata.uuid) || '';
 
             this.isAppRunning(uuid).then((isRunning: boolean) => {
@@ -244,7 +244,7 @@ export class FDC3 {
             }
         });
     }
-    private focusApplication(app: IAppMetadata): void {
+    private focusApplication(app: StoreAppMetadata): void {
         fin.Window.wrapSync(app).focus();
     }
     /**
@@ -263,7 +263,7 @@ export class FDC3 {
      * handling the intent
      */
     private async resolveIntent(intent: RaiseIntentPayload, source: Identity, applications: IApplication[]): Promise<IApplication> {
-        const removeFromQueue = (intent: IQueuedIntent): void => {
+        const removeFromQueue = (intent: QueuedIntent): void => {
             const index: number = this.uiQueue.indexOf(intent);
             if (index >= 0) {
                 // Remove from queue
@@ -276,7 +276,7 @@ export class FDC3 {
         };
         return new Promise<IApplication>((resolve, reject) => {
             // Add to queue
-            const queuedIntent: IQueuedIntent = {
+            const queuedIntent: QueuedIntent = {
                 handle: this.createHandle(),
                 intent,
                 source: this.metadata.lookupFromAppUUID(source.uuid)!,
@@ -298,7 +298,7 @@ export class FDC3 {
             }
         });
     }
-    private async openAppSelector(queuedIntent: IQueuedIntent): Promise<fin.OpenFinApplication> {
+    private async openAppSelector(queuedIntent: QueuedIntent): Promise<fin.OpenFinApplication> {
         const baseUrl: string = window.location.href.split('/').slice(0, -1).join('/');
         const appUrl: string = baseUrl + '/ui/selector.html';
         return new Promise<fin.OpenFinApplication>((resolve, reject) => {
@@ -332,7 +332,7 @@ export class FDC3 {
     private async sendContext(context: ContextBase): Promise<void> {
         return fin.InterApplicationBus.publish('context', context);
     }
-    private async sendIntent(intent: RaiseIntentPayload, targetApp: IAppMetadata): Promise<void> {
+    private async sendIntent(intent: RaiseIntentPayload, targetApp: StoreAppMetadata): Promise<void> {
         if (targetApp) {
             console.log('c1a: ', targetApp, intent);
             return fin.InterApplicationBus.send(targetApp, 'intent', intent);

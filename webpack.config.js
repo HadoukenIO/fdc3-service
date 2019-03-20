@@ -108,7 +108,7 @@ const manifestPlugin = new CopyWebpackPlugin([{
  * 
  * This embeds the package version into the source file as a string constant.
  */
-const versionPlugin = new webpack.DefinePlugin({PACKAGE_VERSION: `'${version}'`});
+const versionPlugin = new webpack.DefinePlugin({ PACKAGE_VERSION: `'${version}'` });
 
 
 /**
@@ -123,6 +123,5 @@ module.exports = [
     }, undefined, versionPlugin),
     createConfig(`${outputDir}/demo`, {
         app: './src/demo/index.tsx',
-        menu: './src/demo/contextMenuPopup.tsx'
     }, undefined, versionPlugin)
 ];

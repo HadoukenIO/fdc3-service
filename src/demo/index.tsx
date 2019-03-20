@@ -1,10 +1,10 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { BlotterApp } from './apps/BlotterApp';
-import { ChartsApp } from './apps/ChartsApp';
-import { ContactsApp } from './apps/ContactsApp';
-import { DialerApp } from './apps/DialerApp';
-import { LauncherApp } from './apps/LauncherApp';
+import {BlotterApp} from './apps/BlotterApp';
+import {ChartsApp} from './apps/ChartsApp';
+import {ContactsApp} from './apps/ContactsApp';
+import {DialerApp} from './apps/DialerApp';
+import {LauncherApp} from './apps/LauncherApp';
 
 /*
  * This file defines the entry point for all of the applications in this project. This "bootstrap" is intended to allow
@@ -19,54 +19,55 @@ import { LauncherApp } from './apps/LauncherApp';
  * applications, likely made by different vendors, that are both capable of providing the same funcionality.
  */
 
-let uuid: string, color: string;
-let app: JSX.Element;
 
-if (window.hasOwnProperty("fin")) {
-    uuid = fin.desktop.Application.getCurrent().uuid;
-
-    //Colours are used to simulate having multiple apps capable of handling the same intent.
-    //In this sample they are re-skins of the same application, but in a real scenario they would be completely unrelated applications.
-    color = uuid.split("-")[2];
+function App(): React.ReactElement {
+    let uuid: string = fin.Window.me.uuid;
+    let color: string = uuid.split("-")[2];
     if (color) {
-        //Remove the colour suffix from the application UUID
         uuid = uuid.slice(0, uuid.length - color.length - 1);
-    } else {
-        //Use default theme
+    }
+    else {
         color = "blue-grey";
     }
+    const cssURL = `https://www.w3schools.com/lib/w3-theme-${color}.css`;
 
-    //Add an extra stylesheet to the document, to change the app's appearance
-    const link = document.createElement("link");
-    link.type = "text/css";
-    link.rel = "stylesheet";
-    link.href = "https://www.w3schools.com/lib/w3-theme-" + color + ".css";
-    document.getElementsByTagName('head')[0].appendChild(link);
+    return (
+        <React.Fragment>
+            <link rel="stylesheet" type="text/css" href={cssURL} />
+            <SelectApp uuid={uuid} />
+        </React.Fragment>
+    );
+}
 
-    //Create root React component
-    switch(uuid) {
+interface SelectAppProps {
+    uuid: string;
+}
+
+function SelectApp(props: SelectAppProps): React.ReactElement {
+    const {uuid} = props;
+    let selectedApp: JSX.Element;
+
+    switch (uuid) {
         case "fdc3-launcher":
-            app = <LauncherApp />;
+            selectedApp = <LauncherApp />;
             break;
-
         case "fdc3-blotter":
-            app = <BlotterApp />;
+            selectedApp = <BlotterApp />;
             break;
         case "fdc3-charts":
-            app = <ChartsApp />;
+            selectedApp = <ChartsApp />;
             break;
         case "fdc3-contacts":
-            app = <ContactsApp />;
+            selectedApp = <ContactsApp />;
             break;
         case "fdc3-dialer":
-            app = <DialerApp />;
+            selectedApp = <DialerApp />;
             break;
 
         default:
-            app = (<div>Unknown application uuid: "{uuid}". Add application to index.tsx</div>);
+            selectedApp = (<div>Unknown application uuid: "{uuid}". Add application to index.tsx</div>);
     }
-} else {
-    app = (<div>You cannot run this sample in the browser. Run this application through OpenFin by following the instructions in the readme.</div>);
+    return selectedApp;
 }
 
-ReactDOM.render(app, document.getElementById('react-app'));
+ReactDOM.render(<App />, document.getElementById('react-app'));
