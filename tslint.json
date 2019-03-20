@@ -1,9 +1,16 @@
 {
-    "extends": "./node_modules/gts/tslint.json",
+    "extends": [
+        "gts/tslint.json",
+        "tslint-react/tslint-react.json"
+    ],
     "rules": {
-        "array-type": [true, "array"],
+        "array-type": [
+            true,
+            "array"
+        ],
         "interface-name": false,
         "member-access": true,
-        "no-inferrable-types": false
+        "no-inferrable-types": false,
+        "jsx-no-multiline-js": false
     }
 }

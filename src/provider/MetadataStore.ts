@@ -2,7 +2,7 @@ import {Application} from 'openfin/_v2/main';
 
 import {IApplication} from '../client/directory';
 
-export interface IAppMetadata {
+export interface AppMetadata {
     /**
      * The application's UUID, as defined by it's app.json file.
      */
@@ -29,7 +29,7 @@ export interface IAppMetadata {
  * all the necessary data is available.
  */
 export class MetadataStore {
-    private appData: {[dirId: number]: IAppMetadata};
+    private appData: {[dirId: number]: AppMetadata};
 
     constructor() {
         this.appData = {};
@@ -42,7 +42,7 @@ export class MetadataStore {
      *
      * @param directoryId The ID of an application within the FDC3 directory
      */
-    public lookupFromDirectoryId(directoryId: number): IAppMetadata|null {
+    public lookupFromDirectoryId(directoryId: number): AppMetadata|null {
         return this.appData[directoryId] || null;
     }
 
@@ -53,10 +53,10 @@ export class MetadataStore {
      *
      * @param uuid The UUID of an OpenFin application
      */
-    public lookupFromAppUUID(uuid: string): IAppMetadata|null {
+    public lookupFromAppUUID(uuid: string): AppMetadata|null {
         for (const directoryId in this.appData) {
             if (this.appData.hasOwnProperty(directoryId)) {
-                const metadata: IAppMetadata = this.appData[directoryId];
+                const metadata: AppMetadata = this.appData[directoryId];
 
                 if (metadata.uuid === uuid) {
                     return metadata;
@@ -108,7 +108,7 @@ export class MetadataStore {
             throw new TypeError('Invalid appData passed to MetadataStore. "id" must be a number.');
         }
         if (!this.appData.hasOwnProperty(appData.id)) {
-            this.appData[appData.id] = {uuid: app.identity.uuid, name: app.identity.name!, directoryId: appData.id};
+            this.appData[appData.id] = {uuid: app.identity.uuid, name: app.identity.uuid, directoryId: appData.id};
         }
     }
 }

@@ -2,45 +2,51 @@ import * as React from 'react';
 
 import './Dialer.css';
 
-interface IDialerProps {
+interface DialerProps {
     handleKeyPress?: (key: string) => void;
 }
 
-export class Dialer extends React.Component<IDialerProps> {
-    constructor(props: {}) {
-        super(props);
-
-        this.handleKeyPress = this.handleKeyPress.bind(this);
-    }
-
-    public render(): JSX.Element {
-        return (
-            <div className="dialer">
-                <div className="w3-row">
-                    {[this.createButton("1"), this.createButton("2"), this.createButton("3")]}
-                </div>
-                <div className="w3-row">
-                    {[this.createButton("4"), this.createButton("5"), this.createButton("6")]}
-                </div>
-                <div className="w3-row">
-                    {[this.createButton("7"), this.createButton("8"), this.createButton("9")]}
-                </div>
-                <div className="w3-row">
-                    {[this.createButton("*"), this.createButton("0"), this.createButton("#")]}
-                </div>
+export function Dialer(props: DialerProps): React.ReactElement {
+    const {handleKeyPress} = props;
+    return (
+        <div className="dialer">
+            <div className="w3-row">
+                <KeyPadButton value="1" handleKeyPress={handleKeyPress} />
+                <KeyPadButton value="2" handleKeyPress={handleKeyPress} />
+                <KeyPadButton value="3" handleKeyPress={handleKeyPress} />
             </div>
-        );
-    }
+            <div className="w3-row">
+                <KeyPadButton value="4" handleKeyPress={handleKeyPress} />
+                <KeyPadButton value="5" handleKeyPress={handleKeyPress} />
+                <KeyPadButton value="6" handleKeyPress={handleKeyPress} />
+            </div>
+            <div className="w3-row">
+                <KeyPadButton value="7" handleKeyPress={handleKeyPress} />
+                <KeyPadButton value="8" handleKeyPress={handleKeyPress} />
+                <KeyPadButton value="9" handleKeyPress={handleKeyPress} />
+            </div>
+            <div className="w3-row">
+                <KeyPadButton value="*" handleKeyPress={handleKeyPress} />
+                <KeyPadButton value="0" handleKeyPress={handleKeyPress} />
+                <KeyPadButton value="#" handleKeyPress={handleKeyPress} />
+            </div>
+        </div>
+    );
+}
 
-    private createButton(button: string): JSX.Element {
-        return <button key={button} onClick={this.handleKeyPress} value={button}>{button}</button>;
-    }
+interface KeyPadButtonProps {
+    value: string;
+    handleKeyPress?: (value: string) => void;
+}
 
-    private handleKeyPress(event: React.MouseEvent<HTMLButtonElement>): void {
-        const handler: ((key: string) => void)|undefined = this.props.handleKeyPress;
-
-        if (handler) {
-            handler((event.target as HTMLButtonElement).value);
+function KeyPadButton(props: KeyPadButtonProps): React.ReactElement {
+    const {value, handleKeyPress} = props;
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (handleKeyPress) {
+            handleKeyPress(value);
         }
-    }
+    };
+    return (<button key={value} onClick={handleClick} value={value}>{value}</button>);
 }
