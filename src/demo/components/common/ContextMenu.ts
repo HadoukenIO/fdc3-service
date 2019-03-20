@@ -151,7 +151,9 @@ class ContextMenu {
     const itemHeight = 24; // @todo change this
     menuItems.forEach((item, index) => {
       const li = document.createElement('li');
-      li.innerText = item.text;
+      const span = document.createElement('span');
+      span.innerText = item.text;
+      li.appendChild(span);
 
       li.addEventListener('mouseover', async () => {
         // Nothing to expand
@@ -263,15 +265,14 @@ class ContextMenu {
       font-family: "Segoe UI",Arial,sans-serif;
       font-weight: 400;
     }
-    ul{
-      padding: 0 20px;
-    }
-
     li {
       list-style-type: none;
       margin: 0 auto;
       height: 24px;
       cursor: pointer;
+    }
+    li span {
+      padding-left: 20px;
     }
 
     li:hover {
