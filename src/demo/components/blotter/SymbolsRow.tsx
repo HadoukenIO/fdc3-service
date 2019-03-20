@@ -18,13 +18,13 @@ const menuItems: ContextMenuItem[] = [
     {
         text: "View Quote",
         payload: {
-            userData: "quote"
+            intent: fdc3.Intents.VIEW_QUOTE,
         }
     },
     {
         text: "View News",
         payload: {
-            userData: "news"
+            intent: fdc3.Intents.VIEW_NEWS,
         }
     },
     {
@@ -33,11 +33,9 @@ const menuItems: ContextMenuItem[] = [
     }
 ];
 
-const defaultViewChart: ContextMenuItem = {
+const viewChartsSubMenu: ContextMenuItem = {
     text: "Use Default",
-    payload: {
-        userData: "charts"
-    }
+    children: []
 };
 
 
@@ -49,11 +47,12 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
             return {
                 text: "View " + app.title,
                 payload: {
-                    userData: app.name
+                    intent: fdc3.Intents.VIEW_CHART,
+                    appName: app.name
                 }
             };
         });
-        menuItems[2].children! = [defaultViewChart, ...appItems];
+        menuItems[2].children = [viewChartsSubMenu, ...appItems];
     }, [chartApps]);
 
     const handleClick = (event: React.MouseEvent<HTMLTableRowElement>) => {
@@ -83,21 +82,16 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     };
 
     const handleContextMenuSelection = (payload: ContextMenuPayload) => {
-        // Send intent, "fire and forget" style
-        const userData = payload.userData;
-        switch (userData) {
-            case "quote":
-                fdc3.raiseIntent(fdc3.Intents.VIEW_QUOTE, getContext());
-                break;
-            case "news":
-                fdc3.raiseIntent(fdc3.Intents.VIEW_NEWS, getContext());
-                break;
-            case "chart":
-                fdc3.raiseIntent(fdc3.Intents.VIEW_CHART, getContext());
-                break;
-            default:
-                fdc3.raiseIntent(userData, getContext(), userData);
-                break;
+        if (payload.intent) {
+            // Send intent, "fire and forget" style
+            switch (payload.intent) {
+                case fdc3.Intents.VIEW_CHART:
+                    fdc3.raiseIntent(fdc3.Intents.VIEW_CHART, getContext(), payload.appName);
+                    break;
+                default:
+                    fdc3.raiseIntent(payload.intent, getContext());
+                    break;
+            }
         }
     };
 
