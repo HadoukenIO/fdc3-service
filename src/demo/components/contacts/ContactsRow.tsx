@@ -1,6 +1,6 @@
 import * as React from 'react';
-import * as fdc3 from '../../../client/index';
-import {ContactPayload} from '../../../client/context';
+import * as fdc3 from '../../../client/main';
+import {ContactContext} from '../../../client/context';
 import {Contact} from '../../apps/ContactsApp';
 import {IntentButton} from '../common/IntentButton';
 
@@ -20,14 +20,14 @@ export function ContactsRow(props: ContactRowProps): React.ReactElement {
         if (handleSelect) {
             handleSelect(null);
         }
-        return new fdc3.Intent(fdc3.Intents.DIAL_CALL, getContext()).send();
+        return fdc3.raiseIntent(fdc3.Intents.DIAL_CALL, getContext());
     };
 
     const handleCall = (): Promise<void> => {
         if (handleSelect) {
             handleSelect(null);
         }
-        return new fdc3.Intent(fdc3.Intents.START_CALL, getContext()).send();
+        return fdc3.raiseIntent(fdc3.Intents.START_CALL, getContext());
     };
 
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -38,7 +38,7 @@ export function ContactsRow(props: ContactRowProps): React.ReactElement {
         }
     };
 
-    const getContext = (): ContactPayload => {
+    const getContext = (): ContactContext => {
         return {
             type: "contact",
             name: item.name,

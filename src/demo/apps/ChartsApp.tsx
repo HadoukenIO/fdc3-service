@@ -1,7 +1,7 @@
 import * as React from 'react';
-import * as fdc3 from '../../client/index';
+import * as fdc3 from '../../client/main';
 import {Chart} from '../components/charts/Chart';
-import {SecurityPayload, Payload} from '../../client/context';
+import {SecurityContext, Context} from '../../client/context';
 
 import '../../../res/demo/css/w3.css';
 
@@ -12,7 +12,7 @@ interface AppProps {
 export function ChartsApp(props: AppProps): React.ReactElement {
     const [symbolName, setSymbolName] = React.useState("AAPL");
 
-    function handleIntent(context: SecurityPayload): void {
+    function handleIntent(context: SecurityContext): void {
         if (context && context.name) {
             setSymbolName(context.name);
         } else {
@@ -25,10 +25,10 @@ export function ChartsApp(props: AppProps): React.ReactElement {
     }, []);
 
     React.useEffect(() => {
-        const intent = new fdc3.IntentListener(fdc3.Intents.VIEW_CHART, (context: Payload): Promise<void> => {
+        const intentListener = fdc3.addIntentListener(fdc3.Intents.VIEW_CHART, (context: Context): Promise<void> => {
             return new Promise((resolve, reject) => {
                 try {
-                    handleIntent(context as SecurityPayload);
+                    handleIntent(context as SecurityContext);
                     resolve();
                 } catch (e) {
                     reject(e);
@@ -36,15 +36,15 @@ export function ChartsApp(props: AppProps): React.ReactElement {
             });
         });
 
-        const context = new fdc3.ContextListener((context: Payload): void => {
+        const ContextListener = fdc3.addContextListener((context: Context): void => {
             if (context.type === "security") {
-                handleIntent(context as SecurityPayload);
+                handleIntent(context as SecurityContext);
             }
         });
 
         return function cleanUp() {
-            intent.unsubscribe();
-            context.unsubscribe();
+            intentListener.unsubscribe();
+            ContextListener.unsubscribe();
         };
     }, []);
 

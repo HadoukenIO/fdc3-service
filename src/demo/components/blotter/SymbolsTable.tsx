@@ -1,8 +1,8 @@
 import * as React from 'react';
-import * as fdc3 from '../../../client/index';
+import * as fdc3 from '../../../client/main';
 import {Symbol} from '../../apps/BlotterApp';
 import {SymbolsRow} from './SymbolsRow';
-import {IApplication} from '../../../client/index';
+import {IApplication} from '../../../client/main';
 
 interface SymbolsTableProps {
     items?: Symbol[];
@@ -11,7 +11,7 @@ interface SymbolsTableProps {
 
 
 async function loadCharts() {
-    return fdc3.resolve(fdc3.Intents.VIEW_CHART);
+    return fdc3.findIntent(fdc3.Intents.VIEW_CHART);
 }
 
 export function SymbolsTable(props: SymbolsTableProps): React.ReactElement {
@@ -23,8 +23,8 @@ export function SymbolsTable(props: SymbolsTableProps): React.ReactElement {
     };
 
     React.useEffect(() => {
-        loadCharts().then(apps => {
-            setChartApps(apps);
+        loadCharts().then(appIntent => {
+            setChartApps(appIntent.apps);
         });
     }, []);
 

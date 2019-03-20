@@ -1,6 +1,7 @@
-import {Intent} from '../client';
 import {IApplication} from '../client/directory';
 import {IntentType} from '../client/intents';
+import {RaiseIntentPayload} from '../client/internal';
+import {Context} from '../client/main';
 
 import {FDC3} from './FDC3';
 import {AppMetadata} from './MetadataStore';
@@ -40,11 +41,11 @@ export const enum DefaultAction {
 // Message definitions
 export interface OpenArgs {
     name: string;
-    context?: any;  // tslint:disable-line
+    context?: Context;
 }
 export interface ResolveArgs {
     intent: IntentType;
-    context?: any;  // tslint:disable-line
+    context?: Context;
 }
 export interface SelectorResultArgs {
     handle: number;
@@ -96,7 +97,7 @@ export interface QueuedIntent {
     /**
      * The original intent, launched by the user
      */
-    intent: Intent;
+    intent: RaiseIntentPayload;
 
     /**
      * UUID of the application that fired this intent

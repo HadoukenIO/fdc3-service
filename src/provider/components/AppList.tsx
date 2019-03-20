@@ -1,6 +1,6 @@
 import * as React from 'react';
-import * as fdc3 from '../../client/index';
 import {IApplication} from '../../client/directory';
+import {RaiseIntentPayload, SERVICE_CHANNEL} from '../../client/internal';
 import {AppCard} from './AppCard';
 import {DefaultAction} from '../index';
 
@@ -9,7 +9,7 @@ import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
 interface IntentData {
     handle: number;
-    intent: fdc3.Intent;
+    intent: RaiseIntentPayload;
     applications: IApplication[];
 }
 
@@ -46,7 +46,7 @@ export function AppList(): React.ReactElement {
 
 
     React.useEffect(() => {
-        const service = fin.InterApplicationBus.Channel.connect(fdc3.SERVICE_CHANNEL);
+        const service = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL);
 
         setService(service);
 

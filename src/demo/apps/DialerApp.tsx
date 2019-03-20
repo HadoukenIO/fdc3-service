@@ -1,10 +1,10 @@
 import * as React from 'react';
-import * as fdc3 from '../../client/index';
+import * as fdc3 from '../../client/main';
 import {Number} from '../components/dialer/Number';
 import {Dialer} from '../components/dialer/Dialer';
 import {CallTimer} from '../components/dialer/CallTimer';
 import {CallButton} from '../components/dialer/CallButton';
-import {ContactPayload, Payload} from '../../client/context';
+import {ContactContext, Context} from '../../client/context';
 import {Dialog} from '../components/common/Dialog';
 
 import '../../../res/demo/css/w3.css';
@@ -17,7 +17,7 @@ interface AppProps {
 export function DialerApp(props: AppProps): React.ReactElement {
     const [inCall, setInCall] = React.useState(false);
     const [phoneNumber, setPhoneNumber] = React.useState<string>("");
-    const [pendingCall, setPendingCall] = React.useState<ContactPayload | null>(null);
+    const [pendingCall, setPendingCall] = React.useState<ContactContext | null>(null);
 
     const onNumberEntry = (phoneNumber: string) => setPhoneNumber(phoneNumber);
     const onDialerEntry = (key: string) => setPhoneNumber(phoneNumber + key);
@@ -30,7 +30,7 @@ export function DialerApp(props: AppProps): React.ReactElement {
             setPendingCall(null);
         }
     };
-    const handleIntent = (context: ContactPayload, startCall: boolean) => {
+    const handleIntent = (context: ContactContext, startCall: boolean) => {
         const phoneNumber: string = context.id.phone!;
         if (phoneNumber) {
             setPhoneNumber(context.id.phone!);
@@ -46,32 +46,32 @@ export function DialerApp(props: AppProps): React.ReactElement {
 
     // Setup listeners
     React.useEffect(() => {
-        const dial = new fdc3.IntentListener(fdc3.Intents.DIAL_CALL, (context: Payload) => {
+        const dialListener = fdc3.addIntentListener(fdc3.Intents.DIAL_CALL, (context: Context) => {
             if (!inCall) {
-                handleIntent(context as ContactPayload, false);
-            } else if (context.id.phone) {
-                setPendingCall(context as ContactPayload);
+                handleIntent(context as ContactContext, false);
+            } else if (context.id && context.id.phone) {
+                setPendingCall(context as ContactContext);
             }
         });
-        const call = new fdc3.IntentListener(fdc3.Intents.DIAL_CALL, (context: Payload) => {
+        const callListener = fdc3.addIntentListener(fdc3.Intents.START_CALL, (context: Context) => {
             if (!inCall) {
-                handleIntent(context as ContactPayload, true);
-            } else if (context.id.phone) {
-                setPendingCall(context as ContactPayload);
+                handleIntent(context as ContactContext, true);
+            } else if (context.id && context.id.phone) {
+                setPendingCall(context as ContactContext);
             }
         });
-        const context = new fdc3.ContextListener((context: Payload) => {
+        const contextListener = fdc3.addContextListener((context: Context) => {
             if (context.type === "contact") {
                 if (!inCall) {
-                    handleIntent(context as ContactPayload, false);
+                    handleIntent(context as ContactContext, false);
                 }
             }
         });
         // Cleanup
         return () => {
-            dial.unsubscribe();
-            call.unsubscribe();
-            context.unsubscribe();
+            dialListener.unsubscribe();
+            callListener.unsubscribe();
+            contextListener.unsubscribe();
         };
     }, []);
 

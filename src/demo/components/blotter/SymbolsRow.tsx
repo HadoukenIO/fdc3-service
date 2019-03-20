@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as fdc3 from '../../../client/index';
+import * as fdc3 from '../../../client/main';
 import {IApplication} from '../../../client/directory';
 import {Symbol} from '../../apps/BlotterApp';
 import {IntentButton} from '../common/IntentButton';
@@ -69,7 +69,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
         if (handleSelect) {
             handleSelect(null);
         }
-        return new fdc3.Intent(fdc3.Intents.VIEW_CHART, getContext()).send();
+        return fdc3.raiseIntent(fdc3.Intents.VIEW_CHART, getContext());
     };
 
     const getContext = () => {
@@ -83,24 +83,22 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     };
 
     const handleContextMenuSelection = (payload: ContextMenuPayload) => {
+        // Send intent, "fire and forget" style
         const userData = payload.userData;
-        let intent: fdc3.Intent | null = null;
         switch (userData) {
             case "quote":
-                intent = new fdc3.Intent(fdc3.Intents.VIEW_QUOTE, getContext());
+                fdc3.raiseIntent(fdc3.Intents.VIEW_QUOTE, getContext());
                 break;
             case "news":
-                intent = new fdc3.Intent(fdc3.Intents.VIEW_NEWS, getContext());
+                fdc3.raiseIntent(fdc3.Intents.VIEW_NEWS, getContext());
                 break;
             case "chart":
-                intent = new fdc3.Intent(fdc3.Intents.VIEW_CHART, getContext());
+                fdc3.raiseIntent(fdc3.Intents.VIEW_CHART, getContext());
                 break;
             default:
-                intent = new fdc3.Intent(fdc3.Intents.VIEW_CHART, getContext(), userData);
+                fdc3.raiseIntent(userData, getContext(), userData);
                 break;
         }
-        //Send intent, "fire and forget" style
-        intent.send();
     };
 
 

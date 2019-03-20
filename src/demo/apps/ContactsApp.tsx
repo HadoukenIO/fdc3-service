@@ -1,7 +1,7 @@
 import * as React from 'react';
-import * as fdc3 from '../../client/index';
+import * as fdc3 from '../../client/main';
 import {ContactsTable} from '../components/contacts/ContactsTable';
-import {Payload, ContactPayload} from '../../client/index';
+import {Context, ContactContext} from '../../client/main';
 
 import '../../../res/demo/css/w3.css';
 
@@ -37,7 +37,7 @@ export interface Contact {
 
 export function ContactsApp(): React.ReactElement {
     const [contacts, setContacts] = React.useState(initialContactsState);
-    function handleIntent(context: ContactPayload) {
+    function handleIntent(context: ContactContext) {
         if (context && context.name) {
             const newContact: Contact = {
                 name: context.name,
@@ -53,10 +53,10 @@ export function ContactsApp(): React.ReactElement {
     }, []);
 
     React.useEffect(() => {
-        const intent = new fdc3.IntentListener(fdc3.Intents.SAVE_CONTACT, (context: Payload): Promise<void> => {
+        const intentListener = fdc3.addIntentListener(fdc3.Intents.SAVE_CONTACT, (context: Context): Promise<void> => {
             return new Promise((resolve: () => void, reject: (reason?: Error) => void) => {
                 try {
-                    handleIntent(context as ContactPayload);
+                    handleIntent(context as ContactContext);
                     resolve();
                 } catch (e) {
                     reject(new Error("SAVE_CONTACT intent requires a valid contact context"));
@@ -65,7 +65,7 @@ export function ContactsApp(): React.ReactElement {
         });
         //Cleanup
         return () => {
-            intent.unsubscribe();
+            intentListener.unsubscribe();
         };
     }, []);
 
