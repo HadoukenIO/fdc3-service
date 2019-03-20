@@ -17,10 +17,10 @@ export function LauncherApp(): React.ReactElement {
         fdc3.findIntent(null!)
             .then(async (appIntent) => setApplications(appIntent.apps))
             .catch(console.log);
-    });
+    }, []);
 
     const openApp = (app: IApplication) => {
-        console.log(`Opening app ${app.title}`)
+        console.log(`Opening app ${app.title}`);
         fdc3.open(app.name)
             .then(() => console.log(`Opened app ${app.title}`))
             .catch(console.log);
