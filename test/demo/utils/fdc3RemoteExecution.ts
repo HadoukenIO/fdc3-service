@@ -16,7 +16,7 @@ import {Context, IApplication, IntentType, Payload} from '../../../src/client';
 
 import {OFPuppeteerBrowser, TestWindowContext} from './ofPuppeteer';
 
-const ofBrowser = new OFPuppeteerBrowser(); 
+const ofBrowser = new OFPuppeteerBrowser();
 
 export async function open(
     executionTarget: Identity, name: string, context?: Context): Promise<void> {

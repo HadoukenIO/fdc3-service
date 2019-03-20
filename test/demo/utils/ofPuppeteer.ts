@@ -60,7 +60,7 @@ export class OFPuppeteerBrowser {
 
     const identity: Identity|undefined = await page.evaluate(function(
         this: TestWindowContext): Identity|undefined {
-      // This could be run on devtools or other non fin-enabled windows so need this guard
+      // Could be devtools or other non-fin-enabled windows so need a guard
       if (!fin) {
         return undefined;
       } else {
