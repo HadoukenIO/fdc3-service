@@ -11,5 +11,5 @@ export const getFinConnection = async () => connection;
 export const fdc3ClientPromise = getFinConnection().then(fin => {
   global.fin = fin;
   global.PACKAGE_VERSION = 'TEST-CLIENT';
-  return import('../../../src/client/index');
+  return import('../../../src/client/main');
 });

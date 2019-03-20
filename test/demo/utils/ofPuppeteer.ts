@@ -9,7 +9,7 @@ declare const global: NodeJS.Global&{__BROWSER__: puppeteer.Browser};
 
 export type TestWindowContext = Window&{
   fin: Fin;
-  OpenfinFDC3: typeof import('../../../src/client/index')
+  OpenfinFDC3: typeof import('../../../src/client/main')
 };
 
 export class OFPuppeteerBrowser {

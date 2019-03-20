@@ -3,7 +3,7 @@ import 'jest';
 import {Application} from 'openfin/_v2/main';
 
 import {IApplication} from '../../src/client/directory';
-import {IAppMetadata, MetadataStore} from '../../src/provider/MetadataStore';
+import {AppMetadata, MetadataStore} from '../../src/provider/MetadataStore';
 
 const fakeApps: {appData: IApplication, app: Application}[] = [
   {appData: {id: 1}, app: {identity: {uuid: 'test-app-1'}}},
@@ -66,10 +66,10 @@ describe('Given an empty MetadataStore', () => {
     const store = new MetadataStore();
 
     const {appData, app} = fakeApps[0];
-    const expectedMetadata: IAppMetadata = {
+    const expectedMetadata: AppMetadata = {
       directoryId: appData.id,
       uuid: app.identity.uuid,
-      name: app.identity.name!
+      name: app.identity.uuid
     };
 
     it('The method returns with no errors', () => {

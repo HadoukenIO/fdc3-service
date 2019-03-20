@@ -118,7 +118,7 @@ export interface QueuedIntent {
      * application - selector will be null until the intent reaches the front of
      * the queue.
      */
-    selector: fin.OpenFinApplication | null;
+    selector: fin.OpenFinApplication|null;
 
     /**
      * Function to use to resolve this intent

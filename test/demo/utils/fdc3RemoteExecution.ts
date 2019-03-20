@@ -12,7 +12,7 @@
 
 import {Identity} from 'openfin/_v2/main';
 
-import {Context, IApplication, IntentType, Payload} from '../../../src/client';
+import {Context, IApplication, IntentType} from '../../../src/client/main';
 
 import {OFPuppeteerBrowser, TestWindowContext} from './ofPuppeteer';
 
@@ -34,9 +34,11 @@ export async function resolve(
     context?: Context): Promise<IApplication[]> {
   return ofBrowser.executeOnWindow(
       executionTarget,
-      function(this: TestWindowContext, intent: IntentType, context?: Context):
+      async function(
+          this: TestWindowContext, intent: IntentType, context?: Context):
           Promise<IApplication[]> {
-            return this.OpenfinFDC3.resolve(intent, context);
+            return this.OpenfinFDC3.findIntent(intent, context)
+                .then(appIntent => appIntent.apps);
           },
       intent, context);
 }
@@ -45,7 +47,7 @@ export async function broadcast(
     executionTarget: Identity, context: Context): Promise<void> {
   return ofBrowser.executeOnWindow(
       executionTarget,
-      function(this: TestWindowContext, context: Context): Promise<void> {
+      async function(this: TestWindowContext, context: Context): Promise<void> {
         return this.OpenfinFDC3.broadcast(context);
       }, context);
 }
@@ -62,10 +64,10 @@ export async function addContextListener(
       .executeOnWindow(
           executionTarget,
           async function(this: TestWindowContext):
-              Promise<Payload> {
-                return new Promise<Payload>(res => {
-                  const listener = new this.OpenfinFDC3.ContextListener(
-                      (context: Payload) => {
+              Promise<Context> {
+                return new Promise<Context>(res => {
+                  const listener = this.OpenfinFDC3.addContextListener(
+                      (context: Context) => {
                         res(context);
                       });
                 });

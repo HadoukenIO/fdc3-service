@@ -20,7 +20,7 @@ export function LauncherApp(): React.ReactElement {
     });
 
     const openApp = (app: IApplication) => {
-        console.log(`Opening app ${app.title}`)
+        console.log(`Opening app ${app.title}`);
         fdc3.open(app.name)
             .then(() => console.log(`Opened app ${app.title}`))
             .catch(console.log);
