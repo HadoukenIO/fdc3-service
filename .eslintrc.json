@@ -6,7 +6,8 @@
     },
     "extends": [
         "eslint:recommended",
-        "plugin:import/errors"
+        "plugin:import/errors",
+        "plugin:react/recommended"
     ],
     "globals": {
         "fin": "readonly"
@@ -18,9 +19,11 @@
         "ecmaVersion": 2018,
         "sourceType": "module"
     },
-    "plugins": [
-        "react"
-    ],
+    "settings": {
+        "react": {
+            "version": "detect"
+        }
+    },
     "rules": {
         "array-bracket-newline": ["error", "consistent"],
         "array-bracket-spacing": "error",
@@ -40,7 +43,7 @@
         "key-spacing": "error",
         "keyword-spacing": "error",
         "lines-between-class-members": ["error", "always", {"exceptAfterSingleLine": true}],
-        "max-len": ["error", {"code": 160, "comments": 120, "ignorePattern": "@param .*"}],
+        "max-len": ["error", {"code": 160, "comments": 120, "ignorePattern": "(@param .*)|(import .* from .*)"}],
         "max-statements-per-line": "error",
         "no-console": "off",
         "no-multi-spaces": ["error", {"ignoreEOLComments": true}],
