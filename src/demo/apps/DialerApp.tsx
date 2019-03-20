@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import * as fdc3 from '../../client/main';
 import {Number} from '../components/dialer/Number';
 import {Dialer} from '../components/dialer/Dialer';
@@ -8,7 +9,6 @@ import {ContactContext, Context} from '../../client/context';
 import {Dialog} from '../components/common/Dialog';
 
 import '../../../res/demo/css/w3.css';
-import {ColorLinker} from '../components/common/ColorLinker';
 
 interface AppProps {
     phoneNumber?: string;
@@ -16,14 +16,14 @@ interface AppProps {
 
 export function DialerApp(props: AppProps): React.ReactElement {
     const [inCall, setInCall] = React.useState(false);
-    const [phoneNumber, setPhoneNumber] = React.useState<string>("");
+    const [phoneNumber, setPhoneNumber] = React.useState<string>('');
     const [pendingCall, setPendingCall] = React.useState<ContactContext | null>(null);
 
     const onNumberEntry = (phoneNumber: string) => setPhoneNumber(phoneNumber);
     const onDialerEntry = (key: string) => setPhoneNumber(phoneNumber + key);
     const toggleCall = () => setInCall(!inCall);
     const handleDialog = (option: string) => {
-        if (option === "Yes") {
+        if (option === 'Yes') {
             setPhoneNumber(pendingCall!.id.phone!);
             setPendingCall(null);
         } else {
@@ -36,12 +36,12 @@ export function DialerApp(props: AppProps): React.ReactElement {
             setPhoneNumber(context.id.phone!);
             setInCall(startCall);
         } else {
-            throw new Error("Contact doesn't have a phone number");
+            throw new Error('Contact doesn\'t have a phone number');
         }
     };
 
     React.useEffect(() => {
-        document.title = "Dialer";
+        document.title = 'Dialer';
     }, []);
 
     // Setup listeners
@@ -61,7 +61,7 @@ export function DialerApp(props: AppProps): React.ReactElement {
             }
         });
         const contextListener = fdc3.addContextListener((context: Context) => {
-            if (context.type === "contact") {
+            if (context.type === 'contact') {
                 if (!inCall) {
                     handleIntent(context as ContactContext, false);
                 }
@@ -79,9 +79,22 @@ export function DialerApp(props: AppProps): React.ReactElement {
         <div>
             <Number inCall={inCall} number={phoneNumber} onValueChange={onNumberEntry} />
             {inCall && <CallTimer />}
-            {!inCall && <Dialer handleKeyPress={onDialerEntry} />}
+            {!inCall && <Dialer handleKeyPress={
+                (() => {
+                    if (Math.random() < 0.5) {
+                        return onDialerEntry;
+                    } else {
+                        return () => {};
+                    }
+                })()
+            } />}
             <CallButton canCall={phoneNumber.length > 0} inCall={inCall} handleClick={toggleCall} />
-            <Dialog show={!!pendingCall} title="Replace call?" body={"Hang up and call " + (pendingCall && pendingCall.id.phone) + "?"} options={["No", "Yes"]} handleOption={handleDialog} />
+            <Dialog
+                show={!!pendingCall}
+                title="Replace call?"
+                body={'Hang up and call ' + (pendingCall && pendingCall.id.phone) + '?'}
+                options={['No', 'Yes']} handleOption={handleDialog}
+            />
         </div>
     );
 }

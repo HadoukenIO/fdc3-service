@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import * as fdc3 from '../../client/main';
 import {AppMetadata} from '../../client/main';
 import {IApplication} from '../../client/directory';
@@ -10,7 +11,7 @@ export function LauncherApp(): React.ReactElement {
     const [applications, setApplications] = React.useState<AppMetadata[]>([]);
 
     React.useEffect(() => {
-        document.title = "Launcher";
+        document.title = 'Launcher';
     }, []);
 
     React.useEffect(() => {
@@ -20,7 +21,7 @@ export function LauncherApp(): React.ReactElement {
     });
 
     const openApp = (app: IApplication) => {
-        console.log(`Opening app ${app.title}`)
+        console.log(`Opening app ${app.title}`);
         fdc3.open(app.name)
             .then(() => console.log(`Opened app ${app.title}`))
             .catch(console.log);

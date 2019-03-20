@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import * as fdc3 from '../../../client/main';
 import {IApplication} from '../../../client/directory';
 import {Symbol} from '../../apps/BlotterApp';
@@ -16,27 +17,27 @@ interface SymbolsRowProps {
 
 const menuItems: ContextMenuItem[] = [
     {
-        text: "View Quote",
+        text: 'View Quote',
         payload: {
-            userData: "quote"
+            userData: 'quote'
         }
     },
     {
-        text: "View News",
+        text: 'View News',
         payload: {
-            userData: "news"
+            userData: 'news'
         }
     },
     {
-        text: "View Chart",
+        text: 'View Chart',
         children: []
     }
 ];
 
 const defaultViewChart: ContextMenuItem = {
-    text: "Use Default",
+    text: 'Use Default',
     payload: {
-        userData: "charts"
+        userData: 'charts'
     }
 };
 
@@ -47,7 +48,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     React.useEffect(() => {
         const appItems = chartApps.map(app => {
             return {
-                text: "View " + app.title,
+                text: 'View ' + app.title,
                 payload: {
                     userData: app.name
                 }
@@ -74,7 +75,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
 
     const getContext = () => {
         return {
-            type: "security",
+            type: 'security',
             name: item.name,
             id: {
                 default: item.name
@@ -86,13 +87,13 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
         // Send intent, "fire and forget" style
         const userData = payload.userData;
         switch (userData) {
-            case "quote":
+            case 'quote':
                 fdc3.raiseIntent(fdc3.Intents.VIEW_QUOTE, getContext());
                 break;
-            case "news":
+            case 'news':
                 fdc3.raiseIntent(fdc3.Intents.VIEW_NEWS, getContext());
                 break;
-            case "chart":
+            case 'chart':
                 fdc3.raiseIntent(fdc3.Intents.VIEW_CHART, getContext());
                 break;
             default:
@@ -111,7 +112,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     };
 
     return (
-        <tr className={"symbols-row" + (selected ? " w3-theme-l2" : "")} onClick={handleClick}>
+        <tr className={'symbols-row' + (selected ? ' w3-theme-l2' : '')} onClick={handleClick}>
             <td>{item.name}</td>
             <td>##.##</td>
             <td>##.##</td>
