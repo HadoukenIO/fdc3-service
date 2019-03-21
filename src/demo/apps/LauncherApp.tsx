@@ -1,13 +1,12 @@
 import * as React from 'react';
 import * as fdc3 from '../../client/main';
-import {AppMetadata} from '../../client/main';
 import {DirectoryApplication} from '../../client/directory';
 import {AppCard} from '../components/launcher/AppCard';
 
 import '../../../res/demo/css/w3.css';
 
 export function LauncherApp(): React.ReactElement {
-    const [applications, setApplications] = React.useState<AppMetadata[]>([]);
+    const [applications, setApplications] = React.useState<DirectoryApplication[]>([]);
 
     React.useEffect(() => {
         document.title = "Launcher";
@@ -29,7 +28,7 @@ export function LauncherApp(): React.ReactElement {
     return (
         <div>
             <h1>Launcher</h1>
-            {applications.map((app, index) => <AppCard key={app.id + index} app={app} handleClick={openApp} />)}
+            {applications.map((app, index) => <AppCard key={app.appId + index} app={app} handleClick={openApp} />)}
         </div>
     );
 }

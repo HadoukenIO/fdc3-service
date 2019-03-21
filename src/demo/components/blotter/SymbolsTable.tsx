@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as fdc3 from '../../../client/main';
 import {Symbol} from '../../apps/BlotterApp';
 import {SymbolsRow} from './SymbolsRow';
-import { DirectoryApplication } from '../../../client/main';
+import {DirectoryApplication} from '../../../client/main';
 
 interface SymbolsTableProps {
     items?: Symbol[];

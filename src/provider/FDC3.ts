@@ -4,12 +4,12 @@ import {Identity} from 'openfin/_v2/main';
 import {ContextBase} from '../client/context';
 import {DirectoryApplication} from '../client/directory';
 import {APITopic, BroadcastPayload, FindIntentPayload, RaiseIntentPayload, TopicPayloadMap, TopicResponseMap} from '../client/internal';
-import {AppIntent, AppMetadata} from '../client/main';
+import {AppIntent} from '../client/main';
 
 import {ActionHandlerMap, APIHandler} from './APIHandler';
 import {AppDirectory} from './AppDirectory';
 import {DefaultAction, OpenArgs, QueuedIntent, ResolveArgs, SelectorResultArgs} from './index';
-import {AppMetadata as StoreAppMetadata, MetadataStore} from './MetadataStore';
+import {AppMetadata, MetadataStore} from './MetadataStore';
 import {PreferencesStore} from './PreferencesStore';
 
 /**
@@ -86,7 +86,7 @@ export class FDC3 {
         return this.sendContext(payload.context);
     }
     private async onIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<void> {
-        let applications: AppMetadata[] = (await this.onResolve({intent: payload.intent, context: payload.context})).apps;
+        let applications: DirectoryApplication[] = (await this.onResolve({intent: payload.intent, context: payload.context})).apps;
         if (applications.length > 1) {
             applications = this.applyIntentPreferences(payload, applications, source);
         }
@@ -94,7 +94,7 @@ export class FDC3 {
             // Return all applications within the manifest that can handle the given
             // intent
             return this.onOpen({name: applications[0].name}).then(() => {
-                return this.sendIntent(payload, this.metadata.lookupFromDirectoryId(applications[0].id)!);
+                return this.sendIntent(payload, this.metadata.lookupFromDirectoryId(applications[0].appId)!);
             });
         } else if (applications.length > 1) {
             // Ask user to manually select an application
@@ -185,7 +185,7 @@ export class FDC3 {
      */
     private async openApplication(requestedApp: DirectoryApplication, context?: ContextBase): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            const metadata: StoreAppMetadata|null = this.metadata.lookupFromDirectoryId(requestedApp.appId);
+            const metadata: AppMetadata|null = this.metadata.lookupFromDirectoryId(requestedApp.appId);
             const uuid = (metadata && metadata.uuid) || '';
 
             this.isAppRunning(uuid).then((isRunning: boolean) => {
@@ -259,7 +259,7 @@ export class FDC3 {
                 });
         });
     }
-    private focusApplication(app: StoreAppMetadata): void {
+    private focusApplication(app: AppMetadata): void {
         fin.Window.wrapSync(app).focus();
     }
     /**
@@ -347,7 +347,7 @@ export class FDC3 {
     private async sendContext(context: ContextBase): Promise<void> {
         return fin.InterApplicationBus.publish('context', context);
     }
-    private async sendIntent(intent: RaiseIntentPayload, targetApp: StoreAppMetadata): Promise<void> {
+    private async sendIntent(intent: RaiseIntentPayload, targetApp: AppMetadata): Promise<void> {
         if (targetApp) {
             console.log('c1a: ', targetApp, intent);
             return fin.InterApplicationBus.send(targetApp, 'intent', intent);
