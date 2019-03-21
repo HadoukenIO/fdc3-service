@@ -36,8 +36,6 @@ describe('advanced puppeteer functionality', () => {
         const broadcastPayload = {type: 'test-context', name: 'contextName1', id: {name: 'contextID1'}};
         await fdc3Remote.broadcast(testIdentity1, broadcastPayload);
 
-        // Check that the listener received the context with expected value
-        await new Promise(res => setTimeout(res, 100));
         await expect(callbackResponse).resolves;
         expect(callbackSpy).toHaveBeenCalledTimes(1);
         expect(callbackSpy).toHaveBeenCalledWith(broadcastPayload);

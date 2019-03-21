@@ -9,20 +9,12 @@ import {OFPuppeteerBrowser, TestWindowContext} from './utils/ofPuppeteer';
 describe('basic puppeteer functionality', () => {
     const ofBrowser = new OFPuppeteerBrowser();
 
-    beforeAll(async () => {
-        expect(ofBrowser.browser).not.toBeUndefined();
-        await new Promise(res => setTimeout(res, 200));
-    });
-
 
     afterEach(() => {
         jest.clearAllMocks();
     });
 
-    it('can connect to the browser process', async () => {
-        expect(ofBrowser.browser).toBeTruthy();
-        expect(ofBrowser.browser!.pages()).resolves.toBeTruthy();
-    });
+
 
     it('can execute code remotely on the main test app', async () => {
         const testManagerIdentity = {uuid: 'test-app', name: 'test-app'};

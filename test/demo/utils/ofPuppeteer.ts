@@ -18,17 +18,13 @@ export class OFPuppeteerBrowser {
 
     private _browser: Browser;
 
-    public get browser() {
-        return this._browser;
-    }
-
     constructor() {
         this._pageIdentityCache = new Map<Page, Identity>();
         this._identityPageCache = new Map<string, Page>();
         this._browser = global.__BROWSER__;
     }
 
-    public async getPage(identity: Identity): Promise<Page|undefined> {
+    private async getPage(identity: Identity): Promise<Page|undefined> {
         const idString = getIdString(identity);
 
         // Return cached value when available
@@ -51,7 +47,7 @@ export class OFPuppeteerBrowser {
         return undefined;
     }
 
-    public async getIdentity(page: Page): Promise<Identity|undefined> {
+    private async getIdentity(page: Page): Promise<Identity|undefined> {
         // Return cached value when available
         if (this._pageIdentityCache.has(page)) {
             return this._pageIdentityCache.get(page);
