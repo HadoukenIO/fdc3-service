@@ -37,6 +37,7 @@ export interface DirectoryIntent {
     contexts: string[];
 
     // Sepcification is ambigous on type of customConfig, so leaving as 'any'
+    /* tslint:disable:no-any */
     customConfig: any;
 }
 
