@@ -36,7 +36,7 @@ export interface DirectoryIntent {
     displayName?: string;
     contexts: string[];
 
-    // Sepcification is ambigous on type of customConfig, so leaving as 'any'
+    // Specification is ambiguous on type of customConfig, so leaving as 'any'
     /* tslint:disable:no-any */
     customConfig: any;
 }
