@@ -216,15 +216,10 @@ export class FDC3 {
                 reject(new Error(`Manifest type ${appInfo.manifestType} not supported`));
             }
 
-            let isJson = false;
             try {
                 JSON.parse(appInfo.manifest);
-                isJson = true;
-            } catch (e) {
-            }
-
-            if (isJson) {
                 reject(new Error('Inline JSON manifests not supported'));
+            } catch (e) {
             }
 
             fin.Application.createFromManifest(appInfo.manifest)
