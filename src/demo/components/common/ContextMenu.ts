@@ -20,10 +20,10 @@ const defaultWindowOptions: WindowOption = {
   defaultTop: 200,
 };
 
-export interface ContextMenuItem {
+export interface ContextMenuItem<T extends {}={}> {
   text: string;
   children?: ContextMenuItem[];
-  payload?: ContextMenuPayload;
+  payload?: T;
 }
 
 export interface ContextMenuPayload {
@@ -38,7 +38,7 @@ interface ContextMenuParameters {
 }
 
 // tslint:disable-next-line:no-any
-type clickCallback = (payload: ContextMenuPayload) => any;
+type clickCallback<T extends {}={}> = (payload: T) => any;
 
 class ContextMenu {
   private _windowV1: fin.OpenFinWindow;
@@ -138,7 +138,7 @@ class ContextMenu {
    * @param {clickCallback} clickCallback The function that will be called when an item has been clicked.
    * @memberof ContextMenu
    */
-  public async setContent(menuItems: ContextMenuItem[], clickCallback: clickCallback) {
+  public async setContent<T extends {}={}>(menuItems: ContextMenuItem[], clickCallback: clickCallback<T>) {
     //Check that there is any children if so make a child node
     let child = await this._child;
     if (this.childCheck(menuItems) && child === undefined) {
@@ -175,7 +175,8 @@ class ContextMenu {
       li.addEventListener('click', async () => {
         if (!item.children && item.payload) {
           contextMenu.hide();
-          clickCallback(item.payload);
+          // tslint:disable-next-line:no-any
+          clickCallback(item.payload as any);
         }
       });
 
@@ -290,7 +291,7 @@ window.onunload = async (event) => {
   await contextMenu.destroy();
 };
 
-export async function showContextMenu(position: Point, items: ContextMenuItem[], handleClick: (payload: ContextMenuPayload) => void) {
+export async function showContextMenu<T extends {}>(position: Point, items: ContextMenuItem<T>[], handleClick: (payload: T) => void) {
   if (!contextMenu) {
     contextMenu = await ContextMenu.create("root", true);
   }

@@ -14,7 +14,12 @@ interface SymbolsRowProps {
     handleSelect?: (item: Symbol | null) => void;
 }
 
-const menuItems: ContextMenuItem[] = [
+interface Payload {
+    intent: string;
+    appName?: string;
+}
+
+const menuItems: ContextMenuItem<Payload>[] = [
     {
         text: "View Quote",
         payload: {
