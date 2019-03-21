@@ -18,38 +18,22 @@ import {OFPuppeteerBrowser, TestWindowContext} from './ofPuppeteer';
 
 const ofBrowser = new OFPuppeteerBrowser();
 
-export async function open(
-    executionTarget: Identity, name: string, context?: Context): Promise<void> {
-  return ofBrowser.executeOnWindow(
-      executionTarget,
-      function(this: TestWindowContext, name: string, context?: Context):
-          Promise<void> {
-            return this.OpenfinFDC3.open(name, context);
-          },
-      name, context);
+export async function open(executionTarget: Identity, name: string, context?: Context): Promise<void> {
+    return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, name: string, context?: Context): Promise<void> {
+        return this.OpenfinFDC3.open(name, context);
+    }, name, context);
 }
 
-export async function resolve(
-    executionTarget: Identity, intent: IntentType,
-    context?: Context): Promise<IApplication[]> {
-  return ofBrowser.executeOnWindow(
-      executionTarget,
-      async function(
-          this: TestWindowContext, intent: IntentType, context?: Context):
-          Promise<IApplication[]> {
-            return this.OpenfinFDC3.findIntent(intent, context)
-                .then(appIntent => appIntent.apps);
-          },
-      intent, context);
+export async function resolve(executionTarget: Identity, intent: IntentType, context?: Context): Promise<IApplication[]> {
+    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, intent: IntentType, context?: Context): Promise<IApplication[]> {
+        return this.OpenfinFDC3.findIntent(intent, context).then(appIntent => appIntent.apps);
+    }, intent, context);
 }
 
-export async function broadcast(
-    executionTarget: Identity, context: Context): Promise<void> {
-  return ofBrowser.executeOnWindow(
-      executionTarget,
-      async function(this: TestWindowContext, context: Context): Promise<void> {
+export async function broadcast(executionTarget: Identity, context: Context): Promise<void> {
+    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, context: Context): Promise<void> {
         return this.OpenfinFDC3.broadcast(context);
-      }, context);
+    }, context);
 }
 
 /**
@@ -57,22 +41,19 @@ export async function broadcast(
  *
  * Returns a promise which resolves to the context passed to the listener
  */
-export async function addContextListener(
-    executionTarget: Identity,
-    handler: (context: Context) => void): Promise<void> {
-  return ofBrowser
-      .executeOnWindow(
-          executionTarget,
-          async function(this: TestWindowContext):
-              Promise<Context> {
-                return new Promise<Context>(res => {
-                  const listener = this.OpenfinFDC3.addContextListener(
-                      (context: Context) => {
-                        res(context);
-                      });
-                });
-              })
-      .then(async (result) => {
-        handler(await result);
-      });
+export async function addContextListener(executionTarget: Identity, handler: (context: Context) => void): Promise<void> {
+    return ofBrowser
+        .executeOnWindow(
+            executionTarget,
+            async function(this: TestWindowContext):
+                Promise<Context> {
+                    return new Promise<Context>(res => {
+                        const listener = this.OpenfinFDC3.addContextListener((context: Context) => {
+                            res(context);
+                        });
+                    });
+                })
+        .then(async (result) => {
+            handler(await result);
+        });
 }
