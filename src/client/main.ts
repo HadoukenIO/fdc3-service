@@ -2,7 +2,7 @@ import {channelPromise, tryServiceDispatch} from './connection';
 import {Context} from './context';
 import {IntentType} from './intents';
 import {APITopic, RaiseIntentPayload, SERVICE_IDENTITY} from './internal';
-import {DirectoryApplication} from './directory';
+import {Application} from './directory';
 
 /**
  * This file was copied from the FDC3 v1 specification.
@@ -41,7 +41,7 @@ export interface IntentMetadata {
  */
 export interface AppIntent {
     intent: IntentMetadata;
-    apps: DirectoryApplication[];
+    apps: Application[];
 }
 
 /**

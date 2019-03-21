@@ -2,7 +2,7 @@ import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 import {Identity} from 'openfin/_v2/main';
 
 import {ContextBase} from '../client/context';
-import {DirectoryApplication} from '../client/directory';
+import {Application} from '../client/directory';
 import {APITopic, BroadcastPayload, FindIntentPayload, RaiseIntentPayload, TopicPayloadMap, TopicResponseMap} from '../client/internal';
 import {AppIntent} from '../client/main';
 
@@ -51,8 +51,8 @@ export class FDC3 {
         this.apiHandler.channel.register(FDC3.MSG_SELECTOR_RESULT, this.onSelectorResult.bind(this));
     }
     private async onOpen(payload: OpenArgs): Promise<void> {
-        const applications: DirectoryApplication[] = await this.directory.getApplications();
-        const requestedApp: DirectoryApplication|undefined = applications.find((app: DirectoryApplication) => app.name === payload.name);
+        const applications: Application[] = await this.directory.getApplications();
+        const requestedApp: Application|undefined = applications.find((app: Application) => app.name === payload.name);
         return new Promise<void>((resolve: () => void, reject: (reason: Error) => void) => {
             if (requestedApp) {
                 this.openApplication(requestedApp, payload.context).then(resolve, reject);
@@ -62,11 +62,11 @@ export class FDC3 {
         });
     }
     private async onResolve(payload: FindIntentPayload): Promise<AppIntent> {
-        const applications: DirectoryApplication[] = await this.directory.getApplications();
+        const applications: Application[] = await this.directory.getApplications();
         if (payload.intent) {
             // Return all applications within the manifest that can handle the given
             // intent
-            const filteredApps = applications.filter((app: DirectoryApplication) => app.intents && app.intents.some(intent => intent.name === payload.intent));
+            const filteredApps = applications.filter((app: Application) => app.intents && app.intents.some(intent => intent.name === payload.intent));
             return {
                 // TODO: update this to handle display names once provider is updated to include them (SERVICE-392?)
                 intent: {name: payload.intent, displayName: payload.intent},
@@ -86,7 +86,7 @@ export class FDC3 {
         return this.sendContext(payload.context);
     }
     private async onIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<void> {
-        let applications: DirectoryApplication[] = (await this.onResolve({intent: payload.intent, context: payload.context})).apps;
+        let applications: Application[] = (await this.onResolve({intent: payload.intent, context: payload.context})).apps;
         if (applications.length > 1) {
             applications = this.applyIntentPreferences(payload, applications, source);
         }
@@ -98,7 +98,7 @@ export class FDC3 {
             });
         } else if (applications.length > 1) {
             // Ask user to manually select an application
-            return this.resolveIntent(payload, source, applications).then((selectedApp: DirectoryApplication) => {
+            return this.resolveIntent(payload, source, applications).then((selectedApp: Application) => {
                 return this.sendIntent(payload, this.metadata.lookupFromDirectoryId(selectedApp.appId)!);
             });
         } else {
@@ -123,10 +123,10 @@ export class FDC3 {
      * intent
      * @param source The application that fired the intent
      */
-    private applyIntentPreferences(intent: RaiseIntentPayload, applications: DirectoryApplication[], source: Identity): DirectoryApplication[] {
+    private applyIntentPreferences(intent: RaiseIntentPayload, applications: Application[], source: Identity): Application[] {
         // Check for any explicit target set within the intent
         if (intent.target) {
-            const preferredApplication: DirectoryApplication|undefined = applications.find((app: DirectoryApplication) => app.appId === intent.target);
+            const preferredApplication: Application|undefined = applications.find((app: Application) => app.appId === intent.target);
             if (preferredApplication) {
                 return [preferredApplication];
             }
@@ -134,7 +134,7 @@ export class FDC3 {
         // Check for any user preferences
         const preferredAppId: string = this.preferences.getPreferredApp(this.metadata.mapUUID(source.uuid)!, intent.intent)!;
         if (applications.length > 1 && preferredAppId) {
-            const preferredApplication: DirectoryApplication|undefined = applications.find((app: DirectoryApplication) => app.appId === preferredAppId);
+            const preferredApplication: Application|undefined = applications.find((app: Application) => app.appId === preferredAppId);
             if (preferredApplication) {
                 // We found an applicable user preference, ignore the other applications
                 return [preferredApplication];
@@ -183,7 +183,7 @@ export class FDC3 {
      * @param requestedApp The application to open
      * @param context Context data to pass to the application
      */
-    private async openApplication(requestedApp: DirectoryApplication, context?: ContextBase): Promise<void> {
+    private async openApplication(requestedApp: Application, context?: ContextBase): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             const metadata: AppMetadata|null = this.metadata.lookupFromDirectoryId(requestedApp.appId);
             const uuid = (metadata && metadata.uuid) || '';
@@ -206,7 +206,7 @@ export class FDC3 {
             }, reject);
         });
     }
-    private async startApplication(appInfo: DirectoryApplication, context?: ContextBase): Promise<void> {
+    private async startApplication(appInfo: Application, context?: ContextBase): Promise<void> {
         return new Promise<void>((resolve: () => void, reject: (reason: Error) => void) => {
             if (!appInfo) {
                 reject(new Error('No app details given'));
@@ -272,7 +272,7 @@ export class FDC3 {
      * @param applications A pre-filtered list of applications that are capable of
      * handling the intent
      */
-    private async resolveIntent(intent: RaiseIntentPayload, source: Identity, applications: DirectoryApplication[]): Promise<DirectoryApplication> {
+    private async resolveIntent(intent: RaiseIntentPayload, source: Identity, applications: Application[]): Promise<Application> {
         const removeFromQueue = (intent: QueuedIntent): void => {
             const index: number = this.uiQueue.indexOf(intent);
             if (index >= 0) {
@@ -284,7 +284,7 @@ export class FDC3 {
                 }
             }
         };
-        return new Promise<DirectoryApplication>((resolve, reject) => {
+        return new Promise<Application>((resolve, reject) => {
             // Add to queue
             const queuedIntent: QueuedIntent = {
                 handle: this.createHandle(),
@@ -292,7 +292,7 @@ export class FDC3 {
                 source: this.metadata.lookupFromAppUUID(source.uuid)!,
                 applications,
                 selector: null,
-                resolve: (selectedApp: DirectoryApplication) => {
+                resolve: (selectedApp: Application) => {
                     removeFromQueue(queuedIntent);
                     resolve(selectedApp);
                 },

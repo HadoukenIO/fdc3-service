@@ -2,11 +2,11 @@ import * as React from 'react';
 
 import './AppCard.css';
 
-import {DirectoryApplication} from '../../../client/directory';
+import {Application} from '../../../client/directory';
 
 interface AppCardProps {
-    app: DirectoryApplication;
-    handleClick?: (app: DirectoryApplication) => void;
+    app: Application;
+    handleClick?: (app: Application) => void;
 }
 
 export function AppCard(props: AppCardProps): React.ReactElement {

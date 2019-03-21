@@ -13,40 +13,15 @@
  * It is not possible for TypeScript to verify that only valid application names/appIds are passed to the FDC3 API. This type
  * definition is more a hint to the callee, over a plain "string" argument.
  */
-export type DirectoryAppId = string;
-export type DirectoryAppName = string;
-
-export interface DirectoryAppImage {
-    url: string;
-    tooltip?: string;
-    description?: string;
-}
-
-export interface DirectoryIcon {
-    icon: string;
-}
-
-export interface DirectoryNameValuePair {
-    name: string;
-    value: string;
-}
-
-export interface DirectoryIntent {
-    name: string;
-    displayName?: string;
-    contexts: string[];
-
-    // Specification is ambiguous on type of customConfig, so leaving as 'any'
-    /* tslint:disable:no-any */
-    customConfig: any;
-}
+export type AppId = string;
+export type AppName = string;
 
 /**
  * An application in the app directory
  */
-export interface DirectoryApplication {
-    appId: DirectoryAppId;
-    name: DirectoryAppName;
+export interface Application {
+    appId: AppId;
+    name: AppName;
     manifest: string;
     manifestType: string;
 
@@ -54,14 +29,38 @@ export interface DirectoryApplication {
     title?: string;
     tooltip?: string;
     description?: string;
-    images?: DirectoryAppImage[];
+    images?: AppImage[];
     contactEmail?: string;
     supportEmail?: string;
     publisher?: string;
 
     signature?: string;
-    icons?: DirectoryIcon[];
-    customConfig?: DirectoryNameValuePair[];
+    icons?: Icon[];
+    customConfig?: NameValuePair[];
 
-    intents?: DirectoryIntent[];
+    intents?: Intent[];
+}
+
+interface AppImage {
+    url: string;
+    tooltip?: string;
+    description?: string;
+}
+interface Icon {
+    icon: string;
+}
+
+interface NameValuePair {
+    name: string;
+    value: string;
+}
+
+interface Intent {
+    name: string;
+    displayName?: string;
+    contexts: string[];
+
+    // Specification is ambiguous on type of customConfig, so leaving as 'any'
+    /* tslint:disable:no-any */
+    customConfig: any;
 }

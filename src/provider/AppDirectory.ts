@@ -1,4 +1,4 @@
-import {DirectoryApplication} from '../client/directory';
+import {Application} from '../client/directory';
 
 /**
  * Class that provides access to the application directory. Once retrieved, the
@@ -22,7 +22,7 @@ export class AppDirectory {
      */
     private static MAX_CACHE_AGE: number = 1000 * 60 * 60 * 24;  // 24 hours (in milliseconds)
 
-    private applications: DirectoryApplication[]|null;
+    private applications: Application[]|null;
     private timestamp: number;
 
     constructor() {
@@ -33,7 +33,7 @@ export class AppDirectory {
     /**
      * Returns a list of all applications in the directory.
      */
-    public async getApplications(): Promise<DirectoryApplication[]> {
+    public async getApplications(): Promise<Application[]> {
         if (this.applications && Date.now() < this.timestamp + AppDirectory.MAX_CACHE_AGE) {
             return this.applications;
         } else {
@@ -41,10 +41,10 @@ export class AppDirectory {
         }
     }
 
-    private async request(): Promise<DirectoryApplication[]> {
-        return new Promise((resolve: (value: DirectoryApplication[]) => void, reject: (reason: Error) => void): void => {
+    private async request(): Promise<Application[]> {
+        return new Promise((resolve: (value: Application[]) => void, reject: (reason: Error) => void): void => {
             const xhr: XMLHttpRequest = new XMLHttpRequest();
-            let response: DirectoryApplication[];
+            let response: Application[];
 
             xhr.open('GET', AppDirectory.URL);
             xhr.responseType = 'json';

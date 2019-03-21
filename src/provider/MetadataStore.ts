@@ -1,6 +1,6 @@
 import {Application} from 'openfin/_v2/main';
 
-import {DirectoryApplication, DirectoryAppId} from '../client/directory';
+import {Application as DirectoryApplication, AppId} from '../client/directory';
 
 export interface AppMetadata {
     /**
@@ -16,7 +16,7 @@ export interface AppMetadata {
     /**
      * The application's ID within the FDC3 application directory
      */
-    directoryId: DirectoryAppId;
+    directoryId: AppId;
 }
 
 /**
@@ -42,7 +42,7 @@ export class MetadataStore {
      *
      * @param directoryId The ID of an application within the FDC3 directory
      */
-    public lookupFromDirectoryId(directoryId: DirectoryAppId): AppMetadata|null {
+    public lookupFromDirectoryId(directoryId: AppId): AppMetadata|null {
         return this.appData[directoryId] || null;
     }
 
@@ -75,7 +75,7 @@ export class MetadataStore {
      *
      * @param directoryId The FDC3 app ID to map
      */
-    public mapDirectoryId(directoryId: DirectoryAppId): string|null {
+    public mapDirectoryId(directoryId: AppId): string|null {
         const metadata = this.appData[directoryId];
 
         return (metadata && metadata.uuid) || null;
@@ -88,7 +88,7 @@ export class MetadataStore {
      *
      * @param uuid The application UUID to map
      */
-    public mapUUID(uuid: string): DirectoryAppId|null {
+    public mapUUID(uuid: string): AppId|null {
         const metadata = this.lookupFromAppUUID(uuid);
 
         return (metadata && metadata.directoryId) || null;

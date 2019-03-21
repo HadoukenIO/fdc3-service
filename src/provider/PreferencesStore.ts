@@ -1,4 +1,4 @@
-import {DirectoryApplication} from '../client/directory';
+import {Application} from '../client/directory';
 import * as fdc3 from '../client/main';
 
 /**

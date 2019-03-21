@@ -1,13 +1,13 @@
 import * as React from 'react';
-import {DirectoryApplication} from '../../client/directory';
+import {Application} from '../../client/directory';
 
 import './AppCard.css';
 
 interface AppCardProps {
-    app: DirectoryApplication;
+    app: Application;
     selected: boolean;
-    selectHandler: (app: DirectoryApplication) => void;
-    openHandler: (app: DirectoryApplication) => void;
+    selectHandler: (app: Application) => void;
+    openHandler: (app: Application) => void;
 }
 
 export function AppCard(props: AppCardProps): React.ReactElement {
