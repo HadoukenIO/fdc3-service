@@ -5,7 +5,6 @@ import {OFPuppeteerBrowser, TestWindowContext} from './utils/ofPuppeteer';
 
 // Testing test utils...
 describe('basic puppeteer functionality', () => {
-  jest.setTimeout(100000);
   const ofBrowser = new OFPuppeteerBrowser();
 
   beforeAll(async () => {

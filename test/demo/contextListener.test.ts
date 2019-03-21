@@ -4,13 +4,14 @@ import {getFinConnection} from './utils/fin';
 
 
 describe('advanced puppeteer functionality', () => {
-  jest.setTimeout(300000);
-
   const testManagerIdentity = {uuid: 'test-app', name: 'test-app'};
   const testIdentity1 = {uuid: 'test-app-1', name: 'test-app-1'};
   const testIdentity2 = {uuid: 'test-app-2', name: 'test-app-2'};
 
   it('can can register and trigger a context listener', async () => {
+    // Creating the apps can take a while, so we need a longer timeout.
+    jest.setTimeout(10000);
+
     const fin = await getFinConnection();
 
     // Check to see that the main window started correctly
