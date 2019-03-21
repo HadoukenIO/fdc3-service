@@ -1,4 +1,4 @@
-import {DirectoryApplication, DirectoryAppId} from '../client/directory';
+import {DirectoryApplication, DirectoryAppId, DirectoryAppName} from '../client/directory';
 import {IntentType} from '../client/intents';
 import {RaiseIntentPayload} from '../client/internal';
 import {Context} from '../client/main';
@@ -40,7 +40,7 @@ export const enum DefaultAction {
 
 // Message definitions
 export interface OpenArgs {
-    appId: DirectoryAppId;
+    name: DirectoryAppName;
     context?: Context;
 }
 export interface ResolveArgs {

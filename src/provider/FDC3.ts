@@ -52,12 +52,12 @@ export class FDC3 {
     }
     private async onOpen(payload: OpenArgs): Promise<void> {
         const applications: DirectoryApplication[] = await this.directory.getApplications();
-        const requestedApp: DirectoryApplication|undefined = applications.find((app: DirectoryApplication) => app.appId === payload.appId);
+        const requestedApp: DirectoryApplication|undefined = applications.find((app: DirectoryApplication) => app.name === payload.name);
         return new Promise<void>((resolve: () => void, reject: (reason: Error) => void) => {
             if (requestedApp) {
                 this.openApplication(requestedApp, payload.context).then(resolve, reject);
             } else {
-                reject(new Error('No app with appId \'' + payload.appId + '\''));
+                reject(new Error('No app with name \'' + payload.name + '\''));
             }
         });
     }
@@ -93,7 +93,7 @@ export class FDC3 {
         if (applications.length === 1) {
             // Return all applications within the manifest that can handle the given
             // intent
-            return this.onOpen({appId: applications[0].name}).then(() => {
+            return this.onOpen({name: applications[0].name}).then(() => {
                 return this.sendIntent(payload, this.metadata.lookupFromDirectoryId(applications[0].id)!);
             });
         } else if (applications.length > 1) {
