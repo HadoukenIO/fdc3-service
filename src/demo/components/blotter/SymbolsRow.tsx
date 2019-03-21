@@ -88,15 +88,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
 
     const handleContextMenuSelection = (payload: ContextMenuPayload) => {
         if (payload.intent) {
-            // Send intent, "fire and forget" style
-            switch (payload.intent) {
-                case fdc3.Intents.VIEW_CHART:
-                    fdc3.raiseIntent(fdc3.Intents.VIEW_CHART, getContext(), payload.appName);
-                    break;
-                default:
-                    fdc3.raiseIntent(payload.intent, getContext());
-                    break;
-            }
+            fdc3.raiseIntent(payload.intent, getContext(), payload.appName);
         }
     };
 
