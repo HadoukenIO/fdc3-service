@@ -26,11 +26,6 @@ export interface ContextMenuItem<T extends {}={}> {
   payload?: T;
 }
 
-export interface ContextMenuPayload {
-  // tslint:disable-next-line:no-any
-  [key: string]: any;
-}
-
 interface ContextMenuParameters {
   win: fin.OpenFinWindow;
   menuItems?: ContextMenuItem[];
@@ -153,6 +148,12 @@ class ContextMenu {
       const li = document.createElement('li');
       const span = document.createElement('span');
       span.innerText = item.text;
+      if (item.children) {
+        const arrow = document.createElement('span');
+        arrow.innerText = '▶';
+        arrow.className = 'arrow';
+        span.appendChild(arrow);
+      }
       li.appendChild(span);
 
       li.addEventListener('mouseover', async () => {
@@ -275,7 +276,10 @@ class ContextMenu {
     li span {
       padding-left: 20px;
     }
-
+    li .arrow {
+      float: right;
+      padding-right: 5px;
+    }
     li:hover {
       background: rgb(106, 144, 248)
     }

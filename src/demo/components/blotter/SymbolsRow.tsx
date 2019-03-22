@@ -3,7 +3,7 @@ import * as fdc3 from '../../../client/main';
 import {Application} from '../../../client/directory';
 import {Symbol} from '../../apps/BlotterApp';
 import {IntentButton} from '../common/IntentButton';
-import {showContextMenu, ContextMenuItem, ContextMenuPayload} from '../common/ContextMenu';
+import {showContextMenu, ContextMenuItem} from '../common/ContextMenu';
 
 import './SymbolsRow.css';
 
@@ -40,7 +40,9 @@ const menuItems: ContextMenuItem<Payload>[] = [
 
 const viewChartsSubMenu: ContextMenuItem = {
     text: "Use Default",
-    children: []
+    payload: {
+        intent: fdc3.Intents.VIEW_CHART
+    }
 };
 
 
@@ -86,7 +88,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
         };
     };
 
-    const handleContextMenuSelection = (payload: ContextMenuPayload) => {
+    const handleContextMenuSelection = (payload: Payload) => {
         if (payload.intent) {
             fdc3.raiseIntent(payload.intent, getContext(), payload.appName);
         }
