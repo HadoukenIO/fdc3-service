@@ -15,15 +15,15 @@ describe('advanced puppeteer functionality', () => {
         const fin = await getFinConnection();
 
         // Check to see that the main window started correctly
-        expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
+        await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
 
         // Launch two test applications
         await fdc3Remote.open(testManagerIdentity, testIdentity1.uuid);
         await fdc3Remote.open(testManagerIdentity, testIdentity2.uuid);
 
         // Check that the apps have started properly
-        expect(fin.Application.wrapSync(testIdentity1).isRunning()).resolves.toBe(true);
-        expect(fin.Application.wrapSync(testIdentity2).isRunning()).resolves.toBe(true);
+        await expect(fin.Application.wrapSync(testIdentity1).isRunning()).resolves.toBe(true);
+        await expect(fin.Application.wrapSync(testIdentity2).isRunning()).resolves.toBe(true);
 
         // Register a listener. We don't await as the promise won't resolve until
         // the listener is triggered
