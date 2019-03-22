@@ -16,7 +16,6 @@
         }
     ],
     "runtime": {
-        "arguments": "--enable-aggressive-domstorage-flushing",
         "version": "10.66.39.43"
     }
 }
