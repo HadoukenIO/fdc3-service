@@ -2,11 +2,11 @@ import * as React from 'react';
 
 import './AppCard.css';
 
-import {IApplication} from '../../../client/directory';
+import {Application} from '../../../client/directory';
 
 interface AppCardProps {
-    app: IApplication;
-    handleClick?: (app: IApplication) => void;
+    app: Application;
+    handleClick?: (app: Application) => void;
 }
 
 export function AppCard(props: AppCardProps): React.ReactElement {
@@ -20,7 +20,7 @@ export function AppCard(props: AppCardProps): React.ReactElement {
 
     return (
         <div className="app-card w3-card w3-hover-shadow" onClick={handleClick}>
-            <img className="w3-blue-gray" src={app.icon} />
+            {(app.icons && app.icons.length > 0) && <img className="w3-blue-gray" src={app.icons![0].icon} />}
             <div>
                 <h6><b>{app.title}</b></h6>
                 <p className="w3-small w3-text-grey">{app.description}</p>

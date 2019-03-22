@@ -2,6 +2,7 @@ import {channelPromise, tryServiceDispatch} from './connection';
 import {Context} from './context';
 import {IntentType} from './intents';
 import {APITopic, RaiseIntentPayload, SERVICE_IDENTITY} from './internal';
+import {Application} from './directory';
 
 /**
  * This file was copied from the FDC3 v1 specification.
@@ -40,31 +41,7 @@ export interface IntentMetadata {
  */
 export interface AppIntent {
     intent: IntentMetadata;
-    apps: AppMetadata[];
-}
-
-/**
- * App metadata is Desktop Agent specific - but should support a name property.
- */
-export interface AppMetadata {
-    id: number;
-    name: string;
-    title: string;
-    manifest_url: string;
-    description: string;
-    contact_email: string;
-    support_email: string;
-    signature: string;
-    publisher: string;
-    icon: string;
-    appPage: string;
-    images: {url: string}[];
-    /**
-     * A list of the intents supported by this application.
-     *
-     * Some intents are defined as part of the FDC3 spec, and applications may also define their own intents.
-     */
-    intents: string[];
+    apps: Application[];
 }
 
 /**
