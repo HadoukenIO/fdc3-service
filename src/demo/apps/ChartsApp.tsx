@@ -37,15 +37,15 @@ export function ChartsApp(props: AppProps): React.ReactElement {
             });
         });
 
-        const ContextListener = fdc3.addContextListener((context: Context): void => {
-            if (context.type === 'security') {
+        const contextListener = fdc3.addContextListener((context: Context): void => {
+            if (context.type === "security") {
                 handleIntent(context as SecurityContext);
             }
         });
 
         return function cleanUp() {
             intentListener.unsubscribe();
-            ContextListener.unsubscribe();
+            contextListener.unsubscribe();
         };
     }, []);
 

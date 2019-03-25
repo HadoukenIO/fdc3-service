@@ -15,6 +15,6 @@
     "services":[{"name": "fdc3", "manifestUrl": "http://localhost:3923/app.json"}],
     "runtime": {
         "arguments": "",
-        "version": "9.61.38.40"
+        "version": "10.66.39.43"
     }
 }

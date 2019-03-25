@@ -1,3 +1,4 @@
+import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution} from './main';
 
 /**
@@ -45,7 +46,7 @@ export interface TopicResponseMap {
 }
 
 export interface OpenPayload {
-    name: string;
+    name: AppName;
     context?: Context;
 }
 export interface FindIntentPayload {

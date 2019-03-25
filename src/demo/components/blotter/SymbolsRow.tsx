@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import * as fdc3 from '../../../client/main';
-import {IApplication} from '../../../client/directory';
+import {Application} from '../../../client/directory';
 import {Symbol} from '../../apps/BlotterApp';
 import {IntentButton} from '../common/IntentButton';
 import {showContextMenu, ContextMenuItem, ContextMenuPayload} from '../common/ContextMenu';
@@ -10,7 +10,7 @@ import './SymbolsRow.css';
 
 interface SymbolsRowProps {
     item: Symbol;
-    chartApps: IApplication[];
+    chartApps: Application[];
     selected?: boolean;
     handleSelect?: (item: Symbol | null) => void;
 }
@@ -48,9 +48,9 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     React.useEffect(() => {
         const appItems = chartApps.map(app => {
             return {
-                text: 'View ' + app.title,
+                text: "View " + app.name,
                 payload: {
-                    userData: app.name
+                    userData: app.appId
                 }
             };
         });

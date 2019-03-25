@@ -1,7 +1,5 @@
 import * as React from 'react';
-import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
-
-import {IApplication} from '../../client/directory';
+import {Application} from '../../client/directory';
 import {RaiseIntentPayload, SERVICE_CHANNEL} from '../../client/internal';
 import {DefaultAction} from '../index';
 
@@ -12,7 +10,7 @@ import './AppList.css';
 interface IntentData {
     handle: number;
     intent: RaiseIntentPayload;
-    applications: IApplication[];
+    applications: Application[];
 }
 
 const sendError = (service: Promise<ChannelClient>, handle: number, reason: string) => {
@@ -21,7 +19,7 @@ const sendError = (service: Promise<ChannelClient>, handle: number, reason: stri
     });
 };
 
-const sendSuccess = (service: Promise<ChannelClient>, handle: number, app: IApplication, defaultAction: string) => {
+const sendSuccess = (service: Promise<ChannelClient>, handle: number, app: Application, defaultAction: string) => {
     service.then((client) => {
         client.dispatch('FDC3.SelectorResult', {success: true, handle, app, defaultAction});
     });
@@ -30,12 +28,12 @@ const sendSuccess = (service: Promise<ChannelClient>, handle: number, app: IAppl
 export function AppList(): React.ReactElement {
     const [service, setService] = React.useState<Promise<ChannelClient>>();
     const [handle, setHandle] = React.useState<number>(0);
-    const [applications, setApplications] = React.useState<IApplication[]>([]);
-    const [defaultAction, setDefaultAction] = React.useState<string>('ALWAYS_ASK');
-    const [selectedApplication, setSelectedApplication] = React.useState<IApplication | null>(null);
+    const [applications, setApplications] = React.useState<Application[]>([]);
+    const [defaultAction, setDefaultAction] = React.useState<string>("ALWAYS_ASK");
+    const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
 
-    const onAppSelect = (app: IApplication) => setSelectedApplication(app);
-    const onAppOpen = (app: IApplication) => sendSuccess(service!, handle, app, 'ALWAYS_ASK');
+    const onAppSelect = (app: Application) => setSelectedApplication(app);
+    const onAppOpen = (app: Application) => sendSuccess(service!, handle, app, "ALWAYS_ASK");
     const onSelectDefault = (event: React.ChangeEvent<HTMLSelectElement>) => setDefaultAction(event.currentTarget.value);
     const onOpen = (event: React.MouseEvent<HTMLDivElement>) => {
         event.stopPropagation();
@@ -81,8 +79,8 @@ export function AppList(): React.ReactElement {
         <div className="app-list">
             <h2 className="app-header">Select an appliction:</h2>
             <div className="list-section app-container">
-                {applications.map((app: IApplication) => (
-                    <AppCard key={app.id} app={app} selectHandler={onAppSelect} openHandler={onAppOpen} selected={selectedApplication === app} />
+                {applications.map((app: Application) => (
+                    <AppCard key={app.appId} app={app} selectHandler={onAppSelect} openHandler={onAppOpen} selected={selectedApplication === app} />
                 ))}
             </div>
             <div className="list-section w3-border-top w3-light-grey">
