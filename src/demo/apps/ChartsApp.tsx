@@ -36,7 +36,7 @@ export function ChartsApp(props: AppProps): React.ReactElement {
             });
         });
 
-        const ContextListener = fdc3.addContextListener((context: Context): void => {
+        const contextListener = fdc3.addContextListener((context: Context): void => {
             if (context.type === "security") {
                 handleIntent(context as SecurityContext);
             }
@@ -44,7 +44,7 @@ export function ChartsApp(props: AppProps): React.ReactElement {
 
         return function cleanUp() {
             intentListener.unsubscribe();
-            ContextListener.unsubscribe();
+            contextListener.unsubscribe();
         };
     }, []);
 
