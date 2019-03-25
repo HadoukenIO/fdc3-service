@@ -12,7 +12,7 @@
 
 import {Identity} from 'openfin/_v2/main';
 
-import {Context, IApplication, IntentType} from '../../../src/client/main';
+import {Context, Application, IntentType} from '../../../src/client/main';
 
 import {OFPuppeteerBrowser, TestWindowContext} from './ofPuppeteer';
 
@@ -24,8 +24,8 @@ export async function open(executionTarget: Identity, name: string, context?: Co
     }, name, context);
 }
 
-export async function resolve(executionTarget: Identity, intent: IntentType, context?: Context): Promise<IApplication[]> {
-    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, intent: IntentType, context?: Context): Promise<IApplication[]> {
+export async function resolve(executionTarget: Identity, intent: IntentType, context?: Context): Promise<Application[]> {
+    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, intent: IntentType, context?: Context): Promise<Application[]> {
         return this.OpenfinFDC3.findIntent(intent, context).then(appIntent => appIntent.apps);
     }, intent, context);
 }

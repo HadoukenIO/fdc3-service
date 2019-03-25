@@ -2,15 +2,15 @@ import 'jest';
 
 import {Application} from 'openfin/_v2/main';
 
-import {IApplication} from '../../src/client/directory';
+import {Application as DirectoryApplication} from '../../src/client/directory';
 import {AppMetadata, MetadataStore} from '../../src/provider/MetadataStore';
 
-const fakeApps: {appData: IApplication, app: Application}[] = [
-    {appData: {id: 1}, app: {identity: {uuid: 'test-app-1'}}},
-    {appData: {id: 2}, app: {identity: {uuid: 'test-app-2'}}},
-    {appData: {id: 3}, app: {identity: {uuid: 'test-app-3'}}},
-    {appData: {id: 4}, app: {identity: {uuid: 'test-app-4'}}},
-] as {appData: IApplication, app: Application}[];  // Do an explicit cast for TS. Only need very small sub-set for this test.
+const fakeApps: {appData: DirectoryApplication, app: Application}[] = [
+    {appData: {appId: '1'}, app: {identity: {uuid: 'test-app-1'}}},
+    {appData: {appId: '2'}, app: {identity: {uuid: 'test-app-2'}}},
+    {appData: {appId: '3'}, app: {identity: {uuid: 'test-app-3'}}},
+    {appData: {appId: '4'}, app: {identity: {uuid: 'test-app-4'}}},
+] as {appData: DirectoryApplication, app: Application}[];  // Do an explicit cast for TS. Only need very small sub-set for this test.
 
 beforeEach(() => {
     jest.restoreAllMocks();
@@ -27,8 +27,8 @@ describe('Given an empty MetadataStore', () => {
         });
 
         it('Returns null on any DirectoryID lookup', () => {
-            expect(store.lookupFromDirectoryId(1)).toBeNull();
-            expect(store.lookupFromDirectoryId(-500)).toBeNull();
+            expect(store.lookupFromDirectoryId('1')).toBeNull();
+            expect(store.lookupFromDirectoryId('500')).toBeNull();
         });
 
         it('Returns null on any UUID reverse-map', () => {
@@ -37,8 +37,8 @@ describe('Given an empty MetadataStore', () => {
         });
 
         it('Returns null on DirectoryID reverse-map', () => {
-            expect(store.mapDirectoryId(1)).toBeNull();
-            expect(store.mapDirectoryId(-500)).toBeNull();
+            expect(store.mapDirectoryId('1')).toBeNull();
+            expect(store.mapDirectoryId('500')).toBeNull();
         });
     });
 
@@ -46,7 +46,7 @@ describe('Given an empty MetadataStore', () => {
         // Empty store to be used in update tests
         const store = new MetadataStore();
         // Parameters for the call
-        const appData = {} as IApplication, app = {identity: {uuid: 'some-uuid'}} as Application;
+        const appData = {} as DirectoryApplication, app = {identity: {uuid: 'some-uuid'}} as Application;
 
         it('The method throws an error', () => {
             expect(() => store.update(appData, app)).toThrowError(TypeError);
@@ -62,7 +62,7 @@ describe('Given an empty MetadataStore', () => {
         const store = new MetadataStore();
 
         const {appData, app} = fakeApps[0];
-        const expectedMetadata: AppMetadata = {directoryId: appData.id, uuid: app.identity.uuid, name: app.identity.uuid};
+        const expectedMetadata: AppMetadata = {directoryId: appData.appId, uuid: app.identity.uuid, name: app.identity.uuid};
 
         it('The method returns with no errors', () => {
             expect(() => store.update(appData, app)).not.toThrow();
@@ -73,7 +73,7 @@ describe('Given an empty MetadataStore', () => {
         });
 
         it('The store returns the new app\'s metadata when queried by DiretoryID', () => {
-            expect(store.lookupFromDirectoryId(appData.id)).toEqual(expectedMetadata);
+            expect(store.lookupFromDirectoryId(appData.appId)).toEqual(expectedMetadata);
         });
     });
 });
