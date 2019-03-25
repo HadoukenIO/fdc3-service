@@ -1,4 +1,5 @@
 import * as React from 'react';
+import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
 import {Application} from '../../client/directory';
 import {RaiseIntentPayload, SERVICE_CHANNEL} from '../../client/internal';
