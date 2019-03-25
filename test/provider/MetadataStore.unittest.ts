@@ -9,7 +9,7 @@ const fakeApps: {appData: DirectoryApplication, app: Application}[] = [
     {appData: {appId: '1'}, app: {identity: {uuid: 'test-app-1'}}},
     {appData: {appId: '2'}, app: {identity: {uuid: 'test-app-2'}}},
     {appData: {appId: '3'}, app: {identity: {uuid: 'test-app-3'}}},
-    {appData: {appId: '4'}, app: {identity: {uuid: 'test-app-4'}}},
+    {appData: {appId: '4'}, app: {identity: {uuid: 'test-app-4'}}}
 ] as {appData: DirectoryApplication, app: Application}[];  // Do an explicit cast for TS. Only need very small sub-set for this test.
 
 beforeEach(() => {

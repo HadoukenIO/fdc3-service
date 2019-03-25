@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import {Application} from '../../client/directory';
 import {RaiseIntentPayload, SERVICE_CHANNEL} from '../../client/internal';
 import {DefaultAction} from '../index';
@@ -29,11 +30,11 @@ export function AppList(): React.ReactElement {
     const [service, setService] = React.useState<Promise<ChannelClient>>();
     const [handle, setHandle] = React.useState<number>(0);
     const [applications, setApplications] = React.useState<Application[]>([]);
-    const [defaultAction, setDefaultAction] = React.useState<string>("ALWAYS_ASK");
+    const [defaultAction, setDefaultAction] = React.useState<string>('ALWAYS_ASK');
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
 
     const onAppSelect = (app: Application) => setSelectedApplication(app);
-    const onAppOpen = (app: Application) => sendSuccess(service!, handle, app, "ALWAYS_ASK");
+    const onAppOpen = (app: Application) => sendSuccess(service!, handle, app, 'ALWAYS_ASK');
     const onSelectDefault = (event: React.ChangeEvent<HTMLSelectElement>) => setDefaultAction(event.currentTarget.value);
     const onOpen = (event: React.MouseEvent<HTMLDivElement>) => {
         event.stopPropagation();

@@ -8,7 +8,6 @@ import {AppIntent} from '../client/main';
 
 import {ActionHandlerMap, APIHandler} from './APIHandler';
 import {AppDirectory} from './AppDirectory';
-import {DefaultAction, OpenArgs, QueuedIntent, ResolveArgs, SelectorResultArgs} from './index';
 import {AppMetadata, MetadataStore} from './MetadataStore';
 import {PreferencesStore} from './PreferencesStore';
 
@@ -216,6 +215,7 @@ export class FDC3 {
             }, reject);
         });
     }
+
     private async startApplication(appInfo: Application, context?: ContextBase): Promise<void> {
         return new Promise<void>((resolve: () => void, reject: (reason: Error) => void) => {
             if (!appInfo) {
@@ -234,6 +234,8 @@ export class FDC3 {
                 JSON.parse(appInfo.manifest);
                 reject(new Error('Inline JSON manifests not supported'));
             } catch (e) {
+                // JSON.parse should not be passed valid JSON.  If it is, then it will 'pass' and we reject.
+                // If its not valid JSON, then we enter this catch and continue on.
             }
 
             fin.Application.createFromManifest(appInfo.manifest)
@@ -268,6 +270,7 @@ export class FDC3 {
                 });
         });
     }
+
     private focusApplication(app: AppMetadata): void {
         fin.Window.wrapSync(app).focus();
     }
@@ -360,6 +363,7 @@ export class FDC3 {
     private async sendContext(context: ContextBase): Promise<void> {
         return fin.InterApplicationBus.publish('context', context);
     }
+
     private async sendIntent(intent: RaiseIntentPayload, targetApp: AppMetadata): Promise<void> {
         if (targetApp) {
             console.log('c1a: ', targetApp, intent);

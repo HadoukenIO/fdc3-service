@@ -48,7 +48,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     React.useEffect(() => {
         const appItems = chartApps.map(app => {
             return {
-                text: "View " + app.name,
+                text: 'View ' + app.name,
                 payload: {
                     userData: app.appId
                 }

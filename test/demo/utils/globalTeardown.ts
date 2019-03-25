@@ -1,5 +1,6 @@
 import * as os from 'os';
 import * as path from 'path';
+
 import * as puppeteer from 'puppeteer';
 import * as rimraf from 'rimraf';
 

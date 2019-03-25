@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import * as fdc3 from '../../../client/main';
 import {Symbol} from '../../apps/BlotterApp';
-import {SymbolsRow} from './SymbolsRow';
 import {Application} from '../../../client/main';
 
 import {SymbolsRow} from './SymbolsRow';
