@@ -10,7 +10,7 @@ describe('advanced puppeteer functionality', () => {
 
     it('can can register and trigger a context listener', async () => {
         // Creating the apps can take a while, so we need a longer timeout.
-        jest.setTimeout(10000);
+        jest.setTimeout(20000);
 
         const fin = await getFinConnection();
 
