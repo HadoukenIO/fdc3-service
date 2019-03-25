@@ -29,7 +29,7 @@
         {"icon": "http://localhost:3923/demo/img/app-icons/contacts.svg"}
     ],
     "intents": [
-        {"name": "SaveContact"}
+        {"name": "fdc3.SaveContact"}
     ]
 },
 {
@@ -47,8 +47,8 @@
         {"icon": "http://localhost:3923/demo/img/app-icons/dialer.svg"}
     ],
     "intents": [
-        {"name": "StartCall"},
-        {"name": "DialCall"}
+        {"name": "fdc3.StartCall"},
+        {"name": "fdc3.DialCall"}
     ]
 },
 {
@@ -66,7 +66,7 @@
         {"icon": "http://localhost:3923/demo/img/app-icons/charts.svg"}
     ],
     "intents": [
-        {"name": "ViewChart"}
+        {"name": "fdc3.ViewChart"}
     ]
 },
 {
@@ -84,7 +84,7 @@
         {"icon": "http://localhost:3923/demo/img/app-icons/charts.svg"}
     ],
     "intents": [
-        {"name": "ViewChart"}
+        {"name": "fdc3.ViewChart"}
     ]
 },
 {
@@ -102,6 +102,6 @@
         {"icon": "http://localhost:3923/demo/img/app-icons/charts.svg"}
     ],
     "intents": [
-        {"name": "ViewChart"}
+        {"name": "fdc3.ViewChart"}
     ]
 }]

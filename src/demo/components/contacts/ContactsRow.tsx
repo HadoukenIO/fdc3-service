@@ -40,7 +40,7 @@ export function ContactsRow(props: ContactRowProps): React.ReactElement {
 
     const getContext = (): ContactContext => {
         return {
-            type: "contact",
+            type: 'fdc3.contact',
             name: item.name,
             id: {
                 email: item.email!,
