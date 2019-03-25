@@ -8,7 +8,7 @@
     "test": "npm run test:unit && npm run test:int",
     "test:int": "node test/runner.js",
     "test:unit": "jest --config jest-unit.config.json",
-    "check": "gts check",
+    "check": "gts check && cd test && gts check",
     "fix": "gts fix && cd test && gts fix",
     "clean": "gts clean",
     "docs": "typedoc --name \"OpenFin FDC3\" --out ./dist/docs --excludeNotExported --excludePrivate --excludeProtected --hideGenerator --tsconfig src/client/tsconfig.json --readme none",

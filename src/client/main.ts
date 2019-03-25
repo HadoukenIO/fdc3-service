@@ -1,8 +1,8 @@
 import {channelPromise, tryServiceDispatch} from './connection';
 import {Context} from './context';
+import {Application} from './directory';
 import {IntentType} from './intents';
 import {APITopic, RaiseIntentPayload, SERVICE_IDENTITY} from './internal';
-import {Application} from './directory';
 
 /**
  * This file was copied from the FDC3 v1 specification.
