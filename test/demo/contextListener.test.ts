@@ -40,6 +40,9 @@ describe('advanced puppeteer functionality', () => {
         expect(callbackSpy).toHaveBeenCalledTimes(1);
         expect(callbackSpy).toHaveBeenCalledWith(broadcastPayload);
 
+        await fin.Application.wrapSync(testIdentity1).quit(true).catch(() => {});
+        await fin.Application.wrapSync(testIdentity2).quit(true).catch(() => {});
+
         // Cleanup
         jest.clearAllMocks();
     });
