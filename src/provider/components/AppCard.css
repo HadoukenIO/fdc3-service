@@ -1,4 +1,4 @@
-.app-card {
+.w3-button.app-card {
     padding: 2px;
     width: 100%;
     text-align: left;
@@ -6,7 +6,7 @@
     border: solid lightgray 2px;
 }
 
-.app-card.selected {
+.w3-button.app-card.selected {
     border-color: limegreen;
 }
 

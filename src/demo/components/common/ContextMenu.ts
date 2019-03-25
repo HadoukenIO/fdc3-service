@@ -86,7 +86,7 @@ class ContextMenu {
 
     // Promise based v1 window creation
     private static async createWindow(options: WindowOption): Promise<fin.OpenFinWindow> {
-        return new Promise((resolve, reject) => {
+        return new Promise<fin.OpenFinWindow>((resolve, reject) => {
             const win = new fin.desktop.Window(
                 options,
                 () => {
@@ -266,7 +266,7 @@ class ContextMenu {
     }
     `;
         style.appendChild(this._nativeWindow.document.createTextNode(stylesheet));
-        this._nativeWindow.document.head.appendChild(style);
+        this._nativeWindow.document.head!.appendChild(style);
     }
 }
 
