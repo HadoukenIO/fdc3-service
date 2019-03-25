@@ -6,7 +6,6 @@
         "url": "http://localhost:3923/provider/provider.html",
         "uuid": "fdc3-service",
         "autoShow": true,
-        "showTaskbarIcon": false,
         "defaultHeight": 400,
         "defaultWidth": 500
     },

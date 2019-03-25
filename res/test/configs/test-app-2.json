@@ -5,7 +5,6 @@
         "url": "http://localhost:3923/test/test-app.html",
         "uuid": "test-app-2",
         "autoShow": true,
-        "showTaskbarIcon": false,
         "defaultHeight": 400,
         "defaultWidth": 500
     },

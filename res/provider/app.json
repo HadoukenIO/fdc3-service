@@ -7,7 +7,6 @@
         "url": "https://cdn.openfin.co/services/openfin/fdc3/provider.html",
         "uuid": "fdc3-service",
         "autoShow": true,
-        "showTaskbarIcon": false,
         "defaultHeight": 400,
         "defaultWidth": 500
     },

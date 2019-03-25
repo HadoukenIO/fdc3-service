@@ -12,6 +12,10 @@
         "defaultWidth": 240,
         "defaultHeight": 269
     },
+    "services": [{
+        "name": "fdc3",
+        "manifestUrl": "http://localhost:3923/provider/app.json"
+    }],
     "runtime": {
         "arguments": "",
         "version": "10.66.39.43"
