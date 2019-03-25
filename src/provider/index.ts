@@ -1,4 +1,4 @@
-import {IApplication} from '../client/directory';
+import {Application, AppId, AppName} from '../client/directory';
 import {IntentType} from '../client/intents';
 import {RaiseIntentPayload} from '../client/internal';
 import {Context} from '../client/main';
@@ -40,7 +40,7 @@ export const enum DefaultAction {
 
 // Message definitions
 export interface OpenArgs {
-    name: string;
+    name: AppName;
     context?: Context;
 }
 export interface ResolveArgs {
@@ -56,7 +56,7 @@ export interface SelectorResultArgs {
      *
      * Only specified when success is true.
      */
-    app?: IApplication;
+    app?: Application;
 
     /**
      * The reason that an app wasn't selected.
@@ -107,7 +107,7 @@ export interface QueuedIntent {
     /**
      * List of available applications that are capable of handling the intent
      */
-    applications: IApplication[];
+    applications: Application[];
 
     /**
      * The application spawned by the service to allow the user to decide how to
@@ -123,7 +123,7 @@ export interface QueuedIntent {
     /**
      * Function to use to resolve this intent
      */
-    resolve: (selectedApp: IApplication) => void;
+    resolve: (selectedApp: Application) => void;
 
     /**
      * Function to use to reject this intent

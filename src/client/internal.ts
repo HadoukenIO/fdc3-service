@@ -1,4 +1,5 @@
 import {AppIntent, Context, IntentResolution} from './main';
+import { AppName } from './directory';
 
 /**
  * The identity of the main application window of the service provider
@@ -45,7 +46,7 @@ export interface TopicResponseMap {
 }
 
 export interface OpenPayload {
-    name: string;
+    name: AppName;
     context?: Context;
 }
 export interface FindIntentPayload {
