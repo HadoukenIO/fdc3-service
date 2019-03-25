@@ -9,8 +9,8 @@
   ],
   "scripts": {
     "test": "jest",
-    "check": "eslint src --ext .ts --ext .tsx",
-    "fix": "eslint src --ext .ts --ext .tsx --fix",
+    "check": "eslint src test --ext .ts --ext .tsx",
+    "fix": "eslint src test --ext .ts --ext .tsx --fix",
     "clean": "gts clean",
     "docs": "typedoc --name \"OpenFin FDC3\" --out ./dist/docs --excludeNotExported --excludePrivate --excludeProtected --hideGenerator --tsconfig src/client/tsconfig.json --readme none",
     "posttest": "npm run check",
