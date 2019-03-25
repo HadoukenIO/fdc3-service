@@ -212,6 +212,10 @@ export class FDC3 {
                 reject(new Error('No app details given'));
             }
 
+            if (appInfo.manifestType === undefined) {
+                reject(new Error('Directory entry must specify a manifestType for each app'));
+            }
+
             if (appInfo.manifestType !== 'openfin') {
                 reject(new Error(`Manifest type ${appInfo.manifestType} not supported`));
             }
