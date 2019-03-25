@@ -12,7 +12,7 @@
 
 import {Identity} from 'openfin/_v2/main';
 
-import {Context, Application, IntentType} from '../../../src/client/main';
+import {Application, Context, IntentType} from '../../../src/client/main';
 
 import {OFPuppeteerBrowser, TestWindowContext} from './ofPuppeteer';
 
@@ -31,9 +31,15 @@ export async function resolve(executionTarget: Identity, intent: IntentType, con
 }
 
 export async function broadcast(executionTarget: Identity, context: Context): Promise<void> {
-    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, context: Context): Promise<void> {
-        return this.OpenfinFDC3.broadcast(context);
-    }, context).then(() => new Promise<void>(res => setTimeout(res, 100))); // Broadcast is fire-and-forget. Slight delay to allow for service to handle
+    return ofBrowser
+        .executeOnWindow(
+            executionTarget,
+            async function(this: TestWindowContext, context: Context):
+                Promise<void> {
+                    return this.OpenfinFDC3.broadcast(context);
+                },
+            context)
+        .then(() => new Promise<void>(res => setTimeout(res, 100)));  // Broadcast is fire-and-forget. Slight delay to allow for service to handle
 }
 
 /**

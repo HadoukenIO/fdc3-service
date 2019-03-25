@@ -1,6 +1,6 @@
 import {Application} from 'openfin/_v2/main';
 
-import {Application as DirectoryApplication, AppId} from '../client/directory';
+import {AppId, Application as DirectoryApplication} from '../client/directory';
 
 export interface AppMetadata {
     /**

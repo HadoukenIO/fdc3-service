@@ -1,4 +1,4 @@
-import {Application, AppId, AppName} from '../client/directory';
+import {AppId, Application, AppName} from '../client/directory';
 import {IntentType} from '../client/intents';
 import {RaiseIntentPayload} from '../client/internal';
 import {Context} from '../client/main';
