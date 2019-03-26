@@ -159,10 +159,5 @@
             "icon": "http://localhost:3923/demo/img/app-icons/blotter.svg"
         }
     ],
-    "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
-    ]
+    "intents": []
 }]
