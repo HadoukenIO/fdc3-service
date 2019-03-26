@@ -242,7 +242,7 @@ export class FDC3 {
                             clearTimeout(timeout);
                             if (context) {
                                 // Pass context to application before resolving
-                                fin.InterApplicationBus.publish('context', {context}).then(resolve).catch((reason: string) => reject(new Error(reason)));
+                                fin.InterApplicationBus.publish('context', context).then(resolve).catch((reason: string) => reject(new Error(reason)));
                             } else {
                                 // Application started successfully - can now resolve
                                 resolve();
