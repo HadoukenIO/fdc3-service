@@ -4,13 +4,13 @@ import {RaiseIntentPayload, APITopic, OpenPayload, FindIntentPayload, FindIntent
 import {AppIntent, IntentResolution, Application, Intent} from '../client/main';
 
 import {injectable, inject} from 'inversify';
-import {Inject} from './Injectables';
+import {Inject} from './util/Injectables';
 import {AppDirectory} from './model/AppDirectory';
 import {Model, FindFilter} from './model/Model';
 import {ContextHandler} from './controller/ContextHandler';
 import {IntentHandler} from './controller/IntentHandler';
 import {APIHandler} from './APIHandler';
-import {Injector} from './Injector';
+import {Injector} from './util/Injector';
 
 interface API {
     [APITopic.OPEN]: [OpenPayload, void];

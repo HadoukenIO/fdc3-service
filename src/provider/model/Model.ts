@@ -2,7 +2,7 @@ import {AppWindow} from "./AppWindow";
 import {ContextChannel} from "./ContextChannel";
 import {injectable, inject} from "inversify";
 import {Application} from "../../client/main";
-import {Inject} from "../Injectables";
+import {Inject} from "../util/Injectables";
 import {Environment} from "./Environment";
 import {Identity} from "openfin/_v2/main";
 import {AppDirectory} from "./AppDirectory";

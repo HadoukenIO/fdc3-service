@@ -1,5 +1,5 @@
 import {injectable, inject } from "inversify";
-import {Inject} from "../Injectables";
+import {Inject} from "../util/Injectables";
 import {Intent} from "../../client/intents";
 import {SelectorHandler, SelectorResult} from "./SelectorHandler";
 import {IntentResolution, Application } from "../../client/main";

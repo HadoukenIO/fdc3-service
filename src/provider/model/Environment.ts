@@ -1,5 +1,5 @@
 import {injectable} from "inversify";
-import {Signal1, Signal2} from "../Signal";
+import {Signal1, Signal2} from "../util/Signal";
 import {AsyncInit} from "../controller/AsyncInit";
 import {WindowEvent} from "openfin/_v2/api/events/base";
 import {Identity} from "openfin/_v2/main";
