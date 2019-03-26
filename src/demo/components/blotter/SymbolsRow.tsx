@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as fdc3 from '../../../client/main';
-import {Application} from '../../../client/directory';
+import {Application, AppName} from '../../../client/directory';
 import {Symbol} from '../../apps/BlotterApp';
 import {IntentButton} from '../common/IntentButton';
 import {showContextMenu, ContextMenuItem} from '../common/ContextMenu';
@@ -16,7 +16,7 @@ interface SymbolsRowProps {
 
 interface Payload {
     intent: string;
-    appName?: string;
+    appName?: AppName;
 }
 
 const menuItems: ContextMenuItem<Payload>[] = [
