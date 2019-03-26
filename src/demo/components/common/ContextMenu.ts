@@ -65,7 +65,7 @@ class ContextMenu {
     return this._isShowing;
   }
 
-  private constructor({win, isRoot = false}: ContextMenuParameters) {
+  private constructor ({win, isRoot = false}: ContextMenuParameters) {
     this._windowV1 = win;
     this._nativeWindow = win.getNativeWindow();
     this._window = fin.Window.wrapSync({name: win.name, uuid: win.uuid});

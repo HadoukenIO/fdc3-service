@@ -1,6 +1,6 @@
 import {Application} from 'openfin/_v2/main';
 
-import {Application as DirectoryApplication, AppId} from '../client/directory';
+import {AppId, Application as DirectoryApplication} from '../client/directory';
 
 export interface AppMetadata {
     /**
@@ -104,6 +104,9 @@ export class MetadataStore {
      * @param app An OpenFin application that has been created from 'appData'
      */
     public update(appData: DirectoryApplication, app: Application): void {
+        if (typeof appData.appId !== 'string') {
+            throw new TypeError('Invalid appData passed to MetadataStore. "id" must be a string.');
+        }
         if (!this.appData.hasOwnProperty(appData.appId)) {
             this.appData[appData.appId] = {uuid: app.identity.uuid, name: app.identity.uuid, directoryId: appData.appId};
         }

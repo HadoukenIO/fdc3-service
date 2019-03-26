@@ -8,8 +8,7 @@
         "types": ["node", "openfin"],
         "jsx": "react",
         "sourceMap": true,
-        "declaration": false,
-        "moduleResolution": "node"
+        "declaration": false
     },
     "include": [
         "src"

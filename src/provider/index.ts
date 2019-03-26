@@ -1,4 +1,4 @@
-import {Application, AppId, AppName} from '../client/directory';
+import {AppId, Application, AppName} from '../client/directory';
 import {IntentType} from '../client/intents';
 import {RaiseIntentPayload} from '../client/internal';
 import {Context} from '../client/main';
@@ -118,7 +118,7 @@ export interface QueuedIntent {
      * application - selector will be null until the intent reaches the front of
      * the queue.
      */
-    selector: fin.OpenFinApplication | null;
+    selector: fin.OpenFinApplication|null;
 
     /**
      * Function to use to resolve this intent
