@@ -2,7 +2,7 @@ import {Intent, Application} from "../../client/main";
 import {_Window} from "openfin/_v2/api/window/window";
 import {WindowOption} from "openfin/_v2/api/window/windowOption";
 import {injectable, inject} from "inversify";
-import {Inject} from "../util/Injectables";
+import {Inject} from "../common/Injectables";
 import {AppDirectory} from "../model/AppDirectory";
 import {AsyncInit} from "./AsyncInit";
 import {ChannelClient} from "openfin/_v2/api/interappbus/channel/client";
