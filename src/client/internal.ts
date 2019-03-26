@@ -1,3 +1,7 @@
+/**
+ * @hidden
+ */
+
 import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution} from './main';
 
@@ -20,29 +24,17 @@ export const SERVICE_CHANNEL = 'of-fdc3-service-v1';
 export enum APITopic {
     OPEN = 'OPEN',
     FIND_INTENT = 'FIND-INTENT',
-    FIND_INTENTS_BY_CONTEXT = 'FIND-INTENT-BY-CONTEXT',
+    FIND_INTENTS_BY_CONTEXT = 'FIND-INTENTS-BY-CONTEXT',
     BROADCAST = 'BROADCAST',
     RAISE_INTENT = 'RAISE-INTENT'
 }
 
-export interface TopicPayloadMap {
-    [APITopic.OPEN]: OpenPayload;
-    [APITopic.FIND_INTENT]: FindIntentPayload;
-    [APITopic.FIND_INTENTS_BY_CONTEXT]: FindIntentsByContextPayload;
-    [APITopic.BROADCAST]: BroadcastPayload;
-    [APITopic.RAISE_INTENT]: RaiseIntentPayload;
-}
-
-export interface TopicResponseMap {
-    [APITopic.OPEN]: void;
-    [APITopic.FIND_INTENT]: AppIntent;
-    [APITopic.FIND_INTENTS_BY_CONTEXT]: AppIntent[];
-    [APITopic.BROADCAST]: void;
-    // This is not strictly to spec as target should be able to return data.
-    // Needs a not-insignificant amount of provider changes to allow the two-way
-    // transmission of data before it can be put back to IntentResponse
-    // TODO: Revisit after SERVICE-392
-    [APITopic.RAISE_INTENT]: void;
+export type API = {
+    [APITopic.OPEN]: [OpenPayload, void];
+    [APITopic.FIND_INTENT]: [FindIntentPayload, AppIntent];
+    [APITopic.FIND_INTENTS_BY_CONTEXT]: [FindIntentsByContextPayload, AppIntent[]];
+    [APITopic.BROADCAST]: [BroadcastPayload, void];
+    [APITopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
 }
 
 export interface OpenPayload {

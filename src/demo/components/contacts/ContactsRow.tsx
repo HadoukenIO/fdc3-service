@@ -16,14 +16,14 @@ interface ContactRowProps {
 export function ContactsRow(props: ContactRowProps): React.ReactElement {
     const {item, selected, handleSelect} = props;
 
-    const handleDial = (): Promise<void> => {
+    const handleDial = (): Promise<fdc3.IntentResolution> => {
         if (handleSelect) {
             handleSelect(null);
         }
         return fdc3.raiseIntent(fdc3.Intents.DIAL_CALL, getContext());
     };
 
-    const handleCall = (): Promise<void> => {
+    const handleCall = (): Promise<fdc3.IntentResolution> => {
         if (handleSelect) {
             handleSelect(null);
         }

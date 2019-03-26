@@ -1,7 +1,6 @@
 import {channelPromise, tryServiceDispatch} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
-import {IntentType} from './intents';
 import {APITopic, RaiseIntentPayload, SERVICE_IDENTITY} from './internal';
 
 /**
@@ -192,7 +191,7 @@ export function broadcast(context: Context): void {
  * agent.raiseIntent("StartChat", newContext, intentR.source);
  * ```
  */
-export async function raiseIntent(intent: string, context: Context, target?: string): Promise<void> {
+export async function raiseIntent(intent: string, context: Context, target?: string): Promise<IntentResolution> {
     return tryServiceDispatch(APITopic.RAISE_INTENT, {intent, context, target});
 }
 

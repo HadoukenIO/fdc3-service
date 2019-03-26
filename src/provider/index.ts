@@ -1,132 +1,114 @@
-import {AppId, Application, AppName} from '../client/directory';
-import {IntentType} from '../client/intents';
-import {RaiseIntentPayload} from '../client/internal';
-import {Context} from '../client/main';
+import 'reflect-metadata';
 
-import {FDC3} from './FDC3';
-import {AppMetadata} from './MetadataStore';
+import {RaiseIntentPayload, APITopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload} from '../client/internal';
+import {AppIntent, IntentResolution, Application, Intent} from '../client/main';
 
-console.log('the provider has landed.');
+import {injectable, inject} from 'inversify';
+import {Inject} from './Injectables';
+import {AppDirectory} from './model/AppDirectory';
+import {Model, FindFilter} from './model/Model';
+import {ContextHandler} from './controller/ContextHandler';
+import {IntentHandler} from './controller/IntentHandler';
+import {APIHandler} from './APIHandler';
+import {Injector} from './Injector';
 
-// Create and initialise desktop agent
-const service: FDC3 = new FDC3();
-service.register();
-
-/**
- * When the user is shown an app selector popup, they have the option of telling
- * the service how to handle similar intents in the future.
- *
- * This enum defines the options available to users.
- */
-export const enum DefaultAction {
-    /**
-     * Service should always show the app selection UI, to allow the user to
-     * choose which application to use.
-     */
-    ALWAYS_ASK = 'ALWAYS_ASK',
-
-    /**
-     * The service should always use the current selection when the intent is
-     * coming from the app that fired the current intent.
-     */
-    ALWAYS_FOR_APP = 'ALWAYS_FOR_APP',
-
-    /**
-     * The service should always use the current selection, whenever an intent of
-     * this type is fired.
-     */
-    ALWAYS_FOR_INTENT = 'ALWAYS_FOR_INTENT'
+interface API {
+    [APITopic.OPEN]: [OpenPayload, void];
+    [APITopic.FIND_INTENT]: [FindIntentPayload, AppIntent];
+    [APITopic.FIND_INTENTS_BY_CONTEXT]: [FindIntentsByContextPayload, AppIntent[]];
+    [APITopic.BROADCAST]: [BroadcastPayload, void];
+    [APITopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
 }
 
-// Message definitions
-export interface OpenArgs {
-    name: AppName;
-    context?: Context;
+@injectable()
+export class Main {
+    private _config = null;
+
+    @inject(Inject.APP_DIRECTORY)   private _directory!: AppDirectory;
+    @inject(Inject.MODEL)           private _model!: Model;
+
+    @inject(Inject.CONTEXT_HANDLER) private _contexts!: ContextHandler;
+    @inject(Inject.INTENT_HANDLER)  private _intents!: IntentHandler;
+
+    private apiHandler: APIHandler<APITopic>;
+
+    constructor() {
+        this.apiHandler = new APIHandler();
+    }
+
+    public async register(): Promise<void> {
+        Object.assign(window, {
+            main: this,
+            config: this._config,
+            directory: this._directory,
+            model: this._model,
+            contexts: this._contexts,
+            intents: this._intents
+        });
+
+        // Wait for creation of any injected components that require async initialization
+        await Injector.initialized;
+
+        // Current API
+        this.apiHandler.registerListeners<API>({
+            [APITopic.OPEN]: this.onOpen.bind(this),
+            [APITopic.FIND_INTENT]: this.findIntent.bind(this),
+            [APITopic.FIND_INTENTS_BY_CONTEXT]: this.findIntentsByContext.bind(this),
+            [APITopic.BROADCAST]: this.broadcast.bind(this),
+            [APITopic.RAISE_INTENT]: this.raiseIntent.bind(this)
+        });
+
+        console.log('Service Initialised');
+    }
+
+    private async onOpen(payload: OpenPayload): Promise<void> {
+        const appInfo: Application|null = await this._directory.getAppByName(payload.name);
+
+        if (appInfo) {
+            const app = await this._model.findOrCreate(appInfo, {prefer: FindFilter.WITH_CONTEXT_LISTENER});
+
+            if (payload.context) {
+                await this._contexts.send(app, payload.context);
+            }
+        } else {
+            throw new Error(`No app in directory with name: ${payload.name}`);
+        }
+    }
+
+    private async findIntent(payload: FindIntentPayload): Promise<AppIntent> {
+        let apps;
+        if (payload.intent) {
+            apps = await this._directory.getAppsByIntent(payload.intent);
+        } else {
+            apps = await this._directory.getAllApps();
+        }
+
+        return {
+            intent: {
+                name: payload.intent,
+                displayName: payload.intent
+            },
+            apps
+        };
+    }
+
+    private async findIntentsByContext (payload: FindIntentsByContextPayload): Promise<AppIntent[]> {
+        return [];
+    }
+
+    private async broadcast(payload: BroadcastPayload): Promise<void> {
+        await this._contexts.broadcast(payload.context);
+    }
+
+    private async raiseIntent(payload: RaiseIntentPayload): Promise<IntentResolution> {
+        const intent: Intent = {
+            type: payload.intent,
+            context: payload.context
+        };
+
+        return this._intents.raise(intent);
+    }
 }
-export interface ResolveArgs {
-    intent: IntentType;
-    context?: Context;
-}
-export interface SelectorResultArgs {
-    handle: number;
-    success: boolean;
 
-    /**
-     * The application that was selected by the user.
-     *
-     * Only specified when success is true.
-     */
-    app?: Application;
-
-    /**
-     * The reason that an app wasn't selected.
-     *
-     * Only specified when success is false.
-     */
-    reason?: string;
-
-    /**
-     * Determines the future behaviour of this intent
-     */
-    defaultAction: DefaultAction;
-}
-
-/**
- * If there are multiple applications available that can handle an intent, the
- * service must ask the user which application they would like to use. To avoid
- * confusing users, only one selector will be shown at a time - if another
- * intent is fired whilst the resolver is open then it will be queued.
- *
- * This interface is used to wrap each intent that comes into the service that
- * requires manual resolution by the user. These wrappers can then be placed in
- * a queue.
- *
- * NOTE: Only intents that require user interaction will (potentially) be placed
- * in a queue. Any explicit intents, or intents where there is only one
- * application available, will always be handled immediately.
- */
-export interface QueuedIntent {
-    /**
-     * A unique identifier for this intent.
-     *
-     * This is created when the service first recives the intent, and is used to
-     * manage communication across between the service back-end and front-end.
-     */
-    handle: number;
-
-    /**
-     * The original intent, launched by the user
-     */
-    intent: RaiseIntentPayload;
-
-    /**
-     * UUID of the application that fired this intent
-     */
-    source: AppMetadata;
-
-    /**
-     * List of available applications that are capable of handling the intent
-     */
-    applications: Application[];
-
-    /**
-     * The application spawned by the service to allow the user to decide how to
-     * handle the intent.
-     *
-     * If there are multiple simultanous intents that require a user selection,
-     * they will be queued. Only the first item in the queue will have an
-     * application - selector will be null until the intent reaches the front of
-     * the queue.
-     */
-    selector: fin.OpenFinApplication|null;
-
-    /**
-     * Function to use to resolve this intent
-     */
-    resolve: (selectedApp: Application) => void;
-
-    /**
-     * Function to use to reject this intent
-     */
-    reject: (reason: Error) => void;
-}
+// Start service provider
+Injector.getClass(Main).register();

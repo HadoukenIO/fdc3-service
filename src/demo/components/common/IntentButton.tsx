@@ -1,9 +1,10 @@
 import * as React from 'react';
+import {IntentResolution} from '../../../client/main';
 
 interface IntentButtonProps {
   title?: string;
   iconClassName?: string;
-  action: () => Promise<void>;
+  action: () => Promise<IntentResolution>;
 }
 
 enum ButtonStateType {
