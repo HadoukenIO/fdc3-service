@@ -119,7 +119,7 @@ module.exports = [
     createConfig(`${outputDir}/client`, './src/client/main.ts', {minify: true, isLibrary: true, libraryName: 'OpenfinFDC3', outputFilename: "openfin-fdc3"}, versionPlugin),
     createConfig(`${outputDir}/provider`, './src/provider/index.ts', undefined, manifestPlugin, versionPlugin),
     createConfig(`${outputDir}/provider/ui`, {
-        'ui': './src/provider/Selector.tsx'
+        'ui': './src/provider/view/Selector.tsx'
     }, undefined, versionPlugin),
     createConfig(`${outputDir}/demo`, {
         app: './src/demo/index.tsx',

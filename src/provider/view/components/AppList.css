@@ -1,0 +1,23 @@
+.app-list {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: solid #ccc 2px;
+}
+
+.app-list .app-header {
+    margin-left: 16px;
+}
+
+.app-list .app-container {
+    flex-grow: 1;
+    overflow: auto;
+}
+
+.app-list .list-section {
+    padding: 0 16px 16px 16px;
+}
+
+.app-list .open-btn {
+    margin: 12px 0 2px 0;
+}
