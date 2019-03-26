@@ -1,6 +1,7 @@
 import {Fin, Identity} from 'openfin/_v2/main';
 import * as puppeteer from 'puppeteer';
-import {Browser, Page, Target} from 'puppeteer';
+import {Browser, Page} from 'puppeteer';
+import {Context, IntentType} from '../../../src/client/main';
 
 const fetch = require('node-fetch');
 
@@ -9,7 +10,9 @@ declare const global: NodeJS.Global&{__BROWSER__: puppeteer.Browser};
 
 export type TestWindowContext = Window&{
     fin: Fin;
-    OpenfinFDC3: typeof import('../../../src/client/main')
+    OpenfinFDC3: typeof import('../../../src/client/main');
+    receivedContexts: Context[];
+    receivedIntents: {intent: IntentType, context: Context}[]
 };
 
 export class OFPuppeteerBrowser {

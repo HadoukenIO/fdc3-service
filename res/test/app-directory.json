@@ -141,4 +141,28 @@
         "SaveContact",
         "ViewChart"
     ]
+},
+{
+    "appId": "700",
+    "name": "test-app-invalid-manifest",
+    "manifest": "http://localhost:3923/test/configs/non-existent-manifest.json",
+    "manifestType": "openfin",
+    "title": "Failure to launch",
+    "description": "This app intentionally has an invalid manifest and will not launch",
+    "images": [],
+    "contactEmail": "support@openfin.co",
+    "supportEmail": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icons": [
+        {
+            "icon": "http://localhost:3923/demo/img/app-icons/blotter.svg"
+        }
+    ],
+    "intents": [
+        "DialCall",
+        "StartCall",
+        "SaveContact",
+        "ViewChart"
+    ]
 }]
