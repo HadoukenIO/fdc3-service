@@ -12,7 +12,7 @@ const testManagerIdentity = {
     name: 'test-app'
 };
 
-describe('Opening directory applications', () => {
+describe('Opening applications with the FDC3 client', () => {
     let fin: Fin;
 
     beforeAll(async () => {
