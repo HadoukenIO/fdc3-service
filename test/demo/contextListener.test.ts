@@ -3,7 +3,7 @@ import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {getFinConnection} from './utils/fin';
 
 
-describe('advanced puppeteer functionality', () => {
+describe('Broadcasting and context listeners', () => {
     const testManagerIdentity = {uuid: 'test-app', name: 'test-app'};
     const testIdentity1 = {uuid: 'test-app-1', name: 'test-app-1'};
     const testIdentity2 = {uuid: 'test-app-2', name: 'test-app-2'};
