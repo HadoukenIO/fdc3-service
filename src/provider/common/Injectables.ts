@@ -9,7 +9,6 @@ enum Injectable {
     CONTEXT_HANDLER,
     ENVIRONMENT,
     INTENT_HANDLER,
-    INTERFACE,
     MODEL,
     SELECTOR
 }

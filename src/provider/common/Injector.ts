@@ -10,11 +10,6 @@ import {AsyncInit} from "../controller/AsyncInit";
 import {FinEnvironment} from "../model/Environment";
 import {Environment} from "openfin/_v2/environment/environment";
 
-interface I {
-    foo: string;
-    bar: number;
-}
-
 /**
  * For each entry in `Inject`, defines the type that will be injected for that key.
  */
@@ -23,7 +18,6 @@ type Types = {
     [Inject.CONTEXT_HANDLER]: ContextHandler,
     [Inject.ENVIRONMENT]: Environment,
     [Inject.INTENT_HANDLER]: IntentHandler,
-    [Inject.INTERFACE]: I,
     [Inject.MODEL]: Model,
     [Inject.SELECTOR]: SelectorHandler
 };
@@ -39,7 +33,6 @@ const Bindings = {
     [Inject.CONTEXT_HANDLER]: ContextHandler,
     [Inject.ENVIRONMENT]: FinEnvironment,
     [Inject.INTENT_HANDLER]: IntentHandler,
-    [Inject.INTERFACE]: {foo: 'a', bar: 1},
     [Inject.MODEL]: Model,
     [Inject.SELECTOR]: SelectorHandler
 };
@@ -57,31 +50,14 @@ export class Injector {
         const promises: Promise<unknown>[] = [];
 
         Object.keys(Bindings).forEach(k => {
-            const key: keyof typeof Inject = k as any;
+            const key: Keys = k as any;
+
             if (typeof Bindings[key] === 'function') {
-                // container.bind(Inject[key]).toProvider(Injector.providerCreator.bind(null, key));
                 container.bind(Inject[key]).to(Bindings[key] as any).inSingletonScope();
                 
                 if ((Bindings[key] as Function).prototype.hasOwnProperty('init')) {
-                    console.log(key, "is async");
                     promises.push((container.get(Inject[key]) as AsyncInit).initialized);
                 }
-
-                /*container.bind(Inject[key]).to(Bindings[key] as any).inSingletonScope();/*.onActivation(async (context, instance) => {
-                    if ((Bindings[key] as Function).prototype.hasOwnProperty('init')) {
-                        console.log(key, "is async");
-                    } else {
-                        console.log(key, "is sync");
-                    }
-
-                    await new Promise(resolve => setTimeout(resolve, 5000));
-
-                    return instance;
-                });*/
-
-                // container.bind(Inject[key]).toProvider((context: inversify.Context) => {
-                //     return container.get(Bindings[key] as any);
-                // });
             } else {
                 container.bind(Inject[key]).toConstantValue(Bindings[key]);
             }
@@ -123,22 +99,4 @@ export class Injector {
 
         return value;
     }
-
-    /*
-    private static providerCreator<T, K extends Keys>(identifier: K, context: inversify.Context): inversify.Provider<T> {
-        // return () => {
-            return new Promise((resolve, reject) => {
-                const value: T&(AsyncInit|{}) = Injector._container.resolve(Bindings[identifier] as inversify.Newable<T&(AsyncInit|{})>);
-
-                if (value.hasOwnProperty('initialized')) {
-                    console.log(identifier, "is async");
-                    (value as AsyncInit).initialized.then(() => resolve(value));
-                } else {
-                    console.log(identifier, "is sync");
-                    resolve(value);
-                }
-            }) as any;
-        // };
-    }
-    //*/
 }
