@@ -58,7 +58,7 @@ export class IntentHandler {
     }
 
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
-        const app: AppWindow = await this._model.findOrCreate(appInfo, {prefer: FindFilter.WITH_INTENT_LISTENER});
+        const app: AppWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_INTENT_LISTENER);
         const data: unknown = await this._contexts.send(app, intent.context);
         const result: IntentResolution = {
             source: appInfo.name,

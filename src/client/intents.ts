@@ -1,4 +1,4 @@
-import { Context, ContactContext } from "./context";
+import {Context, ContactContext} from "./context";
 
 /**
  * TypeScript definitions for FDC3-defined intents.
@@ -14,6 +14,7 @@ import { Context, ContactContext } from "./context";
 export interface Intent<T=string, C extends Context=Context> {
     type: T;
     context: C;
+    target?: string;
 }
 
 // Built-in intents

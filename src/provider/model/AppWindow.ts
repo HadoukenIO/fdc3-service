@@ -57,19 +57,3 @@ export class AppWindow {
         return this._window.setAsForeground();
     }
 }
-
-export interface Context {
-    type: string;
-    name: string;
-    id: {[key: string]: string};
-}
-
-export interface Instrument extends Context {
-    type: 'fdc3.instrument',
-    name: string;
-    id: {[key: string]: string} & {
-        ticker?: string;
-        ISIN?: string;
-        CUSIP?: string;
-    }
-}

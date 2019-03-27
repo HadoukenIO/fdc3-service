@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import {RaiseIntentPayload, APITopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload} from '../client/internal';
+import {RaiseIntentPayload, APITopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, API} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Intent} from '../client/main';
 
 import {injectable, inject} from 'inversify';
@@ -11,14 +11,6 @@ import {ContextHandler} from './controller/ContextHandler';
 import {IntentHandler} from './controller/IntentHandler';
 import {APIHandler} from './APIHandler';
 import {Injector} from './common/Injector';
-
-interface API {
-    [APITopic.OPEN]: [OpenPayload, void];
-    [APITopic.FIND_INTENT]: [FindIntentPayload, AppIntent];
-    [APITopic.FIND_INTENTS_BY_CONTEXT]: [FindIntentsByContextPayload, AppIntent[]];
-    [APITopic.BROADCAST]: [BroadcastPayload, void];
-    [APITopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
-}
 
 @injectable()
 export class Main {
@@ -51,7 +43,7 @@ export class Main {
 
         // Current API
         this.apiHandler.registerListeners<API>({
-            [APITopic.OPEN]: this.onOpen.bind(this),
+            [APITopic.OPEN]: this.open.bind(this),
             [APITopic.FIND_INTENT]: this.findIntent.bind(this),
             [APITopic.FIND_INTENTS_BY_CONTEXT]: this.findIntentsByContext.bind(this),
             [APITopic.BROADCAST]: this.broadcast.bind(this),
@@ -61,11 +53,11 @@ export class Main {
         console.log('Service Initialised');
     }
 
-    private async onOpen(payload: OpenPayload): Promise<void> {
+    private async open(payload: OpenPayload): Promise<void> {
         const appInfo: Application|null = await this._directory.getAppByName(payload.name);
 
         if (appInfo) {
-            const app = await this._model.findOrCreate(appInfo, {prefer: FindFilter.WITH_CONTEXT_LISTENER});
+            const app = await this._model.findOrCreate(appInfo, FindFilter.WITH_CONTEXT_LISTENER);
 
             if (payload.context) {
                 await this._contexts.send(app, payload.context);

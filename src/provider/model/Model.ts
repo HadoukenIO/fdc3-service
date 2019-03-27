@@ -71,8 +71,8 @@ export class Model {
         return windows;
     }
 
-    public async findOrCreate(appInfo: Application, options?: FindOptions): Promise<AppWindow> {
-        const matchingWindow = this.findWindow(appInfo, options);
+    public async findOrCreate(appInfo: Application, prefer?: FindFilter): Promise<AppWindow> {
+        const matchingWindow = this.findWindow(appInfo, {prefer});
 
         if (matchingWindow) {
             await matchingWindow.focus();
