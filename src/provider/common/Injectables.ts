@@ -2,7 +2,7 @@
  * Declare all injectable types/values here.
  * 
  * This enum determines the keys that can be used within `@inject` tags. The mapping of these tags to default concrete types is defined in 
- * `inversify.config.ts`. These mappings can be programmatically overridden by calling the methods of the {@link Injector} util.
+ * `Injector.ts`. These mappings can be programmatically overridden by calling the methods of the {@link Injector} util.
  */
 enum Injectable {
     APP_DIRECTORY,
