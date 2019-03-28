@@ -23,7 +23,7 @@
     },
     "settings": {
         "react": {
-            "version": "detect"
+            "version": "latest"
         }
     },
     "rules": {
@@ -39,13 +39,14 @@
         "func-call-spacing": "error",
         "func-style": ["error", "declaration", { "allowArrowFunctions": true }],
         "function-paren-newline": "error",
+        "import/export": "off",
         "import/no-unresolved": "off",
         "import/order": ["error", {"newlines-between": "always"}],
         "indent": ["error", 4, {"SwitchCase": 1}],
         "key-spacing": "error",
         "keyword-spacing": "error",
         "lines-between-class-members": ["error", "always", {"exceptAfterSingleLine": true}],
-        "max-len": ["error", {"code": 160, "comments": 120, "ignorePattern": "(@param .*)|(import .* from .*)"}],
+        "max-len": ["error", {"code": 160, "ignorePattern": "(@param .*)|(import .* from .*)"}],
         "max-statements-per-line": "error",
         "no-console": "off",
         "no-multi-spaces": ["error", {"ignoreEOLComments": true}],
