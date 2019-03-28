@@ -13,7 +13,7 @@ export function Number(props: NumberProps) {
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const inputFilter: RegExp = /[^0-9*#]/g;
         const {value} = event.currentTarget;
-        const filterValue = value.replace(inputFilter, "");
+        const filterValue = value.replace(inputFilter, '');
         if (handleValueChange) {
             handleValueChange(filterValue);
         }
@@ -22,13 +22,13 @@ export function Number(props: NumberProps) {
         event.stopPropagation();
         event.currentTarget.focus();
         if (handleValueChange) {
-            handleValueChange("");
+            handleValueChange('');
         }
     };
 
     return (
         <div className="number">
-            <i className={"fa fa-close w3-button w3-text-gray" + (inCall ? " w3-hide" : "")} onClick={handleClear} />
+            <i className={'fa fa-close w3-button w3-text-gray' + (inCall ? ' w3-hide' : '')} onClick={handleClear} />
             <input className="number-input w3-input w3-border" type="text" value={phoneNumber} onChange={handleChange} readOnly={inCall} />
         </div>
     );

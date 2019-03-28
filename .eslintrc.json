@@ -1,0 +1,75 @@
+{
+    "parser": "@typescript-eslint/parser",
+    "env": {
+        "browser": true,
+        "es6": true,
+        "jest": true,
+        "node": true
+    },
+    "extends": [
+        "eslint:recommended",
+        "plugin:import/errors",
+        "plugin:react/recommended"
+    ],
+    "globals": {
+        "fin": "readonly"
+    },
+    "parserOptions": {
+        "ecmaFeatures": {
+            "jsx": true
+        },
+        "ecmaVersion": 2018,
+        "sourceType": "module"
+    },
+    "settings": {
+        "react": {
+            "version": "latest"
+        }
+    },
+    "rules": {
+        "array-bracket-newline": ["error", "consistent"],
+        "array-bracket-spacing": "error",
+        "array-element-newline": ["error", "consistent"],
+        "block-spacing": "error",
+        "brace-style": "error",
+        "comma-dangle": "error",
+        "comma-spacing": "error",
+        "eol-last": "error",
+        "eqeqeq": "error",
+        "func-call-spacing": "error",
+        "func-style": ["error", "declaration", { "allowArrowFunctions": true }],
+        "function-paren-newline": "error",
+        "import/export": "off",
+        "import/no-unresolved": "off",
+        "import/order": ["error", {"newlines-between": "always"}],
+        "indent": ["error", 4, {"SwitchCase": 1}],
+        "key-spacing": "error",
+        "keyword-spacing": "error",
+        "lines-between-class-members": ["error", "always", {"exceptAfterSingleLine": true}],
+        "max-len": ["error", {"code": 160, "ignorePattern": "(@param .*)|(import .* from .*)"}],
+        "max-statements-per-line": "error",
+        "no-console": "off",
+        "no-multi-spaces": ["error", {"ignoreEOLComments": true}],
+        "no-return-await": "error",
+        "no-throw-literal": "error",
+        "no-trailing-spaces": "error",
+        "no-unused-vars": "off",
+        "no-var": "error",
+        "object-curly-spacing": "error",
+        "padded-blocks": ["error", "never"],
+        "prefer-const": "error",
+        "prefer-promise-reject-errors": "error",
+        "quotes": ["error", "single"],
+        "require-jsdoc": "warn",
+        "semi": "error",
+        "space-in-parens": "error",
+        "spaced-comment": "error",
+        "valid-jsdoc": ["warn", {
+            "requireReturn": false,
+            "requireReturnType": false,
+            "requireParamType": false,
+            "requireParamDescription": true,
+            "requireReturnDescription": false
+        }]
+    }
+}

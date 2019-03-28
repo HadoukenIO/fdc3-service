@@ -17,7 +17,7 @@ const defaultWindowOptions: WindowOption = {
     resizable: false,
     maximizable: false,
     defaultLeft: 200,
-    defaultTop: 200,
+    defaultTop: 200
 };
 
 export interface ContextMenuItem {
@@ -94,7 +94,8 @@ class ContextMenu {
                 },
                 (err) => {
                     reject(err);
-                });
+                }
+            );
         });
     }
 

@@ -29,8 +29,10 @@ describe('advanced puppeteer functionality', () => {
         // the listener is triggered
         const callbackSpy = jest.fn();
         const callbackResponse = fdc3Remote.addContextListener(testIdentity2, callbackSpy);
-        await new Promise(res => setTimeout(res,
-                                            1000));  // Slight delay to ensure callback is properly registered
+        await new Promise(res => setTimeout(
+            res,
+            1000
+        ));  // Slight delay to ensure callback is properly registered
 
         // Send a context on app-1
         const broadcastPayload = {type: 'test-context', name: 'contextName1', id: {name: 'contextID1'}};

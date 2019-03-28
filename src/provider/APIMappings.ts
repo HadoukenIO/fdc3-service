@@ -15,7 +15,7 @@ export const actionHandlerMap: ActionHandlerMap<APITopic, TopicPayloadMap, Topic
     [APITopic.FIND_INTENT]: handleFindIntent,
     [APITopic.FIND_INTENTS_BY_CONTEXT]: handleFindIntentsByContext,
     [APITopic.BROADCAST]: handleBroadcast,
-    [APITopic.RAISE_INTENT]: handleRaiseIntent,
+    [APITopic.RAISE_INTENT]: handleRaiseIntent
 };
 
 async function handleOpen(payload: OpenPayload, source: ProviderIdentity): Promise<void> {
