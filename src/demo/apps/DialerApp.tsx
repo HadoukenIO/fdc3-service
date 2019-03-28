@@ -79,15 +79,7 @@ export function DialerApp(props: AppProps): React.ReactElement {
         <div>
             <Number inCall={inCall} number={phoneNumber} onValueChange={onNumberEntry} />
             {inCall && <CallTimer />}
-            {!inCall && <Dialer handleKeyPress={
-                (() => {
-                    if (Math.random() < 0.5) {
-                        return onDialerEntry;
-                    } else {
-                        return () => {};
-                    }
-                })()
-            } />}
+            {!inCall && <Dialer handleKeyPress={onDialerEntry} />}
             <CallButton canCall={phoneNumber.length > 0} inCall={inCall} handleClick={toggleCall} />
             <Dialog
                 show={!!pendingCall}
