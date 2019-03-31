@@ -2,38 +2,23 @@ import * as React from 'react';
 
 import './CallButton.css';
 
-interface ICallButtonProps {
+interface CallButtonProps {
     inCall: boolean;
     canCall: boolean;
     handleClick?: () => void;
 }
 
-export class CallButton extends React.Component<ICallButtonProps> {
-    constructor(props: ICallButtonProps) {
-        super(props);
-
-        this.state = {
-            inCall: props.inCall || false,
-            canCall: props.canCall || false
-        };
-
-        this.handleClick = this.handleClick.bind(this);
-    }
-
-    public render(): JSX.Element {
-        const inCall: boolean = this.props.inCall,
-            isEnabled: boolean = inCall || this.props.canCall;
-
-        return (
-            <button className={"call-btn w3-button " + (inCall ? "w3-red" : "w3-green")} disabled={!isEnabled} onClick={this.handleClick}>{inCall ? "End Call" : "Call"}</button>
-        );
-    }
-
-    private handleClick(event: React.MouseEvent<HTMLButtonElement>): void {
-        const handler: (()=>void)|undefined = this.props.handleClick;
-
-        if (handler && (this.props.inCall || this.props.canCall)) {
+export function CallButton(props: CallButtonProps): React.ReactElement {
+    const {handleClick: handler, canCall, inCall} = props;
+    const isEnabled: boolean = inCall || canCall;
+    const handleClick = () => {
+        if (handler && (inCall || canCall)) {
             handler();
         }
-    }
+    };
+    return (
+        <button className={'call-btn w3-button ' + (inCall ? 'w3-red' : 'w3-green')} disabled={!isEnabled} onClick={handleClick}>
+            {inCall ? 'End Call' : 'Call'}
+        </button>
+    );
 }

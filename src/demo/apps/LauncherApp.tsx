@@ -1,41 +1,35 @@
 import * as React from 'react';
-import * as fdc3 from '../../client/index';
-import { IApplication } from '../../client/directory';
+
+import * as fdc3 from '../../client/main';
+import {Application} from '../../client/directory';
+import {AppCard} from '../components/launcher/AppCard';
 
 import '../../../res/demo/css/w3.css';
 
-import { AppCard } from '../components/launcher/AppCard';
+export function LauncherApp(): React.ReactElement {
+    const [applications, setApplications] = React.useState<Application[]>([]);
 
-interface IAppState {
-    applications: IApplication[];
-}
+    React.useEffect(() => {
+        document.title = 'Launcher';
+    }, []);
 
-export class LauncherApp extends React.Component<{}, IAppState> {
-    constructor(props: {}) {
-        super(props);
+    React.useEffect(() => {
+        fdc3.findIntent(null!)
+            .then(async (appIntent) => setApplications(appIntent.apps))
+            .catch(console.log);
+    });
 
-        document.title = "Launcher";
-        this.state = {applications: []};
+    const openApp = (app: Application) => {
+        console.log(`Opening app ${app.title}`);
+        fdc3.open(app.appId)
+            .then(() => console.log(`Opened app ${app.title}`))
+            .catch(console.log);
+    };
 
-        fdc3.resolve(null!).then((applications: IApplication[]) => {
-            this.setState({applications});
-        });
-    }
-
-    public render(): JSX.Element {
-        return (
-            <div>
-                <h1>Launcher</h1>
-
-                {this.state.applications.map(
-                    (app) => <AppCard key={app.id} app={app} handleClick={this.openApp.bind(null, app)} />
-                )}
-            </div>
-        );
-    }
-
-    private openApp(app: IApplication): void {
-        console.log("Opening app " + app.title);
-        fdc3.open(app.name);
-    }
+    return (
+        <div>
+            <h1>Launcher</h1>
+            {applications.map((app, index) => <AppCard key={app.appId + index} app={app} handleClick={openApp} />)}
+        </div>
+    );
 }

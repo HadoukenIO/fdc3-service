@@ -1,62 +1,59 @@
 import * as React from 'react';
-import * as fdc3 from '../../client/index';
+
+import * as fdc3 from '../../client/main';
+import {Chart} from '../components/charts/Chart';
+import {SecurityContext, Context} from '../../client/context';
 
 import '../../../res/demo/css/w3.css';
 
-import { Chart } from '../components/charts/Chart';
-import { SecurityPayload, Payload } from '../../client/context';
-
-interface IAppProps {
+interface AppProps {
     symbolName?: string;
 }
 
-interface IAppState {
-    symbolName: string;
-}
+export function ChartsApp(props: AppProps): React.ReactElement {
+    const [symbolName, setSymbolName] = React.useState('AAPL');
 
-export class ChartsApp extends React.Component<IAppProps, IAppState> {
-    constructor(props: IAppState) {
-        super(props);
+    function handleIntent(context: SecurityContext): void {
+        if (context && context.name) {
+            setSymbolName(context.name);
+        } else {
+            throw new Error('Invalid context received');
+        }
+    }
 
-        document.title = "Charts";
-        this.state = {
-            symbolName: props.symbolName || "AAPL"
-        };
+    React.useEffect(() => {
+        document.title = 'Charts';
+    }, []);
 
-        //Add FDC3 listeners
-        const chartListener = new fdc3.IntentListener(fdc3.Intents.VIEW_CHART, (context: Payload): Promise<void> => {
-            return new Promise((resolve: ()=>void, reject: (reason?: Error)=>void) => {
+    React.useEffect(() => {
+        const intentListener = fdc3.addIntentListener(fdc3.Intents.VIEW_CHART, (context: Context): Promise<void> => {
+            return new Promise((resolve, reject) => {
                 try {
-                    this.handleIntent(context as SecurityPayload);
+                    handleIntent(context as SecurityContext);
                     resolve();
-                } catch(e) {
+                } catch (e) {
                     reject(e);
                 }
             });
         });
-        const contextListener = new fdc3.ContextListener((context: Payload): void => {
-            if (context.type === "security") {
-                this.handleIntent(context as SecurityPayload);
+
+        const contextListener = fdc3.addContextListener((context: Context): void => {
+            if (context.type === 'security') {
+                handleIntent(context as SecurityContext);
             }
         });
-    }
 
-    public render(): JSX.Element {
-        return (
-            <div className="chart-app w3-theme">
-                <h1 className="w3-margin-left">{this.state.symbolName}</h1>
-                <Chart />
-            </div>
-        );
-    }
+        return function cleanUp() {
+            intentListener.unsubscribe();
+            contextListener.unsubscribe();
+        };
+    }, []);
 
-    private handleIntent(context: SecurityPayload): void {
-        if (context && context.name) {
-            this.setState({
-                symbolName: context.name
-            });
-        } else {
-            throw new Error("Invalid context received");
-        }
-    }
+
+    return (
+        <div className="chart-app w3-theme">
+            <h1 className="w3-margin-left">{symbolName}</h1>
+            <Chart />
+        </div>
+    );
 }

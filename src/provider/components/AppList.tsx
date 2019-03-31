@@ -1,120 +1,103 @@
 import * as React from 'react';
-import * as fdc3 from '../../client/index';
+import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
+
+import {Application} from '../../client/directory';
+import {RaiseIntentPayload, SERVICE_CHANNEL} from '../../client/internal';
+import {DefaultAction} from '../index';
+
+import {AppCard} from './AppCard';
 
 import './AppList.css';
 
-import { IApplication } from '../../client/directory';
-import { AppCard } from './AppCard';
-import { eDefaultAction } from '../index';
-
-interface IAppListState {
+interface IntentData {
     handle: number;
-    defaultAction: string;
-    applications: IApplication[];
-    selectedApplication: IApplication|null;
+    intent: RaiseIntentPayload;
+    applications: Application[];
 }
 
-interface IIntentData {
-    handle: number;
-    intent: fdc3.Intent;
-    applications: IApplication[];
-}
+const sendError = (service: Promise<ChannelClient>, handle: number, reason: string) => {
+    service.then((client) => {
+        client.dispatch('FDC3.SelectorResult', {success: false, handle, reason});
+    });
+};
 
-const servicePromise = fin.InterApplicationBus.Channel.connect(fdc3.SERVICE_CHANNEL);
+const sendSuccess = (service: Promise<ChannelClient>, handle: number, app: Application, defaultAction: string) => {
+    service.then((client) => {
+        client.dispatch('FDC3.SelectorResult', {success: true, handle, app, defaultAction});
+    });
+};
 
-export class AppList extends React.Component<{}, IAppListState> {
-    constructor(props: {}) {
-        super(props);
+export function AppList(): React.ReactElement {
+    const [service, setService] = React.useState<Promise<ChannelClient>>();
+    const [handle, setHandle] = React.useState<number>(0);
+    const [applications, setApplications] = React.useState<Application[]>([]);
+    const [defaultAction, setDefaultAction] = React.useState<string>('ALWAYS_ASK');
+    const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
 
-        this.state = {
-            handle: 0,
-            defaultAction: "ALWAYS_ASK",
-            applications: [],
-            selectedApplication: null
-        };
-        this.onAppSelect = this.onAppSelect.bind(this);
-        this.onAppOpen = this.onAppOpen.bind(this);
-        this.onSelectDefault = this.onSelectDefault.bind(this);
-        this.onOpen = this.onOpen.bind(this);
-        this.onCancel = this.onCancel.bind(this);
+    const onAppSelect = (app: Application) => setSelectedApplication(app);
+    const onAppOpen = (app: Application) => sendSuccess(service!, handle, app, 'ALWAYS_ASK');
+    const onSelectDefault = (event: React.ChangeEvent<HTMLSelectElement>) => setDefaultAction(event.currentTarget.value);
+    const onOpen = (event: React.MouseEvent<HTMLDivElement>) => {
+        event.stopPropagation();
+        sendSuccess(service!, handle, selectedApplication!, defaultAction);
+    };
+    const onCancel = (event: React.MouseEvent<HTMLDivElement>) => {
+        event.stopPropagation();
+        sendError(service!, handle, 'Cancelled');
+    };
 
-        fin.Application.getCurrentSync().getWindow().then(w => w.getOptions().then((options) => {
-            const data: IIntentData = JSON.parse(options.customData);
 
-            if (data && data.intent && data.applications) {
-                this.setState({
-                    handle: data.handle,
-                    applications: data.applications
-                });
-            } else if (data) {
-                //customData was malformed
-                this.sendError(data.handle, "Invalid intent data");
-            } else {
-                //customData was missing
-                this.sendError(0, "No intent data");
-            }
-        }).catch((reason: string) => {
-            //Couldn't fetch window options
-            this.sendError(0, "No window data");
-        }));
-    }
+    React.useEffect(() => {
+        const service = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL);
 
-    public render(): JSX.Element {
-        return (
-            <div className="app-list">
-                <h2 className="app-header">Select an appliction:</h2>
-                <div className="list-section app-container">
-                    {this.state.applications.map((app: IApplication) => (
-                        <AppCard key={app.id} app={app} selectHandler={this.onAppSelect} openHandler={this.onAppOpen} selected={this.state.selectedApplication === app} />
-                    ))}
-                </div>
-                
-                <div className="list-section w3-border-top w3-light-grey">
-                    <h2>Set default action:</h2>
-                    <div id="actions" className={this.state.selectedApplication ? "" : "w3-disabled"}>
-                        <select className="default-action w3-select" onChange={this.onSelectDefault}>
-                            <option value={eDefaultAction.ALWAYS_ASK}>Always ask</option>
-                            <option value={eDefaultAction.ALWAYS_FOR_INTENT}>Remember my selection</option>
-                            <option value={eDefaultAction.ALWAYS_FOR_APP}>Remember for this application only</option>
-                        </select>
+        setService(service);
 
-                        <div className="open-btn w3-button w3-bar w3-green w3-large" onClick={this.onOpen}>Open Application</div>
-                    </div>
-                    <div className="w3-button w3-bar w3-red w3-small" onClick={this.onCancel}>Cancel</div>
-                </div>
+        fin.Application
+            .getCurrentSync()
+            .getWindow()
+            .then(w => w.getOptions()
+                .then((options) => {
+                    const data: IntentData = JSON.parse(options.customData);
+
+                    if (data && data.intent && data.applications) {
+                        setHandle(data.handle);
+                        setApplications(data.applications);
+                    } else if (data) {
+                        // customData was malformed
+                        sendError(service, data.handle, 'Invalid intent data');
+                    } else {
+                        // customData was missing
+                        sendError(service, 0, 'No intent data');
+                    }
+                })
+                .catch(() => {
+                    // Couldn't fetch window options
+                    sendError(service, 0, 'No window data');
+                }));
+    }, []);
+
+
+    return (
+        <div className="app-list">
+            <h2 className="app-header">Select an appliction:</h2>
+            <div className="list-section app-container">
+                {applications.map((app: Application) => (
+                    <AppCard key={app.appId} app={app} selectHandler={onAppSelect} openHandler={onAppOpen} selected={selectedApplication === app} />
+                ))}
             </div>
-        );
-    }
+            <div className="list-section w3-border-top w3-light-grey">
+                <h2>Set default action:</h2>
+                <div id="actions" className={selectedApplication ? '' : 'w3-disabled'}>
+                    <select className="default-action w3-select" onChange={onSelectDefault}>
+                        <option value={DefaultAction.ALWAYS_ASK}>Always ask</option>
+                        <option value={DefaultAction.ALWAYS_FOR_INTENT}>Remember my selection</option>
+                        <option value={DefaultAction.ALWAYS_FOR_APP}>Remember for this application only</option>
+                    </select>
 
-    private onAppSelect(app: IApplication): void {
-        this.setState({selectedApplication: app});
-    }
-
-    private onAppOpen(app: IApplication): void {
-        this.sendSuccess(this.state.handle, app, "ALWAYS_ASK");
-    }
-
-    private onSelectDefault(event: React.ChangeEvent<HTMLSelectElement>): void {
-        this.setState({defaultAction: event.currentTarget.value});
-    }
-
-    private onOpen(event: React.MouseEvent<HTMLDivElement>): void {
-        this.sendSuccess(this.state.handle, this.state.selectedApplication!, this.state.defaultAction);
-    }
-
-    private onCancel(event: React.MouseEvent<HTMLDivElement>): void {
-        this.sendError(this.state.handle, "Cancelled");
-    }
-
-    private sendSuccess(handle: number, app: IApplication, defaultAction: string): void {
-        servicePromise.then((service) => {
-            service.dispatch("FDC3.SelectorResult", {success: true, handle, app, defaultAction});
-        });
-    }
-
-    private sendError(handle: number, reason: string): void {
-        servicePromise.then((service) => {
-            service.dispatch("FDC3.SelectorResult", {success: false, handle, reason});
-        });
-    }
+                    <div className="open-btn w3-button w3-bar w3-green w3-large" onClick={onOpen}>Open Application</div>
+                </div>
+                <div className="w3-button w3-bar w3-red w3-small" onClick={onCancel}>Cancel</div>
+            </div>
+        </div>
+    );
 }

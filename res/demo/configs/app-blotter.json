@@ -1,5 +1,6 @@
 {
     "devtools_port": 9090,
+    "licenseKey": "64605fac-add3-48a0-8710-64b38e96a2dd",
     "startup_app": {
         "name": "FDC3 Blotter POC",
         "description": "OpenFin FDC3 Sample Application",
@@ -10,6 +11,6 @@
     },
     "runtime": {
         "arguments": "",
-        "version": "9.61.38.40"
+        "version": "10.66.39.43"
     }
 }

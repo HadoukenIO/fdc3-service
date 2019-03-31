@@ -1,72 +1,73 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { BlotterApp } from './apps/BlotterApp';
-import { ChartsApp } from './apps/ChartsApp';
-import { ContactsApp } from './apps/ContactsApp';
-import { DialerApp } from './apps/DialerApp';
-import { LauncherApp } from './apps/LauncherApp';
+
+import {BlotterApp} from './apps/BlotterApp';
+import {ChartsApp} from './apps/ChartsApp';
+import {ContactsApp} from './apps/ContactsApp';
+import {DialerApp} from './apps/DialerApp';
+import {LauncherApp} from './apps/LauncherApp';
 
 /*
  * This file defines the entry point for all of the applications in this project. This "bootstrap" is intended to allow
  * the creation of many small, simple applications whilst avoiding boilerplate.
- * 
- * Each application has it's own "app.json" file, but each file shares the same HTML page. This file will check the 
+ *
+ * Each application has it's own "app.json" file, but each file shares the same HTML page. This file will check the
  * UUID of the current application in order to determine which React component to create and add to the DOM.
- * 
+ *
  * For demo purposes, we also need to have multiple applications capable of handling the same intent. This is done by
  * making the demo applications skinnable, to create several similar applications that differ only in colour scheme.
- * Whilst these applications clearly share the same code, they should be assumed to be completely unrelated 
+ * Whilst these applications clearly share the same code, they should be assumed to be completely unrelated
  * applications, likely made by different vendors, that are both capable of providing the same funcionality.
  */
 
-let uuid: string, color: string;
-let app: JSX.Element;
 
-if (window.hasOwnProperty("fin")) {
-    uuid = fin.desktop.Application.getCurrent().uuid;
-
-    //Colours are used to simulate having multiple apps capable of handling the same intent.
-    //In this sample they are re-skins of the same application, but in a real scenario they would be completely unrelated applications.
-    color = uuid.split("-")[2];
+function App(): React.ReactElement {
+    let uuid: string = fin.Window.me.uuid;
+    let color: string = uuid.split('-')[2];
     if (color) {
-        //Remove the colour suffix from the application UUID
         uuid = uuid.slice(0, uuid.length - color.length - 1);
     } else {
-        //Use default theme
-        color = "blue-grey";
+        color = 'blue-grey';
     }
+    const cssURL = `https://www.w3schools.com/lib/w3-theme-${color}.css`;
 
-    //Add an extra stylesheet to the document, to change the app's appearance
-    const link = document.createElement("link");
-    link.type = "text/css";
-    link.rel = "stylesheet";
-    link.href = "https://www.w3schools.com/lib/w3-theme-" + color + ".css";
-    document.getElementsByTagName('head')[0].appendChild(link);
+    return (
+        <React.Fragment>
+            <link rel="stylesheet" type="text/css" href={cssURL} />
+            <SelectApp uuid={uuid} />
+        </React.Fragment>
+    );
+}
 
-    //Create root React component
-    switch(uuid) {
-        case "fdc3-launcher":
-            app = <LauncherApp />;
-            break;
+interface SelectAppProps {
+    uuid: string;
+}
 
-        case "fdc3-blotter":
-            app = <BlotterApp />;
+function SelectApp(props: SelectAppProps): React.ReactElement {
+    const {uuid} = props;
+    let selectedApp: JSX.Element;
+
+    switch (uuid) {
+        case 'fdc3-launcher':
+            selectedApp = <LauncherApp />;
             break;
-        case "fdc3-charts":
-            app = <ChartsApp />;
+        case 'fdc3-blotter':
+            selectedApp = <BlotterApp />;
             break;
-        case "fdc3-contacts":
-            app = <ContactsApp />;
+        case 'fdc3-charts':
+            selectedApp = <ChartsApp />;
             break;
-        case "fdc3-dialer":
-            app = <DialerApp />;
+        case 'fdc3-contacts':
+            selectedApp = <ContactsApp />;
+            break;
+        case 'fdc3-dialer':
+            selectedApp = <DialerApp />;
             break;
 
         default:
-            app = (<div>Unknown application uuid: "{uuid}". Add application to index.tsx</div>);
+            selectedApp = (<div>Unknown application uuid: &quot;{uuid}&quot;. Add application to index.tsx</div>);
     }
-} else {
-    app = (<div>You cannot run this sample in the browser. Run this application through OpenFin by following the instructions in the readme.</div>);
+    return selectedApp;
 }
 
-ReactDOM.render(app, document.getElementById('react-app'));
+ReactDOM.render(<App />, document.getElementById('react-app'));

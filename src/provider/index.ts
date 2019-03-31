@@ -1,9 +1,10 @@
-import {Intent} from '../client';
-import {IApplication} from '../client/directory';
+import {AppId, Application, AppName} from '../client/directory';
 import {IntentType} from '../client/intents';
+import {RaiseIntentPayload} from '../client/internal';
+import {Context} from '../client/main';
 
 import {FDC3} from './FDC3';
-import {IAppMetadata} from './MetadataStore';
+import {AppMetadata} from './MetadataStore';
 
 console.log('the provider has landed.');
 
@@ -17,7 +18,7 @@ service.register();
  *
  * This enum defines the options available to users.
  */
-export const enum eDefaultAction {
+export const enum DefaultAction {
     /**
      * Service should always show the app selection UI, to allow the user to
      * choose which application to use.
@@ -38,15 +39,15 @@ export const enum eDefaultAction {
 }
 
 // Message definitions
-export interface IOpenArgs {
-    name: string;
-    context?: any;  // tslint:disable-line
+export interface OpenArgs {
+    name: AppName;
+    context?: Context;
 }
-export interface IResolveArgs {
+export interface ResolveArgs {
     intent: IntentType;
-    context?: any;  // tslint:disable-line
+    context?: Context;
 }
-export interface ISelectorResultArgs {
+export interface SelectorResultArgs {
     handle: number;
     success: boolean;
 
@@ -55,7 +56,7 @@ export interface ISelectorResultArgs {
      *
      * Only specified when success is true.
      */
-    app?: IApplication;
+    app?: Application;
 
     /**
      * The reason that an app wasn't selected.
@@ -67,7 +68,7 @@ export interface ISelectorResultArgs {
     /**
      * Determines the future behaviour of this intent
      */
-    defaultAction: eDefaultAction;
+    defaultAction: DefaultAction;
 }
 
 /**
@@ -84,7 +85,7 @@ export interface ISelectorResultArgs {
  * in a queue. Any explicit intents, or intents where there is only one
  * application available, will always be handled immediately.
  */
-export interface IQueuedIntent {
+export interface QueuedIntent {
     /**
      * A unique identifier for this intent.
      *
@@ -96,17 +97,17 @@ export interface IQueuedIntent {
     /**
      * The original intent, launched by the user
      */
-    intent: Intent;
+    intent: RaiseIntentPayload;
 
     /**
      * UUID of the application that fired this intent
      */
-    source: IAppMetadata;
+    source: AppMetadata;
 
     /**
      * List of available applications that are capable of handling the intent
      */
-    applications: IApplication[];
+    applications: Application[];
 
     /**
      * The application spawned by the service to allow the user to decide how to
@@ -122,7 +123,7 @@ export interface IQueuedIntent {
     /**
      * Function to use to resolve this intent
      */
-    resolve: (selectedApp: IApplication) => void;
+    resolve: (selectedApp: Application) => void;
 
     /**
      * Function to use to reject this intent

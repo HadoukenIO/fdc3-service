@@ -1,8 +1,8 @@
 import {Application} from 'openfin/_v2/main';
 
-import {IApplication} from '../client/directory';
+import {AppId, Application as DirectoryApplication} from '../client/directory';
 
-export interface IAppMetadata {
+export interface AppMetadata {
     /**
      * The application's UUID, as defined by it's app.json file.
      */
@@ -16,7 +16,7 @@ export interface IAppMetadata {
     /**
      * The application's ID within the FDC3 application directory
      */
-    directoryId: number;
+    directoryId: AppId;
 }
 
 /**
@@ -29,7 +29,7 @@ export interface IAppMetadata {
  * all the necessary data is available.
  */
 export class MetadataStore {
-    private appData: {[dirId: number]: IAppMetadata};
+    private appData: {[dirId: string]: AppMetadata};
 
     constructor() {
         this.appData = {};
@@ -42,7 +42,7 @@ export class MetadataStore {
      *
      * @param directoryId The ID of an application within the FDC3 directory
      */
-    public lookupFromDirectoryId(directoryId: number): IAppMetadata|null {
+    public lookupFromDirectoryId(directoryId: AppId): AppMetadata|null {
         return this.appData[directoryId] || null;
     }
 
@@ -53,10 +53,10 @@ export class MetadataStore {
      *
      * @param uuid The UUID of an OpenFin application
      */
-    public lookupFromAppUUID(uuid: string): IAppMetadata|null {
+    public lookupFromAppUUID(uuid: string): AppMetadata|null {
         for (const directoryId in this.appData) {
             if (this.appData.hasOwnProperty(directoryId)) {
-                const metadata: IAppMetadata = this.appData[directoryId];
+                const metadata: AppMetadata = this.appData[directoryId];
 
                 if (metadata.uuid === uuid) {
                     return metadata;
@@ -75,7 +75,7 @@ export class MetadataStore {
      *
      * @param directoryId The FDC3 app ID to map
      */
-    public mapDirectoryId(directoryId: number): string|null {
+    public mapDirectoryId(directoryId: AppId): string|null {
         const metadata = this.appData[directoryId];
 
         return (metadata && metadata.uuid) || null;
@@ -88,7 +88,7 @@ export class MetadataStore {
      *
      * @param uuid The application UUID to map
      */
-    public mapUUID(uuid: string): number|null {
+    public mapUUID(uuid: string): AppId|null {
         const metadata = this.lookupFromAppUUID(uuid);
 
         return (metadata && metadata.directoryId) || null;
@@ -103,9 +103,12 @@ export class MetadataStore {
      * @param appData An FDC3 application directory record
      * @param app An OpenFin application that has been created from 'appData'
      */
-    public update(appData: IApplication, app: Application): void {
-        if (!this.appData.hasOwnProperty(appData.id)) {
-            this.appData[appData.id] = {uuid: app.identity.uuid, name: app.identity.name!, directoryId: appData.id};
+    public update(appData: DirectoryApplication, app: Application): void {
+        if (typeof appData.appId !== 'string') {
+            throw new TypeError('Invalid appData passed to MetadataStore. "id" must be a string.');
+        }
+        if (!this.appData.hasOwnProperty(appData.appId)) {
+            this.appData[appData.appId] = {uuid: app.identity.uuid, name: app.identity.uuid, directoryId: appData.appId};
         }
     }
 }
