@@ -85,7 +85,7 @@ export interface GetAllChannelsPayload {
 }
 
 export interface JoinChannelPayload {
-    id: ChannelId|'global',
+    id: ChannelId,
     identity?: Identity
 }
 

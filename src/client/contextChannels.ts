@@ -5,6 +5,8 @@ import {APITopic, SERVICE_IDENTITY} from './internal';
 
 export type ChannelId = string;
 
+export const GLOBAL_CHANNEL_ID: ChannelId = 'global';
+
 /**
  * Object representing a fully-initialised channel.
  *
@@ -57,7 +59,7 @@ export async function getAllChannels(): Promise<Channel[]> {
  *
  * Use the special constant 'global' to revert to the global channel.
  */
-export async function joinChannel(id: ChannelId|'global', identity?: Identity): Promise<void> {
+export async function joinChannel(id: ChannelId, identity?: Identity): Promise<void> {
     return tryServiceDispatch(APITopic.JOIN_CHANNEL, {id, identity});
 }
 

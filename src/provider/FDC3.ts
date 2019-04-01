@@ -13,6 +13,7 @@ import {AppMetadata, MetadataStore} from './MetadataStore';
 import {PreferencesStore} from './PreferencesStore';
 
 import {DefaultAction, OpenArgs, QueuedIntent, ResolveArgs, SelectorResultArgs} from './index';
+import { createChannelModel, ChannelModel } from './ChannelModel';
 
 /**
  * FDC3 service implementation
@@ -25,6 +26,7 @@ export class FDC3 {
     private directory: AppDirectory;
     private metadata: MetadataStore;
     private preferences: PreferencesStore;
+    private channelModel: ChannelModel;
     private uiQueue: QueuedIntent[];
     private apiHandler: APIHandler<APITopic, TopicPayloadMap, TopicResponseMap>;
     constructor() {
@@ -32,6 +34,7 @@ export class FDC3 {
         this.metadata = new MetadataStore();
         this.preferences = new PreferencesStore();
         this.apiHandler = new APIHandler();
+        this.channelModel = createChannelModel();
         this.uiQueue = [];
     }
 
@@ -118,15 +121,19 @@ export class FDC3 {
     }
 
     private async onGetAllChannels(payload: GetAllChannelsPayload, source: ProviderIdentity): Promise<Channel[]> {
-        throw new Error('Not implemented');
+        return this.channelModel.getAllChannels();
     }
 
     private async onJoinChannel(payload: JoinChannelPayload, source: ProviderIdentity): Promise<void> {
-        throw new Error('Not implemented');
+        const identity = payload.identity || source;
+
+        this.channelModel.joinChannel(identity, payload.id);
     }
 
     private async onGetChannel(payload: GetChannelPayload, source: ProviderIdentity): Promise<Channel> {
-        throw new Error('Not implemented');
+        const identity = payload.identity || source;
+
+        return this.channelModel.getChannel(identity);
     }
 
     private async onGetChannelMembers(payload: GetChannelMembersPayload, source: ProviderIdentity): Promise<Identity[]> {
