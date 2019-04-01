@@ -46,7 +46,7 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
 /**
  * This will register a simple contextListener on the window.
  *
- * Returns a promise which resolves to the context passed to the listener
+ * Returns a promise which resolves when the listener is triggered.
  */
 export async function addContextListener(executionTarget: Identity, handler: (context: Context) => void): Promise<void> {
     return ofBrowser
@@ -64,4 +64,30 @@ export async function addContextListener(executionTarget: Identity, handler: (co
         .then(async (result) => {
             handler(await result);
         });
+}
+
+/**
+ * This is not part of the fdc3 API, but rather is a helper method to retreive
+ * the array of contexts received by registered context listeners on a certain
+ * test window.
+ *
+ * @param target Window from which to retreive the receivedContexts array
+ */
+export async function getReceivedContexts(target: Identity): Promise<Context[]> {
+    return ofBrowser.executeOnWindow(target, function(this: TestWindowContext): Context[] {
+        return this.receivedContexts;
+    });
+}
+
+/**
+ * This is not part of the fdc3 API, but rather is a helper method to retreive
+ * the array of intents received by registered intent listeners on a certain
+ * test window.
+ *
+ * @param target Window from which to retreive the receivedContexts array
+ */
+export async function getReceivedIntents(target: Identity) {
+    return ofBrowser.executeOnWindow(target, function(this: TestWindowContext) {
+        return this.receivedIntents;
+    });
 }

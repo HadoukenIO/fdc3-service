@@ -1,11 +1,11 @@
 import 'jest';
 
 import {connect, Fin} from 'hadouken-js-adapter';
+import {Identity} from 'openfin/_v2/main';
 
 import {Context, OrganizationContext} from '../../src/client/main';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
-import {OFPuppeteerBrowser, TestWindowContext} from './utils/ofPuppeteer';
 
 const testManagerIdentity = {
     uuid: 'test-app',
@@ -25,7 +25,6 @@ describe('Opening applications with the FDC3 client', () => {
         // The main launcher app should remain running for the duration of all tests.
         await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
     });
-
 
     describe('Without context', () => {
         afterEach(async () => {
@@ -80,16 +79,16 @@ describe('Opening applications with the FDC3 client', () => {
 
     describe('With context', () => {
         const validContext: OrganizationContext = {type: 'organization', name: 'OpenFin', id: {default: 'openfin'}};
+        const testAppIdentity1: Identity = {uuid: 'test-app-preregistered-1', name: 'test-app-preregistered-1'};
+        const testAppIdentity2: Identity = {uuid: 'test-app-preregistered-2', name: 'test-app-preregistered-2'};
 
         afterEach(async () => {
             // Close all test apps and suppress any errors since the apps may not be running
-            await fin.Application.wrapSync({uuid: 'test-app-preregistered-1'}).quit().catch(() => {});
-            await fin.Application.wrapSync({uuid: 'test-app-preregistered-2'}).quit().catch(() => {});
+            await fin.Application.wrapSync(testAppIdentity1).quit().catch(() => {});
+            await fin.Application.wrapSync(testAppIdentity2).quit().catch(() => {});
         });
 
         test('When passing a valid app name and a valid context, the app opens and its context listener is triggered with the correct data', async () => {
-            const ofPuppeteer = new OFPuppeteerBrowser();
-
             // From the launcher app, call fdc3.open with a valid name and context
             await fdc3Remote.open(testManagerIdentity, 'test-app-preregistered-1', validContext);
 
@@ -97,18 +96,11 @@ describe('Opening applications with the FDC3 client', () => {
             await expect(fin.Application.wrapSync({uuid: 'test-app-preregistered-1'}).isRunning()).resolves.toBe(true);
 
             // Retrieve the list of contexts the app received
-            const receivedContexts: Context[] = await ofPuppeteer.executeOnWindow(
-                {uuid: 'test-app-preregistered-1', name: 'test-app-preregistered-1'},
-                function(this: TestWindowContext) {
-                    return this.receivedContexts;
-                }
-            );
+            const receivedContexts: Context[] = await fdc3Remote.getReceivedContexts(testAppIdentity1);
 
             // Check that the app received the context passed in open and nothing else
             expect(receivedContexts.length).toBe(1);
             expect(receivedContexts.slice(-1)[0]).toEqual(validContext);
-
-            await fin.Application.wrapSync({uuid: 'test-app-preregistered-1'}).quit().catch();
         });
 
         test.todo('When passing a known app name but invalid context, [behaviour TBD]');
@@ -126,9 +118,8 @@ describe('Opening applications with the FDC3 client', () => {
             });
 
             test(
-                'When opening an already running app the app is focused, its context listener is triggered with the correct data, and the promise resolves',
+                'When opening the running app it is focused, its context listener is triggered with the correct data, and the promise resolves',
                 async () => {
-                    const ofPuppeteer = new OFPuppeteerBrowser();
                     // Focus another window so we do not get false positives from the first open focusing
                     await fin.Window.wrapSync(testManagerIdentity).focus();
 
@@ -141,13 +132,7 @@ describe('Opening applications with the FDC3 client', () => {
                     await expect(fin.System.getFocusedWindow().then(w => w.uuid)).resolves.toBe('test-app-preregistered-1');
 
                     // Retrieve the list of contexts the app received
-                    const receivedContexts: Context[] =
-                        await ofPuppeteer.executeOnWindow(
-                            {uuid: 'test-app-preregistered-1', name: 'test-app-preregistered-1'},
-                            function(this: TestWindowContext) {
-                                return this.receivedContexts;
-                            }
-                        );
+                    const receivedContexts: Context[] = await fdc3Remote.getReceivedContexts(testAppIdentity1);
 
                     // Check that the app received the context passed in open and nothing else
                     expect(receivedContexts.length).toBe(1);
@@ -159,33 +144,20 @@ describe('Opening applications with the FDC3 client', () => {
                 'When an app is already running, opening a second app with context works as expected \
                     and does not trigger the context listener of the already open app',
                 async () => {
-                    const ofPuppeteer = new OFPuppeteerBrowser();
                     // From the launcher app, call fdc3.open with the name of as second app
                     await fdc3Remote.open(testManagerIdentity, 'test-app-preregistered-2', validContext);
                     // Check that the second app started
                     await expect(fin.Application.wrapSync({uuid: 'test-app-preregistered-2'}).isRunning()).resolves.toBe(true);
 
                     // Retrieve the list of contexts the second app received
-                    const secondReceivedContexts: Context[] =
-                        await ofPuppeteer.executeOnWindow(
-                            {uuid: 'test-app-preregistered-2', name: 'test-app-preregistered-2'},
-                            function(this: TestWindowContext) {
-                                return this.receivedContexts;
-                            }
-                        );
+                    const secondReceivedContexts: Context[] = await fdc3Remote.getReceivedContexts(testAppIdentity2);
 
                     // Check that the second app received the context passed in open and nothing else
                     expect(secondReceivedContexts.length).toBe(1);
                     expect(secondReceivedContexts.slice(-1)[0]).toEqual(validContext);
 
                     // Retrieve the list of contexts the first app received
-                    const firstReceivedContexts: Context[] =
-                        await ofPuppeteer.executeOnWindow(
-                            {uuid: 'test-app-preregistered-1', name: 'test-app-preregistered-1'},
-                            function(this: TestWindowContext) {
-                                return this.receivedContexts;
-                            }
-                        );
+                    const firstReceivedContexts: Context[] = await fdc3Remote.getReceivedContexts(testAppIdentity1);
 
                     // Check that the first app did not receive a context
                     expect(firstReceivedContexts.length).toBe(0);
