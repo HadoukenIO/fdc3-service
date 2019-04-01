@@ -42,6 +42,10 @@ export class AppDirectory {
     }
 
     private async request(): Promise<Application[]> {
+        // If using the demo app directory in production, return an empty array.
+        if (process.env.NODE_ENV === 'production' && AppDirectory.URL === 'http://localhost:3923/provider/app-directory.json') {
+            return [];
+        }
         return new Promise((resolve: (value: Application[]) => void, reject: (reason: Error) => void): void => {
             const xhr: XMLHttpRequest = new XMLHttpRequest();
             let response: Application[];
