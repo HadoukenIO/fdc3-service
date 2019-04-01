@@ -1,6 +1,6 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {Channel, ChannelId, GLOBAL_CHANNEL_ID} from '../client/contextChannels';
+import {Channel, ChannelChangedPayload, ChannelId, GLOBAL_CHANNEL_ID} from '../client/contextChannels';
 import {Context} from '../client/main';
 
 type IdentityHash = string;
@@ -83,7 +83,7 @@ export class ChannelModel {
         return this._channels.slice();
     }
 
-    public joinChannel(identity: Identity, channelId: ChannelId) {
+    public joinChannel(identity: Identity, channelId: ChannelId, onChannelChanged: (payload: ChannelChangedPayload) => void) {
         this.validateChannelId(channelId);
 
         const identityHash = getIdentityHash(identity);
@@ -114,7 +114,7 @@ export class ChannelModel {
             const channel = this._channelIdToChannelMap.get(channelId)!;
             const previousChannel = this._channelIdToChannelMap.get(previousChannelId)!;
 
-            fin.InterApplicationBus.publish('channel-changed', {identity, channel, previousChannel});
+            onChannelChanged({identity, channel, previousChannel});
         }
     }
 

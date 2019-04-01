@@ -1,7 +1,7 @@
 import {Identity} from 'openfin/_v2/main';
 
 import {tryServiceDispatch, channelPromise} from './connection';
-import {APITopic, SERVICE_IDENTITY} from './internal';
+import {APITopic} from './internal';
 
 export type ChannelId = string;
 
@@ -86,15 +86,18 @@ export async function getChannelMembers(id: ChannelId): Promise<Identity[]> {
  */
 export function addEventListener(
     event: 'channel-changed',
-    listener: (event: {identity: Identity; channel: Channel; previousChannel: Channel}) => void, identity?: Identity
+    listener: (event: {identity: Identity; channel: Channel; previousChannel: Channel}) => void,
+    identity?: Identity
 ): void {
     channelChangedListeners.push(listener);
 }
 
 if (channelPromise) {
-    fin.InterApplicationBus.subscribe(SERVICE_IDENTITY, 'channel-changed', (payload: ChannelChangedPayload, uuid: string, name: string) => {
-        channelChangedListeners.forEach((listener: ChannelChangedListener) => {
-            listener({identity: payload.identity, channel: payload.channel, previousChannel: payload.previousChannel});
+    channelPromise.then(channel => {
+        channel.register('channel-changed', (payload: ChannelChangedPayload) => {
+            channelChangedListeners.forEach((listener: ChannelChangedListener) => {
+                listener({identity: payload.identity, channel: payload.channel, previousChannel: payload.previousChannel});
+            });
         });
     });
 }

@@ -5,7 +5,7 @@ import {ContextBase} from '../client/context';
 import {Application} from '../client/directory';
 import {APITopic, BroadcastPayload, FindIntentPayload, RaiseIntentPayload, TopicPayloadMap, TopicResponseMap, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload} from '../client/internal';
 import {AppIntent} from '../client/main';
-import {Channel} from '../client/contextChannels';
+import {Channel, ChannelChangedPayload} from '../client/contextChannels';
 
 import {ActionHandlerMap, APIHandler} from './APIHandler';
 import {AppDirectory} from './AppDirectory';
@@ -134,7 +134,9 @@ export class FDC3 {
     private async onJoinChannel(payload: JoinChannelPayload, source: ProviderIdentity): Promise<void> {
         const identity = payload.identity || source;
 
-        this.channelModel.joinChannel(identity, payload.id);
+        this.channelModel.joinChannel(identity, payload.id, (payload: ChannelChangedPayload) => {
+            this.apiHandler.channel.publish('channel-changed', payload);
+        });
         const context = this.channelModel.getContext(payload.id);
 
         if (context) {
