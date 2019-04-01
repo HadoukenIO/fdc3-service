@@ -253,40 +253,9 @@ class ContextMenu {
     }
 
     public async setStyle(css?: string) {
-        const style = this._nativeWindow.document.createElement('style');
-        style.id = 'style';
-        style.type = 'text/css';
-
-        // Temp. Will be moved into another file and imported
-        const stylesheet = css || `
-        * {
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background: #eee;
-            font-family: "Segoe UI",Arial,sans-serif;
-            font-weight: 400;
-        }
-        li {
-            list-style-type: none;
-            margin: 0 auto;
-            height: 24px;
-            cursor: pointer;
-        }
-        li span {
-            padding-left: 20px;
-        }
-        li .arrow {
-            float: right;
-            padding-right: 5px;
-        }
-        li:hover {
-            background: rgb(106, 144, 248)
-        }
-        `;
-        style.appendChild(this._nativeWindow.document.createTextNode(stylesheet));
+        const style = this._nativeWindow.document.createElement('link');
+        style.rel = 'stylesheet';
+        style.href = location.origin + '/demo/css/context-menu.css';
         this._nativeWindow.document.head.appendChild(style);
     }
 }
