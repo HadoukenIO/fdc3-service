@@ -1,10 +1,9 @@
 import {Fin, Identity} from 'openfin/_v2/main';
 import * as puppeteer from 'puppeteer';
 import {Browser, Page} from 'puppeteer';
+import {connect} from 'hadouken-js-adapter';
 
 import {Context, IntentType} from '../../../src/client/main';
-
-const fetch = require('node-fetch');
 
 // This gets mounted by jest as part of our setup
 declare const global: NodeJS.Global&{__BROWSER__: puppeteer.Browser};
@@ -22,13 +21,29 @@ export class OFPuppeteerBrowser {
 
     private _browser: Browser;
 
+    private _ready: Promise<void>;
+
     constructor() {
         this._pageIdentityCache = new Map<Page, Identity>();
         this._identityPageCache = new Map<string, Page>();
         this._browser = global.__BROWSER__;
+        this._ready = this.registerCleaupListener();
+    }
+
+    private async registerCleaupListener() {
+        const fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-puppeteer-' + Math.random().toString()});
+        fin.System.addListener('window-closing', win => {
+            const page = this._identityPageCache.get(getIdString(win));
+            if (page) {
+                this._identityPageCache.delete(getIdString(win));
+                this._pageIdentityCache.delete(page);
+            }
+        });
+        return;
     }
 
     private async getPage(identity: Identity): Promise<Page|undefined> {
+        await this._ready;
         const idString = getIdString(identity);
 
         // Return cached value when available
@@ -52,6 +67,7 @@ export class OFPuppeteerBrowser {
     }
 
     private async getIdentity(page: Page): Promise<Identity|undefined> {
+        await this._ready;
         // Return cached value when available
         if (this._pageIdentityCache.has(page)) {
             return this._pageIdentityCache.get(page);
