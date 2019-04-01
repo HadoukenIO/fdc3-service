@@ -1,8 +1,8 @@
-import {Point} from 'openfin/_v2/api/system/point';
-import Bounds from 'openfin/_v2/api/window/bounds';
-import {Transition} from 'openfin/_v2/api/window/transition';
-import {_Window} from 'openfin/_v2/api/window/window';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
+import {_Window} from 'openfin/_v2/api/window/window';
+import {Point} from 'openfin/_v2/api/system/point';
+import {Transition} from 'openfin/_v2/api/window/transition';
+import Bounds from 'openfin/_v2/api/window/bounds';
 
 const defaultWindowOptions: WindowOption = {
     url: 'about:blank',
@@ -20,15 +20,10 @@ const defaultWindowOptions: WindowOption = {
     defaultTop: 200
 };
 
-export interface ContextMenuItem {
+export interface ContextMenuItem<T extends {}={}> {
     text: string;
     children?: ContextMenuItem[];
-    payload?: ContextMenuPayload;
-}
-
-export interface ContextMenuPayload {
-    // tslint:disable-next-line:no-any
-    [key: string]: any;
+    payload?: T;
 }
 
 interface ContextMenuParameters {
@@ -38,7 +33,7 @@ interface ContextMenuParameters {
 }
 
 // tslint:disable-next-line:no-any
-type clickCallback = (payload: ContextMenuPayload) => any;
+type clickCallback<T extends {}={}> = (payload: T) => any;
 
 class ContextMenu {
     private _windowV1: fin.OpenFinWindow;
@@ -47,9 +42,20 @@ class ContextMenu {
     private _isShowing: boolean = false;
     private _child!: ContextMenu;
 
-    private transitionOut: Transition = {opacity: {opacity: 0, duration: 100}};
+    private transitionOut: Transition = {
+        opacity: {
+            opacity: 0,
+            duration: 100
+        }
+    };
 
-    private transitionIn: Transition = {opacity: {opacity: 1, duration: 100}};
+    private transitionIn: Transition = {
+        opacity: {
+            opacity: 1,
+            duration: 100
+        }
+    };
+
     private _isRoot: boolean;
 
     public get isRoot() {
@@ -67,6 +73,7 @@ class ContextMenu {
         this._isRoot = isRoot;
 
         this.setStyle();
+
         // Add blur to the root context menu only
         if (isRoot) {
             this._windowV1.addEventListener('blurred', async () => {
@@ -87,15 +94,11 @@ class ContextMenu {
     // Promise based v1 window creation
     private static async createWindow(options: WindowOption): Promise<fin.OpenFinWindow> {
         return new Promise((resolve, reject) => {
-            const win = new fin.desktop.Window(
-                options,
-                () => {
-                    resolve(win);
-                },
-                (err) => {
-                    reject(err);
-                }
-            );
+            const win = new fin.desktop.Window(options, () => {
+                resolve(win);
+            }, (err) => {
+                reject(err);
+            });
         });
     }
 
@@ -132,7 +135,7 @@ class ContextMenu {
      * @param {clickCallback} clickCallback The function that will be called when an item has been clicked.
      * @memberof ContextMenu
      */
-    public async setContent(menuItems: ContextMenuItem[], clickCallback: clickCallback) {
+    public async setContent<T extends {}={}>(menuItems: ContextMenuItem[], clickCallback: clickCallback<T>) {
         // Check that there is any children if so make a child node
         let child = await this._child;
         if (this.childCheck(menuItems) && child === undefined) {
@@ -142,10 +145,18 @@ class ContextMenu {
         const document = this._nativeWindow.document;
         document.body.innerHTML = '';
         const ul = document.createElement('ul');
-        const itemHeight = 24;  // @todo change this
+        const itemHeight = 24; // @todo change this
         menuItems.forEach((item, index) => {
             const li = document.createElement('li');
-            li.innerText = item.text;
+            const span = document.createElement('span');
+            span.innerText = item.text;
+            if (item.children) {
+                const arrow = document.createElement('span');
+                arrow.innerText = '▶';
+                arrow.className = 'arrow';
+                span.appendChild(arrow);
+            }
+            li.appendChild(span);
 
             li.addEventListener('mouseover', async () => {
                 // Nothing to expand
@@ -167,7 +178,8 @@ class ContextMenu {
             li.addEventListener('click', async () => {
                 if (!item.children && item.payload) {
                     contextMenu.hide();
-                    clickCallback(item.payload);
+                    // tslint:disable-next-line:no-any
+                    clickCallback(item.payload as any);
                 }
             });
 
@@ -207,7 +219,10 @@ class ContextMenu {
      * @memberof ContextMenu
      */
     public async hide() {
-        const animateOptions = {interrupt: true, tween: 'ease-out'};
+        const animateOptions = {
+            interrupt: true,
+            tween: 'ease-out'
+        };
         if (this._child) {
             (await this._child).hide();
         }
@@ -224,7 +239,10 @@ class ContextMenu {
      * @memberof ContextMenu
      */
     public async showAt(point: Point, focus?: boolean) {
-        const animateOptions = {interrupt: true, tween: 'ease-in'};
+        const animateOptions = {
+            interrupt: true,
+            tween: 'ease-in'
+        };
         this._window.show();
         this._isShowing = true;
         this._window.moveTo(point.x, point.y);
@@ -235,38 +253,9 @@ class ContextMenu {
     }
 
     public async setStyle(css?: string) {
-        const style = this._nativeWindow.document.createElement('style');
-        style.id = 'style';
-        style.type = 'text/css';
-
-        // Temp. Will be moved into another file and imported
-        const stylesheet = css || `
-    * {
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background: #eee;
-      font-family: "Segoe UI",Arial,sans-serif;
-      font-weight: 400;
-    }
-    ul{
-      padding: 0 20px;
-    }
-
-    li {
-      list-style-type: none;
-      margin: 0 auto;
-      height: 24px;
-      cursor: pointer;
-    }
-
-    li:hover {
-      background: rgb(106, 144, 248)
-    }
-    `;
-        style.appendChild(this._nativeWindow.document.createTextNode(stylesheet));
+        const style = this._nativeWindow.document.createElement('link');
+        style.rel = 'stylesheet';
+        style.href = location.origin + '/demo/css/context-menu.css';
         this._nativeWindow.document.head.appendChild(style);
     }
 }
@@ -277,7 +266,7 @@ window.onunload = async (event) => {
     await contextMenu.destroy();
 };
 
-export async function showContextMenu(position: Point, items: ContextMenuItem[], handleClick: (payload: ContextMenuPayload) => void) {
+export async function showContextMenu<T extends {}>(position: Point, items: ContextMenuItem<T>[], handleClick: (payload: T) => void) {
     if (!contextMenu) {
         contextMenu = await ContextMenu.create('root', true);
     }

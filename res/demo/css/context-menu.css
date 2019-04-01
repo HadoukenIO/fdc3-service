@@ -1,0 +1,30 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #eee;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-weight: 400;
+}
+
+li {
+  list-style-type: none;
+  margin: 0 auto;
+  height: 24px;
+  cursor: pointer;
+}
+
+li span {
+  padding-left: 20px;
+}
+
+li .arrow {
+  float: right;
+  padding-right: 5px;
+}
+
+li:hover {
+  background: rgb(106, 144, 248)
+}
