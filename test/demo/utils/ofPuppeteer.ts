@@ -51,9 +51,7 @@ export class OFPuppeteerBrowser {
             return this._identityPageCache.get(idString);
         }
 
-        // Connect will always result in browser being defined, but typescript
-        // doesn't know that.
-        const pages = await this._browser!.pages();
+        const pages = await this._browser.pages();
         for (const page of pages) {
             const pageIdentity = await this.getIdentity(page);
             if (pageIdentity && pageIdentity.uuid === identity.uuid && pageIdentity.name === identity.name) {
