@@ -12,6 +12,7 @@
  * This file is excluded from the public-facing TypeScript documentation.
  */
 import {EventEmitter} from 'events';
+
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
 import {APITopic, SERVICE_CHANNEL, SERVICE_IDENTITY, TopicPayloadMap, TopicResponseMap} from './internal';
@@ -41,7 +42,7 @@ export let channelPromise: Promise<ChannelClient>;
 // that includes this, but for now it is easier to put a guard in place.
 if (fin.Window.me.uuid !== SERVICE_IDENTITY.uuid || fin.Window.me.name !== SERVICE_IDENTITY.name) {
     channelPromise = typeof fin === 'undefined' ?
-        Promise.reject('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.') :
+        Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.')) :
         fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}}).then((channel: ChannelClient) => {
             // Register service listeners
             channel.register('WARN', (payload: any) => console.warn(payload));  // tslint:disable-line:no-any
@@ -57,6 +58,9 @@ if (fin.Window.me.uuid !== SERVICE_IDENTITY.uuid || fin.Window.me.name !== SERVI
 
 /**
  * Wrapper around service.dispatch to help with type checking
+ *
+ * @param action String identifying the call being made to the provider
+ * @param payload Object containing additional arguments
  */
 export async function tryServiceDispatch<T extends APITopic>(action: T, payload: TopicPayloadMap[T]): Promise<TopicResponseMap[T]> {
     const channel: ChannelClient = await channelPromise;

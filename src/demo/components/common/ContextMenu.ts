@@ -17,7 +17,7 @@ const defaultWindowOptions: WindowOption = {
     resizable: false,
     maximizable: false,
     defaultLeft: 200,
-    defaultTop: 200,
+    defaultTop: 200
 };
 
 export interface ContextMenuItem<T extends {}={}> {
@@ -55,6 +55,7 @@ class ContextMenu {
             duration: 100
         }
     };
+
     private _isRoot: boolean;
 
     public get isRoot() {
@@ -65,14 +66,15 @@ class ContextMenu {
         return this._isShowing;
     }
 
-    private constructor ({win, isRoot = false}: ContextMenuParameters) {
+    private constructor({win, isRoot = false}: ContextMenuParameters) {
         this._windowV1 = win;
         this._nativeWindow = win.getNativeWindow();
         this._window = fin.Window.wrapSync({name: win.name, uuid: win.uuid});
         this._isRoot = isRoot;
 
         this.setStyle();
-        //Add blur to the root context menu only
+
+        // Add blur to the root context menu only
         if (isRoot) {
             this._windowV1.addEventListener('blurred', async () => {
                 this.hide();

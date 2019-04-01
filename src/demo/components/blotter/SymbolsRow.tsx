@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import * as fdc3 from '../../../client/main';
 import {Application, AppName} from '../../../client/directory';
 import {Symbol} from '../../apps/BlotterApp';
@@ -21,19 +22,19 @@ interface Payload {
 
 const menuItems: ContextMenuItem<Payload>[] = [
     {
-        text: "View Quote",
+        text: 'View Quote',
         payload: {
-            intent: fdc3.Intents.VIEW_QUOTE,
+            intent: fdc3.Intents.VIEW_QUOTE
         }
     },
     {
-        text: "View News",
+        text: 'View News',
         payload: {
-            intent: fdc3.Intents.VIEW_NEWS,
+            intent: fdc3.Intents.VIEW_NEWS
         }
     },
     {
-        text: "View Chart",
+        text: 'View Chart',
         children: []
     }
 ];
@@ -80,7 +81,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
 
     const getContext = () => {
         return {
-            type: "security",
+            type: 'security',
             name: item.name,
             id: {
                 default: item.name
@@ -104,7 +105,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     };
 
     return (
-        <tr className={"symbols-row" + (selected ? " w3-theme-l2" : "")} onClick={handleClick}>
+        <tr className={'symbols-row' + (selected ? ' w3-theme-l2' : '')} onClick={handleClick}>
             <td>{item.name}</td>
             <td>##.##</td>
             <td>##.##</td>

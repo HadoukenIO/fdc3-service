@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import * as fdc3 from '../../client/main';
 import {Application} from '../../client/directory';
 import {AppCard} from '../components/launcher/AppCard';
@@ -9,7 +10,7 @@ export function LauncherApp(): React.ReactElement {
     const [applications, setApplications] = React.useState<Application[]>([]);
 
     React.useEffect(() => {
-        document.title = "Launcher";
+        document.title = 'Launcher';
     }, []);
 
     React.useEffect(() => {
