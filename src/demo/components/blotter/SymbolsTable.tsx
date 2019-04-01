@@ -1,8 +1,10 @@
 import * as React from 'react';
+
 import * as fdc3 from '../../../client/main';
 import {Symbol} from '../../apps/BlotterApp';
-import {SymbolsRow} from './SymbolsRow';
 import {Application} from '../../../client/main';
+
+import {SymbolsRow} from './SymbolsRow';
 
 interface SymbolsTableProps {
     items?: Symbol[];
@@ -41,7 +43,9 @@ export function SymbolsTable(props: SymbolsTableProps): React.ReactElement {
                 </tr>
             </thead>
             <tbody>
-                {items && items.map((item) => <SymbolsRow key={item.name} item={item} selected={item === selectedItem} chartApps={chartApps} handleSelect={handleSelect} />)}
+                {items && items.map((item) => {
+                    return <SymbolsRow key={item.name} item={item} selected={item === selectedItem} chartApps={chartApps} handleSelect={handleSelect} />;
+                })}
             </tbody>
         </table>
     );

@@ -55,7 +55,7 @@ function createData(): ChartItem[] {
             height,
             error1: (Math.random() * 0.1),
             error2: (Math.random() * 0.1),
-            style: (delta >= 0) ? "#00ff00" : "#ff0000"
+            style: (delta >= 0) ? '#00ff00' : '#ff0000'
         });
     }
 
@@ -63,16 +63,16 @@ function createData(): ChartItem[] {
 }
 
 function redraw(chart: HTMLCanvasElement, chartData: ChartItem[], width: number, spacing: number) {
-    const ctx: CanvasRenderingContext2D = chart.getContext("2d")!;
+    const ctx: CanvasRenderingContext2D = chart.getContext('2d')!;
     const padding: number = Number.parseInt(window.getComputedStyle(chart.parentElement!).padding!, 10) || 0;
 
-    //Set Dimensions
+    // Set Dimensions
     const w = window.innerWidth - (padding * 2);
     const h = window.innerHeight - chart.offsetTop - padding;
     chart.width = w;
     chart.height = h;
 
-    //Draw Data
+    // Draw Data
     let x = w - spacing;
     for (let i = 0; i < 100 && x > -width; i++) {
         const data = chartData[i];
@@ -88,7 +88,7 @@ function redraw(chart: HTMLCanvasElement, chartData: ChartItem[], width: number,
         x -= spacing;
     }
 
-    //Draw Axes
+    // Draw Axes
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.lineTo(0, h);

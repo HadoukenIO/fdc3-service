@@ -1,11 +1,13 @@
 import * as React from 'react';
+import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
+
 import {Application} from '../../client/directory';
 import {RaiseIntentPayload, SERVICE_CHANNEL} from '../../client/internal';
-import {AppCard} from './AppCard';
 import {DefaultAction} from '../index';
 
+import {AppCard} from './AppCard';
+
 import './AppList.css';
-import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
 interface IntentData {
     handle: number;
@@ -15,13 +17,13 @@ interface IntentData {
 
 const sendError = (service: Promise<ChannelClient>, handle: number, reason: string) => {
     service.then((client) => {
-        client.dispatch("FDC3.SelectorResult", {success: false, handle, reason});
+        client.dispatch('FDC3.SelectorResult', {success: false, handle, reason});
     });
 };
 
 const sendSuccess = (service: Promise<ChannelClient>, handle: number, app: Application, defaultAction: string) => {
     service.then((client) => {
-        client.dispatch("FDC3.SelectorResult", {success: true, handle, app, defaultAction});
+        client.dispatch('FDC3.SelectorResult', {success: true, handle, app, defaultAction});
     });
 };
 
@@ -29,11 +31,11 @@ export function AppList(): React.ReactElement {
     const [service, setService] = React.useState<Promise<ChannelClient>>();
     const [handle, setHandle] = React.useState<number>(0);
     const [applications, setApplications] = React.useState<Application[]>([]);
-    const [defaultAction, setDefaultAction] = React.useState<string>("ALWAYS_ASK");
+    const [defaultAction, setDefaultAction] = React.useState<string>('ALWAYS_ASK');
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
 
     const onAppSelect = (app: Application) => setSelectedApplication(app);
-    const onAppOpen = (app: Application) => sendSuccess(service!, handle, app, "ALWAYS_ASK");
+    const onAppOpen = (app: Application) => sendSuccess(service!, handle, app, 'ALWAYS_ASK');
     const onSelectDefault = (event: React.ChangeEvent<HTMLSelectElement>) => setDefaultAction(event.currentTarget.value);
     const onOpen = (event: React.MouseEvent<HTMLDivElement>) => {
         event.stopPropagation();
@@ -41,7 +43,7 @@ export function AppList(): React.ReactElement {
     };
     const onCancel = (event: React.MouseEvent<HTMLDivElement>) => {
         event.stopPropagation();
-        sendError(service!, handle, "Cancelled");
+        sendError(service!, handle, 'Cancelled');
     };
 
 
@@ -61,18 +63,17 @@ export function AppList(): React.ReactElement {
                         setHandle(data.handle);
                         setApplications(data.applications);
                     } else if (data) {
-                        //customData was malformed
-                        sendError(service, data.handle, "Invalid intent data");
+                        // customData was malformed
+                        sendError(service, data.handle, 'Invalid intent data');
                     } else {
-                        //customData was missing
-                        sendError(service, 0, "No intent data");
+                        // customData was missing
+                        sendError(service, 0, 'No intent data');
                     }
                 })
                 .catch(() => {
-                    //Couldn't fetch window options
-                    sendError(service, 0, "No window data");
-                })
-            );
+                    // Couldn't fetch window options
+                    sendError(service, 0, 'No window data');
+                }));
     }, []);
 
 
@@ -86,7 +87,7 @@ export function AppList(): React.ReactElement {
             </div>
             <div className="list-section w3-border-top w3-light-grey">
                 <h2>Set default action:</h2>
-                <div id="actions" className={selectedApplication ? "" : "w3-disabled"}>
+                <div id="actions" className={selectedApplication ? '' : 'w3-disabled'}>
                     <select className="default-action w3-select" onChange={onSelectDefault}>
                         <option value={DefaultAction.ALWAYS_ASK}>Always ask</option>
                         <option value={DefaultAction.ALWAYS_FOR_INTENT}>Remember my selection</option>

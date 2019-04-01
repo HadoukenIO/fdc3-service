@@ -36,9 +36,10 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
             executionTarget,
             async function(this: TestWindowContext, context: Context):
                 Promise<void> {
-                    return this.OpenfinFDC3.broadcast(context);
-                },
-            context)
+                return this.OpenfinFDC3.broadcast(context);
+            },
+            context
+        )
         .then(() => new Promise<void>(res => setTimeout(res, 100)));  // Broadcast is fire-and-forget. Slight delay to allow for service to handle
 }
 
@@ -53,12 +54,13 @@ export async function addContextListener(executionTarget: Identity, handler: (co
             executionTarget,
             async function(this: TestWindowContext):
                 Promise<Context> {
-                    return new Promise<Context>(res => {
-                        const listener = this.OpenfinFDC3.addContextListener((context: Context) => {
-                            res(context);
-                        });
+                return new Promise<Context>(res => {
+                    const listener = this.OpenfinFDC3.addContextListener((context: Context) => {
+                        res(context);
                     });
-                })
+                });
+            }
+        )
         .then(async (result) => {
             handler(await result);
         });

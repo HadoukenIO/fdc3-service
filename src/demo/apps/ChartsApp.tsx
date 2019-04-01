@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import * as fdc3 from '../../client/main';
 import {Chart} from '../components/charts/Chart';
 import {SecurityContext, Context} from '../../client/context';
@@ -10,18 +11,18 @@ interface AppProps {
 }
 
 export function ChartsApp(props: AppProps): React.ReactElement {
-    const [symbolName, setSymbolName] = React.useState("AAPL");
+    const [symbolName, setSymbolName] = React.useState('AAPL');
 
     function handleIntent(context: SecurityContext): void {
         if (context && context.name) {
             setSymbolName(context.name);
         } else {
-            throw new Error("Invalid context received");
+            throw new Error('Invalid context received');
         }
     }
 
     React.useEffect(() => {
-        document.title = "Charts";
+        document.title = 'Charts';
     }, []);
 
     React.useEffect(() => {
@@ -37,7 +38,7 @@ export function ChartsApp(props: AppProps): React.ReactElement {
         });
 
         const contextListener = fdc3.addContextListener((context: Context): void => {
-            if (context.type === "security") {
+            if (context.type === 'security') {
                 handleIntent(context as SecurityContext);
             }
         });

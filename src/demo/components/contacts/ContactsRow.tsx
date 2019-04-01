@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import * as fdc3 from '../../../client/main';
 import {ContactContext} from '../../../client/context';
 import {Contact} from '../../apps/ContactsApp';
@@ -40,7 +41,7 @@ export function ContactsRow(props: ContactRowProps): React.ReactElement {
 
     const getContext = (): ContactContext => {
         return {
-            type: "contact",
+            type: 'contact',
             name: item.name,
             id: {
                 email: item.email!,
@@ -50,7 +51,7 @@ export function ContactsRow(props: ContactRowProps): React.ReactElement {
     };
 
     return (
-        <tr className={"contacts-row" + (selected ? " w3-theme-l2" : "")} onClick={handleClick}>
+        <tr className={'contacts-row' + (selected ? ' w3-theme-l2' : '')} onClick={handleClick}>
             <td>{item.name}</td>
             <td>{item.email}</td>
             <td>{item.phone}</td>

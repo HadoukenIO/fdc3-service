@@ -8,9 +8,10 @@ import {AppIntent} from '../client/main';
 
 import {ActionHandlerMap, APIHandler} from './APIHandler';
 import {AppDirectory} from './AppDirectory';
-import {DefaultAction, OpenArgs, QueuedIntent, ResolveArgs, SelectorResultArgs} from './index';
 import {AppMetadata, MetadataStore} from './MetadataStore';
 import {PreferencesStore} from './PreferencesStore';
+
+import {DefaultAction, OpenArgs, QueuedIntent, ResolveArgs, SelectorResultArgs} from './index';
 
 /**
  * FDC3 service implementation
@@ -32,6 +33,7 @@ export class FDC3 {
         this.apiHandler = new APIHandler();
         this.uiQueue = [];
     }
+
     public async register(): Promise<void> {
         // Define a custom handler mapping here. Ideally this will be replaced with the one in
         // APIMappings once the provider is more modularized.
@@ -40,7 +42,7 @@ export class FDC3 {
             [APITopic.FIND_INTENT]: this.onResolve.bind(this),
             [APITopic.FIND_INTENTS_BY_CONTEXT]: () => new Promise<AppIntent[]>(() => {}),
             [APITopic.BROADCAST]: this.onBroadcast.bind(this),
-            [APITopic.RAISE_INTENT]: this.onIntent.bind(this),
+            [APITopic.RAISE_INTENT]: this.onIntent.bind(this)
         };
 
         console.log('registering the service.');
@@ -50,6 +52,7 @@ export class FDC3 {
         // managing these comms
         this.apiHandler.channel.register(FDC3.MSG_SELECTOR_RESULT, this.onSelectorResult.bind(this));
     }
+
     private async onOpen(payload: OpenArgs): Promise<void> {
         const applications: Application[] = await this.directory.getApplications();
         const requestedApp: Application|undefined = applications.find((app: Application) => app.name === payload.name);
@@ -61,6 +64,7 @@ export class FDC3 {
             }
         });
     }
+
     private async onResolve(payload: FindIntentPayload): Promise<AppIntent> {
         const applications: Application[] = await this.directory.getApplications();
         if (payload.intent) {
@@ -70,7 +74,7 @@ export class FDC3 {
             return {
                 // TODO: update this to handle display names once provider is updated to include them (SERVICE-392?)
                 intent: {name: payload.intent, displayName: payload.intent},
-                apps: filteredApps,
+                apps: filteredApps
             };
         } else {
             // Return all applications. Used by the demo to populate the launcher, but
@@ -78,13 +82,15 @@ export class FDC3 {
             return {
                 // TODO: update this to handle display names once provider is updated to include them (SERVICE-392?)
                 intent: {name: payload.intent, displayName: payload.intent},
-                apps: applications,
+                apps: applications
             };
         }
     }
+
     private async onBroadcast(payload: BroadcastPayload): Promise<void> {
         return this.sendContext(payload.context);
     }
+
     private async onIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<void> {
         let applications: Application[] = (await this.onResolve({intent: payload.intent, context: payload.context})).apps;
         if (applications.length > 1) {
@@ -105,6 +111,7 @@ export class FDC3 {
             throw new Error('No applications available to handle this intent');
         }
     }
+
     /**
      * Takes an intent that is in the process of being resolved, and attempts to
      * find the best application for handling that intent.
@@ -143,6 +150,7 @@ export class FDC3 {
         // No applicable preferences. User will have to select an app manually.
         return applications;
     }
+
     private onSelectorResult(result: SelectorResultArgs): void {
         const queuedIntent: QueuedIntent = this.uiQueue[0];
         if (queuedIntent && queuedIntent.handle === result.handle) {
@@ -171,6 +179,7 @@ export class FDC3 {
             }
         }
     }
+
     /**
      * Opens the specified app with the given context.
      *
@@ -206,6 +215,7 @@ export class FDC3 {
             }, reject);
         });
     }
+
     private async startApplication(appInfo: Application, context?: ContextBase): Promise<void> {
         return new Promise<void>((resolve: () => void, reject: (reason: Error) => void) => {
             if (!appInfo) {
@@ -224,6 +234,8 @@ export class FDC3 {
                 JSON.parse(appInfo.manifest);
                 reject(new Error('Inline JSON manifests not supported'));
             } catch (e) {
+                // JSON.parse should not be passed valid JSON.  If it is, then it will 'pass' and we reject.
+                // If its not valid JSON, then we enter this catch and continue on.
             }
 
             fin.Application.createFromManifest(appInfo.manifest)
@@ -258,9 +270,11 @@ export class FDC3 {
                 });
         });
     }
+
     private focusApplication(app: AppMetadata): void {
         fin.Window.wrapSync(app).focus();
     }
+
     /**
      * Opens a UI dialog to allow the user to manually resolve an intent.
      *
@@ -312,6 +326,7 @@ export class FDC3 {
             }
         });
     }
+
     private async openAppSelector(queuedIntent: QueuedIntent): Promise<fin.OpenFinApplication> {
         const baseUrl: string = window.location.href.split('/').slice(0, -1).join('/');
         const appUrl: string = baseUrl + '/ui/selector.html';
@@ -339,13 +354,16 @@ export class FDC3 {
                         resolve(selector);
                     }, reject);
                 },
-                reject);
+                reject
+            );
             queuedIntent.selector = selector;
         });
     }
+
     private async sendContext(context: ContextBase): Promise<void> {
         return fin.InterApplicationBus.publish('context', context);
     }
+
     private async sendIntent(intent: RaiseIntentPayload, targetApp: AppMetadata): Promise<void> {
         if (targetApp) {
             console.log('c1a: ', targetApp, intent);
@@ -357,6 +375,7 @@ export class FDC3 {
             return fin.InterApplicationBus.publish('intent', intent);
         }
     }
+
     private async isAppRunning(uuid: string): Promise<boolean> {
         return new Promise<boolean>((resolve: (value: boolean) => void, reject: (reason: string) => void) => {
             fin.desktop.System.getAllApplications((applicationInfoList: fin.ApplicationInfo[]) => {
@@ -364,6 +383,7 @@ export class FDC3 {
             }, reject);
         });
     }
+
     private createHandle(): number {
         // Returns a large random integer
         return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
