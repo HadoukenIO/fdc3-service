@@ -1,7 +1,9 @@
 import 'jest';
 import fetch from 'node-fetch';
+
 import {Application as DirectoryApp} from '../../src/client/directory';
 import {Intents} from '../../src/client/intents';
+
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 
 const testManagerIdentity = {
@@ -32,7 +34,8 @@ describe('Resolving applications by intent', () => {
 
                 // Compare the two arrays (sorted as order doesn't matter)
                 expect(actualAppNames.sort()).toEqual(expectedAppNames.sort());
-            });
+            }
+        );
 
         test('When calling resolve with an intent which no directory applications accept, the promise resolves to an empty array', async () => {
             // Resolve the invalid intent

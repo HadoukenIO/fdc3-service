@@ -134,7 +134,8 @@ describe('Opening applications with the FDC3 client', () => {
                 // Check that the app received the context passed in open and nothing else
                 expect(receivedContexts.length).toBe(1);
                 expect(receivedContexts.slice(-1)[0]).toEqual(validContext);
-            });
+            }
+        );
 
         test.todo('When passing a known app name but invalid context, [behaviour TBD]');
 
@@ -179,7 +180,8 @@ describe('Opening applications with the FDC3 client', () => {
                 // Check that the first app did not receive a context
                 expect(firstReceivedContexts.length).toBe(0);
             },
-            10000);
+            10000
+        );
     });
 
     test('When opening an app which fails to launch the promise rejects with a suitable error message', async () => {

@@ -1,6 +1,7 @@
 import {Fin, Identity} from 'openfin/_v2/main';
 import * as puppeteer from 'puppeteer';
 import {Browser, Page} from 'puppeteer';
+
 import {Context, IntentType} from '../../../src/client/main';
 
 const fetch = require('node-fetch');
