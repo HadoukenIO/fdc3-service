@@ -10,27 +10,30 @@
         window.receivedContexts = [];
         window.receivedIntents = [];
 
-        const intents = [
-            'DialCall',
-            'SaveContact',
-            'SaveInstrument',
-            'ShareContext',
-            'StartCall',
-            'StartChat',
-            'ViewContact',
-            'ViewChart',
-            'ViewQuote',
-            'ViewNews'
-        ]
-
-        OpenfinFDC3.addContextListener((context) => {
-            receivedContexts.push(context);
-        });
-
-        for (const intent of intents) {
-            OpenfinFDC3.addIntentListener(intent, (context) => {
-                receivedIntents.push({intent, context});
+        const queryParams = new URLSearchParams(location.search);
+        if (queryParams.get('registerListeners') === 'true') {
+            const intents = [
+                'DialCall',
+                'SaveContact',
+                'SaveInstrument',
+                'ShareContext',
+                'StartCall',
+                'StartChat',
+                'ViewContact',
+                'ViewChart',
+                'ViewQuote',
+                'ViewNews'
+            ];
+    
+            OpenfinFDC3.addContextListener((context) => {
+                receivedContexts.push(context);
             });
+    
+            for (const intent of intents) {
+                OpenfinFDC3.addIntentListener(intent, (context) => {
+                    receivedIntents.push({intent, context});
+                });
+            }
         }
     </script>
 </head>
