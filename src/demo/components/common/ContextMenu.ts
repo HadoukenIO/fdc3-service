@@ -5,7 +5,7 @@ import {Transition} from 'openfin/_v2/api/window/transition';
 import Bounds from 'openfin/_v2/api/window/bounds';
 
 const defaultWindowOptions: WindowOption = {
-    url: "about:blank",
+    url: 'about:blank',
     shadow: true,
     showTaskbarIcon: false,
     autoShow: false,
@@ -136,14 +136,14 @@ class ContextMenu {
      * @memberof ContextMenu
      */
     public async setContent<T extends {}={}>(menuItems: ContextMenuItem[], clickCallback: clickCallback<T>) {
-        //Check that there is any children if so make a child node
+        // Check that there is any children if so make a child node
         let child = await this._child;
         if (this.childCheck(menuItems) && child === undefined) {
-            child = await ContextMenu.create(this._window.identity.name + ":child", false);
+            child = await ContextMenu.create(this._window.identity.name + ':child', false);
             this._child = child;
         }
         const document = this._nativeWindow.document;
-        document.body.innerHTML = "";
+        document.body.innerHTML = '';
         const ul = document.createElement('ul');
         const itemHeight = 24; // @todo change this
         menuItems.forEach((item, index) => {
@@ -167,7 +167,7 @@ class ContextMenu {
                     child._child.hide();
                 }
                 if (item.children && item.children.length > 0) {
-                    //Show next window
+                    // Show next window
                     const bounds = await this._window.getBounds();
                     const position = {x: bounds.left + bounds.width, y: bounds.top + itemHeight * index};
                     await child.setContent(item.children!, clickCallback);
@@ -254,7 +254,7 @@ class ContextMenu {
 
     public async setStyle(css?: string) {
         const style = this._nativeWindow.document.createElement('style');
-        style.id = "style";
+        style.id = 'style';
         style.type = 'text/css';
 
         // Temp. Will be moved into another file and imported
@@ -299,7 +299,7 @@ window.onunload = async (event) => {
 
 export async function showContextMenu<T extends {}>(position: Point, items: ContextMenuItem<T>[], handleClick: (payload: T) => void) {
     if (!contextMenu) {
-        contextMenu = await ContextMenu.create("root", true);
+        contextMenu = await ContextMenu.create('root', true);
     }
     await contextMenu.setContent(items, handleClick);
     contextMenu.showAt(position, true);

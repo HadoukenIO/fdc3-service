@@ -40,7 +40,7 @@ const menuItems: ContextMenuItem<Payload>[] = [
 ];
 
 const viewChartsSubMenu: ContextMenuItem = {
-    text: "Use Default",
+    text: 'Use Default',
     payload: {
         intent: fdc3.Intents.VIEW_CHART
     }
@@ -53,7 +53,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     React.useEffect(() => {
         const appItems = chartApps.map(app => {
             return {
-                text: "View " + app.title,
+                text: 'View ' + app.title,
                 payload: {
                     intent: fdc3.Intents.VIEW_CHART,
                     appName: app.name
