@@ -6,7 +6,7 @@ import {Context} from '../client/main';
 type IdentityHash = string;
 
 const GLOBAL_CHANNEL: Channel = {
-    id: 'global',
+    id: GLOBAL_CHANNEL_ID,
     type: 'default',
     name: 'Global',
     color: 0xFFFFFF
