@@ -149,7 +149,8 @@ describe('Opening applications with the FDC3 client', () => {
         });
 
         test(
-            'When an app is already running, opening a second app with context works as expected and does not trigger the context listener of the already open app',
+            'When an app is already running, opening a second app with context works as expected \
+                and does not trigger the context listener of the already open app',
             async () => {
                 const ofPuppeteer = new OFPuppeteerBrowser();
 

@@ -254,7 +254,8 @@ export class FDC3 {
                             clearTimeout(timeout);
                             if (context) {
                                 // Pass context to application before resolving (assume that the main window is the one with listeners registered)
-                                fin.InterApplicationBus.send({...app.identity, name: app.identity.uuid}, 'context', context).then(resolve).catch((reason: string) => reject(new Error(reason)));
+                                fin.InterApplicationBus.send({...app.identity, name: app.identity.uuid}, 'context', context)
+                                    .then(resolve).catch((reason: string) => reject(new Error(reason)));
                             } else {
                                 // Application started successfully - can now resolve
                                 resolve();

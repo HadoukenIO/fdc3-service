@@ -24,7 +24,8 @@ describe('Resolving applications by intent', () => {
         });
 
         test(
-            'When calling resolve with an intent which at least one directory application accepts, the returned object lists all and only those apps which accept the intent',
+            'When calling resolve with an intent which at least one directory application accepts, \
+                the returned object lists all and only those apps which accept the intent',
             async () => {
                 // Query the actual app directory to find all apps which should be returned
                 const expectedAppNames = directory.filter(app => app.intents && app.intents.some(intent => intent.name === validIntent)).map(app => app.name);
