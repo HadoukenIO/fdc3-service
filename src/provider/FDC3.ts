@@ -3,8 +3,9 @@ import {Identity} from 'openfin/_v2/main';
 
 import {ContextBase} from '../client/context';
 import {Application} from '../client/directory';
-import {APITopic, BroadcastPayload, FindIntentPayload, RaiseIntentPayload, TopicPayloadMap, TopicResponseMap} from '../client/internal';
+import {APITopic, BroadcastPayload, FindIntentPayload, RaiseIntentPayload, TopicPayloadMap, TopicResponseMap, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload} from '../client/internal';
 import {AppIntent} from '../client/main';
+import {Channel} from '../client/contextChannels';
 
 import {ActionHandlerMap, APIHandler} from './APIHandler';
 import {AppDirectory} from './AppDirectory';
@@ -42,7 +43,11 @@ export class FDC3 {
             [APITopic.FIND_INTENT]: this.onResolve.bind(this),
             [APITopic.FIND_INTENTS_BY_CONTEXT]: () => new Promise<AppIntent[]>(() => {}),
             [APITopic.BROADCAST]: this.onBroadcast.bind(this),
-            [APITopic.RAISE_INTENT]: this.onIntent.bind(this)
+            [APITopic.RAISE_INTENT]: this.onIntent.bind(this),
+            [APITopic.GET_ALL_CHANNELS]: this.onGetAllChannels.bind(this),
+            [APITopic.JOIN_CHANNEL]: this.onJoinChannel.bind(this),
+            [APITopic.GET_CHANNEL]: this.onGetChannel.bind(this),
+            [APITopic.GET_CHANNEL_MEMBERS]: this.onGetChannelMembers.bind(this)
         };
 
         console.log('registering the service.');
@@ -110,6 +115,22 @@ export class FDC3 {
         } else {
             throw new Error('No applications available to handle this intent');
         }
+    }
+
+    private async onGetAllChannels(payload: GetAllChannelsPayload, source: ProviderIdentity): Promise<Channel[]> {
+        throw new Error('Not implemented');
+    }
+
+    private async onJoinChannel(payload: JoinChannelPayload, source: ProviderIdentity): Promise<void> {
+        throw new Error('Not implemented');
+    }
+
+    private async onGetChannel(payload: GetChannelPayload, source: ProviderIdentity): Promise<Channel> {
+        throw new Error('Not implemented');
+    }
+
+    private async onGetChannelMembers(payload: GetChannelMembersPayload, source: ProviderIdentity): Promise<Identity[]> {
+        throw new Error('Not implemented');
     }
 
     /**
