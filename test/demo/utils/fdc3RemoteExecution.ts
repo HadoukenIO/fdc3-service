@@ -20,13 +20,13 @@ const ofBrowser = new OFPuppeteerBrowser();
 
 export async function open(executionTarget: Identity, name: string, context?: Context): Promise<void> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, name: string, context?: Context): Promise<void> {
-        return this.OpenfinFDC3.open(name, context);
+        return this.fdc3.open(name, context);
     }, name, context);
 }
 
 export async function resolve(executionTarget: Identity, intent: IntentType, context?: Context): Promise<Application[]> {
     return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, intent: IntentType, context?: Context): Promise<Application[]> {
-        return this.OpenfinFDC3.findIntent(intent, context).then(appIntent => appIntent.apps);
+        return this.fdc3.findIntent(intent, context).then(appIntent => appIntent.apps);
     }, intent, context);
 }
 
@@ -36,7 +36,7 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
             executionTarget,
             async function(this: TestWindowContext, context: Context):
                 Promise<void> {
-                return this.OpenfinFDC3.broadcast(context);
+                return this.fdc3.broadcast(context);
             },
             context
         )
@@ -55,7 +55,7 @@ export async function addContextListener(executionTarget: Identity, handler: (co
             async function(this: TestWindowContext):
                 Promise<Context> {
                 return new Promise<Context>(res => {
-                    const listener = this.OpenfinFDC3.addContextListener((context: Context) => {
+                    const listener = this.fdc3.addContextListener((context: Context) => {
                         res(context);
                     });
                 });
