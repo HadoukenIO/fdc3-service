@@ -43,51 +43,63 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
         .then(() => new Promise<void>(res => setTimeout(res, 100)));  // Broadcast is fire-and-forget. Slight delay to allow for service to handle
 }
 
-/**
- * This will register a simple contextListener on the window.
- *
- * Returns a promise which resolves when the listener is triggered.
- */
-export async function addContextListener(executionTarget: Identity, handler: (context: Context) => void): Promise<void> {
-    return ofBrowser
-        .executeOnWindow(
-            executionTarget,
-            async function(this: TestWindowContext):
-                Promise<Context> {
-                return new Promise<Context>(res => {
-                    const listener = this.OpenfinFDC3.addContextListener((context: Context) => {
-                        res(context);
-                    });
-                });
-            }
-        )
-        .then(async (result) => {
-            handler(await result);
+export interface RemoteContextListener {
+    type: 'context';
+    remoteIdentity: Identity;
+    id: number;
+    unsubscribe: () => Promise<void>;
+    getReceivedContexts: () => Promise<Context[]>;
+}
+
+export async function addContextListener(executionTarget: Identity): Promise<RemoteContextListener> {
+    const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext): number {
+        const listenerID = this.contextListeners.length;
+        this.contextListeners[listenerID] = this.OpenfinFDC3.addContextListener((context) => {
+            this.receivedContexts.push({listenerID, context});
         });
+        return listenerID;
+    });
+
+    return {
+        type: 'context',
+        remoteIdentity: executionTarget,
+        id,
+        unsubscribe: async () => {
+            return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): void {
+                this.contextListeners[id].unsubscribe();
+            }, id);
+        },
+        getReceivedContexts: async (): Promise<Context[]> => {
+            return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): Context[] {
+                return this.receivedContexts.filter(entry => entry.listenerID === id).map(entry => entry.context);
+            }, id);
+        }
+    };
 }
 
-/**
- * This is not part of the fdc3 API, but rather is a helper method to retreive
- * the array of contexts received by registered context listeners on a certain
- * test window.
- *
- * @param target Window from which to retreive the receivedContexts array
- */
-export async function getReceivedContexts(target: Identity): Promise<Context[]> {
-    return ofBrowser.executeOnWindow(target, function(this: TestWindowContext): Context[] {
-        return this.receivedContexts;
-    });
-}
+export async function getRemoteContextListener(executionTarget: Identity, listenerID: number = 0): Promise<RemoteContextListener> {
+    // Check that the ID maps to a listener
+    const exists = await ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): boolean {
+        return typeof this.contextListeners[id] !== 'undefined';
+    }, listenerID);
 
-/**
- * This is not part of the fdc3 API, but rather is a helper method to retreive
- * the array of intents received by registered intent listeners on a certain
- * test window.
- *
- * @param target Window from which to retreive the receivedContexts array
- */
-export async function getReceivedIntents(target: Identity) {
-    return ofBrowser.executeOnWindow(target, function(this: TestWindowContext) {
-        return this.receivedIntents;
-    });
+    if (!exists) {
+        throw new Error('Could not get remoteListener: No listener found with ID ' + listenerID + ' on window ' + JSON.stringify(executionTarget));
+    }
+    return {
+        type: 'context',
+        remoteIdentity: executionTarget,
+        id: listenerID,
+        unsubscribe: async () => {
+            return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): void {
+                this.contextListeners[id].unsubscribe();
+                delete this.contextListeners[id];
+            }, listenerID);
+        },
+        getReceivedContexts: async (): Promise<Context[]> => {
+            return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): Context[] {
+                return this.receivedContexts.filter(entry => entry.listenerID === id).map(entry => entry.context);
+            }, listenerID);
+        }
+    };
 }

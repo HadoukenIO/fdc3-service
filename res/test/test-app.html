@@ -7,6 +7,8 @@
         document.title = title;
     </script>
     <script>
+        window.contextListeners = [];
+        window.intentListeners = [];
         window.receivedContexts = [];
         window.receivedIntents = [];
 
@@ -25,13 +27,15 @@
                 'ViewNews'
             ];
     
-            OpenfinFDC3.addContextListener((context) => {
-                receivedContexts.push(context);
+            const nextContextListenerID = window.contextListeners.length;
+            window.contextListeners[nextContextListenerID] = OpenfinFDC3.addContextListener((context) => {
+                receivedContexts.push({listenerID: nextContextListenerID, context});
             });
     
             for (const intent of intents) {
-                OpenfinFDC3.addIntentListener(intent, (context) => {
-                    receivedIntents.push({intent, context});
+                const nextIntentListenerID = window.intentListeners.length;
+                window.intentListeners[nextIntentListenerID] = OpenfinFDC3.addIntentListener(intent, (context) => {
+                    receivedIntents.push({id: nextIntentListenerID, intent, context});
                 });
             }
         }

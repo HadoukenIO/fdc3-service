@@ -6,7 +6,6 @@ import {Identity} from 'openfin/_v2/main';
 import {Context, OrganizationContext} from '../../src/client/main';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
-
 const testManagerIdentity = {
     uuid: 'test-app',
     name: 'test-app'
@@ -96,7 +95,8 @@ describe('Opening applications with the FDC3 client', () => {
             await expect(fin.Application.wrapSync({uuid: 'test-app-preregistered-1'}).isRunning()).resolves.toBe(true);
 
             // Retrieve the list of contexts the app received
-            const receivedContexts: Context[] = await fdc3Remote.getReceivedContexts(testAppIdentity1);
+            const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppIdentity1);
+            const receivedContexts: Context[] = await preregisteredListener.getReceivedContexts();
 
             // Check that the app received the context passed in open and nothing else
             expect(receivedContexts.length).toBe(1);
@@ -132,7 +132,8 @@ describe('Opening applications with the FDC3 client', () => {
                     await expect(fin.System.getFocusedWindow().then(w => w.uuid)).resolves.toBe('test-app-preregistered-1');
 
                     // Retrieve the list of contexts the app received
-                    const receivedContexts: Context[] = await fdc3Remote.getReceivedContexts(testAppIdentity1);
+                    const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppIdentity1);
+                    const receivedContexts: Context[] = await preregisteredListener.getReceivedContexts();
 
                     // Check that the app received the context passed in open and nothing else
                     expect(receivedContexts.length).toBe(1);
@@ -150,14 +151,16 @@ describe('Opening applications with the FDC3 client', () => {
                     await expect(fin.Application.wrapSync({uuid: 'test-app-preregistered-2'}).isRunning()).resolves.toBe(true);
 
                     // Retrieve the list of contexts the second app received
-                    const secondReceivedContexts: Context[] = await fdc3Remote.getReceivedContexts(testAppIdentity2);
+                    const listener2 = await fdc3Remote.getRemoteContextListener(testAppIdentity2);
+                    const secondReceivedContexts: Context[] = await listener2.getReceivedContexts();
 
                     // Check that the second app received the context passed in open and nothing else
                     expect(secondReceivedContexts.length).toBe(1);
                     expect(secondReceivedContexts.slice(-1)[0]).toEqual(validContext);
 
                     // Retrieve the list of contexts the first app received
-                    const firstReceivedContexts: Context[] = await fdc3Remote.getReceivedContexts(testAppIdentity1);
+                    const listener1 = await fdc3Remote.getRemoteContextListener(testAppIdentity1);
+                    const firstReceivedContexts: Context[] = await listener1.getReceivedContexts();
 
                     // Check that the first app did not receive a context
                     expect(firstReceivedContexts.length).toBe(0);

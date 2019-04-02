@@ -3,7 +3,7 @@ import * as puppeteer from 'puppeteer';
 import {Browser, Page} from 'puppeteer';
 import {connect} from 'hadouken-js-adapter';
 
-import {Context, IntentType} from '../../../src/client/main';
+import {Context, IntentType, ContextListener, IntentListener} from '../../../src/client/main';
 
 // This gets mounted by jest as part of our setup
 declare const global: NodeJS.Global&{__BROWSER__: puppeteer.Browser};
@@ -11,8 +11,12 @@ declare const global: NodeJS.Global&{__BROWSER__: puppeteer.Browser};
 export type TestWindowContext = Window&{
     fin: Fin;
     OpenfinFDC3: typeof import('../../../src/client/main');
-    receivedContexts: Context[];
-    receivedIntents: {intent: IntentType, context: Context}[]
+    contextListeners: ContextListener[];
+    intentListeners: IntentListener[];
+    receivedContexts: {listenerID: number, context: Context}[];
+    receivedIntents: {listenerID: number, intent: IntentType, context: Context}[];
+    getNextContextListenerID: () => number;
+    getNextIntentListenerID: () => number;
 };
 
 export class OFPuppeteerBrowser {
@@ -27,10 +31,10 @@ export class OFPuppeteerBrowser {
         this._pageIdentityCache = new Map<Page, Identity>();
         this._identityPageCache = new Map<string, Page>();
         this._browser = global.__BROWSER__;
-        this._ready = this.registerCleaupListener();
+        this._ready = this.registerCleanupListener();
     }
 
-    private async registerCleaupListener() {
+    private async registerCleanupListener() {
         const fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-puppeteer-' + Math.random().toString()});
         fin.System.addListener('window-closing', win => {
             const page = this._identityPageCache.get(getIdString(win));
