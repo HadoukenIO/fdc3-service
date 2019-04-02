@@ -7,7 +7,7 @@ type IdentityHash = string;
 
 const GLOBAL_CHANNEL: Channel = {
     id: GLOBAL_CHANNEL_ID,
-    type: 'default',
+    type: 'global',
     name: 'Global',
     color: 0xFFFFFF
 };
