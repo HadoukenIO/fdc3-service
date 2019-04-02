@@ -14,7 +14,7 @@ export class AppDirectory {
      * This URL is currently hard-coded but will eventually be defined in a place
      * that can be controlled by the desktop owner.
      */
-    private static URL: string = 'http://localhost:3923/provider/app-directory.json';
+    private static URL: string = 'http://localhost:3923/provider/sample-app-directory.json';
 
     /**
      * If cached application list is older than this duration, the next request to
@@ -43,7 +43,7 @@ export class AppDirectory {
 
     private async request(): Promise<Application[]> {
         // If using the demo app directory in production, return an empty array.
-        if (process.env.NODE_ENV === 'production' && AppDirectory.URL === 'http://localhost:3923/provider/app-directory.json') {
+        if (process.env.NODE_ENV === 'production' && AppDirectory.URL === 'http://localhost:3923/provider/sample-app-directory.json') {
             return [];
         }
         return new Promise((resolve: (value: Application[]) => void, reject: (reason: Error) => void): void => {
