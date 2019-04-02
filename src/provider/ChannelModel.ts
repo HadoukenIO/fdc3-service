@@ -92,11 +92,11 @@ export class ChannelModel {
         if (channelId !== previousChannelId) {
             if (channelId === GLOBAL_CHANNEL_ID) {
                 this._identityHashToChannelIdMap.delete(identityHash);
-                let identities = this._channelIdToIdentitiesMap.get(channelId)!;
+                let identities = this._channelIdToIdentitiesMap.get(previousChannelId)!;
 
                 identities = identities.filter(searchIdentity => getIdentityHash(searchIdentity) !== identityHash);
                 if (identities.length === 0) {
-                    this._channelIdToChannelMap.delete(channelId);
+                    this._channelIdToIdentitiesMap.delete(previousChannelId);
                 }
             } else {
                 this._identityHashToChannelIdMap.set(identityHash, channelId);
