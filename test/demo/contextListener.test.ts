@@ -87,7 +87,7 @@ describe('Context listeners and broadcasting', () => {
                 // Send the context
                 await fdc3Remote.broadcast(testManagerIdentity, validContext);
 
-                const receivedContexts = await Promise.all(listeners.map(l => l.getReceivedContexts()));
+                const receivedContexts = await Promise.all(listeners.map(listener => listener.getReceivedContexts()));
                 for (const contextList of receivedContexts) {
                     expect(contextList.length).toBe(1);
                     expect(contextList[0]).toEqual(validContext);
@@ -106,7 +106,17 @@ describe('Context listeners and broadcasting', () => {
                     await listeners[0].unsubscribe();
                 });
 
-                test.todo('When calling broadcast, only the still-registered listener is triggered');
+                test('When calling broadcast, only the still-registered listener is triggered', async () => {
+                    await fdc3Remote.broadcast(testAppIdentity, validContext);
+                    const receivedContexts = await Promise.all(listeners.map(listener => listener.getReceivedContexts()));
+
+                    // First listener not triggered
+                    expect(receivedContexts[0].length).toBe(0);
+
+                    // Second listener triggered once
+                    expect(receivedContexts[1].length).toBe(1);
+                    expect(receivedContexts[1][0]).toEqual(validContext);
+                });
             });
         });
     });
