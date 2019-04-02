@@ -84,8 +84,7 @@ export async function getChannelMembers(id: ChannelId): Promise<Identity[]> {
  * This includes switching to/from the global channel. The `channel` and
  * `previousChannel` fields use the same conventions for denoting the global channel as `getChannel`.
  */
-export function addEventListener(
-    event: 'channel-changed', listener: ChannelChangedListener, identity?: Identity): void {
+export function addEventListener(event: 'channel-changed', listener: ChannelChangedListener, identity?: Identity): void {
     channelChangedListeners.push(listener);
 }
 
