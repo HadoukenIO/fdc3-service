@@ -23,7 +23,7 @@ export interface Channel {
      *
      * Currently two channel types. More may be added in the future.
      */
-    type: 'default'|'user';
+    type: 'global'|'user';
 
     /**
      * A user-readable name for this channel, e.g: "Red"
