@@ -12,7 +12,7 @@
 
 import {Identity} from 'openfin/_v2/main';
 
-import {Application, Context, IntentType} from '../../../src/client/main';
+import {Application, Context, IntentType, ChannelId, Channel} from '../../../src/client/main';
 
 import {OFPuppeteerBrowser, TestWindowContext} from './ofPuppeteer';
 
@@ -41,6 +41,30 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
             context
         )
         .then(() => new Promise<void>(res => setTimeout(res, 100)));  // Broadcast is fire-and-forget. Slight delay to allow for service to handle
+}
+
+export async function getAllChannels(executionTarget: Identity): Promise<Channel[]> {
+    return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext): Promise<Channel[]> {
+        return this.OpenfinFDC3.getAllChannels();
+    });
+}
+
+export async function joinChannel(executionTarget: Identity, channelId: ChannelId, identity?: Identity): Promise<void> {
+    return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, channelId: ChannelId, identity?: Identity): Promise<void> {
+        return this.OpenfinFDC3.joinChannel(channelId, identity);
+    }, channelId, identity);
+}
+
+export async function getChannel(executionTarget: Identity, identity?: Identity): Promise<Channel> {
+    return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, identity?: Identity): Promise<Channel> {
+        return this.OpenfinFDC3.getChannel(identity);
+    }, identity);
+}
+
+export async function getChannelMembers(executionTarget: Identity, channelId: ChannelId): Promise<Identity[]> {
+    return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, channelId: ChannelId): Promise<Identity[]> {
+        return this.OpenfinFDC3.getChannelMembers(channelId);
+    }, channelId);
 }
 
 export interface RemoteContextListener {
