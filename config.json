@@ -1,0 +1,5 @@
+{
+    "PORT": 3923,
+    "SERVICE_NAME": "fdc3",
+    "CDN_LOCATION": "https://cdn.openfin.co/services/openfin/fdc3"
+ }
