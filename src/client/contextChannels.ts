@@ -43,7 +43,7 @@ export interface ChannelChangedPayload {
 }
 
 
-type ChannelChangedListener = (event: {identity: Identity; channel: Channel; previousChannel: Channel}) => void;
+type ChannelChangedListener = (event: ChannelChangedPayload) => void;
 
 const channelChangedListeners: ChannelChangedListener[] = [];
 
@@ -85,10 +85,7 @@ export async function getChannelMembers(id: ChannelId): Promise<Identity[]> {
  * `previousChannel` fields use the same conventions for denoting the global channel as `getChannel`.
  */
 export function addEventListener(
-    event: 'channel-changed',
-    listener: (event: {identity: Identity; channel: Channel; previousChannel: Channel}) => void,
-    identity?: Identity
-): void {
+    event: 'channel-changed', listener: ChannelChangedListener, identity?: Identity): void {
     channelChangedListeners.push(listener);
 }
 
@@ -96,7 +93,7 @@ if (channelPromise) {
     channelPromise.then(channel => {
         channel.register('channel-changed', (payload: ChannelChangedPayload) => {
             channelChangedListeners.forEach((listener: ChannelChangedListener) => {
-                listener({identity: payload.identity, channel: payload.channel, previousChannel: payload.previousChannel});
+                listener(payload);
             });
         });
     });
