@@ -3,13 +3,15 @@ import {Identity} from 'openfin/_v2/main';
 
 import {ContextBase} from '../client/context';
 import {Application} from '../client/directory';
-import {APITopic, BroadcastPayload, FindIntentPayload, RaiseIntentPayload, TopicPayloadMap, TopicResponseMap} from '../client/internal';
+import {APITopic, BroadcastPayload, FindIntentPayload, RaiseIntentPayload, TopicPayloadMap, TopicResponseMap, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload} from '../client/internal';
 import {AppIntent} from '../client/main';
+import {Channel, ChannelChangedPayload} from '../client/contextChannels';
 
 import {ActionHandlerMap, APIHandler} from './APIHandler';
 import {AppDirectory} from './AppDirectory';
 import {AppMetadata, MetadataStore} from './MetadataStore';
 import {PreferencesStore} from './PreferencesStore';
+import {createChannelModel, ChannelModel} from './ChannelModel';
 
 import {DefaultAction, OpenArgs, QueuedIntent, ResolveArgs, SelectorResultArgs} from './index';
 
@@ -24,6 +26,7 @@ export class FDC3 {
     private directory: AppDirectory;
     private metadata: MetadataStore;
     private preferences: PreferencesStore;
+    private channelModel: ChannelModel;
     private uiQueue: QueuedIntent[];
     private apiHandler: APIHandler<APITopic, TopicPayloadMap, TopicResponseMap>;
     constructor() {
@@ -31,6 +34,7 @@ export class FDC3 {
         this.metadata = new MetadataStore();
         this.preferences = new PreferencesStore();
         this.apiHandler = new APIHandler();
+        this.channelModel = createChannelModel();
         this.uiQueue = [];
     }
 
@@ -42,7 +46,11 @@ export class FDC3 {
             [APITopic.FIND_INTENT]: this.onResolve.bind(this),
             [APITopic.FIND_INTENTS_BY_CONTEXT]: () => new Promise<AppIntent[]>(() => {}),
             [APITopic.BROADCAST]: this.onBroadcast.bind(this),
-            [APITopic.RAISE_INTENT]: this.onIntent.bind(this)
+            [APITopic.RAISE_INTENT]: this.onIntent.bind(this),
+            [APITopic.GET_ALL_CHANNELS]: this.onGetAllChannels.bind(this),
+            [APITopic.JOIN_CHANNEL]: this.onJoinChannel.bind(this),
+            [APITopic.GET_CHANNEL]: this.onGetChannel.bind(this),
+            [APITopic.GET_CHANNEL_MEMBERS]: this.onGetChannelMembers.bind(this)
         };
 
         console.log('registering the service.');
@@ -87,8 +95,15 @@ export class FDC3 {
         }
     }
 
-    private async onBroadcast(payload: BroadcastPayload): Promise<void> {
-        return this.sendContext(payload.context);
+    private async onBroadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {
+        const channel = this.channelModel.getChannel(source);
+        const channelMembers = this.channelModel.getChannelMembers(channel.id, this.apiHandler.getClientConnections());
+
+        const context = payload.context;
+
+        this.channelModel.setContext(channel.id, context);
+
+        return Promise.all(channelMembers.map(identity => this.sendContext(identity, context))).then(() => {});
     }
 
     private async onIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<void> {
@@ -110,6 +125,33 @@ export class FDC3 {
         } else {
             throw new Error('No applications available to handle this intent');
         }
+    }
+
+    private async onGetAllChannels(payload: GetAllChannelsPayload, source: ProviderIdentity): Promise<Channel[]> {
+        return this.channelModel.getAllChannels();
+    }
+
+    private async onJoinChannel(payload: JoinChannelPayload, source: ProviderIdentity): Promise<void> {
+        const identity = payload.identity || source;
+
+        this.channelModel.joinChannel(identity, payload.id, (payload: ChannelChangedPayload) => {
+            this.apiHandler.channel.publish('channel-changed', payload);
+        });
+        const context = this.channelModel.getContext(payload.id);
+
+        if (context) {
+            this.sendContext(identity, context);
+        }
+    }
+
+    private async onGetChannel(payload: GetChannelPayload, source: ProviderIdentity): Promise<Channel> {
+        const identity = payload.identity || source;
+
+        return this.channelModel.getChannel(identity);
+    }
+
+    private async onGetChannelMembers(payload: GetChannelMembersPayload, source: ProviderIdentity): Promise<Identity[]> {
+        return this.channelModel.getChannelMembers(payload.id, this.apiHandler.getClientConnections());
     }
 
     /**
@@ -205,7 +247,7 @@ export class FDC3 {
                     }, reject);
                 } else if (context) {
                     // Pass new context to existing application instance and focus
-                    this.sendContext(context).then(resolve, reject);
+                    this.sendContext(metadata!, context).then(resolve, reject);
                     this.focusApplication(metadata!);
                 } else {
                     // Bring application to foreground and then resolve
@@ -361,8 +403,8 @@ export class FDC3 {
         });
     }
 
-    private async sendContext(context: ContextBase): Promise<void> {
-        return fin.InterApplicationBus.publish('context', context);
+    private async sendContext(identity: Identity, context: ContextBase): Promise<void> {
+        return fin.InterApplicationBus.send(identity, 'context', context);
     }
 
     private async sendIntent(intent: RaiseIntentPayload, targetApp: AppMetadata): Promise<void> {
