@@ -1,9 +1,9 @@
-const execa = require('execa');
-const os = require('os');
-const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
+const express = require('express');
+const execa = require('execa');
 const {launch} = require('hadouken-js-adapter');
 
 let port;
@@ -21,19 +21,19 @@ const cleanup = async res => {
         execa.shellSync(cmd);
     }
     process.exit((res.failed===true) ? 1 : 0);
-}
+};
 
 const fail = err => {
     console.error(err);
     process.exit(1);
-}
+};
 
 const run = (...args) => {
-    const p = execa(...args)
-    p.stdout.pipe(process.stdout)
-    p.stderr.pipe(process.stderr)
-    return p
-}
+    const p = execa(...args);
+    p.stdout.pipe(process.stdout);
+    p.stderr.pipe(process.stderr);
+    return p;
+};
 
 /**
  * Performs a clean build of the application and tests
@@ -69,9 +69,9 @@ buildStep
     .then(async () => {
         port = await launch({manifestUrl: 'http://localhost:3923/test/test-app-main.json'});
         console.log('Openfin running on port ' + port);
-        return port
+        return port;
     })
     .catch(fail)
-    .then(OF_PORT => run('jest' ,['--config', 'jest-int.config.json', '--forceExit', '--no-cache'] , { env: { OF_PORT } }))
+    .then(OF_PORT => run('jest', ['--config', 'jest-int.config.json', '--forceExit', '--no-cache', '--runInBand'], {env: {OF_PORT}}))
     .then(cleanup)
     .catch(cleanup);
