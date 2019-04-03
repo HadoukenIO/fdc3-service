@@ -34,8 +34,10 @@ export class FDC3 {
         this.metadata = new MetadataStore();
         this.preferences = new PreferencesStore();
         this.apiHandler = new APIHandler();
-        this.channelModel = createChannelModel();
+        this.channelModel = createChannelModel(this.apiHandler.connectionSignal, this.apiHandler.disconnectionSignal);
         this.uiQueue = [];
+
+        this.channelModel.channelChangedSignal.add(this.onChannelChanged, this);
     }
 
     public async register(): Promise<void> {
@@ -97,7 +99,7 @@ export class FDC3 {
 
     private async onBroadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {
         const channel = this.channelModel.getChannel(source);
-        const channelMembers = this.channelModel.getChannelMembers(channel.id, this.apiHandler.getClientConnections());
+        const channelMembers = this.channelModel.getChannelMembers(channel.id);
 
         const context = payload.context;
 
@@ -134,9 +136,7 @@ export class FDC3 {
     private async onJoinChannel(payload: JoinChannelPayload, source: ProviderIdentity): Promise<void> {
         const identity = payload.identity || source;
 
-        this.channelModel.joinChannel(identity, payload.id, (payload: ChannelChangedPayload) => {
-            this.apiHandler.channel.publish('channel-changed', payload);
-        });
+        this.channelModel.joinChannel(identity, payload.id);
         const context = this.channelModel.getContext(payload.id);
 
         if (context) {
@@ -151,7 +151,7 @@ export class FDC3 {
     }
 
     private async onGetChannelMembers(payload: GetChannelMembersPayload, source: ProviderIdentity): Promise<Identity[]> {
-        return this.channelModel.getChannelMembers(payload.id, this.apiHandler.getClientConnections());
+        return this.channelModel.getChannelMembers(payload.id);
     }
 
     /**
@@ -429,5 +429,9 @@ export class FDC3 {
     private createHandle(): number {
         // Returns a large random integer
         return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+    }
+
+    private onChannelChanged(payload: ChannelChangedPayload): void {
+        this.apiHandler.channel.publish('channel-changed', payload);
     }
 }

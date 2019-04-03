@@ -3,6 +3,7 @@ import {ChannelProvider} from 'openfin/_v2/api/interappbus/channel/provider';
 import {Identity} from 'openfin/_v2/main';
 
 import {SERVICE_CHANNEL} from '../client/internal';
+import { Signal1 } from './Signal';
 
 export type ActionHandler<T extends Actions, Actions extends string, Payloads extends {[K in Actions]: unknown}, Responses extends {[K in Actions]: unknown}> =
     (() => Promise<Responses[T]>)|((payload: Payloads[T]) => Promise<Responses[T]>)|((payload: Payloads[T], source: ProviderIdentity) => Promise<Responses[T]>);
@@ -14,9 +15,24 @@ export type ActionHandlerMap<Actions extends string, Payloads extends {[K in Act
 
 export class APIHandler<A extends string, P extends {[K in A]: unknown}, R extends {[K in A]: unknown}> {
     private _providerChannel!: ChannelProvider;
+    private _connectionSignal: Signal1<Identity>;
+    private _disconnectionSignal: Signal1<Identity>;
+
+    public constructor() {
+        this._connectionSignal = new Signal1<Identity>();
+        this._disconnectionSignal = new Signal1<Identity>();
+    }
 
     public get channel(): ChannelProvider {
         return this._providerChannel;
+    }
+
+    public get connectionSignal(): Signal1<Identity> {
+        return this._connectionSignal;
+    }
+
+    public get disconnectionSignal(): Signal1<Identity> {
+        return this._disconnectionSignal;
     }
 
     public isClientConnection(identity: Identity): boolean {
@@ -33,6 +49,7 @@ export class APIHandler<A extends string, P extends {[K in A]: unknown}, R exten
         const providerChannel: ChannelProvider = this._providerChannel = await fin.InterApplicationBus.Channel.create(SERVICE_CHANNEL);
 
         providerChannel.onConnection(this.onConnection);
+        providerChannel.onDisconnection(this.onDisconnection);
 
         for (const action in actionHandlerMap) {
             if (actionHandlerMap.hasOwnProperty(action)) {
@@ -56,5 +73,11 @@ export class APIHandler<A extends string, P extends {[K in A]: unknown}, R exten
         } else {
             console.log(`connection from client: ${app.name}, unable to determine version`);
         }
+
+        this._connectionSignal.emit(app);
+    }
+
+    private onDisconnection(app:Identity): void {
+        this._disconnectionSignal.emit(app);
     }
 }

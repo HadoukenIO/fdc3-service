@@ -1,7 +1,8 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {Channel, ChannelChangedPayload, ChannelId, GLOBAL_CHANNEL_ID} from '../client/contextChannels';
+import {Channel, ChannelChangedPayload, ChannelId, GLOBAL_CHANNEL_ID, joinChannel} from '../client/contextChannels';
 import {Context} from '../client/main';
+import { Signal1 } from './Signal';
 
 type IdentityHash = string;
 
@@ -54,8 +55,8 @@ const PURPLE_CHANNEL: Channel = {
     color: 0xFF00FF
 };
 
-export function createChannelModel() {
-    return new ChannelModel(GLOBAL_CHANNEL, [RED_CHANNEL, ORANGE_CHANNEL, YELLOW_CHANNEL, GREEN_CHANNEL, BLUE_CHANNEL, PURPLE_CHANNEL]);
+export function createChannelModel(connectionSignal: Signal1<Identity>, disconnectionSignal:Signal1<Identity>) {
+    return new ChannelModel(GLOBAL_CHANNEL, [RED_CHANNEL, ORANGE_CHANNEL, YELLOW_CHANNEL, GREEN_CHANNEL, BLUE_CHANNEL, PURPLE_CHANNEL], connectionSignal, disconnectionSignal);
 }
 
 export class ChannelModel {
@@ -68,7 +69,9 @@ export class ChannelModel {
 
     private _globalChannel: Channel;
 
-    public constructor(globalChannel: Channel, userChannels: Channel[]) {
+    private _channelChangedSignal: Signal1<ChannelChangedPayload>;
+
+    public constructor(globalChannel: Channel, userChannels: Channel[], connectionSignal: Signal1<Identity>, disconnectionSignal:Signal1<Identity>) {
         this._globalChannel = globalChannel;
 
         this._channels.splice(0, 0, this._globalChannel);
@@ -77,27 +80,44 @@ export class ChannelModel {
         for (const channel of this._channels) {
             this._channelIdToChannelMap.set(channel.id, channel);
         }
+
+        this._channelChangedSignal = new Signal1<ChannelChangedPayload>();
+
+        connectionSignal.add(this.onConnection, this);
+        disconnectionSignal.add(this.onDisconnection, this);
+    }
+
+    public get channelChangedSignal(): Signal1<ChannelChangedPayload> {
+        return this._channelChangedSignal;
     }
 
     public getAllChannels(): Channel[] {
         return this._channels.slice();
     }
 
-    public joinChannel(identity: Identity, channelId: ChannelId, onChannelChanged: (payload: ChannelChangedPayload) => void) {
+    public joinChannel(identity: Identity, channelId: ChannelId) {
         this.validateChannelId(channelId);
+        this.joinChannel(identity, channelId);
+    }
+
+    private joinChannelInternal(identity: Identity, channelId: ChannelId|undefined) {
 
         const identityHash = getIdentityHash(identity);
-        const previousChannelId = this._identityHashToChannelIdMap.get(identityHash) || GLOBAL_CHANNEL_ID;
+        const previousChannelId = this._identityHashToChannelIdMap.get(identityHash);
 
         if (channelId !== previousChannelId) {
-            if (channelId === GLOBAL_CHANNEL_ID) {
-                this._identityHashToChannelIdMap.delete(identityHash);
-                let identities = this._channelIdToIdentitiesMap.get(previousChannelId)!;
 
-                identities = identities.filter(searchIdentity => getIdentityHash(searchIdentity) !== identityHash);
-                if (identities.length === 0) {
+            if (previousChannelId) {
+                let previousIdentities = this._channelIdToIdentitiesMap.get(previousChannelId)!;
+
+                previousIdentities = previousIdentities.filter(searchIdentity => getIdentityHash(searchIdentity) !== identityHash);
+                if (previousIdentities.length === 0) {
                     this._channelIdToIdentitiesMap.delete(previousChannelId);
                 }
+            }
+
+            if (channelId === undefined) {
+                this._identityHashToChannelIdMap.delete(identityHash);
             } else {
                 this._identityHashToChannelIdMap.set(identityHash, channelId);
 
@@ -111,10 +131,10 @@ export class ChannelModel {
                 identities.push(identity);
             }
 
-            const channel = this._channelIdToChannelMap.get(channelId)!;
-            const previousChannel = this._channelIdToChannelMap.get(previousChannelId)!;
+            const channel = channelId ? this._channelIdToChannelMap.get(channelId)! : undefined;
+            const previousChannel = previousChannelId ? this._channelIdToChannelMap.get(previousChannelId)! : undefined;
 
-            onChannelChanged({identity, channel, previousChannel});
+            this._channelChangedSignal.emit({identity, channel, previousChannel});
         }
     }
 
@@ -122,17 +142,13 @@ export class ChannelModel {
         const identityHash = getIdentityHash(identity);
         const channelId = this._identityHashToChannelIdMap.get(identityHash);
 
-        return channelId ? this._channelIdToChannelMap.get(channelId)! : this._globalChannel;
+        return this._channelIdToChannelMap.get(channelId || GLOBAL_CHANNEL_ID)!;
     }
 
-    public getChannelMembers(channelId: ChannelId, allWindows: Identity[]): Identity[] {
+    public getChannelMembers(channelId: ChannelId): Identity[] {
         this.validateChannelId(channelId);
 
-        if (channelId === GLOBAL_CHANNEL_ID) {
-            return allWindows.filter(identity => !this._identityHashToChannelIdMap.has(getIdentityHash(identity)));
-        } else {
-            return this._channelIdToIdentitiesMap.get(channelId) || [];
-        }
+        return this._channelIdToIdentitiesMap.get(channelId) || [];
     }
 
     public setContext(channelId: ChannelId, context: Context): void {
@@ -153,6 +169,14 @@ export class ChannelModel {
         if (!this._channelIdToChannelMap.has(channelId)) {
             throw new Error('No channel with channelId: ' + channelId);
         }
+    }
+
+    private onConnection(identity: Identity) {
+        this.joinChannelInternal(identity, GLOBAL_CHANNEL_ID);
+    }
+
+    private onDisconnection(identity: Identity) {
+        this.joinChannelInternal(identity, undefined);
     }
 }
 
