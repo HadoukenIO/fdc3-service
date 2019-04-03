@@ -254,7 +254,9 @@ export class FDC3 {
                             clearTimeout(timeout);
                             if (context) {
                                 // Pass context to application before resolving
-                                this.apiHandler.channel.dispatch(app.identity, 'context', {context});
+                                this.apiHandler.channel.dispatch(app.identity, 'context', {context})
+                                    .then(resolve)
+                                    .catch((reason: string) => reject(new Error(reason)));
                             } else {
                                 // Application started successfully - can now resolve
                                 resolve();
@@ -360,19 +362,19 @@ export class FDC3 {
         });
     }
 
-    private async sendContext(context: ContextBase): Promise<any> {
-        return this.apiHandler.channel.publish('context', context);
+    private async sendContext(context: ContextBase): Promise<void> {
+        await this.apiHandler.channel.publish('context', context);
     }
 
-    private async sendIntent(intent: RaiseIntentPayload, targetApp: AppMetadata): Promise<any> {
+    private async sendIntent(intent: RaiseIntentPayload, targetApp: AppMetadata): Promise<void> {
         if (targetApp) {
             console.log('c1a: ', targetApp, intent);
-            return this.apiHandler.channel.dispatch(targetApp, 'intent', intent);
+            await this.apiHandler.channel.dispatch(targetApp, 'intent', intent);
         } else {
             // Intents should be one-to-one, but as a fallback broadcast this intent
             // to all applications
             console.warn('No target given for intent. Going to broadcast to all applications');
-            return this.apiHandler.channel.publish('intent', intent);
+            await this.apiHandler.channel.publish('intent', intent);
         }
     }
 
