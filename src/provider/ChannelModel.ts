@@ -1,6 +1,6 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {Channel, ChannelChangedPayload, ChannelId, GLOBAL_CHANNEL_ID, joinChannel} from '../client/contextChannels';
+import {Channel, ChannelChangedPayload, ChannelId, GLOBAL_CHANNEL_ID} from '../client/contextChannels';
 import {Context} from '../client/main';
 
 import {Signal1} from './Signal';
