@@ -404,8 +404,8 @@ export class FDC3 {
         });
     }
 
-    private async sendContext(context: ContextBase): Promise<void> {
-        await this.apiHandler.channel.publish('context', context);
+    private async sendContext(identity: Identity, context: ContextBase): Promise<void> {
+        await this.apiHandler.channel.dispatch(identity, 'context', context);
     }
 
     private async sendIntent(intent: RaiseIntentPayload, targetApp: AppMetadata): Promise<void> {
