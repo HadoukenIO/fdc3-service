@@ -142,9 +142,9 @@ export class ChannelModel {
 
     public getChannel(identity: Identity): Channel {
         const identityHash = getIdentityHash(identity);
-        const channelId = this._identityHashToChannelIdMap.get(identityHash);
+        const channelId = this._identityHashToChannelIdMap.get(identityHash)!;
 
-        return this._channelIdToChannelMap.get(channelId || GLOBAL_CHANNEL_ID)!;
+        return this._channelIdToChannelMap.get(channelId)!;
     }
 
     public getChannelMembers(channelId: ChannelId): Identity[] {
