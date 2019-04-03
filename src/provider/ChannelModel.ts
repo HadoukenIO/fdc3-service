@@ -63,6 +63,8 @@ export function createChannelModel(connectionSignal: Signal1<Identity>, disconne
 }
 
 export class ChannelModel {
+    public readonly onChannelChanged: Signal1<ChannelChangedPayload> = new Signal1<ChannelChangedPayload>();
+
     private _identityHashToChannelIdMap: Map<IdentityHash, ChannelId> = new Map<IdentityHash, ChannelId>();
     private _channelIdToIdentitiesMap: Map<ChannelId, Identity[]> = new Map<ChannelId, Identity[]>();
     private _channelIdToCachedContextMap: Map<ChannelId, Context> = new Map<ChannelId, Context>();
@@ -72,9 +74,7 @@ export class ChannelModel {
 
     private _globalChannel: Channel;
 
-    private _channelChangedSignal: Signal1<ChannelChangedPayload>;
-
-    public constructor(globalChannel: Channel, userChannels: Channel[], connectionSignal: Signal1<Identity>, disconnectionSignal:Signal1<Identity>) {
+    public constructor(globalChannel: Channel, userChannels: Channel[], onConnection: Signal1<Identity>, onDisconnection:Signal1<Identity>) {
         this._globalChannel = globalChannel;
 
         this._channels.splice(0, 0, this._globalChannel);
@@ -84,26 +84,20 @@ export class ChannelModel {
             this._channelIdToChannelMap.set(channel.id, channel);
         }
 
-        this._channelChangedSignal = new Signal1<ChannelChangedPayload>();
-
-        connectionSignal.add(this.onConnection, this);
-        disconnectionSignal.add(this.onDisconnection, this);
-    }
-
-    public get channelChangedSignal(): Signal1<ChannelChangedPayload> {
-        return this._channelChangedSignal;
+        onConnection.add(this.onConnection, this);
+        onDisconnection.add(this.onDisconnection, this);
     }
 
     public getAllChannels(): Channel[] {
         return this._channels.slice();
     }
 
-    public joinChannel(identity: Identity, channelId: ChannelId) {
+    public joinChannel(identity: Identity, channelId: ChannelId): void {
         this.validateChannelId(channelId);
         this.joinChannelInternal(identity, channelId);
     }
 
-    private joinChannelInternal(identity: Identity, channelId: ChannelId|undefined) {
+    private joinChannelInternal(identity: Identity, channelId: ChannelId|undefined): void {
         identity = {name: identity.name, uuid: identity.uuid};
         const identityHash = getIdentityHash(identity);
         const previousChannelId = this._identityHashToChannelIdMap.get(identityHash);
@@ -139,7 +133,7 @@ export class ChannelModel {
             const previousChannel = previousChannelId ? this._channelIdToChannelMap.get(previousChannelId)! : undefined;
 
             if (channel) {
-                this._channelChangedSignal.emit({identity, channel, previousChannel});
+                this.onChannelChanged.emit({identity, channel, previousChannel});
             }
         }
     }
@@ -171,17 +165,17 @@ export class ChannelModel {
         return this._channelIdToCachedContextMap.get(channelId);
     }
 
-    private validateChannelId(channelId: string) {
+    private validateChannelId(channelId: string): void {
         if (!this._channelIdToChannelMap.has(channelId)) {
             throw new Error('No channel with channelId: ' + channelId);
         }
     }
 
-    private onConnection(identity: Identity) {
+    private onConnection(identity: Identity): void {
         this.joinChannelInternal(identity, GLOBAL_CHANNEL_ID);
     }
 
-    private onDisconnection(identity: Identity) {
+    private onDisconnection(identity: Identity): void {
         this.joinChannelInternal(identity, undefined);
     }
 }

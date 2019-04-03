@@ -34,10 +34,10 @@ export class FDC3 {
         this.metadata = new MetadataStore();
         this.preferences = new PreferencesStore();
         this.apiHandler = new APIHandler();
-        this.channelModel = createChannelModel(this.apiHandler.connectionSignal, this.apiHandler.disconnectionSignal);
+        this.channelModel = createChannelModel(this.apiHandler.onConnection, this.apiHandler.onDisconnection);
         this.uiQueue = [];
 
-        this.channelModel.channelChangedSignal.add(this.onChannelChanged, this);
+        this.channelModel.onChannelChanged.add(this.onChannelChangedHandler, this);
     }
 
     public async register(): Promise<void> {
@@ -431,7 +431,7 @@ export class FDC3 {
         return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
     }
 
-    private onChannelChanged(payload: ChannelChangedPayload): void {
+    private onChannelChangedHandler(payload: ChannelChangedPayload): void {
         this.apiHandler.channel.publish('channel-changed', payload);
     }
 }
