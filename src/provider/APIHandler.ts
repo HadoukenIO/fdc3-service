@@ -49,8 +49,8 @@ export class APIHandler<A extends string, P extends {[K in A]: unknown}, R exten
     public async registerListeners(actionHandlerMap: ActionHandlerMap<A, P, R>): Promise<void> {
         const providerChannel: ChannelProvider = this._providerChannel = await fin.InterApplicationBus.Channel.create(SERVICE_CHANNEL);
 
-        providerChannel.onConnection(this.onConnection);
-        providerChannel.onDisconnection(this.onDisconnection);
+        providerChannel.onConnection(this.onConnection.bind(this));
+        providerChannel.onDisconnection(this.onDisconnection.bind(this));
 
         for (const action in actionHandlerMap) {
             if (actionHandlerMap.hasOwnProperty(action)) {
