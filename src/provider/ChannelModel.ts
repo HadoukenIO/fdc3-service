@@ -118,9 +118,7 @@ export class ChannelModel {
                 }
             }
 
-            if (channelId === undefined) {
-                this._identityHashToChannelIdMap.delete(identityHash);
-            } else {
+            if (channelId) {
                 this._identityHashToChannelIdMap.set(identityHash, channelId);
 
                 let identities = this._channelIdToIdentitiesMap.get(channelId);
@@ -131,12 +129,16 @@ export class ChannelModel {
                 }
 
                 identities.push(identity);
+            } else {
+                this._identityHashToChannelIdMap.delete(identityHash);
             }
 
             const channel = channelId ? this._channelIdToChannelMap.get(channelId)! : undefined;
             const previousChannel = previousChannelId ? this._channelIdToChannelMap.get(previousChannelId)! : undefined;
 
-            this._channelChangedSignal.emit({identity, channel, previousChannel});
+            if (channel) {
+                this._channelChangedSignal.emit({identity, channel, previousChannel});
+            }
         }
     }
 
