@@ -90,14 +90,17 @@ export class ChannelModel {
         const previousChannelId = this._identityHashToChannelIdMap.get(identityHash) || GLOBAL_CHANNEL_ID;
 
         if (channelId !== previousChannelId) {
-            if (channelId === GLOBAL_CHANNEL_ID) {
-                this._identityHashToChannelIdMap.delete(identityHash);
-                let identities = this._channelIdToIdentitiesMap.get(previousChannelId)!;
+            let previousIdentities = this._channelIdToIdentitiesMap.get(previousChannelId);
 
-                identities = identities.filter(searchIdentity => getIdentityHash(searchIdentity) !== identityHash);
-                if (identities.length === 0) {
+            if (previousIdentities) {
+                previousIdentities = previousIdentities.filter(searchIdentity => getIdentityHash(searchIdentity) !== identityHash);
+                if (previousIdentities.length === 0) {
                     this._channelIdToIdentitiesMap.delete(previousChannelId);
                 }
+            }
+
+            if (channelId === GLOBAL_CHANNEL_ID) {
+                this._identityHashToChannelIdMap.delete(identityHash);
             } else {
                 this._identityHashToChannelIdMap.set(identityHash, channelId);
 
@@ -108,7 +111,7 @@ export class ChannelModel {
                     this._channelIdToIdentitiesMap.set(channelId, identities);
                 }
 
-                identities.push(identity);
+                identities.push({name: identity.name, uuid: identity.uuid});
             }
 
             const channel = this._channelIdToChannelMap.get(channelId)!;
@@ -129,7 +132,9 @@ export class ChannelModel {
         this.validateChannelId(channelId);
 
         if (channelId === GLOBAL_CHANNEL_ID) {
-            return allWindows.filter(identity => !this._identityHashToChannelIdMap.has(getIdentityHash(identity)));
+            return allWindows
+                .filter(identity => !this._identityHashToChannelIdMap.has(getIdentityHash(identity)))
+                .map(window => ({name: window.name, uuid: window.uuid}));
         } else {
             return this._channelIdToIdentitiesMap.get(channelId) || [];
         }
