@@ -5,8 +5,11 @@ const path = require('path');
 
 const NodeEnvironment = require('jest-environment-node');
 const puppeteer = require('puppeteer');
+const jsAdapter = require('hadouken-js-adapter');
 
 const DIR = path.join(os.tmpdir(), 'jest_puppeteer_global_setup');
+
+const finPromise = jsAdapter.connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-jest-env'});
 
 class PuppeteerEnvironment extends NodeEnvironment {
     constructor(config) {
@@ -21,10 +24,13 @@ class PuppeteerEnvironment extends NodeEnvironment {
             throw new Error('wsEndpoint not found');
         }
 
-        // connect to puppeteer
+        // establish puppeteer connection
         this.global.__BROWSER__ = await puppeteer.connect({
             browserWSEndpoint: wsEndpoint
         });
+
+        // establish js-adapter connection
+        this.global.__FIN__ = await finPromise;
     }
 
     async teardown() {

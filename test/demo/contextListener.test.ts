@@ -15,13 +15,8 @@ const validContext: OrganizationContext = {type: 'organization', name: 'OpenFin'
 // These tests all use the default channel for context broadcasts and listeners
 // Context-passing in a channelled environment is tested in a seperate file
 describe('Context listeners and broadcasting', () => {
-    let fin: Fin;
-
-    beforeAll(async () => {
-        // Establish a node adapter connection for the file. This needs to use a file-specific name since jest sandboxes the imports
-        // from each test file, and other files may have already connected to the runtime with a generic uuid
-        fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-contextListner'});
-    });
+    // Adapter connection is established in setup. Reassign here for convenience
+    const fin: Fin = global.__FIN__;
 
     beforeEach(async () => {
         // The main launcher app should remain running for the duration of all tests.
@@ -29,7 +24,7 @@ describe('Context listeners and broadcasting', () => {
     });
 
     test('When calling broadcast with no apps running, the promise resolves and there are no errors', async () => {
-        await expect(fdc3Remote.broadcast(testManagerIdentity, validContext)).resolves;
+        await expect(fdc3Remote.broadcast(testManagerIdentity, validContext)).resolves.not.toThrowError();
     });
 
     describe('Registering and unsubscribing context listeners', () => {
@@ -46,7 +41,7 @@ describe('Context listeners and broadcasting', () => {
 
 
         test('When calling addContextListener for the first time the promise resolves and there are no errors', async () => {
-            await expect(fdc3Remote.addContextListener(testAppIdentity)).resolves;
+            await expect(fdc3Remote.addContextListener(testAppIdentity)).resolves.toBeTruthy();
         });
 
         describe('With one context listener registered', () => {
@@ -110,7 +105,7 @@ describe('Context listeners and broadcasting', () => {
             describe('When one listener is unsubsribed', () => {
                 beforeEach(async () => {
                     // Unsubscribe first listener
-                    await expect(listeners[0].unsubscribe()).resolves;
+                    await expect(listeners[0].unsubscribe()).resolves.not.toThrowError();
                 });
 
                 test('When calling broadcast, only the still-registered listener is triggered', async () => {

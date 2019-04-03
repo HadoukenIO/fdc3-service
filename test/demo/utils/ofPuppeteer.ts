@@ -1,12 +1,8 @@
 import {Fin, Identity} from 'openfin/_v2/main';
-import * as puppeteer from 'puppeteer';
 import {Browser, Page} from 'puppeteer';
 import {connect} from 'hadouken-js-adapter';
 
 import {Context, IntentType, ContextListener, IntentListener} from '../../../src/client/main';
-
-// This gets mounted by jest as part of our setup
-declare const global: NodeJS.Global&{__BROWSER__: puppeteer.Browser};
 
 export type TestWindowContext = Window&{
     fin: Fin;

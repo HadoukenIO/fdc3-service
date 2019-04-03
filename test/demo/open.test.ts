@@ -12,13 +12,8 @@ const testManagerIdentity = {
 };
 
 describe('Opening applications with the FDC3 client', () => {
-    let fin: Fin;
-
-    beforeAll(async () => {
-        // Establish a node adapter connection for the file. This needs to use a file-specific name since jest sandboxes the imports
-        // from each test file, and other files may have already connected to the runtime with a generic uuid
-        fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-open'});
-    });
+    // Adapter connection is established in setup. Reassign here for convenience
+    const fin: Fin = global.__FIN__;
 
     beforeEach(async () => {
         // The main launcher app should remain running for the duration of all tests.
