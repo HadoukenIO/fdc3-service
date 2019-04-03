@@ -49,7 +49,7 @@ async function serve() {
 
         // Sneakily return the test directory instead of the default one
         app.get('/provider/app-directory.json', (req, res) => {
-            let testDirectory = JSON.parse(fs.readFileSync(path.join('res', 'test','app-directory.json')));
+            const testDirectory = JSON.parse(fs.readFileSync(path.join('res', 'test','app-directory.json')));
 
             res.contentType('application/json');
             res.json(testDirectory);
