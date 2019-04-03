@@ -10,6 +10,9 @@ import {APITopic, RaiseIntentPayload, SERVICE_IDENTITY} from './internal';
  * Original file: https://github.com/FDC3/FDC3/blob/master/src/api/interface.ts
  */
 
+// Re-export context channel API at top-level
+export * from './contextChannels';
+
 // Re-export types/enums at top-level
 export * from './context';
 export * from './directory';

@@ -1,10 +1,10 @@
 import * as React from 'react';
 
 import * as fdc3 from '../../../client/main';
-import {Application} from '../../../client/directory';
+import {Application, AppName} from '../../../client/directory';
 import {Symbol} from '../../apps/BlotterApp';
 import {IntentButton} from '../common/IntentButton';
-import {showContextMenu, ContextMenuItem, ContextMenuPayload} from '../common/ContextMenu';
+import {showContextMenu, ContextMenuItem} from '../common/ContextMenu';
 
 import './SymbolsRow.css';
 
@@ -15,17 +15,22 @@ interface SymbolsRowProps {
     handleSelect?: (item: Symbol | null) => void;
 }
 
-const menuItems: ContextMenuItem[] = [
+interface Payload {
+    intent: string;
+    appName?: AppName;
+}
+
+const menuItems: ContextMenuItem<Payload>[] = [
     {
         text: 'View Quote',
         payload: {
-            userData: 'quote'
+            intent: fdc3.Intents.VIEW_QUOTE
         }
     },
     {
         text: 'View News',
         payload: {
-            userData: 'news'
+            intent: fdc3.Intents.VIEW_NEWS
         }
     },
     {
@@ -34,10 +39,10 @@ const menuItems: ContextMenuItem[] = [
     }
 ];
 
-const defaultViewChart: ContextMenuItem = {
+const viewChartsSubMenu: ContextMenuItem = {
     text: 'Use Default',
     payload: {
-        userData: 'charts'
+        intent: fdc3.Intents.VIEW_CHART
     }
 };
 
@@ -48,13 +53,14 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     React.useEffect(() => {
         const appItems = chartApps.map(app => {
             return {
-                text: 'View ' + app.name,
+                text: 'View ' + app.title,
                 payload: {
-                    userData: app.appId
+                    intent: fdc3.Intents.VIEW_CHART,
+                    appName: app.name
                 }
             };
         });
-        menuItems[2].children! = [defaultViewChart, ...appItems];
+        menuItems[2].children = [viewChartsSubMenu, ...appItems];
     }, [chartApps]);
 
     const handleClick = (event: React.MouseEvent<HTMLTableRowElement>) => {
@@ -83,22 +89,9 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
         };
     };
 
-    const handleContextMenuSelection = (payload: ContextMenuPayload) => {
-        // Send intent, "fire and forget" style
-        const userData = payload.userData;
-        switch (userData) {
-            case 'quote':
-                fdc3.raiseIntent(fdc3.Intents.VIEW_QUOTE, getContext());
-                break;
-            case 'news':
-                fdc3.raiseIntent(fdc3.Intents.VIEW_NEWS, getContext());
-                break;
-            case 'chart':
-                fdc3.raiseIntent(fdc3.Intents.VIEW_CHART, getContext());
-                break;
-            default:
-                fdc3.raiseIntent(userData, getContext(), userData);
-                break;
+    const handleContextMenuSelection = (payload: Payload) => {
+        if (payload.intent) {
+            fdc3.raiseIntent(payload.intent, getContext(), payload.appName);
         }
     };
 
