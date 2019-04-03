@@ -132,7 +132,7 @@ describe('Context listeners and broadcasting', () => {
                     const receivedContexts = await newListener.getReceivedContexts();
 
                     expect(receivedContexts.length).toBe(1);
-                    expect(receivedContexts).toEqual(validContext);
+                    expect(receivedContexts[0]).toEqual(validContext);
                 });
             });
         });
