@@ -110,9 +110,11 @@ export class ChannelModel {
 
         if (channelId !== previousChannelId) {
             if (previousChannelId) {
-                let previousIdentities = this._channelIdToIdentitiesMap.get(previousChannelId)!;
+                const previousIdentities = this._channelIdToIdentitiesMap.get(previousChannelId)!;
 
-                previousIdentities = previousIdentities.filter(searchIdentity => getIdentityHash(searchIdentity) !== identityHash);
+                const previousIdentityIndex = previousIdentities.findIndex(searchIdentity => getIdentityHash(searchIdentity) === identityHash);
+                previousIdentities.splice(previousIdentityIndex, 1);
+
                 if (previousIdentities.length === 0) {
                     this._channelIdToIdentitiesMap.delete(previousChannelId);
                 }
