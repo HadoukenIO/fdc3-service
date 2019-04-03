@@ -100,7 +100,7 @@ export class ChannelModel {
 
     public joinChannel(identity: Identity, channelId: ChannelId) {
         this.validateChannelId(channelId);
-        this.joinChannel(identity, channelId);
+        this.joinChannelInternal(identity, channelId);
     }
 
     private joinChannelInternal(identity: Identity, channelId: ChannelId|undefined) {
