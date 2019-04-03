@@ -26,6 +26,10 @@ describe('Context listeners and broadcasting', () => {
         await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
     });
 
+    test('When calling broadcast with no apps running, the promise resolves and there are no errors', async () => {
+        await expect(fdc3Remote.broadcast(testManagerIdentity, validContext)).resolves;
+    });
+
     describe('Registering and unsubscribing context listeners', () => {
         const testAppIdentity = {uuid: 'test-app-1', name: 'test-app-1'};
         beforeEach(async () => {
@@ -38,8 +42,9 @@ describe('Context listeners and broadcasting', () => {
             await fin.Application.wrapSync(testAppIdentity).quit(true);
         });
 
-        test('When calling addContextListener for the first time the function resolves and there are no errors', async () => {
-            await fdc3Remote.addContextListener(testAppIdentity);
+
+        test('When calling addContextListener for the first time the promise resolves and there are no errors', async () => {
+            await expect(fdc3Remote.addContextListener(testAppIdentity)).resolves;
         });
 
         describe('With one context listener registered', () => {
@@ -103,7 +108,7 @@ describe('Context listeners and broadcasting', () => {
             describe('When one listener is unsubsribed', () => {
                 beforeEach(async () => {
                     // Unsubscribe first listener
-                    await listeners[0].unsubscribe();
+                    await expect(listeners[0].unsubscribe()).resolves;
                 });
 
                 test('When calling broadcast, only the still-registered listener is triggered', async () => {
@@ -116,6 +121,16 @@ describe('Context listeners and broadcasting', () => {
                     // Second listener triggered once
                     expect(receivedContexts[1].length).toBe(1);
                     expect(receivedContexts[1][0]).toEqual(validContext);
+                });
+
+                test('A third listener can be registered and triggered as expected', async () => {
+                    const newListener = await fdc3Remote.addContextListener(testAppIdentity);
+
+                    await fdc3Remote.broadcast(testAppIdentity, validContext);
+                    const receivedContexts = await newListener.getReceivedContexts();
+
+                    expect(receivedContexts.length).toBe(1);
+                    expect(receivedContexts).toEqual(validContext);
                 });
             });
         });
