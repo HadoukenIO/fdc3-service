@@ -2,7 +2,8 @@ import {Identity} from 'openfin/_v2/main';
 
 import {Channel, ChannelChangedPayload, ChannelId, GLOBAL_CHANNEL_ID, joinChannel} from '../client/contextChannels';
 import {Context} from '../client/main';
-import { Signal1 } from './Signal';
+
+import {Signal1} from './Signal';
 
 type IdentityHash = string;
 
@@ -56,7 +57,9 @@ const PURPLE_CHANNEL: Channel = {
 };
 
 export function createChannelModel(connectionSignal: Signal1<Identity>, disconnectionSignal:Signal1<Identity>) {
-    return new ChannelModel(GLOBAL_CHANNEL, [RED_CHANNEL, ORANGE_CHANNEL, YELLOW_CHANNEL, GREEN_CHANNEL, BLUE_CHANNEL, PURPLE_CHANNEL], connectionSignal, disconnectionSignal);
+    const userChannels = [RED_CHANNEL, ORANGE_CHANNEL, YELLOW_CHANNEL, GREEN_CHANNEL, BLUE_CHANNEL, PURPLE_CHANNEL];
+
+    return new ChannelModel(GLOBAL_CHANNEL, userChannels, connectionSignal, disconnectionSignal);
 }
 
 export class ChannelModel {
@@ -101,12 +104,11 @@ export class ChannelModel {
     }
 
     private joinChannelInternal(identity: Identity, channelId: ChannelId|undefined) {
-
+        identity = {name: identity.name, uuid: identity.uuid};
         const identityHash = getIdentityHash(identity);
         const previousChannelId = this._identityHashToChannelIdMap.get(identityHash);
 
         if (channelId !== previousChannelId) {
-
             if (previousChannelId) {
                 let previousIdentities = this._channelIdToIdentitiesMap.get(previousChannelId)!;
 
