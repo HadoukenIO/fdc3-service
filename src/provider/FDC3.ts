@@ -65,7 +65,7 @@ export class FDC3 {
 
     private async onOpen(payload: OpenArgs): Promise<void> {
         const applications: Application[] = await this.directory.getApplications();
-        const requestedApp: Application|undefined = applications.find((app: Application) => app.name === payload.name);
+        const requestedApp: Application | undefined = applications.find((app: Application) => app.name === payload.name);
         return new Promise<void>((resolve: () => void, reject: (reason: Error) => void) => {
             if (requestedApp) {
                 this.openApplication(requestedApp, payload.context).then(resolve, reject);
@@ -175,7 +175,7 @@ export class FDC3 {
     private applyIntentPreferences(intent: RaiseIntentPayload, applications: Application[], source: Identity): Application[] {
         // Check for any explicit target set within the intent
         if (intent.target) {
-            const preferredApplication: Application|undefined = applications.find((app: Application) => app.appId === intent.target);
+            const preferredApplication: Application | undefined = applications.find((app: Application) => app.appId === intent.target);
             if (preferredApplication) {
                 return [preferredApplication];
             }
@@ -183,7 +183,7 @@ export class FDC3 {
         // Check for any user preferences
         const preferredAppId: string = this.preferences.getPreferredApp(this.metadata.mapUUID(source.uuid)!, intent.intent)!;
         if (applications.length > 1 && preferredAppId) {
-            const preferredApplication: Application|undefined = applications.find((app: Application) => app.appId === preferredAppId);
+            const preferredApplication: Application | undefined = applications.find((app: Application) => app.appId === preferredAppId);
             if (preferredApplication) {
                 // We found an applicable user preference, ignore the other applications
                 return [preferredApplication];
@@ -236,7 +236,7 @@ export class FDC3 {
      */
     private async openApplication(requestedApp: Application, context?: ContextBase): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            const metadata: AppMetadata|null = this.metadata.lookupFromDirectoryId(requestedApp.appId);
+            const metadata: AppMetadata | null = this.metadata.lookupFromDirectoryId(requestedApp.appId);
             const uuid = (metadata && metadata.uuid) || '';
 
             this.isAppRunning(uuid).then((isRunning: boolean) => {
@@ -296,7 +296,7 @@ export class FDC3 {
                             clearTimeout(timeout);
                             if (context) {
                                 // Pass context to application before resolving (assume that the main window is the one with listeners registered)
-                                fin.InterApplicationBus.send({...app.identity, name: app.identity.uuid}, 'context', context)
+                                this.apiHandler.channel.dispatch({...app.identity, name: app.identity.uuid}, 'context', context)
                                     .then(resolve).catch((reason: string) => reject(new Error(reason)));
                             } else {
                                 // Application started successfully - can now resolve
@@ -404,26 +404,26 @@ export class FDC3 {
     }
 
     private async sendContext(identity: Identity, context: ContextBase): Promise<void> {
-        return fin.InterApplicationBus.send(identity, 'context', context);
+        await this.apiHandler.channel.dispatch(identity, 'context', context);
     }
 
     private async sendIntent(intent: RaiseIntentPayload, targetApp: AppMetadata): Promise<void> {
         if (targetApp) {
             console.log('c1a: ', targetApp, intent);
-            return fin.InterApplicationBus.send(targetApp, 'intent', intent);
+            await this.apiHandler.channel.dispatch(targetApp, 'intent', intent);
         } else {
             // Intents should be one-to-one, but as a fallback broadcast this intent
             // to all applications
             console.warn('No target given for intent. Going to broadcast to all applications');
-            return fin.InterApplicationBus.publish('intent', intent);
+            await this.apiHandler.channel.publish('intent', intent);
         }
     }
 
     private async isAppRunning(uuid: string): Promise<boolean> {
         return new Promise<boolean>((resolve: (value: boolean) => void, reject: (reason: string) => void) => {
-            fin.desktop.System.getAllApplications((applicationInfoList: fin.ApplicationInfo[]) => {
+            fin.System.getAllApplications().then((applicationInfoList: fin.ApplicationInfo[]) => {
                 resolve(!!applicationInfoList.find((app: fin.ApplicationInfo) => app.uuid === uuid && app.isRunning));
-            }, reject);
+            });
         });
     }
 
