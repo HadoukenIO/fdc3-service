@@ -4,7 +4,7 @@ import {Identity} from 'openfin/_v2/main';
 import {ContextBase} from '../client/context';
 import {Application} from '../client/directory';
 import {APITopic, BroadcastPayload, FindIntentPayload, RaiseIntentPayload, TopicPayloadMap, TopicResponseMap, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload} from '../client/internal';
-import {AppIntent} from '../client/main';
+import {AppIntent, IntentResolution} from '../client/main';
 import {Channel, ChannelChangedPayload} from '../client/contextChannels';
 
 import {ActionHandlerMap, APIHandler} from './APIHandler';
@@ -108,7 +108,7 @@ export class FDC3 {
         return Promise.all(channelMembers.map(identity => this.sendContext(identity, context))).then(() => {});
     }
 
-    private async onIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<void> {
+    private async onIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<IntentResolution> {
         let applications: Application[] = (await this.onResolve({intent: payload.intent, context: payload.context})).apps;
         if (applications.length > 1) {
             applications = this.applyIntentPreferences(payload, applications, source);
@@ -407,15 +407,16 @@ export class FDC3 {
         return fin.InterApplicationBus.send(identity, 'context', context);
     }
 
-    private async sendIntent(intent: RaiseIntentPayload, targetApp: AppMetadata): Promise<void> {
+    private async sendIntent(intent: RaiseIntentPayload, targetApp: AppMetadata): Promise<IntentResolution> {
         if (targetApp) {
-            console.log('c1a: ', targetApp, intent);
-            return fin.InterApplicationBus.send(targetApp, 'intent', intent);
+            await fin.InterApplicationBus.send(targetApp, 'intent', intent);
+            return {
+                version: '1.0.0',
+                source: targetApp.directoryId,
+                data: null
+            };
         } else {
-            // Intents should be one-to-one, but as a fallback broadcast this intent
-            // to all applications
-            console.warn('No target given for intent. Going to broadcast to all applications');
-            return fin.InterApplicationBus.publish('intent', intent);
+            throw new Error('Internal error: No target given for intent. Ensure target application exists within directory.');
         }
     }
 

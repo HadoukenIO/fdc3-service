@@ -196,7 +196,7 @@ export function broadcast(context: Context): void {
  * agent.raiseIntent("StartChat", newContext, intentR.source);
  * ```
  */
-export async function raiseIntent(intent: string, context: Context, target?: string): Promise<void> {
+export async function raiseIntent(intent: string, context: Context, target?: string): Promise<IntentResolution> {
     return tryServiceDispatch(APITopic.RAISE_INTENT, {intent, context, target});
 }
 

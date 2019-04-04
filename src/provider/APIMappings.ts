@@ -2,7 +2,7 @@ import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 import {Identity} from 'openfin/_v2/main';
 
 import {APITopic, BroadcastPayload, FindIntentPayload, FindIntentsByContextPayload, OpenPayload, RaiseIntentPayload, TopicPayloadMap, TopicResponseMap, GetChannelMembersPayload, GetChannelPayload, JoinChannelPayload, GetAllChannelsPayload} from '../client/internal';
-import {AppIntent} from '../client/main';
+import {AppIntent, IntentResolution} from '../client/main';
 import {Channel} from '../client/contextChannels';
 
 import {ActionHandlerMap} from './APIHandler';
@@ -48,7 +48,7 @@ async function handleBroadcast(payload: BroadcastPayload, source: ProviderIdenti
     throw new NotImplementedError('handleBroadcast');
 }
 
-async function handleRaiseIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<void> {
+async function handleRaiseIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<IntentResolution> {
     // TODO: This should be filled in once provider re-structuring is complete (SERVICE-392)
 
     throw new NotImplementedError('handleRaiseIntent');

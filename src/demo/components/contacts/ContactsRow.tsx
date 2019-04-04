@@ -17,18 +17,18 @@ interface ContactRowProps {
 export function ContactsRow(props: ContactRowProps): React.ReactElement {
     const {item, selected, handleSelect} = props;
 
-    const handleDial = (): Promise<void> => {
+    const handleDial = async (): Promise<void> => {
         if (handleSelect) {
             handleSelect(null);
         }
-        return fdc3.raiseIntent(fdc3.Intents.DIAL_CALL, getContext());
+        await fdc3.raiseIntent(fdc3.Intents.DIAL_CALL, getContext());
     };
 
-    const handleCall = (): Promise<void> => {
+    const handleCall = async (): Promise<void> => {
         if (handleSelect) {
             handleSelect(null);
         }
-        return fdc3.raiseIntent(fdc3.Intents.START_CALL, getContext());
+        await fdc3.raiseIntent(fdc3.Intents.START_CALL, getContext());
     };
 
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
