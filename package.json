@@ -2,7 +2,7 @@
   "name": "openfin-fdc3",
   "version": "0.1.0",
   "description": "",
-  "types": "dist/client/index.d.ts",
+  "types": "dist/client/main.d.ts",
   "main": "dist/client/main-bundle.js",
   "files": [
     "dist/client"
