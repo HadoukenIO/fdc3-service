@@ -4,6 +4,8 @@ import {connect} from 'hadouken-js-adapter';
 
 import {Context, IntentType, ContextListener, IntentListener} from '../../../src/client/main';
 
+declare const global: NodeJS.Global & {__BROWSER__: Browser};
+
 export type TestWindowContext = Window&{
     fin: Fin;
     OpenfinFDC3: typeof import('../../../src/client/main');
@@ -109,17 +111,14 @@ export class OFPuppeteerBrowser {
     // latest version that works with OF v10. TODO: Revisit with newer version of
     // puppeteer once v11 runtime is out (or at least usable)
 
-    // public async mountFunctionOnWindow(executionTarget: Identity, name: string,
-    // fn: Function) {
+    // public async mountFunctionOnWindow(executionTarget: Identity, name: string, fn: Function) {
     //     const page = await this.getPage(executionTarget);
     //     if (!page) {
     //         throw new Error('could not find specified executionTarget');
     //     }
 
-    //     // tslint:disable-next-line: no-any Explicit cast needed to appease
-    //     typescript. Puppeteer types make liberal use of any, which confuses
-    //     things here. return page.exposeFunction(name, fn as (...args: any[]) =>
-    //     any);
+    //     // tslint:disable-next-line: no-any Explicit cast needed to appease typescript
+    //     return page.exposeFunction(name, fn as (...args: any[]) => any);
     // }
 }
 

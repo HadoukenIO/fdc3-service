@@ -1,8 +1,7 @@
 import 'jest';
-import {connect, Fin} from 'hadouken-js-adapter';
-
 import {OrganizationContext} from '../../src/client/main';
 
+import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 
 const testManagerIdentity = {
@@ -15,9 +14,6 @@ const validContext: OrganizationContext = {type: 'organization', name: 'OpenFin'
 // These tests all use the default channel for context broadcasts and listeners
 // Context-passing in a channelled environment is tested in a seperate file
 describe('Context listeners and broadcasting', () => {
-    // Adapter connection is established in setup. Reassign here for convenience
-    const fin: Fin = global.__FIN__;
-
     beforeEach(async () => {
         // The main launcher app should remain running for the duration of all tests.
         await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
@@ -38,7 +34,6 @@ describe('Context listeners and broadcasting', () => {
             // Close down the app once done
             await fin.Application.wrapSync(testAppIdentity).quit(true);
         });
-
 
         test('When calling addContextListener for the first time the promise resolves and there are no errors', async () => {
             await expect(fdc3Remote.addContextListener(testAppIdentity)).resolves.toBeTruthy();
