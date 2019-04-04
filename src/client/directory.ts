@@ -1,3 +1,6 @@
+/**
+ * @module Directory
+ */
 
 /**
  * TypeScript definitions for objects returned by the Application Directory.

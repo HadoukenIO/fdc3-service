@@ -1,3 +1,6 @@
+/**
+ * @module Context
+ */
 
 /**
  * TypeScript definitions for envelope and context objects.
