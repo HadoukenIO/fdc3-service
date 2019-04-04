@@ -10,7 +10,7 @@ let port;
 
 // Should be cmd-line args at some point
 const debugMode = true;
-const skipBuild = true;
+const skipBuild = false;
 
 const cleanup = async res => {
     if (os.platform().match(/^win/)) {
