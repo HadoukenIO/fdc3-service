@@ -20,7 +20,7 @@ describe('Resolving applications by intent', () => {
         beforeAll(async () => {
             // TODO: Replace this hard-coded string once possible (SERVICE-392?)
             // Fecth and store the current app directory
-            directory = await fetch('http://localhost:3923/provider/app-directory.json').then(response => response.json());
+            directory = await fetch('http://localhost:3923/provider/sample-app-directory.json').then(response => response.json());
         });
 
         test(
