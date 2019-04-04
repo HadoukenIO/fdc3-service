@@ -39,7 +39,7 @@ export interface Channel {
 export interface ChannelChangedPayload {
     identity: Identity,
     channel: Channel,
-    previousChannel: Channel
+    previousChannel?: Channel
 }
 
 

@@ -34,7 +34,7 @@
   "homepage": "https://github.com/HadoukenIO/fdc3-service#readme",
   "dependencies": {},
   "devDependencies": {
-    "@types/jest": "^22.2.3",
+    "@types/jest": "^24.0.11",
     "@types/mkdirp": "^0.5.2",
     "@types/moment": "^2.13.0",
     "@types/node": "^9.4.6",
