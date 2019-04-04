@@ -11,6 +11,9 @@
         "plugin:import/errors",
         "plugin:react/recommended"
     ],
+    "plugins": [
+        "jsdoc"
+    ],
     "globals": {
         "fin": "readonly"
     },
@@ -60,16 +63,28 @@
         "prefer-const": "error",
         "prefer-promise-reject-errors": "error",
         "quotes": ["error", "single"],
-        "require-jsdoc": "warn",
+        "require-jsdoc": "off",
         "semi": "error",
         "space-in-parens": "error",
         "spaced-comment": "error",
-        "valid-jsdoc": ["warn", {
-            "requireReturn": false,
-            "requireReturnType": false,
-            "requireParamType": false,
-            "requireParamDescription": true,
-            "requireReturnDescription": false
-        }]
+        "jsdoc/check-examples": 1,
+        "jsdoc/check-param-names": 1,
+        "jsdoc/check-tag-names": 1,
+        "jsdoc/check-types": 1,
+        "jsdoc/newline-after-description": 0,
+        "jsdoc/no-undefined-types": 1,
+        "jsdoc/require-description": 0,
+        "jsdoc/require-description-complete-sentence": 0,
+        "jsdoc/require-example": 0,
+        "jsdoc/require-hyphen-before-param-description": 0,
+        "jsdoc/require-param": 1,
+        "jsdoc/require-param-description": 1,
+        "jsdoc/require-param-name": 0,
+        "jsdoc/require-param-type": 0,
+        "jsdoc/require-returns": 0,
+        "jsdoc/require-returns-check": 0,
+        "jsdoc/require-returns-description": 1,
+        "jsdoc/require-returns-type": 0,
+        "jsdoc/valid-types": 1
     }
 }
