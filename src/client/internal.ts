@@ -1,5 +1,18 @@
+/**
+ * @hidden
+ */
+
+/**
+ * File contains types used to communicate between client and provider.
+ *
+ * These types are a part of the client, but are not required by applications wishing to interact with the service.
+ * This file is excluded from the public-facing TypeScript documentation.
+ */
+import {Identity} from 'openfin/_v2/main';
+
 import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution} from './main';
+import {Channel, ChannelId} from './contextChannels';
 
 /**
  * The identity of the main application window of the service provider
@@ -22,7 +35,11 @@ export enum APITopic {
     FIND_INTENT = 'FIND-INTENT',
     FIND_INTENTS_BY_CONTEXT = 'FIND-INTENT-BY-CONTEXT',
     BROADCAST = 'BROADCAST',
-    RAISE_INTENT = 'RAISE-INTENT'
+    RAISE_INTENT = 'RAISE-INTENT',
+    GET_ALL_CHANNELS = 'GET-ALL-CHANNELS',
+    JOIN_CHANNEL = 'JOIN-CHANNEL',
+    GET_CHANNEL = 'GET-CHANNEL',
+    GET_CHANNEL_MEMBERS = 'GET-CHANNEL-MEMBERS'
 }
 
 export interface TopicPayloadMap {
@@ -31,6 +48,10 @@ export interface TopicPayloadMap {
     [APITopic.FIND_INTENTS_BY_CONTEXT]: FindIntentsByContextPayload;
     [APITopic.BROADCAST]: BroadcastPayload;
     [APITopic.RAISE_INTENT]: RaiseIntentPayload;
+    [APITopic.GET_ALL_CHANNELS]: GetAllChannelsPayload;
+    [APITopic.JOIN_CHANNEL]: JoinChannelPayload;
+    [APITopic.GET_CHANNEL]: GetChannelPayload;
+    [APITopic.GET_CHANNEL_MEMBERS]: GetChannelMembersPayload;
 }
 
 export interface TopicResponseMap {
@@ -38,11 +59,11 @@ export interface TopicResponseMap {
     [APITopic.FIND_INTENT]: AppIntent;
     [APITopic.FIND_INTENTS_BY_CONTEXT]: AppIntent[];
     [APITopic.BROADCAST]: void;
-    // This is not strictly to spec as target should be able to return data.
-    // Needs a not-insignificant amount of provider changes to allow the two-way
-    // transmission of data before it can be put back to IntentResponse
-    // TODO: Revisit after SERVICE-392
-    [APITopic.RAISE_INTENT]: void;
+    [APITopic.RAISE_INTENT]: IntentResolution;
+    [APITopic.GET_ALL_CHANNELS]: Channel[];
+    [APITopic.JOIN_CHANNEL]: void;
+    [APITopic.GET_CHANNEL]: Channel;
+    [APITopic.GET_CHANNEL_MEMBERS]: Identity[];
 }
 
 export interface OpenPayload {
@@ -63,4 +84,21 @@ export interface RaiseIntentPayload {
     intent: string;
     context: Context;
     target?: string;
+}
+
+export interface GetAllChannelsPayload {
+
+}
+
+export interface JoinChannelPayload {
+    id: ChannelId,
+    identity?: Identity
+}
+
+export interface GetChannelPayload {
+    identity?: Identity
+}
+
+export interface GetChannelMembersPayload {
+    id: ChannelId;
 }

@@ -3,13 +3,15 @@ import {Identity} from 'openfin/_v2/main';
 
 import {ContextBase} from '../client/context';
 import {Application} from '../client/directory';
-import {APITopic, BroadcastPayload, FindIntentPayload, RaiseIntentPayload, TopicPayloadMap, TopicResponseMap} from '../client/internal';
-import {AppIntent} from '../client/main';
+import {APITopic, BroadcastPayload, FindIntentPayload, RaiseIntentPayload, TopicPayloadMap, TopicResponseMap, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload} from '../client/internal';
+import {AppIntent, IntentResolution} from '../client/main';
+import {Channel, ChannelChangedPayload} from '../client/contextChannels';
 
 import {ActionHandlerMap, APIHandler} from './APIHandler';
 import {AppDirectory} from './AppDirectory';
 import {AppMetadata, MetadataStore} from './MetadataStore';
 import {PreferencesStore} from './PreferencesStore';
+import {createChannelModel, ChannelModel} from './ChannelModel';
 
 import {DefaultAction, OpenArgs, QueuedIntent, ResolveArgs, SelectorResultArgs} from './index';
 
@@ -24,6 +26,7 @@ export class FDC3 {
     private directory: AppDirectory;
     private metadata: MetadataStore;
     private preferences: PreferencesStore;
+    private channelModel: ChannelModel;
     private uiQueue: QueuedIntent[];
     private apiHandler: APIHandler<APITopic, TopicPayloadMap, TopicResponseMap>;
     constructor() {
@@ -31,7 +34,10 @@ export class FDC3 {
         this.metadata = new MetadataStore();
         this.preferences = new PreferencesStore();
         this.apiHandler = new APIHandler();
+        this.channelModel = createChannelModel(this.apiHandler.onConnection, this.apiHandler.onDisconnection);
         this.uiQueue = [];
+
+        this.channelModel.onChannelChanged.add(this.onChannelChangedHandler, this);
     }
 
     public async register(): Promise<void> {
@@ -42,7 +48,11 @@ export class FDC3 {
             [APITopic.FIND_INTENT]: this.onResolve.bind(this),
             [APITopic.FIND_INTENTS_BY_CONTEXT]: () => new Promise<AppIntent[]>(() => {}),
             [APITopic.BROADCAST]: this.onBroadcast.bind(this),
-            [APITopic.RAISE_INTENT]: this.onIntent.bind(this)
+            [APITopic.RAISE_INTENT]: this.onIntent.bind(this),
+            [APITopic.GET_ALL_CHANNELS]: this.onGetAllChannels.bind(this),
+            [APITopic.JOIN_CHANNEL]: this.onJoinChannel.bind(this),
+            [APITopic.GET_CHANNEL]: this.onGetChannel.bind(this),
+            [APITopic.GET_CHANNEL_MEMBERS]: this.onGetChannelMembers.bind(this)
         };
 
         console.log('registering the service.');
@@ -55,7 +65,7 @@ export class FDC3 {
 
     private async onOpen(payload: OpenArgs): Promise<void> {
         const applications: Application[] = await this.directory.getApplications();
-        const requestedApp: Application|undefined = applications.find((app: Application) => app.name === payload.name);
+        const requestedApp: Application | undefined = applications.find((app: Application) => app.name === payload.name);
         return new Promise<void>((resolve: () => void, reject: (reason: Error) => void) => {
             if (requestedApp) {
                 this.openApplication(requestedApp, payload.context).then(resolve, reject);
@@ -87,11 +97,18 @@ export class FDC3 {
         }
     }
 
-    private async onBroadcast(payload: BroadcastPayload): Promise<void> {
-        return this.sendContext(payload.context);
+    private async onBroadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {
+        const channel = this.channelModel.getChannel(source);
+        const channelMembers = this.channelModel.getChannelMembers(channel.id);
+
+        const context = payload.context;
+
+        this.channelModel.setContext(channel.id, context);
+
+        return Promise.all(channelMembers.map(identity => this.sendContext(identity, context))).then(() => {});
     }
 
-    private async onIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<void> {
+    private async onIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<IntentResolution> {
         let applications: Application[] = (await this.onResolve({intent: payload.intent, context: payload.context})).apps;
         if (applications.length > 1) {
             applications = this.applyIntentPreferences(payload, applications, source);
@@ -110,6 +127,31 @@ export class FDC3 {
         } else {
             throw new Error('No applications available to handle this intent');
         }
+    }
+
+    private async onGetAllChannels(payload: GetAllChannelsPayload, source: ProviderIdentity): Promise<Channel[]> {
+        return this.channelModel.getAllChannels();
+    }
+
+    private async onJoinChannel(payload: JoinChannelPayload, source: ProviderIdentity): Promise<void> {
+        const identity = payload.identity || source;
+
+        this.channelModel.joinChannel(identity, payload.id);
+        const context = this.channelModel.getContext(payload.id);
+
+        if (context) {
+            this.sendContext(identity, context);
+        }
+    }
+
+    private async onGetChannel(payload: GetChannelPayload, source: ProviderIdentity): Promise<Channel> {
+        const identity = payload.identity || source;
+
+        return this.channelModel.getChannel(identity);
+    }
+
+    private async onGetChannelMembers(payload: GetChannelMembersPayload, source: ProviderIdentity): Promise<Identity[]> {
+        return this.channelModel.getChannelMembers(payload.id);
     }
 
     /**
@@ -133,7 +175,7 @@ export class FDC3 {
     private applyIntentPreferences(intent: RaiseIntentPayload, applications: Application[], source: Identity): Application[] {
         // Check for any explicit target set within the intent
         if (intent.target) {
-            const preferredApplication: Application|undefined = applications.find((app: Application) => app.appId === intent.target);
+            const preferredApplication: Application | undefined = applications.find((app: Application) => app.appId === intent.target);
             if (preferredApplication) {
                 return [preferredApplication];
             }
@@ -141,7 +183,7 @@ export class FDC3 {
         // Check for any user preferences
         const preferredAppId: string = this.preferences.getPreferredApp(this.metadata.mapUUID(source.uuid)!, intent.intent)!;
         if (applications.length > 1 && preferredAppId) {
-            const preferredApplication: Application|undefined = applications.find((app: Application) => app.appId === preferredAppId);
+            const preferredApplication: Application | undefined = applications.find((app: Application) => app.appId === preferredAppId);
             if (preferredApplication) {
                 // We found an applicable user preference, ignore the other applications
                 return [preferredApplication];
@@ -194,7 +236,7 @@ export class FDC3 {
      */
     private async openApplication(requestedApp: Application, context?: ContextBase): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            const metadata: AppMetadata|null = this.metadata.lookupFromDirectoryId(requestedApp.appId);
+            const metadata: AppMetadata | null = this.metadata.lookupFromDirectoryId(requestedApp.appId);
             const uuid = (metadata && metadata.uuid) || '';
 
             this.isAppRunning(uuid).then((isRunning: boolean) => {
@@ -205,7 +247,7 @@ export class FDC3 {
                     }, reject);
                 } else if (context) {
                     // Pass new context to existing application instance and focus
-                    this.sendContext(context).then(resolve, reject);
+                    this.sendContext(metadata!, context).then(resolve, reject);
                     this.focusApplication(metadata!);
                 } else {
                     // Bring application to foreground and then resolve
@@ -253,8 +295,9 @@ export class FDC3 {
                         .then(() => {
                             clearTimeout(timeout);
                             if (context) {
-                                // Pass context to application before resolving
-                                fin.InterApplicationBus.publish('context', {context}).then(resolve).catch((reason: string) => reject(new Error(reason)));
+                                // Pass context to application before resolving (assume that the main window is the one with listeners registered)
+                                this.apiHandler.channel.dispatch({...app.identity, name: app.identity.uuid}, 'context', context)
+                                    .then(resolve).catch((reason: string) => reject(new Error(reason)));
                             } else {
                                 // Application started successfully - can now resolve
                                 resolve();
@@ -360,32 +403,37 @@ export class FDC3 {
         });
     }
 
-    private async sendContext(context: ContextBase): Promise<void> {
-        return fin.InterApplicationBus.publish('context', context);
+    private async sendContext(identity: Identity, context: ContextBase): Promise<void> {
+        await this.apiHandler.channel.dispatch(identity, 'context', context);
     }
 
-    private async sendIntent(intent: RaiseIntentPayload, targetApp: AppMetadata): Promise<void> {
+    private async sendIntent(intent: RaiseIntentPayload, targetApp: AppMetadata): Promise<IntentResolution> {
         if (targetApp) {
-            console.log('c1a: ', targetApp, intent);
-            return fin.InterApplicationBus.send(targetApp, 'intent', intent);
+            await this.apiHandler.channel.dispatch(targetApp, 'intent', intent);
+            return {
+                version: '1.0.0',
+                source: targetApp.directoryId,
+                data: null
+            };
         } else {
-            // Intents should be one-to-one, but as a fallback broadcast this intent
-            // to all applications
-            console.warn('No target given for intent. Going to broadcast to all applications');
-            return fin.InterApplicationBus.publish('intent', intent);
+            throw new Error('Internal error: No target given for intent. Ensure target application exists within directory.');
         }
     }
 
     private async isAppRunning(uuid: string): Promise<boolean> {
         return new Promise<boolean>((resolve: (value: boolean) => void, reject: (reason: string) => void) => {
-            fin.desktop.System.getAllApplications((applicationInfoList: fin.ApplicationInfo[]) => {
+            fin.System.getAllApplications().then((applicationInfoList: fin.ApplicationInfo[]) => {
                 resolve(!!applicationInfoList.find((app: fin.ApplicationInfo) => app.uuid === uuid && app.isRunning));
-            }, reject);
+            });
         });
     }
 
     private createHandle(): number {
         // Returns a large random integer
         return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+    }
+
+    private onChannelChangedHandler(payload: ChannelChangedPayload): void {
+        this.apiHandler.channel.publish('channel-changed', payload);
     }
 }

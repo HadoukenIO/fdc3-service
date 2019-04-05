@@ -12,7 +12,7 @@ const webpackTools = require('openfin-service-tooling').webpackTools;
 module.exports = [
     webpackTools.createConfig(`${outputDir}/client`, './src/client/main.ts', undefined, webpackTools.versionPlugin),
     webpackTools.createConfig(`${outputDir}/client`, './src/client/main.ts', {
-        minify: true, isLibrary: true, libraryName: 'OpenfinFDC3', outputFilename: 'openfin-fdc3'
+        minify: true, isLibrary: true, libraryName: 'fdc3', outputFilename: 'openfin-fdc3'
     }, webpackTools.versionPlugin),
     webpackTools.createConfig(`${outputDir}/provider`, './src/provider/index.ts', undefined, webpackTools.manifestPlugin, webpackTools.versionPlugin),
     webpackTools.createConfig(`${outputDir}/provider/ui`, {

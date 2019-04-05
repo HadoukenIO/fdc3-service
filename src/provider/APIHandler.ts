@@ -4,6 +4,8 @@ import {Identity} from 'openfin/_v2/main';
 
 import {SERVICE_CHANNEL} from '../client/internal';
 
+import {Signal1} from './Signal';
+
 export type ActionHandler<T extends Actions, Actions extends string, Payloads extends {[K in Actions]: unknown}, Responses extends {[K in Actions]: unknown}> =
     (() => Promise<Responses[T]>)|((payload: Payloads[T]) => Promise<Responses[T]>)|((payload: Payloads[T], source: ProviderIdentity) => Promise<Responses[T]>);
 
@@ -13,6 +15,9 @@ export type ActionHandlerMap<Actions extends string, Payloads extends {[K in Act
 
 
 export class APIHandler<A extends string, P extends {[K in A]: unknown}, R extends {[K in A]: unknown}> {
+    public readonly onConnection: Signal1<Identity> = new Signal1<Identity>();
+    public readonly onDisconnection: Signal1<Identity> = new Signal1<Identity>();
+
     private _providerChannel!: ChannelProvider;
 
     public get channel(): ChannelProvider {
@@ -32,7 +37,8 @@ export class APIHandler<A extends string, P extends {[K in A]: unknown}, R exten
     public async registerListeners(actionHandlerMap: ActionHandlerMap<A, P, R>): Promise<void> {
         const providerChannel: ChannelProvider = this._providerChannel = await fin.InterApplicationBus.Channel.create(SERVICE_CHANNEL);
 
-        providerChannel.onConnection(this.onConnection);
+        providerChannel.onConnection(this.onConnectionHandler.bind(this));
+        providerChannel.onDisconnection(this.onDisconnectionHandler.bind(this));
 
         for (const action in actionHandlerMap) {
             if (actionHandlerMap.hasOwnProperty(action)) {
@@ -50,11 +56,17 @@ export class APIHandler<A extends string, P extends {[K in A]: unknown}, R exten
 
     // TODO?: Remove the need for this any by defining connection payload type?
     // tslint:disable-next-line:no-any
-    private onConnection(app: Identity, payload?: any): void {
+    private onConnectionHandler(app: Identity, payload?: any): void {
         if (payload && payload.version && payload.version.length > 0) {
             console.log(`connection from client: ${app.name}, version: ${payload.version}`);
         } else {
             console.log(`connection from client: ${app.name}, unable to determine version`);
         }
+
+        this.onConnection.emit(app);
+    }
+
+    private onDisconnectionHandler(app:Identity): void {
+        this.onDisconnection.emit(app);
     }
 }

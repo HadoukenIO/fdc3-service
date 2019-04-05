@@ -2,7 +2,7 @@
   "name": "openfin-fdc3",
   "version": "0.1.0",
   "description": "",
-  "types": "dist/client/index.d.ts",
+  "types": "dist/client/main.d.ts",
   "main": "dist/client/main-bundle.js",
   "files": [
     "dist/client"
@@ -14,7 +14,7 @@
     "check": "svc-tools check",
     "fix": "svc-tools fix",
     "clean": "rimraf dist gen",
-    "docs": "typedoc --name \"OpenFin FDC3\" --out ./dist/docs --excludeNotExported --excludePrivate --excludeProtected --hideGenerator --tsconfig src/client/tsconfig.json --readme none",
+    "docs": "typedoc --name \"OpenFin FDC3\" --theme ./typedoc-template --out ./dist/docs --excludeNotExported --excludePrivate --excludeProtected --hideGenerator --tsconfig src/client/tsconfig.json --readme none",
     "posttest": "npm run check",
     "prepack": "npm run clean && npm run build && tsc -p src/client/tsconfig.types.json",
     "build": "svc-tools build -- --mode production",
@@ -34,7 +34,7 @@
   "homepage": "https://github.com/HadoukenIO/fdc3-service#readme",
   "dependencies": {},
   "devDependencies": {
-    "@types/jest": "^22.2.3",
+    "@types/jest": "^24.0.11",
     "@types/mkdirp": "^0.5.2",
     "@types/moment": "^2.13.0",
     "@types/node-fetch": "^2.1.6",
@@ -60,7 +60,8 @@
     "rimraf": "^2.6.3",
     "ts-jest": "^24.0.0",
     "tslint-react": "^3.6.0",
-    "typedoc": "^0.14.2",
+    "typedoc": "^0.12.0",
+    "typedoc-plugin-external-module-name": "^1.1.3",
     "typescript": "^3.1.1"
   },
   "precommit": {
