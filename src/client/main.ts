@@ -1,7 +1,10 @@
+/**
+ * @module Index
+ */
+
 import {channelPromise, tryServiceDispatch} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
-import {IntentType} from './intents';
 import {APITopic, RaiseIntentPayload, SERVICE_IDENTITY} from './internal';
 
 /**

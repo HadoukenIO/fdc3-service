@@ -1,3 +1,6 @@
+/**
+ * @module Intents
+ */
 
 /**
  * TypeScript definitions for FDC3-defined intents.
