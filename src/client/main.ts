@@ -2,10 +2,13 @@
  * @module Index
  */
 
-import {channelPromise, tryServiceDispatch} from './connection';
+import {Identity} from 'openfin/_v2/main';
+
+import {channelPromise, tryServiceDispatch, eventEmitter} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
 import {APITopic, RaiseIntentPayload, SERVICE_IDENTITY} from './internal';
+import {ChannelChangedPayload} from './contextChannels';
 
 /**
  * This file was copied from the FDC3 v1 specification.
@@ -66,6 +69,14 @@ export interface IntentResolution {
     version: string;
 }
 
+export type EventPayload = ChannelChangedPayload;
+export type Event = 'channel-changed';
+
+export interface EventChannelPayload {
+    event: Event,
+    payload: EventPayload
+}
+
 export type Listener = ContextListener | IntentListener;
 
 export interface ContextListener {
@@ -79,6 +90,15 @@ export interface ContextListener {
 export interface IntentListener {
     intent: string;
     handler: (context: Context) => void;
+    /**
+     * Unsubscribe the listener object.
+     */
+    unsubscribe: () => void;
+}
+
+export interface EventListener {
+    event: Event
+    handler: (payload: any) => void;
     /**
      * Unsubscribe the listener object.
      */
@@ -205,6 +225,7 @@ export async function raiseIntent(intent: string, context: Context, target?: str
 
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
+const eventListeners: EventListener[] = [];
 
 if (channelPromise) {
     channelPromise.then((channel) => {
@@ -264,5 +285,31 @@ export function addContextListener(handler: (context: Context) => void): Context
         }
     };
     contextListeners.push(listener);
+    return listener;
+}
+
+/**
+ * Event that is fired whenever a window changes from one channel to another.
+ *
+ * This includes switching to/from the global channel. The `channel` and
+ * `previousChannel` fields use the same conventions for denoting the global channel as `getChannel`.
+ */
+export function addEventListener(event: 'channel-changed', handler: (event: ChannelChangedPayload) => void, identity?: Identity): EventListener;
+
+export function addEventListener(event: Event, handler: (event: EventPayload) => void, identity?: Identity): EventListener {
+    const listener = {event, handler, unsubscribe: () => {
+        const index: number = eventListeners.indexOf(listener);
+
+        if (index >= 0) {
+            eventListeners.splice(index, 1);
+        }
+
+        eventEmitter.removeListener(event, handler);
+        return index >= 0;
+    }};
+
+    eventListeners.push(listener);
+    eventEmitter.addListener(event, handler);
+
     return listener;
 }

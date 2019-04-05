@@ -434,6 +434,6 @@ export class FDC3 {
     }
 
     private onChannelChangedHandler(payload: ChannelChangedPayload): void {
-        this.apiHandler.channel.publish('channel-changed', payload);
+        this.apiHandler.channel.publish('event', {type: 'channel-changed', ...payload});
     }
 }
