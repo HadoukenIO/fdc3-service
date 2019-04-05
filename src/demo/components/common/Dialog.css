@@ -1,0 +1,11 @@
+.dialog {
+    padding-top: 15px;
+}
+
+.dialog .w3-modal-content {
+    padding: 20px 0;
+}
+
+.dialog button {
+    margin: 0 5px;
+}

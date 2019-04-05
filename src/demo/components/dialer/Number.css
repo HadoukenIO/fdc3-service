@@ -1,0 +1,16 @@
+.number {
+    position: relative;
+}
+
+.number i {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    padding-top: 12px;
+}
+
+.number input {
+    text-align: center;
+    width: 100%;
+}

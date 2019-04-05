@@ -1,0 +1,16 @@
+{
+    "devtools_port": 9090,
+    "licenseKey": "64605fac-add3-48a0-8710-64b38e96a2dd",
+    "startup_app": {
+        "name": "FDC3-Service",
+        "description": "OpenFin FDC3 Desktop Service",
+        "url": "https://cdn.openfin.co/services/openfin/fdc3/provider.html",
+        "uuid": "fdc3-service",
+        "autoShow": true,
+        "defaultHeight": 400,
+        "defaultWidth": 500
+    },
+    "runtime": {
+        "version": "10.66.39.43"
+    }
+}

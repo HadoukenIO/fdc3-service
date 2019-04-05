@@ -1,0 +1,16 @@
+{
+    "extends": "./node_modules/gts/tsconfig-google.json",
+    "compilerOptions": {
+        "target": "es2017",
+        "outDir": "dist",
+        "rootDir": "src",
+        "lib": ["dom", "es2017"],
+        "types": ["node", "openfin"],
+        "jsx": "react",
+        "sourceMap": true,
+        "declaration": false
+    },
+    "include": [
+        "src"
+    ]
+}

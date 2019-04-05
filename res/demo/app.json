@@ -1,0 +1,22 @@
+{
+    "devtools_port": 9090,
+    "licenseKey": "64605fac-add3-48a0-8710-64b38e96a2dd",
+    "startup_app": {
+        "name": "fdc3-launcher",
+        "description": "OpenFin FDC3 Desktop Service",
+        "url": "http://localhost:3923/demo/index.html",
+        "uuid": "fdc3-launcher",
+        "autoShow": true,
+        "defaultHeight": 400,
+        "defaultWidth": 500
+    },
+    "services": [
+        {
+            "name": "fdc3",
+            "manifestUrl": "http://localhost:3923/provider/app.json"
+        }
+    ],
+    "runtime": {
+        "version": "10.66.39.43"
+    }
+}
