@@ -2,7 +2,6 @@ import 'jest';
 import {connect, Fin, Identity, Application} from 'hadouken-js-adapter';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
-import {delay} from './utils/delay';
 
 const testManagerIdentity = {uuid: 'test-app', name: 'test-app'};
 

@@ -31,7 +31,7 @@
 
             const events = [
                 'channel-changed'
-            ]
+            ];
     
             const nextContextListenerID = window.contextListeners.length;
             window.contextListeners[nextContextListenerID] = fdc3.addContextListener((context) => {
@@ -46,7 +46,7 @@
             }
 
             for (const event of events) {
-                const nextEventListenerID = window.intentListeners.length;
+                const nextEventListenerID = window.eventListeners.length;
                 window.eventListeners[nextEventListenerID] = OpenfinFDC3.addEventListener(event, (payload) => {
                     receivedEvents.push({id: nextEventListenerID, payload});
                 });
