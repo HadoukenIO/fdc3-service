@@ -115,7 +115,7 @@ const versionPlugin = new webpack.DefinePlugin({ PACKAGE_VERSION: `'${version}'`
  * Modules to be exported
  */
 module.exports = [
-    createConfig(`${outputDir}/client`, './src/client/main.ts', undefined, versionPlugin),
+    createConfig(`${outputDir}/client`, './src/client/main.ts', {minify: false, isLibrary: true, libraryName: 'fdc3'}, versionPlugin),
     createConfig(`${outputDir}/client`, './src/client/main.ts', {minify: true, isLibrary: true, libraryName: 'fdc3', outputFilename: "openfin-fdc3"}, versionPlugin),
     createConfig(`${outputDir}/provider`, './src/provider/index.ts', undefined, manifestPlugin, versionPlugin),
     createConfig(`${outputDir}/provider/ui`, {

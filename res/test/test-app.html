@@ -34,13 +34,13 @@
             ]
     
             const nextContextListenerID = window.contextListeners.length;
-            window.contextListeners[nextContextListenerID] = OpenfinFDC3.addContextListener((context) => {
+            window.contextListeners[nextContextListenerID] = fdc3.addContextListener((context) => {
                 receivedContexts.push({listenerID: nextContextListenerID, context});
             });
     
             for (const intent of intents) {
                 const nextIntentListenerID = window.intentListeners.length;
-                window.intentListeners[nextIntentListenerID] = OpenfinFDC3.addIntentListener(intent, (context) => {
+                window.intentListeners[nextIntentListenerID] = fdc3.addIntentListener(intent, (context) => {
                     receivedIntents.push({id: nextIntentListenerID, intent, context});
                 });
             }

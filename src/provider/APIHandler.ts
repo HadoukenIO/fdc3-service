@@ -63,7 +63,11 @@ export class APIHandler<A extends string, P extends {[K in A]: unknown}, R exten
             console.log(`connection from client: ${app.name}, unable to determine version`);
         }
 
-        this.onConnection.emit(app);
+        // The 'onConnection' callback fires *just before* the channel is ready.
+        // Delaying the firing of our signal slightly, to ensure client is definitely contactable.
+        setImmediate(() => {
+            this.onConnection.emit(app);
+        });
     }
 
     private onDisconnectionHandler(app:Identity): void {
