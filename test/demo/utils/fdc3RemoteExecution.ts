@@ -20,13 +20,13 @@ const ofBrowser = new OFPuppeteerBrowser();
 
 export async function open(executionTarget: Identity, name: string, context?: Context): Promise<void> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, name: string, context?: Context): Promise<void> {
-        return this.OpenfinFDC3.open(name, context);
+        return this.fdc3.open(name, context);
     }, name, context);
 }
 
 export async function resolve(executionTarget: Identity, intent: IntentType, context?: Context): Promise<Application[]> {
     return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, intent: IntentType, context?: Context): Promise<Application[]> {
-        return this.OpenfinFDC3.findIntent(intent, context).then(appIntent => appIntent.apps);
+        return this.fdc3.findIntent(intent, context).then(appIntent => appIntent.apps);
     }, intent, context);
 }
 
@@ -36,7 +36,7 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
             executionTarget,
             async function(this: TestWindowContext, context: Context):
                 Promise<void> {
-                return this.OpenfinFDC3.broadcast(context);
+                return this.fdc3.broadcast(context);
             },
             context
         )
@@ -45,25 +45,25 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
 
 export async function getAllChannels(executionTarget: Identity): Promise<Channel[]> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext): Promise<Channel[]> {
-        return this.OpenfinFDC3.getAllChannels();
+        return this.fdc3.getAllChannels();
     });
 }
 
 export async function joinChannel(executionTarget: Identity, channelId: ChannelId, identity?: Identity): Promise<void> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, channelId: ChannelId, identity?: Identity): Promise<void> {
-        return this.OpenfinFDC3.joinChannel(channelId, identity);
+        return this.fdc3.joinChannel(channelId, identity);
     }, channelId, identity);
 }
 
 export async function getChannel(executionTarget: Identity, identity?: Identity): Promise<Channel> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, identity?: Identity): Promise<Channel> {
-        return this.OpenfinFDC3.getChannel(identity);
+        return this.fdc3.getChannel(identity);
     }, identity);
 }
 
 export async function getChannelMembers(executionTarget: Identity, channelId: ChannelId): Promise<Identity[]> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, channelId: ChannelId): Promise<Identity[]> {
-        return this.OpenfinFDC3.getChannelMembers(channelId);
+        return this.fdc3.getChannelMembers(channelId);
     }, channelId);
 }
 
@@ -78,7 +78,7 @@ export interface RemoteContextListener {
 export async function addContextListener(executionTarget: Identity): Promise<RemoteContextListener> {
     const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext): number {
         const listenerID = this.contextListeners.length;
-        this.contextListeners[listenerID] = this.OpenfinFDC3.addContextListener((context) => {
+        this.contextListeners[listenerID] = this.fdc3.addContextListener((context) => {
             this.receivedContexts.push({listenerID, context});
         });
         return listenerID;

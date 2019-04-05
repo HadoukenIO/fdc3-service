@@ -8,7 +8,7 @@ declare const global: NodeJS.Global & {__BROWSER__: Browser};
 
 export type TestWindowContext = Window&{
     fin: Fin;
-    OpenfinFDC3: typeof import('../../../src/client/main');
+    fdc3: typeof import('../../../src/client/main');
     contextListeners: ContextListener[];
     intentListeners: IntentListener[];
     receivedContexts: {listenerID: number, context: Context}[];
