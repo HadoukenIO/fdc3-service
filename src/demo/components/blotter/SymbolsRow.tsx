@@ -72,11 +72,11 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
         }
     };
 
-    const chartIntentAction = () => {
+    const chartIntentAction = async () => {
         if (handleSelect) {
             handleSelect(null);
         }
-        return fdc3.raiseIntent(fdc3.Intents.VIEW_CHART, getContext());
+        await fdc3.raiseIntent(fdc3.Intents.VIEW_CHART, getContext());
     };
 
     const getContext = () => {
