@@ -2,7 +2,7 @@ import {Fin, Identity} from 'openfin/_v2/main';
 import {Browser, Page} from 'puppeteer';
 import {connect} from 'hadouken-js-adapter';
 
-import {Context, IntentType, ContextListener, IntentListener} from '../../../src/client/main';
+import {Context, IntentType, ContextListener, IntentListener, EventListener, EventPayload, Event} from '../../../src/client/main';
 
 declare const global: NodeJS.Global & {__BROWSER__: Browser};
 
@@ -11,7 +11,9 @@ export type TestWindowContext = Window&{
     fdc3: typeof import('../../../src/client/main');
     contextListeners: ContextListener[];
     intentListeners: IntentListener[];
+    eventListeners: EventListener[];
     receivedContexts: {listenerID: number, context: Context}[];
+    receivedEvents: {listenerID: number, payload: EventPayload}[];
     receivedIntents: {listenerID: number, intent: IntentType, context: Context}[];
     getNextContextListenerID: () => number;
     getNextIntentListenerID: () => number;
