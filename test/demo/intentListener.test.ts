@@ -10,7 +10,8 @@ const testManagerIdentity = {
 
 const testAppIdentity = {
     uuid: 'test-app-1',
-    name: 'test-app-1'
+    name: 'test-app-1',
+    appId: '100'
 };
 
 const validPayload = {
@@ -58,7 +59,7 @@ describe('Intent listeners and raising intents', () => {
                 });
 
                 test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
-                    await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, '100');
+                    await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.appId);
 
                     const receivedContexts = await listener.getReceivedContexts();
                     expect(receivedContexts.length).toBe(1);
