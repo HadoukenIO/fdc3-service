@@ -20,7 +20,7 @@
     "build": "svc-tools build --mode production",
     "build:dev": "svc-tools build --mode development",
     "zip": "svc-tools zip",
-    "start": "svc-tools start --mode production"
+    "start": "svc-tools start"
   },
   "repository": {
     "type": "git",
