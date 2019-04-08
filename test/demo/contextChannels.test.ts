@@ -69,12 +69,11 @@ describe('When broadcasting on global channel', () => {
 
         // Check the global window received our test context
         const globalContexts = await globalListener.getReceivedContexts();
-        expect(globalContexts.length).toBe(1);
-        expect(globalContexts[0]).toEqual(testContext);
+        expect(globalContexts).toEqual([testContext]);
 
         // Check the blue window received no context
         const blueContexts = await blueListener.getReceivedContexts();
-        expect(blueContexts.length).toBe(0);
+        expect(blueContexts).toHaveLength(0);
     });
 
     it('Context is received by window that has left and rejoined global channel', async () => {
@@ -90,8 +89,7 @@ describe('When broadcasting on global channel', () => {
 
         // Check our window received our test context
         const receivedContexts = await channelChangingListener.getReceivedContexts();
-        expect(receivedContexts.length).toBe(1);
-        expect(receivedContexts[0]).toEqual(testContext);
+        expect(receivedContexts).toEqual([testContext]);
     });
 });
 
@@ -108,15 +106,14 @@ describe('When broadcasting on a user channel', () => {
 
         // Check our red window received our test context
         const redReceivedContexts = await redListener.getReceivedContexts();
-        expect(redReceivedContexts.length).toBe(1);
-        expect(redReceivedContexts[0]).toEqual(testContext);
+        expect(redReceivedContexts).toEqual([testContext]);
 
         const globalReceivedContexts = await globalListener.getReceivedContexts();
-        expect(globalReceivedContexts.length).toBe(0);
+        expect(globalReceivedContexts).toHaveLength(0);
 
         // Check our blue window received no context
         const blueReceivedContexts = await blueListener.getReceivedContexts();
-        expect(blueReceivedContexts.length).toBe(0);
+        expect(blueReceivedContexts).toHaveLength(0);
     });
 
     it('Context is received by window that has left and rejoined user channel', async () => {
@@ -133,8 +130,7 @@ describe('When broadcasting on a user channel', () => {
 
         // Check our blue window received our test context
         const receivedContexts = await channelChangingWindowListener.getReceivedContexts();
-        expect(receivedContexts.length).toBe(1);
-        expect(receivedContexts[0]).toEqual(testContext);
+        expect(receivedContexts).toEqual([testContext]);
     });
 });
 
@@ -200,8 +196,7 @@ describe('When joining a channel', () => {
 
         // Check our now-yellow window received our test context
         const receivedContexts = await channelChangingListener.getReceivedContexts();
-        expect(receivedContexts.length).toBe(1);
-        expect(receivedContexts[0]).toEqual(testContext);
+        expect(receivedContexts).toEqual([testContext]);
     });
 
     it('Window does not receive cached context for global channel', async () => {
@@ -217,7 +212,7 @@ describe('When joining a channel', () => {
 
         // Check our now-global window received no context
         const receivedContexts = await channelChangingWindowListener.getReceivedContexts();
-        expect(receivedContexts.length).toBe(0);
+        expect(receivedContexts).toHaveLength(0);
     });
 
     it('channel-changed event is fired for user channel', async () => {
@@ -230,7 +225,7 @@ describe('When joining a channel', () => {
 
         // Check we received a channel-changed event
         const payload = await listener.getReceivedEventPayload();
-        expect(payload.length).toBe(1);
+        expect(payload).toHaveLength(1);
         expect(payload[0]).toHaveProperty('channel.id', 'green');
         expect(payload[0]).toHaveProperty('previousChannel.id', 'global');
         expect(payload[0]).toHaveProperty('identity', channelChangingWindow);
@@ -246,7 +241,7 @@ describe('When joining a channel', () => {
 
         // Check we received a channel-changed event
         const payload = await listener.getReceivedEventPayload();
-        expect(payload.length).toBe(1);
+        expect(payload).toHaveLength(1);
         expect(payload[0]).toHaveProperty('channel.id', 'global');
         expect(payload[0]).toHaveProperty('previousChannel.id', 'blue');
         expect(payload[0]).toHaveProperty('identity', channelChangingWindow);
@@ -261,7 +256,7 @@ describe('When starting an app', () => {
 
         // Check we received a channel-changed event
         const payload = await listener.getReceivedEventPayload();
-        expect(payload.length).toBe(1);
+        expect(payload).toHaveLength(1);
         expect(payload[0]).toHaveProperty('channel.id', 'global');
         expect(payload[0]).toHaveProperty('previousChannel.id', undefined);
         expect(payload[0]).toHaveProperty('identity', channelChangingWindow);
