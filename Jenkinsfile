@@ -1,7 +1,4 @@
 pipeline {
-    triggers {
-        githubPush()
-    }
 
     agent { label 'linux-slave' }
 
