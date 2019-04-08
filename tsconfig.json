@@ -1,14 +1,8 @@
 {
-    "extends": "./node_modules/gts/tsconfig-google.json",
+    "extends": "./node_modules/openfin-service-tooling/tsconfig-services.json",
     "compilerOptions": {
-        "target": "es2017",
         "outDir": "dist",
-        "rootDir": "src",
-        "lib": ["dom", "es2017"],
-        "types": ["node", "openfin"],
-        "jsx": "react",
-        "sourceMap": true,
-        "declaration": false
+        "rootDir": "src"
     },
     "include": [
         "src"
