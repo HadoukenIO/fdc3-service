@@ -10,11 +10,9 @@ export type TestWindowContext = Window&{
     fin: Fin;
     OpenfinFDC3: typeof import('../../../src/client/main');
     contextListeners: ContextListener[];
-    intentListeners: IntentListener[];
+    intentListeners: {[intent: string]: IntentListener[]};
     receivedContexts: {listenerID: number, context: Context}[];
     receivedIntents: {listenerID: number, intent: IntentType, context: Context}[];
-    getNextContextListenerID: () => number;
-    getNextIntentListenerID: () => number;
 };
 
 export class OFPuppeteerBrowser {

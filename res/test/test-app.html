@@ -34,7 +34,10 @@
     
             for (const intent of intents) {
                 const nextIntentListenerID = window.intentListeners.length;
-                window.intentListeners[nextIntentListenerID] = OpenfinFDC3.addIntentListener(intent, (context) => {
+                if (window.intentListeners[intent] === undefined) {
+                    window.intentListeners[intent] = [];
+                }
+                window.intentListeners[intent][nextIntentListenerID] = OpenfinFDC3.addIntentListener(intent, (context) => {
                     receivedIntents.push({id: nextIntentListenerID, intent, context});
                 });
             }
