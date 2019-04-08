@@ -1,7 +1,10 @@
+/**
+ * @module Index
+ */
+
 import {channelPromise, tryServiceDispatch} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
-import {IntentType} from './intents';
 import {APITopic, RaiseIntentPayload, SERVICE_IDENTITY} from './internal';
 
 /**
@@ -63,7 +66,7 @@ export interface IntentResolution {
     version: string;
 }
 
-export type Listener = ContextListener|IntentListener;
+export type Listener = ContextListener | IntentListener;
 
 export interface ContextListener {
     handler: (context: Context) => void;
@@ -196,7 +199,7 @@ export function broadcast(context: Context): void {
  * agent.raiseIntent("StartChat", newContext, intentR.source);
  * ```
  */
-export async function raiseIntent(intent: string, context: Context, target?: string): Promise<void> {
+export async function raiseIntent(intent: string, context: Context, target?: string): Promise<IntentResolution> {
     return tryServiceDispatch(APITopic.RAISE_INTENT, {intent, context, target});
 }
 
@@ -204,17 +207,21 @@ const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
 if (channelPromise) {
-    fin.InterApplicationBus.subscribe(SERVICE_IDENTITY, 'intent', (payload: RaiseIntentPayload, uuid: string, name: string) => {
-        intentListeners.forEach((listener: IntentListener) => {
-            if (payload.intent === listener.intent) {
-                listener.handler(payload.context);
-            }
+    channelPromise.then((channel) => {
+        channel.register('intent', (payload: RaiseIntentPayload) => {
+            intentListeners.forEach((listener: IntentListener) => {
+                if (payload.intent === listener.intent) {
+                    listener.handler(payload.context);
+                }
+            });
         });
     });
 
-    fin.InterApplicationBus.subscribe(SERVICE_IDENTITY, 'context', (payload: Context, uuid: string, name: string) => {
-        contextListeners.forEach((listener: ContextListener) => {
-            listener.handler(payload);
+    channelPromise.then(channel => {
+        channel.register('context', (payload: Context) => {
+            contextListeners.forEach((listener: ContextListener) => {
+                listener.handler(payload);
+            });
         });
     });
 }

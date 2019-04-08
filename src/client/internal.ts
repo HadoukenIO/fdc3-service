@@ -1,3 +1,13 @@
+/**
+ * @hidden
+ */
+
+/**
+ * File contains types used to communicate between client and provider.
+ *
+ * These types are a part of the client, but are not required by applications wishing to interact with the service.
+ * This file is excluded from the public-facing TypeScript documentation.
+ */
 import {Identity} from 'openfin/_v2/main';
 
 import {AppName} from './directory';
@@ -49,11 +59,7 @@ export interface TopicResponseMap {
     [APITopic.FIND_INTENT]: AppIntent;
     [APITopic.FIND_INTENTS_BY_CONTEXT]: AppIntent[];
     [APITopic.BROADCAST]: void;
-    // This is not strictly to spec as target should be able to return data.
-    // Needs a not-insignificant amount of provider changes to allow the two-way
-    // transmission of data before it can be put back to IntentResponse
-    // TODO: Revisit after SERVICE-392
-    [APITopic.RAISE_INTENT]: void;
+    [APITopic.RAISE_INTENT]: IntentResolution;
     [APITopic.GET_ALL_CHANNELS]: Channel[];
     [APITopic.JOIN_CHANNEL]: void;
     [APITopic.GET_CHANNEL]: Channel;
