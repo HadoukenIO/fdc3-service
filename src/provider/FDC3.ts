@@ -428,6 +428,7 @@ export class FDC3 {
     }
 
     private createHandle(): number {
+        console.log('test');
         // Returns a large random integer
         return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
     }
