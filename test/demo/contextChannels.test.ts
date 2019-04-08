@@ -7,7 +7,7 @@ const testManagerIdentity = {uuid: 'test-app', name: 'test-app'};
 
 const testContext = {type: 'test-context', name: 'contextName1', id: {name: 'contextID1'}};
 
-const startedApps:Application [] = [];
+const startedApps:Application[] = [];
 
 let fin: Fin;
 
