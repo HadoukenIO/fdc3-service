@@ -51,7 +51,7 @@ describe('Intent listeners and raising intents', () => {
                 await expect(fdc3Remote.addIntentListener(testAppIdentity, validPayload.intent)).resolves.not.toThrow();
             });
 
-            describe('When the target is registered to accept the fired intent', () => {
+            describe('When the target is registered to accept the raised intent', () => {
                 let listener: fdc3Remote.RemoteIntentListener;
 
                 beforeEach(async () => {
@@ -67,8 +67,21 @@ describe('Intent listeners and raising intents', () => {
                 });
             });
 
-            describe('When the target is *not* registered to accept the fired intent', () => {
-
+            describe('When the target is *not* registered to accept the raised intent', () => {
+                test('When calling raiseIntent the promise rejects with an error', async () => {
+                    const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, invalidPayload.intent, invalidPayload.context, testAppIdentity.appId);
+                    // TODO: decide if this is this the error message we want when sending a targeted intent
+                    await expect(resultPromise).rejects.toThrowError(/No applications available to handle this intent/);
+                });
+            });
+            describe('When the target is not in the directory', () => {
+                // Currently this will just open the resolver UI, which is probably the wrong behaviour
+                // TODO: Make the service return an error when targeting an app which isn't in the directory
+                test.skip('When calling raseIntent the promise rejects with an error', async () => {
+                    const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, 'this-app-does-not-exist');
+                    // TODO: decide what the error should be
+                    await expect(resultPromise).rejects.toThrow();
+                });
             });
         });
 
