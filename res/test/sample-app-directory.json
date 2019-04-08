@@ -16,10 +16,10 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {
@@ -40,10 +40,10 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {
@@ -64,10 +64,10 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {
@@ -88,10 +88,10 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {
@@ -112,10 +112,10 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {
@@ -136,10 +136,10 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {
