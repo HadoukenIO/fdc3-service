@@ -12,7 +12,7 @@
 
 import {Identity} from 'openfin/_v2/main';
 
-import {Application, Context, IntentType, ChannelId, Channel, EventPayload, Event} from '../../../src/client/main';
+import {Application, Context, IntentType, ChannelId, Channel, EventPayload, EventType} from '../../../src/client/main';
 
 import {OFPuppeteerBrowser, TestWindowContext} from './ofPuppeteer';
 
@@ -130,25 +130,25 @@ export async function getRemoteContextListener(executionTarget: Identity, listen
 
 export interface RemoteEventListener {
     type: 'event';
-    event: Event;
+    eventType: EventType;
     remoteIdentity: Identity;
     id: number;
     getReceivedEventPayload: () => Promise<EventPayload[]>;
     unsubscribe: () => Promise<void>;
 }
 
-export async function addEventListener(executionTarget: Identity, event: Event): Promise<RemoteEventListener> {
-    const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext, event: Event): number {
+export async function addEventListener(executionTarget: Identity, eventType: EventType): Promise<RemoteEventListener> {
+    const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext, event: EventType): number {
         const listenerID = this.eventListeners.length;
         this.eventListeners[listenerID] = this.fdc3.addEventListener(event, (payload) => {
             this.receivedEvents.push({listenerID, payload});
         },);
         return listenerID;
-    }, event);
+    }, eventType);
 
     return {
         type: 'event',
-        event: event,
+        eventType,
         remoteIdentity: executionTarget,
         id,
         unsubscribe: async () => {
@@ -166,18 +166,17 @@ export async function addEventListener(executionTarget: Identity, event: Event):
 
 export async function getRemoteEventListener(executionTarget: Identity, listenerID: number = 0): Promise<RemoteEventListener> {
     // Check that the ID maps to a listener
-    const {exists, event} = await ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): {exists: boolean, event?: Event} {
-        const exists = typeof this.eventListeners[id] !== 'undefined';
-        const event = exists ? this.eventListeners[id].event : undefined;
-        return {exists, event};
+    const eventType = await ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): EventType|undefined {
+        const event = this.eventListeners[id] ? this.eventListeners[id].eventType : undefined;
+        return eventType;
     }, listenerID);
 
-    if (!exists) {
+    if (!eventType) {
         throw new Error('Could not get remoteListener: No listener found with ID ' + listenerID + ' on window ' + JSON.stringify(executionTarget));
     } else {
         return {
             type: 'event',
-            event: event!,
+            eventType,
             remoteIdentity: executionTarget,
             id: listenerID,
             unsubscribe: async () => {

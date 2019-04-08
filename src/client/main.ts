@@ -70,10 +70,10 @@ export interface IntentResolution {
 }
 
 export type EventPayload = ChannelChangedPayload;
-export type Event = 'channel-changed';
+export type EventType = 'channel-changed';
 
 export interface EventChannelPayload {
-    event: Event,
+    eventType: EventType,
     payload: EventPayload
 }
 
@@ -97,7 +97,7 @@ export interface IntentListener {
 }
 
 export interface EventListener {
-    event: Event
+    eventType: EventType
     handler: (payload: any) => void;
     /**
      * Unsubscribe the listener object.
@@ -296,20 +296,20 @@ export function addContextListener(handler: (context: Context) => void): Context
  */
 export function addEventListener(event: 'channel-changed', handler: (event: ChannelChangedPayload) => void, identity?: Identity): EventListener;
 
-export function addEventListener(event: Event, handler: (event: EventPayload) => void, identity?: Identity): EventListener {
-    const listener = {event, handler, unsubscribe: () => {
+export function addEventListener(eventType: EventType, handler: (event: EventPayload) => void, identity?: Identity): EventListener {
+    const listener = {eventType, handler, unsubscribe: () => {
         const index: number = eventListeners.indexOf(listener);
 
         if (index >= 0) {
             eventListeners.splice(index, 1);
         }
 
-        eventEmitter.removeListener(event, handler);
+        eventEmitter.removeListener(eventType, handler);
         return index >= 0;
     }};
 
     eventListeners.push(listener);
-    eventEmitter.addListener(event, handler);
+    eventEmitter.addListener(eventType, handler);
 
     return listener;
 }
