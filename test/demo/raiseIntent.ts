@@ -65,8 +65,7 @@ describe('Intent listeners and raising intents', () => {
                     await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.appId);
 
                     const receivedContexts = await listener.getReceivedIntents();
-                    expect(receivedContexts.length).toBe(1);
-                    expect(receivedContexts[0]).toEqual(validPayload.context);
+                    expect(receivedContexts).toEqual([validPayload.context]);
                 });
             });
 
@@ -96,7 +95,7 @@ describe('Intent listeners and raising intents', () => {
             };
 
             describe('When the target is registered to accept the raised intent', () => {
-                test.only('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
+                test('The targeted app opens and its listener is triggered exactly once with the correct context', async () => {
                     await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.appId);
 
                     // App should now be running
@@ -105,8 +104,7 @@ describe('Intent listeners and raising intents', () => {
                     const listener = await fdc3Remote.getRemoteIntentListner(testAppIdentity, validPayload.intent);
                     const receivedContexts = await listener.getReceivedIntents();
 
-                    expect(receivedContexts.length).toBe(1);
-                    expect(receivedContexts[0]).toEqual(validPayload.context);
+                    expect(receivedContexts).toEqual([validPayload.context]);
 
                     await fin.Application.wrapSync(testAppIdentity).quit();
                 });
@@ -119,7 +117,7 @@ describe('Intent listeners and raising intents', () => {
             describe('When the target is not in the directory', () => {
                 // Currently this will just open the resolver UI, which is probably the wrong behaviour
                 // TODO: Make the service return an error when targeting an app which isn't in the directory
-                test.skip('When calling raseIntent the promise rejects with an error', async () => {
+                test.skip('When calling raiseIntent the promise rejects with an error', async () => {
                     const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, 'this-app-does-not-exist');
                     // TODO: decide what the error should be
                     await expect(resultPromise).rejects.toThrow();
