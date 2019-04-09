@@ -33,12 +33,12 @@
             });
     
             for (const intent of intents) {
-                const nextIntentListenerID = window.intentListeners.length;
                 if (window.intentListeners[intent] === undefined) {
                     window.intentListeners[intent] = [];
                 }
-                window.intentListeners[intent][nextIntentListenerID] = OpenfinFDC3.addIntentListener(intent, (context) => {
-                    receivedIntents.push({id: nextIntentListenerID, intent, context});
+                const nextIntentListenerID = window.intentListeners[intent].length;
+                window.intentListeners[intent][nextIntentListenerID] = fdc3.addIntentListener(intent, (context) => {
+                    receivedIntents.push({listenerID: nextIntentListenerID, intent, context});
                 });
             }
         }
