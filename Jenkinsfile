@@ -16,6 +16,12 @@ pipeline {
                         always {
                             junit "dist/test/results-unit.xml"
                         }
+                        success {
+                            echo "Success unit test"
+                        }
+                        failure {
+                            echo "Failure unit test"
+                        }
                     }
                 }
 
@@ -28,6 +34,12 @@ pipeline {
                     post {
                         always {
                             junit "dist/test/results-int.xml"
+                        }
+                        success {
+                            echo "Success integration test"
+                        }
+                        failure {
+                            echo "Failure integration test"
                         }
                     }
                 }
