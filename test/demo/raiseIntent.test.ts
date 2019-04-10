@@ -127,6 +127,25 @@ describe('Intent listeners and raising intents', () => {
     });
 
     describe('Without a target', () => {
-        // TODO: figure out how to test the resolver UI properly
+        describe('With no apps registered to accept the raised intent', () => {
+            test('When calling raiseIntent the promise rejects with an error', async () => {
+                await expect(fdc3Remote.raiseIntent(testManagerIdentity, invalidPayload.intent, invalidPayload.context)).rejects.toThrow();
+            });
+        });
+
+        // TODO: find a way to dynamically set the app directory for these tests
+        describe('With one app registered to accept the raised intent', () => {
+            describe('With the registered app running', () => {
+                test.todo('When calling raiseIntent from another app the listener is triggered exactly once with the correct context');
+            });
+
+            describe('With the registered app not running', () => {
+                test.todo('The targeted app opens and its listener is triggered exactly once with the correct context');
+            });
+        });
+
+        describe('With multiple apps registered to accept the raised intent', () => {
+            // TODO: figure out how to test the resolver UI properly
+        });
     });
 });
