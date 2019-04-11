@@ -12,7 +12,8 @@
 
 import {Identity} from 'openfin/_v2/main';
 
-import {Application, Context, IntentType, ChannelId, Channel, EventPayload, EventType} from '../../../src/client/main';
+import {Application, Context, IntentType, ChannelId, Channel} from '../../../src/client/main';
+import {FDC3Event, FDC3EventType} from '../../../src/client/connection';
 
 import {OFPuppeteerBrowser, TestWindowContext} from './ofPuppeteer';
 
@@ -131,15 +132,15 @@ export async function getRemoteContextListener(executionTarget: Identity, listen
 export interface RemoteEventListener {
     remoteIdentity: Identity;
     id: number;
-    getReceivedEventPayload: () => Promise<EventPayload[]>;
+    getReceivedEvents: () => Promise<FDC3Event[]>;
     unsubscribe: () => Promise<void>;
 }
 
-export async function addEventListener(executionTarget: Identity, eventType: EventType): Promise<RemoteEventListener> {
-    const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext, eventType: EventType): number {
+export async function addEventListener(executionTarget: Identity, eventType: FDC3EventType): Promise<RemoteEventListener> {
+    const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext, eventType: FDC3EventType): number {
         const listenerID = this.eventListeners.length;
 
-        const handler = (payload: EventPayload) => {
+        const handler = (payload: FDC3Event) => {
             this.receivedEvents.push({listenerID, payload});
         };
 
@@ -160,8 +161,8 @@ export async function addEventListener(executionTarget: Identity, eventType: Eve
                 this.eventListeners[id].unsubscribe();
             }, id);
         },
-        getReceivedEventPayload: async (): Promise<EventPayload[]> => {
-            return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): EventPayload[] {
+        getReceivedEvents: async (): Promise<FDC3Event[]> => {
+            return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): FDC3Event[] {
                 return this.receivedEvents.filter(entry => entry.listenerID === id).map(entry => entry.payload);
             }, id);
         }
@@ -186,8 +187,8 @@ export async function getRemoteEventListener(executionTarget: Identity, listener
                     delete this.eventListeners[id];
                 }, listenerID);
             },
-            getReceivedEventPayload: async (): Promise<EventPayload[]> => {
-                return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): EventPayload[] {
+            getReceivedEvents: async (): Promise<FDC3Event[]> => {
+                return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): FDC3Event[] {
                     return this.receivedEvents.filter(entry => entry.listenerID === id).map(entry => entry.payload);
                 }, listenerID);
             }

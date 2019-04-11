@@ -40,7 +40,9 @@ export interface Channel {
     color: number
 }
 
-export interface ChannelChangedPayload {
+export interface ChannelChangedEvent {
+    type: 'channel-changed'
+
     identity: Identity,
     channel: Channel,
     previousChannel?: Channel

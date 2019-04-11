@@ -224,7 +224,7 @@ describe('When joining a channel', () => {
         await fdc3Remote.joinChannel(channelChangingWindow, 'green');
 
         // Check we received a channel-changed event
-        const payload = await listener.getReceivedEventPayload();
+        const payload = await listener.getReceivedEvents();
         expect(payload).toHaveLength(1);
         expect(payload[0]).toHaveProperty('channel.id', 'green');
         expect(payload[0]).toHaveProperty('previousChannel.id', 'global');
@@ -240,7 +240,7 @@ describe('When joining a channel', () => {
         await fdc3Remote.joinChannel(channelChangingWindow, 'global');
 
         // Check we received a channel-changed event
-        const payload = await listener.getReceivedEventPayload();
+        const payload = await listener.getReceivedEvents();
         expect(payload).toHaveLength(1);
         expect(payload[0]).toHaveProperty('channel.id', 'global');
         expect(payload[0]).toHaveProperty('previousChannel.id', 'blue');
@@ -255,7 +255,7 @@ describe('When starting an app', () => {
         const [channelChangingWindow] = await setupWindows(undefined);
 
         // Check we received a channel-changed event
-        const payload = await listener.getReceivedEventPayload();
+        const payload = await listener.getReceivedEvents();
         expect(payload).toHaveLength(1);
         expect(payload[0]).toHaveProperty('channel.id', 'global');
         expect(payload[0]).toHaveProperty('previousChannel.id', undefined);
