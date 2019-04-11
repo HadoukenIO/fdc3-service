@@ -96,15 +96,6 @@ export interface IntentListener {
     unsubscribe: () => void;
 }
 
-export interface EventListener {
-    eventType: EventType
-    handler: (payload: any) => void;
-    /**
-     * Unsubscribe the listener object.
-     */
-    unsubscribe: () => void;
-}
-
 /**
  * A Desktop Agent is a desktop component (or aggregate of components) that serves as a
  * launcher and message router (broker) for applications in its domain.
@@ -225,7 +216,6 @@ export async function raiseIntent(intent: string, context: Context, target?: str
 
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
-const eventListeners: EventListener[] = [];
 
 if (channelPromise) {
     channelPromise.then((channel) => {
@@ -294,22 +284,12 @@ export function addContextListener(handler: (context: Context) => void): Context
  * This includes switching to/from the global channel. The `channel` and
  * `previousChannel` fields use the same conventions for denoting the global channel as `getChannel`.
  */
-export function addEventListener(event: 'channel-changed', handler: (event: ChannelChangedPayload) => void, identity?: Identity): EventListener;
+export function addEventListener(eventType: 'channel-changed', handler: (eventPayload: ChannelChangedPayload) => void): void;
 
-export function addEventListener(eventType: EventType, handler: (event: EventPayload) => void, identity?: Identity): EventListener {
-    const listener = {eventType, handler, unsubscribe: () => {
-        const index: number = eventListeners.indexOf(listener);
-
-        if (index >= 0) {
-            eventListeners.splice(index, 1);
-        }
-
-        eventEmitter.removeListener(eventType, handler);
-        return index >= 0;
-    }};
-
-    eventListeners.push(listener);
+export function addEventListener(eventType: EventType, handler: (eventPayload: EventPayload) => void, identity?: Identity): void {
     eventEmitter.addListener(eventType, handler);
+}
 
-    return listener;
+export function removeEventListener(eventType: EventType, handler: (eventPayload: ChannelChangedPayload) => void): void {
+    eventEmitter.removeListener(eventType, handler);
 }

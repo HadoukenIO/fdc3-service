@@ -129,8 +129,6 @@ export async function getRemoteContextListener(executionTarget: Identity, listen
 }
 
 export interface RemoteEventListener {
-    type: 'event';
-    eventType: EventType;
     remoteIdentity: Identity;
     id: number;
     getReceivedEventPayload: () => Promise<EventPayload[]>;
@@ -138,17 +136,23 @@ export interface RemoteEventListener {
 }
 
 export async function addEventListener(executionTarget: Identity, eventType: EventType): Promise<RemoteEventListener> {
-    const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext, event: EventType): number {
+    const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext, eventType: EventType): number {
         const listenerID = this.eventListeners.length;
-        this.eventListeners[listenerID] = this.fdc3.addEventListener(event, (payload) => {
+
+        const handler = (payload: EventPayload) => {
             this.receivedEvents.push({listenerID, payload});
-        },);
+        };
+
+        const unsubscribe = () => {
+            this.fdc3.removeEventListener(eventType, handler);
+        };
+
+        this.fdc3.addEventListener(eventType, handler);
+        this.eventListeners[listenerID] = {handler, unsubscribe};
         return listenerID;
     }, eventType);
 
     return {
-        type: 'event',
-        eventType,
         remoteIdentity: executionTarget,
         id,
         unsubscribe: async () => {
@@ -166,17 +170,14 @@ export async function addEventListener(executionTarget: Identity, eventType: Eve
 
 export async function getRemoteEventListener(executionTarget: Identity, listenerID: number = 0): Promise<RemoteEventListener> {
     // Check that the ID maps to a listener
-    const eventType = await ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): EventType|undefined {
-        const event = this.eventListeners[id] ? this.eventListeners[id].eventType : undefined;
-        return eventType;
+    const exists = await ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): boolean {
+        return typeof this.eventListeners[id] !== 'undefined';
     }, listenerID);
 
-    if (!eventType) {
+    if (!exists) {
         throw new Error('Could not get remoteListener: No listener found with ID ' + listenerID + ' on window ' + JSON.stringify(executionTarget));
     } else {
         return {
-            type: 'event',
-            eventType,
             remoteIdentity: executionTarget,
             id: listenerID,
             unsubscribe: async () => {
