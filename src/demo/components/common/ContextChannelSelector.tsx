@@ -1,33 +1,37 @@
 import * as React from 'react';
 
-import {Channel} from '../../../client/contextChannels';
+import {Channel, getChannel, getAllChannels, joinChannel, GLOBAL_CHANNEL_ID, ChannelId} from '../../../client/contextChannels';
 
-
-interface ContextChannelSelectorProps {
-    current: Channel;
-    channels: Channel[];
-    onChannelChange: (channel: Channel) => void
-}
 /**
  * Context channel ui
 */
-export function ContextChannelSelector(props: ContextChannelSelectorProps): React.ReactElement {
-    const {current, channels, onChannelChange} = props;
+export function ContextChannelSelector(): React.ReactElement {
+    const [currentChannelId, setCurrentChannelId] = React.useState<ChannelId>(GLOBAL_CHANNEL_ID);
+    const [channels, setChannels] = React.useState<Channel[]>([]);
+
+    React.useEffect(() => {
+        getChannel().then(channel => {
+            setCurrentChannelId(channel.id);
+        });
+        getAllChannels().then(channels => {
+            setChannels(channels);
+        });
+    }, []);
+
     const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const {value: id} = event.currentTarget;
-        const channel = channels.find(x => x.id === id);
-        onChannelChange(channel!);
+        joinChannel(id);
     };
 
     return (
         <div>
-            <select name="color" value={current.id} onChange={handleChange}>
+            <select name="color" value={currentChannelId} onChange={handleChange}>
                 {
                     channels.map((channel, index) => {
                         return (
                             <option
                                 key={channel.id + index}
-                                selected={current.id === channel.id}
+                                selected={currentChannelId === channel.id}
                                 value={channel.id}
                             >
                                 {channel.name}
