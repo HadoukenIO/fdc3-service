@@ -61,7 +61,7 @@ export interface AppIntent {
  * //resolve a "Client-Service" export type intent with data response
  * var intentR = await agent.raiseIntent("intentName", context);
  * var dataR = intentR.data;
- *
+ * ```
  */
 export interface IntentResolution {
     source: string;
