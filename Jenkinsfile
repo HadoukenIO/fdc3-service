@@ -82,15 +82,15 @@ pipeline {
                 GIT_SHORT_SHA = sh ( script: "git rev-parse --short HEAD", returnStdout: true ).trim()
                 PKG_VERSION = sh ( script: "node -pe \"require('./package.json').version\"", returnStdout: true ).trim()
 
-                BUILD_VERSION = "PKG_VERSION"
+                BUILD_VERSION = "${PKG_VERSION}"
                 CHANNEL = "stable"
                 SERVICE_NAME = "fdc3"
                 MANIFEST_NAME = "app.json"
 
-                S3_LOC = "env.DSERVICE_S3_ROOT" + "SERVICE_NAME" + "/" + "BUILD_VERSION"
-                DOCS_CHANNEL_LOC = "env.DSERVICE_S3_ROOT_DOCS" + "SERVICE_NAME" + "/" + "CHANNEL"
-                DOCS_VERSIONED_LOC = "env.DSERVICE_S3_ROOT_DOCS" + "SERVICE_NAME" + "/" + "BUILD_VERSION"
-                MANIFEST_LOC = "env.DSERVICE_S3_ROOT" + "SERVICE_NAME" + "/" + "MANIFEST_NAME"
+                S3_LOC = "${env.DSERVICE_S3_ROOT}${SERVICE_NAME}/${BUILD_VERSION}"
+                DOCS_CHANNEL_LOC = "${env.DSERVICE_S3_ROOT_DOCS}${SERVICE_NAME}/${CHANNEL}"
+                DOCS_VERSIONED_LOC = "${env.DSERVICE_S3_ROOT_DOCS}${SERVICE_NAME}/${BUILD_VERSION}"
+                MANIFEST_LOC = "${env.DSERVICE_S3_ROOT}${SERVICE_NAME}/${MANIFEST_NAME}"
             }
             stages {
                 stage("Build & Deploy to CDN (Production)") {
