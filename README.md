@@ -3,7 +3,7 @@
 
 ## Overview
 
-OpenFin FDC3 API uses the new Services framework to expose its API to consuming applications.  You can see the documentation for these APIs here:  http://cdn.openfin.co/jsdocs/alpha/fin.desktop.Service.html.
+OpenFin FDC3 API uses the message Channels framework to expose its API to consuming applications.  You can see the documentation for these APIs here:  https://cdn.openfin.co/docs/javascript/stable/InterApplicationBus.Channel.html.
 
 This project consist of 2 parts:
 1. The FDC3 Provider, taking care of intents, context and resolving them (UI)
