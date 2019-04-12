@@ -86,7 +86,7 @@ export interface RemoteIntentListener {
     id: number;
     intent: IntentType;
     unsubscribe: () => Promise<void>;
-    getReceivedIntents: () => Promise<Context[]>;
+    getReceivedContexts: () => Promise<Context[]>;
 }
 
 export async function addContextListener(executionTarget: Identity): Promise<RemoteContextListener> {
@@ -135,7 +135,7 @@ export async function addIntentListener(executionTarget: Identity, intent: Inten
                 this.intentListeners[intent][id].unsubscribe();
             }, intent, id);
         },
-        getReceivedIntents: async (): Promise<Context[]> => {
+        getReceivedContexts: async (): Promise<Context[]> => {
             return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, intent: IntentType, id: number): Context[] {
                 return this.receivedIntents.filter(entry => entry.listenerID === id && entry.intent === intent).map(entry => entry.context);
             }, intent, id);
@@ -169,7 +169,7 @@ export async function getRemoteContextListener(executionTarget: Identity, listen
     };
 }
 
-export async function getRemoteIntentListner(executionTarget: Identity, intent: IntentType, listenerID: number = 0): Promise<RemoteIntentListener> {
+export async function getRemoteIntentListener(executionTarget: Identity, intent: IntentType, listenerID: number = 0): Promise<RemoteIntentListener> {
     // Check that the intent/ID pair maps to a listener
     const exists = await ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, intent: IntentType, id: number): boolean {
         return typeof this.intentListeners[intent] !== 'undefined' && typeof this.intentListeners[intent][id] !== 'undefined';
@@ -189,7 +189,7 @@ export async function getRemoteIntentListner(executionTarget: Identity, intent: 
                 delete this.intentListeners[intent][id];
             }, intent, listenerID);
         },
-        getReceivedIntents: async (): Promise<Context[]> => {
+        getReceivedContexts: async (): Promise<Context[]> => {
             return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, intent: IntentType, id: number): Context[] {
                 return this.receivedIntents.filter(entry => entry.listenerID === id && entry.intent === intent).map(entry => entry.context);
             }, intent, listenerID);

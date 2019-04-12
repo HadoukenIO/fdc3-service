@@ -27,18 +27,14 @@
                 'ViewNews'
             ];
     
-            const nextContextListenerID = window.contextListeners.length;
-            window.contextListeners[nextContextListenerID] = fdc3.addContextListener((context) => {
-                receivedContexts.push({listenerID: nextContextListenerID, context});
+            window.contextListeners[0] = fdc3.addContextListener((context) => {
+                receivedContexts.push({listenerID: 0, context});
             });
     
             for (const intent of intents) {
-                if (window.intentListeners[intent] === undefined) {
-                    window.intentListeners[intent] = [];
-                }
-                const nextIntentListenerID = window.intentListeners[intent].length;
-                window.intentListeners[intent][nextIntentListenerID] = fdc3.addIntentListener(intent, (context) => {
-                    receivedIntents.push({listenerID: nextIntentListenerID, intent, context});
+                window.intentListeners[intent] = [];
+                window.intentListeners[intent][0] = fdc3.addIntentListener(intent, (context) => {
+                    receivedIntents.push({listenerID: 0, intent, context});
                 });
             }
         }

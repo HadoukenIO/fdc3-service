@@ -64,7 +64,7 @@ describe('Intent listeners and raising intents', () => {
                 test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
                     await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.appId);
 
-                    const receivedContexts = await listener.getReceivedIntents();
+                    const receivedContexts = await listener.getReceivedContexts();
                     expect(receivedContexts).toEqual([validPayload.context]);
                 });
             });
@@ -101,8 +101,8 @@ describe('Intent listeners and raising intents', () => {
                     // App should now be running
                     await expect(fin.Application.wrapSync(testAppIdentity).isRunning()).resolves.toBe(true);
 
-                    const listener = await fdc3Remote.getRemoteIntentListner(testAppIdentity, validPayload.intent);
-                    const receivedContexts = await listener.getReceivedIntents();
+                    const listener = await fdc3Remote.getRemoteIntentListener(testAppIdentity, validPayload.intent);
+                    const receivedContexts = await listener.getReceivedContexts();
 
                     expect(receivedContexts).toEqual([validPayload.context]);
 
