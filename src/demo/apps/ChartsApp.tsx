@@ -3,8 +3,8 @@ import * as React from 'react';
 import * as fdc3 from '../../client/main';
 import {Chart} from '../components/charts/Chart';
 import {SecurityContext, Context} from '../../client/context';
-
 import '../../../res/demo/css/w3.css';
+import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
 
 interface AppProps {
     symbolName?: string;
@@ -51,9 +51,12 @@ export function ChartsApp(props: AppProps): React.ReactElement {
 
 
     return (
-        <div className="chart-app w3-theme">
-            <h1 className="w3-margin-left">{symbolName}</h1>
-            <Chart />
-        </div>
+        <React.Fragment>
+            <ContextChannelSelector float={true} />
+            <div className="chart-app w3-theme">
+                <h1 className="w3-margin-left">{symbolName}</h1>
+                <Chart />
+            </div>
+        </React.Fragment>
     );
 }
