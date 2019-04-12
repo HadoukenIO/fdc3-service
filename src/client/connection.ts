@@ -16,6 +16,7 @@ import {EventEmitter} from 'events';
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
 import {APITopic, SERVICE_CHANNEL, SERVICE_IDENTITY, TopicPayloadMap, TopicResponseMap} from './internal';
+import {ChannelChangedEvent} from './contextChannels';
 
 /**
  * The version of the NPM package.
@@ -27,7 +28,8 @@ declare const PACKAGE_VERSION: string;
 /**
  * Defines all events that are fired by the service
  */
-export type FDC3Event = any;  // tslint:disable-line:no-any
+export type FDC3Event = ChannelChangedEvent;
+export type FDC3EventType = 'channel-changed';
 
 /**
  * The event emitter to emit events received from the service.  All addEventListeners will tap into this.

@@ -9,8 +9,10 @@
     <script>
         window.contextListeners = [];
         window.intentListeners = [];
+        window.eventListeners = [];
         window.receivedContexts = [];
         window.receivedIntents = [];
+        window.receivedEvents = [];
 
         const queryParams = new URLSearchParams(location.search);
         if (queryParams.get('registerListeners') === 'true') {
@@ -26,6 +28,10 @@
                 'ViewQuote',
                 'ViewNews'
             ];
+
+            const eventTypes = [
+                'channel-changed'
+            ];
     
             const nextContextListenerID = window.contextListeners.length;
             window.contextListeners[nextContextListenerID] = fdc3.addContextListener((context) => {
@@ -37,6 +43,21 @@
                 window.intentListeners[nextIntentListenerID] = fdc3.addIntentListener(intent, (context) => {
                     receivedIntents.push({id: nextIntentListenerID, intent, context});
                 });
+            }
+
+            for (const eventType of eventTypes) {
+                const nextEventListenerID = window.eventListeners.length;
+
+                const handler = (payload) => {
+                    receivedEvents.push({listenerID, payload});
+                };
+
+                const unsubscribe = () => {
+                    fdc3.removeEventListener(eventType, handler);
+                };
+
+                fdc3.addEventListener(eventType, handler);
+                window.eventListeners[nextEventListenerID] = {eventType, handler, unsubscribe};
             }
         }
     </script>
