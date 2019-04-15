@@ -1,12 +1,15 @@
+import {injectable} from 'inversify';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 import {ChannelProvider} from 'openfin/_v2/api/interappbus/channel/provider';
 import {Identity} from 'openfin/_v2/main';
 
 import {SERVICE_CHANNEL} from '../client/internal';
 
+import {Signal1} from './common/Signal';
+
 /**
  * Semantic type definition.
- * 
+ *
  * Whilst not enforceable via TypeScript, wherever this type is used it is expected that a string-based enum will be
  * used as the source of that string.
  */
@@ -14,10 +17,10 @@ type Enum = string;
 
 /**
  * Defines a tuple that stores the payload and return type of an API method.
- * 
- * The first element will be an interface containing the "payload" of the API - an object containing any parameters 
+ *
+ * The first element will be an interface containing the "payload" of the API - an object containing any parameters
  * that need to be passed from client to provider.
- * 
+ *
  * The second element is the return type of the API - the type (possibly `void`) that is passed from the provider back
  * to the client.
  */
@@ -25,7 +28,7 @@ export type APIDefinition = [unknown, unknown];
 
 /**
  * Defines the external API of the service. This is a mapping of method identifiers to `APIDefinition` tuples.
- * 
+ *
  * The keys of this mapping are the string 'topic' values that are used to communicate via the IAB Channel.
  */
 export type APISpecification<T extends Enum> = {
@@ -40,7 +43,7 @@ export type APIAction<T extends APIDefinition> = (payload: T[0], source: Provide
 
 /**
  * Defines an object that contains a callback for each API method.
- * 
+ *
  * The signature of each method must match the payload and return type defined in the `T` API specification.
  */
 export type APIImplementation<T extends Enum, S extends APISpecification<T>> = {
@@ -49,11 +52,15 @@ export type APIImplementation<T extends Enum, S extends APISpecification<T>> = {
 
 /**
  * Generic client/provider interaction handler.
- * 
+ *
  * Type args:
  *   T: Defines API topics. An enum that defines each available function call.
  */
+@injectable()
 export class APIHandler<T extends Enum> {
+    public readonly onConnection: Signal1<Identity> = new Signal1<Identity>();
+    public readonly onDisconnection: Signal1<Identity> = new Signal1<Identity>();
+
     private _providerChannel!: ChannelProvider;
 
     public get channel(): ChannelProvider {
@@ -73,7 +80,8 @@ export class APIHandler<T extends Enum> {
     public async registerListeners<S extends APISpecification<T>>(actionHandlerMap: APIImplementation<T, S>): Promise<void> {
         const providerChannel: ChannelProvider = this._providerChannel = await fin.InterApplicationBus.Channel.create(SERVICE_CHANNEL);
 
-        providerChannel.onConnection(this.onConnection);
+        providerChannel.onConnection(this.onConnectionHandler.bind(this));
+        providerChannel.onDisconnection(this.onDisconnectionHandler.bind(this));
 
         for (const action in actionHandlerMap) {
             if (actionHandlerMap.hasOwnProperty(action)) {
@@ -84,11 +92,21 @@ export class APIHandler<T extends Enum> {
 
     // TODO?: Remove the need for this any by defining connection payload type?
     // tslint:disable-next-line:no-any
-    private onConnection(app: Identity, payload?: any): void {
+    private onConnectionHandler(app: Identity, payload?: any): void {
         if (payload && payload.version && payload.version.length > 0) {
             console.log(`connection from client: ${app.name}, version: ${payload.version}`);
         } else {
             console.log(`connection from client: ${app.name}, unable to determine version`);
         }
+
+        // The 'onConnection' callback fires *just before* the channel is ready.
+        // Delaying the firing of our signal slightly, to ensure client is definitely contactable.
+        setImmediate(() => {
+            this.onConnection.emit(app);
+        });
+    }
+
+    private onDisconnectionHandler(app:Identity): void {
+        this.onDisconnection.emit(app);
     }
 }

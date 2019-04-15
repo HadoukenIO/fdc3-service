@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import {Application} from '../../../client/directory';
 
 import './AppCard.css';
@@ -23,7 +24,7 @@ export function AppCard(props: AppCardProps): React.ReactElement {
         openHandler(app);
     };
     return (
-        <div className={"app-card w3-card w3-round-large w3-button" + (selected ? " selected" : "")} onClick={clickHandler} onDoubleClick={doubleClickHandler}>
+        <div className={'app-card w3-card w3-round-large w3-button' + (selected ? ' selected' : '')} onClick={clickHandler} onDoubleClick={doubleClickHandler}>
             {(app.icons && app.icons.length > 0) && <img className="" src={app.icons![0].icon} />}
             <h3>{app.title}</h3>
             <div className="w3-clear" />

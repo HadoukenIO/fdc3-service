@@ -96,11 +96,11 @@
 },
 {
     "appId": "500",
-    "name": "test-app-5",
-    "manifest": "http://localhost:3923/test/configs/test-app-5.json",
+    "name": "test-app-preregistered-1",
+    "manifest": "http://localhost:3923/test/configs/test-app-preregistered-1.json",
     "manifestType": "openfin",
-    "title": "Test App 5",
-    "description": "App for testing fdc3 service",
+    "title": "Test App Preregistered 2",
+    "description": "App for testing fdc3 service. Has intent and context listeners auto-registered on load",
     "images": [],
     "contactEmail": "support@openfin.co",
     "supportEmail": "support@openfin.co",
@@ -120,11 +120,11 @@
 },
 {
     "appId": "600",
-    "name": "test-app-6",
-    "manifest": "http://localhost:3923/test/configs/test-app-6.json",
+    "name": "test-app-preregistered-2",
+    "manifest": "http://localhost:3923/test/configs/test-app-preregistered-2.json",
     "manifestType": "openfin",
-    "title": "Test App 6",
-    "description": "App for testing fdc3 service",
+    "title": "Test App Preregistered 2",
+    "description": "App for testing fdc3 service. Has intent and context listeners auto-registered on load",
     "images": [],
     "contactEmail": "support@openfin.co",
     "supportEmail": "support@openfin.co",
@@ -141,4 +141,23 @@
         "SaveContact",
         "ViewChart"
     ]
+},
+{
+    "appId": "700",
+    "name": "test-app-invalid-manifest",
+    "manifest": "http://localhost:3923/test/configs/non-existent-manifest.json",
+    "manifestType": "openfin",
+    "title": "Failure to launch",
+    "description": "This app intentionally has an invalid manifest and will not launch",
+    "images": [],
+    "contactEmail": "support@openfin.co",
+    "supportEmail": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icons": [
+        {
+            "icon": "http://localhost:3923/demo/img/app-icons/blotter.svg"
+        }
+    ],
+    "intents": []
 }]

@@ -1,11 +1,13 @@
-import {AppWindow} from "./AppWindow";
-import {ContextChannel} from "./ContextChannel";
-import {injectable, inject} from "inversify";
-import {Application} from "../../client/main";
-import {Inject} from "../common/Injectables";
-import {Environment} from "./Environment";
-import {Identity} from "openfin/_v2/main";
-import {AppDirectory} from "./AppDirectory";
+import {injectable, inject} from 'inversify';
+import {Identity} from 'openfin/_v2/main';
+
+import {Application} from '../../client/main';
+import {Inject} from '../common/Injectables';
+
+import {AppWindow} from './AppWindow';
+import {ContextChannel} from './ContextChannel';
+import {Environment} from './Environment';
+import {AppDirectory} from './AppDirectory';
 
 export enum FindFilter {
     WITH_CONTEXT_LISTENER,
@@ -109,7 +111,7 @@ export class Model {
     }
 
     private matchesFilter(window: AppWindow, filter: FindFilter): boolean {
-        switch(filter) {
+        switch (filter) {
             case FindFilter.WITH_CONTEXT_LISTENER:
                 return window.contexts.length > 0;
             case FindFilter.WITH_INTENT_LISTENER:

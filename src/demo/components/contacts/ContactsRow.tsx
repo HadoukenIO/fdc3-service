@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import * as fdc3 from '../../../client/main';
 import {ContactContext} from '../../../client/context';
 import {Contact} from '../../apps/ContactsApp';
@@ -16,18 +17,18 @@ interface ContactRowProps {
 export function ContactsRow(props: ContactRowProps): React.ReactElement {
     const {item, selected, handleSelect} = props;
 
-    const handleDial = (): Promise<fdc3.IntentResolution> => {
+    const handleDial = async (): Promise<void> => {
         if (handleSelect) {
             handleSelect(null);
         }
-        return fdc3.raiseIntent(fdc3.Intents.DIAL_CALL, getContext());
+        await fdc3.raiseIntent(fdc3.Intents.DIAL_CALL, getContext());
     };
 
-    const handleCall = (): Promise<fdc3.IntentResolution> => {
+    const handleCall = async (): Promise<void> => {
         if (handleSelect) {
             handleSelect(null);
         }
-        return fdc3.raiseIntent(fdc3.Intents.START_CALL, getContext());
+        await fdc3.raiseIntent(fdc3.Intents.START_CALL, getContext());
     };
 
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -50,7 +51,7 @@ export function ContactsRow(props: ContactRowProps): React.ReactElement {
     };
 
     return (
-        <tr className={"contacts-row" + (selected ? " w3-theme-l2" : "")} onClick={handleClick}>
+        <tr className={'contacts-row' + (selected ? ' w3-theme-l2' : '')} onClick={handleClick}>
             <td>{item.name}</td>
             <td>{item.email}</td>
             <td>{item.phone}</td>

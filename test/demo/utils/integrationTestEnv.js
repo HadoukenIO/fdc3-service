@@ -1,38 +1,46 @@
 // Had problems with this as a typescript file, so leaving as js for now
-const NodeEnvironment = require('jest-environment-node');
 const fs = require('fs');
-const path = require('path');
-const puppeteer = require('puppeteer');
 const os = require('os');
+const path = require('path');
+
+const NodeEnvironment = require('jest-environment-node');
+const puppeteer = require('puppeteer');
+const jsAdapter = require('hadouken-js-adapter');
 
 const DIR = path.join(os.tmpdir(), 'jest_puppeteer_global_setup');
 
-class PuppeteerEnvironment extends NodeEnvironment {
-  constructor(config) {
-    super(config);
-  }
+const finPromise = jsAdapter.connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-jest-env'});
 
-  async setup() {
-    await super.setup();
-    // get the wsEndpoint
-    const wsEndpoint = fs.readFileSync(path.join(DIR, 'wsEndpoint'), 'utf8');
-    if (!wsEndpoint) {
-      throw new Error('wsEndpoint not found');
+class PuppeteerEnvironment extends NodeEnvironment {
+    constructor(config) {
+        super(config);
     }
 
-    // connect to puppeteer
-    this.global.__BROWSER__ = await puppeteer.connect({
-      browserWSEndpoint: wsEndpoint,
-    });
-  }
+    async setup() {
+        await super.setup();
+        // get the wsEndpoint
+        const wsEndpoint = fs.readFileSync(path.join(DIR, 'wsEndpoint'), 'utf8');
+        if (!wsEndpoint) {
+            throw new Error('wsEndpoint not found');
+        }
 
-  async teardown() {
-    await super.teardown();
-  }
+        // establish puppeteer connection
+        this.global.__BROWSER__ = await puppeteer.connect({
+            browserWSEndpoint: wsEndpoint
+        });
 
-  runScript(script) {
-    return super.runScript(script);
-  }
+        // establish js-adapter connection
+        this.global.__FIN__ = await finPromise;
+    }
+
+    async teardown() {
+        await this.global.__BROWSER__.disconnect();
+        await super.teardown();
+    }
+
+    runScript(script) {
+        return super.runScript(script);
+    }
 }
 
 module.exports = PuppeteerEnvironment;

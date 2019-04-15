@@ -1,10 +1,12 @@
-import {injectable} from "inversify";
-import {Signal1, Signal2} from "../common/Signal";
-import {AsyncInit} from "../controller/AsyncInit";
-import {WindowEvent} from "openfin/_v2/api/events/base";
-import {Identity} from "openfin/_v2/main";
-import {Application} from "../../client/main";
-import {AppWindow} from "./AppWindow";
+import {injectable} from 'inversify';
+import {WindowEvent} from 'openfin/_v2/api/events/base';
+import {Identity} from 'openfin/_v2/main';
+
+import {Signal1, Signal2} from '../common/Signal';
+import {AsyncInit} from '../controller/AsyncInit';
+import {Application} from '../../client/main';
+
+import {AppWindow} from './AppWindow';
 
 export interface Environment {
     windowCreated: Signal2<Identity, string>;
@@ -25,16 +27,16 @@ export interface Environment {
 export class FinEnvironment extends AsyncInit implements Environment {
     /**
      * Indicates that a new window has been created.
-     * 
+     *
      * When the service first starts, this signal will also be fired for any pre-existing windows.
-     * 
+     *
      * Arguments: (identity: Identity, manifestUrl: string)
      */
     public readonly windowCreated: Signal2<Identity, string> = new Signal2();
 
     /**
      * Indicates that a window has been closed.
-     * 
+     *
      * Arguments: (identity: Identity)
      */
     public readonly windowClosed: Signal1<Identity> = new Signal1();

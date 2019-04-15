@@ -1,4 +1,7 @@
-import {Context, ContactContext} from "./context";
+/**
+ * @module Intents
+ */
+import {Context, ContactContext} from './context';
 
 /**
  * TypeScript definitions for FDC3-defined intents.

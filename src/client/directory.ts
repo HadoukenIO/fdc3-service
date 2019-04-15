@@ -1,3 +1,6 @@
+/**
+ * @module Directory
+ */
 
 /**
  * TypeScript definitions for objects returned by the Application Directory.
@@ -10,8 +13,8 @@
  * Type definitions that is are wherever the API expects the ID or of an application to be passed. We have both, since
  * internally appId is used to identify app, but externally we use name to repsect specification
  *
- * It is not possible for TypeScript to verify that only valid application names/appIds are passed to the FDC3 API. This type
- * definition is more a hint to the callee, over a plain "string" argument.
+ * It is not possible for TypeScript to verify that only valid application names/appIds are passed
+ * to the FDC3 API. This type definition is more a hint to the callee, over a plain "string" argument.
  */
 export type AppId = string;
 export type AppName = string;

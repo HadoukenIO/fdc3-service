@@ -1,9 +1,12 @@
 import 'reflect-metadata';
 
-import {RaiseIntentPayload, APITopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, API} from '../client/internal';
-import {AppIntent, IntentResolution, Application, Intent} from '../client/main';
-
 import {injectable, inject} from 'inversify';
+import {Identity} from 'openfin/_v2/main';
+import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
+
+import {RaiseIntentPayload, APITopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, API, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload} from '../client/internal';
+import {AppIntent, IntentResolution, Application, Intent, Channel} from '../client/main';
+
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
 import {Model, FindFilter} from './model/Model';
@@ -16,17 +19,20 @@ import {Injector} from './common/Injector';
 export class Main {
     private _config = null;
 
-    @inject(Inject.APP_DIRECTORY)   private _directory!: AppDirectory;
-    @inject(Inject.MODEL)           private _model!: Model;
+    @inject(Inject.APP_DIRECTORY)
+    private _directory!: AppDirectory;
 
-    @inject(Inject.CONTEXT_HANDLER) private _contexts!: ContextHandler;
-    @inject(Inject.INTENT_HANDLER)  private _intents!: IntentHandler;
+    @inject(Inject.MODEL)
+    private _model!: Model;
 
-    private apiHandler: APIHandler<APITopic>;
+    @inject(Inject.CONTEXT_HANDLER)
+    private _contexts!: ContextHandler;
 
-    constructor() {
-        this.apiHandler = new APIHandler();
-    }
+    @inject(Inject.INTENT_HANDLER)
+    private _intents!: IntentHandler;
+
+    @inject(Inject.API_HANDLER)
+    private _apiHandler!: APIHandler<APITopic>;
 
     public async register(): Promise<void> {
         Object.assign(window, {
@@ -42,12 +48,16 @@ export class Main {
         await Injector.initialized;
 
         // Current API
-        this.apiHandler.registerListeners<API>({
+        this._apiHandler.registerListeners<API>({
             [APITopic.OPEN]: this.open.bind(this),
             [APITopic.FIND_INTENT]: this.findIntent.bind(this),
             [APITopic.FIND_INTENTS_BY_CONTEXT]: this.findIntentsByContext.bind(this),
             [APITopic.BROADCAST]: this.broadcast.bind(this),
-            [APITopic.RAISE_INTENT]: this.raiseIntent.bind(this)
+            [APITopic.RAISE_INTENT]: this.raiseIntent.bind(this),
+            [APITopic.GET_ALL_CHANNELS]: this.getAllChannels.bind(this),
+            [APITopic.JOIN_CHANNEL]: this.joinChannel.bind(this),
+            [APITopic.GET_CHANNEL]: this.getChannel.bind(this),
+            [APITopic.GET_CHANNEL_MEMBERS]: this.getChannelMembers.bind(this)
         });
 
         console.log('Service Initialised');
@@ -88,8 +98,8 @@ export class Main {
         return [];
     }
 
-    private async broadcast(payload: BroadcastPayload): Promise<void> {
-        await this._contexts.broadcast(payload.context);
+    private async broadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {
+        await this._contexts.broadcast(payload.context, source);
     }
 
     private async raiseIntent(payload: RaiseIntentPayload): Promise<IntentResolution> {
@@ -99,6 +109,22 @@ export class Main {
         };
 
         return this._intents.raise(intent);
+    }
+
+    private async getAllChannels(payload: GetAllChannelsPayload, source: ProviderIdentity): Promise<Channel[]> {
+        return this._contexts.getAllChannels(payload, source);
+    }
+
+    private async joinChannel(payload: JoinChannelPayload, source: ProviderIdentity): Promise<void> {
+        return this._contexts.joinChannel(payload, source);
+    }
+
+    private async getChannel(payload: GetChannelPayload, source: ProviderIdentity): Promise<Channel> {
+        return this._contexts.getChannel(payload, source);
+    }
+
+    private async getChannelMembers(payload: GetChannelMembersPayload, source: ProviderIdentity): Promise<Identity[]> {
+        return this._contexts.getChannelMembers(payload, source);
     }
 }
 

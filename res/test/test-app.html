@@ -6,8 +6,64 @@
         const title = fin.Window.me.name;
         document.title = title;
     </script>
+    <script>
+        window.contextListeners = [];
+        window.intentListeners = [];
+        window.eventListeners = [];
+        window.receivedContexts = [];
+        window.receivedIntents = [];
+        window.receivedEvents = [];
+
+        const queryParams = new URLSearchParams(location.search);
+        if (queryParams.get('registerListeners') === 'true') {
+            const intents = [
+                'DialCall',
+                'SaveContact',
+                'SaveInstrument',
+                'ShareContext',
+                'StartCall',
+                'StartChat',
+                'ViewContact',
+                'ViewChart',
+                'ViewQuote',
+                'ViewNews'
+            ];
+
+            const eventTypes = [
+                'channel-changed'
+            ];
+    
+            const nextContextListenerID = window.contextListeners.length;
+            window.contextListeners[nextContextListenerID] = fdc3.addContextListener((context) => {
+                receivedContexts.push({listenerID: nextContextListenerID, context});
+            });
+    
+            for (const intent of intents) {
+                const nextIntentListenerID = window.intentListeners.length;
+                window.intentListeners[nextIntentListenerID] = fdc3.addIntentListener(intent, (context) => {
+                    receivedIntents.push({id: nextIntentListenerID, intent, context});
+                });
+            }
+
+            for (const eventType of eventTypes) {
+                const nextEventListenerID = window.eventListeners.length;
+
+                const handler = (payload) => {
+                    receivedEvents.push({listenerID, payload});
+                };
+
+                const unsubscribe = () => {
+                    fdc3.removeEventListener(eventType, handler);
+                };
+
+                fdc3.addEventListener(eventType, handler);
+                window.eventListeners[nextEventListenerID] = {eventType, handler, unsubscribe};
+            }
+        }
+    </script>
 </head>
 <body>
-    Test App. Has the client mounted as "window.OpenfinFDC3".
+    Test App. Has the client mounted as "window.fdc3".
 </body>
 </html>
+

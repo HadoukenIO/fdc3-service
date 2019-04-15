@@ -1,12 +1,14 @@
-import {Intent, Application} from "../../client/main";
-import {_Window} from "openfin/_v2/api/window/window";
-import {WindowOption} from "openfin/_v2/api/window/windowOption";
-import {injectable, inject} from "inversify";
-import {Inject} from "../common/Injectables";
-import {AppDirectory} from "../model/AppDirectory";
-import {AsyncInit} from "./AsyncInit";
-import {ChannelClient} from "openfin/_v2/api/interappbus/channel/client";
-import {SERVICE_IDENTITY} from "../../client/internal";
+import {_Window} from 'openfin/_v2/api/window/window';
+import {WindowOption} from 'openfin/_v2/api/window/windowOption';
+import {injectable, inject} from 'inversify';
+import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
+
+import {Inject} from '../common/Injectables';
+import {AppDirectory} from '../model/AppDirectory';
+import {Intent, Application} from '../../client/main';
+import {SERVICE_IDENTITY} from '../../client/internal';
+
+import {AsyncInit} from './AsyncInit';
 
 const SELECTOR_URL = (() => {
     let providerLocation = window.location.href;
@@ -100,9 +102,9 @@ export class SelectorHandler extends AsyncInit {
 
     /**
      * Instructs the selector to prepare for a new intent.
-     * 
+     *
      * Selector should refresh it's UI, and then show itself when ready.
-     * 
+     *
      * @param intent Intent that is about to be resolved
      */
     public async handleIntent(intent: Intent): Promise<SelectorResult> {
@@ -121,8 +123,8 @@ export class SelectorHandler extends AsyncInit {
 
     /**
      * Instructs the selector to hide itself.
-     * 
-     * The selector will be re-used if another intent needs to be resolved later. If there are queued intents, this 
+     *
+     * The selector will be re-used if another intent needs to be resolved later. If there are queued intents, this
      * could be immediately after the selector is done cleaning-up.
      */
     public async cancel(): Promise<void> {

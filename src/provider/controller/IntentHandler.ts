@@ -1,18 +1,20 @@
-import {injectable, inject } from "inversify";
-import {Inject} from "../common/Injectables";
-import {Intent} from "../../client/intents";
-import {SelectorHandler, SelectorResult} from "./SelectorHandler";
-import {IntentResolution, Application } from "../../client/main";
-import {ContextHandler} from "./ContextHandler";
-import {FindFilter, Model} from "../model/Model";
-import {AppDirectory} from "../model/AppDirectory";
-import {AppWindow} from "../model/AppWindow";
+import {injectable, inject} from 'inversify';
+
+import {Inject} from '../common/Injectables';
+import {Intent} from '../../client/intents';
+import {IntentResolution, Application} from '../../client/main';
+import {FindFilter, Model} from '../model/Model';
+import {AppDirectory} from '../model/AppDirectory';
+import {AppWindow} from '../model/AppWindow';
+
+import {ContextHandler} from './ContextHandler';
+import {SelectorHandler, SelectorResult} from './SelectorHandler';
 
 @injectable()
 export class IntentHandler {
-    @inject(Inject.APP_DIRECTORY)   private _directory!: AppDirectory;
-    @inject(Inject.MODEL)           private _model!: Model;
-    @inject(Inject.SELECTOR)        private _selector!: SelectorHandler;
+    @inject(Inject.APP_DIRECTORY) private _directory!: AppDirectory;
+    @inject(Inject.MODEL) private _model!: Model;
+    @inject(Inject.SELECTOR) private _selector!: SelectorHandler;
     @inject(Inject.CONTEXT_HANDLER) private _contexts!: ContextHandler;
 
     private _promise: Promise<IntentResolution>|null;
@@ -44,16 +46,19 @@ export class IntentHandler {
     }
 
     private async startResolve(intent: Intent): Promise<IntentResolution> {
-        console.log("Handling intent", intent.type);
+        console.log('Handling intent', intent.type);
 
         // Show selector
-        const selection: SelectorResult|null = await this._selector.handleIntent(intent).catch(e => { console.warn(e); return null; });
+        const selection: SelectorResult|null = await this._selector.handleIntent(intent).catch(e => {
+            console.warn(e);
+            return null;
+        });
         if (!selection) {
-            throw new Error("Selector closed or cancelled");
+            throw new Error('Selector closed or cancelled');
         }
 
         // Handle response
-        console.log("Selected from resolver:", selection.app.title);
+        console.log('Selected from resolver:', selection.app.title);
         return this.fireIntent(intent, selection.app);
     }
 
@@ -67,7 +72,7 @@ export class IntentHandler {
         };
 
         // Handle next queued intent
-        console.log("Finished intent", intent.type);
+        console.log('Finished intent', intent.type);
 
         return result;
     }

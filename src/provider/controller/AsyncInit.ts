@@ -1,11 +1,11 @@
-import {injectable} from "inversify";
+import {injectable} from 'inversify';
 
 /**
  * Base class for any objects that initialise asynchronously.
- * 
+ *
  * Since constructors cannot be awaited, this class acts to create a common pattern for these types of objects.
- * 
- * To ensure the object is fully initilased before usage, place an `await myObject.initialised;` immediately after 
+ *
+ * To ensure the object is fully initilased before usage, place an `await myObject.initialised;` immediately after
  * construction.
  */
 @injectable()

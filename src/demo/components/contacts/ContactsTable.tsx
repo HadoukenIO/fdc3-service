@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import {Contact} from '../../apps/ContactsApp';
+
 import {ContactsRow} from './ContactsRow';
 
 interface ContactTableProps {

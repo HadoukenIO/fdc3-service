@@ -1,13 +1,23 @@
-import {channelPromise, tryServiceDispatch} from './connection';
+/**
+ * @module Index
+ */
+
+import {Identity} from 'openfin/_v2/main';
+
+import {channelPromise, tryServiceDispatch, eventEmitter, FDC3Event, FDC3EventType} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
 import {APITopic, RaiseIntentPayload, SERVICE_IDENTITY} from './internal';
+import {ChannelChangedEvent} from './contextChannels';
 
 /**
  * This file was copied from the FDC3 v1 specification.
  *
  * Original file: https://github.com/FDC3/FDC3/blob/master/src/api/interface.ts
  */
+
+// Re-export context channel API at top-level
+export * from './contextChannels';
 
 // Re-export types/enums at top-level
 export * from './context';
@@ -59,7 +69,7 @@ export interface IntentResolution {
     version: string;
 }
 
-export type Listener = ContextListener|IntentListener;
+export type Listener = ContextListener | IntentListener;
 
 export interface ContextListener {
     handler: (context: Context) => void;
@@ -93,7 +103,8 @@ export interface IntentListener {
  * Launches/links to an app by name.
  *
  * If a Context object is passed in, this object will be provided to the opened application via a contextListener.
- * The Context argument is functionally equivalent to opening the target app with no context and broadcasting the context directly to it.
+ * The Context argument is functionally equivalent to opening the target app with no context and broadcasting the
+ * context directly to it.
  *
  * If opening errors, it returns an `Error` with a string from the `OpenError` export enumeration.
  *
@@ -199,17 +210,21 @@ const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
 if (channelPromise) {
-    fin.InterApplicationBus.subscribe(SERVICE_IDENTITY, 'intent', (payload: RaiseIntentPayload, uuid: string, name: string) => {
-        intentListeners.forEach((listener: IntentListener) => {
-            if (payload.intent === listener.intent) {
-                listener.handler(payload.context);
-            }
+    channelPromise.then((channel) => {
+        channel.register('intent', (payload: RaiseIntentPayload) => {
+            intentListeners.forEach((listener: IntentListener) => {
+                if (payload.intent === listener.intent) {
+                    listener.handler(payload.context);
+                }
+            });
         });
     });
 
-    fin.InterApplicationBus.subscribe(SERVICE_IDENTITY, 'context', (payload: Context, uuid: string, name: string) => {
-        contextListeners.forEach((listener: ContextListener) => {
-            listener.handler(payload);
+    channelPromise.then(channel => {
+        channel.register('context', (payload: Context) => {
+            contextListeners.forEach((listener: ContextListener) => {
+                listener.handler(payload);
+            });
         });
     });
 }
@@ -253,4 +268,20 @@ export function addContextListener(handler: (context: Context) => void): Context
     };
     contextListeners.push(listener);
     return listener;
+}
+
+/**
+ * Event that is fired whenever a window changes from one channel to another.
+ *
+ * This includes switching to/from the global channel. The `channel` and
+ * `previousChannel` fields use the same conventions for denoting the global channel as `getChannel`.
+ */
+export function addEventListener(eventType: 'channel-changed', handler: (event: ChannelChangedEvent) => void): void;
+
+export function addEventListener(eventType: FDC3EventType, handler: (event: FDC3Event) => void, identity?: Identity): void {
+    eventEmitter.addListener(eventType, handler);
+}
+
+export function removeEventListener(eventType: FDC3EventType, handler: (eventPayload: ChannelChangedEvent) => void): void {
+    eventEmitter.removeListener(eventType, handler);
 }
