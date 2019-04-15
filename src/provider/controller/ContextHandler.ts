@@ -20,16 +20,19 @@ export class ContextHandler {
         this._channelModel.onChannelChanged.add(this.onChannelChangedHandler, this);
     }
 
-    public async send(app: AppWindow, context: Context): Promise<void> {
+    // TODO: Remove ability to pass an Identity, standardise on AppWindow
+    public async send(app: AppWindow|Identity, context: Context): Promise<void> {
+        const identity: Identity = (app as AppWindow).identity || app;
+        this._apiHandler.channel.dispatch(identity, 'context', context);
     }
 
     public async broadcast(context: Context, source: Identity): Promise<void> {
-        // const channel = this._channelModel.getChannel(source);
-        // const channelMembers = this._channelModel.getChannelMembers(channel.id);
+        const channel = this._channelModel.getChannel(source);
+        const channelMembers = this._channelModel.getChannelMembers(channel.id);
 
-        // this._channelModel.setContext(channel.id, context);
+        this._channelModel.setContext(channel.id, context);
 
-        // return Promise.all(channelMembers.map(identity => this.send(identity, context))).then(() => {});
+        return Promise.all(channelMembers.map(identity => this.send(identity, context))).then(() => {});
     }
 
     public async getAllChannels(payload: GetAllChannelsPayload, source: ProviderIdentity): Promise<Channel[]> {
@@ -37,14 +40,14 @@ export class ContextHandler {
     }
 
     public async joinChannel(payload: JoinChannelPayload, source: ProviderIdentity): Promise<void> {
-        // const identity = payload.identity || source;
+        const identity = payload.identity || source;
 
-        // this._channelModel.joinChannel(identity, payload.id);
-        // const context = this._channelModel.getContext(payload.id);
+        this._channelModel.joinChannel(identity, payload.id);
+        const context = this._channelModel.getContext(payload.id);
 
-        // if (context) {
-        //     this.send(identity, context);
-        // }
+        if (context) {
+            this.send(identity, context);
+        }
     }
 
     public async getChannel(payload: GetChannelPayload, source: ProviderIdentity): Promise<Channel> {

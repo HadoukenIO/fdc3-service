@@ -43,6 +43,10 @@ export class AppWindow {
         return this._id;
     }
 
+    public get identity(): Identity {
+        return this._window.identity;
+    }
+
     public get appInfo(): Readonly<Application> {
         return this._appInfo;
     }
