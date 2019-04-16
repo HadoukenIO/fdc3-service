@@ -68,6 +68,10 @@ export class APIHandler<A extends string, P extends {[K in A]: unknown}, R exten
         setImmediate(() => {
             this.onConnection.emit(app);
             console.log('**** onConnectionHandler', Date.now());
+
+            for (const foo in this._providerChannel.connections) {
+                console.log(foo);
+            }
         });
     }
 
