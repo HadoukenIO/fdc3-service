@@ -50,7 +50,7 @@ describe('Intent listeners and raising intents', () => {
                 await fin.Application.wrapSync(testAppIdentity).quit().catch(() => {});
             });
 
-            test('When calling addIntentListner for the first time, the promise resolves and there are no errors', async () => {
+            test('When calling addIntentListener for the first time, the promise resolves and there are no errors', async () => {
                 await expect(fdc3Remote.addIntentListener(testAppIdentity, validPayload.intent)).resolves.not.toThrow();
             });
 
