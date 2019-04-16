@@ -19,7 +19,7 @@ async function loadCharts() {
 export function SymbolsTable(props: SymbolsTableProps): React.ReactElement {
     const {items} = props;
     const [chartApps, setChartApps] = React.useState<Application[]>([]);
-    const [selectedItem, setSelectedItem] = React.useState<Symbol | null>(items![0] || null);
+    const [selectedItem, setSelectedItem] = React.useState<Symbol | null>(null);
     const handleSelect = (item: Symbol | null) => {
         setSelectedItem(item);
     };

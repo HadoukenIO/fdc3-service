@@ -9,7 +9,7 @@ const testManagerIdentity = {
     name: 'test-app'
 };
 
-const validContext: OrganizationContext = {type: 'organization', name: 'OpenFin', id: {default: 'openfin'}};
+const validContext: OrganizationContext = {type: 'fdc3.organization', name: 'OpenFin', id: {default: 'openfin'}};
 
 // These tests all use the default channel for context broadcasts and listeners
 // Context-passing in a channelled environment is tested in a seperate file

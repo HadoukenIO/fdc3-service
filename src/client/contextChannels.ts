@@ -4,7 +4,7 @@
 
 import {Identity} from 'openfin/_v2/main';
 
-import {tryServiceDispatch, channelPromise} from './connection';
+import {tryServiceDispatch} from './connection';
 import {APITopic} from './internal';
 
 export type ChannelId = string;

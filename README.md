@@ -8,6 +8,7 @@ OpenFin FDC3 API uses the message Channels framework to expose its API to consum
 This project consist of 2 parts:
 1. The FDC3 Provider, taking care of intents, context and resolving them (UI)
 2. The FDC3 Client, exposing API's for applications to handle/raise intents with contexts
+3. The FDC3 Demo App, demonstrating the different features of OpenFin FDC3
 
 ### Dependencies
 - OpenFin version >= 8.56.30.42 

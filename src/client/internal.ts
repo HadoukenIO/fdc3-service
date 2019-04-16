@@ -33,7 +33,7 @@ export const SERVICE_CHANNEL = 'of-fdc3-service-v1';
 export enum APITopic {
     OPEN = 'OPEN',
     FIND_INTENT = 'FIND-INTENT',
-    FIND_INTENTS_BY_CONTEXT = 'FIND-INTENT-BY-CONTEXT',
+    FIND_INTENTS_BY_CONTEXT = 'FIND-INTENTS-BY-CONTEXT',
     BROADCAST = 'BROADCAST',
     RAISE_INTENT = 'RAISE-INTENT',
     GET_ALL_CHANNELS = 'GET-ALL-CHANNELS',
@@ -42,28 +42,16 @@ export enum APITopic {
     GET_CHANNEL_MEMBERS = 'GET-CHANNEL-MEMBERS'
 }
 
-export interface TopicPayloadMap {
-    [APITopic.OPEN]: OpenPayload;
-    [APITopic.FIND_INTENT]: FindIntentPayload;
-    [APITopic.FIND_INTENTS_BY_CONTEXT]: FindIntentsByContextPayload;
-    [APITopic.BROADCAST]: BroadcastPayload;
-    [APITopic.RAISE_INTENT]: RaiseIntentPayload;
-    [APITopic.GET_ALL_CHANNELS]: GetAllChannelsPayload;
-    [APITopic.JOIN_CHANNEL]: JoinChannelPayload;
-    [APITopic.GET_CHANNEL]: GetChannelPayload;
-    [APITopic.GET_CHANNEL_MEMBERS]: GetChannelMembersPayload;
-}
-
-export interface TopicResponseMap {
-    [APITopic.OPEN]: void;
-    [APITopic.FIND_INTENT]: AppIntent;
-    [APITopic.FIND_INTENTS_BY_CONTEXT]: AppIntent[];
-    [APITopic.BROADCAST]: void;
-    [APITopic.RAISE_INTENT]: IntentResolution;
-    [APITopic.GET_ALL_CHANNELS]: Channel[];
-    [APITopic.JOIN_CHANNEL]: void;
-    [APITopic.GET_CHANNEL]: Channel;
-    [APITopic.GET_CHANNEL_MEMBERS]: Identity[];
+export type API = {
+    [APITopic.OPEN]: [OpenPayload, void];
+    [APITopic.FIND_INTENT]: [FindIntentPayload, AppIntent];
+    [APITopic.FIND_INTENTS_BY_CONTEXT]: [FindIntentsByContextPayload, AppIntent[]];
+    [APITopic.BROADCAST]: [BroadcastPayload, void];
+    [APITopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
+    [APITopic.GET_ALL_CHANNELS]: [GetAllChannelsPayload, Channel[]];
+    [APITopic.JOIN_CHANNEL]: [JoinChannelPayload, void];
+    [APITopic.GET_CHANNEL]: [GetChannelPayload, Channel];
+    [APITopic.GET_CHANNEL_MEMBERS]: [GetChannelMembersPayload, Identity[]];
 }
 
 export interface OpenPayload {

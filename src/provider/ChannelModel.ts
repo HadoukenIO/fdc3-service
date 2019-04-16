@@ -3,7 +3,7 @@ import {Identity} from 'openfin/_v2/main';
 import {Channel, ChannelId, GLOBAL_CHANNEL_ID, ChannelChangedEvent} from '../client/contextChannels';
 import {Context} from '../client/main';
 
-import {Signal1} from './Signal';
+import {Signal1} from './common/Signal';
 
 type IdentityHash = string;
 
