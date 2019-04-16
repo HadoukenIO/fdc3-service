@@ -18,6 +18,7 @@ import {RaiseIntentPayload} from '../../../src/client/internal';
 import {FDC3Event, FDC3EventType} from '../../../src/client/connection';
 
 import {OFPuppeteerBrowser, TestWindowContext} from './ofPuppeteer';
+import {delay} from './delay';
 
 const ofBrowser = new OFPuppeteerBrowser();
 
@@ -222,6 +223,7 @@ export async function addEventListener(executionTarget: Identity, eventType: FDC
         return listenerID;
     }, eventType);
 
+    await delay(1000);
 
     return {
         remoteIdentity: executionTarget,
