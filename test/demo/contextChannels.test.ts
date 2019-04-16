@@ -37,7 +37,7 @@ async function setupWindows(...channels: (string|undefined)[]): Promise<Identity
     const appIdentities = [app1, app2, app3, app4];
 
     // Creating apps takes time, so increase timeout
-    jest.setTimeout(channels.length * 5000);
+    jest.setTimeout(60 * 60 * 60 * 1000);
 
     const result: Identity[] = await Promise.all(channels.map(async (channel, index) => {
         const identity = appIdentities[index];
