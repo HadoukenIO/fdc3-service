@@ -280,6 +280,8 @@ export class FDC3 {
                 // If its not valid JSON, then we enter this catch and continue on.
             }
 
+            console.log('*** opening app', Date.now());
+
             fin.Application.createFromManifest(appInfo.manifest)
                 .then((app) => {
                     // Setup a timeout for the registration of an intent listener
