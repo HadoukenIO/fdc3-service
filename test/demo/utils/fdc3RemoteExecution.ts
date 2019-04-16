@@ -211,6 +211,8 @@ export async function addEventListener(executionTarget: Identity, eventType: FDC
         const listenerID = this.eventListeners.length;
 
         const handler = ((payload: FDC3Event) => {
+            console.log('***** receiving event remote', payload);
+
             this.receivedEvents.push({listenerID, payload});
         }).bind(this);
 

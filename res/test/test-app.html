@@ -48,6 +48,8 @@
                 const nextEventListenerID = window.eventListeners.length;
 
                 const handler = (payload) => {
+                    console.log('***** receiving event remote', payload);
+
                     receivedEvents.push({nextEventListenerID, payload});
                 };
 

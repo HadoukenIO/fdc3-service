@@ -2,6 +2,7 @@ import 'jest';
 import {connect, Fin, Identity, Application} from 'hadouken-js-adapter';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
+import {delay} from './utils/delay';
 
 const testManagerIdentity = {uuid: 'test-app', name: 'test-app'};
 
@@ -36,7 +37,7 @@ async function setupWindows(...channels: (string|undefined)[]): Promise<Identity
     const appIdentities = [app1, app2, app3, app4];
 
     // Creating apps takes time, so increase timeout
-    jest.setTimeout(channels.length * 5000);
+    jest.setTimeout(channels.length * 5000 * 10000);
 
     const result: Identity[] = await Promise.all(channels.map(async (channel, index) => {
         const identity = appIdentities[index];
@@ -225,6 +226,12 @@ describe('When joining a channel', () => {
 
         // Check we received a channel-changed event
         const payload = await listener.getReceivedEvents();
+
+        if (payload.length === 0) {
+            console.log('frozen ****');
+            await delay(60 * 60 * 60 * 1000);
+        }
+
         expect(payload).toHaveLength(1);
         expect(payload[0]).toHaveProperty('channel.id', 'green');
         expect(payload[0]).toHaveProperty('previousChannel.id', 'global');

@@ -434,6 +434,8 @@ export class FDC3 {
     }
 
     private onChannelChangedHandler(event: ChannelChangedEvent): void {
+        console.log('***** publishing event', event);
+
         this.apiHandler.channel.publish('event', event);
     }
 }
