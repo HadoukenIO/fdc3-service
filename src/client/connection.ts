@@ -36,6 +36,8 @@ export type FDC3EventType = 'channel-changed';
  */
 export const eventEmitter = new EventEmitter();
 
+console.log('da;odhawklfghaskljdfghaskfghaklsfdjgefkg');
+
 /**
  * Promise to the channel object that allows us to connect to the client
  */
