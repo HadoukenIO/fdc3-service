@@ -59,11 +59,15 @@ async function setupWindows(...channels: (string|undefined)[]): Promise<Identity
     return result;
 }
 
-describe('When starting an app', () => {
-    it('channel-changed event is fired for global channel', async () => {
+
+describe('When joining a channel', () => {
+    it('channel-changed event is fired for user channel', async () => {
+        const [channelChangingWindow] = await setupWindows(undefined);
+
         const listener = await fdc3Remote.addEventListener(testManagerIdentity, 'channel-changed');
 
-        const [channelChangingWindow] = await setupWindows(undefined);
+        // Change the channel of our window to green
+        await fdc3Remote.joinChannel(channelChangingWindow, 'green');
 
         // Check we received a channel-changed event
         const payload = await listener.getReceivedEvents();
@@ -71,10 +75,10 @@ describe('When starting an app', () => {
         console.log('frozen ****', payload.length);
         await delay(60 * 60 * 60 * 1000);
 
+
         expect(payload).toHaveLength(1);
-        expect(payload[0]).toHaveProperty('channel.id', 'global');
-        expect(payload[0]).toHaveProperty('previousChannel.id', undefined);
+        expect(payload[0]).toHaveProperty('channel.id', 'green');
+        expect(payload[0]).toHaveProperty('previousChannel.id', 'global');
         expect(payload[0]).toHaveProperty('identity', channelChangingWindow);
     });
 });
-
