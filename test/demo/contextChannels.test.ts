@@ -66,7 +66,7 @@ describe('When starting an app', () => {
 
         // Check we received a channel-changed event
         const payload = await listener.getReceivedEvents();
-        
+
         console.log('frozen ****', payload.length);
         await delay(60 * 60 * 60 * 1000);
 
