@@ -209,13 +209,13 @@ export async function addEventListener(executionTarget: Identity, eventType: FDC
     const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext, eventType: FDC3EventType): number {
         const listenerID = this.eventListeners.length;
 
-        const handler = (payload: FDC3Event) => {
+        const handler = ((payload: FDC3Event) => {
             this.receivedEvents.push({listenerID, payload});
-        };
+        }).bind(this);
 
-        const unsubscribe = () => {
+        const unsubscribe = (() => {
             this.fdc3.removeEventListener(eventType, handler);
-        };
+        }).bind(this);
 
         this.fdc3.addEventListener(eventType, handler);
         this.eventListeners[listenerID] = {handler, unsubscribe};
