@@ -439,8 +439,8 @@ export class FDC3 {
     private onChannelChangedHandler(event: ChannelChangedEvent): void {
         console.log('*** publishing event', Date.now());
 
-        setImmediate(() => {
-            this.apiHandler.channel.publish('event', event);
-        });
+        // setImmediate(() => {
+        this.apiHandler.channel.publish('event', event);
+        // });
     }
 }

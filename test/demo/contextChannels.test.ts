@@ -44,6 +44,8 @@ async function setupWindows(...channels: (string|undefined)[]): Promise<Identity
         const identity = appIdentities[index];
 
         await fdc3Remote.open(testManagerIdentity, identity.uuid);
+        await delay(2000);
+
         const app = fin.Application.wrapSync(appIdentities[index]);
 
         await expect(app.isRunning()).resolves.toBe(true);
@@ -55,6 +57,8 @@ async function setupWindows(...channels: (string|undefined)[]): Promise<Identity
 
         return identity;
     }));
+
+    await delay(2000);
 
     return result;
 }
@@ -72,8 +76,8 @@ describe('When joining a channel', () => {
         // Check we received a channel-changed event
         const payload = await listener.getReceivedEvents();
 
-        // console.log('frozen ****', payload.length);
-        // await delay(60 * 60 * 60 * 1000);
+        console.log('frozen ****', payload.length);
+        await delay(60 * 60 * 60 * 1000);
 
 
         expect(payload).toHaveLength(1);
