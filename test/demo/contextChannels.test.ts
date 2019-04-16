@@ -22,6 +22,7 @@ afterEach(async () => {
 
     for (const app of startedApps) {
         await app.quit().catch(() => {});
+        await expect(app.isRunning()).resolves.toBe(false);
     }
 
     startedApps.length = 0;
