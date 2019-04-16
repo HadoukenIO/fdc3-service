@@ -57,6 +57,9 @@ if (fin.Window.me.uuid !== SERVICE_IDENTITY.uuid || fin.Window.me.name !== SERVI
             // Any unregistered action will simply return false
             channel.setDefaultAction(() => false);
 
+            console.log('*** registered service listeners');
+
+
             return channel;
         });
 }
