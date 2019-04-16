@@ -11,8 +11,9 @@
  */
 
 import {Identity} from 'openfin/_v2/main';
+import {Payload} from 'openfin/_v2/transport/transport';
 
-import {Application, Context, IntentType, ChannelId, Channel} from '../../../src/client/main';
+import {Application, Context, IntentType, ChannelId, Channel, ChannelChangedEvent} from '../../../src/client/main';
 import {RaiseIntentPayload} from '../../../src/client/internal';
 import {FDC3Event, FDC3EventType} from '../../../src/client/connection';
 
@@ -230,6 +231,15 @@ export async function addEventListener(executionTarget: Identity, eventType: FDC
             }, id);
         },
         getReceivedEvents: async (): Promise<FDC3Event[]> => {
+            const allReceivedEvents = await ofBrowser.executeOnWindow(
+                executionTarget,
+                function(this: TestWindowContext, id: number): {listenerID: number, payload: ChannelChangedEvent}[] {
+                    return this.receivedEvents;
+                }, id
+            );
+
+            console.log('*** getting received events' + allReceivedEvents.length, allReceivedEvents);
+
             return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): FDC3Event[] {
                 return this.receivedEvents.filter(entry => entry.listenerID === id).map(entry => entry.payload);
             }, id);

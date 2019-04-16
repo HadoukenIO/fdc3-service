@@ -48,7 +48,7 @@
                 const nextEventListenerID = window.eventListeners.length;
 
                 const handler = (payload) => {
-                    receivedEvents.push({listenerID, payload});
+                    receivedEvents.push({nextEventListenerID, payload});
                 };
 
                 const unsubscribe = () => {
