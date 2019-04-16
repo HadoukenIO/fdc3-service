@@ -2,6 +2,7 @@ import 'jest';
 import {connect, Fin, Identity, Application} from 'hadouken-js-adapter';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
+import {delay} from './utils/delay';
 
 const testManagerIdentity = {uuid: 'test-app', name: 'test-app'};
 
@@ -256,6 +257,12 @@ describe('When starting an app', () => {
 
         // Check we received a channel-changed event
         const payload = await listener.getReceivedEvents();
+
+        console.log('*** payload length', payload.length);
+        jest.setTimeout(60 * 60 * 60 * 1000);
+        await delay(60 * 60 * 60 * 1000);
+
+
         expect(payload).toHaveLength(1);
         expect(payload[0]).toHaveProperty('channel.id', 'global');
         expect(payload[0]).toHaveProperty('previousChannel.id', undefined);

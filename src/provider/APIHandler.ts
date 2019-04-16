@@ -67,6 +67,7 @@ export class APIHandler<A extends string, P extends {[K in A]: unknown}, R exten
         // Delaying the firing of our signal slightly, to ensure client is definitely contactable.
         setImmediate(() => {
             this.onConnection.emit(app);
+            console.log('**** onConnectionHandler', Date.now());
         });
     }
 
