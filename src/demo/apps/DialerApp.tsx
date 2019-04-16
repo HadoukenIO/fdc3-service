@@ -80,7 +80,7 @@ export function DialerApp(props: AppProps): React.ReactElement {
 
     return (
         <div>
-            <ContextChannelSelector float={false} />
+            <ContextChannelSelector />
             <Number inCall={inCall} number={phoneNumber} onValueChange={onNumberEntry} />
             {inCall && <CallTimer />}
             {!inCall && <Dialer handleKeyPress={onDialerEntry} />}

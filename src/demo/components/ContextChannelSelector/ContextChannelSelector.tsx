@@ -8,11 +8,15 @@ interface ContextChannelSelectorProps {
     float?: boolean;
 }
 
+ContextChannelSelector.defaultProps = {
+    float: false
+};
+
 /**
  * Context channel ui
 */
 export function ContextChannelSelector(props: ContextChannelSelectorProps): React.ReactElement {
-    const {float = false} = props;
+    const {float} = props;
     const [currentChannelId, setCurrentChannelId] = React.useState<ChannelId>(GLOBAL_CHANNEL_ID);
     const [color, setColor] = React.useState<number>(0xFFFFFF);
     const [channels, setChannels] = React.useState<Channel[]>([]);
@@ -28,13 +32,13 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
 
     const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const {value: id} = event.currentTarget;
-        const channel = channels.find(x => x.id === id);
+        const selectedChannel = channels.find(channel => channel.id === id);
 
         joinChannel(id)
             .then(() => {
                 setCurrentChannelId(id);
-                if (channel) {
-                    setColor(channel.color);
+                if (selectedChannel) {
+                    setColor(selectedChannel.color);
                 }
             })
             .catch(error => {
@@ -64,6 +68,7 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
         </div>
     );
 }
+
 /**
  *
  * @param num
