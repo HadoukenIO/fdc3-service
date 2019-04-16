@@ -77,7 +77,7 @@ describe('When joining a channel', () => {
         const payload = await listener.getReceivedEvents();
 
         console.log('frozen ****', payload.length);
-        await delay(60 * 60 * 60 * 1000);
+        // await delay(60 * 60 * 60 * 1000);
 
 
         expect(payload).toHaveLength(1);
