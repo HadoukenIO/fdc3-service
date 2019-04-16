@@ -296,6 +296,7 @@ export class FDC3 {
                             clearTimeout(timeout);
                             if (context) {
                                 // Pass context to application before resolving (assume that the main window is the one with listeners registered)
+                                console.log('*** dispatching', Date.now());
                                 this.apiHandler.channel.dispatch({...app.identity, name: app.identity.uuid}, 'context', context)
                                     .then(resolve).catch((reason: string) => reject(new Error(reason)));
                             } else {
@@ -404,11 +405,13 @@ export class FDC3 {
     }
 
     private async sendContext(identity: Identity, context: ContextBase): Promise<void> {
+        console.log('*** dispatching', Date.now());
         await this.apiHandler.channel.dispatch(identity, 'context', context);
     }
 
     private async sendIntent(intent: RaiseIntentPayload, targetApp: AppMetadata): Promise<IntentResolution> {
         if (targetApp) {
+            console.log('*** dispatching', Date.now());
             await this.apiHandler.channel.dispatch(targetApp, 'intent', intent);
             return {
                 version: '1.0.0',
@@ -434,7 +437,7 @@ export class FDC3 {
     }
 
     private onChannelChangedHandler(event: ChannelChangedEvent): void {
-        console.log('***** publishing event', event);
+        console.log('*** publishing event', Date.now());
 
         this.apiHandler.channel.publish('event', event);
     }

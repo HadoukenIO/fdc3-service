@@ -53,6 +53,9 @@ if (fin.Window.me.uuid !== SERVICE_IDENTITY.uuid || fin.Window.me.name !== SERVI
             });
             // Any unregistered action will simply return false
             channel.setDefaultAction(() => false);
+
+            console.log('*** registered service listeners', Date.now());
+
             return channel;
         });
 }
@@ -65,5 +68,6 @@ if (fin.Window.me.uuid !== SERVICE_IDENTITY.uuid || fin.Window.me.name !== SERVI
  */
 export async function tryServiceDispatch<T extends APITopic>(action: T, payload: TopicPayloadMap[T]): Promise<TopicResponseMap[T]> {
     const channel: ChannelClient = await channelPromise;
+    console.log('*** dispatching', Date.now());
     return channel.dispatch(action, payload) as Promise<TopicResponseMap[T]>;
 }
