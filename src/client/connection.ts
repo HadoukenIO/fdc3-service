@@ -43,12 +43,9 @@ export let channelPromise: Promise<ChannelClient>;
 // Currently a runtime bug when provider connects to itself. Ideally the provider would never import a file
 // that includes this, but for now it is easier to put a guard in place.
 if (fin.Window.me.uuid !== SERVICE_IDENTITY.uuid || fin.Window.me.name !== SERVICE_IDENTITY.name) {
-    console.log('*** going to register service listeners');
     channelPromise = typeof fin === 'undefined' ?
         Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.')) :
         fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}}).then((channel: ChannelClient) => {
-            console.log('*** registering service listeners');
-
             // Register service listeners
             channel.register('WARN', (payload: any) => console.warn(payload));  // tslint:disable-line:no-any
             channel.register('event', (event: FDC3Event) => {
@@ -56,10 +53,6 @@ if (fin.Window.me.uuid !== SERVICE_IDENTITY.uuid || fin.Window.me.name !== SERVI
             });
             // Any unregistered action will simply return false
             channel.setDefaultAction(() => false);
-
-            console.log('*** registered service listeners');
-
-
             return channel;
         });
 }
