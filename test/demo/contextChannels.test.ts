@@ -60,8 +60,6 @@ async function setupWindows(...channels: (string|undefined)[]): Promise<Identity
 
 
 describe('When joining a channel', () => {
-
-
     it('channel-changed event is fired for user channel', async () => {
         const [channelChangingWindow] = await setupWindows(undefined);
 
@@ -73,7 +71,7 @@ describe('When joining a channel', () => {
         // Check we received a channel-changed event
         const payload = await listener.getReceivedEvents();
 
-        /*if (payload.length === 0) {
+        /* if (payload.length === 0) {
             console.log('frozen ****');
             await delay(60 * 60 * 60 * 1000);
         }*/
@@ -83,5 +81,4 @@ describe('When joining a channel', () => {
         expect(payload[0]).toHaveProperty('previousChannel.id', 'global');
         expect(payload[0]).toHaveProperty('identity', channelChangingWindow);
     });
-
 });
