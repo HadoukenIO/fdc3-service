@@ -1,10 +1,13 @@
 pipeline {
-
     agent { label 'linux-slave' }
+    options { timestamps() }
 
     stages {
         stage('Input') {
-            when { branch "master" }
+            when {
+                branch "master"
+                beforeInput true
+            }
             input {
                 message "Would you like to deploy the client to NPM?"
                 parameters {
