@@ -3,6 +3,16 @@ pipeline {
     agent { label 'linux-slave' }
 
     stages {
+        stage('Input') {
+            when { branch "master" }
+            input {
+                message "Would you like to deploy the client to NPM?"
+                parameters {
+                    choice(name: 'DEPLOY_CLIENT', choices: ['Yes', 'No'], description: '') 
+                }
+            }
+        }
+
         stage('Run Tests') {
             parallel {
                 stage('Unit Tests') {
@@ -36,35 +46,60 @@ pipeline {
         stage('Build & Deploy (Staging)') {
             agent { label 'linux-slave' }
             when { branch "develop" }
-            steps {
-                script {
-                    GIT_SHORT_SHA = sh ( script: "git rev-parse --short HEAD", returnStdout: true ).trim()
-                    PKG_VERSION = sh ( script: "node -pe \"require('./package.json').version\"", returnStdout: true ).trim()
+            environment {
+                GIT_SHORT_SHA = sh ( script: "git rev-parse --short HEAD", returnStdout: true ).trim()
+                PKG_VERSION = sh ( script: "node -pe \"require('./package.json').version\"", returnStdout: true ).trim()
 
                     configure(PKG_VERSION + "-alpha." + env.BUILD_NUMBER, "staging", "app.staging.json")
                 }
-
-                buildProject();
-                deployToS3();
-                deployToNPM();
+            }
+            stages {
+                stage("Build") {
+                    steps {
+                        buildProject();
+                    }
+                }
+                stage("Deploy Provider & Docs") {
+                    steps {
+                        deployToS3();
+                    }
+                });
+                stage("Deploy Client to NPM") {
+                    steps {
+                        deployToNPM();
+                    }
+                }
             }
         }
 
         stage('Build & Deploy (Production)') {
             agent { label 'linux-slave' }
             when { branch "master" }
-            steps {
-                script {
-                    GIT_SHORT_SHA = sh ( script: "git rev-parse --short HEAD", returnStdout: true ).trim()
-                    PKG_VERSION = sh ( script: "node -pe \"require('./package.json').version\"", returnStdout: true ).trim()
+            environment {
+                GIT_SHORT_SHA = sh ( script: "git rev-parse --short HEAD", returnStdout: true ).trim()
+                PKG_VERSION = sh ( script: "node -pe \"require('./package.json').version\"", returnStdout: true ).trim()
 
                     configure(PKG_VERSION, "stable", "app.json")
                 }
-
-                buildProject();
-                addReleaseChannels();
-                deployToS3();
-                deployToNPM();
+            }
+            stages {
+                stage("Build") {
+                    steps {
+                        buildProject();
+                        addReleaseChannels();
+                    }
+                }
+                stage("Deploy Provider & Docs") {
+                    steps {
+                        deployToS3();
+                    }
+                });
+                stage("Deploy Client to NPM") {
+                    when {expression { DEPLOY_CLIENT == 'Yes' }}
+                    steps {
+                        deployToNPM();
+                    }
+                }
             }
         }
     }
