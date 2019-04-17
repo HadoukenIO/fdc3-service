@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'linux-slave' }
+    agent none
 
     stages {
         stage('Input') {
@@ -21,6 +21,7 @@ pipeline {
         stage('Test') {
             parallel {
                 stage('Unit Tests') {
+                    agent { label 'linux-slave' }
                     steps {
                         sh "npm install"
                         sh "npm run test:unit -- --color=false --no-cache --verbose"
@@ -50,7 +51,6 @@ pipeline {
 
         stage('Build') {
             agent { label 'linux-slave' }
-            when { branch "develop" }
             steps {
                 configure()
 
