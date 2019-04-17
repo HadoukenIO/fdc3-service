@@ -11,6 +11,8 @@ pipeline {
                     choice(name: 'DEPLOY_CLIENT', choices: ['Yes', 'No'], description: '') 
                 }
             }
+            steps {
+            }
         }
 
         stage('Run Tests') {
