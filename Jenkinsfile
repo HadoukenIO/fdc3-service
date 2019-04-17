@@ -50,8 +50,7 @@ pipeline {
                 GIT_SHORT_SHA = sh ( script: "git rev-parse --short HEAD", returnStdout: true ).trim()
                 PKG_VERSION = sh ( script: "node -pe \"require('./package.json').version\"", returnStdout: true ).trim()
 
-                    configure(PKG_VERSION + "-alpha." + env.BUILD_NUMBER, "staging", "app.staging.json")
-                }
+                configure(PKG_VERSION + "-alpha." + env.BUILD_NUMBER, "staging", "app.staging.json")
             }
             stages {
                 stage("Build") {
@@ -63,7 +62,7 @@ pipeline {
                     steps {
                         deployToS3();
                     }
-                });
+                }
                 stage("Deploy Client to NPM") {
                     steps {
                         deployToNPM();
@@ -79,8 +78,7 @@ pipeline {
                 GIT_SHORT_SHA = sh ( script: "git rev-parse --short HEAD", returnStdout: true ).trim()
                 PKG_VERSION = sh ( script: "node -pe \"require('./package.json').version\"", returnStdout: true ).trim()
 
-                    configure(PKG_VERSION, "stable", "app.json")
-                }
+                configure(PKG_VERSION, "stable", "app.json")
             }
             stages {
                 stage("Build") {
@@ -93,7 +91,7 @@ pipeline {
                     steps {
                         deployToS3();
                     }
-                });
+                }
                 stage("Deploy Client to NPM") {
                     when {expression { DEPLOY_CLIENT == 'Yes' }}
                     steps {
