@@ -1,6 +1,5 @@
 pipeline {
     agent { label 'linux-slave' }
-    options { timestamps() }
 
     stages {
         stage('Input') {
