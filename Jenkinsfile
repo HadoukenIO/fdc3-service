@@ -46,7 +46,7 @@ pipeline {
         stage('Build & Deploy (Staging)') {
             agent { label 'linux-slave' }
             when { branch "develop" }
-            environment {
+            script {
                 GIT_SHORT_SHA = sh ( script: "git rev-parse --short HEAD", returnStdout: true ).trim()
                 PKG_VERSION = sh ( script: "node -pe \"require('./package.json').version\"", returnStdout: true ).trim()
 
@@ -74,7 +74,7 @@ pipeline {
         stage('Build & Deploy (Production)') {
             agent { label 'linux-slave' }
             when { branch "master" }
-            environment {
+            script {
                 GIT_SHORT_SHA = sh ( script: "git rev-parse --short HEAD", returnStdout: true ).trim()
                 PKG_VERSION = sh ( script: "node -pe \"require('./package.json').version\"", returnStdout: true ).trim()
 
