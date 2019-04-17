@@ -36,7 +36,7 @@ export type FDC3EventType = 'channel-changed';
  */
 export const eventEmitter = new EventEmitter();
 
-console.log('da;odhawklfghaskljdfghaskfghaklsfdjgefkg');
+console.log('Establishing connection');
 
 /**
  * Promise to the channel object that allows us to connect to the client
@@ -53,9 +53,8 @@ if (fin.Window.me.uuid !== SERVICE_IDENTITY.uuid || fin.Window.me.name !== SERVI
             channel.register('event', (event: FDC3Event) => {
                 eventEmitter.emit(event.type, event);
             });
-            // Any unregistered action will simply return false
+            // Any unregistered action will simply returnnosnfvpeszngv'ldsknz   n false
             channel.setDefaultAction(() => false);
-
             console.log('**** fin.InterApplicationBus.Channel.connect', Date.now());
 
             return channel;

@@ -63,22 +63,21 @@ async function setupWindows(...channels: (string|undefined)[]): Promise<Identity
 
 describe('When starting an app', () => {
     it('channel-changed event is fired for global channel', async () => {
-        const listener = await fdc3Remote.addEventListener(testManagerIdentity, 'channel-changed');
+        /* const listener = await fdc3Remote.addEventListener(testManagerIdentity, 'channel-changed');
 
         const [channelChangingWindow] = await setupWindows(undefined);
 
         // Check we received a channel-changed event
-        const payload = await listener.getReceivedEvents();
+        const payload = await listener.getReceivedEvents();*/
 
-        console.log('*** payload length', payload.length);
         jest.setTimeout(60 * 60 * 60 * 1000);
         await delay(60 * 60 * 60 * 1000);
 
-
+        /*
         expect(payload).toHaveLength(1);
         expect(payload[0]).toHaveProperty('channel.id', 'global');
         expect(payload[0]).toHaveProperty('previousChannel.id', undefined);
-        expect(payload[0]).toHaveProperty('identity', channelChangingWindow);
+        expect(payload[0]).toHaveProperty('identity', channelChangingWindow);*/
     });
 });
 
