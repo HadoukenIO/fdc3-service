@@ -2,6 +2,7 @@ import 'jest';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
+import {delay} from './utils/delay';
 
 const testManagerIdentity = {
     uuid: 'test-app',
@@ -98,44 +99,80 @@ describe('Intent listeners and raising intents', () => {
         });
 
         describe('When the target is not running', () => {
-            const testAppIdentity = {
-                uuid: 'test-app-preregistered-1',
-                name: 'test-app-preregistered-1',
-                appId: '500'
-            };
+            describe('And the listener is added right away', () => {
+                const testAppIdentity = {
+                    uuid: 'test-app-preregistered-1',
+                    name: 'test-app-preregistered-1',
+                    appId: '500'
+                };
 
-            describe('When the target is registered to accept the raised intent', () => {
-                test('The targeted app opens and its listener is triggered exactly once with the correct context', async () => {
-                    await fdc3Remote.raiseIntent(
-                        testManagerIdentity,
-                        validPayloadPreregistered.intent,
-                        validPayloadPreregistered.context,
-                        testAppIdentity.appId
-                    );
+                describe('When the target is registered to accept the raised intent', () => {
+                    test('The targeted app opens and its listener is triggered exactly once with the correct context', async () => {
+                        await fdc3Remote.raiseIntent(
+                            testManagerIdentity,
+                            validPayloadPreregistered.intent,
+                            validPayloadPreregistered.context,
+                            testAppIdentity.appId
+                        );
 
-                    // App should now be running
-                    await expect(fin.Application.wrapSync(testAppIdentity).isRunning()).resolves.toBe(true);
+                        // App should now be running
+                        await expect(fin.Application.wrapSync(testAppIdentity).isRunning()).resolves.toBe(true);
 
-                    const listener = await fdc3Remote.getRemoteIntentListener(testAppIdentity, validPayloadPreregistered.intent);
-                    const receivedContexts = await listener.getReceivedContexts();
+                        const listener = await fdc3Remote.getRemoteIntentListener(testAppIdentity, validPayloadPreregistered.intent);
+                        const receivedContexts = await listener.getReceivedContexts();
 
-                    expect(receivedContexts).toEqual([validPayloadPreregistered.context]);
+                        expect(receivedContexts).toEqual([validPayloadPreregistered.context]);
 
-                    await fin.Application.wrapSync(testAppIdentity).quit();
+                        await fin.Application.wrapSync(testAppIdentity).quit();
+                    });
+                });
+
+                describe('When the target is *not* registered to accept the raised intent', () => {
+                    // TBD: should the app open if the intent is not valid?
+                    test.todo('When calling raiseIntent [behaviour TBD]');
+                });
+                describe('When the target is not in the directory', () => {
+                    // Currently this will just open the resolver UI, which is probably the wrong behaviour
+                    // TODO: Make the service return an error when targeting an app which isn't in the directory
+                    test.skip('When calling raiseIntent the promise rejects with an error', async () => {
+                        const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, 'this-app-does-not-exist');
+                        // TODO: decide what the error should be
+                        await expect(resultPromise).rejects.toThrow();
+                    });
                 });
             });
 
-            describe('When the target is *not* registered to accept the raised intent', () => {
-                // TBD: should the app open if the intent is not valid?
-                test.todo('When calling raiseIntent [behavoir TBD]');
-            });
-            describe('When the target is not in the directory', () => {
-                // Currently this will just open the resolver UI, which is probably the wrong behaviour
-                // TODO: Make the service return an error when targeting an app which isn't in the directory
-                test.skip('When calling raiseIntent the promise rejects with an error', async () => {
-                    const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, 'this-app-does-not-exist');
-                    // TODO: decide what the error should be
-                    await expect(resultPromise).rejects.toThrow();
+            describe('And the listener is added after a delay', () => {
+                const testAppIdentity = {
+                    uuid: 'test-app-1',
+                    name: 'test-app-1',
+                    appId: '550'
+                };
+                test('The targeted app opens and its listener is triggered exactly once with the correct context, after the listener is set up', async () => {
+                    // We dont await for this promise here because it wouldn't resolve.
+                    // It's going to resolve only after we add the listener to the test app
+                    const raiseIntentPromise = fdc3Remote.raiseIntent(
+                        testManagerIdentity,
+                        validPayload.intent,
+                        validPayload.context,
+                        testAppIdentity.appId
+                    );
+
+                    await delay(1500);
+                    // App should now be running
+                    await expect(fin.Application.wrapSync(testAppIdentity).isRunning()).resolves.toBe(true);
+
+                    // We want to have a delay between the app running and the intent listener being set up
+                    await delay(1500);
+                    await fdc3Remote.addIntentListener(testAppIdentity, validPayload.intent);
+
+                    await raiseIntentPromise;
+
+                    const listener = await fdc3Remote.getRemoteIntentListener(testAppIdentity, validPayload.intent);
+                    const receivedContexts = await listener.getReceivedContexts();
+                    expect(receivedContexts).toEqual([validPayload.context]);
+
+                    await fin.Application.wrapSync(testAppIdentity).quit();
                 });
             });
         });
