@@ -10,7 +10,7 @@ import {SelectorHandler} from '../controller/SelectorHandler';
 import {AsyncInit} from '../controller/AsyncInit';
 import {FinEnvironment} from '../model/Environment';
 import {APIHandler} from '../APIHandler';
-import {APITopic} from '../../client/internal';
+import {APIFromClientTopic} from '../../client/internal';
 
 import {Inject} from './Injectables';
 
@@ -19,7 +19,7 @@ import {Inject} from './Injectables';
  * For each entry in `Inject`, defines the type that will be injected for that key.
  */
 type Types = {
-    [Inject.API_HANDLER]: APIHandler<APITopic>,
+    [Inject.API_HANDLER]: APIHandler<APIFromClientTopic>,
     [Inject.APP_DIRECTORY]: AppDirectory,
     [Inject.CONTEXT_HANDLER]: ContextHandler,
     [Inject.ENVIRONMENT]: Environment,

@@ -16,6 +16,7 @@
         }
     ],
     "intents": [
+        {"name": "test.IntentName"},
         {"name": "DialCall"},
         {"name": "StartCall"},
         {"name": "SaveContact"},
@@ -99,7 +100,7 @@
     "name": "test-app-preregistered-1",
     "manifest": "http://localhost:3923/test/configs/test-app-preregistered-1.json",
     "manifestType": "openfin",
-    "title": "Test App Preregistered 2",
+    "title": "Test App Preregistered 1",
     "description": "App for testing fdc3 service. Has intent and context listeners auto-registered on load",
     "images": [],
     "contactEmail": "support@openfin.co",
@@ -112,6 +113,7 @@
         }
     ],
     "intents": [
+        {"name": "test.IntentNamePreregistered"},
         {"name": "DialCall"},
         {"name": "StartCall"},
         {"name": "SaveContact"},

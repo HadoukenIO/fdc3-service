@@ -9,7 +9,17 @@ const testManagerIdentity = {
 };
 
 const validPayload = {
-    intent: 'DialCall',
+    intent: 'test.IntentName',
+    context: {
+        type: 'contact',
+        name: 'Test Name',
+        id: {
+            twitter: '@testname'
+        }
+    }
+};
+const validPayloadPreregistered = {
+    intent: 'test.IntentNamePreregistered',
     context: {
         type: 'contact',
         name: 'Test Name',
@@ -96,15 +106,20 @@ describe('Intent listeners and raising intents', () => {
 
             describe('When the target is registered to accept the raised intent', () => {
                 test('The targeted app opens and its listener is triggered exactly once with the correct context', async () => {
-                    await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.appId);
+                    await fdc3Remote.raiseIntent(
+                        testManagerIdentity,
+                        validPayloadPreregistered.intent,
+                        validPayloadPreregistered.context,
+                        testAppIdentity.appId
+                    );
 
                     // App should now be running
                     await expect(fin.Application.wrapSync(testAppIdentity).isRunning()).resolves.toBe(true);
 
-                    const listener = await fdc3Remote.getRemoteIntentListener(testAppIdentity, validPayload.intent);
+                    const listener = await fdc3Remote.getRemoteIntentListener(testAppIdentity, validPayloadPreregistered.intent);
                     const receivedContexts = await listener.getReceivedContexts();
 
-                    expect(receivedContexts).toEqual([validPayload.context]);
+                    expect(receivedContexts).toEqual([validPayloadPreregistered.context]);
 
                     await fin.Application.wrapSync(testAppIdentity).quit();
                 });

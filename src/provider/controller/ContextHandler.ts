@@ -6,15 +6,22 @@ import {AppWindow} from '../model/AppWindow';
 import {Context, ChannelChangedEvent, Channel} from '../../client/main';
 import {ChannelModel, createChannelModel} from '../ChannelModel';
 import {APIHandler} from '../APIHandler';
-import {APITopic, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload} from '../../client/internal';
+import {
+    APIFromClientTopic,
+    GetAllChannelsPayload,
+    JoinChannelPayload,
+    GetChannelPayload,
+    GetChannelMembersPayload,
+    APIToClientTopic
+} from '../../client/internal';
 import {Inject} from '../common/Injectables';
 
 @injectable()
 export class ContextHandler {
-    private _apiHandler: APIHandler<APITopic>;
+    private _apiHandler: APIHandler<APIFromClientTopic>;
     private _channelModel: ChannelModel;
 
-    constructor(@inject(Inject.API_HANDLER) apiHandler: APIHandler<APITopic>) {
+    constructor(@inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>) {
         this._apiHandler = apiHandler;
         this._channelModel = createChannelModel(apiHandler.onConnection, apiHandler.onDisconnection);
         this._channelModel.onChannelChanged.add(this.onChannelChangedHandler, this);
@@ -23,7 +30,7 @@ export class ContextHandler {
     // TODO: Remove ability to pass an Identity, standardise on AppWindow
     public async send(app: AppWindow|Identity, context: Context): Promise<void> {
         const identity: Identity = (app as AppWindow).identity || app;
-        this._apiHandler.channel.dispatch(identity, 'context', context);
+        this._apiHandler.channel.dispatch(identity, APIToClientTopic.CONTEXT, context);
     }
 
     public async broadcast(context: Context, source: Identity): Promise<void> {

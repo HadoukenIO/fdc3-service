@@ -17,6 +17,7 @@
         const queryParams = new URLSearchParams(location.search);
         if (queryParams.get('registerListeners') === 'true') {
             const intents = [
+                'test.IntentNamePreregistered',
                 'DialCall',
                 'SaveContact',
                 'SaveInstrument',

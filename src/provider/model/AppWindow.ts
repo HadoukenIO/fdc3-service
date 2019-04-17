@@ -1,15 +1,16 @@
 import {Window, Identity} from 'openfin/_v2/main';
 
-import {Application} from '../../client/main';
+import {Application, IntentType} from '../../client/main';
+import {Signal1} from '../common/Signal';
 
 import {ContextChannel} from './ContextChannel';
 
-interface IntentSpec {
-    name: string;
-    context: ContextSpec;
-}
 interface ContextSpec {
     type: string;
+}
+
+interface IntentMap {
+    [key: string]: boolean;
 }
 
 /**
@@ -27,7 +28,7 @@ export class AppWindow {
     private _appInfo: Application;
     private _window: Window;
 
-    private _intents: IntentSpec[];
+    private _intents: IntentMap;
     private _contexts: ContextSpec[];
 
     constructor(identity: Identity, appInfo: Application) {
@@ -35,9 +36,11 @@ export class AppWindow {
         this._window = fin.Window.wrapSync(identity);
         this._appInfo = appInfo;
 
-        this._intents = [];
+        this._intents = {};
         this._contexts = [];
     }
+
+    public readonly intentsModified: Signal1<IntentType> = new Signal1();
 
     public get id(): string {
         return this._id;
@@ -51,7 +54,7 @@ export class AppWindow {
         return this._appInfo;
     }
 
-    public get intents(): ReadonlyArray<IntentSpec> {
+    public get intents(): IntentMap {
         return this._intents;
     }
 
@@ -61,5 +64,19 @@ export class AppWindow {
 
     public focus(): Promise<void> {
         return this._window.setAsForeground();
+    }
+
+    public isReadyToReceiveIntent(intent: IntentType): Promise<void> {
+        if (this._intents[intent]) {
+            return Promise.resolve();
+        }
+        return new Promise(resolve => {
+            const slot = this.intentsModified.add(intentSignalled => {
+                if (intentSignalled === intent) {
+                    slot.remove();
+                    resolve();
+                }
+            });
+        });
     }
 }

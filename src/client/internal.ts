@@ -30,28 +30,43 @@ export const SERVICE_CHANNEL = 'of-fdc3-service-v1';
 /**
  * Enum containing all and only actions that the provider can accept.
  */
-export enum APITopic {
+export enum APIFromClientTopic {
     OPEN = 'OPEN',
     FIND_INTENT = 'FIND-INTENT',
     FIND_INTENTS_BY_CONTEXT = 'FIND-INTENTS-BY-CONTEXT',
     BROADCAST = 'BROADCAST',
     RAISE_INTENT = 'RAISE-INTENT',
+    INTENT_LISTENER_READY = 'INTENT-LISTENER-READY',
     GET_ALL_CHANNELS = 'GET-ALL-CHANNELS',
     JOIN_CHANNEL = 'JOIN-CHANNEL',
     GET_CHANNEL = 'GET-CHANNEL',
     GET_CHANNEL_MEMBERS = 'GET-CHANNEL-MEMBERS'
 }
 
-export type API = {
-    [APITopic.OPEN]: [OpenPayload, void];
-    [APITopic.FIND_INTENT]: [FindIntentPayload, AppIntent];
-    [APITopic.FIND_INTENTS_BY_CONTEXT]: [FindIntentsByContextPayload, AppIntent[]];
-    [APITopic.BROADCAST]: [BroadcastPayload, void];
-    [APITopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
-    [APITopic.GET_ALL_CHANNELS]: [GetAllChannelsPayload, Channel[]];
-    [APITopic.JOIN_CHANNEL]: [JoinChannelPayload, void];
-    [APITopic.GET_CHANNEL]: [GetChannelPayload, Channel];
-    [APITopic.GET_CHANNEL_MEMBERS]: [GetChannelMembersPayload, Identity[]];
+/**
+ * Enum containing all and only actions that the provider can accept.
+ */
+export enum APIToClientTopic {
+  INTENT = 'INTENT',
+  CONTEXT = 'CONTEXT',
+}
+
+export type APIFromClient = {
+    [APIFromClientTopic.OPEN]: [OpenPayload, void];
+    [APIFromClientTopic.FIND_INTENT]: [FindIntentPayload, AppIntent];
+    [APIFromClientTopic.FIND_INTENTS_BY_CONTEXT]: [FindIntentsByContextPayload, AppIntent[]];
+    [APIFromClientTopic.BROADCAST]: [BroadcastPayload, void];
+    [APIFromClientTopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
+    [APIFromClientTopic.INTENT_LISTENER_READY]: [IntentListenerReadyPayload, void];
+    [APIFromClientTopic.GET_ALL_CHANNELS]: [GetAllChannelsPayload, Channel[]];
+    [APIFromClientTopic.JOIN_CHANNEL]: [JoinChannelPayload, void];
+    [APIFromClientTopic.GET_CHANNEL]: [GetChannelPayload, Channel];
+    [APIFromClientTopic.GET_CHANNEL_MEMBERS]: [GetChannelMembersPayload, Identity[]];
+}
+
+export type APIToClient = {
+    [APIToClientTopic.CONTEXT]: [ContextPayload, void];
+    [APIToClientTopic.INTENT]: [IntentPayload, any];
 }
 
 export interface OpenPayload {
@@ -74,6 +89,11 @@ export interface RaiseIntentPayload {
     target?: string;
 }
 
+export interface IntentPayload {
+    intent: string;
+    context: Context;
+}
+
 export interface GetAllChannelsPayload {
 
 }
@@ -89,4 +109,12 @@ export interface GetChannelPayload {
 
 export interface GetChannelMembersPayload {
     id: ChannelId;
+}
+
+export interface ContextPayload {
+    context: Context;
+}
+
+export interface IntentListenerReadyPayload {
+  intent: string;
 }
