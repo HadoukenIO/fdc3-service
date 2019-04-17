@@ -7,13 +7,16 @@ import {CallTimer} from '../components/dialer/CallTimer';
 import {CallButton} from '../components/dialer/CallButton';
 import {ContactContext, Context} from '../../client/context';
 import {Dialog} from '../components/common/Dialog';
-
+import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
 import '../../../res/demo/css/w3.css';
 
 interface AppProps {
     phoneNumber?: string;
 }
-
+/**
+ * Dialer App
+ * @param props
+ */
 export function DialerApp(props: AppProps): React.ReactElement {
     const [inCall, setInCall] = React.useState(false);
     const [phoneNumber, setPhoneNumber] = React.useState<string>('');
@@ -77,6 +80,7 @@ export function DialerApp(props: AppProps): React.ReactElement {
 
     return (
         <div>
+            <ContextChannelSelector />
             <Number inCall={inCall} number={phoneNumber} onValueChange={onNumberEntry} />
             {inCall && <CallTimer />}
             {!inCall && <Dialer handleKeyPress={onDialerEntry} />}

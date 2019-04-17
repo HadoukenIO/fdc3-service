@@ -3,8 +3,8 @@ import * as React from 'react';
 import * as fdc3 from '../../client/main';
 import {ContactsTable} from '../components/contacts/ContactsTable';
 import {Context, ContactContext} from '../../client/main';
-
 import '../../../res/demo/css/w3.css';
+import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
 
 const initialContactsState: Contact[] = [
     {'name': 'Tailor D\'Angeli', 'email': 'tdangeli0@toplist.cz', 'phone': '4475836763'},
@@ -34,7 +34,6 @@ export interface Contact {
     phone: string | null;
     email: string | null;
 }
-
 
 export function ContactsApp(): React.ReactElement {
     const [contacts, setContacts] = React.useState(initialContactsState);
@@ -72,6 +71,9 @@ export function ContactsApp(): React.ReactElement {
 
 
     return (
-        <ContactsTable items={contacts} />
+        <React.Fragment>
+            <ContextChannelSelector />
+            <ContactsTable items={contacts} />
+        </React.Fragment>
     );
 }
