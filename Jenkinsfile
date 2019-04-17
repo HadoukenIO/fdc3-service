@@ -12,6 +12,7 @@ pipeline {
                 }
             }
             steps {
+                echo 'Starting build'
             }
         }
 
