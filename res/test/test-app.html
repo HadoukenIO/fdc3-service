@@ -45,10 +45,8 @@
             }
 
             for (const eventType of eventTypes) {
-                const nextEventListenerID = window.eventListeners.length;
-
                 const handler = (payload) => {
-                    receivedEvents.push({listenerID, payload});
+                    receivedEvents.push({listenerID: 0, payload});
                 };
 
                 const unsubscribe = () => {
@@ -56,7 +54,7 @@
                 };
 
                 fdc3.addEventListener(eventType, handler);
-                window.eventListeners[nextEventListenerID] = {eventType, handler, unsubscribe};
+                window.eventListeners[0] = {eventType, handler, unsubscribe};
             }
         }
     </script>
