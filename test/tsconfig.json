@@ -10,6 +10,7 @@
         "es7"
       ],
       "esModuleInterop": false,
+      "experimentalDecorators": true
     },
     "exclude": [
       "../node_modules",
