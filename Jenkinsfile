@@ -46,15 +46,16 @@ pipeline {
         stage('Build & Deploy (Staging)') {
             agent { label 'linux-slave' }
             when { branch "develop" }
-            script {
-                GIT_SHORT_SHA = sh ( script: "git rev-parse --short HEAD", returnStdout: true ).trim()
-                PKG_VERSION = sh ( script: "node -pe \"require('./package.json').version\"", returnStdout: true ).trim()
-
-                configure(PKG_VERSION + "-alpha." + env.BUILD_NUMBER, "staging", "app.staging.json")
-            }
             stages {
                 stage("Build") {
                     steps {
+                        script {
+                            GIT_SHORT_SHA = sh ( script: "git rev-parse --short HEAD", returnStdout: true ).trim()
+                            PKG_VERSION = sh ( script: "node -pe \"require('./package.json').version\"", returnStdout: true ).trim()
+
+                            configure(PKG_VERSION + "-alpha." + env.BUILD_NUMBER, "staging", "app.staging.json")
+                        }
+
                         buildProject();
                     }
                 }
@@ -74,15 +75,16 @@ pipeline {
         stage('Build & Deploy (Production)') {
             agent { label 'linux-slave' }
             when { branch "master" }
-            script {
-                GIT_SHORT_SHA = sh ( script: "git rev-parse --short HEAD", returnStdout: true ).trim()
-                PKG_VERSION = sh ( script: "node -pe \"require('./package.json').version\"", returnStdout: true ).trim()
-
-                configure(PKG_VERSION, "stable", "app.json")
-            }
             stages {
                 stage("Build") {
                     steps {
+                        script {
+                            GIT_SHORT_SHA = sh ( script: "git rev-parse --short HEAD", returnStdout: true ).trim()
+                            PKG_VERSION = sh ( script: "node -pe \"require('./package.json').version\"", returnStdout: true ).trim()
+
+                            configure(PKG_VERSION, "stable", "app.json")
+                        }
+
                         buildProject();
                         addReleaseChannels();
                     }
