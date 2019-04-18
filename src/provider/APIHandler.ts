@@ -66,11 +66,11 @@ export class APIHandler<A extends string, P extends {[K in A]: unknown}, R exten
         // The 'onConnection' callback fires *just before* the channel is ready.
         // Delaying the firing of our signal slightly, to ensure client is definitely contactable.
         setImmediate(() => {
-            this.onConnection.emit(app);
+            // this.onConnection.emit(app);
             console.log('**** onConnectionHandler', Date.now());
 
-            for (const foo in this._providerChannel.connections) {
-                console.log(foo);
+            for (const connection of this._providerChannel.connections) {
+                console.log(connection);
             }
         });
     }
