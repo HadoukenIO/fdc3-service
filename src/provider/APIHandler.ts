@@ -65,9 +65,9 @@ export class APIHandler<A extends string, P extends {[K in A]: unknown}, R exten
 
         // The 'onConnection' callback fires *just before* the channel is ready.
         // Delaying the firing of our signal slightly, to ensure client is definitely contactable.
-        setImmediate(() => {
+        setTimeout(() => {
             this.onConnection.emit(app);
-        });
+        }, 100);
     }
 
     private onDisconnectionHandler(app:Identity): void {

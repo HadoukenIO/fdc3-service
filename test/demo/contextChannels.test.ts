@@ -2,6 +2,7 @@ import 'jest';
 import {connect, Fin, Identity, Application} from 'hadouken-js-adapter';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
+import {delay} from './utils/delay';
 
 const testManagerIdentity = {uuid: 'test-app', name: 'test-app'};
 
@@ -43,6 +44,9 @@ async function setupWindows(...channels: (string|undefined)[]): Promise<Identity
 
         await fdc3Remote.open(testManagerIdentity, identity.uuid);
         const app = fin.Application.wrapSync(appIdentities[index]);
+
+        // Delay so that we can be sure any publishing resulting from the app connecting to the provider has occured
+        await delay(200);
 
         await expect(app.isRunning()).resolves.toBe(true);
 
