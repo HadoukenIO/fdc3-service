@@ -14,7 +14,16 @@ const appTemplate: Application = {
     appId: 'id',
     name: 'test-app',
     manifest: '',
-    manifestType: ''
+    manifestType: '',
+    intents: [
+        {
+            name: 'Call',
+            contexts: [
+                'dial'
+            ],
+            customConfig: {}
+        }
+    ]
 };
 
 // Generate applications
@@ -29,6 +38,10 @@ const generateApplications = (amount: number): Application[] => {
 describe('AppDirectory Unit Tests', () => {
     let appDirectory: AppDirectory;
     let store: LocalForage;
+
+    afterEach(async () => {
+        await store.clear();
+    });
 
     describe('Storage', () => {
         beforeEach(async () => {
@@ -67,7 +80,30 @@ describe('AppDirectory Unit Tests', () => {
         });
     });
 
+    describe('Calls to', () => {
+        const fakeApps = generateApplications(3);
+        beforeEach(async () => {
+            appDirectory = new AppDirectory();
+            appDirectory['fetchData'] = jest.fn(() => Promise.resolve(fakeApps));
+        });
 
-    describe('', () => {
+        it('getAppByName', async () => {
+            const exists = await appDirectory.getAppByName('test-app-0');
+            const doesNotExist = await appDirectory.getAppByName('non-existent-app');
+
+            expect(exists).toBeDefined();
+            expect(exists).toEqual(fakeApps[0]);
+            expect(doesNotExist).toBeNull();
+        });
+
+        it('getAllApps', async () => {
+            const apps = await appDirectory.getAllApps();
+            expect(apps).toEqual(fakeApps);
+        });
+
+        it('getAppsByIntent', async () => {
+            const apps = await appDirectory.getAppsByIntent('Call');
+            expect(apps).toEqual(fakeApps);
+        });
     });
 });
