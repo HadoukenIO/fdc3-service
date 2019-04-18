@@ -96,7 +96,13 @@ export class Main {
     }
 
     private async findIntentsByContext (payload: FindIntentsByContextPayload): Promise<AppIntent[]> {
-        return [];
+        if (payload.context && payload.context.type) {
+            const apps = await this._directory.getAppIntentsByContext(payload.context.type);
+            return apps;
+        } else {
+            // TODO: Choose the right message
+            throw new Error('Context not valid');
+        }
     }
 
     private async broadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {

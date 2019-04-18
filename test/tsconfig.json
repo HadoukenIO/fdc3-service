@@ -3,13 +3,10 @@
     "compilerOptions": {
       "rootDir": "..",
       "outDir": "../dist/test",
-      "target": "es2017",
-      "module": "commonjs",
-      "lib": [
-        "dom",
-        "es7"
-      ],
       "esModuleInterop": false,
+      "types": ["node", "openfin", "reflect-metadata"],
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true
     },
     "exclude": [
       "../node_modules",
