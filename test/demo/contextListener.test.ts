@@ -29,8 +29,6 @@ describe('Context listeners and broadcasting', () => {
         beforeEach(async () => {
             // Open the app to be used in each test
             await fdc3Remote.open(testManagerIdentity, testAppIdentity.uuid);
-            // Delay so that we can be sure testManager has joined the global channel
-            await delay(200);
         });
 
         afterEach(async () => {

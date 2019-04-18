@@ -68,7 +68,10 @@ export class FDC3 {
         const requestedApp: Application | undefined = applications.find((app: Application) => app.name === payload.name);
         return new Promise<void>((resolve: () => void, reject: (reason: Error) => void) => {
             if (requestedApp) {
-                this.openApplication(requestedApp, payload.context).then(resolve, reject);
+                this.openApplication(requestedApp, payload.context).then(() => {
+                    // Delay so that we can be the app has joined the global channel before returning
+                    setTimeout(resolve, 200);
+                }, reject);
             } else {
                 reject(new Error('No app with name \'' + payload.name + '\''));
             }
