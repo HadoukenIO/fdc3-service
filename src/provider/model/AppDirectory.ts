@@ -1,5 +1,4 @@
 import {injectable} from 'inversify';
-import * as localForage from 'localforage';
 
 import {Application} from '../../client/directory';
 
@@ -14,48 +13,19 @@ const devURL = 'http://localhost:3923/provider/sample-app-directory.json';
 
 @injectable()
 export class AppDirectory {
-    private _store: LocalForage;
     private _directory: Application[] = [];
     private _URL!: string;
 
     public constructor() {
-        this._store = localForage.createInstance({
-            name: 'FDC3',
-            version: 1.0,
-            storeName: 'app-directory'
-        });
         // Set default values
-        this._store.getItem<string>(StorageKeys.URL, (error, value) => {
-            // Use dev hardcoded url
-            if (value === null) {
-                value = devURL;
-            }
-            this._URL = value;
-        });
-        this._store.getItem<Application[]>(StorageKeys.APPLICATIONS, (error, value) => {
-            if (value === null) {
-                value = [];
-            }
-            this._directory = value;
-        });
-    }
-
-    /**
-     * Update the application directory in memory and storage.
-     * @param applications To place into the directory.
-     */
-    private async updateDirectory(applications: Application[]): Promise<void> {
-        await this._store.setItem<Application[]>(StorageKeys.APPLICATIONS, applications);
-        this._directory = applications;
-    }
-
-    /**
-     * Update the application directory URL in memory and storage.
-     * @param url Directory URL.
-     */
-    private async updateURL(url: string) {
-        await this._store.setItem<string>(StorageKeys.URL, url);
-        this._URL = url;
+        this._URL = window.localStorage.getItem(StorageKeys.URL) || devURL;
+        try {
+            const directory = window.localStorage.getItem(StorageKeys.APPLICATIONS) || [];
+            this._directory = (typeof directory === 'string') ? JSON.parse(directory) : directory;
+        } catch (error) {
+            // Clear store
+            window.localStorage.removeItem(StorageKeys.APPLICATIONS);
+        }
     }
 
     public async getAppByName(name: string): Promise<Application | null> {
@@ -75,6 +45,24 @@ export class AppDirectory {
     public async getAllApps(): Promise<Application[]> {
         await this.refreshDirectory();
         return this._directory;
+    }
+
+    /**
+     * Update the application directory in memory and storage.
+     * @param applications To place into the directory.
+     */
+    private async updateDirectory(applications: Application[]): Promise<void> {
+        window.localStorage.setItem(StorageKeys.APPLICATIONS, JSON.stringify(applications));
+        this._directory = applications;
+    }
+
+    /**
+     * Update the application directory URL in memory and storage.
+     * @param url Directory URL.
+     */
+    private async updateURL(url: string) {
+        window.localStorage.setItem(StorageKeys.URL, url);
+        this._URL = url;
     }
 
     /**
@@ -99,20 +87,15 @@ export class AppDirectory {
             this.updateDirectory([]);
             return;
         }
-        const storedURL = await localForage.getItem<string>('url');
+        const storedURL = window.localStorage.getItem(StorageKeys.URL);
         const currentURL = this._URL;
         // Only update the directory if the URL has changed
         // or the directory is empty (the last request may have failed?)
-        if (currentURL !== storedURL || (currentURL === storedURL && this._directory.length === 0)) {
-            try {
-                const applications = await this.fetchData(currentURL);
-                await this.updateDirectory(applications);
-                if (currentURL !== storedURL) {
-                    await this.updateURL(currentURL);
-                }
-            } catch (error) {
-                // Dont update
-                return;
+        if (currentURL !== storedURL || this._directory.length === 0) {
+            const applications = await this.fetchData(currentURL);
+            await this.updateDirectory(applications);
+            if (currentURL !== storedURL) {
+                await this.updateURL(currentURL);
             }
         }
     }
