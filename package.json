@@ -11,6 +11,7 @@
     "test": "npm run test:unit && npm run test:int",
     "test:int": "node test/runner.js",
     "test:unit": "jest --config jest-unit.config.json --colors",
+    "channels": "svc-tools channels",
     "check": "svc-tools check",
     "fix": "svc-tools fix",
     "clean": "rimraf dist gen",

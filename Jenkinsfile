@@ -52,7 +52,7 @@ pipeline {
         stage('Build') {
             agent { label 'linux-slave' }
             steps {
-                configure()
+                configure("fdc3")
 
                 buildProject()
                 addReleaseChannels()
@@ -70,11 +70,10 @@ pipeline {
     }
 }
 
-def configure() {
-    def config = readJSON file: './services.config.json'
+def configure(serviceName) {
     GIT_SHORT_SHA = sh ( script: "git rev-parse --short HEAD", returnStdout: true ).trim()
     PKG_VERSION = sh ( script: "node -pe \"require('./package.json').version\"", returnStdout: true ).trim()
-    SERVICE_NAME = config.SERVICE_NAME
+    SERVICE_NAME = serviceName
 
     if (env.BRANCH_NAME == 'master') {
         BUILD_VERSION = PKG_VERSION
