@@ -18,13 +18,13 @@ export class AppDirectory {
 
     public constructor() {
         // Set default values
-        this._URL = window.localStorage.getItem(StorageKeys.URL) || devURL;
+        this._URL = localStorage.getItem(StorageKeys.URL) || devURL;
+        const directory = localStorage.getItem(StorageKeys.APPLICATIONS) || [];
         try {
-            const directory = window.localStorage.getItem(StorageKeys.APPLICATIONS) || [];
             this._directory = (typeof directory === 'string') ? JSON.parse(directory) : directory;
         } catch (error) {
-            // Clear store
-            window.localStorage.removeItem(StorageKeys.APPLICATIONS);
+            this._directory = [];
+            localStorage.setItem(StorageKeys.APPLICATIONS, JSON.stringify([]));
         }
     }
 
@@ -52,7 +52,7 @@ export class AppDirectory {
      * @param applications To place into the directory.
      */
     private async updateDirectory(applications: Application[]): Promise<void> {
-        window.localStorage.setItem(StorageKeys.APPLICATIONS, JSON.stringify(applications));
+        localStorage.setItem(StorageKeys.APPLICATIONS, JSON.stringify(applications));
         this._directory = applications;
     }
 
@@ -61,7 +61,7 @@ export class AppDirectory {
      * @param url Directory URL.
      */
     private async updateURL(url: string) {
-        window.localStorage.setItem(StorageKeys.URL, url);
+        localStorage.setItem(StorageKeys.URL, url);
         this._URL = url;
     }
 
@@ -87,15 +87,17 @@ export class AppDirectory {
             this.updateDirectory([]);
             return;
         }
-        const storedURL = window.localStorage.getItem(StorageKeys.URL);
+        const storedURL = localStorage.getItem(StorageKeys.URL);
         const currentURL = this._URL;
         // Only update the directory if the URL has changed
         // or the directory is empty (the last request may have failed?)
         if (currentURL !== storedURL || this._directory.length === 0) {
-            const applications = await this.fetchData(currentURL);
-            await this.updateDirectory(applications);
-            if (currentURL !== storedURL) {
-                await this.updateURL(currentURL);
+            const applications: Application[] | null = await this.fetchData(currentURL).catch(() => null);
+            if (applications) {
+                await this.updateDirectory(applications);
+                if (currentURL !== storedURL) {
+                    await this.updateURL(currentURL);
+                }
             }
         }
     }

@@ -1,6 +1,8 @@
 import 'jest';
 import 'reflect-metadata';
 
+import {Jest} from '@jest/environment';
+
 import {AppDirectory} from '../../src/provider/model/AppDirectory';
 import {Application} from '../../src/client/directory';
 
@@ -10,6 +12,11 @@ enum StorageKeys {
     APPLICATIONS = 'applications'
 }
 
+enum Intents {
+    Call = 'Call',
+    Chart = 'Chart'
+}
+
 const appTemplate: Application = {
     appId: 'id',
     name: 'test-app',
@@ -17,7 +24,7 @@ const appTemplate: Application = {
     manifestType: '',
     intents: [
         {
-            name: 'Call',
+            name: Intents.Call,
             contexts: [
                 'dial'
             ],
@@ -26,84 +33,171 @@ const appTemplate: Application = {
     ]
 };
 
-// Generate applications
-const generateApplications = (amount: number): Application[] => {
-    return Array(amount).fill(appTemplate).map((app, i) => ({
-        ...app,
-        appId: `id-${i}`,
-        name: `${app.name}-${i}`
-    }));
-};
+const fakeApps: Application[] = [
+    {
+        ...appTemplate, appId: 'id-0', name: 'test-app-0', intents: [
+            {
+                name: Intents.Call,
+                contexts: [
+                    'dial'
+                ],
+                customConfig: {}
+            }
+        ]
+    },
+    {
+        ...appTemplate, appId: 'id-1', name: 'test-app-1', intents: [
+            {
+                name: Intents.Call,
+                contexts: [
+                    'dial'
+                ],
+                customConfig: {}
+            }
+        ]
+    },
+    {
+        ...appTemplate, appId: 'id-2', name: 'test-app-2', intents: [
+            {
+                name: Intents.Chart,
+                contexts: [
+                    'chart'
+                ],
+                customConfig: {}
+            }
+        ]
+    }
+];
+
+declare const global: NodeJS.Global & {localStorage: Store} & {fetch: (url: string) => Promise<Response>};
+
+type Store = jest.Mocked<Pick<typeof localStorage, 'getItem' | 'setItem'>>;
+
+interface ResponseOptions {
+    status: number;
+}
+
+class Response {
+    private _blob: string;
+    private _options: ResponseOptions;
+
+    public constructor(blob: string, options: ResponseOptions) {
+        this._blob = blob;
+        this._options = options;
+    }
+
+    public get ok() {
+        const {status} = this._options;
+        return status >= 200 && status <= 400;
+    }
+
+    public async json() {
+        return JSON.parse(this._blob);
+    }
+}
+
+const fakeAppsJSON = JSON.stringify(fakeApps);
+
+// Define localStorage global/window
+Object.defineProperty(global, 'localStorage', {
+    value: {
+        getItem: jest.fn(),
+        setItem: jest.fn()
+    },
+    writable: true
+});
 
 describe('AppDirectory Unit Tests', () => {
-    let appDirectory: AppDirectory;
-    let store: LocalForage;
-
-    afterEach(async () => {
-        await store.clear();
+    beforeEach(() => {
+        // Reset localStorage
+        global.localStorage = {
+            getItem: jest.fn().mockImplementation((key: string) => {
+                switch (key) {
+                    case StorageKeys.APPLICATIONS:
+                        return fakeAppsJSON;
+                    case StorageKeys.URL:
+                        return 'http://localhost:3923/provider/sample-app-directory.json';
+                    default:
+                        return null;
+                }
+            }),
+            setItem: jest.fn((key: string, value: string) => {})
+        };
+        global.fetch = jest.fn().mockImplementation(async (url: string) => {
+            return new Response(fakeAppsJSON, {status: 200});
+        });
     });
 
-    describe('Storage', () => {
-        beforeEach(async () => {
-            appDirectory = new AppDirectory();
+    describe('When directory is initialized', () => {
+        it('Loads directory and URL from the store', async () => {
+            const appDirectory = new AppDirectory();
+            expect(appDirectory['_directory']).toEqual(fakeApps);
+            expect(appDirectory['_URL']).toEqual('http://localhost:3923/provider/sample-app-directory.json');
         });
 
-        afterEach(async () => {
-            await store.clear();
-        });
+        it('Handles corrupt cached JSON in the store & resets it', () => {
+            global.localStorage.getItem.mockImplementation((key: string) => {
+                return StorageKeys.APPLICATIONS ? '__not_valid_json__' : 'http://localhost';
+            });
 
-        it('Correctly sets up the store', async () => {
-            store = appDirectory['_store'];
-            // await store.ready();
-            const url = await store.getItem(StorageKeys.URL);
-            const applications = await store.getItem(StorageKeys.APPLICATIONS);
-            expect(url).toEqual(null);
-            expect(applications).toEqual(null);
+            const appDirectory = new AppDirectory();
+            // Clear the corrupted data
+            expect(localStorage.getItem).toBeCalled();
+            expect(appDirectory['_directory']).toEqual([]);
         });
+    });
 
-        describe('Storing fetchData', () => {
-            it('Correctly sets applications in the store', async () => {
-                appDirectory['fetchData'] = jest.fn(() => Promise.resolve([]));
+    describe('When querying the Directory', () => {
+        describe('Refreshing the directory', () => {
+            it('Fetches & updates the directory when URLs do not match', async () => {
+                const appDirectory = new AppDirectory();
+                const newApplications = [{...appTemplate, name: 'test-app'}];
+                const spyGetItem = jest.spyOn(global.localStorage, 'getItem');
+                const spyFetch = jest.spyOn(global, 'fetch').mockImplementation(async () => {
+                    return new Response(JSON.stringify(newApplications), {status: 200});
+                });
+                spyGetItem.mockImplementation(() => '__test_url__');
+                appDirectory['_URL'] = '*different_url*';
+
+                const apps = await appDirectory.getAllApps();
+                expect(spyFetch).toBeCalledTimes(1);
+                expect(apps).toEqual(newApplications);
+            });
+
+            it('Cached applications are used when the URL are the same', async () => {
+                const spyFetch = jest.spyOn(global, 'fetch').mockImplementation(async () => new Response('[]', {status: 200}));
+                const appDirectory = new AppDirectory();
                 await appDirectory.getAllApps();
-                const applications = await store.getItem(StorageKeys.APPLICATIONS);
-                expect(applications).toEqual([]);
+                expect(spyFetch).not.toBeCalled();
             });
 
-            it('Correctly stores fetchData in the store and in memory', async () => {
-                const fakeApps = generateApplications(3);
-                appDirectory['fetchData'] = jest.fn(() => Promise.resolve(fakeApps));
-                const returnedApplications = await appDirectory.getAllApps();
-                const storedApplications = await store.getItem(StorageKeys.APPLICATIONS);
-                expect(storedApplications).toEqual(fakeApps);
-                expect(returnedApplications).toEqual(fakeApps);
+            it('Uses cached applications when fetching the data fails', async () => {
+                const spyFetch = jest.spyOn(global, 'fetch')
+                    .mockImplementation(() => Promise.reject(new Error('')));
+                const appDirectory = new AppDirectory();
+                appDirectory['_URL'] = '*new_url*';
+                const apps = await appDirectory.getAllApps();
+                expect(apps).not.toEqual([]);
+                expect(spyFetch).toBeCalled();
             });
         });
-    });
 
-    describe('Calls to', () => {
-        const fakeApps = generateApplications(3);
-        beforeEach(async () => {
-            appDirectory = new AppDirectory();
-            appDirectory['fetchData'] = jest.fn(() => Promise.resolve(fakeApps));
-        });
-
-        it('getAppByName', async () => {
-            const exists = await appDirectory.getAppByName('test-app-0');
-            const doesNotExist = await appDirectory.getAppByName('non-existent-app');
-
-            expect(exists).toBeDefined();
-            expect(exists).toEqual(fakeApps[0]);
-            expect(doesNotExist).toBeNull();
-        });
-
-        it('getAllApps', async () => {
+        it('getAllApps() returns all apps', async () => {
+            const appDirectory = new AppDirectory();
             const apps = await appDirectory.getAllApps();
             expect(apps).toEqual(fakeApps);
         });
 
-        it('getAppsByIntent', async () => {
-            const apps = await appDirectory.getAppsByIntent('Call');
-            expect(apps).toEqual(fakeApps);
+        it('getAppByName() returns an application with the given name when it exists', async () => {
+            const appDirectory = new AppDirectory();
+            const app = await appDirectory.getAppByName('test-app-0');
+            expect(app).not.toBeNull();
+        });
+
+        it('getAppsByIntent() returns applications with the given intent when they exist', async () => {
+            const appDirectory = new AppDirectory();
+            const apps = await appDirectory.getAppsByIntent(Intents.Chart);
+            expect(apps).toHaveLength(1);
         });
     });
 });
