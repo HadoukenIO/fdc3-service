@@ -7,14 +7,12 @@ pipeline {
                 branch "master"
                 beforeInput true
             }
-            input {
-                message "Would you like to deploy the client to NPM?"
-                parameters {
-                    choice(name: 'DEPLOY_CLIENT', choices: ['Yes', 'No'], description: '') 
-                }
-            }
             steps {
-                echo 'Starting build'
+                script {
+                    env.DEPLOY_CLIENT = input \
+                        message: "Would you like to deploy the client to NPM?", \
+                        parameters: [choice(name: 'DEPLOY_CLIENT', choices: ['Yes', 'No'], description: '')]
+                }
             }
         }
 
@@ -71,7 +69,7 @@ pipeline {
 }
 
 def configure(serviceName) {
-    GIT_SHORT_SHA = sh ( script: "git rev-parse --short HEAD", returnStdout: true ).trim()
+    GIT_SHORT_SHA = GIT_COMMIT.substring(0, 7)
     PKG_VERSION = sh ( script: "node -pe \"require('./package.json').version\"", returnStdout: true ).trim()
     SERVICE_NAME = serviceName
 
