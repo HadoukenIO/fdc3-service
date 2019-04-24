@@ -24,7 +24,6 @@ export class AppDirectory {
     public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
         await this.fetchData();
         const appIntentsByName: { [intentName: string]: AppIntent } = {};
-        console.log('getAppIntentsByContext', contextType, this._directory);
         this._directory.forEach((app: Application) => {
             (app.intents || []).forEach(intent => {
                 if (intent.contexts && intent.contexts.includes(contextType)) {
@@ -42,7 +41,6 @@ export class AppDirectory {
                 }
             });
         });
-        console.log('getAppIntentsByContext', appIntentsByName,);
         Object.values(appIntentsByName).forEach(appIntent => {
             appIntent.apps.sort((a, b) => a.appId.localeCompare(b.appId));
         });
