@@ -78,12 +78,7 @@ export interface FindIntentsByContextPayload {
     context: Context;
 }
 
-export interface BroadcastHeader{
-    uuid: string
-}
-
 export interface BroadcastPayload {
-    header: BroadcastHeader,
     context: Context;
 }
 
