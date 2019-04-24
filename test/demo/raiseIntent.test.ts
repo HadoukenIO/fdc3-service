@@ -162,7 +162,10 @@ describe('Intent listeners and raising intents', () => {
                     // App should now be running
                     await expect(fin.Application.wrapSync(testAppIdentity).isRunning()).resolves.toBe(true);
 
-                    // We want to have a delay between the app running and the intent listener being set up
+                    // We want to have a delay between the app running and the intent listener being set up,
+                    // so that we can test the "intent ready" handshake message.  If the app is fast enough setting up,
+                    // the intent message may go through anyway, but we want to simulate the case where the app
+                    // takes some time between starting up and actually setting up the intent listener.
                     await delay(1500);
                     await fdc3Remote.addIntentListener(testAppIdentity, validPayload.intent);
 

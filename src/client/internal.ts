@@ -44,7 +44,7 @@ export enum APIFromClientTopic {
 }
 
 /**
- * Enum containing all and only actions that the provider can accept.
+ * Enum containing all and only actions that the client can accept.
  */
 export enum APIToClientTopic {
   INTENT = 'INTENT',

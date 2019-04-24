@@ -30,7 +30,7 @@ export class Model {
 
     private _windows: AppWindow[];
     private _channels: ContextChannel[];
-    private windowAddedSignal: Signal0 = new Signal0();
+    private onWindowAdded: Signal0 = new Signal0();
 
     constructor(@inject(Inject.ENVIRONMENT) environment: Environment) {
         this._windows = [];
@@ -88,7 +88,7 @@ export class Model {
         } else {
             const createPromise = this._environment.createApplication(appInfo);
             const signalPromise = new Promise<AppWindow>(resolve => {
-                const slot = this.windowAddedSignal.add(() => {
+                const slot = this.onWindowAdded.add(() => {
                     const matchingWindow = this.findWindow(appInfo, {prefer});
                     if (matchingWindow) {
                         slot.remove();
@@ -111,7 +111,7 @@ export class Model {
                 console.info(`Registering window ${id}`);
                 const app = this._environment.wrapApplication(appInfo, identity);
                 this._windows.push(app);
-                this.windowAddedSignal.emit();
+                this.onWindowAdded.emit();
             } else {
                 console.info(`Ignoring window created event for ${id} - window was already registered`);
             }

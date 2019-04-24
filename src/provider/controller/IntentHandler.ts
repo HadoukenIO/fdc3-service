@@ -70,7 +70,7 @@ export class IntentHandler {
 
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
         const app: AppWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_INTENT_LISTENER);
-        await app.isReadyToReceiveIntent(intent.type);
+        await app.ensureReadyToReceiveIntent(intent.type);
         const data = await this._apiHandler.channel.dispatch(app.identity, APIToClientTopic.INTENT, {context: intent.context, intent: intent.type});
         const result: IntentResolution = {
             source: appInfo.name,

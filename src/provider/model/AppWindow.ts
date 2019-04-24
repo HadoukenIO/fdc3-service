@@ -66,7 +66,7 @@ export class AppWindow {
         return this._window.setAsForeground();
     }
 
-    public isReadyToReceiveIntent(intent: IntentType): Promise<void> {
+    public ensureReadyToReceiveIntent(intent: IntentType): Promise<void> {
         if (this._intents[intent]) {
             return Promise.resolve();
         }

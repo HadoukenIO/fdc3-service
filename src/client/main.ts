@@ -231,7 +231,7 @@ if (channelPromise) {
 /**
  * Adds a listener for incoming Intents from the Agent.
  */
-export function addIntentListener(intent: string, handler: (context: Context) => any): IntentListener {
+export function addIntentListener(intent: string, handler: (context: Context) => void): IntentListener {
     const listener = {
         intent,
         handler,
@@ -247,9 +247,7 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
     };
     intentListeners.push(listener);
 
-    tryServiceDispatch(APIFromClientTopic.INTENT_LISTENER_READY, {
-        intent
-    });
+    tryServiceDispatch(APIFromClientTopic.INTENT_LISTENER_READY, {intent});
     return listener;
 }
 
