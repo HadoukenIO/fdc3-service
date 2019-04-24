@@ -13,6 +13,8 @@ interface IntentMap {
     [key: string]: boolean;
 }
 
+export const INTENT_LISTENER_TIMEOUT = 5000;
+
 /**
  * Model object, representing a window that has connected to the service.
  *
@@ -24,23 +26,23 @@ export class AppWindow {
         return `${identity.uuid}/${identity.name || identity.uuid}`;
     }
 
-    private _id: string;
-    private _appInfo: Application;
-    private _window: Window;
+    private readonly _id: string;
+    private readonly _appInfo: Application;
+    private readonly _window: Window;
 
-    private _intents: IntentMap;
-    private _contexts: ContextSpec[];
+    private readonly _intentListeners: IntentMap;
+    private readonly _contexts: ContextSpec[];
 
     constructor(identity: Identity, appInfo: Application) {
         this._id = AppWindow.getId(identity);
         this._window = fin.Window.wrapSync(identity);
         this._appInfo = appInfo;
 
-        this._intents = {};
+        this._intentListeners = {};
         this._contexts = [];
     }
 
-    public readonly intentsModified: Signal1<IntentType> = new Signal1();
+    private readonly _onIntentListenerAdded: Signal1<IntentType> = new Signal1();
 
     public get id(): string {
         return this._id;
@@ -54,8 +56,17 @@ export class AppWindow {
         return this._appInfo;
     }
 
-    public get intents(): IntentMap {
-        return this._intents;
+    public addIntentListener(intentName: string): void {
+        this._intentListeners[intentName] = true;
+        this._onIntentListenerAdded.emit(intentName);
+    }
+
+    public removeIntentListener(intentName: string): void {
+        delete this._intentListeners[intentName];
+    }
+
+    public hasAnyIntentListener() {
+        return Object.keys(this._intentListeners).length > 0;
     }
 
     public get contexts(): ReadonlyArray<ContextChannel> {
@@ -67,16 +78,20 @@ export class AppWindow {
     }
 
     public ensureReadyToReceiveIntent(intent: IntentType): Promise<void> {
-        if (this._intents[intent]) {
+        if (this._intentListeners[intent]) {
             return Promise.resolve();
         }
-        return new Promise(resolve => {
-            const slot = this.intentsModified.add(intentSignalled => {
-                if (intentSignalled === intent) {
+        return new Promise((resolve, reject) => {
+            const slot = this._onIntentListenerAdded.add(intentAdded => {
+                if (intentAdded === intent) {
                     slot.remove();
                     resolve();
                 }
             });
+            setTimeout(() => {
+                slot.remove();
+                reject(new Error(`Timeout waiting for intent listener to be added. intent = ${intent}`));
+            }, INTENT_LISTENER_TIMEOUT);
         });
     }
 }
