@@ -85,7 +85,7 @@ describe('Intent listeners and raising intents', () => {
                     const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.appId);
 
                     await expect(resultPromise).rejects.toThrowError(`Timeout waiting for intent listener to be added. intent = ${validPayload.intent}`);
-                }, INTENT_LISTENER_TIMEOUT * 2);
+                }, INTENT_LISTENER_TIMEOUT + 500);
             });
 
             describe('When the target is *not* registered to accept the raised intent', () => {
