@@ -3,6 +3,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {Application} from '../../client/main';
 import {Inject} from '../common/Injectables';
+import {Signal0} from '../common/Signal';
 
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
@@ -29,6 +30,7 @@ export class Model {
 
     private _windows: AppWindow[];
     private _channels: ContextChannel[];
+    private onWindowAdded: Signal0 = new Signal0();
 
     constructor(@inject(Inject.ENVIRONMENT) environment: Environment) {
         this._windows = [];
@@ -44,6 +46,10 @@ export class Model {
 
     public get channels(): ReadonlyArray<ContextChannel> {
         return this._channels;
+    }
+
+    public getWindow(identity: Identity): AppWindow|null {
+        return this._windows.find(w => w.id === AppWindow.getId(identity)) || null;
     }
 
     public findWindow(appInfo: Application, options?: FindOptions): AppWindow|null {
@@ -80,7 +86,17 @@ export class Model {
             await matchingWindow.focus();
             return matchingWindow;
         } else {
-            return this._environment.createApplication(appInfo);
+            const createPromise = this._environment.createApplication(appInfo);
+            const signalPromise = new Promise<AppWindow>(resolve => {
+                const slot = this.onWindowAdded.add(() => {
+                    const matchingWindow = this.findWindow(appInfo, {prefer});
+                    if (matchingWindow) {
+                        slot.remove();
+                        resolve(matchingWindow);
+                    }
+                });
+            });
+            return Promise.all([signalPromise, createPromise]).then(([app])=> app);
         }
     }
 
@@ -93,7 +109,9 @@ export class Model {
 
             if (!this._windows.some(window => window.id === id)) {
                 console.info(`Registering window ${id}`);
-                this._windows.push(this._environment.wrapApplication(appInfo, identity));
+                const app = this._environment.wrapApplication(appInfo, identity);
+                this._windows.push(app);
+                this.onWindowAdded.emit();
             } else {
                 console.info(`Ignoring window created event for ${id} - window was already registered`);
             }
@@ -115,7 +133,7 @@ export class Model {
             case FindFilter.WITH_CONTEXT_LISTENER:
                 return window.contexts.length > 0;
             case FindFilter.WITH_INTENT_LISTENER:
-                return window.intents.length > 0;
+                return Object.keys(window.intents).length > 0;
         }
     }
 }

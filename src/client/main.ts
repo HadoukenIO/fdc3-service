@@ -7,7 +7,7 @@ import {Identity} from 'openfin/_v2/main';
 import {channelPromise, tryServiceDispatch, eventEmitter, FDC3Event, FDC3EventType} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
-import {APITopic, RaiseIntentPayload, SERVICE_IDENTITY} from './internal';
+import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload} from './internal';
 import {ChannelChangedEvent} from './contextChannels';
 
 /**
@@ -116,7 +116,7 @@ export interface IntentListener {
  * ```
  */
 export async function open(name: string, context?: Context): Promise<void> {
-    return tryServiceDispatch(APITopic.OPEN, {name, context});
+    return tryServiceDispatch(APIFromClientTopic.OPEN, {name, context});
 }
 
 /**
@@ -143,7 +143,7 @@ export async function open(name: string, context?: Context): Promise<void> {
  * ```
  */
 export async function findIntent(intent: string, context?: Context): Promise<AppIntent> {
-    return tryServiceDispatch(APITopic.FIND_INTENT, {intent, context});
+    return tryServiceDispatch(APIFromClientTopic.FIND_INTENT, {intent, context});
 }
 
 /**
@@ -180,7 +180,7 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  * ```
  */
 export async function findIntentsByContext(context: Context): Promise<AppIntent[]> {
-    return tryServiceDispatch(APITopic.FIND_INTENTS_BY_CONTEXT, {context});
+    return tryServiceDispatch(APIFromClientTopic.FIND_INTENTS_BY_CONTEXT, {context});
 }
 
 /**
@@ -190,7 +190,7 @@ export async function findIntentsByContext(context: Context): Promise<AppIntent[
  * ```
  */
 export function broadcast(context: Context): void {
-    tryServiceDispatch(APITopic.BROADCAST, {context});
+    tryServiceDispatch(APIFromClientTopic.BROADCAST, {context});
 }
 
 /**
@@ -203,15 +203,15 @@ export function broadcast(context: Context): void {
  * ```
  */
 export async function raiseIntent(intent: string, context: Context, target?: string): Promise<IntentResolution> {
-    return tryServiceDispatch(APITopic.RAISE_INTENT, {intent, context, target});
+    return tryServiceDispatch(APIFromClientTopic.RAISE_INTENT, {intent, context, target});
 }
 
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
 if (channelPromise) {
-    channelPromise.then((channel) => {
-        channel.register('intent', (payload: RaiseIntentPayload) => {
+    channelPromise.then(channelClient => {
+        channelClient.register(APIToClientTopic.INTENT, (payload: RaiseIntentPayload) => {
             intentListeners.forEach((listener: IntentListener) => {
                 if (payload.intent === listener.intent) {
                     listener.handler(payload.context);
@@ -219,9 +219,8 @@ if (channelPromise) {
             });
         });
     });
-
-    channelPromise.then(channel => {
-        channel.register('context', (payload: Context) => {
+    channelPromise.then(channelClient => {
+        channelClient.register(APIToClientTopic.CONTEXT, (payload: Context) => {
             contextListeners.forEach((listener: ContextListener) => {
                 listener.handler(payload);
             });
@@ -237,16 +236,18 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
         intent,
         handler,
         unsubscribe: () => {
-            const index: number = contextListeners.indexOf(listener);
+            const index: number = intentListeners.indexOf(listener);
 
             if (index >= 0) {
-                contextListeners.splice(index, 1);
+                intentListeners.splice(index, 1);
             }
 
             return index >= 0;
         }
     };
     intentListeners.push(listener);
+
+    tryServiceDispatch(APIFromClientTopic.INTENT_LISTENER_READY, {intent});
     return listener;
 }
 
