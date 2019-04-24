@@ -16,6 +16,7 @@
         }
     ],
     "runtime": {
+        "arguments": "--remote-debugging-port=9222",
         "version": "10.66.39.43"
     }
 }
