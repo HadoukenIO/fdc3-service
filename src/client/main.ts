@@ -190,7 +190,7 @@ export async function findIntentsByContext(context: Context): Promise<AppIntent[
  * ```
  */
 export function broadcast(context: Context): void {
-    tryServiceDispatch(APITopic.BROADCAST, {context});
+    tryServiceDispatch(APITopic.BROADCAST, {context, header: {uuid: name}});
 }
 
 /**

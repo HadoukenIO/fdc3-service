@@ -102,10 +102,14 @@ export class FDC3 {
         const channelMembers = this.channelModel.getChannelMembers(channel.id);
 
         const context = payload.context;
+        const header = payload.header;
 
         this.channelModel.setContext(channel.id, context);
 
-        return Promise.all(channelMembers.map(identity => this.sendContext(identity, context))).then(() => {});
+        return Promise.all(channelMembers
+            .filter(identity => identity.uuid !== header.uuid)
+            .map(identity => this.sendContext(identity, context)))
+            .then(() => {});
     }
 
     private async onIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<IntentResolution> {
