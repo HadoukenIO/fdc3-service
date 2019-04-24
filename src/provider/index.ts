@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import {injectable, inject} from 'inversify';
+import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
@@ -8,7 +8,7 @@ import {AppIntent, IntentResolution, Application, Intent, Channel} from '../clie
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
-import {Model, FindFilter} from './model/Model';
+import {FindFilter, Model} from './model/Model';
 import {ContextHandler} from './controller/ContextHandler';
 import {IntentHandler} from './controller/IntentHandler';
 import {APIHandler} from './APIHandler';
@@ -97,11 +97,9 @@ export class Main {
 
     private async findIntentsByContext (payload: FindIntentsByContextPayload): Promise<AppIntent[]> {
         if (payload.context && payload.context.type) {
-            const apps = await this._directory.getAppIntentsByContext(payload.context.type);
-            return apps;
+            return this._directory.getAppIntentsByContext(payload.context.type);
         } else {
-            // TODO: Choose the right message
-            throw new Error('Context not valid');
+            throw new Error(`Context not valid. context = ${JSON.stringify(payload.context)}`);
         }
     }
 

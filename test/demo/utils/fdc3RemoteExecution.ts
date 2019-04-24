@@ -12,7 +12,7 @@
 
 import {Identity} from 'openfin/_v2/main';
 
-import {Application, Context, IntentType, ChannelId, Channel} from '../../../src/client/main';
+import {Application, Context, IntentType, ChannelId, Channel, AppIntent} from '../../../src/client/main';
 import {RaiseIntentPayload} from '../../../src/client/internal';
 import {FDC3Event, FDC3EventType} from '../../../src/client/connection';
 
@@ -262,4 +262,10 @@ export async function getRemoteEventListener(executionTarget: Identity, listener
             }
         };
     }
+}
+
+export async function findIntentsByContext(executionTarget: Identity, context: Context): Promise<AppIntent[]> {
+    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, context: Context): Promise<AppIntent[]> {
+        return this.fdc3.findIntentsByContext(context);
+    }, context);
 }
