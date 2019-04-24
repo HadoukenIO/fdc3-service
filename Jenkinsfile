@@ -4,13 +4,13 @@ pipeline {
     stages {
         stage('Input') {
             when {
-                branch "master"
+                branch 'master'
                 beforeInput true
             }
             steps {
                 script {
                     env.DEPLOY_CLIENT = input \
-                        message: "Would you like to deploy the client to NPM?", \
+                        message: 'Would you like to deploy the client to NPM?', \
                         parameters: [choice(name: 'DEPLOY_CLIENT', choices: ['Yes', 'No'], description: '')]
                 }
             }
@@ -50,7 +50,7 @@ pipeline {
         stage('Build') {
             agent { label 'linux-slave' }
             steps {
-                configure("fdc3")
+                configure('fdc3')
 
                 buildProject()
                 addReleaseChannels()
@@ -75,18 +75,18 @@ def configure(serviceName) {
 
     if (env.BRANCH_NAME == 'master') {
         BUILD_VERSION = PKG_VERSION
-        CHANNEL = "stable"
-        MANIFEST_NAME = "app.json"
+        CHANNEL = 'stable'
+        MANIFEST_NAME = 'app.json'
     } else {
-        BUILD_VERSION = PKG_VERSION + "-alpha." + env.BUILD_NUMBER
-        CHANNEL = "staging"
-        MANIFEST_NAME = "app.staging.json"
+        BUILD_VERSION = PKG_VERSION + '-alpha.' + env.BUILD_NUMBER
+        CHANNEL = 'staging'
+        MANIFEST_NAME = 'app.staging.json'
     }
 
-    DIR_BUILD_ROOT = env.DSERVICE_S3_ROOT + SERVICE_NAME + "/"
+    DIR_BUILD_ROOT = env.DSERVICE_S3_ROOT + SERVICE_NAME + '/'
     DIR_BUILD_VERSION = DIR_BUILD_ROOT + BUILD_VERSION
 
-    DIR_DOCS_ROOT = env.DSERVICE_S3_ROOT_DOCS + SERVICE_NAME + "/"
+    DIR_DOCS_ROOT = env.DSERVICE_S3_ROOT_DOCS + SERVICE_NAME + '/'
     DIR_DOCS_CHANNEL = DIR_DOCS_ROOT + CHANNEL
     DIR_DOCS_VERSION = DIR_DOCS_ROOT + BUILD_VERSION
 }
@@ -121,20 +121,20 @@ def deployToS3() {
 
 def deployToNPM() {
     if (DEPLOY_CLIENT != 'No') {
-        withCredentials([string(credentialsId: "NPM_TOKEN_WRITE", variable: 'NPM_TOKEN')]) {
+        withCredentials([string(credentialsId: 'NPM_TOKEN_WRITE', variable: 'NPM_TOKEN')]) {
             sh "echo //registry.npmjs.org/:_authToken=$NPM_TOKEN > $WORKSPACE/.npmrc"
         }
 
         if (BUILD_VERSION == PKG_VERSION) {
             // Assume production release
-            echo "publishing to npm, version: " + BUILD_VERSION
+            echo "publishing to npm, version: ${BUILD_VERSION}"
             sh "npm publish"
         } else {
             // Assume staging release, and tag as 'alpha'
-            echo "publishing pre-release version to npm: " + BUILD_VERSION
-            sh "npm version --no-git-tag-version " + BUILD_VERSION
+            echo "publishing pre-release version to npm: ${BUILD_VERSION}"
+            sh "npm version --no-git-tag-version ${BUILD_VERSION}"
             sh "npm publish --tag alpha"
-            sh "npm version --no-git-tag-version " + PKG_VERSION
+            sh "npm version --no-git-tag-version ${PKG_VERSION}"
         }
     }
 }
