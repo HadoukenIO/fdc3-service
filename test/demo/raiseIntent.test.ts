@@ -1,5 +1,7 @@
 import 'jest';
 
+import {INTENT_LISTENER_TIMEOUT} from '../../src/provider/model/AppWindow';
+
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay} from './utils/delay';
@@ -78,6 +80,12 @@ describe('Intent listeners and raising intents', () => {
                     const receivedContexts = await listener.getReceivedContexts();
                     expect(receivedContexts).toEqual([validPayload.context]);
                 });
+                test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it times out', async () => {
+                    await listener.unsubscribe();
+                    const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.appId);
+
+                    await expect(resultPromise).rejects.toThrowError(`Timeout waiting for intent listener to be added. intent = ${validPayload.intent}`);
+                }, INTENT_LISTENER_TIMEOUT + 500);
             });
 
             describe('When the target is *not* registered to accept the raised intent', () => {
@@ -90,7 +98,7 @@ describe('Intent listeners and raising intents', () => {
             describe('When the target is not in the directory', () => {
                 // Currently this will just open the resolver UI, which is probably the wrong behaviour
                 // TODO: Make the service return an error when targeting an app which isn't in the directory
-                test.skip('When calling raseIntent the promise rejects with an error', async () => {
+                test.skip('When calling raiseIntent the promise rejects with an error', async () => {
                     const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, 'this-app-does-not-exist');
                     // TODO: decide what the error should be
                     await expect(resultPromise).rejects.toThrow();
@@ -163,7 +171,7 @@ describe('Intent listeners and raising intents', () => {
                     await expect(fin.Application.wrapSync(testAppIdentity).isRunning()).resolves.toBe(true);
 
                     // We want to have a delay between the app running and the intent listener being set up,
-                    // so that we can test the "intent ready" handshake message.  If the app is fast enough setting up,
+                    // so that we can test the "add intent" handshake message.  If the app is fast enough setting up,
                     // the intent message may go through anyway, but we want to simulate the case where the app
                     // takes some time between starting up and actually setting up the intent listener.
                     await delay(1500);

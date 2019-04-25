@@ -36,7 +36,8 @@ export enum APIFromClientTopic {
     FIND_INTENTS_BY_CONTEXT = 'FIND-INTENTS-BY-CONTEXT',
     BROADCAST = 'BROADCAST',
     RAISE_INTENT = 'RAISE-INTENT',
-    INTENT_LISTENER_READY = 'INTENT-LISTENER-READY',
+    ADD_INTENT_LISTENER = 'ADD-INTENT-LISTENER',
+    REMOVE_INTENT_LISTENER = 'REMOVE-INTENT-LISTENER',
     GET_ALL_CHANNELS = 'GET-ALL-CHANNELS',
     JOIN_CHANNEL = 'JOIN-CHANNEL',
     GET_CHANNEL = 'GET-CHANNEL',
@@ -57,7 +58,8 @@ export type APIFromClient = {
     [APIFromClientTopic.FIND_INTENTS_BY_CONTEXT]: [FindIntentsByContextPayload, AppIntent[]];
     [APIFromClientTopic.BROADCAST]: [BroadcastPayload, void];
     [APIFromClientTopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
-    [APIFromClientTopic.INTENT_LISTENER_READY]: [IntentListenerReadyPayload, void];
+    [APIFromClientTopic.ADD_INTENT_LISTENER]: [IntentListenerPayload, void];
+    [APIFromClientTopic.REMOVE_INTENT_LISTENER]: [IntentListenerPayload, void];
     [APIFromClientTopic.GET_ALL_CHANNELS]: [GetAllChannelsPayload, Channel[]];
     [APIFromClientTopic.JOIN_CHANNEL]: [JoinChannelPayload, void];
     [APIFromClientTopic.GET_CHANNEL]: [GetChannelPayload, Channel];
@@ -115,6 +117,6 @@ export interface ContextPayload {
     context: Context;
 }
 
-export interface IntentListenerReadyPayload {
+export interface IntentListenerPayload {
   intent: string;
 }

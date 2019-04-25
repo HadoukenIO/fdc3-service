@@ -3,7 +3,7 @@ import {injectable, inject} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload, IntentListenerReadyPayload} from '../client/internal';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload, IntentListenerPayload} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Intent, Channel} from '../client/main';
 
 import {Inject} from './common/Injectables';
@@ -53,7 +53,8 @@ export class Main {
             [APIFromClientTopic.FIND_INTENTS_BY_CONTEXT]: this.findIntentsByContext.bind(this),
             [APIFromClientTopic.BROADCAST]: this.broadcast.bind(this),
             [APIFromClientTopic.RAISE_INTENT]: this.raiseIntent.bind(this),
-            [APIFromClientTopic.INTENT_LISTENER_READY]: this.intentListenerReady.bind(this),
+            [APIFromClientTopic.ADD_INTENT_LISTENER]: this.addIntentListener.bind(this),
+            [APIFromClientTopic.REMOVE_INTENT_LISTENER]: this.removeIntentListener.bind(this),
             [APIFromClientTopic.GET_ALL_CHANNELS]: this.getAllChannels.bind(this),
             [APIFromClientTopic.JOIN_CHANNEL]: this.joinChannel.bind(this),
             [APIFromClientTopic.GET_CHANNEL]: this.getChannel.bind(this),
@@ -127,11 +128,24 @@ export class Main {
         return this._contexts.getChannelMembers(payload, source);
     }
 
-    private async intentListenerReady(payload: IntentListenerReadyPayload, identity: ProviderIdentity): Promise<void> {
+    private async addIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): Promise<void> {
         const app = this._model.getWindow(identity);
-        app!.intents[payload.intent] = true;
-        app!.intentsModified.emit(payload.intent);
-        return Promise.resolve();
+        if (app) {
+            app.addIntentListener(payload.intent);
+            return Promise.resolve();
+        } else {
+            throw new Error('App not found in model');
+        }
+    }
+
+    private async removeIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): Promise<void> {
+        const app = this._model.getWindow(identity);
+        if (app) {
+            app.removeIntentListener(payload.intent);
+            return Promise.resolve();
+        } else {
+            throw new Error('App not found in model');
+        }
     }
 }
 

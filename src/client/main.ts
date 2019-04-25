@@ -240,6 +240,7 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
 
             if (index >= 0) {
                 intentListeners.splice(index, 1);
+                tryServiceDispatch(APIFromClientTopic.REMOVE_INTENT_LISTENER, {intent});
             }
 
             return index >= 0;
@@ -247,7 +248,7 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
     };
     intentListeners.push(listener);
 
-    tryServiceDispatch(APIFromClientTopic.INTENT_LISTENER_READY, {intent});
+    tryServiceDispatch(APIFromClientTopic.ADD_INTENT_LISTENER, {intent});
     return listener;
 }
 

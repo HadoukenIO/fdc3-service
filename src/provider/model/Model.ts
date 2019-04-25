@@ -26,11 +26,11 @@ export class Model {
     private _directory!: AppDirectory;
 
     @inject(Inject.ENVIRONMENT)
-    private _environment!: Environment;
+    private readonly _environment!: Environment;
 
-    private _windows: AppWindow[];
-    private _channels: ContextChannel[];
-    private onWindowAdded: Signal0 = new Signal0();
+    private readonly _windows: AppWindow[];
+    private readonly _channels: ContextChannel[];
+    private readonly onWindowAdded: Signal0 = new Signal0();
 
     constructor(@inject(Inject.ENVIRONMENT) environment: Environment) {
         this._windows = [];
@@ -62,14 +62,14 @@ export class Model {
             if (app.appInfo.appId !== appInfo.appId) {
                 return false;
             } else if (require !== undefined) {
-                return this.matchesFilter(app, require);
+                return Model.matchesFilter(app, require);
             } else {
                 return true;
             }
         });
 
         if (windows.length > 0 && prefer !== undefined) {
-            const preferredWindows = windows.filter(app => this.matchesFilter(app, prefer));
+            const preferredWindows = windows.filter(app => Model.matchesFilter(app, prefer));
 
             if (preferredWindows.length > 0) {
                 return preferredWindows;
@@ -128,12 +128,12 @@ export class Model {
         }
     }
 
-    private matchesFilter(window: AppWindow, filter: FindFilter): boolean {
+    private static matchesFilter(window: AppWindow, filter: FindFilter): boolean {
         switch (filter) {
             case FindFilter.WITH_CONTEXT_LISTENER:
                 return window.contexts.length > 0;
             case FindFilter.WITH_INTENT_LISTENER:
-                return Object.keys(window.intents).length > 0;
+                return window.hasAnyIntentListener();
         }
     }
 }
