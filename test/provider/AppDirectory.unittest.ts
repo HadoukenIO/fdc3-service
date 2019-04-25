@@ -75,6 +75,7 @@ describe('Given an App Directory with apps', () => {
             ] as AppIntent[]);
         });
     });
+
     describe('When finding app intents by context with a context not implemented by any intent', () => {
         beforeEach(() => {
             mockJson.mockResolvedValue(fakeAppDirectory);
@@ -85,6 +86,7 @@ describe('Given an App Directory with apps', () => {
             expect(intents).toEqual([] as AppIntent[]);
         });
     });
+
     describe('When finding app intents by context with a context implemented by only 1 intent in 1 app', () => {
         beforeEach(() => {
             mockJson.mockResolvedValue(fakeAppDirectory);

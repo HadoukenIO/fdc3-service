@@ -26,7 +26,7 @@ export function ContactsRow(props: ContactRowProps): React.ReactElement {
 
     const getIntentIcon = (appIntent: AppIntent): string => {
         if (appIntent && appIntent.apps.length > 0 && appIntent.apps[0].intents) {
-            const intent = appIntent.apps[0].intents.find(intent => intent.name===appIntent.intent.name);
+            const intent = appIntent.apps[0].intents.find(intent => intent.name === appIntent.intent.name);
             if (intent && intent.customConfig) {
                 return intent.customConfig.icon;
             }

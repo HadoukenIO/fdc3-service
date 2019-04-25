@@ -18,7 +18,10 @@ describe('Resolving intents by context, findIntentsByContext', () => {
         const invalidContext = {
             twitter: '@testname'
         };
-        test('the promise rejects', async () => {
+        test('The promise rejects', async () => {
+            // Typescript catches sending an invalid context here, but we want to validate
+            // that in the provider as well, so we want to test passing an invalid one.
+            // That is why we need to ignore the next line.
             // @ts-ignore
             await expect(fdc3Remote.findIntentsByContext(testManagerIdentity, invalidContext))
                 .rejects
@@ -32,7 +35,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
             name: 'Test Name'
         };
 
-        test('the promise resolves to an empty array', async () => {
+        test('The promise resolves to an empty array', async () => {
             const receivedAppIntents = await fdc3Remote.findIntentsByContext(testManagerIdentity, context);
             expect(receivedAppIntents).toEqual([]);
         });
@@ -43,7 +46,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
             type: 'contact',
             name: 'Test Name'
         };
-        test('the promise resolves to an array of all compatible AppIntents', async () => {
+        test('The promise resolves to an array of all compatible AppIntents', async () => {
             const receivedAppIntents = await fdc3Remote.findIntentsByContext(testManagerIdentity, context);
             expect(receivedAppIntents).toEqual([
                 {

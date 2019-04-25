@@ -54,9 +54,9 @@ export function ContactsApp(): React.ReactElement {
             type: 'fdc3.contact',
             name: '',
             id: {}
-        }).then(appIntents => {
-            console.log('setAppIntents', appIntents);
-            setAppIntents(appIntents);
+        }).then(foundAppIntents => {
+            console.log('setAppIntents', foundAppIntents);
+            setAppIntents(foundAppIntents);
         });
     }, []);
 
