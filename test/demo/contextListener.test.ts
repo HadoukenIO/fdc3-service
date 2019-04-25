@@ -101,7 +101,6 @@ describe('Context listeners and broadcasting', () => {
                 await fdc3Remote.broadcast(testAppIdentity, validContext);
 
                 const receivedContexts = await Promise.all(listeners.map(listener => listener.getReceivedContexts()));
-                receivedContexts.forEach((rc)=>console.log(rc));
                 expect(receivedContexts.length).toBe(2);
                 expect(receivedContexts).toEqual([[], []]);
             });
