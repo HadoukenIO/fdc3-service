@@ -34,7 +34,16 @@ export enum OpenError {
 export enum ResolveError {
     NoAppsFound = 'NoAppsFound',
     ResolverUnavailable = 'ResolverUnavailable',
-    ResolverTimeout = 'ResolverTimeout'
+    ResolverTimeout = 'ResolverTimeout',
+    InvalidContext = 'InvalidContext'
+}
+
+export class FDC3Error extends Error{
+    public code: string;
+    public constructor(code: string, message: string) {
+        super(message);
+        this.code = code;
+    }
 }
 
 /**

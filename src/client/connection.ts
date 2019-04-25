@@ -17,6 +17,7 @@ import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
 import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient} from './internal';
 import {ChannelChangedEvent} from './contextChannels';
+import {FDC3Error} from './main';
 
 /**
  * The version of the NPM package.
@@ -66,5 +67,17 @@ if (fin.Window.me.uuid !== SERVICE_IDENTITY.uuid || fin.Window.me.name !== SERVI
  */
 export async function tryServiceDispatch<T extends APIFromClientTopic>(action: T, payload: APIFromClient[T][0]): Promise<APIFromClient[T][1]> {
     const channel: ChannelClient = await channelPromise;
-    return channel.dispatch(action, payload) as Promise<APIFromClient[T][1]>;
+    return (channel.dispatch(action, payload) as Promise<APIFromClient[T][1]>)
+        .catch(error => {
+            let errorToRethrow = error;
+            try {
+                const fdc3Error = JSON.parse(error.message);
+                if (fdc3Error && fdc3Error.code && fdc3Error.message) {
+                    errorToRethrow = new FDC3Error(fdc3Error.code, fdc3Error.message);
+                }
+            } catch (e) {
+                // Didn't parse, we will rethrow the error param
+            }
+            throw errorToRethrow;
+        });
 }

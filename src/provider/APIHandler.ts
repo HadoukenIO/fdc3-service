@@ -85,7 +85,18 @@ export class APIHandler<T extends Enum> {
 
         for (const action in actionHandlerMap) {
             if (actionHandlerMap.hasOwnProperty(action)) {
-                this._providerChannel.register(action, actionHandlerMap[action]);
+                this._providerChannel.register(action, (payload, source) =>
+                    actionHandlerMap[action](payload, source)
+                        .catch(error => {
+                            let errorToRethrow = error;
+                            if (error && error.code && error.message) {
+                                errorToRethrow = new Error(JSON.stringify({
+                                    code: error.code,
+                                    message: error.message
+                                }));
+                            }
+                            throw errorToRethrow;
+                        }));
             }
         }
     }
