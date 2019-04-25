@@ -54,7 +54,7 @@ describe('Context listeners and broadcasting', () => {
                 expect(receivedContexts[0]).toEqual(validContext);
             });
 
-            test('When broadcast is called from the same app', async () => {
+            test('When broadcast is called from the app that is listening, its listeners doesn\'t get triggered', async () => {
                 await fdc3Remote.broadcast(testAppIdentity, validContext);
 
                 // Received contexts
@@ -97,11 +97,10 @@ describe('Context listeners and broadcasting', () => {
                 }
             });
 
-            test('When calling broadcast from the first app', async () => {
+            test('When calling broadcast from the first app, none of its own listeners will be triggered', async () => {
                 await fdc3Remote.broadcast(testAppIdentity, validContext);
 
                 const receivedContexts = await Promise.all(listeners.map(listener => listener.getReceivedContexts()));
-                expect(receivedContexts.length).toBe(2);
                 expect(receivedContexts).toEqual([[], []]);
             });
 
