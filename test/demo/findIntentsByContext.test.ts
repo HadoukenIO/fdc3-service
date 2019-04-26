@@ -1,4 +1,6 @@
 import 'jest';
+import {FDC3Error, ResolveError} from '../../src/client/errors';
+
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 
@@ -6,7 +8,6 @@ const testManagerIdentity = {
     uuid: 'test-app',
     name: 'test-app'
 };
-
 
 describe('Resolving intents by context, findIntentsByContext', () => {
     beforeEach(async () => {
@@ -26,6 +27,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
             await expect(fdc3Remote.findIntentsByContext(testManagerIdentity, invalidContext))
                 .rejects
                 .toThrow(`Context not valid. context = ${JSON.stringify(invalidContext)}`);
+            // .toThrowError(new FDC3Error(ResolveError.InvalidContext, `Context not valid. context = ${JSON.stringify(invalidContext)}`));
         });
     });
 
