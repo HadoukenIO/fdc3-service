@@ -42,9 +42,9 @@ export class AppDirectory {
             });
         });
         Object.values(appIntentsByName).forEach(appIntent => {
-            appIntent.apps.sort((a, b) => a.appId.localeCompare(b.appId));
+            appIntent.apps.sort((a, b) => a.appId.localeCompare(b.appId, 'en'));
         });
-        return Object.values(appIntentsByName).sort((a, b) => a.intent.name.localeCompare(b.intent.name));
+        return Object.values(appIntentsByName).sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));
     }
 
     public async getAllApps(): Promise<Application[]> {
