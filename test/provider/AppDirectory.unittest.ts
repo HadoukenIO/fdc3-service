@@ -8,8 +8,8 @@ import {Application} from '../../src/client/directory';
 
 
 enum StorageKeys {
-    URL = 'url',
-    APPLICATIONS = 'applications'
+    URL = 'fdc3@url',
+    APPLICATIONS = 'fdc3@applications'
 }
 
 enum Intents {

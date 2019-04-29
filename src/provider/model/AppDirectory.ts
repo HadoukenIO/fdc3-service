@@ -3,8 +3,8 @@ import {injectable} from 'inversify';
 import {Application} from '../../client/directory';
 
 enum StorageKeys {
-    URL = 'url',
-    APPLICATIONS = 'applications'
+    URL = 'fdc3@url',
+    APPLICATIONS = 'fdc3@applications'
 }
 
 // Demo development app directory url
@@ -25,6 +25,7 @@ export class AppDirectory {
             storedDirectory = JSON.parse(localStorage.getItem(StorageKeys.APPLICATIONS) || '[]');
         } catch (error) {
             storedDirectory = [];
+            localStorage.setItem(StorageKeys.APPLICATIONS, '[]');
         }
         this._directory = storedDirectory;
     }
