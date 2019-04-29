@@ -246,6 +246,32 @@ describe('When joining a channel', () => {
         expect(payload[0]).toHaveProperty('previousChannel.id', 'blue');
         expect(payload[0]).toHaveProperty('identity', channelChangingWindow);
     });
+
+    it('if everything is unsubscribed, and something rejoins, there is no data left over', async ()=>{
+        const [greenWindow1, channelChangingWindow] = await setupWindows('green', 'yellow');
+        const channelChangingWindowListener = await fdc3Remote.addContextListener(channelChangingWindow);
+        await fdc3Remote.broadcast(greenWindow1, testContext);
+
+        let receivedContexts = await channelChangingWindowListener.getReceivedContexts();
+        expect(receivedContexts).toHaveLength(0);
+
+        await fdc3Remote.joinChannel(channelChangingWindow, 'green');
+        receivedContexts = await channelChangingWindowListener.getReceivedContexts();
+        expect(receivedContexts).toHaveLength(1);
+
+        await fdc3Remote.joinChannel(greenWindow1, 'global');
+        await fdc3Remote.joinChannel(channelChangingWindow, 'global');
+        const members = await fdc3Remote.getChannelMembers(channelChangingWindow, 'green');
+        expect(members).toEqual([]);
+
+        receivedContexts = await channelChangingWindowListener.getReceivedContexts();
+        expect(receivedContexts).toHaveLength(1);
+
+        await fdc3Remote.joinChannel(channelChangingWindow, 'green');
+
+        receivedContexts = await channelChangingWindowListener.getReceivedContexts();
+        expect(receivedContexts).toHaveLength(1);
+    });
 });
 
 describe('When starting an app', () => {
