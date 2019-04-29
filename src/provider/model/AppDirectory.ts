@@ -8,24 +8,25 @@ enum StorageKeys {
 }
 
 // Demo development app directory url
-const devURL = 'http://localhost:3923/provider/sample-app-directory.json';
+const devUrl = 'http://localhost:3923/provider/sample-app-directory.json';
 
 
 @injectable()
 export class AppDirectory {
     private _directory: Application[] = [];
-    private _URL!: string;
+    private _url!: string;
 
     public constructor() {
         // Set default values
-        this._URL = localStorage.getItem(StorageKeys.URL) || devURL;
-        const directory = localStorage.getItem(StorageKeys.APPLICATIONS) || [];
+        this._url = localStorage.getItem(StorageKeys.URL) || devUrl;
+        let storedDirectory: Application[];
+        // Handle malformed data in localStorage
         try {
-            this._directory = (typeof directory === 'string') ? JSON.parse(directory) : directory;
+            storedDirectory = JSON.parse(localStorage.getItem(StorageKeys.APPLICATIONS) || '[]');
         } catch (error) {
-            this._directory = [];
-            localStorage.setItem(StorageKeys.APPLICATIONS, JSON.stringify([]));
+            storedDirectory = [];
         }
+        this._directory = storedDirectory;
     }
 
     public async getAppByName(name: string): Promise<Application | null> {
@@ -48,21 +49,27 @@ export class AppDirectory {
     }
 
     /**
-     * Update the application directory in memory and storage.
-     * @param applications To place into the directory.
+     * Refresh the AppDirectory.
      */
-    private async updateDirectory(applications: Application[]): Promise<void> {
-        localStorage.setItem(StorageKeys.APPLICATIONS, JSON.stringify(applications));
-        this._directory = applications;
-    }
-
-    /**
-     * Update the application directory URL in memory and storage.
-     * @param url Directory URL.
-     */
-    private async updateURL(url: string) {
-        localStorage.setItem(StorageKeys.URL, url);
-        this._URL = url;
+    private async refreshDirectory(): Promise<void> {
+        // If using the demo app directory in production, set an empty array.
+        if (process.env.NODE_ENV === 'production') {
+            await this.updateDirectory([]);
+            return;
+        }
+        const storedUrl = localStorage.getItem(StorageKeys.URL);
+        const currentUrl = this._url;
+        // Only update the directory if the URL has changed
+        // or the directory is empty (the last request may have failed?)
+        if (currentUrl !== storedUrl || this._directory.length === 0) {
+            const applications: Application[] | null = await this.fetchData(currentUrl).catch(() => null);
+            if (applications) {
+                await this.updateDirectory(applications);
+                if (currentUrl !== storedUrl) {
+                    await this.updateURL(currentUrl);
+                }
+            }
+        }
     }
 
     /**
@@ -79,26 +86,20 @@ export class AppDirectory {
     }
 
     /**
-     * Refresh the AppDirectory.
+     * Update the application directory in memory and storage.
+     * @param applications To place into the directory.
      */
-    private async refreshDirectory(): Promise<void> {
-        // If using the demo app directory in production, set an empty array.
-        if (process.env.NODE_ENV === 'production') {
-            this.updateDirectory([]);
-            return;
-        }
-        const storedURL = localStorage.getItem(StorageKeys.URL);
-        const currentURL = this._URL;
-        // Only update the directory if the URL has changed
-        // or the directory is empty (the last request may have failed?)
-        if (currentURL !== storedURL || this._directory.length === 0) {
-            const applications: Application[] | null = await this.fetchData(currentURL).catch(() => null);
-            if (applications) {
-                await this.updateDirectory(applications);
-                if (currentURL !== storedURL) {
-                    await this.updateURL(currentURL);
-                }
-            }
-        }
+    private async updateDirectory(applications: Application[]): Promise<void> {
+        localStorage.setItem(StorageKeys.APPLICATIONS, JSON.stringify(applications));
+        this._directory = applications;
+    }
+
+    /**
+     * Update the application directory URL in memory and storage.
+     * @param url Directory URL.
+     */
+    private async updateURL(url: string) {
+        localStorage.setItem(StorageKeys.URL, url);
+        this._url = url;
     }
 }

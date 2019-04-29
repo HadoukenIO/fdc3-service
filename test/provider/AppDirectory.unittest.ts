@@ -13,8 +13,8 @@ enum StorageKeys {
 }
 
 enum Intents {
-    Call = 'Call',
-    Chart = 'Chart'
+    CALL = 'Call',
+    CHART = 'Chart'
 }
 
 const appTemplate: Application = {
@@ -24,7 +24,7 @@ const appTemplate: Application = {
     manifestType: '',
     intents: [
         {
-            name: Intents.Call,
+            name: Intents.CALL,
             contexts: [
                 'dial'
             ],
@@ -37,7 +37,7 @@ const fakeApps: Application[] = [
     {
         ...appTemplate, appId: 'id-0', name: 'test-app-0', intents: [
             {
-                name: Intents.Call,
+                name: Intents.CALL,
                 contexts: [
                     'dial'
                 ],
@@ -48,7 +48,7 @@ const fakeApps: Application[] = [
     {
         ...appTemplate, appId: 'id-1', name: 'test-app-1', intents: [
             {
-                name: Intents.Call,
+                name: Intents.CALL,
                 contexts: [
                     'dial'
                 ],
@@ -59,7 +59,7 @@ const fakeApps: Application[] = [
     {
         ...appTemplate, appId: 'id-2', name: 'test-app-2', intents: [
             {
-                name: Intents.Chart,
+                name: Intents.CHART,
                 contexts: [
                     'chart'
                 ],
@@ -74,12 +74,13 @@ declare const global: NodeJS.Global & {localStorage: Store} & {fetch: (url: stri
 type Store = jest.Mocked<Pick<typeof localStorage, 'getItem' | 'setItem'>>;
 
 interface ResponseOptions {
-    status: number;
+    readonly status: number;
 }
 
+/** Mock implementation */
 class Response {
-    private _blob: string;
-    private _options: ResponseOptions;
+    private readonly _blob: string;
+    private readonly _options: ResponseOptions;
 
     public constructor(blob: string, options: ResponseOptions) {
         this._blob = blob;
@@ -132,7 +133,7 @@ describe('AppDirectory Unit Tests', () => {
         it('Loads directory and URL from the store', async () => {
             const appDirectory = new AppDirectory();
             expect(appDirectory['_directory']).toEqual(fakeApps);
-            expect(appDirectory['_URL']).toEqual('http://localhost:3923/provider/sample-app-directory.json');
+            expect(appDirectory['_url']).toEqual('http://localhost:3923/provider/sample-app-directory.json');
         });
 
         it('Handles corrupt cached JSON in the store & resets it', () => {
@@ -157,7 +158,7 @@ describe('AppDirectory Unit Tests', () => {
                     return new Response(JSON.stringify(newApplications), {status: 200});
                 });
                 spyGetItem.mockImplementation(() => '__test_url__');
-                appDirectory['_URL'] = '*different_url*';
+                appDirectory['_url'] = '*different_url*';
 
                 const apps = await appDirectory.getAllApps();
                 expect(spyFetch).toBeCalledTimes(1);
@@ -175,7 +176,7 @@ describe('AppDirectory Unit Tests', () => {
                 const spyFetch = jest.spyOn(global, 'fetch')
                     .mockImplementation(() => Promise.reject(new Error('')));
                 const appDirectory = new AppDirectory();
-                appDirectory['_URL'] = '*new_url*';
+                appDirectory['_url'] = '*new_url*';
                 const apps = await appDirectory.getAllApps();
                 expect(apps).not.toEqual([]);
                 expect(spyFetch).toBeCalled();
@@ -196,7 +197,7 @@ describe('AppDirectory Unit Tests', () => {
 
         it('getAppsByIntent() returns applications with the given intent when they exist', async () => {
             const appDirectory = new AppDirectory();
-            const apps = await appDirectory.getAppsByIntent(Intents.Chart);
+            const apps = await appDirectory.getAppsByIntent(Intents.CHART);
             expect(apps).toHaveLength(1);
         });
     });
