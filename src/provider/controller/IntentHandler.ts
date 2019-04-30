@@ -2,7 +2,7 @@ import {injectable, inject} from 'inversify';
 
 import {Inject} from '../common/Injectables';
 import {Intent} from '../../client/intents';
-import {IntentResolution, Application} from '../../client/main';
+import {IntentResolution, Application, FDC3Error, ResolveError} from '../../client/main';
 import {FindFilter, Model} from '../model/Model';
 import {AppDirectory} from '../model/AppDirectory';
 import {AppWindow} from '../model/AppWindow';
@@ -31,7 +31,7 @@ export class IntentHandler {
         const apps: Application[] = await this._directory.getAppsByIntent(intent.type);
 
         if (apps.length === 0) {
-            throw new Error('No applications available to handle this intent');
+            throw new FDC3Error(ResolveError.NoAppsFound, 'No applications available to handle this intent');
         } else if (apps.length === 1) {
             // Resolve intent immediately
             return this.fireIntent(intent, apps[0]);
