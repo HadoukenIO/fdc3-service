@@ -1,5 +1,6 @@
 import 'jest';
-import {FDC3Error, ResolveError} from '../../src/client/errors';
+import {ResolveError} from '../../src/client/errors';
+import {Context} from '../../src/client/context';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
@@ -18,16 +19,12 @@ describe('Resolving intents by context, findIntentsByContext', () => {
     describe('When calling findIntentsByContext with an invalid context', () => {
         const invalidContext = {
             twitter: '@testname'
-        };
-        test('The promise rejects', async () => {
-            // Typescript catches sending an invalid context here, but we want to validate
-            // that in the provider as well, so we want to test passing an invalid one.
-            // That is why we need to ignore the next line.
-            // @ts-ignore
-            await expect(fdc3Remote.findIntentsByContext(testManagerIdentity, invalidContext))
-                .rejects
-                .toThrow(`Context not valid. context = ${JSON.stringify(invalidContext)}`);
-            // .toThrowError(new FDC3Error(ResolveError.InvalidContext, `Context not valid. context = ${JSON.stringify(invalidContext)}`));
+        } as unknown as Context;
+        test('The promise rejects with an FDC3Error', async () => {
+            const findIntentsPromise = fdc3Remote.findIntentsByContext(testManagerIdentity, invalidContext);
+            await expect(findIntentsPromise).rejects.toThrowError(`Context not valid. context = ${JSON.stringify(invalidContext)}`);
+            await expect(findIntentsPromise).rejects.toHaveProperty('name', 'FDC3Error');
+            await expect(findIntentsPromise).rejects.toHaveProperty('code', ResolveError.InvalidContext);
         });
     });
 
