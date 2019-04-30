@@ -4,6 +4,7 @@ import {ChannelProvider} from 'openfin/_v2/api/interappbus/channel/provider';
 import {Identity} from 'openfin/_v2/main';
 
 import {SERVICE_CHANNEL} from '../client/internal';
+import {FDC3Error} from '../client/errors';
 
 import {Signal1} from './common/Signal';
 
@@ -88,14 +89,7 @@ export class APIHandler<T extends Enum> {
                 this._providerChannel.register(action, (payload, source) =>
                     actionHandlerMap[action](payload, source)
                         .catch(error => {
-                            let errorToRethrow = error;
-                            if (error && error.code && error.message) {
-                                errorToRethrow = new Error(JSON.stringify({
-                                    code: error.code,
-                                    message: error.message
-                                }));
-                            }
-                            throw errorToRethrow;
+                            throw FDC3Error.serialize(error);
                         }));
             }
         }

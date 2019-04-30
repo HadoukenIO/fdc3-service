@@ -69,15 +69,6 @@ export async function tryServiceDispatch<T extends APIFromClientTopic>(action: T
     const channel: ChannelClient = await channelPromise;
     return (channel.dispatch(action, payload) as Promise<APIFromClient[T][1]>)
         .catch(error => {
-            let errorToRethrow = error;
-            try {
-                const fdc3Error = JSON.parse(error.message);
-                if (fdc3Error && fdc3Error.code && fdc3Error.message) {
-                    errorToRethrow = new FDC3Error(fdc3Error.code, fdc3Error.message);
-                }
-            } catch (e) {
-                // Didn't parse, we will rethrow the error param
-            }
-            throw errorToRethrow;
+            throw FDC3Error.deserialize(error);
         });
 }
