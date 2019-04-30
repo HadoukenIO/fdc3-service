@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import * as fdc3 from '../../client/main';
 import {ContactsTable} from '../components/contacts/ContactsTable';
-import {Context, ContactContext} from '../../client/main';
+import {Context, ContactContext, AppIntent} from '../../client/main';
 import '../../../res/demo/css/w3.css';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
 
@@ -48,6 +48,18 @@ export function ContactsApp(): React.ReactElement {
         }
     }
 
+    const [appIntents, setAppIntents] = React.useState([] as AppIntent[]);
+    React.useEffect(() => {
+        fdc3.findIntentsByContext({
+            type: 'fdc3.contact',
+            name: '',
+            id: {}
+        }).then(foundAppIntents => {
+            console.log('setAppIntents', foundAppIntents);
+            setAppIntents(foundAppIntents);
+        });
+    }, []);
+
     React.useEffect(() => {
         document.title = 'Contacts';
     }, []);
@@ -73,7 +85,7 @@ export function ContactsApp(): React.ReactElement {
     return (
         <React.Fragment>
             <ContextChannelSelector />
-            <ContactsTable items={contacts} />
+            <ContactsTable items={contacts} appIntents={appIntents} />
         </React.Fragment>
     );
 }

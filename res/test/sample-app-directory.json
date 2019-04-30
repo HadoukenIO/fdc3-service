@@ -16,11 +16,33 @@
         }
     ],
     "intents": [
-        {"name": "test.IntentName"},
-        {"name": "DialCall"},
-        {"name": "StartCall"},
-        {"name": "SaveContact"},
-        {"name": "ViewChart"}
+        {
+            "name": "test.IntentName",
+            "displayName": "Test Intent"
+        },
+        {
+            "name": "DialCall",
+            "displayName": "Dial",
+            "contexts": ["contact"],
+            "customConfig": {
+                "icon": "fa-tty"
+            }
+        },
+        {
+            "name": "StartCall",
+            "displayName": "Call",
+            "customConfig": {
+                "icon": "fa-phone"
+            }
+        },
+        {
+            "name": "SaveContact",
+            "displayName": "Save"
+        },
+        {
+            "name": "ViewChart",
+            "displayName": "View Chart"
+        }
     ]
 },
 {

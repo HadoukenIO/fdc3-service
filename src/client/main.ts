@@ -149,14 +149,14 @@ export async function findIntent(intent: string, context?: Context): Promise<App
 /**
  * Find all the available intents for a particular context.
  *
- * findIntents is effectively granting programmatic access to the Desktop Agent's resolver.
+ * findIntentsByContext is effectively granting programmatic access to the Desktop Agent's resolver.
  * A promise resolving to all the intents, their metadata and metadata about the apps that registered it is returned,
  * based on the context export types the intents have registered.
  *
  * If the resolution fails, the promise will return an `Error` with a string from the `ResolveError` export enumeration.
  *
  * ```javascript
- * // I have a context object, and I want to know what I can do with it, hence, I look for for intents...
+ * // I have a context object, and I want to know what I can do with it, hence, I look for intents...
  * const appIntents = await agent.findIntentsForContext(context);
  *
  * // returns for example:
@@ -197,7 +197,7 @@ export function broadcast(context: Context): void {
  * Raises an intent to the desktop agent to resolve.
  * ```javascript
  * //raise an intent to start a chat with a given contact
- * const intentR = await agent.findIntents("StartChat", context);
+ * const intentR = await agent.findIntent("StartChat", context);
  * //use the IntentResolution object to target the same chat app with a new context
  * agent.raiseIntent("StartChat", newContext, intentR.source);
  * ```
