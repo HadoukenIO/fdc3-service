@@ -7,7 +7,7 @@ import {Identity} from 'openfin/_v2/main';
 import {channelPromise, tryServiceDispatch, eventEmitter, FDC3Event, FDC3EventType} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
-import {APITopic, RaiseIntentPayload, SERVICE_IDENTITY} from './internal';
+import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload} from './internal';
 import {ChannelChangedEvent} from './contextChannels';
 
 /**
@@ -116,7 +116,7 @@ export interface IntentListener {
  * ```
  */
 export async function open(name: string, context?: Context): Promise<void> {
-    return tryServiceDispatch(APITopic.OPEN, {name, context});
+    return tryServiceDispatch(APIFromClientTopic.OPEN, {name, context});
 }
 
 /**
@@ -143,20 +143,20 @@ export async function open(name: string, context?: Context): Promise<void> {
  * ```
  */
 export async function findIntent(intent: string, context?: Context): Promise<AppIntent> {
-    return tryServiceDispatch(APITopic.FIND_INTENT, {intent, context});
+    return tryServiceDispatch(APIFromClientTopic.FIND_INTENT, {intent, context});
 }
 
 /**
  * Find all the available intents for a particular context.
  *
- * findIntents is effectively granting programmatic access to the Desktop Agent's resolver.
+ * findIntentsByContext is effectively granting programmatic access to the Desktop Agent's resolver.
  * A promise resolving to all the intents, their metadata and metadata about the apps that registered it is returned,
  * based on the context export types the intents have registered.
  *
  * If the resolution fails, the promise will return an `Error` with a string from the `ResolveError` export enumeration.
  *
  * ```javascript
- * // I have a context object, and I want to know what I can do with it, hence, I look for for intents...
+ * // I have a context object, and I want to know what I can do with it, hence, I look for intents...
  * const appIntents = await agent.findIntentsForContext(context);
  *
  * // returns for example:
@@ -180,7 +180,7 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  * ```
  */
 export async function findIntentsByContext(context: Context): Promise<AppIntent[]> {
-    return tryServiceDispatch(APITopic.FIND_INTENTS_BY_CONTEXT, {context});
+    return tryServiceDispatch(APIFromClientTopic.FIND_INTENTS_BY_CONTEXT, {context});
 }
 
 /**
@@ -190,28 +190,28 @@ export async function findIntentsByContext(context: Context): Promise<AppIntent[
  * ```
  */
 export function broadcast(context: Context): void {
-    tryServiceDispatch(APITopic.BROADCAST, {context});
+    tryServiceDispatch(APIFromClientTopic.BROADCAST, {context});
 }
 
 /**
  * Raises an intent to the desktop agent to resolve.
  * ```javascript
  * //raise an intent to start a chat with a given contact
- * const intentR = await agent.findIntents("StartChat", context);
+ * const intentR = await agent.findIntent("StartChat", context);
  * //use the IntentResolution object to target the same chat app with a new context
  * agent.raiseIntent("StartChat", newContext, intentR.source);
  * ```
  */
 export async function raiseIntent(intent: string, context: Context, target?: string): Promise<IntentResolution> {
-    return tryServiceDispatch(APITopic.RAISE_INTENT, {intent, context, target});
+    return tryServiceDispatch(APIFromClientTopic.RAISE_INTENT, {intent, context, target});
 }
 
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
 if (channelPromise) {
-    channelPromise.then((channel) => {
-        channel.register('intent', (payload: RaiseIntentPayload) => {
+    channelPromise.then(channelClient => {
+        channelClient.register(APIToClientTopic.INTENT, (payload: RaiseIntentPayload) => {
             intentListeners.forEach((listener: IntentListener) => {
                 if (payload.intent === listener.intent) {
                     listener.handler(payload.context);
@@ -219,9 +219,8 @@ if (channelPromise) {
             });
         });
     });
-
-    channelPromise.then(channel => {
-        channel.register('context', (payload: Context) => {
+    channelPromise.then(channelClient => {
+        channelClient.register(APIToClientTopic.CONTEXT, (payload: Context) => {
             contextListeners.forEach((listener: ContextListener) => {
                 listener.handler(payload);
             });
@@ -237,16 +236,19 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
         intent,
         handler,
         unsubscribe: () => {
-            const index: number = contextListeners.indexOf(listener);
+            const index: number = intentListeners.indexOf(listener);
 
             if (index >= 0) {
-                contextListeners.splice(index, 1);
+                intentListeners.splice(index, 1);
+                tryServiceDispatch(APIFromClientTopic.REMOVE_INTENT_LISTENER, {intent});
             }
 
             return index >= 0;
         }
     };
     intentListeners.push(listener);
+
+    tryServiceDispatch(APIFromClientTopic.ADD_INTENT_LISTENER, {intent});
     return listener;
 }
 

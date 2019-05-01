@@ -1,15 +1,14 @@
 import 'reflect-metadata';
-
-import {injectable, inject} from 'inversify';
+import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {RaiseIntentPayload, APITopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, API, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload} from '../client/internal';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload, IntentListenerPayload} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Intent, Channel} from '../client/main';
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
-import {Model, FindFilter} from './model/Model';
+import {FindFilter, Model} from './model/Model';
 import {ContextHandler} from './controller/ContextHandler';
 import {IntentHandler} from './controller/IntentHandler';
 import {APIHandler} from './APIHandler';
@@ -32,7 +31,7 @@ export class Main {
     private _intents!: IntentHandler;
 
     @inject(Inject.API_HANDLER)
-    private _apiHandler!: APIHandler<APITopic>;
+    private _apiHandler!: APIHandler<APIFromClientTopic>;
 
     public async register(): Promise<void> {
         Object.assign(window, {
@@ -48,16 +47,18 @@ export class Main {
         await Injector.initialized;
 
         // Current API
-        this._apiHandler.registerListeners<API>({
-            [APITopic.OPEN]: this.open.bind(this),
-            [APITopic.FIND_INTENT]: this.findIntent.bind(this),
-            [APITopic.FIND_INTENTS_BY_CONTEXT]: this.findIntentsByContext.bind(this),
-            [APITopic.BROADCAST]: this.broadcast.bind(this),
-            [APITopic.RAISE_INTENT]: this.raiseIntent.bind(this),
-            [APITopic.GET_ALL_CHANNELS]: this.getAllChannels.bind(this),
-            [APITopic.JOIN_CHANNEL]: this.joinChannel.bind(this),
-            [APITopic.GET_CHANNEL]: this.getChannel.bind(this),
-            [APITopic.GET_CHANNEL_MEMBERS]: this.getChannelMembers.bind(this)
+        this._apiHandler.registerListeners<APIFromClient>({
+            [APIFromClientTopic.OPEN]: this.open.bind(this),
+            [APIFromClientTopic.FIND_INTENT]: this.findIntent.bind(this),
+            [APIFromClientTopic.FIND_INTENTS_BY_CONTEXT]: this.findIntentsByContext.bind(this),
+            [APIFromClientTopic.BROADCAST]: this.broadcast.bind(this),
+            [APIFromClientTopic.RAISE_INTENT]: this.raiseIntent.bind(this),
+            [APIFromClientTopic.ADD_INTENT_LISTENER]: this.addIntentListener.bind(this),
+            [APIFromClientTopic.REMOVE_INTENT_LISTENER]: this.removeIntentListener.bind(this),
+            [APIFromClientTopic.GET_ALL_CHANNELS]: this.getAllChannels.bind(this),
+            [APIFromClientTopic.JOIN_CHANNEL]: this.joinChannel.bind(this),
+            [APIFromClientTopic.GET_CHANNEL]: this.getChannel.bind(this),
+            [APIFromClientTopic.GET_CHANNEL_MEMBERS]: this.getChannelMembers.bind(this)
         });
 
         console.log('Service Initialised');
@@ -95,7 +96,11 @@ export class Main {
     }
 
     private async findIntentsByContext (payload: FindIntentsByContextPayload): Promise<AppIntent[]> {
-        return [];
+        if (payload.context && payload.context.type) {
+            return this._directory.getAppIntentsByContext(payload.context.type);
+        } else {
+            throw new Error(`Context not valid. context = ${JSON.stringify(payload.context)}`);
+        }
     }
 
     private async broadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {
@@ -125,6 +130,26 @@ export class Main {
 
     private async getChannelMembers(payload: GetChannelMembersPayload, source: ProviderIdentity): Promise<Identity[]> {
         return this._contexts.getChannelMembers(payload, source);
+    }
+
+    private async addIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): Promise<void> {
+        const app = this._model.getWindow(identity);
+        if (app) {
+            app.addIntentListener(payload.intent);
+            return Promise.resolve();
+        } else {
+            throw new Error('App not found in model');
+        }
+    }
+
+    private async removeIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): Promise<void> {
+        const app = this._model.getWindow(identity);
+        if (app) {
+            app.removeIntentListener(payload.intent);
+            return Promise.resolve();
+        } else {
+            throw new Error('App not found in model');
+        }
     }
 }
 

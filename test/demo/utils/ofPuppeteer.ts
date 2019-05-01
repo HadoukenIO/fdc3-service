@@ -16,13 +16,11 @@ export type TestWindowContext = Window&{
     fin: Fin;
     fdc3: typeof import('../../../src/client/main');
     contextListeners: ContextListener[];
-    intentListeners: IntentListener[];
+    intentListeners: {[intent: string]: IntentListener[]};
     eventListeners: TestWindowEventListener[];
     receivedContexts: {listenerID: number, context: Context}[];
     receivedEvents: {listenerID: number, payload: FDC3Event}[];
     receivedIntents: {listenerID: number, intent: IntentType, context: Context}[];
-    getNextContextListenerID: () => number;
-    getNextIntentListenerID: () => number;
 };
 
 export class OFPuppeteerBrowser {

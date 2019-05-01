@@ -16,10 +16,33 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {
+            "name": "test.IntentName",
+            "displayName": "Test Intent"
+        },
+        {
+            "name": "DialCall",
+            "displayName": "Dial",
+            "contexts": ["contact"],
+            "customConfig": {
+                "icon": "fa-tty"
+            }
+        },
+        {
+            "name": "StartCall",
+            "displayName": "Call",
+            "customConfig": {
+                "icon": "fa-phone"
+            }
+        },
+        {
+            "name": "SaveContact",
+            "displayName": "Save"
+        },
+        {
+            "name": "ViewChart",
+            "displayName": "View Chart"
+        }
     ]
 },
 {
@@ -40,10 +63,10 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {
@@ -64,10 +87,10 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {
@@ -88,10 +111,10 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {
@@ -99,7 +122,7 @@
     "name": "test-app-preregistered-1",
     "manifest": "http://localhost:3923/test/configs/test-app-preregistered-1.json",
     "manifestType": "openfin",
-    "title": "Test App Preregistered 2",
+    "title": "Test App Preregistered 1",
     "description": "App for testing fdc3 service. Has intent and context listeners auto-registered on load",
     "images": [],
     "contactEmail": "support@openfin.co",
@@ -112,10 +135,11 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "test.IntentNamePreregistered"},
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {
@@ -136,10 +160,10 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {

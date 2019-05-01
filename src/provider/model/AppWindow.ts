@@ -1,16 +1,19 @@
 import {Window, Identity} from 'openfin/_v2/main';
 
-import {Application} from '../../client/main';
+import {Application, IntentType} from '../../client/main';
+import {Signal1} from '../common/Signal';
 
 import {ContextChannel} from './ContextChannel';
 
-interface IntentSpec {
-    name: string;
-    context: ContextSpec;
-}
 interface ContextSpec {
     type: string;
 }
+
+interface IntentMap {
+    [key: string]: boolean;
+}
+
+export const INTENT_LISTENER_TIMEOUT = 5000;
 
 /**
  * Model object, representing a window that has connected to the service.
@@ -23,21 +26,23 @@ export class AppWindow {
         return `${identity.uuid}/${identity.name || identity.uuid}`;
     }
 
-    private _id: string;
-    private _appInfo: Application;
-    private _window: Window;
+    private readonly _id: string;
+    private readonly _appInfo: Application;
+    private readonly _window: Window;
 
-    private _intents: IntentSpec[];
-    private _contexts: ContextSpec[];
+    private readonly _intentListeners: IntentMap;
+    private readonly _contexts: ContextSpec[];
 
     constructor(identity: Identity, appInfo: Application) {
         this._id = AppWindow.getId(identity);
         this._window = fin.Window.wrapSync(identity);
         this._appInfo = appInfo;
 
-        this._intents = [];
+        this._intentListeners = {};
         this._contexts = [];
     }
+
+    private readonly _onIntentListenerAdded: Signal1<IntentType> = new Signal1();
 
     public get id(): string {
         return this._id;
@@ -51,8 +56,17 @@ export class AppWindow {
         return this._appInfo;
     }
 
-    public get intents(): ReadonlyArray<IntentSpec> {
-        return this._intents;
+    public addIntentListener(intentName: string): void {
+        this._intentListeners[intentName] = true;
+        this._onIntentListenerAdded.emit(intentName);
+    }
+
+    public removeIntentListener(intentName: string): void {
+        delete this._intentListeners[intentName];
+    }
+
+    public hasAnyIntentListener() {
+        return Object.keys(this._intentListeners).length > 0;
     }
 
     public get contexts(): ReadonlyArray<ContextChannel> {
@@ -61,5 +75,23 @@ export class AppWindow {
 
     public focus(): Promise<void> {
         return this._window.setAsForeground();
+    }
+
+    public ensureReadyToReceiveIntent(intent: IntentType): Promise<void> {
+        if (this._intentListeners[intent]) {
+            return Promise.resolve();
+        }
+        return new Promise((resolve, reject) => {
+            const slot = this._onIntentListenerAdded.add(intentAdded => {
+                if (intentAdded === intent) {
+                    slot.remove();
+                    resolve();
+                }
+            });
+            setTimeout(() => {
+                slot.remove();
+                reject(new Error(`Timeout waiting for intent listener to be added. intent = ${intent}`));
+            }, INTENT_LISTENER_TIMEOUT);
+        });
     }
 }

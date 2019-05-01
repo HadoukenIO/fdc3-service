@@ -3,6 +3,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {Application} from '../../client/main';
 import {Inject} from '../common/Injectables';
+import {Signal0} from '../common/Signal';
 
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
@@ -25,10 +26,11 @@ export class Model {
     private _directory!: AppDirectory;
 
     @inject(Inject.ENVIRONMENT)
-    private _environment!: Environment;
+    private readonly _environment!: Environment;
 
-    private _windows: AppWindow[];
-    private _channels: ContextChannel[];
+    private readonly _windows: AppWindow[];
+    private readonly _channels: ContextChannel[];
+    private readonly onWindowAdded: Signal0 = new Signal0();
 
     constructor(@inject(Inject.ENVIRONMENT) environment: Environment) {
         this._windows = [];
@@ -46,6 +48,10 @@ export class Model {
         return this._channels;
     }
 
+    public getWindow(identity: Identity): AppWindow|null {
+        return this._windows.find(w => w.id === AppWindow.getId(identity)) || null;
+    }
+
     public findWindow(appInfo: Application, options?: FindOptions): AppWindow|null {
         return this.findWindows(appInfo, options)[0] || null;
     }
@@ -56,14 +62,14 @@ export class Model {
             if (app.appInfo.appId !== appInfo.appId) {
                 return false;
             } else if (require !== undefined) {
-                return this.matchesFilter(app, require);
+                return Model.matchesFilter(app, require);
             } else {
                 return true;
             }
         });
 
         if (windows.length > 0 && prefer !== undefined) {
-            const preferredWindows = windows.filter(app => this.matchesFilter(app, prefer));
+            const preferredWindows = windows.filter(app => Model.matchesFilter(app, prefer));
 
             if (preferredWindows.length > 0) {
                 return preferredWindows;
@@ -80,7 +86,17 @@ export class Model {
             await matchingWindow.focus();
             return matchingWindow;
         } else {
-            return this._environment.createApplication(appInfo);
+            const createPromise = this._environment.createApplication(appInfo);
+            const signalPromise = new Promise<AppWindow>(resolve => {
+                const slot = this.onWindowAdded.add(() => {
+                    const matchingWindow = this.findWindow(appInfo, {prefer});
+                    if (matchingWindow) {
+                        slot.remove();
+                        resolve(matchingWindow);
+                    }
+                });
+            });
+            return Promise.all([signalPromise, createPromise]).then(([app])=> app);
         }
     }
 
@@ -93,7 +109,9 @@ export class Model {
 
             if (!this._windows.some(window => window.id === id)) {
                 console.info(`Registering window ${id}`);
-                this._windows.push(this._environment.wrapApplication(appInfo, identity));
+                const app = this._environment.wrapApplication(appInfo, identity);
+                this._windows.push(app);
+                this.onWindowAdded.emit();
             } else {
                 console.info(`Ignoring window created event for ${id} - window was already registered`);
             }
@@ -110,12 +128,12 @@ export class Model {
         }
     }
 
-    private matchesFilter(window: AppWindow, filter: FindFilter): boolean {
+    private static matchesFilter(window: AppWindow, filter: FindFilter): boolean {
         switch (filter) {
             case FindFilter.WITH_CONTEXT_LISTENER:
                 return window.contexts.length > 0;
             case FindFilter.WITH_INTENT_LISTENER:
-                return window.intents.length > 0;
+                return window.hasAnyIntentListener();
         }
     }
 }
