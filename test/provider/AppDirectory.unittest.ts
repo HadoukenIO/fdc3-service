@@ -133,8 +133,6 @@ describe('AppDirectory Unit Tests', () => {
                 const spyFetch = jest.spyOn(global, 'fetch');
                 const appDirectory = new AppDirectory();
                 const apps = await appDirectory.getAllApps();
-                console.log('getItem', global.localStorage.getItem(StorageKeys.URL));
-                console.log('memory url', appDirectory['_url']);
                 expect(spyFetch).not.toBeCalled();
                 expect(apps).toEqual(fakeApps);
             });
@@ -145,7 +143,6 @@ describe('AppDirectory Unit Tests', () => {
                 const appDirectory = new AppDirectory();
                 appDirectory['_url'] = '*new_url*';
                 const apps = await appDirectory.getAllApps();
-                console.log(apps);
                 expect(apps).toEqual(fakeApps);
                 expect(spyFetch).toBeCalled();
             });
