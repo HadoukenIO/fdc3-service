@@ -46,8 +46,8 @@ export class AppDirectory {
     }
 
     public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
-        await this.fetchData();
-        const appIntentsByName: { [intentName: string]: AppIntent } = {};
+        await this.refreshDirectory();
+        const appIntentsByName: {[intentName: string]: AppIntent} = {};
         this._directory.forEach((app: Application) => {
             (app.intents || []).forEach(intent => {
                 if (intent.contexts && intent.contexts.includes(contextType)) {
