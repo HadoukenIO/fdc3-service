@@ -2,11 +2,12 @@
 
 
 ## Overview
-OpenFin FDC3 API uses the message Channels framework to expose its API to consuming applications.  You can see the documentation for these APIs here:  https://cdn.openfin.co/docs/javascript/stable/InterApplicationBus.Channel.html.
+OpenFin FDC3 provides an implementation of the [FINOS FDC3](https://fdc3.finos.org/) standards for OpenFin-based applications.
 
 This project consist of 3 parts:
 1. The FDC3 Service, taking care of intents, context and resolving them (UI)
-2. The FDC3 Client, exposing API's for applications to handle/raise intents with contexts
+2. The FDC3 Client, exposing APIs for applications to handle/raise intents with contexts
+3. The FDC3 Demo App, demonstrating the different features of OpenFin FDC3
 
 ### Dependencies
 - OpenFin version for applications using FDC3 = 9.61.38.41
@@ -20,12 +21,9 @@ This project consist of 3 parts:
 * Attach listeners for Intents and Contexts
 * Context channel support, to filter context broadcasts
 
-### API Documentation
-[Official API spec](hhttps://fdc3.finos.org/)
-
 ## Getting Started
 
-Integrating the FDC3 service is done in two steps, add the service to application manifest and import the API:
+Integrating the FDC3 service is done in two steps. Add the service to application manifest, and import the API:
 
 ### Manifest declaration
 
@@ -34,7 +32,7 @@ To ensure the service is running, you must declare it in your application config
 ```
 "services":
 [
-   {"name":"fdc3"}
+   {"name": "fdc3"}
 ]
 ```
 
