@@ -246,6 +246,37 @@ describe('When joining a channel', () => {
         expect(payload[0]).toHaveProperty('previousChannel.id', 'blue');
         expect(payload[0]).toHaveProperty('identity', channelChangingWindow);
     });
+
+    it('If everything is unsubscribed, and something rejoins, there is no data held in the channel', async ()=>{
+        // First, set up a pair of windows on different channels. Yellow will be unused; green will be the
+        // interesting one. Broadcast on green. No one is listening, no one hears.
+        const [sendWindow, receiveWindow] = await setupWindows('green', 'yellow');
+        const receiveWindowListener = await fdc3Remote.addContextListener(receiveWindow);
+        await fdc3Remote.broadcast(sendWindow, testContext);
+        let receivedContexts = await receiveWindowListener.getReceivedContexts();
+        expect(receivedContexts).toHaveLength(0);
+
+        // Now join green, and we should a callback because of the current state of the green channel.
+        await fdc3Remote.joinChannel(receiveWindow, 'green');
+        receivedContexts = await receiveWindowListener.getReceivedContexts();
+        expect(receivedContexts).toEqual([testContext]);
+
+        // Move all the windows to a different channel, so no one is listening to green. This should cause
+        // the state data to be dropped
+        await fdc3Remote.joinChannel(sendWindow, 'yellow');
+        await fdc3Remote.joinChannel(receiveWindow, 'yellow');
+        const members = await fdc3Remote.getChannelMembers(receiveWindow, 'green');
+        expect(members).toEqual([]);
+
+        // Now, subscribe to the green channel again. Because the state data is dropped, we won't get a callback,
+        // and our received contexts will be unchanged (remember, receivedContexts is the life history of all
+        // the contexts received)
+        receivedContexts = await receiveWindowListener.getReceivedContexts();
+        expect(receivedContexts).toEqual([testContext]);
+        await fdc3Remote.joinChannel(receiveWindow, 'green');
+        receivedContexts = await receiveWindowListener.getReceivedContexts();
+        expect(receivedContexts).toEqual([testContext]);
+    });
 });
 
 describe('When starting an app', () => {
