@@ -1,8 +1,8 @@
 import * as React from 'react';
 
 import {SymbolsTable} from '../components/blotter/SymbolsTable';
-
 import '../../../res/demo/css/w3.css';
+import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
 
 export interface Symbol {
     name: string;
@@ -31,5 +31,10 @@ export function BlotterApp(): React.ReactElement {
         document.title = 'Blotter';
     }, []);
 
-    return (<SymbolsTable items={symbols} />);
+    return (
+        <React.Fragment>
+            <ContextChannelSelector />
+            <SymbolsTable items={symbols} />
+        </React.Fragment>
+    );
 }

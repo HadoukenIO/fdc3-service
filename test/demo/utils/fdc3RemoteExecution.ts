@@ -13,6 +13,8 @@
 import {Identity} from 'openfin/_v2/main';
 
 import {Application, Context, IntentType, ChannelId, Channel} from '../../../src/client/main';
+import {RaiseIntentPayload} from '../../../src/client/internal';
+import {FDC3Event, FDC3EventType} from '../../../src/client/connection';
 
 import {OFPuppeteerBrowser, TestWindowContext} from './ofPuppeteer';
 
@@ -67,10 +69,23 @@ export async function getChannelMembers(executionTarget: Identity, channelId: Ch
     }, channelId);
 }
 
+export async function raiseIntent(executionTarget: Identity, intent: IntentType, context: Context, target?: string): Promise<void> {
+    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, payload: RaiseIntentPayload): Promise<void> {
+        await this.fdc3.raiseIntent(payload.intent, payload.context, payload.target);
+    }, {intent, context, target});
+}
+
 export interface RemoteContextListener {
-    type: 'context';
     remoteIdentity: Identity;
     id: number;
+    unsubscribe: () => Promise<void>;
+    getReceivedContexts: () => Promise<Context[]>;
+}
+
+export interface RemoteIntentListener {
+    remoteIdentity: Identity;
+    id: number;
+    intent: IntentType;
     unsubscribe: () => Promise<void>;
     getReceivedContexts: () => Promise<Context[]>;
 }
@@ -85,7 +100,6 @@ export async function addContextListener(executionTarget: Identity): Promise<Rem
     });
 
     return {
-        type: 'context',
         remoteIdentity: executionTarget,
         id,
         unsubscribe: async () => {
@@ -101,6 +115,35 @@ export async function addContextListener(executionTarget: Identity): Promise<Rem
     };
 }
 
+export async function addIntentListener(executionTarget: Identity, intent: IntentType): Promise<RemoteIntentListener> {
+    const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext, intentRemote: IntentType): number {
+        if (this.intentListeners[intentRemote] === undefined) {
+            this.intentListeners[intentRemote] = [];
+        }
+        const listenerID = this.intentListeners[intentRemote].length;
+        this.intentListeners[intentRemote][listenerID] = this.fdc3.addIntentListener(intentRemote, (context) => {
+            this.receivedIntents.push({listenerID, intent: intentRemote, context});
+        });
+        return listenerID;
+    }, intent);
+
+    return {
+        remoteIdentity: executionTarget,
+        id,
+        intent,
+        unsubscribe: async () => {
+            return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, intent: IntentType, id: number): void {
+                this.intentListeners[intent][id].unsubscribe();
+            }, intent, id);
+        },
+        getReceivedContexts: async (): Promise<Context[]> => {
+            return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, intent: IntentType, id: number): Context[] {
+                return this.receivedIntents.filter(entry => entry.listenerID === id && entry.intent === intent).map(entry => entry.context);
+            }, intent, id);
+        }
+    };
+}
+
 export async function getRemoteContextListener(executionTarget: Identity, listenerID: number = 0): Promise<RemoteContextListener> {
     // Check that the ID maps to a listener
     const exists = await ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): boolean {
@@ -111,7 +154,6 @@ export async function getRemoteContextListener(executionTarget: Identity, listen
         throw new Error('Could not get remoteListener: No listener found with ID ' + listenerID + ' on window ' + JSON.stringify(executionTarget));
     }
     return {
-        type: 'context',
         remoteIdentity: executionTarget,
         id: listenerID,
         unsubscribe: async () => {
@@ -126,4 +168,98 @@ export async function getRemoteContextListener(executionTarget: Identity, listen
             }, listenerID);
         }
     };
+}
+
+export async function getRemoteIntentListener(executionTarget: Identity, intent: IntentType, listenerID: number = 0): Promise<RemoteIntentListener> {
+    // Check that the intent/ID pair maps to a listener
+    const exists = await ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, intent: IntentType, id: number): boolean {
+        return typeof this.intentListeners[intent] !== 'undefined' && typeof this.intentListeners[intent][id] !== 'undefined';
+    }, intent, listenerID);
+
+    if (!exists) {
+        throw new Error(`Could not get remoteListener: No listener found for intent "${intent}" with ID "${listenerID}" \
+            on window "${executionTarget.uuid}/${executionTarget.name}"`);
+    }
+    return {
+        remoteIdentity: executionTarget,
+        id: listenerID,
+        intent,
+        unsubscribe: async () => {
+            return ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext, intent: IntentType, id: number): void {
+                this.intentListeners[intent][id].unsubscribe();
+                delete this.intentListeners[intent][id];
+            }, intent, listenerID);
+        },
+        getReceivedContexts: async (): Promise<Context[]> => {
+            return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, intent: IntentType, id: number): Context[] {
+                return this.receivedIntents.filter(entry => entry.listenerID === id && entry.intent === intent).map(entry => entry.context);
+            }, intent, listenerID);
+        }
+    };
+}
+export interface RemoteEventListener {
+    remoteIdentity: Identity;
+    id: number;
+    getReceivedEvents: () => Promise<FDC3Event[]>;
+    unsubscribe: () => Promise<void>;
+}
+
+export async function addEventListener(executionTarget: Identity, eventType: FDC3EventType): Promise<RemoteEventListener> {
+    const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext, eventType: FDC3EventType): number {
+        const listenerID = this.eventListeners.length;
+
+        const handler = (payload: FDC3Event) => {
+            this.receivedEvents.push({listenerID, payload});
+        };
+
+        const unsubscribe = () => {
+            this.fdc3.removeEventListener(eventType, handler);
+        };
+
+        this.fdc3.addEventListener(eventType, handler);
+        this.eventListeners[listenerID] = {handler, unsubscribe};
+        return listenerID;
+    }, eventType);
+
+    return {
+        remoteIdentity: executionTarget,
+        id,
+        unsubscribe: async () => {
+            return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): void {
+                this.eventListeners[id].unsubscribe();
+            }, id);
+        },
+        getReceivedEvents: async (): Promise<FDC3Event[]> => {
+            return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): FDC3Event[] {
+                return this.receivedEvents.filter(entry => entry.listenerID === id).map(entry => entry.payload);
+            }, id);
+        }
+    };
+}
+
+export async function getRemoteEventListener(executionTarget: Identity, listenerID: number = 0): Promise<RemoteEventListener> {
+    // Check that the ID maps to a listener
+    const exists = await ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): boolean {
+        return typeof this.eventListeners[id] !== 'undefined';
+    }, listenerID);
+
+    if (!exists) {
+        throw new Error('Could not get remoteListener: No listener found with ID ' + listenerID + ' on window ' + JSON.stringify(executionTarget));
+    } else {
+        return {
+            remoteIdentity: executionTarget,
+            id: listenerID,
+            unsubscribe: async () => {
+                return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): void {
+                    this.eventListeners[id].unsubscribe();
+                    delete this.eventListeners[id];
+                }, listenerID);
+            },
+            getReceivedEvents: async (): Promise<FDC3Event[]> => {
+                return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): FDC3Event[] {
+                    return this.receivedEvents.filter(entry => entry.listenerID === id).map(entry => entry.payload);
+                }, listenerID);
+            }
+        };
+    }
 }

@@ -16,10 +16,10 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {
@@ -40,10 +40,10 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {
@@ -64,10 +64,10 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {
@@ -88,14 +88,14 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {
-    "appId": "400",
+    "appId": "500",
     "name": "test-app-preregistered-1",
     "manifest": "http://localhost:3923/test/configs/test-app-preregistered-1.json",
     "manifestType": "openfin",
@@ -112,14 +112,14 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {
-    "appId": "500",
+    "appId": "600",
     "name": "test-app-preregistered-2",
     "manifest": "http://localhost:3923/test/configs/test-app-preregistered-2.json",
     "manifestType": "openfin",
@@ -136,14 +136,14 @@
         }
     ],
     "intents": [
-        "DialCall",
-        "StartCall",
-        "SaveContact",
-        "ViewChart"
+        {"name": "DialCall"},
+        {"name": "StartCall"},
+        {"name": "SaveContact"},
+        {"name": "ViewChart"}
     ]
 },
 {
-    "appId": "600",
+    "appId": "700",
     "name": "test-app-invalid-manifest",
     "manifest": "http://localhost:3923/test/configs/non-existent-manifest.json",
     "manifestType": "openfin",

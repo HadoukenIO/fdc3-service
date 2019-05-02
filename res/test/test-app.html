@@ -9,8 +9,10 @@
     <script>
         window.contextListeners = [];
         window.intentListeners = [];
+        window.eventListeners = [];
         window.receivedContexts = [];
         window.receivedIntents = [];
+        window.receivedEvents = [];
 
         const queryParams = new URLSearchParams(location.search);
         if (queryParams.get('registerListeners') === 'true') {
@@ -26,17 +28,33 @@
                 'ViewQuote',
                 'ViewNews'
             ];
+
+            const eventTypes = [
+                'channel-changed'
+            ];
     
-            const nextContextListenerID = window.contextListeners.length;
-            window.contextListeners[nextContextListenerID] = fdc3.addContextListener((context) => {
-                receivedContexts.push({listenerID: nextContextListenerID, context});
+            window.contextListeners[0] = fdc3.addContextListener((context) => {
+                receivedContexts.push({listenerID: 0, context});
             });
     
             for (const intent of intents) {
-                const nextIntentListenerID = window.intentListeners.length;
-                window.intentListeners[nextIntentListenerID] = fdc3.addIntentListener(intent, (context) => {
-                    receivedIntents.push({id: nextIntentListenerID, intent, context});
+                window.intentListeners[intent] = [];
+                window.intentListeners[intent][0] = fdc3.addIntentListener(intent, (context) => {
+                    receivedIntents.push({listenerID: 0, intent, context});
                 });
+            }
+
+            for (const eventType of eventTypes) {
+                const handler = (payload) => {
+                    receivedEvents.push({listenerID: 0, payload});
+                };
+
+                const unsubscribe = () => {
+                    fdc3.removeEventListener(eventType, handler);
+                };
+
+                fdc3.addEventListener(eventType, handler);
+                window.eventListeners[0] = {eventType, handler, unsubscribe};
             }
         }
     </script>

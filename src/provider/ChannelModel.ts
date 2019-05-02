@@ -1,6 +1,6 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {Channel, ChannelChangedPayload, ChannelId, GLOBAL_CHANNEL_ID} from '../client/contextChannels';
+import {Channel, ChannelId, GLOBAL_CHANNEL_ID, ChannelChangedEvent} from '../client/contextChannels';
 import {Context} from '../client/main';
 
 import {Signal1} from './Signal';
@@ -63,7 +63,7 @@ export function createChannelModel(connectionSignal: Signal1<Identity>, disconne
 }
 
 export class ChannelModel {
-    public readonly onChannelChanged: Signal1<ChannelChangedPayload> = new Signal1<ChannelChangedPayload>();
+    public readonly onChannelChanged: Signal1<ChannelChangedEvent> = new Signal1<ChannelChangedEvent>();
 
     private _identityHashToChannelIdMap: Map<IdentityHash, ChannelId> = new Map<IdentityHash, ChannelId>();
     private _channelIdToIdentitiesMap: Map<ChannelId, Identity[]> = new Map<ChannelId, Identity[]>();
@@ -111,6 +111,7 @@ export class ChannelModel {
 
                 if (previousIdentities.length === 0) {
                     this._channelIdToIdentitiesMap.delete(previousChannelId);
+                    this._channelIdToCachedContextMap.delete(previousChannelId);
                 }
             }
 
@@ -133,7 +134,7 @@ export class ChannelModel {
             const previousChannel = previousChannelId ? this._channelIdToChannelMap.get(previousChannelId)! : undefined;
 
             if (channel) {
-                this.onChannelChanged.emit({identity, channel, previousChannel});
+                this.onChannelChanged.emit({type: 'channel-changed', identity, channel, previousChannel});
             }
         }
     }

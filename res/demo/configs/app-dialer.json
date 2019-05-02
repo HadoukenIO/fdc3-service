@@ -10,7 +10,8 @@
         "autoShow": true,
         "resizable": false,
         "defaultWidth": 240,
-        "defaultHeight": 269
+        "defaultHeight": 310,
+        "saveWindowState": false
     },
     "runtime": {
         "arguments": "",

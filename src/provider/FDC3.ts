@@ -5,7 +5,7 @@ import {ContextBase} from '../client/context';
 import {Application} from '../client/directory';
 import {APITopic, BroadcastPayload, FindIntentPayload, RaiseIntentPayload, TopicPayloadMap, TopicResponseMap, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload} from '../client/internal';
 import {AppIntent, IntentResolution} from '../client/main';
-import {Channel, ChannelChangedPayload} from '../client/contextChannels';
+import {Channel, ChannelChangedEvent} from '../client/contextChannels';
 
 import {ActionHandlerMap, APIHandler} from './APIHandler';
 import {AppDirectory} from './AppDirectory';
@@ -105,7 +105,10 @@ export class FDC3 {
 
         this.channelModel.setContext(channel.id, context);
 
-        return Promise.all(channelMembers.map(identity => this.sendContext(identity, context))).then(() => {});
+        return Promise.all(channelMembers
+            .filter(identity => identity.uuid !== source.uuid)
+            .map(identity => this.sendContext(identity, context)))
+            .then(() => {});
     }
 
     private async onIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<IntentResolution> {
@@ -433,7 +436,7 @@ export class FDC3 {
         return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
     }
 
-    private onChannelChangedHandler(payload: ChannelChangedPayload): void {
-        this.apiHandler.channel.publish('channel-changed', payload);
+    private onChannelChangedHandler(event: ChannelChangedEvent): void {
+        this.apiHandler.channel.publish('event', event);
     }
 }

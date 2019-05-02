@@ -3,18 +3,24 @@ import {Browser, Page} from 'puppeteer';
 import {connect} from 'hadouken-js-adapter';
 
 import {Context, IntentType, ContextListener, IntentListener} from '../../../src/client/main';
+import {FDC3Event} from '../../../src/client/connection';
 
 declare const global: NodeJS.Global & {__BROWSER__: Browser};
+
+export interface TestWindowEventListener {
+    handler: (payload: any) => void;
+    unsubscribe: () => void;
+}
 
 export type TestWindowContext = Window&{
     fin: Fin;
     fdc3: typeof import('../../../src/client/main');
     contextListeners: ContextListener[];
-    intentListeners: IntentListener[];
+    intentListeners: {[intent: string]: IntentListener[]};
+    eventListeners: TestWindowEventListener[];
     receivedContexts: {listenerID: number, context: Context}[];
+    receivedEvents: {listenerID: number, payload: FDC3Event}[];
     receivedIntents: {listenerID: number, intent: IntentType, context: Context}[];
-    getNextContextListenerID: () => number;
-    getNextIntentListenerID: () => number;
 };
 
 export class OFPuppeteerBrowser {

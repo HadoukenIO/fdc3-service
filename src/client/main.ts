@@ -2,10 +2,13 @@
  * @module Index
  */
 
-import {channelPromise, tryServiceDispatch} from './connection';
+import {Identity} from 'openfin/_v2/main';
+
+import {channelPromise, tryServiceDispatch, eventEmitter, FDC3Event, FDC3EventType} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
 import {APITopic, RaiseIntentPayload, SERVICE_IDENTITY} from './internal';
+import {ChannelChangedEvent} from './contextChannels';
 
 /**
  * This file was copied from the FDC3 v1 specification.
@@ -265,4 +268,20 @@ export function addContextListener(handler: (context: Context) => void): Context
     };
     contextListeners.push(listener);
     return listener;
+}
+
+/**
+ * Event that is fired whenever a window changes from one channel to another.
+ *
+ * This includes switching to/from the global channel. The `channel` and
+ * `previousChannel` fields use the same conventions for denoting the global channel as `getChannel`.
+ */
+export function addEventListener(eventType: 'channel-changed', handler: (event: ChannelChangedEvent) => void): void;
+
+export function addEventListener(eventType: FDC3EventType, handler: (event: FDC3Event) => void, identity?: Identity): void {
+    eventEmitter.addListener(eventType, handler);
+}
+
+export function removeEventListener(eventType: FDC3EventType, handler: (eventPayload: ChannelChangedEvent) => void): void {
+    eventEmitter.removeListener(eventType, handler);
 }
