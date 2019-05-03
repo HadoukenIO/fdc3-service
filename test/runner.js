@@ -72,6 +72,6 @@ buildStep
         return port;
     })
     .catch(fail)
-    .then(OF_PORT => run('jest', ['contextChannelFailing', '--config', 'jest-int.config.json', '--forceExit', '--no-cache', '--runInBand'], {env: {OF_PORT}}))
+    .then(OF_PORT => run('jest', ['--config', 'jest-int.config.json', '--forceExit', '--no-cache', '--runInBand'], {env: {OF_PORT}}))
     .then(cleanup)
     .catch(cleanup);

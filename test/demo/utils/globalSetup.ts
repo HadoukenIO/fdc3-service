@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as mkdirp from 'mkdirp';
 import fetch from 'node-fetch';
 import * as puppeteer from 'puppeteer';
+import {connect} from 'hadouken-js-adapter';
 
 declare const global: NodeJS.Global&{__BROWSER_GLOBAL__: puppeteer.Browser};
 
@@ -25,4 +26,7 @@ module.exports = async () => {
     // use the file system to expose the wsEndpoint for TestEnvironments
     mkdirp.sync(DIR);
     fs.writeFileSync(path.join(DIR, 'wsEndpoint'), browserWSEndpoint);
+
+    const fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-globalSetup.ts'});
+    await fin.Application.startFromManifest('http://localhost:3923/test/test-app-main.json');
 };
