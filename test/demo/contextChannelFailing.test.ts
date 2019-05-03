@@ -74,6 +74,7 @@ describe('When joining a channel', () => {
         const payload = await listener.getReceivedEvents();
 
         if (payload.length === 0) {
+            console.log('Pausing for investigation');
             await delay(10 * 60 * 60 * 1000);
         }
 
