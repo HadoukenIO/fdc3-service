@@ -13,7 +13,9 @@ const startedApps:Application[] = [];
 let fin: Fin;
 
 beforeAll(async () => {
-    fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-contextChannelFailing.ts'});
+    fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-contextChannels.ts'});
+    await fin.Application.startFromManifest('http://localhost:3923/test/test-app-main.json');
+
     await expect(fin.Application.wrapSync({uuid: 'test-app', name: 'test-app'}).isRunning()).resolves.toBe(true);
 
     jest.setTimeout(10 * 60 * 60 * 1000);
