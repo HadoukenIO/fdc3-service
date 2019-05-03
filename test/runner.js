@@ -67,7 +67,7 @@ const buildStep = skipBuild ? Promise.resolve() : build();
 buildStep
     .then(() => serve())
     .then(async () => {
-        port = await launch({manifestUrl: 'http://localhost:3923/test/test-app-main.json'});
+        port = await launch({manifestUrl: 'http://localhost:3923/test/test-provider.json'});
         console.log('Openfin running on port ' + port);
         return port;
     })
