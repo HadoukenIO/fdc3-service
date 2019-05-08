@@ -68,10 +68,10 @@ export class Main {
         const appInfo: Application|null = await this._directory.getAppByName(payload.name);
 
         if (appInfo) {
-            const app = await this._model.findOrCreate(appInfo, FindFilter.WITH_CONTEXT_LISTENER);
+            const appWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_CONTEXT_LISTENER);
 
             if (payload.context) {
-                await this._contexts.send(app, payload.context);
+                await this._contexts.send(appWindow, payload.context);
             }
         } else {
             throw new Error(`No app in directory with name: ${payload.name}`);
@@ -79,7 +79,7 @@ export class Main {
     }
 
     private async findIntent(payload: FindIntentPayload): Promise<AppIntent> {
-        let apps;
+        let apps: Application[];
         if (payload.intent) {
             apps = await this._directory.getAppsByIntent(payload.intent);
         } else {
@@ -133,9 +133,9 @@ export class Main {
     }
 
     private async addIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): Promise<void> {
-        const app = this._model.getWindow(identity);
-        if (app) {
-            app.addIntentListener(payload.intent);
+        const appWindow = this._model.getWindow(identity);
+        if (appWindow) {
+            appWindow.addIntentListener(payload.intent);
             return Promise.resolve();
         } else {
             throw new Error('App not found in model');
@@ -143,9 +143,9 @@ export class Main {
     }
 
     private async removeIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): Promise<void> {
-        const app = this._model.getWindow(identity);
-        if (app) {
-            app.removeIntentListener(payload.intent);
+        const appWindow = this._model.getWindow(identity);
+        if (appWindow) {
+            appWindow.removeIntentListener(payload.intent);
             return Promise.resolve();
         } else {
             throw new Error('App not found in model');

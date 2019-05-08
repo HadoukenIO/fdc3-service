@@ -277,14 +277,12 @@ export async function findIntentsByContext(executionTarget: Identity, context: C
  * @param error Error returned by puppeteer
  */
 function handlePuppeteerError(error: Error): never {
-    let errorInfo;
-
     try {
         // Strip-away boilerplate added by puppeteer when returning errors from client apps
         const payload = error.message.replace('Evaluation failed: Error: ', '').split('\n')[0];
 
         // Append additional error fields to Error object
-        errorInfo = JSON.parse(payload);
+        const errorInfo = JSON.parse(payload);
         Object.assign(error, errorInfo);
     } catch (e) {
         // Not an FDC3Error, continue as normal

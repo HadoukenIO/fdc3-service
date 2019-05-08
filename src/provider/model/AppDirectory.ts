@@ -1,13 +1,13 @@
 import {injectable} from 'inversify';
 
-import {Application} from '../../client/directory';
+import {Application, AppName} from '../../client/directory';
 import {AppIntent} from '../../client/main';
 
 @injectable()
 export class AppDirectory {
     private _directory!: Application[];
 
-    public async getAppByName(name: string): Promise<Application|null> {
+    public async getAppByName(name: AppName): Promise<Application|null> {
         await this.fetchData();
         return this._directory.find((app: Application) => {
             return app.name === name;

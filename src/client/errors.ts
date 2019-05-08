@@ -1,18 +1,18 @@
 export enum OpenError {
-  AppNotFound = 'AppNotFound',
-  ErrorOnLaunch = 'ErrorOnLaunch',
-  AppTimeout = 'AppTimeout',
-  ResolverUnavailable = 'ResolverUnavailable'
+    AppNotFound = 'AppNotFound',
+    ErrorOnLaunch = 'ErrorOnLaunch',
+    AppTimeout = 'AppTimeout',
+    ResolverUnavailable = 'ResolverUnavailable'
 }
 
 export enum ResolveError {
-  NoAppsFound = 'NoAppsFound',
-  ResolverUnavailable = 'ResolverUnavailable',
-  ResolverTimeout = 'ResolverTimeout',
-  InvalidContext = 'InvalidContext'
+    NoAppsFound = 'NoAppsFound',
+    ResolverUnavailable = 'ResolverUnavailable',
+    ResolverTimeout = 'ResolverTimeout',
+    InvalidContext = 'InvalidContext'
 }
 
-export class FDC3Error extends Error{
+export class FDC3Error extends Error {
     /**
      * If error is FDC3 specific, serialize it as { code, message } so it can be identified as an `FDC3Error` at the client's end.
      * Otherwise return the error itself
@@ -44,15 +44,14 @@ export class FDC3Error extends Error{
         } catch (e) {
             // Payload wasn't a serialized JSON object
         }
-        
+
         return error;
     }
 
-
-  public code: string;
-  public constructor(code: string, message: string) {
-      super(message);
-      this.name = 'FDC3Error';
-      this.code = code;
-  }
+    public code: string;
+    public constructor(code: string, message: string) {
+        super(message);
+        this.name = 'FDC3Error';
+        this.code = code;
+    }
 }
