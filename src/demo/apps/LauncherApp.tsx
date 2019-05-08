@@ -19,11 +19,20 @@ export function LauncherApp(): React.ReactElement {
             .catch(console.log);
     }, []);
 
-    const openApp = (app: Application) => {
+    const openApp = async (app: Application) => {
         console.log(`Opening app ${app.title}`);
-        fdc3.open(app.appId)
-            .then(() => console.log(`Opened app ${app.title}`))
-            .catch(console.log);
+        try {
+            await fdc3.open(app.appId);
+            console.log(`Opened app ${app.title}`);
+        } catch (e) {
+            // Stringifying an `Error` omits the message!
+            const error: any = {
+                message: e.message,
+                ...e
+            };
+            console.log(e, error);
+            alert(`openApp threw an error!\n${JSON.stringify(error)}`);
+        }
     };
 
     return (

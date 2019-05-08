@@ -4,7 +4,7 @@ import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload, IntentListenerPayload} from '../client/internal';
-import {AppIntent, IntentResolution, Application, Intent, Channel, ResolveError, FDC3Error} from '../client/main';
+import {AppIntent, IntentResolution, Application, Intent, Channel, ResolveError, OpenError, FDC3Error} from '../client/main';
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
@@ -67,14 +67,14 @@ export class Main {
     private async open(payload: OpenPayload): Promise<void> {
         const appInfo: Application|null = await this._directory.getAppByName(payload.name);
 
-        if (appInfo) {
-            const appWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_CONTEXT_LISTENER);
+        if (!appInfo) {
+            throw new FDC3Error(OpenError.AppNotFound, `No app in directory with name: ${payload.name}`);
+        }
 
-            if (payload.context) {
-                await this._contexts.send(appWindow, payload.context);
-            }
-        } else {
-            throw new Error(`No app in directory with name: ${payload.name}`);
+        const appWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_CONTEXT_LISTENER);
+
+        if (payload.context) {
+            await this._contexts.send(appWindow, payload.context);
         }
     }
 

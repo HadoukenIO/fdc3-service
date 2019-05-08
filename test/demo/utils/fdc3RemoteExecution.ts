@@ -22,8 +22,8 @@ const ofBrowser = new OFPuppeteerBrowser();
 
 export async function open(executionTarget: Identity, name: string, context?: Context): Promise<void> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, name: string, context?: Context): Promise<void> {
-        return this.fdc3.open(name, context);
-    }, name, context);
+        return this.fdc3.open(name, context).catch(this.errorHandler);
+    }, name, context).catch(handlePuppeteerError);
 }
 
 export async function resolve(executionTarget: Identity, intent: IntentType, context?: Context): Promise<Application[]> {
