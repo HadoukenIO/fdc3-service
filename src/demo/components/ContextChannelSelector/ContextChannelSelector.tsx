@@ -42,7 +42,14 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
                 }
             })
             .catch(error => {
+                // Stringifying an `Error` omits the message!
+                const err: any = {
+                    message: error.message,
+                    ...error
+                };
                 console.error(`Unable to join channel ${id}! ${error.message}`);
+
+                alert(`joinChannel threw an error!\n${JSON.stringify(err)}`);
             });
     };
 

@@ -13,6 +13,13 @@ export enum ResolveError {
     InvalidContext = 'InvalidContext'
 }
 
+export enum ChannelError {
+    // When getChannel / joinChannel on a non existing channel id
+    ChannelDoesNotExist = 'ChannelDoesNotExist',
+    // When trying to create a channel that already exists
+    ChannelAlreadyExists = 'ChannelAlreadyExists'
+}
+
 export class FDC3Error extends Error {
     /**
      * If error is FDC3 specific, serialize it as { code, message } so it can be identified as an `FDC3Error` at the client's end.
