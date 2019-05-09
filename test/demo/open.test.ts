@@ -75,6 +75,7 @@ describe('Opening applications with the FDC3 client', () => {
 
     describe('With context', () => {
         const validContext: OrganizationContext = {type: 'fdc3.organization', name: 'OpenFin', id: {default: 'openfin'}};
+        const invalidContext = {twitter: '@testname'} as unknown as Context; // Invalid because `type` is missing
         const testAppIdentity1: Identity = {uuid: 'test-app-preregistered-1', name: 'test-app-preregistered-1'};
         const testAppIdentity2: Identity = {uuid: 'test-app-preregistered-2', name: 'test-app-preregistered-2'};
 
@@ -100,7 +101,12 @@ data [broken in provider re-arch, to be fixed in future story]', async () => {
             expect(receivedContexts).toEqual([validContext]);
         });
 
-        test.todo('When passing a known app name but invalid context, [behaviour TBD]');
+        test('When passing a known app name but invalid context, the service returns an FDC3Error', async () => {
+            const openPromise = fdc3Remote.open(testManagerIdentity, testAppIdentity1.uuid, invalidContext);
+            await expect(openPromise).rejects.toThrowError(`Context not valid. context = ${JSON.stringify(invalidContext)}`);
+            await expect(openPromise).rejects.toHaveProperty('name', 'FDC3Error');
+            await expect(openPromise).rejects.toHaveProperty('code', OpenError.InvalidContext);
+        });
 
         test('When passing an unknown app name with any context the service returns an FDC3Error', async () => {
             // From the launcher app, call fdc3.open with an invalid name and valid context

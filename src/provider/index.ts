@@ -72,9 +72,13 @@ export class Main {
             throw new FDC3Error(OpenError.AppNotFound, `No app in directory with name: ${payload.name}`);
         }
 
+        // This can throw FDC3Error's if app fails to open
         const appWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_CONTEXT_LISTENER);
 
         if (payload.context) {
+            if (!payload.context.type) {
+                throw new FDC3Error(OpenError.InvalidContext, `Context not valid. context = ${JSON.stringify(payload.context)}`);
+            }
             await this._contexts.send(appWindow, payload.context);
         }
     }

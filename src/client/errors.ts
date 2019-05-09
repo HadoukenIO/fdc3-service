@@ -2,7 +2,8 @@ export enum OpenError {
     AppNotFound = 'AppNotFound',
     ErrorOnLaunch = 'ErrorOnLaunch',
     AppTimeout = 'AppTimeout',
-    ResolverUnavailable = 'ResolverUnavailable'
+    ResolverUnavailable = 'ResolverUnavailable',
+    InvalidContext = 'InvalidContext'
 }
 
 export enum ResolveError {
