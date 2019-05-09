@@ -4,7 +4,8 @@ import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload, IntentListenerPayload} from '../client/internal';
-import {AppIntent, IntentResolution, Application, Intent, Channel, ResolveError, OpenError, FDC3Error} from '../client/main';
+import {AppIntent, IntentResolution, Application, Intent, Channel} from '../client/main';
+import {FDC3Error, ResolveError, OpenError} from '../client/errors';
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';

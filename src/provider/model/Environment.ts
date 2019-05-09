@@ -5,6 +5,7 @@ import {Identity} from 'openfin/_v2/main';
 import {Signal1, Signal2} from '../common/Signal';
 import {AsyncInit} from '../controller/AsyncInit';
 import {Application} from '../../client/main';
+import {FDC3Error, OpenError} from '../../client/errors';
 
 import {AppWindow} from './AppWindow';
 
@@ -42,8 +43,12 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public readonly windowClosed: Signal1<Identity> = new Signal1();
 
     public async createApplication(appInfo: Application): Promise<AppWindow> {
-        const app = await fin.Application.startFromManifest(appInfo.manifest);
-        return new AppWindow(app.identity, appInfo);
+        try {
+            const app = await fin.Application.startFromManifest(appInfo.manifest);
+            return new AppWindow(app.identity, appInfo);
+        } catch (e) {
+            throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
+        }
     }
 
     public wrapApplication(appInfo: Application, identity: Identity): AppWindow {

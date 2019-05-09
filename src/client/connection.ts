@@ -17,7 +17,7 @@ import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
 import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient} from './internal';
 import {ChannelChangedEvent} from './contextChannels';
-import {FDC3Error} from './main';
+import {FDC3Error} from './errors';
 
 /**
  * The version of the NPM package.

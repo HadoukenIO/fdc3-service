@@ -3,6 +3,7 @@ import 'jest';
 import {Identity} from 'openfin/_v2/main';
 
 import {Context, OrganizationContext} from '../../src/client/main';
+import {OpenError} from '../../src/client/errors';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
@@ -101,10 +102,12 @@ data [broken in provider re-arch, to be fixed in future story]', async () => {
 
         test.todo('When passing a known app name but invalid context, [behaviour TBD]');
 
-        test('When passing an unknown app name with any context the service returns an error', async () => {
+        test('When passing an unknown app name with any context the service returns an FDC3Error', async () => {
             // From the launcher app, call fdc3.open with an invalid name and valid context
-            // TODO: fill in the error message once provider work is done and we know what it will be (SERVICE-TBD)
-            await expect(fdc3Remote.open(testManagerIdentity, 'invalid-app-name', validContext)).rejects.toThrowError();
+            const openPromise = fdc3Remote.open(testManagerIdentity, 'invalid-app-name', validContext);
+            await expect(openPromise).rejects.toThrowError(/No app in directory with name/);
+            await expect(openPromise).rejects.toHaveProperty('name', 'FDC3Error');
+            await expect(openPromise).rejects.toHaveProperty('code', OpenError.AppNotFound);
         });
 
         describe('With an app already running', () => {
@@ -158,7 +161,11 @@ and does not trigger the context listener of the already open app [broken in pro
     });
 
     test('When opening an app which fails to launch the promise rejects with a suitable error message', async () => {
-        // TODO: fill in the error message once provider work is done and we know what it will be (SERVICE-TBD)
-        await expect(fdc3Remote.open(testManagerIdentity, 'test-app-invalid-manifest')).rejects.toThrowError();
+        const openPromise = fdc3Remote.open(testManagerIdentity, 'test-app-invalid-manifest');
+
+        // fin.Application.startFromManifest errors with this message when providing an inexistent manifest URL
+        await expect(openPromise).rejects.toThrowError(/Failed to download resource\. Status code: 404/);
+        await expect(openPromise).rejects.toHaveProperty('name', 'FDC3Error');
+        await expect(openPromise).rejects.toHaveProperty('code', OpenError.ErrorOnLaunch);
     });
 });
