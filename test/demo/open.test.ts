@@ -37,10 +37,12 @@ describe('Opening applications with the FDC3 client', () => {
             await expect(fin.Application.wrapSync(testAppIdentity1).isRunning()).resolves.toBe(true);
         }, 10000);
 
-        test('When passing an unknown app name the service returns an error', async () => {
+        test('When passing an unknown app name the service returns an FDC3Error', async () => {
             // From the launcher app, call fdc3.open with an unregistered name
-            // TODO: fill in the error message once provider work is done and we know what it will be (SERVICE-TBD)
-            await expect(fdc3Remote.open(testManagerIdentity, 'invalid-app-name')).rejects.toThrowError();
+            const openPromise = fdc3Remote.open(testManagerIdentity, 'invalid-app-name');
+            await expect(openPromise).rejects.toThrowError(/No app in directory with name/);
+            await expect(openPromise).rejects.toHaveProperty('name', 'FDC3Error');
+            await expect(openPromise).rejects.toHaveProperty('code', OpenError.AppNotFound);
         });
 
         describe('With an app already running', () => {
