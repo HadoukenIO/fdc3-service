@@ -28,6 +28,10 @@ export class IntentHandler {
     }
 
     public async raise(intent: Intent): Promise<IntentResolution> {
+        if (intent.target) {
+            return this.raiseWithTarget(intent);
+        }
+
         const apps: Application[] = await this._directory.getAppsByIntent(intent.type);
 
         if (apps.length === 0) {
@@ -39,6 +43,20 @@ export class IntentHandler {
             // Prompt the user to select an application to use
             return this.resolve(intent);
         }
+    }
+
+    private async raiseWithTarget(intent: Intent): Promise<IntentResolution> {
+        const appInfo = await this._directory.getAppByName(intent.target!);
+
+        if (!appInfo) {
+            throw new FDC3Error(ResolveError.TargetAppNotInDirectory, `No app in directory with name: ${intent.target}`);
+        }
+
+        if (!(appInfo.intents || []).some(appIntent => appIntent.name === intent.type)) {
+            throw new FDC3Error(ResolveError.TargetAppDoesNotHandleIntent, `App ${intent.target} does not handle intent ${intent.type}`);
+        }
+
+        return this.fireIntent(intent, appInfo);
     }
 
     private async resolve(intent: Intent): Promise<IntentResolution> {

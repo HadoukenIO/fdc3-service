@@ -76,35 +76,37 @@ describe('Intent listeners and raising intents', () => {
                 });
 
                 test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
-                    await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.appId);
+                    await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.name);
 
                     const receivedContexts = await listener.getReceivedContexts();
                     expect(receivedContexts).toEqual([validPayload.context]);
                 });
                 test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it times out', async () => {
                     await listener.unsubscribe();
-                    const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.appId);
+                    const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.name);
 
                     await expect(resultPromise).rejects.toThrowError(`Timeout waiting for intent listener to be added. intent = ${validPayload.intent}`);
                 }, INTENT_LISTENER_TIMEOUT + 500);
             });
 
-            describe('When the target is *not* registered to accept the raised intent', () => {
+            describe('When the target is not in the directory', () => {
                 test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
-                    const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, invalidPayload.intent, invalidPayload.context, testAppIdentity.appId);
-                    // TODO: decide if this is this the error message we want when sending a targeted intent
-                    await expect(resultPromise).rejects.toThrowError(/No applications available to handle this intent/);
+                    // TODO: Does this test make sense here? 'When the target is running' but then 'When the app doesn't exist'?
+                    const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, 'this-app-does-not-exist');
+
+                    await expect(resultPromise).rejects.toThrowError('No app in directory with name: this-app-does-not-exist');
                     await expect(resultPromise).rejects.toHaveProperty('name', 'FDC3Error');
-                    await expect(resultPromise).rejects.toHaveProperty('code', ResolveError.NoAppsFound);
+                    await expect(resultPromise).rejects.toHaveProperty('code', ResolveError.TargetAppNotInDirectory);
                 });
             });
-            describe('When the target is not in the directory', () => {
-                // Currently this will just open the resolver UI, which is probably the wrong behaviour
-                // TODO: Make the service return an error when targeting an app which isn't in the directory
-                test.skip('When calling raiseIntent the promise rejects with an error', async () => {
-                    const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, 'this-app-does-not-exist');
-                    // TODO: decide what the error should be
-                    await expect(resultPromise).rejects.toThrow();
+
+            describe('When the target is *not* registered to accept the raised intent', () => {
+                test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
+                    const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, invalidPayload.intent, invalidPayload.context, testAppIdentity.name);
+
+                    await expect(resultPromise).rejects.toThrowError(`App ${testAppIdentity.name} does not handle intent ${invalidPayload.intent}`);
+                    await expect(resultPromise).rejects.toHaveProperty('name', 'FDC3Error');
+                    await expect(resultPromise).rejects.toHaveProperty('code', ResolveError.TargetAppDoesNotHandleIntent);
                 });
             });
         });
@@ -123,7 +125,7 @@ describe('Intent listeners and raising intents', () => {
                             testManagerIdentity,
                             validPayloadPreregistered.intent,
                             validPayloadPreregistered.context,
-                            testAppIdentity.appId
+                            testAppIdentity.name
                         );
 
                         // App should now be running
@@ -138,17 +140,23 @@ describe('Intent listeners and raising intents', () => {
                     });
                 });
 
-                describe('When the target is *not* registered to accept the raised intent', () => {
-                    // TBD: should the app open if the intent is not valid?
-                    test.todo('When calling raiseIntent [behaviour TBD]');
-                });
                 describe('When the target is not in the directory', () => {
-                    // Currently this will just open the resolver UI, which is probably the wrong behaviour
-                    // TODO: Make the service return an error when targeting an app which isn't in the directory
-                    test.skip('When calling raiseIntent the promise rejects with an error', async () => {
+                    test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
                         const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, 'this-app-does-not-exist');
-                        // TODO: decide what the error should be
-                        await expect(resultPromise).rejects.toThrow();
+
+                        await expect(resultPromise).rejects.toThrowError('No app in directory with name: this-app-does-not-exist');
+                        await expect(resultPromise).rejects.toHaveProperty('name', 'FDC3Error');
+                        await expect(resultPromise).rejects.toHaveProperty('code', ResolveError.TargetAppNotInDirectory);
+                    });
+                });
+
+                describe('When the target is *not* registered to accept the raised intent', () => {
+                    test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
+                        const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, invalidPayload.intent, invalidPayload.context, testAppIdentity.name);
+
+                        await expect(resultPromise).rejects.toThrowError(`App ${testAppIdentity.name} does not handle intent ${invalidPayload.intent}`);
+                        await expect(resultPromise).rejects.toHaveProperty('name', 'FDC3Error');
+                        await expect(resultPromise).rejects.toHaveProperty('code', ResolveError.TargetAppDoesNotHandleIntent);
                     });
                 });
             });
@@ -166,7 +174,7 @@ describe('Intent listeners and raising intents', () => {
                         testManagerIdentity,
                         validPayload.intent,
                         validPayload.context,
-                        testAppIdentity.appId
+                        testAppIdentity.name
                     );
 
                     await delay(1500);
@@ -194,8 +202,11 @@ describe('Intent listeners and raising intents', () => {
 
     describe('Without a target', () => {
         describe('With no apps registered to accept the raised intent', () => {
-            test('When calling raiseIntent the promise rejects with an error', async () => {
-                await expect(fdc3Remote.raiseIntent(testManagerIdentity, invalidPayload.intent, invalidPayload.context)).rejects.toThrow();
+            test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
+                const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, invalidPayload.intent, invalidPayload.context);
+                await expect(resultPromise).rejects.toThrowError('No applications available to handle this intent');
+                await expect(resultPromise).rejects.toHaveProperty('name', 'FDC3Error');
+                await expect(resultPromise).rejects.toHaveProperty('code', ResolveError.NoAppsFound);
             });
         });
 

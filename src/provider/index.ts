@@ -115,7 +115,8 @@ export class Main {
     private async raiseIntent(payload: RaiseIntentPayload): Promise<IntentResolution> {
         const intent: Intent = {
             type: payload.intent,
-            context: payload.context
+            context: payload.context,
+            target: payload.target
         };
 
         return this._intents.raise(intent);

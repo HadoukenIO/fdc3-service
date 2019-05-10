@@ -8,6 +8,8 @@ export enum OpenError {
 
 export enum ResolveError {
     NoAppsFound = 'NoAppsFound',
+    TargetAppNotInDirectory = 'TargetAppNotInDirectory',
+    TargetAppDoesNotHandleIntent = 'TargetAppDoesNotHandleIntent',
     ResolverUnavailable = 'ResolverUnavailable',
     ResolverTimeout = 'ResolverTimeout',
     InvalidContext = 'InvalidContext'
