@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using Fin = Openfin.Desktop;
 
-namespace OpenFin.FDC3.Client
+namespace OpenFin.FDC3
 {
     internal static class AckExtensions
     {

@@ -1,6 +1,6 @@
-﻿using OpenFin.FDC3.Client.Context;
+﻿using OpenFin.FDC3.Context;
 
-namespace OpenFin.FDC3.Client.Payloads
+namespace OpenFin.FDC3.Payloads
 {
     public abstract class PayloadBase
     {

@@ -1,6 +1,6 @@
-﻿using OpenFin.FDC3.Client.Constants;
+﻿using OpenFin.FDC3.Constants;
 
-namespace OpenFin.FDC3.Client.Context
+namespace OpenFin.FDC3.Context
 {
     public class OrganizationContext : ContextBase
     {

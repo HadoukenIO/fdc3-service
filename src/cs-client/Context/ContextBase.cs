@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Linq;
 
-namespace OpenFin.FDC3.Client.Context
+namespace OpenFin.FDC3.Context
 {
     public abstract class ContextBase
     {

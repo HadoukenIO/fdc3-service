@@ -1,4 +1,4 @@
-﻿namespace OpenFin.FDC3.Client.Directory
+﻿namespace OpenFin.FDC3.Directory
 {
     public class AppImage
     {

@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace OpenFin.FDC3.Client.ContextChannels
+namespace OpenFin.FDC3.ContextChannels
 {
     [JsonConverter(typeof(StringEnumConverter))]
     public enum ChannelType

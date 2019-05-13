@@ -1,15 +1,15 @@
-﻿using OpenFin.FDC3.Client.Constants;
-using OpenFin.FDC3.Client.Context;
-using OpenFin.FDC3.Client.ContextChannels;
-using OpenFin.FDC3.Client.Intents;
-using OpenFin.FDC3.Client.Payloads;
+﻿using OpenFin.FDC3.Constants;
+using OpenFin.FDC3.Context;
+using OpenFin.FDC3.ContextChannels;
+using OpenFin.FDC3.Intents;
+using OpenFin.FDC3.Payloads;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fin = Openfin.Desktop;
 
-namespace OpenFin.FDC3.Client
+namespace OpenFin.FDC3
 {
     internal static class Connection
     {

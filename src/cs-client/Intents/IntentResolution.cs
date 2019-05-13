@@ -1,4 +1,4 @@
-﻿namespace OpenFin.FDC3.Client.Intents
+﻿namespace OpenFin.FDC3.Intents
 {
     public class IntentResolution
     {

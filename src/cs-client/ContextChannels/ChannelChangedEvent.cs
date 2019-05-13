@@ -1,6 +1,6 @@
 ﻿using Fin = Openfin.Desktop;
 
-namespace OpenFin.FDC3.Client.ContextChannels
+namespace OpenFin.FDC3.ContextChannels
 {
     public class ChannelChangedEvent
     {

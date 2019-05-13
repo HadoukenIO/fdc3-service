@@ -7,8 +7,8 @@
     <ProjectGuid>{2B426646-2CAF-4A45-BC2E-79FFA8E49352}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>OpenFin.FDC3.Client</RootNamespace>
-    <AssemblyName>OpenFin.FDC3.Client</AssemblyName>
+    <RootNamespace>OpenFin.FDC3</RootNamespace>
+    <AssemblyName>OpenFin.FDC3</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -57,7 +57,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AckExtensions.cs" />
+    <Compile Include="Extensions\AckExtensions.cs" />
     <Compile Include="Connection.cs" />
     <Compile Include="Constants\RuntimeVersion.cs" />
     <Compile Include="ContextChannels\ChannelChangedEvent.cs" />

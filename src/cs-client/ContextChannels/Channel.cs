@@ -1,4 +1,4 @@
-﻿namespace OpenFin.FDC3.Client.ContextChannels
+﻿namespace OpenFin.FDC3.ContextChannels
 {
     internal class Channel
     {

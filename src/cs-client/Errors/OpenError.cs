@@ -1,4 +1,4 @@
-﻿namespace OpenFin.FDC3.Client
+﻿namespace OpenFin.FDC3.Errors
 {
     public static class OpenError
     {

@@ -1,4 +1,4 @@
-﻿namespace OpenFin.FDC3.Client.Constants
+﻿namespace OpenFin.FDC3.Errors
 {
     internal static class ResolveError
     {

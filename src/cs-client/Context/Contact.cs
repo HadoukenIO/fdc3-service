@@ -1,4 +1,4 @@
-﻿namespace OpenFin.FDC3.Client.Context
+﻿namespace OpenFin.FDC3.Context
 {
     public class Contact
     {
