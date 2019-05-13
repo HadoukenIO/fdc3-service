@@ -105,7 +105,7 @@ describe('Intent listeners and raising intents', () => {
                 test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
                     const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, invalidPayload.intent, invalidPayload.context, testAppIdentity.name);
 
-                    await expect(resultPromise).rejects.toThrowError(`App ${testAppIdentity.name} does not handle intent ${invalidPayload.intent}`);
+                    await expect(resultPromise).rejects.toThrowError(`App '${testAppIdentity.name}' does not handle intent '${invalidPayload.intent}'`);
                     await expect(resultPromise).rejects.toHaveProperty('name', 'FDC3Error');
                     await expect(resultPromise).rejects.toHaveProperty('code', ResolveError.TargetAppDoesNotHandleIntent);
                 });
@@ -155,7 +155,7 @@ describe('Intent listeners and raising intents', () => {
                     test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
                         const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, invalidPayload.intent, invalidPayload.context, testAppIdentity.name);
 
-                        await expect(resultPromise).rejects.toThrowError(`App ${testAppIdentity.name} does not handle intent ${invalidPayload.intent}`);
+                        await expect(resultPromise).rejects.toThrowError(`App '${testAppIdentity.name}' does not handle intent '${invalidPayload.intent}'`);
                         await expect(resultPromise).rejects.toHaveProperty('name', 'FDC3Error');
                         await expect(resultPromise).rejects.toHaveProperty('code', ResolveError.TargetAppDoesNotHandleIntent);
                     });

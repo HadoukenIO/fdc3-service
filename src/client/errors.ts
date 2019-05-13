@@ -12,6 +12,7 @@ export enum ResolveError {
     TargetAppDoesNotHandleIntent = 'TargetAppDoesNotHandleIntent',
     ResolverUnavailable = 'ResolverUnavailable',
     ResolverTimeout = 'ResolverTimeout',
+    ResolverClosedOrCancelled = 'ResolverClosedOrCancelled',
     InvalidContext = 'InvalidContext'
 }
 

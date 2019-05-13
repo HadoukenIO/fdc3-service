@@ -15,6 +15,7 @@ export interface Environment {
 
     /**
      * Creates a new application, given an App Directory entry.
+     * @throws FDC3Error if app fails to start
      */
     createApplication: (appInfo: Application) => Promise<AppWindow>;
 

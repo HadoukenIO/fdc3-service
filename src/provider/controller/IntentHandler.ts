@@ -2,7 +2,8 @@ import {injectable, inject} from 'inversify';
 
 import {Inject} from '../common/Injectables';
 import {Intent} from '../../client/intents';
-import {IntentResolution, Application, FDC3Error, ResolveError} from '../../client/main';
+import {IntentResolution, Application} from '../../client/main';
+import {FDC3Error, ResolveError} from '../../client/errors';
 import {FindFilter, Model} from '../model/Model';
 import {AppDirectory} from '../model/AppDirectory';
 import {AppWindow} from '../model/AppWindow';
@@ -53,7 +54,7 @@ export class IntentHandler {
         }
 
         if (!(appInfo.intents || []).some(appIntent => appIntent.name === intent.type)) {
-            throw new FDC3Error(ResolveError.TargetAppDoesNotHandleIntent, `App ${intent.target} does not handle intent ${intent.type}`);
+            throw new FDC3Error(ResolveError.TargetAppDoesNotHandleIntent, `App '${intent.target}' does not handle intent '${intent.type}'`);
         }
 
         return this.fireIntent(intent, appInfo);
@@ -78,7 +79,8 @@ export class IntentHandler {
             return null;
         });
         if (!selection) {
-            throw new Error('Selector closed or cancelled');
+            // TODO? Should we throw an error when the user deliberately cancels? or just return null
+            throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Selector closed or cancelled');
         }
 
         // Handle response

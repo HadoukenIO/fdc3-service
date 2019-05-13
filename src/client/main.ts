@@ -220,7 +220,7 @@ if (channelPromise) {
  * Adds a listener for incoming Intents from the Agent.
  */
 export function addIntentListener(intent: string, handler: (context: Context) => void): IntentListener {
-    const listener = {
+    const listener: IntentListener = {
         intent,
         handler,
         unsubscribe: () => {
@@ -244,7 +244,7 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
  * Adds a listener for incoming context broadcast from the Desktop Agent.
  */
 export function addContextListener(handler: (context: Context) => void): ContextListener {
-    const listener = {
+    const listener: ContextListener = {
         handler,
         unsubscribe: () => {
             const index: number = contextListeners.indexOf(listener);
