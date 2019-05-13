@@ -1,6 +1,8 @@
 import {Window, Identity} from 'openfin/_v2/main';
 
 import {Application, IntentType} from '../../client/main';
+import {FDC3Error, OpenError, withTimeout, Timeouts} from '../../client/errors';
+import {deferredPromise} from '../../client/internal';
 import {Signal1} from '../common/Signal';
 
 import {ContextChannel} from './ContextChannel';
@@ -12,8 +14,6 @@ interface ContextSpec {
 interface IntentMap {
     [key: string]: boolean;
 }
-
-export const INTENT_LISTENER_TIMEOUT = 5000;
 
 /**
  * Model object, representing a window that has connected to the service.
@@ -77,21 +77,26 @@ export class AppWindow {
         return this._window.setAsForeground();
     }
 
-    public ensureReadyToReceiveIntent(intent: IntentType): Promise<void> {
+    public async ensureReadyToReceiveIntent(intent: IntentType): Promise<void> {
         if (this._intentListeners[intent]) {
+            // App has already registered the intent listener
             return Promise.resolve();
         }
-        return new Promise((resolve, reject) => {
-            const slot = this._onIntentListenerAdded.add(intentAdded => {
-                if (intentAdded === intent) {
-                    slot.remove();
-                    resolve();
-                }
-            });
-            setTimeout(() => {
+
+        // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
+        const [waitForIntentListenerAddedPromise, resolve] = deferredPromise();
+        const slot = this._onIntentListenerAdded.add(intentAdded => {
+            if (intentAdded === intent) {
                 slot.remove();
-                reject(new Error(`Timeout waiting for intent listener to be added. intent = ${intent}`));
-            }, INTENT_LISTENER_TIMEOUT);
+                resolve();
+            }
         });
+
+        const [didTimeout] = await withTimeout(Timeouts.ADD_INTENT_LISTENER, waitForIntentListenerAddedPromise);
+
+        if (didTimeout) {
+            slot.remove();
+            throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for intent listener to be added. intent = ${intent}`);
+        }
     }
 }

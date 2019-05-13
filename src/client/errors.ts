@@ -65,3 +65,25 @@ export class FDC3Error extends Error {
         this.code = code;
     }
 }
+
+/**
+ * Races a given promise against a timeout, and resolves to a `[didTimeout, value?]` tuple indicating
+ * whether the timeout occurred, and the value the promise resolved to (if timeout didn't occur)
+ * @param timeoutMs Timeout period in ms
+ * @param promise Promise to race against the timeout
+ */
+export function withTimeout<T>(timeoutMs: number, promise: Promise<T>): Promise<[false, T] | [true]> {
+    const timeout = new Promise<[true]>(res => setTimeout(() => res([true]), timeoutMs));
+    const p = promise.then(value => ([false, value] as [false, T]));
+    return Promise.race([timeout, p]);
+}
+
+/**
+ * Timeouts, in milliseconds, for the different FDC3 actions
+ */
+export const Timeouts = {
+    /**
+     * Time for an app to register a listener after opening
+     */
+    ADD_INTENT_LISTENER: 5000
+};

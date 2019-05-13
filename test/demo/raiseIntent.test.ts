@@ -1,7 +1,6 @@
 import 'jest';
 
-import {INTENT_LISTENER_TIMEOUT} from '../../src/provider/model/AppWindow';
-import {ResolveError} from '../../src/client/errors';
+import {ResolveError, OpenError, Timeouts} from '../../src/client/errors';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
@@ -86,12 +85,14 @@ describe('Intent listeners and raising intents', () => {
                     const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.name);
 
                     await expect(resultPromise).rejects.toThrowError(`Timeout waiting for intent listener to be added. intent = ${validPayload.intent}`);
-                }, INTENT_LISTENER_TIMEOUT + 500);
+                    await expect(resultPromise).rejects.toHaveProperty('name', 'FDC3Error');
+                    await expect(resultPromise).rejects.toHaveProperty('code', OpenError.AppTimeout);
+                }, Timeouts.ADD_INTENT_LISTENER + 500);
             });
 
             describe('When the target is not in the directory', () => {
                 test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
-                    // TODO: Does this test make sense here? 'When the target is running' but then 'When the app doesn't exist'?
+                    // TODO? Does this test make sense here? 'When the target is running' but then 'When the app doesn't exist'?
                     const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, 'this-app-does-not-exist');
 
                     await expect(resultPromise).rejects.toThrowError('No app in directory with name: this-app-does-not-exist');
