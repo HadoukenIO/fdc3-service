@@ -2,8 +2,8 @@
 {
     internal static class ResolveError
     {
-        internal const string NO_APPS_FOUND = "NoAppsFound";
-        internal const string RESOLVER_UNAVAILABLE = "ResolverUnavaliable";
-        internal const string RESOLVER_TIMEOUT = "ResolverTimeout";
+        internal const string NoAppsFound         = "NoAppsFound";
+        internal const string ResolverUnavailable = "ResolverUnavaliable";
+        internal const string ResolverTimeout     = "ResolverTimeout";
     }
 }

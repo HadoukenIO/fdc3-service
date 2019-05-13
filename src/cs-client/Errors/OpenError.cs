@@ -2,9 +2,9 @@
 {
     public static class OpenError
     {
-        public const string APP_NOT_FOUND = "AppNotFound";
-        public const string ERROR_ON_LAUNCH = "ErrorOnLaunch";
-        public const string APP_TIMEOUT = "AppTimeout";
-        public const string RESOLVER_UNAVAILABLE = "ResolverUnavailable";
+        public const string AppNotFound         = "AppNotFound";
+        public const string ErrorOnLaunch       = "ErrorOnLaunch";
+        public const string AppTimeout          = "AppTimeout";
+        public const string ResolverUnavailable = "ResolverUnavailable";
     }
 }
