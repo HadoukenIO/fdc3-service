@@ -72,7 +72,7 @@ export class Main {
             throw new FDC3Error(OpenError.AppNotFound, `No app in directory with name: ${payload.name}`);
         }
 
-        // This can throw FDC3Error's if app fails to open
+        // This can throw FDC3Error's if app fails to open or times out
         const appWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_CONTEXT_LISTENER);
 
         if (payload.context) {

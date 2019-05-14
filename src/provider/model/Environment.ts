@@ -5,7 +5,7 @@ import {Identity} from 'openfin/_v2/main';
 import {Signal1, Signal2} from '../common/Signal';
 import {AsyncInit} from '../controller/AsyncInit';
 import {Application} from '../../client/main';
-import {FDC3Error, OpenError} from '../../client/errors';
+import {FDC3Error, OpenError, withTimeout, Timeouts} from '../../client/errors';
 
 import {AppWindow} from './AppWindow';
 
@@ -15,7 +15,9 @@ export interface Environment {
 
     /**
      * Creates a new application, given an App Directory entry.
-     * @throws FDC3Error if app fails to start
+     * @throws:
+     * * FDC3Error if app fails to start
+     * * FDC3Error if timeout trying to start app
      */
     createApplication: (appInfo: Application) => Promise<AppWindow>;
 
@@ -44,12 +46,17 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public readonly windowClosed: Signal1<Identity> = new Signal1();
 
     public async createApplication(appInfo: Application): Promise<AppWindow> {
-        try {
-            const app = await fin.Application.startFromManifest(appInfo.manifest);
-            return new AppWindow(app.identity, appInfo);
-        } catch (e) {
-            throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
+        const [didTimeout, app] = await withTimeout(
+            Timeouts.APP_START_FROM_MANIFEST,
+            fin.Application.startFromManifest(appInfo.manifest).catch(e => {
+                throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
+            })
+        );
+        if (didTimeout) {
+            throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
         }
+
+        return new AppWindow(app!.identity, appInfo);
     }
 
     public wrapApplication(appInfo: Application, identity: Identity): AppWindow {

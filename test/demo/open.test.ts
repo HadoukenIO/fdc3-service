@@ -3,7 +3,7 @@ import 'jest';
 import {Identity} from 'openfin/_v2/main';
 
 import {Context, OrganizationContext} from '../../src/client/main';
-import {OpenError} from '../../src/client/errors';
+import {OpenError, Timeouts} from '../../src/client/errors';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
@@ -31,7 +31,7 @@ describe('Opening applications with the FDC3 client', () => {
 
         test('When passing a valid app name the app opens and the promise resolves', async () => {
             // From the launcher app, call fdc3.open with a valid name
-            await fdc3Remote.open(testManagerIdentity, testAppIdentity1.uuid);
+            await fdc3Remote.open(testManagerIdentity, testAppIdentity1.name!);
 
             // Check that the app is now running
             await expect(fin.Application.wrapSync(testAppIdentity1).isRunning()).resolves.toBe(true);
@@ -48,7 +48,7 @@ describe('Opening applications with the FDC3 client', () => {
         describe('With an app already running', () => {
             beforeEach(async () => {
                 // Start by opening a test app
-                await fdc3Remote.open(testManagerIdentity, testAppIdentity1.uuid);
+                await fdc3Remote.open(testManagerIdentity, testAppIdentity1.name!);
             });
 
             test('When opening the already running app the app is focused and the promise resolves', async () => {
@@ -56,7 +56,7 @@ describe('Opening applications with the FDC3 client', () => {
                 await fin.Window.wrapSync(testManagerIdentity).focus();
 
                 // From the launcher app, call fdc3.open with a valid name
-                await fdc3Remote.open(testManagerIdentity, testAppIdentity1.uuid);
+                await fdc3Remote.open(testManagerIdentity, testAppIdentity1.name!);
 
                 // Check that the app is still running
                 await expect(fin.Application.wrapSync(testAppIdentity1).isRunning()).resolves.toBe(true);
@@ -66,7 +66,7 @@ describe('Opening applications with the FDC3 client', () => {
 
             test('When opening a an app, the running-state of other apps has no effect', async () => {
                 // From the launcher app, call fdc3.open with a second app name
-                await fdc3Remote.open(testManagerIdentity, testAppIdentity2.uuid);
+                await fdc3Remote.open(testManagerIdentity, testAppIdentity2.name!);
 
                 // Check that both apps are running
                 await expect(fin.Application.wrapSync(testAppIdentity1).isRunning()).resolves.toBe(true);
@@ -90,7 +90,7 @@ describe('Opening applications with the FDC3 client', () => {
         test.skip('When passing a valid app name and a valid context, the app opens and its context listener is triggered with the correct\
 data [broken in provider re-arch, to be fixed in future story]', async () => {
             // From the launcher app, call fdc3.open with a valid name and context
-            await fdc3Remote.open(testManagerIdentity, testAppIdentity1.uuid, validContext);
+            await fdc3Remote.open(testManagerIdentity, testAppIdentity1.name!, validContext);
 
             // Check that the app is now running
             await expect(fin.Application.wrapSync({uuid: testAppIdentity1.uuid}).isRunning()).resolves.toBe(true);
@@ -104,7 +104,7 @@ data [broken in provider re-arch, to be fixed in future story]', async () => {
         });
 
         test('When passing a known app name but invalid context, the service returns an FDC3Error', async () => {
-            const openPromise = fdc3Remote.open(testManagerIdentity, testAppIdentity1.uuid, invalidContext);
+            const openPromise = fdc3Remote.open(testManagerIdentity, testAppIdentity1.name!, invalidContext);
             await expect(openPromise).rejects.toThrowError(`Context not valid. context = ${JSON.stringify(invalidContext)}`);
             await expect(openPromise).rejects.toHaveProperty('name', 'FDC3Error');
             await expect(openPromise).rejects.toHaveProperty('code', OpenError.InvalidContext);
@@ -121,7 +121,7 @@ data [broken in provider re-arch, to be fixed in future story]', async () => {
         describe('With an app already running', () => {
             beforeEach(async () => {
                 // Start by opening a test app
-                await fdc3Remote.open(testManagerIdentity, testAppIdentity1.uuid);
+                await fdc3Remote.open(testManagerIdentity, testAppIdentity1.name!);
             });
 
             test('When opening the running app it is focused, its context listener is triggered with the correct data, and the promise resolves', async () => {
@@ -129,7 +129,7 @@ data [broken in provider re-arch, to be fixed in future story]', async () => {
                 await fin.Window.wrapSync(testManagerIdentity).focus();
 
                 // From the launcher app, call fdc3.open the name of the running app
-                await fdc3Remote.open(testManagerIdentity, testAppIdentity1.uuid, validContext);
+                await fdc3Remote.open(testManagerIdentity, testAppIdentity1.name!, validContext);
 
                 // Check that the app is still running
                 await expect(fin.Application.wrapSync({uuid: testAppIdentity1.uuid}).isRunning()).resolves.toBe(true);
@@ -147,7 +147,7 @@ data [broken in provider re-arch, to be fixed in future story]', async () => {
             test.skip('When an app is already running, opening a second app with context works as expected \
 and does not trigger the context listener of the already open app [broken in provider re-arch, to be fixed in future story]', async () => {
                 // From the launcher app, call fdc3.open with the name of as second app
-                await fdc3Remote.open(testManagerIdentity, testAppIdentity2.uuid, validContext);
+                await fdc3Remote.open(testManagerIdentity, testAppIdentity2.name!, validContext);
                 // Check that the second app started
                 await expect(fin.Application.wrapSync({uuid: testAppIdentity2.uuid}).isRunning()).resolves.toBe(true);
 
@@ -176,4 +176,14 @@ and does not trigger the context listener of the already open app [broken in pro
         await expect(openPromise).rejects.toHaveProperty('name', 'FDC3Error');
         await expect(openPromise).rejects.toHaveProperty('code', OpenError.ErrorOnLaunch);
     });
+
+    test('When opening an app which takes too long to launch the promise rejects with a timeout FDC3Error', async () => {
+        const appName = 'test-app-takes-long-to-load-manifest';
+        const openPromise = fdc3Remote.open(testManagerIdentity, appName);
+
+        // fin.Application.startFromManifest errors with this message when it times out trying to open an app
+        await expect(openPromise).rejects.toThrowError(`Timeout waiting for app '${appName}' to start from manifest`);
+        await expect(openPromise).rejects.toHaveProperty('name', 'FDC3Error');
+        await expect(openPromise).rejects.toHaveProperty('code', OpenError.AppTimeout);
+    }, Timeouts.APP_START_FROM_MANIFEST + 2000);
 });
