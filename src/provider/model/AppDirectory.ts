@@ -19,16 +19,7 @@ export class AppDirectory {
 
     public constructor() {
         // Set default values
-        this._url = localStorage.getItem(StorageKeys.URL) || devUrl;
-        let storedDirectory: Application[];
-        // Handle malformed data in localStorage
-        try {
-            storedDirectory = JSON.parse(localStorage.getItem(StorageKeys.APPLICATIONS) || '[]');
-        } catch (error) {
-            storedDirectory = [];
-            localStorage.setItem(StorageKeys.APPLICATIONS, '[]');
-        }
-        this._directory = storedDirectory;
+        this._url = devUrl;
     }
 
     public async getAppByName(name: string): Promise<Application | null> {
@@ -87,30 +78,31 @@ export class AppDirectory {
         }
         const storedUrl = localStorage.getItem(StorageKeys.URL);
         const currentUrl = this._url;
-        // Only update the directory if the URL has changed
-        // or the directory is empty (the last request may have failed?)
-        if (currentUrl !== storedUrl || this._directory.length === 0) {
-            const applications: Application[] | null = await this.fetchData(currentUrl).catch(() => null);
-            if (applications) {
-                await this.updateDirectory(applications);
-                if (currentUrl !== storedUrl) {
-                    await this.updateURL(currentUrl);
-                }
-            }
-        }
+        const applications = await this.fetchData(currentUrl, storedUrl);
+        await this.updateDirectory(applications);
+        await this.updateURL(currentUrl);
     }
 
     /**
      * Fetch the AppDirectory.
      * @param url Location of the AppDirectory.
+     * @param storedUrl Cache url
      */
-    private async fetchData(url: string): Promise<Application[]> {
-        const response: Response = await fetch(url);
-        if (response.ok) {
+    private async fetchData(url: string, storedUrl: string | null): Promise<Application[]> {
+        // @ts-ignore
+        const response = await global.fetch(url).catch(() => {
+            console.warn(`Failed to fetch app directory @ ${url}`);
+        });
+
+        if (response && response.ok) {
             return response.json();
-        } else {
-            throw new Error('Error fetching app directory: ' + response.statusText);
         }
+        // Use cached apps if urls match
+        if (url === storedUrl) {
+            return JSON.parse(localStorage.getItem(StorageKeys.APPLICATIONS) || '[]');
+        }
+        // Use empty array if urls dont match
+        return [];
     }
 
     /**
