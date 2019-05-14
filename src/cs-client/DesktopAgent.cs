@@ -137,7 +137,7 @@ namespace OpenFin.FDC3
         }
 
         /// <summary>
-        /// Removed intent listener
+        /// Removed all registered handlers for an intent
         /// </summary>
         /// <param name="intent">The name of the intent to remove listeners for</param>
         public static void UnsubscribeIntentListener(string intent)
@@ -145,16 +145,29 @@ namespace OpenFin.FDC3
             Connection.UnsubscribeIntentListener(intent);
         }
 
+        /// <summary>
+        /// Removes a specific intent handler by the intent and handler
+        /// </summary>
+        /// <param name="intent">The name of the intent</param>
+        /// <param name="handler">The handler to be removed</param>
         public static void UnsubscribeIntentListener(string intent, Action<ContextBase> handler)
         {
             Connection.UnsubscribeIntentListener(intent, handler);
         }
 
+        /// <summary>
+        /// Adds handler to respond to Channel changes
+        /// </summary>
+        /// <param name="handler">The handler</param>
         public static void AddChannelChangedEventListener(Action<ChannelChangedEvent> handler)
         {
             Connection.AddChannelChangedEventListener(handler);
         }
 
+        /// <summary>
+        /// Removed handler that responds to Channel changes
+        /// </summary>
+        /// <param name="handler">The handler</param>
         public static void RemoveChannelChangedEventListener(Action<ChannelChangedEvent> handler)
         {
             Connection.RemoveChannelChangedEventListener(handler);
