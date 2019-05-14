@@ -115,6 +115,7 @@ export class SelectorHandler extends AsyncInit {
 
         await this._window.show();
         await this._window.setAsForeground();
+        // TODO? Put a timeout here? We shouldn't force users to pick an app within a certain time, should we?
         const selection: SelectorResult = await this._channel.dispatch('resolve', msg).catch(console.error);
         await this._window.hide();
 

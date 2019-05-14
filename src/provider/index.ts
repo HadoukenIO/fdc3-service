@@ -144,6 +144,7 @@ export class Main {
             appWindow.addIntentListener(payload.intent);
             return Promise.resolve();
         } else {
+            // TODO? Should this be an `AppNotFound` (or other) FDC3Error? Or is the model an implementation detail?
             throw new Error('App not found in model');
         }
     }
@@ -154,6 +155,11 @@ export class Main {
             appWindow.removeIntentListener(payload.intent);
             return Promise.resolve();
         } else {
+            /* // TODO? Food for thought:
+                - Should this be an `AppNotFound` (or other) FDC3Error? Or is the model an implementation detail irrelevant to the client app?
+                - Should fail silently instead? Perhaps removing an intent listener for a window not found in the model is not too critical
+                    (and would be an extremely rare case)
+            */
             throw new Error('App not found in model');
         }
     }
