@@ -156,7 +156,7 @@ namespace OpenFin.FDC3
         }
 
         /// <summary>
-        /// Adds handler to respond to Channel changes
+        /// Adds handler to respond to events when a window changes from one channel to another
         /// </summary>
         /// <param name="handler">The handler</param>
         public static void AddChannelChangedEventListener(Action<ChannelChangedEvent> handler)
@@ -165,7 +165,7 @@ namespace OpenFin.FDC3
         }
 
         /// <summary>
-        /// Removed handler that responds to Channel changes
+        /// Removed handler that responds to events when a window changes from cone channel to another
         /// </summary>
         /// <param name="handler">The handler</param>
         public static void RemoveChannelChangedEventListener(Action<ChannelChangedEvent> handler)
