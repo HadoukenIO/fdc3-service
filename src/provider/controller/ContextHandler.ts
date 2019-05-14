@@ -39,7 +39,10 @@ export class ContextHandler {
 
         this._channelModel.setContext(channel.id, context);
 
-        return Promise.all(channelMembers.map(identity => this.send(identity, context))).then(() => {});
+        return Promise.all(channelMembers
+            .filter(identity => identity.uuid !== source.uuid) // Do not receive my own broadcasts
+            .map(identity => this.send(identity, context)))
+            .then(() => {});
     }
 
     public async getAllChannels(payload: GetAllChannelsPayload, source: ProviderIdentity): Promise<Channel[]> {
