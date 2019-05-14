@@ -1,4 +1,5 @@
-﻿using OpenFin.FDC3.Constants;
+﻿using Newtonsoft.Json.Linq;
+using OpenFin.FDC3.Constants;
 using OpenFin.FDC3.Context;
 using OpenFin.FDC3.ContextChannels;
 using OpenFin.FDC3.Intents;
@@ -18,42 +19,24 @@ namespace OpenFin.FDC3
         private static Action<ChannelChangedEvent> channelChangedHandlers { get; set; }
         private static List<KeyValuePair<string, Action<ContextBase>>> intentListeners { get; set; }
 
+        internal static Action ConnectionInitializationComplete;
+
         internal static void Initialize(Fin.Runtime runtimeInstance)
         {
             intentListeners = new List<KeyValuePair<string, Action<ContextBase>>>();
             channelClient = runtimeInstance.InterApplicationBus.Channel.CreateClient(Fdc3ServiceConstants.ServiceChannel);
-        }
 
-        internal static void RegisterChannelTopics()
-        {
-            if (channelClient == null)
-            {
-                throw new NullReferenceException("ChannelClient must be created before registering topics.");
-            }            
-
-            channelClient.RegisterTopic<RaiseIntentPayload, object>(ChannelTopicConstants.Intent, payload =>
-            {
-                var listeners = intentListeners.Where(x => x.Key == payload.Intent).ToList();
-                listeners.ForEach(x => x.Value?.Invoke(payload.Context));
-                return null;
+            registerChannelTopics();
+            
+            channelClient.Connect().ContinueWith(x =>
+            {                
+                ConnectionInitializationComplete?.Invoke();
             });
-
-            channelClient.RegisterTopic<ContextBase, object>(ChannelTopicConstants.Context, payload =>
-            {
-                contextListeners?.Invoke(payload);
-                return null;
-            });
-
-            channelClient.RegisterTopic<ChannelChangedEvent, object>(ChannelTopicConstants.Event, @event =>
-            {
-                channelChangedHandlers?.Invoke(@event);
-                return null;
-            });
-        }
+        }      
 
         internal static Task<Channel[]> GetAllChannels()
         {
-            return channelClient.Dispatch<Channel[]>(ApiTopic.GetAllChannels, null);
+            return channelClient.Dispatch<Channel[]>(ApiTopic.GetAllChannels, JValue.CreateUndefined());
         }
 
         internal static Task JoinChannel(string channelId, Fin.WindowIdentity identity)
@@ -66,17 +49,17 @@ namespace OpenFin.FDC3
             return channelClient.Dispatch<Fin.WindowIdentity[]>(ApiTopic.GetChannel, channelId);
         }
 
-        internal static Task<string> OpenAsync(string name, ContextBase context)
+        internal static Task OpenAsync(string name, ContextBase context = null)
         {
             return channelClient.Dispatch<string>(ApiTopic.Open, new { name, context });
         }
 
-        internal static Task<AppIntent> FindIntent(string intent, Context.ContextBase context)
+        internal static Task<AppIntent> FindIntent(string intent, ContextBase context)
         {
-            return channelClient.Dispatch<AppIntent>(ApiTopic.FindIntent, new { intent });            
+            return channelClient.Dispatch<AppIntent>(ApiTopic.FindIntent, new { intent, context});            
         }
 
-        internal static Task<AppIntent[]> FindIntentsByContext(Context.ContextBase context)
+        internal static Task<AppIntent[]> FindIntentsByContext(ContextBase context)
         {
             return channelClient.Dispatch<AppIntent[]>(ApiTopic.FindIntentsByContext, context);
         }
@@ -96,22 +79,22 @@ namespace OpenFin.FDC3
             return channelClient.Dispatch<Task>(ApiTopic.Broadcast, context);
         }
 
-        internal static Task<IntentResolution> RaiseIntent(string intent, Context.ContextBase context, string target)
+        internal static Task<IntentResolution> RaiseIntent(string intent, ContextBase context, string target)
         {
             return channelClient.Dispatch<IntentResolution>(ApiTopic.RaiseIntent, new { intent, context, target });
         }
 
-        internal static void AddContextListener(Action<Context.ContextBase> handler)
+        internal static void AddContextListener(Action<ContextBase> handler)
         {
             contextListeners += handler;
         }       
 
-        internal static void UnsubcribeContextListener(Action<Context.ContextBase> handler)
+        internal static void UnsubcribeContextListener(Action<ContextBase> handler)
         {
             contextListeners -= handler;
         }
 
-        internal static void AddIntentListener(string intent, Action<Context.ContextBase> handler)
+        internal static void AddIntentListener(string intent, Action<ContextBase> handler)
         {            
             intentListeners.Add(new KeyValuePair<string, Action<ContextBase>>(intent, handler));            
         }
@@ -124,6 +107,32 @@ namespace OpenFin.FDC3
         internal static void UnsubscribeIntentListener(string intent, Action<ContextBase> handler)
         {
             intentListeners.RemoveAll(x => x.Key == intent && x.Value == handler);
+        }
+        private static void registerChannelTopics()
+        {
+            if (channelClient == null)
+            {
+                throw new NullReferenceException("ChannelClient must be created before registering topics.");
+            }
+
+            channelClient.RegisterTopic<RaiseIntentPayload, object>(ChannelTopicConstants.Intent, payload =>
+            {
+                var listeners = intentListeners.Where(x => x.Key == payload.Intent).ToList();
+                listeners.ForEach(x => x.Value?.Invoke(payload.Context));
+                return null;
+            });
+
+            channelClient.RegisterTopic<ContextBase, object>(ChannelTopicConstants.Context, payload =>
+            {
+                contextListeners?.Invoke(payload);
+                return null;
+            });
+
+            channelClient.RegisterTopic<ChannelChangedEvent, object>(ChannelTopicConstants.Event, @event =>
+            {
+                channelChangedHandlers?.Invoke(@event);
+                return null;
+            });
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace OpenFin.FDC3.ContextChannels
 {
-    internal class Channel
+    public class Channel
     {
         public string Id => "global";
         public ChannelType ChannelType { get; set; }
