@@ -28,11 +28,23 @@ export class ContextHandler {
     }
 
     // TODO: Remove ability to pass an Identity, standardise on AppWindow
+    /**
+     * Send a context to a specific app. Fire and forget
+     * @param app App to send the context to
+     * @param context Context to be sent
+     */
     public async send(app: AppWindow|Identity, context: Context): Promise<void> {
         const identity: Identity = (app as AppWindow).identity || app;
+
+        // Note the call to `dispatch` is not `await`ed, hence the fire and forget behaviour
         this._apiHandler.channel.dispatch(identity, APIToClientTopic.CONTEXT, context);
     }
 
+    /**
+     * Broadcast context to all apps in the same channel as the sender, except the sender itself. Fire and forget
+     * @param context Context to send
+     * @param source App sending the context. It won't receive the broadcast
+     */
     public async broadcast(context: Context, source: Identity): Promise<void> {
         const channel = this._channelModel.getChannel(source);
         const channelMembers = this._channelModel.getChannelMembers(channel.id);

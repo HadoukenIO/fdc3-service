@@ -92,7 +92,7 @@ describe('Intent listeners and raising intents', () => {
 
             describe('When the target is not in the directory', () => {
                 test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
-                    // TODO? Does this test make sense here? 'When the target is running' but then 'When the app doesn't exist'?
+                    // TODO? Does this test make sense here? 'When the target is running' but then 'When the app doesn't exist'? [SERVICE-479 will change this]
                     const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, 'this-app-does-not-exist');
 
                     await expect(resultPromise).rejects.toThrowError('No app in directory with name: this-app-does-not-exist');

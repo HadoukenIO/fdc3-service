@@ -79,7 +79,6 @@ export class IntentHandler {
             return null;
         });
         if (!selection) {
-            // TODO? Should we throw an error when the user deliberately cancels? or just return null
             throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Selector closed or cancelled');
         }
 

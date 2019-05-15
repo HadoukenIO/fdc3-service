@@ -30,7 +30,6 @@ export class FDC3Error extends Error {
      * @param error The error
      */
     public static serialize(error: Error | FDC3Error): Error {
-        // TODO: is use of `instanceof` OK? or should use `if (error && error.code && error.message)` ?
         if (error instanceof FDC3Error) {
             return new Error(JSON.stringify({
                 code: error.code,
