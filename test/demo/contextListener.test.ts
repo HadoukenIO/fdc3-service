@@ -9,6 +9,8 @@ const testManagerIdentity = {
     name: 'test-app'
 };
 
+const testAppUrl = 'http://localhost:3923/test/test-app.html';
+
 const validContext: OrganizationContext = {type: 'fdc3.organization', name: 'OpenFin', id: {default: 'openfin'}};
 
 // These tests all use the default channel for context broadcasts and listeners
@@ -27,7 +29,7 @@ describe('Context listeners and broadcasting', () => {
         const testAppIdentity = {uuid: 'test-app-1', name: 'test-app-1'};
         beforeEach(async () => {
             // Open the app to be used in each test
-            await fdc3Remote.open(testManagerIdentity, testAppIdentity.uuid);
+            await fdc3Remote.open(testManagerIdentity, testAppIdentity.name);
         });
 
         afterEach(async () => {
@@ -104,7 +106,7 @@ describe('Context listeners and broadcasting', () => {
                 });
 
                 test('When calling broadcast, only the still-registered listener is triggered', async () => {
-                    await fdc3Remote.broadcast(testAppIdentity, validContext);
+                    await fdc3Remote.broadcast(testManagerIdentity, validContext);
                     const receivedContexts = await Promise.all(listeners.map(listener => listener.getReceivedContexts()));
 
                     // First listener not triggered
@@ -118,13 +120,62 @@ describe('Context listeners and broadcasting', () => {
                 test('A third listener can be registered and triggered as expected', async () => {
                     const newListener = await fdc3Remote.addContextListener(testAppIdentity);
 
-                    await fdc3Remote.broadcast(testAppIdentity, validContext);
+                    await fdc3Remote.broadcast(testManagerIdentity, validContext);
                     const receivedContexts = await newListener.getReceivedContexts();
 
                     expect(receivedContexts.length).toBe(1);
                     expect(receivedContexts[0]).toEqual(validContext);
                 });
             });
+        });
+    });
+
+    describe('Broadcasting with multiple windows in the same app', () => {
+        const testAppMainWindowIdentity = {uuid: 'test-app-1', name: 'test-app-1'};
+        const testAppChildWindowName = 'test-app-1-child-window';
+        beforeEach(async () => {
+            await fdc3Remote.open(testManagerIdentity, testAppMainWindowIdentity.name);
+        });
+
+        afterEach(async () => {
+            // This `.quit()` closes the main window as well as any child windows
+            await fin.Application.wrapSync(testAppMainWindowIdentity).quit(true);
+        });
+
+        test('When main window broadcasts context, it does not receive its own context, but child window does', async () => {
+            const testAppChildWindowIdentity = await fdc3Remote.createFinWindow(testAppMainWindowIdentity, {url: testAppUrl, name: testAppChildWindowName});
+
+            const testAppMainWindowListener = await fdc3Remote.addContextListener(testAppMainWindowIdentity);
+            const testAppChildWindowListener = await fdc3Remote.addContextListener(testAppChildWindowIdentity);
+
+            await fdc3Remote.broadcast(testAppMainWindowIdentity, validContext);
+
+            // Window broadcasting the context does NOT receive it
+            const testAppMainWindowReceivedContexts = await testAppMainWindowListener.getReceivedContexts();
+            expect(testAppMainWindowReceivedContexts.length).toBe(0);
+
+            // Window on the same app as the one broadcasting DOES receive context
+            const testAppChildWindowReceivedContexts = await testAppChildWindowListener.getReceivedContexts();
+            expect(testAppChildWindowReceivedContexts.length).toBe(1);
+            expect(testAppChildWindowReceivedContexts[0]).toEqual(validContext);
+        });
+
+        test('When child window broadcasts context, it does not receive its own context, but main window does', async () => {
+            const testAppChildWindowIdentity = await fdc3Remote.createFinWindow(testAppMainWindowIdentity, {url: testAppUrl, name: testAppChildWindowName});
+
+            const testAppMainWindowListener = await fdc3Remote.addContextListener(testAppMainWindowIdentity);
+            const testAppChildWindowListener = await fdc3Remote.addContextListener(testAppChildWindowIdentity);
+
+            await fdc3Remote.broadcast(testAppChildWindowIdentity, validContext);
+
+            // Window broadcasting the context does NOT receive it
+            const testAppChildWindowReceivedContexts = await testAppChildWindowListener.getReceivedContexts();
+            expect(testAppChildWindowReceivedContexts.length).toBe(0);
+
+            // Window on the same app as the one broadcasting DOES receive context
+            const testAppMainWindowReceivedContexts = await testAppMainWindowListener.getReceivedContexts();
+            expect(testAppMainWindowReceivedContexts.length).toBe(1);
+            expect(testAppMainWindowReceivedContexts[0]).toEqual(validContext);
         });
     });
 });

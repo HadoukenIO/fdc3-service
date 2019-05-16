@@ -11,6 +11,7 @@
  */
 
 import {Identity} from 'openfin/_v2/main';
+import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 
 import {Application, Context, IntentType, ChannelId, Channel, AppIntent} from '../../../src/client/main';
 import {RaiseIntentPayload} from '../../../src/client/internal';
@@ -73,6 +74,18 @@ export async function raiseIntent(executionTarget: Identity, intent: IntentType,
     return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, payload: RaiseIntentPayload): Promise<void> {
         await this.fdc3.raiseIntent(payload.intent, payload.context, payload.target);
     }, {intent, context, target});
+}
+
+/**
+ * Create an OpenFin window under the same app as the `executionTarget`
+ * @param executionTarget Identity of the app/window on which to run the command
+ * @param windowOptions standard `fin.Window.create` options
+ */
+export async function createFinWindow(executionTarget: Identity, windowOptions: WindowOption): Promise<Identity> {
+    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, payload: WindowOption): Promise<Identity> {
+        const window = await this.fin.Window.create(payload);
+        return window.identity;
+    }, windowOptions);
 }
 
 export interface RemoteContextListener {
