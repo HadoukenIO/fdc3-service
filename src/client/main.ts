@@ -237,10 +237,10 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
         intent,
         handler,
         unsubscribe: () => {
-            const index: number = contextListeners.indexOf(listener);
+            const index: number = intentListeners.indexOf(listener);
 
             if (index >= 0) {
-                contextListeners.splice(index, 1);
+                intentListeners.splice(index, 1);
             }
 
             return index >= 0;
