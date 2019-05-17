@@ -52,8 +52,7 @@ describe('Context listeners and broadcasting', () => {
                 await fdc3Remote.broadcast(testManagerIdentity, validContext);
 
                 const receivedContexts = await listener.getReceivedContexts();
-                expect(receivedContexts.length).toBe(1);
-                expect(receivedContexts[0]).toEqual(validContext);
+                expect(receivedContexts).toEqual([validContext]);
             });
 
             test.todo('When broadcast is called from the same app [behavior TBD - do apps receive their own broadcasts?]');
@@ -70,7 +69,7 @@ describe('Context listeners and broadcasting', () => {
 
                 // Received contexts
                 const receivedContexts = await listener.getReceivedContexts();
-                expect(receivedContexts.length).toBe(0);
+                expect(receivedContexts).toEqual([]);
             });
         });
 
@@ -88,8 +87,7 @@ describe('Context listeners and broadcasting', () => {
 
                 const receivedContexts = await Promise.all(listeners.map(listener => listener.getReceivedContexts()));
                 for (const contextList of receivedContexts) {
-                    expect(contextList.length).toBe(1);
-                    expect(contextList[0]).toEqual(validContext);
+                    expect(contextList).toEqual([validContext]);
                 }
             });
 
@@ -110,11 +108,10 @@ describe('Context listeners and broadcasting', () => {
                     const receivedContexts = await Promise.all(listeners.map(listener => listener.getReceivedContexts()));
 
                     // First listener not triggered
-                    expect(receivedContexts[0].length).toBe(0);
+                    expect(receivedContexts[0]).toEqual([]);
 
                     // Second listener triggered once
-                    expect(receivedContexts[1].length).toBe(1);
-                    expect(receivedContexts[1][0]).toEqual(validContext);
+                    expect(receivedContexts[1]).toEqual([validContext]);
                 });
 
                 test('A third listener can be registered and triggered as expected', async () => {
@@ -123,8 +120,7 @@ describe('Context listeners and broadcasting', () => {
                     await fdc3Remote.broadcast(testManagerIdentity, validContext);
                     const receivedContexts = await newListener.getReceivedContexts();
 
-                    expect(receivedContexts.length).toBe(1);
-                    expect(receivedContexts[0]).toEqual(validContext);
+                    expect(receivedContexts).toEqual([validContext]);
                 });
             });
         });
@@ -152,12 +148,11 @@ describe('Context listeners and broadcasting', () => {
 
             // Window broadcasting the context does NOT receive it
             const testAppMainWindowReceivedContexts = await testAppMainWindowListener.getReceivedContexts();
-            expect(testAppMainWindowReceivedContexts.length).toBe(0);
+            expect(testAppMainWindowReceivedContexts).toEqual([]);
 
             // Window on the same app as the one broadcasting DOES receive context
             const testAppChildWindowReceivedContexts = await testAppChildWindowListener.getReceivedContexts();
-            expect(testAppChildWindowReceivedContexts.length).toBe(1);
-            expect(testAppChildWindowReceivedContexts[0]).toEqual(validContext);
+            expect(testAppChildWindowReceivedContexts).toEqual([validContext]);
         });
 
         test('When child window broadcasts context, it does not receive its own context, but main window does', async () => {
@@ -170,12 +165,11 @@ describe('Context listeners and broadcasting', () => {
 
             // Window broadcasting the context does NOT receive it
             const testAppChildWindowReceivedContexts = await testAppChildWindowListener.getReceivedContexts();
-            expect(testAppChildWindowReceivedContexts.length).toBe(0);
+            expect(testAppChildWindowReceivedContexts).toEqual([]);
 
             // Window on the same app as the one broadcasting DOES receive context
             const testAppMainWindowReceivedContexts = await testAppMainWindowListener.getReceivedContexts();
-            expect(testAppMainWindowReceivedContexts.length).toBe(1);
-            expect(testAppMainWindowReceivedContexts[0]).toEqual(validContext);
+            expect(testAppMainWindowReceivedContexts).toEqual([validContext]);
         });
     });
 });
