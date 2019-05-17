@@ -22,7 +22,7 @@ export class AppDirectory {
         this._url = devUrl;
     }
 
-    public async getAppByName(name: string): Promise<Application | null> {
+    public async getAppByName(name: AppName): Promise<Application | null> {
         await this.refreshDirectory();
         return this._directory.find((app: Application) => {
             return app.name === name;
