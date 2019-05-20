@@ -72,14 +72,14 @@ export class Main {
             throw new FDC3Error(OpenError.AppNotFound, `No app in directory with name: ${payload.name}`);
         }
 
-        // This can throw FDC3Error's if app fails to open or times out
+        // This can throw FDC3Errors if app fails to open or times out
         const appWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_CONTEXT_LISTENER);
 
         if (payload.context) {
             if (!payload.context.type) {
                 throw new FDC3Error(OpenError.InvalidContext, `Context not valid. context = ${JSON.stringify(payload.context)}`);
             }
-            await this._contexts.send(appWindow, payload.context);
+            this._contexts.send(appWindow, payload.context);
         }
     }
 
@@ -144,7 +144,7 @@ export class Main {
             appWindow.addIntentListener(payload.intent);
             return;
         } else {
-            // TODO? [SERVICE-429] Should this be an FDC3Error? Or is the AppWindow model an implementation detail and is OK to throw a non-FDC3 error?
+            // TODO: [SERVICE-429] Should this be an FDC3Error? Or is the AppWindow model an implementation detail and is OK to throw a non-FDC3 error?
             throw new Error('App not found in model');
         }
     }
@@ -155,8 +155,8 @@ export class Main {
             appWindow.removeIntentListener(payload.intent);
             return;
         } else {
-            // Previously an Error was thrown at this point. Actually, if for some odd reason the window is not in the model,
-            // it's still OK to return successfully, as the caller intention was to remove a listener and the listener is certainly not there.
+            // If for some odd reason the window is not in the model it's still OK to return successfully,
+            // as the caller's intention was to remove a listener and the listener is certainly not there.
         }
     }
 }

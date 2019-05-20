@@ -267,12 +267,12 @@ describe('When joining a channel', () => {
         // the state data to be dropped
         await fdc3Remote.joinChannel(sendWindow, 'yellow');
         await fdc3Remote.joinChannel(receiveWindow, 'yellow');
-        const members = await fdc3Remote.getChannelMembers(receiveWindow, 'green');
+        const members = await fdc3Remote.getChannelMembers(testManagerIdentity, 'green');
         expect(members).toEqual([]);
 
         // Now, subscribe to the green channel again. Because the state data is dropped, we won't get a callback,
-        // and our received contexts will be unchanged (remember, receivedContexts is the life history of all
-        // the contexts received)
+        // and our received contexts will be unchanged (remember, receivedContexts is all contexts received
+        // over receiveWindow's lifetime)
         receivedContexts = await receiveWindowListener.getReceivedContexts();
         expect(receivedContexts).toEqual([testContext]);
         await fdc3Remote.joinChannel(receiveWindow, 'green');

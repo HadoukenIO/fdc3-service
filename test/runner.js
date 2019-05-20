@@ -60,7 +60,7 @@ async function serve() {
         app.get('/fakeDelay', (req, res) => {
             let ms = req.query.t;
             ms = parseInt(ms) || 0;
-            setTimeout(()=> res.status(200).send({delay: ms}), ms);
+            setTimeout(() => res.status(200).send({delay: ms}), ms);
         });
 
         app.use(express.static('dist'));

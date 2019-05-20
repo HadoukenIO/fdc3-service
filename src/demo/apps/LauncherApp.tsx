@@ -16,7 +16,7 @@ export function LauncherApp(): React.ReactElement {
     React.useEffect(() => {
         fdc3.findIntent(null!)
             .then(async (appIntent) => setApplications(appIntent.apps))
-            .catch(console.log);
+            .catch(console.error);
     }, []);
 
     const openApp = async (app: Application) => {
@@ -30,7 +30,7 @@ export function LauncherApp(): React.ReactElement {
                 message: e.message,
                 ...e
             };
-            console.log(e, error);
+            console.error(e, error);
             alert(`openApp threw an error!\n${JSON.stringify(error)}`);
         }
     };

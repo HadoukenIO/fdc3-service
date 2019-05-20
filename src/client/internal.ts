@@ -121,10 +121,6 @@ export interface IntentListenerPayload {
   intent: string;
 }
 
-//
-// Utility functions - provisional location. Move to separate file(s) if they become too many
-//
-
 /**
  * Creates a deferred promise and returns it along with handlers to resolve/reject it imperatively
  * @returns a tuple with the promise and its resolve/reject handlers
@@ -136,5 +132,5 @@ export function deferredPromise<T = void>(): [Promise<T>, (value?: T) => void, (
         res = r;
         rej = rj;
     });
-    return [p, res! as (value?: T) => void, rej!];
+    return [p, res!, rej!];
 }
