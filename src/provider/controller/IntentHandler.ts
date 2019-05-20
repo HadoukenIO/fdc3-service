@@ -29,7 +29,7 @@ export class IntentHandler {
     }
 
     public async raise(intent: Intent): Promise<IntentResolution> {
-        if (intent.target) {
+        if (hasTarget(intent)) {
             return this.raiseWithTarget(intent);
         }
 
@@ -46,8 +46,8 @@ export class IntentHandler {
         }
     }
 
-    private async raiseWithTarget(intent: Intent): Promise<IntentResolution> {
-        const appInfo = await this._directory.getAppByName(intent.target!);
+    private async raiseWithTarget(intent: IntentWithTarget): Promise<IntentResolution> {
+        const appInfo = await this._directory.getAppByName(intent.target);
 
         if (!appInfo) {
             throw new FDC3Error(ResolveError.TargetAppNotInDirectory, `No app in directory with name: ${intent.target}`);
@@ -102,4 +102,14 @@ export class IntentHandler {
 
         return result;
     }
+}
+
+interface IntentWithTarget extends Intent {
+    // Overwrite optional `target` from Intent, making it mandatory
+    target: string;
+}
+
+// Guard to help narrow down Intent into IntentWithTarget
+function hasTarget(intent: Intent): intent is IntentWithTarget {
+    return intent && !!intent.target;
 }
