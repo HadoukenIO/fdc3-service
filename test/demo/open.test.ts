@@ -40,9 +40,11 @@ describe('Opening applications with the FDC3 client', () => {
         test('When passing an unknown app name the service returns an FDC3Error', async () => {
             // From the launcher app, call fdc3.open with an unregistered name
             const openPromise = fdc3Remote.open(testManagerIdentity, 'invalid-app-name');
-            await expect(openPromise).rejects.toThrowError(/No app in directory with name/);
-            await expect(openPromise).rejects.toHaveProperty('name', 'FDC3Error');
-            await expect(openPromise).rejects.toHaveProperty('code', OpenError.AppNotFound);
+
+            await expect(openPromise).toThrowFDC3Error(
+                OpenError.AppNotFound,
+                /No app in directory with name/
+            );
         });
 
         describe('With an app already running', () => {
@@ -105,17 +107,21 @@ data [broken in provider re-arch, to be fixed in future story]', async () => {
 
         test('When passing a known app name but invalid context, the service returns an FDC3Error', async () => {
             const openPromise = fdc3Remote.open(testManagerIdentity, testAppIdentity1.name!, invalidContext);
-            await expect(openPromise).rejects.toThrowError(`Context not valid. context = ${JSON.stringify(invalidContext)}`);
-            await expect(openPromise).rejects.toHaveProperty('name', 'FDC3Error');
-            await expect(openPromise).rejects.toHaveProperty('code', OpenError.InvalidContext);
+
+            await expect(openPromise).toThrowFDC3Error(
+                OpenError.InvalidContext,
+                `Context not valid. context = ${JSON.stringify(invalidContext)}`
+            );
         });
 
         test('When passing an unknown app name with any context the service returns an FDC3Error', async () => {
             // From the launcher app, call fdc3.open with an invalid name and valid context
             const openPromise = fdc3Remote.open(testManagerIdentity, 'invalid-app-name', validContext);
-            await expect(openPromise).rejects.toThrowError(/No app in directory with name/);
-            await expect(openPromise).rejects.toHaveProperty('name', 'FDC3Error');
-            await expect(openPromise).rejects.toHaveProperty('code', OpenError.AppNotFound);
+
+            await expect(openPromise).toThrowFDC3Error(
+                OpenError.AppNotFound,
+                /No app in directory with name/
+            );
         });
 
         describe('With an app already running', () => {
@@ -172,9 +178,10 @@ and does not trigger the context listener of the already open app [broken in pro
         const openPromise = fdc3Remote.open(testManagerIdentity, 'test-app-invalid-manifest');
 
         // fin.Application.startFromManifest errors with this message when providing an inexistent manifest URL
-        await expect(openPromise).rejects.toThrowError(/Failed to download resource\. Status code: 404/);
-        await expect(openPromise).rejects.toHaveProperty('name', 'FDC3Error');
-        await expect(openPromise).rejects.toHaveProperty('code', OpenError.ErrorOnLaunch);
+        await expect(openPromise).toThrowFDC3Error(
+            OpenError.ErrorOnLaunch,
+            /Failed to download resource\. Status code: 404/
+        );
     });
 
     test('When opening an app which takes too long to launch the promise rejects with a timeout FDC3Error', async () => {
@@ -182,8 +189,9 @@ and does not trigger the context listener of the already open app [broken in pro
         const openPromise = fdc3Remote.open(testManagerIdentity, appName);
 
         // fin.Application.startFromManifest errors with this message when it times out trying to open an app
-        await expect(openPromise).rejects.toThrowError(`Timeout waiting for app '${appName}' to start from manifest`);
-        await expect(openPromise).rejects.toHaveProperty('name', 'FDC3Error');
-        await expect(openPromise).rejects.toHaveProperty('code', OpenError.AppTimeout);
+        await expect(openPromise).toThrowFDC3Error(
+            OpenError.AppTimeout,
+            `Timeout waiting for app '${appName}' to start from manifest`
+        );
     }, Timeouts.APP_START_FROM_MANIFEST + 2000);
 });

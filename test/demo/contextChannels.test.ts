@@ -287,9 +287,10 @@ describe('When joining a channel', () => {
             // Join a non-existent channel
             const joinChannelPromise = fdc3Remote.joinChannel(window, 'non-existent-channel');
 
-            await expect(joinChannelPromise).rejects.toHaveProperty('name', 'FDC3Error');
-            await expect(joinChannelPromise).rejects.toHaveProperty('code', ChannelError.ChannelDoesNotExist);
-            await expect(joinChannelPromise).rejects.toThrowError('No channel with channelId: non-existent-channel');
+            await expect(joinChannelPromise).toThrowFDC3Error(
+                ChannelError.ChannelDoesNotExist,
+                'No channel with channelId: non-existent-channel'
+            );
         });
     });
 });
