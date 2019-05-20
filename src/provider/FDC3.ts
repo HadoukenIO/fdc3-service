@@ -105,7 +105,10 @@ export class FDC3 {
 
         this.channelModel.setContext(channel.id, context);
 
-        return Promise.all(channelMembers.map(identity => this.sendContext(identity, context))).then(() => {});
+        return Promise.all(channelMembers
+            .filter(identity => identity.uuid !== source.uuid)
+            .map(identity => this.sendContext(identity, context)))
+            .then(() => {});
     }
 
     private async onIntent(payload: RaiseIntentPayload, source: ProviderIdentity): Promise<IntentResolution> {

@@ -54,7 +54,13 @@ describe('Context listeners and broadcasting', () => {
                 expect(receivedContexts[0]).toEqual(validContext);
             });
 
-            test.todo('When broadcast is called from the same app [behavior TBD - do apps receive their own broadcasts?]');
+            test('When broadcast is called from the app that is listening, its listeners doesn\'t get triggered', async () => {
+                await fdc3Remote.broadcast(testAppIdentity, validContext);
+
+                // Received contexts
+                const receivedContexts = await listener.getReceivedContexts();
+                expect(receivedContexts.length).toBe(0);
+            });
 
             test('When calling addContextListener a second time there are no errors', async () => {
                 // Add second listener
@@ -91,7 +97,12 @@ describe('Context listeners and broadcasting', () => {
                 }
             });
 
-            test.todo('When calling broadcast from the first app [behavior TBD - do apps receive their own broadcasts?]');
+            test('When calling broadcast from the first app, none of its own listeners will be triggered', async () => {
+                await fdc3Remote.broadcast(testAppIdentity, validContext);
+
+                const receivedContexts = await Promise.all(listeners.map(listener => listener.getReceivedContexts()));
+                expect(receivedContexts).toEqual([[], []]);
+            });
 
             test('With two contextListeners registered, calling unsubscribe on the second listener will return with no errors', async () => {
                 await listeners[0].unsubscribe();
@@ -104,7 +115,7 @@ describe('Context listeners and broadcasting', () => {
                 });
 
                 test('When calling broadcast, only the still-registered listener is triggered', async () => {
-                    await fdc3Remote.broadcast(testAppIdentity, validContext);
+                    await fdc3Remote.broadcast(testManagerIdentity, validContext);
                     const receivedContexts = await Promise.all(listeners.map(listener => listener.getReceivedContexts()));
 
                     // First listener not triggered
@@ -118,7 +129,7 @@ describe('Context listeners and broadcasting', () => {
                 test('A third listener can be registered and triggered as expected', async () => {
                     const newListener = await fdc3Remote.addContextListener(testAppIdentity);
 
-                    await fdc3Remote.broadcast(testAppIdentity, validContext);
+                    await fdc3Remote.broadcast(testManagerIdentity, validContext);
                     const receivedContexts = await newListener.getReceivedContexts();
 
                     expect(receivedContexts.length).toBe(1);

@@ -157,7 +157,7 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  *
  * ```javascript
  * // I have a context object, and I want to know what I can do with it, hence, I look for for intents...
- * const appIntents = await agent.findIntentsForContext(context);
+ * const appIntents = await agent.findIntentsByContext(context);
  *
  * // returns for example:
  * // [{
@@ -237,10 +237,10 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
         intent,
         handler,
         unsubscribe: () => {
-            const index: number = contextListeners.indexOf(listener);
+            const index: number = intentListeners.indexOf(listener);
 
             if (index >= 0) {
-                contextListeners.splice(index, 1);
+                intentListeners.splice(index, 1);
             }
 
             return index >= 0;
