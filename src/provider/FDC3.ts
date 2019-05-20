@@ -106,7 +106,7 @@ export class FDC3 {
         this.channelModel.setContext(channel.id, context);
 
         return Promise.all(channelMembers
-            .filter(identity => identity.uuid !== source.uuid)
+            .filter(identity => identity.uuid !== source.uuid && identity.name !== source.name)
             .map(identity => this.sendContext(identity, context)))
             .then(() => {});
     }
