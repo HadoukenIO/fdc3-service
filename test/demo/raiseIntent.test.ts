@@ -1,6 +1,7 @@
 import 'jest';
 
 import {INTENT_LISTENER_TIMEOUT} from '../../src/provider/model/AppWindow';
+import {ResolveError} from '../../src/client/errors';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
@@ -89,10 +90,12 @@ describe('Intent listeners and raising intents', () => {
             });
 
             describe('When the target is *not* registered to accept the raised intent', () => {
-                test('When calling raiseIntent the promise rejects with an error', async () => {
+                test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
                     const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, invalidPayload.intent, invalidPayload.context, testAppIdentity.appId);
                     // TODO: decide if this is this the error message we want when sending a targeted intent
                     await expect(resultPromise).rejects.toThrowError(/No applications available to handle this intent/);
+                    await expect(resultPromise).rejects.toHaveProperty('name', 'FDC3Error');
+                    await expect(resultPromise).rejects.toHaveProperty('code', ResolveError.NoAppsFound);
                 });
             });
             describe('When the target is not in the directory', () => {

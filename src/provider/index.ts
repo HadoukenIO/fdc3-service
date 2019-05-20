@@ -4,7 +4,7 @@ import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload, IntentListenerPayload} from '../client/internal';
-import {AppIntent, IntentResolution, Application, Intent, Channel} from '../client/main';
+import {AppIntent, IntentResolution, Application, Intent, Channel, ResolveError, FDC3Error} from '../client/main';
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
@@ -68,10 +68,10 @@ export class Main {
         const appInfo: Application|null = await this._directory.getAppByName(payload.name);
 
         if (appInfo) {
-            const app = await this._model.findOrCreate(appInfo, FindFilter.WITH_CONTEXT_LISTENER);
+            const appWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_CONTEXT_LISTENER);
 
             if (payload.context) {
-                await this._contexts.send(app, payload.context);
+                await this._contexts.send(appWindow, payload.context);
             }
         } else {
             throw new Error(`No app in directory with name: ${payload.name}`);
@@ -79,7 +79,7 @@ export class Main {
     }
 
     private async findIntent(payload: FindIntentPayload): Promise<AppIntent> {
-        let apps;
+        let apps: Application[];
         if (payload.intent) {
             apps = await this._directory.getAppsByIntent(payload.intent);
         } else {
@@ -99,7 +99,7 @@ export class Main {
         if (payload.context && payload.context.type) {
             return this._directory.getAppIntentsByContext(payload.context.type);
         } else {
-            throw new Error(`Context not valid. context = ${JSON.stringify(payload.context)}`);
+            throw new FDC3Error(ResolveError.InvalidContext, `Context not valid. context = ${JSON.stringify(payload.context)}`);
         }
     }
 
@@ -133,9 +133,9 @@ export class Main {
     }
 
     private async addIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): Promise<void> {
-        const app = this._model.getWindow(identity);
-        if (app) {
-            app.addIntentListener(payload.intent);
+        const appWindow = this._model.getWindow(identity);
+        if (appWindow) {
+            appWindow.addIntentListener(payload.intent);
             return Promise.resolve();
         } else {
             throw new Error('App not found in model');
@@ -143,9 +143,9 @@ export class Main {
     }
 
     private async removeIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): Promise<void> {
-        const app = this._model.getWindow(identity);
-        if (app) {
-            app.removeIntentListener(payload.intent);
+        const appWindow = this._model.getWindow(identity);
+        if (appWindow) {
+            appWindow.removeIntentListener(payload.intent);
             return Promise.resolve();
         } else {
             throw new Error('App not found in model');

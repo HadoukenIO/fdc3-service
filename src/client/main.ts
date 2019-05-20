@@ -23,19 +23,7 @@ export * from './contextChannels';
 export * from './context';
 export * from './directory';
 export * from './intents';
-
-export enum OpenError {
-    AppNotFound = 'AppNotFound',
-    ErrorOnLaunch = 'ErrorOnLaunch',
-    AppTimeout = 'AppTimeout',
-    ResolverUnavailable = 'ResolverUnavailable'
-}
-
-export enum ResolveError {
-    NoAppsFound = 'NoAppsFound',
-    ResolverUnavailable = 'ResolverUnavailable',
-    ResolverTimeout = 'ResolverTimeout'
-}
+export * from './errors';
 
 /**
  * Intent descriptor

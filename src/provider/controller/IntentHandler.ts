@@ -2,7 +2,7 @@ import {injectable, inject} from 'inversify';
 
 import {Inject} from '../common/Injectables';
 import {Intent} from '../../client/intents';
-import {IntentResolution, Application} from '../../client/main';
+import {IntentResolution, Application, FDC3Error, ResolveError} from '../../client/main';
 import {FindFilter, Model} from '../model/Model';
 import {AppDirectory} from '../model/AppDirectory';
 import {AppWindow} from '../model/AppWindow';
@@ -31,7 +31,7 @@ export class IntentHandler {
         const apps: Application[] = await this._directory.getAppsByIntent(intent.type);
 
         if (apps.length === 0) {
-            throw new Error('No applications available to handle this intent');
+            throw new FDC3Error(ResolveError.NoAppsFound, 'No applications available to handle this intent');
         } else if (apps.length === 1) {
             // Resolve intent immediately
             return this.fireIntent(intent, apps[0]);
@@ -69,9 +69,9 @@ export class IntentHandler {
     }
 
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
-        const app: AppWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_INTENT_LISTENER);
-        await app.ensureReadyToReceiveIntent(intent.type);
-        const data = await this._apiHandler.channel.dispatch(app.identity, APIToClientTopic.INTENT, {context: intent.context, intent: intent.type});
+        const appWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_INTENT_LISTENER);
+        await appWindow.ensureReadyToReceiveIntent(intent.type);
+        const data = await this._apiHandler.channel.dispatch(appWindow.identity, APIToClientTopic.INTENT, {context: intent.context, intent: intent.type});
         const result: IntentResolution = {
             source: appInfo.name,
             version: '1.0.0',

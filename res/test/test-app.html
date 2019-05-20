@@ -7,6 +7,21 @@
         document.title = title;
     </script>
     <script>
+        /**
+         * Mirror of FDC3Error.serialize(), makes sure puppeteer serializes all the relevant error information (for FDC3Error's) back to the test host
+         */
+        function errorHandler(error) {
+            if (error && error.code && error.message) {
+                throw new Error(JSON.stringify({
+                    name: error.name,
+                    code: error.code,
+                    message: error.message
+                }));
+            } 
+            
+            throw error;
+        }
+
         window.contextListeners = [];
         window.intentListeners = [];
         window.eventListeners = [];

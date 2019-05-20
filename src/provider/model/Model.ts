@@ -58,18 +58,18 @@ export class Model {
 
     public findWindows(appInfo: Application, options?: FindOptions): AppWindow[] {
         const {prefer, require} = options || {prefer: undefined, require: undefined};
-        const windows = this._windows.filter((app: AppWindow) => {
-            if (app.appInfo.appId !== appInfo.appId) {
+        const windows = this._windows.filter(appWindow => {
+            if (appWindow.appInfo.appId !== appInfo.appId) {
                 return false;
             } else if (require !== undefined) {
-                return Model.matchesFilter(app, require);
+                return Model.matchesFilter(appWindow, require);
             } else {
                 return true;
             }
         });
 
         if (windows.length > 0 && prefer !== undefined) {
-            const preferredWindows = windows.filter(app => Model.matchesFilter(app, prefer));
+            const preferredWindows = windows.filter(appWindow => Model.matchesFilter(appWindow, prefer));
 
             if (preferredWindows.length > 0) {
                 return preferredWindows;
@@ -109,8 +109,8 @@ export class Model {
 
             if (!this._windows.some(window => window.id === id)) {
                 console.info(`Registering window ${id}`);
-                const app = this._environment.wrapApplication(appInfo, identity);
-                this._windows.push(app);
+                const appWindow = this._environment.wrapApplication(appInfo, identity);
+                this._windows.push(appWindow);
                 this.onWindowAdded.emit();
             } else {
                 console.info(`Ignoring window created event for ${id} - window was already registered`);

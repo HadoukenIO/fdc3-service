@@ -71,8 +71,8 @@ export async function getChannelMembers(executionTarget: Identity, channelId: Ch
 
 export async function raiseIntent(executionTarget: Identity, intent: IntentType, context: Context, target?: string): Promise<void> {
     return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, payload: RaiseIntentPayload): Promise<void> {
-        await this.fdc3.raiseIntent(payload.intent, payload.context, payload.target);
-    }, {intent, context, target});
+        await this.fdc3.raiseIntent(payload.intent, payload.context, payload.target).catch(this.errorHandler);
+    }, {intent, context, target}).catch(handlePuppeteerError);
 }
 
 export interface RemoteContextListener {
@@ -266,6 +266,26 @@ export async function getRemoteEventListener(executionTarget: Identity, listener
 
 export async function findIntentsByContext(executionTarget: Identity, context: Context): Promise<AppIntent[]> {
     return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, context: Context): Promise<AppIntent[]> {
-        return this.fdc3.findIntentsByContext(context);
-    }, context);
+        return this.fdc3.findIntentsByContext(context).catch(this.errorHandler);
+    }, context).catch(handlePuppeteerError);
+}
+
+/**
+ * Puppeteer catches and rethrows errors its own way, losing information on extra fields (e.g. `code` for FDC3Error objects).
+ * So what we do is serialize all these fields into the single `message` from the client apps, then from here strip back whatever puppeteer
+ * added (Evaluation failed...) and parse the actual error object so we can check for the right info in our integration tests.
+ * @param error Error returned by puppeteer
+ */
+function handlePuppeteerError(error: Error): never {
+    try {
+        // Strip-away boilerplate added by puppeteer when returning errors from client apps
+        const payload = error.message.replace('Evaluation failed: Error: ', '').split('\n')[0];
+
+        // Append additional error fields to Error object
+        const errorInfo = JSON.parse(payload);
+        Object.assign(error, errorInfo);
+    } catch (e) {
+        // Not an FDC3Error, continue as normal
+    }
+    throw error;
 }
