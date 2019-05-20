@@ -73,6 +73,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             this.windowClosed.emit(identity);
         });
 
+        // Register windows that were running before launching the FDC3 service
         const windowInfo = await fin.System.getAllWindows();
         windowInfo.forEach(info => {
             const {uuid, mainWindow, childWindows} = info;

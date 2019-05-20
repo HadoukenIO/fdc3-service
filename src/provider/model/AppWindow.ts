@@ -22,6 +22,10 @@ interface IntentMap {
  * window.
  */
 export class AppWindow {
+    /**
+     * Generates a unique `string` id for a window based on its application's uuid and window name
+     * @param identity
+     */
     public static getId(identity: Identity): string {
         return `${identity.uuid}/${identity.name || identity.uuid}`;
     }
