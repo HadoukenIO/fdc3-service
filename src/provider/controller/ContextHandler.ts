@@ -33,7 +33,7 @@ export class ContextHandler {
      * @param app App to send the context to
      * @param context Context to be sent
      */
-    public async send(app: AppWindow|Identity, context: Context): Promise<void> {
+    public send(app: AppWindow|Identity, context: Context): void {
         const identity: Identity = (app as AppWindow).identity || app;
 
         // Note the call to `dispatch` is not `await`ed, hence the fire and forget behaviour
@@ -45,7 +45,7 @@ export class ContextHandler {
      * @param context Context to send
      * @param source App sending the context. It won't receive the broadcast
      */
-    public async broadcast(context: Context, source: Identity): Promise<void> {
+    public broadcast(context: Context, source: Identity): void {
         const channel = this._channelModel.getChannel(source);
         const channelMembers = this._channelModel.getChannelMembers(channel.id);
 
@@ -53,17 +53,17 @@ export class ContextHandler {
 
         const sourceId = AppWindow.getId(source);
 
-        await Promise.all(channelMembers
+        channelMembers
             // Sender window should not receive its own broadcasts
             .filter(identity => AppWindow.getId(identity) !== sourceId)
-            .map(identity => this.send(identity, context)));
+            .forEach(identity => this.send(identity, context));
     }
 
-    public async getAllChannels(payload: GetAllChannelsPayload, source: ProviderIdentity): Promise<Channel[]> {
+    public getAllChannels(payload: GetAllChannelsPayload, source: ProviderIdentity): Channel[] {
         return this._channelModel.getAllChannels();
     }
 
-    public async joinChannel(payload: JoinChannelPayload, source: ProviderIdentity): Promise<void> {
+    public joinChannel(payload: JoinChannelPayload, source: ProviderIdentity): void {
         const identity = payload.identity || source;
 
         this._channelModel.joinChannel(identity, payload.id);
@@ -74,13 +74,13 @@ export class ContextHandler {
         }
     }
 
-    public async getChannel(payload: GetChannelPayload, source: ProviderIdentity): Promise<Channel> {
+    public getChannel(payload: GetChannelPayload, source: ProviderIdentity): Channel {
         const identity = payload.identity || source;
 
         return this._channelModel.getChannel(identity);
     }
 
-    public async getChannelMembers(payload: GetChannelMembersPayload, source: ProviderIdentity): Promise<Identity[]> {
+    public getChannelMembers(payload: GetChannelMembersPayload, source: ProviderIdentity): Identity[] {
         return this._channelModel.getChannelMembers(payload.id);
     }
 
