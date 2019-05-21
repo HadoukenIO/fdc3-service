@@ -36,12 +36,12 @@ export class Model {
     @inject(Inject.ENVIRONMENT)
     private readonly _environment!: Environment;
 
-    private readonly _windows: AppWindow[];
+    private readonly _windowsById: {[id: string]: AppWindow};
     private readonly _channels: ContextChannel[];
     private readonly onWindowAdded: Signal0 = new Signal0();
 
     constructor(@inject(Inject.ENVIRONMENT) environment: Environment) {
-        this._windows = [];
+        this._windowsById = {};
         this._channels = [];
 
         environment.windowCreated.add(this.onWindowCreated, this);
@@ -49,7 +49,7 @@ export class Model {
     }
 
     public get windows(): ReadonlyArray<AppWindow> {
-        return this._windows;
+        return Object.values(this._windowsById);
     }
 
     public get channels(): ReadonlyArray<ContextChannel> {
@@ -57,7 +57,7 @@ export class Model {
     }
 
     public getWindow(identity: Identity): AppWindow|null {
-        return this._windows.find(w => w.id === getId(identity)) || null;
+        return this._windowsById[getId(identity)] || null;
     }
 
     public findWindow(appInfo: Application, options?: FindOptions): AppWindow|null {
@@ -66,7 +66,7 @@ export class Model {
 
     public findWindows(appInfo: Application, options?: FindOptions): AppWindow[] {
         const {prefer, require} = options || {prefer: undefined, require: undefined};
-        const windows = this._windows.filter(appWindow => {
+        const windows = this.windows.filter(appWindow => {
             if (appWindow.appInfo.appId !== appInfo.appId) {
                 return false;
             } else if (require !== undefined) {
@@ -85,6 +85,22 @@ export class Model {
         }
 
         return windows;
+    }
+
+    /**
+     * Registers an appWindow in the model
+     * // TODO: 'guessed' is not quite the word - find a better way to express that the Application object is fabricated
+     * @param appInfo Application info, either from the app directory, or 'guessed' for a non-registered app
+     * @param identity Window identity
+     * @param isInAppDirectory boolean indicating whether the app is registered in the app directory
+     */
+    public registerWindow(appInfo: Application, identity: Identity, isInAppDirectory: boolean): AppWindow {
+        const appWindow = this._environment.wrapApplication(appInfo, identity);
+        console.info(`Registering window [${isInAppDirectory ? '' : 'NOT '}in app directory] ${appWindow.id}`);
+        this._windowsById[appWindow.id] = appWindow;
+        this.onWindowAdded.emit();
+
+        return appWindow;
     }
 
     public async findOrCreate(appInfo: Application, prefer?: FindFilter): Promise<AppWindow> {
@@ -110,29 +126,29 @@ export class Model {
 
     private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
         const apps = await this._directory.getAllApps();
-        const appInfo = apps.find(app => app.manifest.startsWith(manifestUrl));
+        const appInfoFromDirectory = apps.find(app => app.manifest.startsWith(manifestUrl));
 
-        if (appInfo) {
-            const id: string = getId(identity);
-
-            if (!this._windows.some(window => window.id === id)) {
-                console.info(`Registering window ${id}`);
-                const appWindow = this._environment.wrapApplication(appInfo, identity);
-                this._windows.push(appWindow);
-                this.onWindowAdded.emit();
-            } else {
-                console.info(`Ignoring window created event for ${id} - window was already registered`);
-            }
+        if (!appInfoFromDirectory) {
+            // If the app is not in directory we ignore it. We'll add to the model if and when it adds its first intent listener
+            return;
         }
+
+        const id: string = getId(identity);
+        if (this._windowsById[id]) {
+            console.info(`Ignoring window created event for ${id} - window was already registered`);
+            return;
+        }
+
+        this.registerWindow(appInfoFromDirectory, identity, true);
     }
 
     private onWindowClosed(identity: Identity): void {
         const id: string = getId(identity);
-        const index = this._windows.findIndex(window => window.id === id);
+        const window = this._windowsById[id];
 
-        if (index >= 0) {
+        if (window) {
             console.info(`Removing window ${id}`);
-            this._windows.splice(index, 1);
+            delete this._windowsById[id];
         }
     }
 

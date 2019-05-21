@@ -42,7 +42,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
         }
 
-        return new FinAppWindow(app!.identity, appInfo);
+        return this.wrapApplication(appInfo, app!.identity);
     }
 
     public wrapApplication(appInfo: Application, identity: Identity): AppWindow {
@@ -134,7 +134,7 @@ class FinAppWindow {
     public async ensureReadyToReceiveIntent(intent: IntentType): Promise<void> {
         if (this._intentListeners[intent]) {
             // App has already registered the intent listener
-            return Promise.resolve();
+            return;
         }
 
         // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
