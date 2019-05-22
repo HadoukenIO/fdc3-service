@@ -12,7 +12,13 @@ namespace OpenFin.FDC3
     {
         private static Fin.Runtime runtimeInstance;
 
-        public static Action InitializationComplete;
+        /// <summary>        
+        /// Fires when DesktopAgent initialization is completed successfully.
+        /// Returns exception if a failure occurred during initialization.
+        /// /// Must be set before calling Initialize().
+        /// </summary>        
+        public static Action<Exception> InitializationComplete;
+
 
         /// <summary>
         /// Initialize client with the default Manifest URL
@@ -24,11 +30,15 @@ namespace OpenFin.FDC3
         }        
 
         /// <summary>
-        /// Initialize the agent with specified URL
+        /// Initialize the agent with a specified URL. The InitializationComplete Action delegate must be set before calling this function.
         /// </summary>
         /// <param name="manifestUri">The URI if the manifest</param>
         public static void Initialize(Uri manifestUri)
         {
+            if (InitializationComplete == null)
+                throw new Exception("InitializationComplete action delegate must be set before calling Initialize.");
+           
+
             var runtimeOptions = Fin.RuntimeOptions.LoadManifest(manifestUri);
             runtimeInstance = Fin.Runtime.GetRuntimeInstance(runtimeOptions);
 
@@ -43,13 +53,12 @@ namespace OpenFin.FDC3
                         fdcService.run();
                     }
 
-                    Connection.ConnectionInitializationComplete += () =>
+                    Connection.ConnectionInitializationComplete += exception =>
                     {
-                        InitializationComplete?.Invoke();
-                    };
+                        InitializationComplete?.Invoke(exception);
+                    };                    
 
-                    Connection.Initialize(runtimeInstance);
-                                             
+                    Connection.Initialize(runtimeInstance);                                             
                 });
             });
         }

@@ -38,8 +38,8 @@
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="OpenfinDesktop, Version=9.0.1.3, Culture=neutral, PublicKeyToken=18a277d64dddd680, processorArchitecture=MSIL">
-      <HintPath>packages\OpenfinDesktop.9.0.1-alpha3\lib\net40\OpenfinDesktop.dll</HintPath>
+    <Reference Include="OpenfinDesktop, Version=9.0.1.5, Culture=neutral, PublicKeyToken=18a277d64dddd680, processorArchitecture=MSIL">
+      <HintPath>packages\OpenfinDesktop.9.0.1\lib\net40\OpenfinDesktop.dll</HintPath>
     </Reference>
     <Reference Include="SuperSocket.ClientEngine, Version=0.9.0.0, Culture=neutral, PublicKeyToken=ee9af13f57f00acc, processorArchitecture=MSIL">
       <HintPath>packages\SuperSocket.ClientEngine.Core.0.9.0\lib\net45\SuperSocket.ClientEngine.dll</HintPath>
@@ -87,8 +87,6 @@
     <Compile Include="Payloads\FindIntentsByContextPayload.cs" />
     <Compile Include="Payloads\GetAllChannelsPayload.cs" />
     <Compile Include="Payloads\GetChannelMembersPayload.cs" />
-    <Compile Include="Payloads\GetChannelPayload.cs" />
-    <Compile Include="Payloads\JoinChannelPayload.cs" />
     <Compile Include="Payloads\OpenPayload.cs" />
     <Compile Include="Payloads\PayloadBase.cs" />
     <Compile Include="Payloads\RaiseIntentPayload.cs" />

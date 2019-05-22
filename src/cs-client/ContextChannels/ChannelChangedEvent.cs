@@ -1,11 +1,11 @@
-﻿using Fin = Openfin.Desktop;
+﻿using Openfin.Desktop.Messaging;
 
 namespace OpenFin.FDC3.ContextChannels
 {
     public class ChannelChangedEvent
     {
         public string Type => "channel-changed";
-        public Fin.ChannelClient Channel { get; set; }
-        public Fin.ChannelClient PreviousChannel { get; set; }
+        public ChannelClient Channel { get; set; }
+        public ChannelClient PreviousChannel { get; set; }
     }
 }
