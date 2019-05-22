@@ -30,7 +30,7 @@ export class ContextHandler {
     // TODO: Remove ability to pass an Identity, standardise on AppWindow
     public async send(app: AppWindow|Identity, context: Context): Promise<void> {
         const identity: Identity = (app as AppWindow).identity || app;
-        this._apiHandler.channel.dispatch(identity, APIToClientTopic.CONTEXT, context);
+        await this._apiHandler.channel.dispatch(identity, APIToClientTopic.CONTEXT, context);
     }
 
     public async broadcast(context: Context, source: Identity): Promise<void> {
@@ -58,7 +58,7 @@ export class ContextHandler {
         const context = this._channelModel.getContext(payload.id);
 
         if (context) {
-            this.send(identity, context);
+            await this.send(identity, context);
         }
     }
 
