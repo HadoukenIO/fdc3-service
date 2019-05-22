@@ -4,7 +4,7 @@ import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
 import {AppWindow} from '../model/AppWindow';
 import {Context, ChannelChangedEvent, Channel} from '../../client/main';
-import {ChannelModel, createChannelModel} from '../ChannelModel';
+import {ChannelModel} from '../ChannelModel';
 import {APIHandler} from '../APIHandler';
 import {
     APIFromClientTopic,
@@ -21,9 +21,12 @@ export class ContextHandler {
     private _apiHandler: APIHandler<APIFromClientTopic>;
     private _channelModel: ChannelModel;
 
-    constructor(@inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>) {
+    constructor(
+        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
+        @inject(Inject.CHANNEL_MODEL) channelModel: ChannelModel
+    ) {
         this._apiHandler = apiHandler;
-        this._channelModel = createChannelModel(apiHandler.onConnection, apiHandler.onDisconnection);
+        this._channelModel = channelModel;
         this._channelModel.onChannelChanged.add(this.onChannelChangedHandler, this);
     }
 

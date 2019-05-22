@@ -11,6 +11,7 @@ import {AsyncInit} from '../controller/AsyncInit';
 import {FinEnvironment} from '../model/Environment';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
+import {ChannelModel} from '../ChannelModel';
 
 import {Inject} from './Injectables';
 
@@ -25,7 +26,8 @@ type Types = {
     [Inject.ENVIRONMENT]: Environment,
     [Inject.INTENT_HANDLER]: IntentHandler,
     [Inject.MODEL]: Model,
-    [Inject.SELECTOR]: SelectorHandler
+    [Inject.SELECTOR]: SelectorHandler,
+    [Inject.CHANNEL_MODEL]: ChannelModel
 };
 
 /**
@@ -41,7 +43,8 @@ const Bindings = {
     [Inject.ENVIRONMENT]: FinEnvironment,
     [Inject.INTENT_HANDLER]: IntentHandler,
     [Inject.MODEL]: Model,
-    [Inject.SELECTOR]: SelectorHandler
+    [Inject.SELECTOR]: SelectorHandler,
+    [Inject.CHANNEL_MODEL]: ChannelModel
 };
 
 type Keys = (keyof typeof Inject & keyof typeof Bindings & keyof Types);
