@@ -17,17 +17,19 @@ export interface ContextSpec {
 export interface AppWindow {
     id: string;
 
-    contexts: ReadonlyArray<ContextChannel>;
-
     identity: Identity;
 
     appInfo: Readonly<Application>;
 
+    contexts: ReadonlyArray<ContextChannel>;
+
+    intentListeners: ReadonlyArray<string>;
+
+    hasIntentListener(intentName: string): boolean;
+
     addIntentListener(intentName: string): void;
 
     removeIntentListener(intentName: string): void;
-
-    hasAnyIntentListener(): boolean;
 
     focus(): Promise<void>;
 

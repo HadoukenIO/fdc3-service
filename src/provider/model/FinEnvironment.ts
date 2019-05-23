@@ -114,6 +114,14 @@ class FinAppWindow {
         return this._contexts;
     }
 
+    public get intentListeners(): ReadonlyArray<string> {
+        return Object.keys(this._intentListeners);
+    }
+
+    public hasIntentListener(intentName: string): boolean {
+        return this._intentListeners[intentName] === true;
+    }
+
     public addIntentListener(intentName: string): void {
         this._intentListeners[intentName] = true;
         this._onIntentListenerAdded.emit(intentName);
@@ -121,10 +129,6 @@ class FinAppWindow {
 
     public removeIntentListener(intentName: string): void {
         delete this._intentListeners[intentName];
-    }
-
-    public hasAnyIntentListener() {
-        return Object.keys(this._intentListeners).length > 0;
     }
 
     public focus(): Promise<void> {
