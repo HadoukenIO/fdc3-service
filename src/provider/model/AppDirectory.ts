@@ -48,17 +48,16 @@ export class AppDirectory {
         this._directory.forEach((app: Application) => {
             (app.intents || []).forEach(intent => {
                 if (intent.contexts && intent.contexts.includes(contextType)) {
-                    if (appIntentsByName[intent.name]) {
-                        appIntentsByName[intent.name].apps.push(app);
-                    } else {
+                    if (!appIntentsByName[intent.name]) {
                         appIntentsByName[intent.name] = {
                             intent: {
                                 name: intent.name,
                                 displayName: intent.displayName || intent.name
                             },
-                            apps: [app]
+                            apps: []
                         };
                     }
+                    appIntentsByName[intent.name].apps.push(app);
                 }
             });
         });

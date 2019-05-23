@@ -102,7 +102,7 @@ class FinAppWindow {
         return this._id;
     }
 
-    public get identity(): Identity {
+    public get identity(): Readonly<Identity> {
         return this._window.identity;
     }
 

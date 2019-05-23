@@ -27,7 +27,7 @@ export async function open(executionTarget: Identity, name: string, context?: Co
     }, name, context).catch(handlePuppeteerError);
 }
 
-export async function resolve(executionTarget: Identity, intent: IntentType, context?: Context): Promise<Application[]> {
+export async function findIntent(executionTarget: Identity, intent: IntentType, context?: Context): Promise<Application[]> {
     return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, intent: IntentType, context?: Context): Promise<Application[]> {
         return this.fdc3.findIntent(intent, context).then(appIntent => appIntent.apps);
     }, intent, context);
