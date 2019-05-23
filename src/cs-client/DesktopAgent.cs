@@ -1,6 +1,5 @@
 ﻿using OpenFin.FDC3.Constants;
 using OpenFin.FDC3.Context;
-using OpenFin.FDC3.ContextChannels;
 using OpenFin.FDC3.Intents;
 using System;
 using System.Threading.Tasks;
@@ -10,7 +9,7 @@ namespace OpenFin.FDC3
 {
     public class DesktopAgent
     {
-        private static Fin.Runtime runtimeInstance;
+        private static Fin.Runtime runtimeInstance;        
 
         /// <summary>        
         /// Fires when DesktopAgent initialization is completed successfully.
@@ -18,7 +17,9 @@ namespace OpenFin.FDC3
         /// /// Must be set before calling Initialize().
         /// </summary>        
         public static Action<Exception> InitializationComplete;
+        
 
+        //TODO : Add ContextChannels property
 
         /// <summary>
         /// Initialize client with the default Manifest URL
@@ -77,7 +78,7 @@ namespace OpenFin.FDC3
         /// <summary>
         /// Obtain information about in intent
         /// </summary>
-        /// <param name="intent">The naem of the intent</param>
+        /// <param name="intent">The name of the intent</param>
         /// <param name="context">Optional context about the intent</param>
         /// <returns>A single application intent</returns>
         public static Task<AppIntent> FindIntent(string intent, ContextBase context= null)
@@ -135,15 +136,6 @@ namespace OpenFin.FDC3
         {
             Connection.AddIntentListener(intent, handler);
         }
-        
-        /// <summary>
-        /// Removed context broadcast listener
-        /// </summary>
-        /// <param name="handler">Handler to be removed</param>
-        public static void UnsubcribeContextListener(Action<Context.ContextBase> handler)
-        {
-            Connection.UnsubcribeContextListener(handler);
-        }
 
         /// <summary>
         /// Removed all registered handlers for an intent
@@ -165,21 +157,12 @@ namespace OpenFin.FDC3
         }
 
         /// <summary>
-        /// Adds handler to respond to events when a window changes from one channel to another
+        /// Removed context broadcast listener
         /// </summary>
-        /// <param name="handler">The handler</param>
-        public static void AddChannelChangedEventListener(Action<ChannelChangedEvent> handler)
+        /// <param name="handler">Handler to be removed</param>
+        public static void UnsubcribeContextListener(Action<Context.ContextBase> handler)
         {
-            Connection.AddChannelChangedEventListener(handler);
-        }
-
-        /// <summary>
-        /// Removed handler that responds to events when a window changes from cone channel to another
-        /// </summary>
-        /// <param name="handler">The handler</param>
-        public static void RemoveChannelChangedEventListener(Action<ChannelChangedEvent> handler)
-        {
-            Connection.RemoveChannelChangedEventListener(handler);
-        }
+            Connection.UnsubcribeContextListener(handler);
+        }       
     }
 }

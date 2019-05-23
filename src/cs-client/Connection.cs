@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using OpenFin.FDC3.Constants;
 using OpenFin.FDC3.Context;
-using OpenFin.FDC3.ContextChannels;
 using OpenFin.FDC3.Intents;
 using OpenFin.FDC3.Payloads;
 using System;
@@ -10,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Openfin.Desktop.Messaging;
 using Openfin.Desktop;
+using OpenFin.FDC3.Channels;
 
 namespace OpenFin.FDC3
 {
@@ -18,7 +18,7 @@ namespace OpenFin.FDC3
         private static ChannelClient channelClient;
 
         private static Action<ContextBase> contextListeners { get; set; }
-        private static Action<ChannelChangedEvent> channelChangedHandlers { get; set; }
+        private static Action<ChannelChangedPayload> channelChangedHandlers { get; set; }
         private static List<KeyValuePair<string, Action<ContextBase>>> intentListeners { get; set; }
 
         internal static Action<Exception> ConnectionInitializationComplete;        
@@ -35,7 +35,29 @@ namespace OpenFin.FDC3
                 if (x.Exception == null)
                     ConnectionInitializationComplete?.Invoke(x.Exception);              
             });
-        }      
+        }
+
+        internal static Task<Identity[]> GetChannelMembersAsync(string channelId)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal static Task JoinChannelAsync(string id, Identity identity)
+        {
+            return channelClient.DispatchAsync(ApiTopic.JoinChannel, new { id, identity });
+        }
+
+        internal static Task<Channel> GetChannelAsync(Identity identity)
+        {
+            if(identity == null)
+            {
+                return channelClient.DispatchAsync<Channel>(ApiTopic.GetChannel,  JValue.CreateUndefined());
+            }
+            else
+            {
+                return channelClient.DispatchAsync<Channel>(ApiTopic.GetChannel, new { identity });
+            }
+        }
 
         internal static Task<Channel[]> GetAllChannels()
         {
@@ -57,12 +79,12 @@ namespace OpenFin.FDC3
             return channelClient.DispatchAsync<AppIntent[]>(ApiTopic.FindIntentsByContext, context);
         }
 
-        internal static void AddChannelChangedEventListener(Action<ChannelChangedEvent> handler)
+        internal static void AddChannelChangedEventListener(Action<ChannelChangedPayload> handler)
         {
             channelChangedHandlers += handler;
         }
 
-        internal static void RemoveChannelChangedEventListener(Action<ChannelChangedEvent> handler)
+        internal static void RemoveChannelChangedEventListener(Action<ChannelChangedPayload> handler)
         {
             channelChangedHandlers -= handler;
         }
@@ -121,7 +143,7 @@ namespace OpenFin.FDC3
                 return null;
             });
 
-            channelClient.RegisterTopic<ChannelChangedEvent, object>(ChannelTopicConstants.Event, @event =>
+            channelClient.RegisterTopic<ChannelChangedPayload, object>(ChannelTopicConstants.Event, @event =>
             {
                 channelChangedHandlers?.Invoke(@event);
                 return null;
