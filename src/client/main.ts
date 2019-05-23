@@ -4,7 +4,7 @@
 
 import {Identity} from 'openfin/_v2/main';
 
-import {channelPromise, tryServiceDispatch, eventEmitter, FDC3Event, FDC3EventType} from './connection';
+import {tryServiceDispatch, eventEmitter, FDC3Event, FDC3EventType, getServicePromise} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
 import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload} from './internal';
@@ -197,24 +197,23 @@ export async function raiseIntent(intent: string, context: Context, target?: str
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
-if (channelPromise) {
-    channelPromise.then(channelClient => {
-        channelClient.register(APIToClientTopic.INTENT, (payload: RaiseIntentPayload) => {
-            intentListeners.forEach((listener: IntentListener) => {
-                if (payload.intent === listener.intent) {
-                    listener.handler(payload.context);
-                }
-            });
+getServicePromise().then(channelClient => {
+    channelClient.register(APIToClientTopic.INTENT, (payload: RaiseIntentPayload) => {
+        intentListeners.forEach((listener: IntentListener) => {
+            if (payload.intent === listener.intent) {
+                listener.handler(payload.context);
+            }
         });
     });
-    channelPromise.then(channelClient => {
-        channelClient.register(APIToClientTopic.CONTEXT, (payload: Context) => {
-            contextListeners.forEach((listener: ContextListener) => {
-                listener.handler(payload);
-            });
+
+    channelClient.register(APIToClientTopic.CONTEXT, (payload: Context) => {
+        contextListeners.forEach((listener: ContextListener) => {
+            listener.handler(payload);
         });
     });
-}
+}, resason => {
+    console.warn('Unable to register client Context and Intent handlers. getServicePromise() rejected with reason:', resason);
+});
 
 /**
  * Adds a listener for incoming Intents from the Agent.
