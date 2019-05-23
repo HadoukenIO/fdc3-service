@@ -51,115 +51,195 @@ describe('Intent listeners and raising intents', () => {
     });
 
     describe('With a target', () => {
-        const testAppIdentity = {
-            uuid: 'test-app-1',
-            name: 'test-app-1',
-            appId: '100'
-        };
-        describe('When the target is running', () => {
-            beforeEach(async () => {
-                await fdc3Remote.open(testManagerIdentity, testAppIdentity.uuid);
+        describe('When the target is is in the directory', () => {
+            const testAppInDirectory = {
+                uuid: 'test-app-1',
+                name: 'test-app-1',
+                appId: '100'
+            };
+            describe('When the target is not running', () => {
+                // TODO
             });
 
-            afterEach(async () => {
-                await fin.Application.wrapSync(testAppIdentity).quit().catch(() => {});
-            });
-
-            test('When calling addIntentListener for the first time, the promise resolves and there are no errors', async () => {
-                await expect(fdc3Remote.addIntentListener(testAppIdentity, validPayload.intent)).resolves.not.toThrow();
-            });
-
-            describe('When the target is registered to accept the raised intent', () => {
-                let listener: fdc3Remote.RemoteIntentListener;
-
+            describe('When the target is running', () => {
                 beforeEach(async () => {
-                    listener = await fdc3Remote.addIntentListener(testAppIdentity, validPayload.intent);
+                    await fdc3Remote.open(testManagerIdentity, testAppInDirectory.uuid);
                 });
 
-                test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
-                    await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.name);
-
-                    const receivedContexts = await listener.getReceivedContexts();
-                    expect(receivedContexts).toEqual([validPayload.context]);
+                afterEach(async () => {
+                    await fin.Application.wrapSync(testAppInDirectory).quit().catch(() => {});
                 });
-                test('When adding a duplicate intent listener, then calling raiseIntent from another app, ' +
-                    'both listeners are triggered exactly once with the correct context', async () => {
-                    const duplicateListener = await fdc3Remote.addIntentListener(testAppIdentity, validPayload.intent);
 
-                    await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.name);
-
-                    const receivedContexts = await listener.getReceivedContexts();
-                    expect(receivedContexts).toEqual([validPayload.context]);
-
-                    const duplicateReceivedContexts = await duplicateListener.getReceivedContexts();
-                    expect(duplicateReceivedContexts).toEqual([validPayload.context]);
+                test('When calling addIntentListener for the first time, the promise resolves and there are no errors', async () => {
+                    await expect(fdc3Remote.addIntentListener(testAppInDirectory, validPayload.intent)).resolves.not.toThrow();
                 });
-                test('When adding a distinct intent listener, then calling raiseIntent from another app, only the first listener is triggered', async () => {
-                    const distinctListener = await fdc3Remote.addIntentListener(testAppIdentity, validPayload.intent + 'distinguisher');
 
-                    await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.name);
+                describe('When the target is registered to accept the raised intent', () => {
+                    let listener: fdc3Remote.RemoteIntentListener;
 
-                    const receivedContexts = await listener.getReceivedContexts();
-                    expect(receivedContexts).toEqual([validPayload.context]);
+                    beforeEach(async () => {
+                        listener = await fdc3Remote.addIntentListener(testAppInDirectory, validPayload.intent);
+                    });
 
-                    const distinctReceivedContexts = await distinctListener.getReceivedContexts();
-                    expect(distinctReceivedContexts).toEqual([]);
+                    test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
+                        await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppInDirectory.name);
+
+                        const receivedContexts = await listener.getReceivedContexts();
+                        expect(receivedContexts).toEqual([validPayload.context]);
+                    });
+                    test('When adding a duplicate intent listener, then calling raiseIntent from another app, ' +
+                        'both listeners are triggered exactly once with the correct context', async () => {
+                        const duplicateListener = await fdc3Remote.addIntentListener(testAppInDirectory, validPayload.intent);
+
+                        await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppInDirectory.name);
+
+                        const receivedContexts = await listener.getReceivedContexts();
+                        expect(receivedContexts).toEqual([validPayload.context]);
+
+                        const duplicateReceivedContexts = await duplicateListener.getReceivedContexts();
+                        expect(duplicateReceivedContexts).toEqual([validPayload.context]);
+                    });
+                    test('When adding a distinct intent listener, then calling raiseIntent from another app, ' +
+                        'only the first listener is triggered', async () => {
+                        const distinctListener = await fdc3Remote.addIntentListener(testAppInDirectory, validPayload.intent + 'distinguisher');
+
+                        await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppInDirectory.name);
+
+                        const receivedContexts = await listener.getReceivedContexts();
+                        expect(receivedContexts).toEqual([validPayload.context]);
+
+                        const distinctReceivedContexts = await distinctListener.getReceivedContexts();
+                        expect(distinctReceivedContexts).toEqual([]);
+                    });
+                    test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it times out', async () => {
+                        await listener.unsubscribe();
+                        const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppInDirectory.name);
+
+                        await expect(resultPromise).toThrowFDC3Error(
+                            OpenError.AppTimeout,
+                            `Timeout waiting for intent listener to be added. intent = ${validPayload.intent}`
+                        );
+                    }, Timeouts.ADD_INTENT_LISTENER + 500);
+                    test('When calling unsubscribe from a second intent listener, then calling raiseIntent from another app, ' +
+                        'the first listener is triggered exactly once with the correct context', async () => {
+                        const shortLivedListener = await fdc3Remote.addIntentListener(testAppInDirectory, validPayload.intent);
+                        await shortLivedListener.unsubscribe();
+
+                        await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppInDirectory.name);
+
+                        const receivedContexts = await listener.getReceivedContexts();
+                        expect(receivedContexts).toEqual([validPayload.context]);
+                    });
+                    test('When calling unsubscribe from a second intent listener, then calling raiseIntent from another app, ' +
+                        'the second listener is not triggered', async () => {
+                        const shortLivedListener = await fdc3Remote.addIntentListener(testAppInDirectory, validPayload.intent);
+                        await shortLivedListener.unsubscribe();
+
+                        await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppInDirectory.name);
+
+                        const receivedContexts = await shortLivedListener.getReceivedContexts();
+                        expect(receivedContexts).toEqual([]);
+                    });
+                    test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it errors', async () => {
+                        await listener.unsubscribe();
+                        const promise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppInDirectory.name);
+
+                        await expect(promise).toThrowFDC3Error(
+                            ResolveError.TargetAppDoesNotHandleIntent,
+                            `App '${testAppInDirectory.name}' has not registered listeners for intent '${validPayload.intent}'`
+                        );
+                        // TODO 479: Used to be a timeout. Figure out where this test would go
+                        //     await expect(resultPromise).toThrowFDC3Error(
+                        //         OpenError.AppTimeout,
+                        //         `Timeout waiting for intent listener to be added. intent = ${validPayload.intent}`
+                        //     );
+                        // }, Timeouts.ADD_INTENT_LISTENER + 500);
+                    });
                 });
-                test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it times out', async () => {
-                    await listener.unsubscribe();
-                    const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.name);
 
-                    await expect(resultPromise).toThrowFDC3Error(
-                        OpenError.AppTimeout,
-                        `Timeout waiting for intent listener to be added. intent = ${validPayload.intent}`
-                    );
-                }, Timeouts.ADD_INTENT_LISTENER + 500);
-                test('When calling unsubscribe from a second intent listener, then calling raiseIntent from another app, ' +
-                     'the first listener is triggered exactly once with the correct context', async () => {
-                    const shortLivedListener = await fdc3Remote.addIntentListener(testAppIdentity, validPayload.intent);
-                    await shortLivedListener.unsubscribe();
+                describe('When the target is *not* registered to accept the raised intent', () => {
+                    test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
+                        const promise = fdc3Remote.raiseIntent(testManagerIdentity, invalidPayload.intent, invalidPayload.context, testAppInDirectory.name);
 
-                    await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.name);
-
-                    const receivedContexts = await listener.getReceivedContexts();
-                    expect(receivedContexts).toEqual([validPayload.context]);
-                });
-                test('When calling unsubscribe from a second intent listener, then calling raiseIntent from another app, ' +
-                     'the second listener is not triggered', async () => {
-                    const shortLivedListener = await fdc3Remote.addIntentListener(testAppIdentity, validPayload.intent);
-                    await shortLivedListener.unsubscribe();
-
-                    await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.name);
-
-                    const receivedContexts = await shortLivedListener.getReceivedContexts();
-                    expect(receivedContexts).toEqual([]);
-                });
-            });
-
-            describe('When the target is not in the directory', () => {
-                test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
-                    // TODO: Does this test make sense here? 'When the target is running' but then 'When the app doesn't exist'? [SERVICE-479 will change this]
-                    const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, 'this-app-does-not-exist');
-
-                    await expect(resultPromise).toThrowFDC3Error(
-                        ResolveError.TargetAppNotInDirectory,
-                        'No app in directory with name: this-app-does-not-exist'
-                    );
-                });
-            });
-
-            describe('When the target is *not* registered to accept the raised intent', () => {
-                test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
-                    const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, invalidPayload.intent, invalidPayload.context, testAppIdentity.name);
-
-                    await expect(resultPromise).toThrowFDC3Error(
-                        ResolveError.TargetAppDoesNotHandleIntent,
-                        `App '${testAppIdentity.name}' does not handle intent '${invalidPayload.intent}'`
-                    );
+                        await expect(promise).toThrowFDC3Error(
+                            ResolveError.TargetAppDoesNotHandleIntent,
+                            `App '${testAppInDirectory.name}' has not registered listeners for intent '${invalidPayload.intent}'`
+                        );
+                    });
                 });
             });
         });
 
+        describe('When the target is *not* in the directory', () => {
+            const testAppNotInDirectory = {
+                uuid: 'test-app-not-in-directory',
+                name: 'test-app-not-in-directory',
+                appId: '888-not-in-directory'
+            };
+            describe('When the target is not running', () => {
+                test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
+                    const promise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppNotInDirectory.name);
+
+                    await expect(promise).toThrowFDC3Error(
+                        ResolveError.TargetAppNotInDirectory,
+                        'No app in directory with name: test-app-not-in-directory'
+                    );
+                });
+            });
+
+            // TODO 479: Unskip :)
+            describe.skip('When the target is running', () => {
+                beforeEach(async () => {
+                    // TODO 479: Here we should manually launch an app not in the directory
+                    await fdc3Remote.open(testManagerIdentity, testAppNotInDirectory.uuid);
+                });
+
+                afterEach(async () => {
+                    await fin.Application.wrapSync(testAppNotInDirectory).quit().catch(() => {});
+                });
+
+                test('When calling addIntentListener for the first time, the promise resolves and there are no errors', async () => {
+                    await expect(fdc3Remote.addIntentListener(testAppNotInDirectory, validPayload.intent)).resolves.not.toThrow();
+                });
+
+                describe('When the target is registered to accept the raised intent', () => {
+                    let listener: fdc3Remote.RemoteIntentListener;
+
+                    beforeEach(async () => {
+                        listener = await fdc3Remote.addIntentListener(testAppNotInDirectory, validPayload.intent);
+                    });
+
+                    test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
+                        await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppNotInDirectory.name);
+
+                        const receivedContexts = await listener.getReceivedContexts();
+                        expect(receivedContexts).toEqual([validPayload.context]);
+                    });
+                    test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it times out', async () => {
+                        await listener.unsubscribe();
+                        const promise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppNotInDirectory.name);
+
+                        await expect(promise).toThrowFDC3Error(
+                            OpenError.AppTimeout,
+                            `Timeout waiting for intent listener to be added. intent = ${validPayload.intent}`
+                        );
+                    }, Timeouts.ADD_INTENT_LISTENER + 500);
+                });
+
+                describe('When the target has *not* registered listeners for the raised intent', () => {
+                    test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
+                        const promise = fdc3Remote.raiseIntent(testManagerIdentity, invalidPayload.intent, invalidPayload.context, testAppNotInDirectory.name);
+
+                        await expect(promise).toThrowFDC3Error(
+                            ResolveError.TargetAppDoesNotHandleIntent,
+                            `App '${testAppNotInDirectory.name}' has not registered listeners for intent '${invalidPayload.intent}'`
+                        );
+                    });
+                });
+            });
+        });
+
+        // TODO 479: This 'not running' case now belongs to some of the specific cases above (in directory / not in directory)
         describe('When the target is not running', () => {
             describe('And the listener is added right away', () => {
                 const testAppIdentity = {
@@ -191,11 +271,11 @@ describe('Intent listeners and raising intents', () => {
 
                 describe('When the target is not in the directory', () => {
                     test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
-                        const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, 'this-app-does-not-exist');
+                        const p = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, 'app-not-in-directory-nor-running');
 
-                        await expect(resultPromise).toThrowFDC3Error(
+                        await expect(p).toThrowFDC3Error(
                             ResolveError.TargetAppNotInDirectory,
-                            'No app in directory with name: this-app-does-not-exist'
+                            'No app in directory with name: app-not-in-directory-nor-running'
                         );
                     });
                 });

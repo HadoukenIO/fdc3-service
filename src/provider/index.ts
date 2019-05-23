@@ -83,11 +83,19 @@ export class Main {
         }
     }
 
+    /**
+     * Find apps that can handle an intent.
+     *
+     * Includes running apps that are not registered on the directory [SERVICE-479]
+     * @param payload Contains the intent type to find information for
+     */
     private async findIntent(payload: FindIntentPayload): Promise<AppIntent> {
         let apps: Application[];
         if (payload.intent) {
-            apps = await this._directory.getAppsByIntent(payload.intent);
+            apps = await this._model.getApplicationsForIntent(payload.intent);
         } else {
+            // This is a non-FDC3 workaround to get all directory apps by calling `findIntent` with a falsy intent.
+            // Ideally the FDC3 spec would expose an API to access the directory in a more meaningful way
             apps = await this._directory.getAllApps();
         }
 
@@ -139,14 +147,33 @@ export class Main {
     }
 
     private async addIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): Promise<void> {
-        const appWindow = this._model.getWindow(identity);
-        if (appWindow) {
-            appWindow.addIntentListener(payload.intent);
-            return;
-        } else {
-            // TODO: [SERVICE-429] Should this be an FDC3Error? Or is the AppWindow model an implementation detail and is OK to throw a non-FDC3 error?
-            throw new Error('App not found in model');
+        let appWindow = this._model.getWindow(identity);
+
+        // Window is not in model - this should mean that the app is not in the directory, as directory apps are immediately added to model upon window creation
+        if (!appWindow) {
+            let appInfo: Application;
+
+            // Attempt to copy appInfo from another appWindow in the model from the same app
+            const appWindowFromSameApp = this._model.findWindowByAppId(identity.uuid);
+            if (appWindowFromSameApp) {
+                appInfo = appWindowFromSameApp.appInfo;
+            } else {
+                // There are no appWindows in the model with the same app uuid - Produce minimal appInfo from window information
+                const application = fin.Application.wrapSync(identity);
+                const applicationInfo = await application.getInfo();
+                appInfo = {
+                    appId: identity.uuid,
+                    name: identity.uuid,
+                    title: (applicationInfo.manifest as {title?: string}).title,
+                    manifestType: 'openfin',
+                    manifest: applicationInfo.manifestUrl
+                };
+            }
+            appWindow = this._model.registerWindow(appInfo, identity, false);
         }
+
+        // Finally, add the intent listener
+        appWindow.addIntentListener(payload.intent);
     }
 
     private async removeIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): Promise<void> {

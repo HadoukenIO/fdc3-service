@@ -131,6 +131,34 @@ export class Model {
         }
     }
 
+    /**
+     * Gets apps that can handle an intent
+     *
+     * Includes windows that are not in the app directory but have registered a listener for it [SERVICE-479]
+     * @param intentType intent type
+     */
+    public async getApplicationsForIntent(intentType: string): Promise<Application[]> {
+        const allAppWindows = this.windows;
+
+        // Include appInfos for any appWindows in model that have registered a listener for the intent
+        const appsInModelWithIntent = allAppWindows
+            .filter(appWindow => appWindow.hasIntentListener(intentType))
+            .reduce<Application[]>((apps, appWindow) => {
+                if (apps.some(app => app.appId === appWindow.appInfo.appId)) {
+                    // AppInfo has already been added by another window on the same app also listening for the same intent
+                    return apps;
+                }
+                return apps.concat([appWindow.appInfo]);
+            }, []);
+
+        // Include only directory apps without appWindows in the model, as these take precedence
+        const directoryAppsWithIntent = await this._directory.getAppsByIntent(intentType);
+        const directoryAppsNotInModel = directoryAppsWithIntent
+            .filter(directoryApp => !allAppWindows.some(appWindow => appWindow.appInfo.appId === directoryApp.appId));
+
+        return [...appsInModelWithIntent, ...directoryAppsNotInModel];
+    }
+
     private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
         const apps = await this._directory.getAllApps();
         const appInfoFromDirectory = apps.find(app => app.manifest.startsWith(manifestUrl));
