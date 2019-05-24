@@ -2,13 +2,14 @@ import {WindowEvent} from 'openfin/_v2/api/events/base';
 import {injectable} from 'inversify';
 import {Identity, Window} from 'openfin/_v2/main';
 
-import {AsyncInit} from '../../controller/AsyncInit';
-import {Environment} from '../Environment';
-import {Signal1, Signal2} from '../../common/Signal';
-import {Application, IntentType} from '../../../client/main';
-import {AppWindow, ContextSpec} from '../AppWindow';
-import {ContextChannel} from '../ContextChannel';
-import {getId} from '../Model';
+import {AsyncInit} from '../controller/AsyncInit';
+import {Signal1, Signal2} from '../common/Signal';
+import {Application, IntentType} from '../../client/main';
+
+import {Environment} from './Environment';
+import {AppWindow, ContextSpec} from './AppWindow';
+import {ContextChannel} from './ContextChannel';
+import {getId} from './Model';
 
 export const INTENT_LISTENER_TIMEOUT = 5000;
 
