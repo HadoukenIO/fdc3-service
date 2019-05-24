@@ -79,7 +79,7 @@ export function getServicePromise(): Promise<ChannelClient> {
  * @param payload Object containing additional arguments
  */
 export async function tryServiceDispatch<T extends APIFromClientTopic>(action: T, payload: APIFromClient[T][0]): Promise<APIFromClient[T][1]> {
-    const channel: ChannelClient = (await channelPromise)!;
+    const channel: ChannelClient = await getServicePromise();
     return (channel.dispatch(action, payload) as Promise<APIFromClient[T][1]>)
         .catch(error => {
             throw FDC3Error.deserialize(error);
