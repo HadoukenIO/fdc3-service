@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28803.156
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenFin.FDC3", "OpenFin.FDC3.csproj", "{2B426646-2CAF-4A45-BC2E-79FFA8E49352}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenFin.FDC3", "OpenFin.FDC3.Client\OpenFin.FDC3.csproj", "{2B426646-2CAF-4A45-BC2E-79FFA8E49352}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenFin.FDC3.Tests", "OpenFin.FDC3.Tests\OpenFin.FDC3.Tests.csproj", "{88DD9410-769E-417C-ACCD-83D538F2026F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{2B426646-2CAF-4A45-BC2E-79FFA8E49352}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2B426646-2CAF-4A45-BC2E-79FFA8E49352}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2B426646-2CAF-4A45-BC2E-79FFA8E49352}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88DD9410-769E-417C-ACCD-83D538F2026F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88DD9410-769E-417C-ACCD-83D538F2026F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88DD9410-769E-417C-ACCD-83D538F2026F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88DD9410-769E-417C-ACCD-83D538F2026F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
