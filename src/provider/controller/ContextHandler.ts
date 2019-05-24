@@ -15,6 +15,7 @@ import {
     APIToClientTopic
 } from '../../client/internal';
 import {Inject} from '../common/Injectables';
+import {getId} from '../model/Model';
 
 @injectable()
 export class ContextHandler {
@@ -42,11 +43,11 @@ export class ContextHandler {
 
         this._channelModel.setContext(channel.id, context);
 
-        const sourceId = AppWindow.getId(source);
+        const sourceId = getId(source);
 
         await Promise.all(channelMembers
             // Sender window should not receive its own broadcasts
-            .filter(identity => AppWindow.getId(identity) !== sourceId)
+            .filter(identity => getId(identity) !== sourceId)
             .map(identity => this.send(identity, context)));
     }
 

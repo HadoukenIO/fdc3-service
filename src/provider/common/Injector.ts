@@ -8,7 +8,7 @@ import {ContextHandler} from '../controller/ContextHandler';
 import {Model} from '../model/Model';
 import {SelectorHandler} from '../controller/SelectorHandler';
 import {AsyncInit} from '../controller/AsyncInit';
-import {FinEnvironment} from '../model/Environment';
+import {FinEnvironment} from '../model/implementation/Fin';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {ChannelModel} from '../ChannelModel';
