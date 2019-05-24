@@ -15,13 +15,62 @@ namespace OpenFin.FDC3
 {
     internal static class Connection
     {
+        internal static Action<Exception> ConnectionInitializationComplete;
         private static ChannelClient channelClient;
-
-        private static Action<ContextBase> contextListeners { get; set; }
         private static Action<ChannelChangedPayload> channelChangedHandlers { get; set; }
+        private static Action<ContextBase> contextListeners { get; set; }
         private static List<KeyValuePair<string, Action<ContextBase>>> intentListeners { get; set; }
+        internal static void AddChannelChangedEventListener(Action<ChannelChangedPayload> handler)
+        {
+            channelChangedHandlers += handler;
+        }
 
-        internal static Action<Exception> ConnectionInitializationComplete;        
+        internal static void AddContextListener(Action<ContextBase> handler)
+        {
+            contextListeners += handler;
+        }
+
+        internal static void AddIntentListener(string intent, Action<ContextBase> handler)
+        {
+            intentListeners.Add(new KeyValuePair<string, Action<ContextBase>>(intent, handler));
+        }
+
+        internal static Task Broadcast(Context.ContextBase context)
+        {
+            return channelClient.DispatchAsync<Task>(ApiTopic.Broadcast, context);
+        }
+
+        internal static Task<AppIntent> FindIntent(string intent, ContextBase context)
+        {
+            return channelClient.DispatchAsync<AppIntent>(ApiTopic.FindIntent, new { intent, context });
+        }
+
+        internal static Task<AppIntent[]> FindIntentsByContext(ContextBase context)
+        {
+            return channelClient.DispatchAsync<AppIntent[]>(ApiTopic.FindIntentsByContext, context);
+        }
+
+        internal static Task<Channel[]> GetAllChannels()
+        {
+            return channelClient.DispatchAsync<Channel[]>(ApiTopic.GetAllChannels, JValue.CreateUndefined());
+        }
+
+        internal static Task<Channel> GetChannelAsync(Identity identity)
+        {
+            if (identity == null)
+            {
+                return channelClient.DispatchAsync<Channel>(ApiTopic.GetChannel, JValue.CreateUndefined());
+            }
+            else
+            {
+                return channelClient.DispatchAsync<Channel>(ApiTopic.GetChannel, new { identity });
+            }
+        }
+
+        internal static Task<Identity[]> GetChannelMembersAsync(string id)
+        {
+            return channelClient.DispatchAsync<Identity[]>(ApiTopic.GetChannelMembers, new { id });
+        }
 
         internal static void Initialize(Runtime runtimeInstance)
         {
@@ -36,84 +85,27 @@ namespace OpenFin.FDC3
                     ConnectionInitializationComplete?.Invoke(x.Exception);              
             });
         }
-
-        internal static Task<Identity[]> GetChannelMembersAsync(string channelId)
-        {
-            throw new NotImplementedException();
-        }
-
         internal static Task JoinChannelAsync(string id, Identity identity)
         {
             return channelClient.DispatchAsync(ApiTopic.JoinChannel, new { id, identity });
         }
-
-        internal static Task<Channel> GetChannelAsync(Identity identity)
-        {
-            if(identity == null)
-            {
-                return channelClient.DispatchAsync<Channel>(ApiTopic.GetChannel,  JValue.CreateUndefined());
-            }
-            else
-            {
-                return channelClient.DispatchAsync<Channel>(ApiTopic.GetChannel, new { identity });
-            }
-        }
-
-        internal static Task<Channel[]> GetAllChannels()
-        {
-            return channelClient.DispatchAsync<Channel[]>(ApiTopic.GetAllChannels, JValue.CreateUndefined());
-        }       
-
         internal static Task OpenAsync(string name, ContextBase context = null)
         {
             return channelClient.DispatchAsync<string>(ApiTopic.Open, new { name, context });
         }
-
-        internal static Task<AppIntent> FindIntent(string intent, ContextBase context)
+        internal static Task<IntentResolution> RaiseIntent(string intent, ContextBase context, string target)
         {
-            return channelClient.DispatchAsync<AppIntent>(ApiTopic.FindIntent, new { intent, context});            
-        }
-
-        internal static Task<AppIntent[]> FindIntentsByContext(ContextBase context)
-        {
-            return channelClient.DispatchAsync<AppIntent[]>(ApiTopic.FindIntentsByContext, context);
-        }
-
-        internal static void AddChannelChangedEventListener(Action<ChannelChangedPayload> handler)
-        {
-            channelChangedHandlers += handler;
+            return channelClient.DispatchAsync<IntentResolution>(ApiTopic.RaiseIntent, new { intent, context, target });
         }
 
         internal static void RemoveChannelChangedEventListener(Action<ChannelChangedPayload> handler)
         {
             channelChangedHandlers -= handler;
         }
-
-        internal static Task Broadcast(Context.ContextBase context)
-        {
-            return channelClient.DispatchAsync<Task>(ApiTopic.Broadcast, context);
-        }
-
-        internal static Task<IntentResolution> RaiseIntent(string intent, ContextBase context, string target)
-        {
-            return channelClient.DispatchAsync<IntentResolution>(ApiTopic.RaiseIntent, new { intent, context, target });
-        }
-
-        internal static void AddContextListener(Action<ContextBase> handler)
-        {
-            contextListeners += handler;
-        }       
-
         internal static void UnsubcribeContextListener(Action<ContextBase> handler)
         {
             contextListeners -= handler;
         }
-
-        internal static void AddIntentListener(string intent, Action<ContextBase> handler)
-        {            
-            intentListeners.Add(new KeyValuePair<string, Action<ContextBase>>(intent, handler));            
-        }
-
         internal static void UnsubscribeIntentListener(string intent)
         {
             intentListeners.RemoveAll(x => x.Key == intent);
