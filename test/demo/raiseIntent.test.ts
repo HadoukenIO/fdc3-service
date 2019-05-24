@@ -1,4 +1,5 @@
 import 'jest';
+import 'reflect-metadata';
 
 import {ResolveError} from '../../src/client/errors';
 import {INTENT_LISTENER_TIMEOUT} from '../../src/provider/model/FinEnvironment';
