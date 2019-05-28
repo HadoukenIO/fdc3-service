@@ -65,6 +65,7 @@ export class IntentHandler {
             // Target app not running -> Try to find in directory
             appInfo = await this._directory.getAppByName(intent.target);
             if (!appInfo) {
+                // TODO: Should this message also mention 'nor running' to cover ad-hoc non-directory apps? [SERVICE-479]
                 throw new FDC3Error(ResolveError.TargetAppNotInDirectory, `No app in directory with name: ${intent.target}`);
             }
 
