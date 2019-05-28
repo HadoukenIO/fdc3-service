@@ -6,6 +6,7 @@ import {ResolveError} from '../../src/client/errors';
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay} from './utils/delay';
+import {appStartupTime} from './constants';
 
 const testManagerIdentity = {
     uuid: 'test-app',
@@ -212,7 +213,12 @@ describe('Intent listeners and raising intents', () => {
                         testAppIdentity.appId
                     );
 
-                    await delay(1500);
+                    const testApp = fin.Application.wrapSync({uuid: 'test-app-1', name: 'test-app-1'});
+
+                    while (!await testApp.isRunning()) {
+                        await delay(500);
+                    }
+
                     // App should now be running
                     await expect(fin.Application.wrapSync(testAppIdentity).isRunning()).resolves.toBe(true);
 
@@ -230,7 +236,7 @@ describe('Intent listeners and raising intents', () => {
                     expect(receivedContexts).toEqual([validPayload.context]);
 
                     await fin.Application.wrapSync(testAppIdentity).quit();
-                });
+                }, appStartupTime + 1500);
             });
         });
     });
