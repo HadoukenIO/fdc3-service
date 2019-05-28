@@ -2,6 +2,7 @@ import 'jest';
 import {connect, Fin, Identity, Application} from 'hadouken-js-adapter';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
+import {appStartupTime} from './constants';
 
 const testManagerIdentity = {uuid: 'test-app', name: 'test-app'};
 
@@ -34,9 +35,6 @@ async function setupWindows(...channels: (string|undefined)[]): Promise<Identity
     const app4 = {uuid: 'test-app-4', name: 'test-app-4'};
 
     const appIdentities = [app1, app2, app3, app4];
-
-    // Creating apps takes time, so increase timeout
-    jest.setTimeout(channels.length * 5000);
 
     const result: Identity[] = await Promise.all(channels.map(async (channel, index) => {
         const identity = appIdentities[index];
@@ -74,7 +72,7 @@ describe('When broadcasting on global channel', () => {
         // Check the blue window received no context
         const blueContexts = await blueListener.getReceivedContexts();
         expect(blueContexts).toHaveLength(0);
-    });
+    }, appStartupTime * 2);
 
     it('Context is received by window that has left and rejoined global channel', async () => {
         const [channelChangingWindow] = await setupWindows('blue');
@@ -114,7 +112,7 @@ describe('When broadcasting on a user channel', () => {
         // Check our blue window received no context
         const blueReceivedContexts = await blueListener.getReceivedContexts();
         expect(blueReceivedContexts).toHaveLength(0);
-    });
+    }, appStartupTime * 4);
 
     it('Context is received by window that has left and rejoined user channel', async () => {
         const [blueWindow, channelChangingWindow] = await setupWindows('blue', undefined);
@@ -131,7 +129,7 @@ describe('When broadcasting on a user channel', () => {
         // Check our blue window received our test context
         const receivedContexts = await channelChangingWindowListener.getReceivedContexts();
         expect(receivedContexts).toEqual([testContext]);
-    });
+    }, appStartupTime * 2);
 });
 
 describe('When joining a channel', () => {
@@ -197,7 +195,7 @@ describe('When joining a channel', () => {
         // Check our now-yellow window received our test context
         const receivedContexts = await channelChangingListener.getReceivedContexts();
         expect(receivedContexts).toEqual([testContext]);
-    });
+    }, appStartupTime * 2);
 
     it('Window does not receive cached context for global channel', async () => {
         const [channelChangingWindow] = await setupWindows('red');
