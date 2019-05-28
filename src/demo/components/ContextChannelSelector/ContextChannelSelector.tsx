@@ -47,7 +47,7 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
                 ...e
             };
             console.error(`Unable to join channel ${id}! ${e.message}`);
-            alert(`joinChannel threw an error!\n${JSON.stringify(error)}`);
+            // alert(`joinChannel threw an error!\n${JSON.stringify(error)}`);
         }
     };
 

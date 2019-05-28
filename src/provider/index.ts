@@ -153,7 +153,6 @@ export class Main {
         const appWindow = this._model.getWindow(identity);
         if (appWindow) {
             appWindow.removeIntentListener(payload.intent);
-            return;
         } else {
             // If for some odd reason the window is not in the model it's still OK to return successfully,
             // as the caller's intention was to remove a listener and the listener is certainly not there.
