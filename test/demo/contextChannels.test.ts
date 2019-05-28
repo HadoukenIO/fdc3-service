@@ -35,14 +35,16 @@ async function setupWindows(...channels: (string|undefined)[]): Promise<Identity
 
     const appIdentities = [app1, app2, app3, app4];
 
+    const offset = startedApps.length;
+
     // Creating apps takes time, so increase timeout
-    jest.setTimeout(channels.length * 5000);
+    jest.setTimeout((offset + channels.length) * 5000);
 
     const result: Identity[] = await Promise.all(channels.map(async (channel, index) => {
-        const identity = appIdentities[index];
+        const identity = appIdentities[index + offset];
 
         await fdc3Remote.open(testManagerIdentity, identity.uuid);
-        const app = fin.Application.wrapSync(appIdentities[index]);
+        const app = fin.Application.wrapSync(appIdentities[index + offset]);
 
         await expect(app.isRunning()).resolves.toBe(true);
 
@@ -216,9 +218,9 @@ describe('When joining a channel', () => {
     });
 
     it('channel-changed event is fired for user channel', async () => {
-        const [channelChangingWindow] = await setupWindows(undefined);
+        const [listeningWindow, channelChangingWindow] = await setupWindows(undefined, undefined);
 
-        const listener = await fdc3Remote.addEventListener(testManagerIdentity, 'channel-changed');
+        const listener = await fdc3Remote.addEventListener(listeningWindow, 'channel-changed');
 
         // Change the channel of our window to green
         await fdc3Remote.joinChannel(channelChangingWindow, 'green');
@@ -232,9 +234,9 @@ describe('When joining a channel', () => {
     });
 
     it('channel-changed event is fired for global channel', async () => {
-        const [channelChangingWindow] = await setupWindows('blue');
+        const [listeningWindow, channelChangingWindow] = await setupWindows(undefined, 'blue');
 
-        const listener = await fdc3Remote.addEventListener(testManagerIdentity, 'channel-changed');
+        const listener = await fdc3Remote.addEventListener(listeningWindow, 'channel-changed');
 
         // Change the channel of our window to green
         await fdc3Remote.joinChannel(channelChangingWindow, 'global');
@@ -281,7 +283,8 @@ describe('When joining a channel', () => {
 
 describe('When starting an app', () => {
     it('channel-changed event is fired for global channel', async () => {
-        const listener = await fdc3Remote.addEventListener(testManagerIdentity, 'channel-changed');
+        const [listeningWindow] = await setupWindows(undefined);
+        const listener = await fdc3Remote.addEventListener(listeningWindow, 'channel-changed');
 
         const [channelChangingWindow] = await setupWindows(undefined);
 
