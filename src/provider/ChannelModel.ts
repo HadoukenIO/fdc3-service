@@ -111,6 +111,7 @@ export class ChannelModel {
 
                 if (previousIdentities.length === 0) {
                     this._channelIdToIdentitiesMap.delete(previousChannelId);
+                    this._channelIdToCachedContextMap.delete(previousChannelId);
                 }
             }
 
