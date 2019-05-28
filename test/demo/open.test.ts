@@ -83,8 +83,7 @@ describe('Opening applications with the FDC3 client', () => {
             await fin.Application.wrapSync(testAppIdentity2).quit().catch(() => {});
         });
 
-        test.skip('When passing a valid app name and a valid context, the app opens and its context listener is triggered with the correct\
-data [broken in provider re-arch, to be fixed in future story]', async () => {
+        test('When passing a valid app name and a valid context, the app opens and its context listener is triggered with the correct data', async () => {
             // From the launcher app, call fdc3.open with a valid name and context
             await fdc3Remote.open(testManagerIdentity, testAppIdentity1.uuid, validContext);
 
@@ -133,8 +132,8 @@ data [broken in provider re-arch, to be fixed in future story]', async () => {
                 expect(receivedContexts).toEqual([validContext]);
             });
 
-            test.skip('When an app is already running, opening a second app with context works as expected \
-and does not trigger the context listener of the already open app [broken in provider re-arch, to be fixed in future story]', async () => {
+            test('When an app is already running, opening a second app with context works as expected \
+and does not trigger the context listener of the already open app', async () => {
                 // From the launcher app, call fdc3.open with the name of as second app
                 await fdc3Remote.open(testManagerIdentity, testAppIdentity2.uuid, validContext);
                 // Check that the second app started
