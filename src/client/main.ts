@@ -145,7 +145,7 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  *
  * ```javascript
  * // I have a context object, and I want to know what I can do with it, hence, I look for intents...
- * const appIntents = await agent.findIntentsForContext(context);
+ * const appIntents = await agent.findIntentsByContext(context);
  *
  * // returns for example:
  * // [{
@@ -228,15 +228,22 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
 
             if (index >= 0) {
                 intentListeners.splice(index, 1);
-                tryServiceDispatch(APIFromClientTopic.REMOVE_INTENT_LISTENER, {intent});
+
+                if (!hasIntentListener(intent)) {
+                    tryServiceDispatch(APIFromClientTopic.REMOVE_INTENT_LISTENER, {intent});
+                }
             }
 
             return index >= 0;
         }
     };
+
+    const hasIntentListenerBefore = hasIntentListener(intent);
     intentListeners.push(listener);
 
-    tryServiceDispatch(APIFromClientTopic.ADD_INTENT_LISTENER, {intent});
+    if (!hasIntentListenerBefore) {
+        tryServiceDispatch(APIFromClientTopic.ADD_INTENT_LISTENER, {intent});
+    }
     return listener;
 }
 
@@ -274,4 +281,8 @@ export function addEventListener(eventType: FDC3EventType, handler: (event: FDC3
 
 export function removeEventListener(eventType: FDC3EventType, handler: (eventPayload: ChannelChangedEvent) => void): void {
     eventEmitter.removeListener(eventType, handler);
+}
+
+function hasIntentListener(intent: string): boolean {
+    return intentListeners.some(intentListener => intentListener.intent === intent);
 }
