@@ -1,1 +1,1 @@
-export const appStartupTime = 15000;
+export const appStartupTime = 30 * 1000;
