@@ -56,27 +56,21 @@ export class Injector {
         const container = new Container();
         const promises: Promise<unknown>[] = [];
 
-        console.log('E');
         Object.keys(Bindings).forEach(k => {
             const key: Keys = k as any;
-            console.log('F', key);
 
             if (typeof Bindings[key] === 'function') {
-                console.log('G', key);
                 container.bind(Inject[key]).to(Bindings[key] as any).inSingletonScope();
 
                 if ((Bindings[key] as Function).prototype.hasOwnProperty('init')) {
                     promises.push((container.get(Inject[key]) as AsyncInit).initialized);
                 }
             } else {
-                console.log('H', key);
                 container.bind(Inject[key]).toConstantValue(Bindings[key]);
             }
         });
-        console.log('I');
 
         Injector._initialized = Promise.all(promises).then(() => {});
-        console.log('J');
         return container;
     })();
 

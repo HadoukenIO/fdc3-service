@@ -16,7 +16,7 @@ import {EventEmitter} from 'events';
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
 import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient} from './internal';
-import {ChannelChangedEvent} from './contextChannels';
+import {ChannelChangedEvent, ChannelEvent, getChannelById} from './contextChannels';
 import {FDC3Error} from './main';
 
 /**
@@ -30,7 +30,6 @@ declare const PACKAGE_VERSION: string;
  * Defines all events that are fired by the service
  */
 export type FDC3Event = ChannelChangedEvent;
-export type FDC3EventType = 'channel-changed';
 
 /**
  * The event emitter to emit events received from the service.  All addEventListeners will tap into this.
@@ -49,7 +48,13 @@ if (fin.Window.me.uuid !== SERVICE_IDENTITY.uuid || fin.Window.me.name !== SERVI
         fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}}).then((channel: ChannelClient) => {
             // Register service listeners
             channel.register('WARN', (payload: any) => console.warn(payload));  // tslint:disable-line:no-any
-            channel.register('event', (event: FDC3Event) => {
+            channel.register('event', async (event: FDC3Event|ChannelEvent) => {
+                // Special-handling for some event types, to convert transport-type event to client-side event.
+                if (event.type === 'channel-changed') {
+                    event.channel = event.channel ? await getChannelById(event.channel.id) : null;
+                    event.previousChannel = event.previousChannel ? await getChannelById(event.previousChannel.id) : null;
+                }
+
                 eventEmitter.emit(event.type, event);
             });
             // Any unregistered action will simply return false

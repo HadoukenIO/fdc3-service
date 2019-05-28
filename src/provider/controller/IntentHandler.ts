@@ -5,7 +5,6 @@ import {Intent} from '../../client/intents';
 import {IntentResolution, Application, FDC3Error, ResolveError} from '../../client/main';
 import {FindFilter, Model} from '../model/Model';
 import {AppDirectory} from '../model/AppDirectory';
-import {AppWindow} from '../model/AppWindow';
 import {APIToClientTopic} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
 

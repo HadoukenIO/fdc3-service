@@ -15,7 +15,7 @@ import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 
 import {Application, Context, IntentType, ChannelId, Channel, AppIntent} from '../../../src/client/main';
 import {RaiseIntentPayload} from '../../../src/client/internal';
-import {FDC3Event, FDC3EventType} from '../../../src/client/connection';
+import {FDC3Event} from '../../../src/client/connection';
 
 import {OFPuppeteerBrowser, TestWindowContext} from './ofPuppeteer';
 
@@ -48,25 +48,47 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
 
 export async function getAllChannels(executionTarget: Identity): Promise<Channel[]> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext): Promise<Channel[]> {
-        return this.fdc3.getAllChannels();
+        return this.fdc3.channels.getDesktopChannels();
     });
 }
 
+/**
+ * TODO (SERVICE-429): Remove this function and replace with a "remote-enabled" Channel object.
+ */
 export async function joinChannel(executionTarget: Identity, channelId: ChannelId, identity?: Identity): Promise<void> {
-    return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, channelId: ChannelId, identity?: Identity): Promise<void> {
-        return this.fdc3.joinChannel(channelId, identity);
+    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, channelId: ChannelId, identity?: Identity): Promise<void> {
+        let channel: Channel;
+
+        if (channelId === 'default') {
+            channel = this.fdc3.channels.defaultChannel;
+        } else {
+            channel = (await this.fdc3.channels.getDesktopChannels()).find(c => c.id === channelId)!;
+        }
+
+        return channel.join(identity);
     }, channelId, identity);
 }
 
-export async function getChannel(executionTarget: Identity, identity?: Identity): Promise<Channel> {
+export async function getCurrentChannel(executionTarget: Identity, identity?: Identity): Promise<Channel> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, identity?: Identity): Promise<Channel> {
-        return this.fdc3.getChannel(identity);
+        return this.fdc3.getCurrentChannel(identity);
     }, identity);
 }
 
+/**
+ * TODO (SERVICE-429): Remove this function and replace with a "remote-enabled" Channel object.
+ */
 export async function getChannelMembers(executionTarget: Identity, channelId: ChannelId): Promise<Identity[]> {
-    return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, channelId: ChannelId): Promise<Identity[]> {
-        return this.fdc3.getChannelMembers(channelId);
+    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, channelId: ChannelId): Promise<Identity[]> {
+        let channel: Channel;
+
+        if (channelId === 'default') {
+            channel = this.fdc3.channels.defaultChannel;
+        } else {
+            channel = (await this.fdc3.channels.getDesktopChannels()).find(c => c.id === channelId)!;
+        }
+
+        return channel.getMembers();
     }, channelId);
 }
 
@@ -217,8 +239,8 @@ export interface RemoteEventListener {
     unsubscribe: () => Promise<void>;
 }
 
-export async function addEventListener(executionTarget: Identity, eventType: FDC3EventType): Promise<RemoteEventListener> {
-    const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext, eventType: FDC3EventType): number {
+export async function addEventListener(executionTarget: Identity, eventType: FDC3Event['type']): Promise<RemoteEventListener> {
+    const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext, eventType: FDC3Event['type']): number {
         const listenerID = this.eventListeners.length;
 
         const handler = (payload: FDC3Event) => {

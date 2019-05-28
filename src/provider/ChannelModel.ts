@@ -1,80 +1,79 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {Channel, ChannelId, GLOBAL_CHANNEL_ID, ChannelChangedEvent} from '../client/contextChannels';
+import {ChannelId, DEFAULT_CHANNEL_ID, ChannelChangedEvent} from '../client/contextChannels';
 import {Context} from '../client/main';
+import {ChannelTransport, DesktopChannelTransport, EventTransport} from '../client/internal';
 
 import {Signal1} from './common/Signal';
 
 type IdentityHash = string;
 
-const GLOBAL_CHANNEL: Channel = {
-    id: GLOBAL_CHANNEL_ID,
-    type: 'global',
-    name: 'Global',
-    color: 0xFFFFFF
+const GLOBAL_CHANNEL: ChannelTransport = {
+    id: DEFAULT_CHANNEL_ID,
+    type: 'default'
 };
 
-const RED_CHANNEL: Channel = {
-    id: 'red',
-    type: 'user',
-    name: 'Red',
-    color: 0xFF0000
-};
-
-const ORANGE_CHANNEL: Channel = {
-    id: 'orange',
-    type: 'user',
-    name: 'Orange',
-    color: 0xFF8000
-};
-
-const YELLOW_CHANNEL: Channel = {
-    id: 'yellow',
-    type: 'user',
-    name: 'Yellow',
-    color: 0xFFFF00
-};
-
-const GREEN_CHANNEL: Channel = {
-    id: 'green',
-    type: 'user',
-    name: 'Green',
-    color: 0x00FF00
-};
-
-const BLUE_CHANNEL: Channel = {
-    id: 'blue',
-    type: 'user',
-    name: 'Blue',
-    color: 0x0000FF
-};
-
-const PURPLE_CHANNEL: Channel = {
-    id: 'purple',
-    type: 'user',
-    name: 'Purple',
-    color: 0xFF00FF
-};
+const DESKTOP_CHANNELS: DesktopChannelTransport[] = [
+    {
+        id: 'red',
+        type: 'desktop',
+        name: 'Red',
+        color: 0xFF0000
+    },
+    {
+        id: 'orange',
+        type: 'desktop',
+        name: 'Orange',
+        color: 0xFF8000
+    },
+    {
+        id: 'yellow',
+        type: 'desktop',
+        name: 'Yellow',
+        color: 0xFFFF00
+    },
+    {
+        id: 'green',
+        type: 'desktop',
+        name: 'Green',
+        color: 0x00FF00
+    },
+    {
+        id: 'blue',
+        type: 'desktop',
+        name: 'Blue',
+        color: 0x0000FF
+    },
+    {
+        id: 'purple',
+        type: 'desktop',
+        name: 'Purple',
+        color: 0xFF00FF
+    }
+];
 
 export function createChannelModel(connectionSignal: Signal1<Identity>, disconnectionSignal:Signal1<Identity>) {
-    const userChannels = [RED_CHANNEL, ORANGE_CHANNEL, YELLOW_CHANNEL, GREEN_CHANNEL, BLUE_CHANNEL, PURPLE_CHANNEL];
-
-    return new ChannelModel(GLOBAL_CHANNEL, userChannels, connectionSignal, disconnectionSignal);
+    return new ChannelModel(GLOBAL_CHANNEL, DESKTOP_CHANNELS, connectionSignal, disconnectionSignal);
 }
 
 export class ChannelModel {
-    public readonly onChannelChanged: Signal1<ChannelChangedEvent> = new Signal1<ChannelChangedEvent>();
+    public readonly onChannelChanged: Signal1<EventTransport<ChannelChangedEvent>> = new Signal1();
 
     private _identityHashToChannelIdMap: Map<IdentityHash, ChannelId> = new Map<IdentityHash, ChannelId>();
     private _channelIdToIdentitiesMap: Map<ChannelId, Identity[]> = new Map<ChannelId, Identity[]>();
     private _channelIdToCachedContextMap: Map<ChannelId, Context> = new Map<ChannelId, Context>();
 
-    private _channelIdToChannelMap: Map<ChannelId, Channel> = new Map<ChannelId, Channel>();
-    private _channels: Channel[] = [];
+    private _channelIdToChannelMap: Map<ChannelId, ChannelTransport> = new Map<ChannelId, ChannelTransport>();
+    private _channels: ChannelTransport[] = [];
 
-    private _globalChannel: Channel;
+    private _globalChannel: ChannelTransport;
 
-    public constructor(globalChannel: Channel, userChannels: Channel[], onConnection: Signal1<Identity>, onDisconnection:Signal1<Identity>) {
+    public constructor(
+        globalChannel: ChannelTransport,
+        userChannels: DesktopChannelTransport[],
+        onConnection: Signal1<Identity>,
+        onDisconnection:Signal1<Identity>
+    ) {
         this._globalChannel = globalChannel;
 
         this._channels.splice(0, 0, this._globalChannel);
@@ -88,7 +87,7 @@ export class ChannelModel {
         onDisconnection.add(this.onDisconnection, this);
     }
 
-    public getAllChannels(): Channel[] {
+    public getAllChannels(): ChannelTransport[] {
         return this._channels.slice();
     }
 
@@ -129,8 +128,8 @@ export class ChannelModel {
                 this._identityHashToChannelIdMap.delete(identityHash);
             }
 
-            const channel = channelId ? this._channelIdToChannelMap.get(channelId)! : undefined;
-            const previousChannel = previousChannelId ? this._channelIdToChannelMap.get(previousChannelId)! : undefined;
+            const channel = channelId ? this._channelIdToChannelMap.get(channelId)! : null;
+            const previousChannel = previousChannelId ? this._channelIdToChannelMap.get(previousChannelId)! : null;
 
             if (channel) {
                 this.onChannelChanged.emit({type: 'channel-changed', identity, channel, previousChannel});
@@ -138,11 +137,19 @@ export class ChannelModel {
         }
     }
 
-    public getChannel(identity: Identity): Channel {
+    public getChannelById(channelId: ChannelId): ChannelTransport {
+        return this._channelIdToChannelMap.get(channelId)!;
+    }
+
+    public getChannelForWindow(identity: Identity): ChannelTransport {
         const identityHash = getIdentityHash(identity);
         const channelId = this._identityHashToChannelIdMap.get(identityHash)!;
 
         return this._channelIdToChannelMap.get(channelId)!;
+    }
+
+    public getChannelContext(channelId: ChannelId): Context {
+        return this._channelIdToCachedContextMap.get(channelId)!;
     }
 
     public getChannelMembers(channelId: ChannelId): Identity[] {
@@ -154,7 +161,7 @@ export class ChannelModel {
     public setContext(channelId: ChannelId, context: Context): void {
         this.validateChannelId(channelId);
 
-        if (channelId !== GLOBAL_CHANNEL_ID) {
+        if (channelId !== DEFAULT_CHANNEL_ID) {
             this._channelIdToCachedContextMap.set(channelId, context);
         }
     }
@@ -172,7 +179,7 @@ export class ChannelModel {
     }
 
     private onConnection(identity: Identity): void {
-        this.joinChannelInternal(identity, GLOBAL_CHANNEL_ID);
+        this.joinChannelInternal(identity, DEFAULT_CHANNEL_ID);
     }
 
     private onDisconnection(identity: Identity): void {

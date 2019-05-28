@@ -1,10 +1,9 @@
 import 'reflect-metadata';
 import {inject, injectable} from 'inversify';
-import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload, IntentListenerPayload} from '../client/internal';
-import {AppIntent, IntentResolution, Application, Intent, Channel, ResolveError, FDC3Error} from '../client/main';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload} from '../client/internal';
+import {AppIntent, IntentResolution, Application, Intent, ResolveError, FDC3Error} from '../client/main';
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
@@ -55,10 +54,12 @@ export class Main {
             [APIFromClientTopic.RAISE_INTENT]: this.raiseIntent.bind(this),
             [APIFromClientTopic.ADD_INTENT_LISTENER]: this.addIntentListener.bind(this),
             [APIFromClientTopic.REMOVE_INTENT_LISTENER]: this.removeIntentListener.bind(this),
-            [APIFromClientTopic.GET_ALL_CHANNELS]: this.getAllChannels.bind(this),
-            [APIFromClientTopic.JOIN_CHANNEL]: this.joinChannel.bind(this),
-            [APIFromClientTopic.GET_CHANNEL]: this.getChannel.bind(this),
-            [APIFromClientTopic.GET_CHANNEL_MEMBERS]: this.getChannelMembers.bind(this)
+            [APIFromClientTopic.GET_DESKTOP_CHANNELS]: this._contexts.getDesktopChannels.bind(this._contexts),
+            [APIFromClientTopic.GET_CURRENT_CHANNEL]: this._contexts.getCurrentChannel.bind(this._contexts),
+            [APIFromClientTopic.CHANNEL_BROADCAST]: this._contexts.channelBroadcast.bind(this._contexts),
+            [APIFromClientTopic.CHANNEL_GET_CURRENT_CONTEXT]: this._contexts.channelGetCurrentContext.bind(this._contexts),
+            [APIFromClientTopic.CHANNEL_GET_MEMBERS]: this._contexts.channelGetMembers.bind(this._contexts),
+            [APIFromClientTopic.CHANNEL_JOIN]: this._contexts.channelJoin.bind(this._contexts)
         });
 
         console.log('Service Initialised');
@@ -114,22 +115,6 @@ export class Main {
         };
 
         return this._intents.raise(intent);
-    }
-
-    private async getAllChannels(payload: GetAllChannelsPayload, source: ProviderIdentity): Promise<Channel[]> {
-        return this._contexts.getAllChannels(payload, source);
-    }
-
-    private async joinChannel(payload: JoinChannelPayload, source: ProviderIdentity): Promise<void> {
-        return this._contexts.joinChannel(payload, source);
-    }
-
-    private async getChannel(payload: GetChannelPayload, source: ProviderIdentity): Promise<Channel> {
-        return this._contexts.getChannel(payload, source);
-    }
-
-    private async getChannelMembers(payload: GetChannelMembersPayload, source: ProviderIdentity): Promise<Identity[]> {
-        return this._contexts.getChannelMembers(payload, source);
     }
 
     private async addIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): Promise<void> {

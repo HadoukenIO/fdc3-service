@@ -3,16 +3,20 @@ import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
 import {AppWindow} from '../model/AppWindow';
-import {Context, ChannelChangedEvent, Channel} from '../../client/main';
+import {Context, ChannelChangedEvent} from '../../client/main';
 import {ChannelModel, createChannelModel} from '../ChannelModel';
 import {APIHandler} from '../APIHandler';
 import {
     APIFromClientTopic,
-    GetAllChannelsPayload,
-    JoinChannelPayload,
-    GetChannelPayload,
-    GetChannelMembersPayload,
-    APIToClientTopic
+    APIToClientTopic,
+    ChannelTransport,
+    GetDesktopChannelsPayload,
+    GetCurrentChannelPayload,
+    ChannelBroadcastPayload,
+    ChannelGetCurrentContextPayload,
+    ChannelGetMembersPayload,
+    ChannelJoinPayload,
+    EventTransport
 } from '../../client/internal';
 import {Inject} from '../common/Injectables';
 
@@ -34,7 +38,7 @@ export class ContextHandler {
     }
 
     public async broadcast(context: Context, source: Identity): Promise<void> {
-        const channel = this._channelModel.getChannel(source);
+        const channel = this._channelModel.getChannelForWindow(source);
         const channelMembers = this._channelModel.getChannelMembers(channel.id);
 
         this._channelModel.setContext(channel.id, context);
@@ -47,11 +51,34 @@ export class ContextHandler {
             .map(identity => this.send(identity, context)));
     }
 
-    public async getAllChannels(payload: GetAllChannelsPayload, source: ProviderIdentity): Promise<Channel[]> {
+    public async getDesktopChannels(payload: GetDesktopChannelsPayload, source: ProviderIdentity): Promise<ChannelTransport[]> {
         return this._channelModel.getAllChannels();
     }
 
-    public async joinChannel(payload: JoinChannelPayload, source: ProviderIdentity): Promise<void> {
+    public async getCurrentChannel(payload: GetCurrentChannelPayload, source: ProviderIdentity): Promise<ChannelTransport> {
+        const identity = payload.identity || source;
+
+        return this._channelModel.getChannelForWindow(identity);
+    }
+
+    public async channelBroadcast(payload: ChannelBroadcastPayload, source: ProviderIdentity): Promise<void> {
+        const channel = this._channelModel.getChannelForWindow(source);
+        const channelMembers = this._channelModel.getChannelMembers(channel.id);
+
+        this._channelModel.setContext(channel.id, payload.context);
+
+        return Promise.all(channelMembers.map(identity => this.send(identity, payload.context))).then(() => {});
+    }
+
+    public async channelGetCurrentContext(payload: ChannelGetCurrentContextPayload, source: ProviderIdentity): Promise<Context|null> {
+        return this._channelModel.getChannelContext(payload.id) || null;
+    }
+
+    public async channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): Promise<Identity[]> {
+        return this._channelModel.getChannelMembers(payload.id);
+    }
+
+    public async channelJoin(payload: ChannelJoinPayload, source: ProviderIdentity): Promise<void> {
         const identity = payload.identity || source;
 
         this._channelModel.joinChannel(identity, payload.id);
@@ -62,17 +89,7 @@ export class ContextHandler {
         }
     }
 
-    public async getChannel(payload: GetChannelPayload, source: ProviderIdentity): Promise<Channel> {
-        const identity = payload.identity || source;
-
-        return this._channelModel.getChannel(identity);
-    }
-
-    public async getChannelMembers(payload: GetChannelMembersPayload, source: ProviderIdentity): Promise<Identity[]> {
-        return this._channelModel.getChannelMembers(payload.id);
-    }
-
-    private onChannelChangedHandler(event: ChannelChangedEvent): void {
+    private onChannelChangedHandler(event: EventTransport<ChannelChangedEvent>): void {
         this._apiHandler.channel.publish('event', event);
     }
 }
