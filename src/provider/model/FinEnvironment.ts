@@ -5,13 +5,13 @@ import {Identity, Window} from 'openfin/_v2/main';
 import {AsyncInit} from '../controller/AsyncInit';
 import {Signal1, Signal2} from '../common/Signal';
 import {Application, IntentType} from '../../client/main';
+import {deferredPromise} from '../../client/internal';
+import {FDC3Error, OpenError, withTimeout, Timeouts} from '../../client/errors';
 
 import {Environment} from './Environment';
 import {AppWindow, ContextSpec} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 import {getId} from './Model';
-
-export const INTENT_LISTENER_TIMEOUT = 5000;
 
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
@@ -32,8 +32,17 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public readonly windowClosed: Signal1<Identity> = new Signal1();
 
     public async createApplication(appInfo: Application): Promise<AppWindow> {
-        const app = await fin.Application.startFromManifest(appInfo.manifest);
-        return new FinAppWindow(app.identity, appInfo);
+        const [didTimeout, app] = await withTimeout(
+            Timeouts.APP_START_FROM_MANIFEST,
+            fin.Application.startFromManifest(appInfo.manifest).catch(e => {
+                throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
+            })
+        );
+        if (didTimeout) {
+            throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
+        }
+
+        return new FinAppWindow(app!.identity, appInfo);
     }
 
     public wrapApplication(appInfo: Application, identity: Identity): AppWindow {
@@ -122,22 +131,27 @@ class FinAppWindow {
         return this._window.setAsForeground();
     }
 
-    public ensureReadyToReceiveIntent(intent: IntentType): Promise<void> {
+    public async ensureReadyToReceiveIntent(intent: IntentType): Promise<void> {
         if (this._intentListeners[intent]) {
+            // App has already registered the intent listener
             return Promise.resolve();
         }
-        return new Promise((resolve, reject) => {
-            const slot = this._onIntentListenerAdded.add(intentAdded => {
-                if (intentAdded === intent) {
-                    slot.remove();
-                    resolve();
-                }
-            });
-            setTimeout(() => {
+
+        // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
+        const [waitForIntentListenerAddedPromise, resolve] = deferredPromise();
+        const slot = this._onIntentListenerAdded.add(intentAdded => {
+            if (intentAdded === intent) {
                 slot.remove();
-                reject(new Error(`Timeout waiting for intent listener to be added. intent = ${intent}`));
-            }, INTENT_LISTENER_TIMEOUT);
+                resolve();
+            }
         });
+
+        const [didTimeout] = await withTimeout(Timeouts.ADD_INTENT_LISTENER, waitForIntentListenerAddedPromise);
+
+        if (didTimeout) {
+            slot.remove();
+            throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for intent listener to be added. intent = ${intent}`);
+        }
     }
 }
 

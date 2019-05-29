@@ -1,7 +1,6 @@
-import {Window, Identity} from 'openfin/_v2/main';
+import {Identity} from 'openfin/_v2/main';
 
 import {Application, IntentType} from '../../client/main';
-import {Signal1} from '../common/Signal';
 
 import {ContextChannel} from './ContextChannel';
 

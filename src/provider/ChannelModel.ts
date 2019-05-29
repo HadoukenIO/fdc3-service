@@ -3,6 +3,7 @@ import {inject, injectable} from 'inversify';
 
 import {Channel, ChannelId, GLOBAL_CHANNEL_ID, ChannelChangedEvent} from '../client/contextChannels';
 import {Context} from '../client/main';
+import {FDC3Error, ChannelError} from '../client/errors';
 import {APIFromClientTopic} from '../client/internal';
 
 import {Signal1} from './common/Signal';
@@ -170,7 +171,7 @@ export class ChannelModel {
 
     private validateChannelId(channelId: string): void {
         if (!this._channelIdToChannelMap.has(channelId)) {
-            throw new Error('No channel with channelId: ' + channelId);
+            throw new FDC3Error(ChannelError.ChannelDoesNotExist, 'No channel with channelId: ' + channelId);
         }
     }
 

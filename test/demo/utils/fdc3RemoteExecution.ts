@@ -23,8 +23,8 @@ const ofBrowser = new OFPuppeteerBrowser();
 
 export async function open(executionTarget: Identity, name: string, context?: Context): Promise<void> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, name: string, context?: Context): Promise<void> {
-        return this.fdc3.open(name, context);
-    }, name, context);
+        return this.fdc3.open(name, context).catch(this.errorHandler);
+    }, name, context).catch(handlePuppeteerError);
 }
 
 export async function resolve(executionTarget: Identity, intent: IntentType, context?: Context): Promise<Application[]> {
@@ -48,26 +48,26 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
 
 export async function getAllChannels(executionTarget: Identity): Promise<Channel[]> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext): Promise<Channel[]> {
-        return this.fdc3.getAllChannels();
-    });
+        return this.fdc3.getAllChannels().catch(this.errorHandler);
+    }).catch(handlePuppeteerError);
 }
 
 export async function joinChannel(executionTarget: Identity, channelId: ChannelId, identity?: Identity): Promise<void> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, channelId: ChannelId, identity?: Identity): Promise<void> {
-        return this.fdc3.joinChannel(channelId, identity);
-    }, channelId, identity);
+        return this.fdc3.joinChannel(channelId, identity).catch(this.errorHandler);
+    }, channelId, identity).catch(handlePuppeteerError);
 }
 
 export async function getChannel(executionTarget: Identity, identity?: Identity): Promise<Channel> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, identity?: Identity): Promise<Channel> {
-        return this.fdc3.getChannel(identity);
-    }, identity);
+        return this.fdc3.getChannel(identity).catch(this.errorHandler);
+    }, identity).catch(handlePuppeteerError);
 }
 
 export async function getChannelMembers(executionTarget: Identity, channelId: ChannelId): Promise<Identity[]> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, channelId: ChannelId): Promise<Identity[]> {
-        return this.fdc3.getChannelMembers(channelId);
-    }, channelId);
+        return this.fdc3.getChannelMembers(channelId).catch(this.errorHandler);
+    }, channelId).catch(handlePuppeteerError);
 }
 
 export async function raiseIntent(executionTarget: Identity, intent: IntentType, context: Context, target?: string): Promise<void> {

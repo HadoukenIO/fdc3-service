@@ -1,6 +1,8 @@
 import 'jest';
 import {connect, Fin, Identity, Application} from 'hadouken-js-adapter';
 
+import {ChannelError} from '../../src/client/errors';
+
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {appStartupTime} from './constants';
 
@@ -58,7 +60,7 @@ async function setupWindows(...channels: (string|undefined)[]): Promise<Identity
 }
 
 describe('When broadcasting on global channel', () => {
-    it('Context is received by global windows only', async () => {
+    test('Context is received by global windows only', async () => {
         const [globalWindow, blueWindow] = await setupWindows(undefined, 'blue');
 
         const globalListener = await fdc3Remote.addContextListener(globalWindow);
@@ -76,7 +78,7 @@ describe('When broadcasting on global channel', () => {
         expect(blueContexts).toHaveLength(0);
     }, appStartupTime * 2);
 
-    it('Context is received by window that has left and rejoined global channel', async () => {
+    test('Context is received by window that has left and rejoined global channel', async () => {
         const [channelChangingWindow] = await setupWindows('blue');
 
         // Change the channel of our window
@@ -94,7 +96,7 @@ describe('When broadcasting on global channel', () => {
 });
 
 describe('When broadcasting on a user channel', () => {
-    it('Context is received by windows on that user channel only', async () => {
+    test('Context is received by windows on that user channel only', async () => {
         const [red1Window, red2Window, globalWindow, blueWindow] = await setupWindows('red', 'red', 'global', 'blue');
 
         const redListener = await fdc3Remote.addContextListener(red2Window);
@@ -116,7 +118,7 @@ describe('When broadcasting on a user channel', () => {
         expect(blueReceivedContexts).toHaveLength(0);
     }, appStartupTime * 4);
 
-    it('Context is received by window that has left and rejoined user channel', async () => {
+    test('Context is received by window that has left and rejoined user channel', async () => {
         const [blueWindow, channelChangingWindow] = await setupWindows('blue', undefined);
 
         // Change the channel of our window
@@ -135,7 +137,7 @@ describe('When broadcasting on a user channel', () => {
 });
 
 describe('When joining a channel', () => {
-    it('Window is listed as a member of the channel', async () => {
+    test('Window is listed as a member of the channel', async () => {
         const [greenWindow] = await setupWindows('green');
 
         const greenChannelMembers = await fdc3Remote.getChannelMembers(testManagerIdentity, 'green');
@@ -149,7 +151,7 @@ describe('When joining a channel', () => {
         expect(globalChannelMembers).not.toContainEqual(greenWindow);
     });
 
-    it('Window is listed as a member of the correct channel after changing channel', async () => {
+    test('Window is listed as a member of the correct channel after changing channel', async () => {
         const [channelChangingWindow] = await setupWindows('orange');
 
         // Change the channel of our window
@@ -166,7 +168,7 @@ describe('When joining a channel', () => {
         expect(orangeChannelMembers).not.toContainEqual(channelChangingWindow);
     });
 
-    it('Window is listed as a member of the correct channel after rejoining the global channel', async () => {
+    test('Window is listed as a member of the correct channel after rejoining the global channel', async () => {
         const [channelChangingWindow] = await setupWindows('purple');
 
         // Change the channel of our window
@@ -183,7 +185,7 @@ describe('When joining a channel', () => {
         expect(purpleChannelMembers).not.toContainEqual(channelChangingWindow);
     });
 
-    it('Window receives cached context for user channel', async () => {
+    test('Window receives cached context for user channel', async () => {
         const [yellowWindow, channelChangingWindow] = await setupWindows('yellow', 'red');
 
         // Broadcast our test context on the yellow channel
@@ -199,7 +201,7 @@ describe('When joining a channel', () => {
         expect(receivedContexts).toEqual([testContext]);
     }, appStartupTime * 2);
 
-    it('Window does not receive cached context for global channel', async () => {
+    test('Window does not receive cached context for global channel', async () => {
         const [channelChangingWindow] = await setupWindows('red');
 
         // Broadcast our test context on the global channel
@@ -215,7 +217,7 @@ describe('When joining a channel', () => {
         expect(receivedContexts).toHaveLength(0);
     });
 
-    it('channel-changed event is fired for user channel', async () => {
+    test('channel-changed event is fired for user channel', async () => {
         const [listeningWindow, channelChangingWindow] = await setupWindows(undefined, undefined);
 
         const listener = await fdc3Remote.addEventListener(listeningWindow, 'channel-changed');
@@ -231,7 +233,7 @@ describe('When joining a channel', () => {
         expect(payload[0]).toHaveProperty('identity', channelChangingWindow);
     }, appStartupTime * 2);
 
-    it('channel-changed event is fired for global channel', async () => {
+    test('channel-changed event is fired for global channel', async () => {
         const [listeningWindow, channelChangingWindow] = await setupWindows(undefined, 'blue');
 
         const listener = await fdc3Remote.addEventListener(listeningWindow, 'channel-changed');
@@ -247,7 +249,7 @@ describe('When joining a channel', () => {
         expect(payload[0]).toHaveProperty('identity', channelChangingWindow);
     }, appStartupTime * 2);
 
-    it('If everything is unsubscribed, and something rejoins, there is no data held in the channel', async ()=>{
+    test('If everything is unsubscribed, and something rejoins, there is no data held in the channel', async ()=>{
         // First, set up a pair of windows on different channels. Yellow will be unused; green will be the
         // interesting one. Broadcast on green. No one is listening, no one hears.
         const [sendWindow, receiveWindow] = await setupWindows('green', 'yellow');
@@ -277,10 +279,22 @@ describe('When joining a channel', () => {
         receivedContexts = await receiveWindowListener.getReceivedContexts();
         expect(receivedContexts).toEqual([testContext]);
     }, appStartupTime * 2);
+
+    test('If the channel to join does not exist, an FDC3Error is thrown', async () => {
+        const [window] = await setupWindows(undefined);
+
+        // Join a non-existent channel
+        const joinChannelPromise = fdc3Remote.joinChannel(window, 'non-existent-channel');
+
+        await expect(joinChannelPromise).toThrowFDC3Error(
+            ChannelError.ChannelDoesNotExist,
+            'No channel with channelId: non-existent-channel'
+        );
+    });
 });
 
 describe('When starting an app', () => {
-    it('channel-changed event is fired for global channel', async () => {
+    test('channel-changed event is fired for global channel', async () => {
         const [listeningWindow] = await setupWindows(undefined);
         const listener = await fdc3Remote.addEventListener(listeningWindow, 'channel-changed');
 

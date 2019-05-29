@@ -43,7 +43,7 @@ describe('Resolving applications by intent', () => {
             const actualApps = await fdc3Remote.resolve(testManagerIdentity, invalidIntent);
 
             // Expect no apps returned
-            expect(actualApps.length).toBe(0);
+            expect(actualApps).toEqual([]);
         });
     });
 

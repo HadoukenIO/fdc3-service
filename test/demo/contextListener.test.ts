@@ -61,7 +61,7 @@ describe('Context listeners and broadcasting', () => {
 
                 // Received contexts
                 const receivedContexts = await listener.getReceivedContexts();
-                expect(receivedContexts.length).toBe(0);
+                expect(receivedContexts).toEqual([]);
             });
 
             test('When calling addContextListener a second time there are no errors', async () => {

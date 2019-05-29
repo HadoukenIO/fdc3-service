@@ -10,6 +10,10 @@ const testManagerIdentity = {
     name: 'test-app'
 };
 
+const invalidContext = {
+    twitter: '@testname'
+} as unknown as Context;
+
 describe('Resolving intents by context, findIntentsByContext', () => {
     beforeEach(async () => {
         // The main launcher app should remain running for the duration of all tests.
@@ -17,14 +21,12 @@ describe('Resolving intents by context, findIntentsByContext', () => {
     });
 
     describe('When calling findIntentsByContext with an invalid context', () => {
-        const invalidContext = {
-            twitter: '@testname'
-        } as unknown as Context;
         test('The promise rejects with an FDC3Error', async () => {
             const findIntentsPromise = fdc3Remote.findIntentsByContext(testManagerIdentity, invalidContext);
-            await expect(findIntentsPromise).rejects.toThrowError(`Context not valid. context = ${JSON.stringify(invalidContext)}`);
-            await expect(findIntentsPromise).rejects.toHaveProperty('name', 'FDC3Error');
-            await expect(findIntentsPromise).rejects.toHaveProperty('code', ResolveError.InvalidContext);
+            await expect(findIntentsPromise).toThrowFDC3Error(
+                ResolveError.InvalidContext,
+                `Context not valid. context = ${JSON.stringify(invalidContext)}`
+            );
         });
     });
 

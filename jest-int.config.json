@@ -20,7 +20,7 @@
     "globalSetup": "./demo/utils/globalSetup.ts",
     "globalTeardown": "./demo/utils/globalTeardown.ts",
     "testEnvironment": "./demo/utils/integrationTestEnv.js",
-    "setupFilesAfterEnv": ["./demo/utils/integrationSetupAfterEnv.js"],
+    "setupFilesAfterEnv": ["./demo/utils/jestExtensions.ts", "./demo/utils/integrationSetupAfterEnv.js"],
     "reporters": [
       "default",
       [

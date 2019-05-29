@@ -4,7 +4,8 @@ import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload, IntentListenerPayload} from '../client/internal';
-import {AppIntent, IntentResolution, Application, Intent, Channel, ResolveError, FDC3Error} from '../client/main';
+import {AppIntent, IntentResolution, Application, Intent, Channel} from '../client/main';
+import {FDC3Error, ResolveError, OpenError} from '../client/errors';
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
@@ -67,14 +68,18 @@ export class Main {
     private async open(payload: OpenPayload): Promise<void> {
         const appInfo: Application|null = await this._directory.getAppByName(payload.name);
 
-        if (appInfo) {
-            const appWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_CONTEXT_LISTENER);
+        if (!appInfo) {
+            throw new FDC3Error(OpenError.AppNotFound, `No app in directory with name: ${payload.name}`);
+        }
 
-            if (payload.context) {
-                await this._contexts.send(appWindow, payload.context);
+        // This can throw FDC3Errors if app fails to open or times out
+        const appWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_CONTEXT_LISTENER);
+
+        if (payload.context) {
+            if (!payload.context.type) {
+                throw new FDC3Error(OpenError.InvalidContext, `Context not valid. context = ${JSON.stringify(payload.context)}`);
             }
-        } else {
-            throw new Error(`No app in directory with name: ${payload.name}`);
+            this._contexts.send(appWindow, payload.context);
         }
     }
 
@@ -110,7 +115,8 @@ export class Main {
     private async raiseIntent(payload: RaiseIntentPayload): Promise<IntentResolution> {
         const intent: Intent = {
             type: payload.intent,
-            context: payload.context
+            context: payload.context,
+            target: payload.target
         };
 
         return this._intents.raise(intent);
@@ -136,8 +142,9 @@ export class Main {
         const appWindow = this._model.getWindow(identity);
         if (appWindow) {
             appWindow.addIntentListener(payload.intent);
-            return Promise.resolve();
+            return;
         } else {
+            // TODO: [SERVICE-429] Should this be an FDC3Error? Or is the AppWindow model an implementation detail and is OK to throw a non-FDC3 error?
             throw new Error('App not found in model');
         }
     }
@@ -146,9 +153,9 @@ export class Main {
         const appWindow = this._model.getWindow(identity);
         if (appWindow) {
             appWindow.removeIntentListener(payload.intent);
-            return Promise.resolve();
         } else {
-            throw new Error('App not found in model');
+            // If for some odd reason the window is not in the model it's still OK to return successfully,
+            // as the caller's intention was to remove a listener and the listener is certainly not there.
         }
     }
 }

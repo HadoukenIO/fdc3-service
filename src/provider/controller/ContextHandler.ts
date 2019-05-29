@@ -32,12 +32,22 @@ export class ContextHandler {
     }
 
     // TODO: Remove ability to pass an Identity, standardise on AppWindow
+    /**
+     * Send a context to a specific app. Fire and forget
+     * @param app App to send the context to
+     * @param context Context to be sent
+     */
     public async send(app: AppWindow|Identity, context: Context): Promise<void> {
         const identity: Identity = (app as AppWindow).identity || app;
         await this._apiHandler.channel.dispatch(identity, APIToClientTopic.CONTEXT, context);
     }
 
-    public async broadcast(context: Context, source: Identity): Promise<void> {
+    /**
+     * Broadcast context to all apps in the same channel as the sender, except the sender itself. Fire and forget
+     * @param context Context to send
+     * @param source App sending the context. It won't receive the broadcast
+     */
+    public broadcast(context: Context, source: Identity): void {
         const channel = this._channelModel.getChannel(source);
         const channelMembers = this._channelModel.getChannelMembers(channel.id);
 
@@ -45,13 +55,13 @@ export class ContextHandler {
 
         const sourceId = getId(source);
 
-        await Promise.all(channelMembers
+        channelMembers
             // Sender window should not receive its own broadcasts
             .filter(identity => getId(identity) !== sourceId)
-            .map(identity => this.send(identity, context)));
+            .forEach(identity => this.send(identity, context));
     }
 
-    public async getAllChannels(payload: GetAllChannelsPayload, source: ProviderIdentity): Promise<Channel[]> {
+    public getAllChannels(payload: GetAllChannelsPayload, source: ProviderIdentity): Channel[] {
         return this._channelModel.getAllChannels();
     }
 
@@ -66,13 +76,13 @@ export class ContextHandler {
         }
     }
 
-    public async getChannel(payload: GetChannelPayload, source: ProviderIdentity): Promise<Channel> {
+    public getChannel(payload: GetChannelPayload, source: ProviderIdentity): Channel {
         const identity = payload.identity || source;
 
         return this._channelModel.getChannel(identity);
     }
 
-    public async getChannelMembers(payload: GetChannelMembersPayload, source: ProviderIdentity): Promise<Identity[]> {
+    public getChannelMembers(payload: GetChannelMembersPayload, source: ProviderIdentity): Identity[] {
         return this._channelModel.getChannelMembers(payload.id);
     }
 

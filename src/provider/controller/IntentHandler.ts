@@ -2,7 +2,8 @@ import {injectable, inject} from 'inversify';
 
 import {Inject} from '../common/Injectables';
 import {Intent} from '../../client/intents';
-import {IntentResolution, Application, FDC3Error, ResolveError} from '../../client/main';
+import {IntentResolution, Application} from '../../client/main';
+import {FDC3Error, ResolveError} from '../../client/errors';
 import {FindFilter, Model} from '../model/Model';
 import {AppDirectory} from '../model/AppDirectory';
 import {AppWindow} from '../model/AppWindow';
@@ -28,6 +29,10 @@ export class IntentHandler {
     }
 
     public async raise(intent: Intent): Promise<IntentResolution> {
+        if (hasTarget(intent)) {
+            return this.raiseWithTarget(intent);
+        }
+
         const apps: Application[] = await this._directory.getAppsByIntent(intent.type);
 
         if (apps.length === 0) {
@@ -39,6 +44,20 @@ export class IntentHandler {
             // Prompt the user to select an application to use
             return this.resolve(intent);
         }
+    }
+
+    private async raiseWithTarget(intent: IntentWithTarget): Promise<IntentResolution> {
+        const appInfo = await this._directory.getAppByName(intent.target);
+
+        if (!appInfo) {
+            throw new FDC3Error(ResolveError.TargetAppNotInDirectory, `No app in directory with name: ${intent.target}`);
+        }
+
+        if (!(appInfo.intents || []).some(appIntent => appIntent.name === intent.type)) {
+            throw new FDC3Error(ResolveError.TargetAppDoesNotHandleIntent, `App '${intent.target}' does not handle intent '${intent.type}'`);
+        }
+
+        return this.fireIntent(intent, appInfo);
     }
 
     private async resolve(intent: Intent): Promise<IntentResolution> {
@@ -60,7 +79,7 @@ export class IntentHandler {
             return null;
         });
         if (!selection) {
-            throw new Error('Selector closed or cancelled');
+            throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Selector closed or cancelled');
         }
 
         // Handle response
@@ -83,4 +102,14 @@ export class IntentHandler {
 
         return result;
     }
+}
+
+interface IntentWithTarget extends Intent {
+    // Overwrite optional `target` from Intent, making it mandatory
+    target: string;
+}
+
+// Guard to help narrow down Intent into IntentWithTarget
+function hasTarget(intent: Intent): intent is IntentWithTarget {
+    return intent && !!intent.target;
 }
