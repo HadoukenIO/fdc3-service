@@ -188,7 +188,7 @@
 {
     "appId": "800",
     "name": "test-app-takes-long-to-load-manifest",
-    "manifest": "http://localhost:3923/fakeDelay/?t=5500",
+    "manifest": "http://localhost:3923/fakeDelay/?t=30500",
     "manifestType": "openfin",
     "title": "Takes forever to load manifest",
     "description": "This app's manifest points to an endpoint which intentionally delays the response to test timeouts",
