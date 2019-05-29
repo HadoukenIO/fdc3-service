@@ -4,7 +4,6 @@ import 'reflect-metadata';
 import {AppDirectory} from '../../src/provider/model/AppDirectory';
 import {Application} from '../../src/client/directory';
 import {AppIntent} from '../../src/client/main';
-import {delay} from '../demo/utils/delay';
 
 enum StorageKeys {
     URL = 'fdc3@url',

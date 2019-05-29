@@ -1,7 +1,8 @@
 import 'jest';
+import 'reflect-metadata';
 
-import {INTENT_LISTENER_TIMEOUT} from '../../src/provider/model/AppWindow';
 import {ResolveError} from '../../src/client/errors';
+import {INTENT_LISTENER_TIMEOUT} from '../../src/provider/model/FinEnvironment';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
