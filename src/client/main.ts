@@ -4,7 +4,7 @@
 
 import {Identity} from 'openfin/_v2/main';
 
-import {channelPromise, tryServiceDispatch, eventEmitter, FDC3Event, FDC3EventType} from './connection';
+import {tryServiceDispatch, eventEmitter, FDC3Event, FDC3EventType, getServicePromise} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
 import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload} from './internal';
@@ -145,7 +145,7 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  *
  * ```javascript
  * // I have a context object, and I want to know what I can do with it, hence, I look for intents...
- * const appIntents = await agent.findIntentsForContext(context);
+ * const appIntents = await agent.findIntentsByContext(context);
  *
  * // returns for example:
  * // [{
@@ -197,24 +197,23 @@ export async function raiseIntent(intent: string, context: Context, target?: str
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
-if (channelPromise) {
-    channelPromise.then(channelClient => {
-        channelClient.register(APIToClientTopic.INTENT, (payload: RaiseIntentPayload) => {
-            intentListeners.forEach((listener: IntentListener) => {
-                if (payload.intent === listener.intent) {
-                    listener.handler(payload.context);
-                }
-            });
+getServicePromise().then(channelClient => {
+    channelClient.register(APIToClientTopic.INTENT, (payload: RaiseIntentPayload) => {
+        intentListeners.forEach((listener: IntentListener) => {
+            if (payload.intent === listener.intent) {
+                listener.handler(payload.context);
+            }
         });
     });
-    channelPromise.then(channelClient => {
-        channelClient.register(APIToClientTopic.CONTEXT, (payload: Context) => {
-            contextListeners.forEach((listener: ContextListener) => {
-                listener.handler(payload);
-            });
+
+    channelClient.register(APIToClientTopic.CONTEXT, (payload: Context) => {
+        contextListeners.forEach((listener: ContextListener) => {
+            listener.handler(payload);
         });
     });
-}
+}, resason => {
+    console.warn('Unable to register client Context and Intent handlers. getServicePromise() rejected with reason:', resason);
+});
 
 /**
  * Adds a listener for incoming Intents from the Agent.
@@ -228,15 +227,22 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
 
             if (index >= 0) {
                 intentListeners.splice(index, 1);
-                tryServiceDispatch(APIFromClientTopic.REMOVE_INTENT_LISTENER, {intent});
+
+                if (!hasIntentListener(intent)) {
+                    tryServiceDispatch(APIFromClientTopic.REMOVE_INTENT_LISTENER, {intent});
+                }
             }
 
             return index >= 0;
         }
     };
+
+    const hasIntentListenerBefore = hasIntentListener(intent);
     intentListeners.push(listener);
 
-    tryServiceDispatch(APIFromClientTopic.ADD_INTENT_LISTENER, {intent});
+    if (!hasIntentListenerBefore) {
+        tryServiceDispatch(APIFromClientTopic.ADD_INTENT_LISTENER, {intent});
+    }
     return listener;
 }
 
@@ -274,4 +280,8 @@ export function addEventListener(eventType: FDC3EventType, handler: (event: FDC3
 
 export function removeEventListener(eventType: FDC3EventType, handler: (eventPayload: ChannelChangedEvent) => void): void {
     eventEmitter.removeListener(eventType, handler);
+}
+
+function hasIntentListener(intent: string): boolean {
+    return intentListeners.some(intentListener => intentListener.intent === intent);
 }

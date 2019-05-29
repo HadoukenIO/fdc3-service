@@ -20,6 +20,14 @@ export interface FindOptions {
     require?: FindFilter;
 }
 
+/**
+ * Generates a unique `string` id for a window based on its application's uuid and window name
+ * @param identity
+ */
+export function getId(identity: Identity): string {
+    return `${identity.uuid}/${identity.name || identity.uuid}`;
+}
+
 @injectable()
 export class Model {
     @inject(Inject.APP_DIRECTORY)
@@ -49,7 +57,7 @@ export class Model {
     }
 
     public getWindow(identity: Identity): AppWindow|null {
-        return this._windows.find(w => w.id === AppWindow.getId(identity)) || null;
+        return this._windows.find(w => w.id === getId(identity)) || null;
     }
 
     public findWindow(appInfo: Application, options?: FindOptions): AppWindow|null {
@@ -105,7 +113,7 @@ export class Model {
         const appInfo = apps.find(app => app.manifest.startsWith(manifestUrl));
 
         if (appInfo) {
-            const id: string = AppWindow.getId(identity);
+            const id: string = getId(identity);
 
             if (!this._windows.some(window => window.id === id)) {
                 console.info(`Registering window ${id}`);
@@ -119,7 +127,7 @@ export class Model {
     }
 
     private onWindowClosed(identity: Identity): void {
-        const id: string = AppWindow.getId(identity);
+        const id: string = getId(identity);
         const index = this._windows.findIndex(window => window.id === id);
 
         if (index >= 0) {

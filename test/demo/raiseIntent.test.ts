@@ -1,10 +1,12 @@
 import 'jest';
+import 'reflect-metadata';
 
 import {ResolveError, OpenError, Timeouts} from '../../src/client/errors';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay} from './utils/delay';
+import {appStartupTime} from './constants';
 
 const testManagerIdentity = {
     uuid: 'test-app',
@@ -80,6 +82,29 @@ describe('Intent listeners and raising intents', () => {
                     const receivedContexts = await listener.getReceivedContexts();
                     expect(receivedContexts).toEqual([validPayload.context]);
                 });
+                test('When adding a duplicate intent listener, then calling raiseIntent from another app, ' +
+                    'both listeners are triggered exactly once with the correct context', async () => {
+                    const duplicateListener = await fdc3Remote.addIntentListener(testAppIdentity, validPayload.intent);
+
+                    await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.name);
+
+                    const receivedContexts = await listener.getReceivedContexts();
+                    expect(receivedContexts).toEqual([validPayload.context]);
+
+                    const duplicateReceivedContexts = await duplicateListener.getReceivedContexts();
+                    expect(duplicateReceivedContexts).toEqual([validPayload.context]);
+                });
+                test('When adding a distinct intent listener, then calling raiseIntent from another app, only the first listener is triggered', async () => {
+                    const distinctListener = await fdc3Remote.addIntentListener(testAppIdentity, validPayload.intent + 'distinguisher');
+
+                    await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.name);
+
+                    const receivedContexts = await listener.getReceivedContexts();
+                    expect(receivedContexts).toEqual([validPayload.context]);
+
+                    const distinctReceivedContexts = await distinctListener.getReceivedContexts();
+                    expect(distinctReceivedContexts).toEqual([]);
+                });
                 test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it times out', async () => {
                     await listener.unsubscribe();
                     const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.name);
@@ -89,6 +114,26 @@ describe('Intent listeners and raising intents', () => {
                         `Timeout waiting for intent listener to be added. intent = ${validPayload.intent}`
                     );
                 }, Timeouts.ADD_INTENT_LISTENER + 500);
+                test('When calling unsubscribe from a second intent listener, then calling raiseIntent from another app, ' +
+                     'the first listener is triggered exactly once with the correct context', async () => {
+                    const shortLivedListener = await fdc3Remote.addIntentListener(testAppIdentity, validPayload.intent);
+                    await shortLivedListener.unsubscribe();
+
+                    await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.name);
+
+                    const receivedContexts = await listener.getReceivedContexts();
+                    expect(receivedContexts).toEqual([validPayload.context]);
+                });
+                test('When calling unsubscribe from a second intent listener, then calling raiseIntent from another app, ' +
+                     'the second listener is not triggered', async () => {
+                    const shortLivedListener = await fdc3Remote.addIntentListener(testAppIdentity, validPayload.intent);
+                    await shortLivedListener.unsubscribe();
+
+                    await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppIdentity.name);
+
+                    const receivedContexts = await shortLivedListener.getReceivedContexts();
+                    expect(receivedContexts).toEqual([]);
+                });
             });
 
             describe('When the target is not in the directory', () => {
@@ -183,7 +228,12 @@ describe('Intent listeners and raising intents', () => {
                         testAppIdentity.name
                     );
 
-                    await delay(1500);
+                    const testApp = fin.Application.wrapSync({uuid: 'test-app-1', name: 'test-app-1'});
+
+                    while (!await testApp.isRunning()) {
+                        await delay(500);
+                    }
+
                     // App should now be running
                     await expect(fin.Application.wrapSync(testAppIdentity).isRunning()).resolves.toBe(true);
 
@@ -201,7 +251,7 @@ describe('Intent listeners and raising intents', () => {
                     expect(receivedContexts).toEqual([validPayload.context]);
 
                     await fin.Application.wrapSync(testAppIdentity).quit();
-                });
+                }, appStartupTime + 1500);
             });
         });
     });

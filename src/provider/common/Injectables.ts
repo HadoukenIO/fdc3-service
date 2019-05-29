@@ -11,7 +11,8 @@ enum Injectable {
     ENVIRONMENT,
     INTENT_HANDLER,
     MODEL,
-    SELECTOR
+    SELECTOR,
+    CHANNEL_MODEL
 }
 
 type InjectableMap = {

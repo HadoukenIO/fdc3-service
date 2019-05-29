@@ -4,7 +4,7 @@ import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
 import {AppWindow} from '../model/AppWindow';
 import {Context, ChannelChangedEvent, Channel} from '../../client/main';
-import {ChannelModel, createChannelModel} from '../ChannelModel';
+import {ChannelModel} from '../ChannelModel';
 import {APIHandler} from '../APIHandler';
 import {
     APIFromClientTopic,
@@ -15,15 +15,19 @@ import {
     APIToClientTopic
 } from '../../client/internal';
 import {Inject} from '../common/Injectables';
+import {getId} from '../model/Model';
 
 @injectable()
 export class ContextHandler {
     private _apiHandler: APIHandler<APIFromClientTopic>;
     private _channelModel: ChannelModel;
 
-    constructor(@inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>) {
+    constructor(
+        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
+        @inject(Inject.CHANNEL_MODEL) channelModel: ChannelModel
+    ) {
         this._apiHandler = apiHandler;
-        this._channelModel = createChannelModel(apiHandler.onConnection, apiHandler.onDisconnection);
+        this._channelModel = channelModel;
         this._channelModel.onChannelChanged.add(this.onChannelChangedHandler, this);
     }
 
@@ -33,11 +37,9 @@ export class ContextHandler {
      * @param app App to send the context to
      * @param context Context to be sent
      */
-    public send(app: AppWindow|Identity, context: Context): void {
+    public async send(app: AppWindow|Identity, context: Context): Promise<void> {
         const identity: Identity = (app as AppWindow).identity || app;
-
-        // Note the call to `dispatch` is not `await`ed, hence the fire and forget behaviour
-        this._apiHandler.channel.dispatch(identity, APIToClientTopic.CONTEXT, context);
+        await this._apiHandler.channel.dispatch(identity, APIToClientTopic.CONTEXT, context);
     }
 
     /**
@@ -51,11 +53,11 @@ export class ContextHandler {
 
         this._channelModel.setContext(channel.id, context);
 
-        const sourceId = AppWindow.getId(source);
+        const sourceId = getId(source);
 
         channelMembers
             // Sender window should not receive its own broadcasts
-            .filter(identity => AppWindow.getId(identity) !== sourceId)
+            .filter(identity => getId(identity) !== sourceId)
             .forEach(identity => this.send(identity, context));
     }
 
@@ -63,14 +65,14 @@ export class ContextHandler {
         return this._channelModel.getAllChannels();
     }
 
-    public joinChannel(payload: JoinChannelPayload, source: ProviderIdentity): void {
+    public async joinChannel(payload: JoinChannelPayload, source: ProviderIdentity): Promise<void> {
         const identity = payload.identity || source;
 
         this._channelModel.joinChannel(identity, payload.id);
         const context = this._channelModel.getContext(payload.id);
 
         if (context) {
-            this.send(identity, context);
+            await this.send(identity, context);
         }
     }
 

@@ -82,9 +82,11 @@ export interface FindIntentPayload {
 export interface FindIntentsByContextPayload {
     context: Context;
 }
+
 export interface BroadcastPayload {
     context: Context;
 }
+
 export interface RaiseIntentPayload {
     intent: string;
     context: Context;
