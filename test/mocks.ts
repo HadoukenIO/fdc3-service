@@ -10,9 +10,10 @@ export function createMockAppWindow(): AppWindow {
         identity: {name: '', uuid: ''},
         appInfo: {appId: '', name: '', manifest: '', manifestType: ''},
         contexts: [],
+        intentListeners: [],
+        hasIntentListener: jest.fn<boolean, [string]>(),
         addIntentListener: jest.fn<void, [string]>(),
         removeIntentListener: jest.fn<void, [string]>(),
-        hasAnyIntentListener: jest.fn<boolean, []>(),
         focus: jest.fn<Promise<void>, []>(),
         ensureReadyToReceiveIntent: jest.fn<Promise<void>, [IntentType]>()
     };
