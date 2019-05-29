@@ -31,7 +31,6 @@ export function LauncherApp(): React.ReactElement {
                 ...e
             };
             console.error(e, error);
-            // alert(`openApp threw an error!\n${JSON.stringify(error)}`);
         }
     };
 

@@ -28,8 +28,6 @@ export function IntentButton(props: IntentButtonProps): React.ReactElement {
             })
             .catch(err => {
                 setButtonState(ButtonStateType.ERROR);
-                // Alert commented out as per https://github.com/HadoukenIO/fdc3-service/pull/87/files/d637737b8e74e858d8cc978f1fa9755e3ad6c308#r288216259
-                // alert(`Intent failed with message '${err.message}'`);
             });
     };
 

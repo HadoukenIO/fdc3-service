@@ -89,5 +89,5 @@ export const Timeouts = {
     /**
      * Time for an OpenFin app to start by calling `fin.Application.startFromManifest`
      */
-    APP_START_FROM_MANIFEST: 5000
+    APP_START_FROM_MANIFEST: 30000
 };

@@ -33,7 +33,7 @@ pipeline {
                     }
                 }
 
-                stage('Integation Tests') {
+                stage('Integration Tests') {
                     agent { label 'win10-dservices' }
                     steps {
                         bat "npm install"
