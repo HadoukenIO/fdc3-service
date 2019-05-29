@@ -1,6 +1,7 @@
 ﻿using Openfin.Desktop;
 using OpenFin.FDC3.Constants;
 using OpenFin.FDC3.Context;
+using OpenFin.FDC3.Exceptions;
 using OpenFin.FDC3.Intents;
 using System;
 using System.Threading.Tasks;
@@ -17,16 +18,25 @@ namespace OpenFin.FDC3
         public static Action<Exception> InitializationComplete;
 
         private static Runtime runtimeInstance;
+        private static bool isInitialized = false;
 
         static DesktopAgent()
-        {
-            ContextChannels = new ContextChannels();
+        {            
         }
 
         /// <summary>
         /// Provides access to channel functions (eg. getting/joining channels)
         /// </summary>
-        public static ContextChannels ContextChannels { get; }
+        public static ContextChannels ContextChannels
+        {
+            get
+            {
+                if (!isInitialized)
+                    throw new OpenFinInitializationException("DesktopAgent must be initialized before attempting to use ContextChannels API.");
+
+                return ContextChannels.Instance;
+            }
+        }
 
         /// <summary>
         /// Adds a listener for incoming context broadcast from the Desktop Agent.
@@ -63,9 +73,9 @@ namespace OpenFin.FDC3
         /// <param name="intent">The name of the intent</param>
         /// <param name="context">Optional context about the intent</param>
         /// <returns>A single application intent</returns>
-        public static Task<AppIntent> FindIntent(string intent, ContextBase context = null)
+        public static Task<AppIntent> FindIntentAsync(string intent, ContextBase context = null)
         {
-            return Connection.FindIntent(intent, context);
+            return Connection.FindIntentAsync(intent, context);
         }
 
         /// <summary>
@@ -73,16 +83,16 @@ namespace OpenFin.FDC3
         /// </summary>
         /// <param name="context">The intent context</param>
         /// <returns></returns>
-        public static Task<AppIntent[]> FindIntentsByContext(ContextBase context)
+        public static Task<AppIntent[]> FindIntentsByContextAsync(ContextBase context)
         {
-            return Connection.FindIntentsByContext(context);
+            return Connection.FindIntentsByContextAsync(context);
         }
 
         /// <summary>
         /// Initialize client with the default Manifest URL
         /// </summary>
         public static void Initialize()
-        {
+        {            
             var fdcManifestUri = new Uri(Fdc3ServiceConstants.ServiceManifestUrl);
             Initialize(fdcManifestUri);
         }
@@ -94,10 +104,11 @@ namespace OpenFin.FDC3
         public static void Initialize(Uri manifestUri)
         {
             if (InitializationComplete == null)
-                throw new Exception("InitializationComplete action delegate must be set before calling Initialize.");
+                throw new OpenFinInitializationException("InitializationComplete action delegate must be set before calling Initialize.");
 
             var runtimeOptions = RuntimeOptions.LoadManifest(manifestUri);
             runtimeInstance = Runtime.GetRuntimeInstance(runtimeOptions);
+            runtimeInstance.Options.RuntimeConnectTimeout = -1;
 
             runtimeInstance.Connect(() =>
             {
@@ -113,6 +124,7 @@ namespace OpenFin.FDC3
                     Connection.ConnectionInitializationComplete += exception =>
                     {
                         InitializationComplete?.Invoke(exception);
+                        isInitialized = true;
                     };
 
                     Connection.Initialize(runtimeInstance);
@@ -138,7 +150,7 @@ namespace OpenFin.FDC3
         /// <param name="context">The context</param>
         /// <param name="target"></param>
         /// <returns></returns>
-        public static Task<IntentResolution> RaiseIntent(string intent, ContextBase context, string target)
+        public static Task<IntentResolution> RaiseIntentAsync(string intent, ContextBase context, string target)
         {
             return Connection.RaiseIntent(intent, context, target);
         }

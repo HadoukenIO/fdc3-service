@@ -40,14 +40,14 @@ namespace OpenFin.FDC3
             return channelClient.DispatchAsync<Task>(ApiTopic.Broadcast, context);
         }
 
-        internal static Task<AppIntent> FindIntent(string intent, ContextBase context)
+        internal static Task<AppIntent> FindIntentAsync(string intent, ContextBase context)
         {
             return channelClient.DispatchAsync<AppIntent>(ApiTopic.FindIntent, new { intent, context });
         }
 
-        internal static Task<AppIntent[]> FindIntentsByContext(ContextBase context)
+        internal static Task<AppIntent[]> FindIntentsByContextAsync(ContextBase context)
         {
-            return channelClient.DispatchAsync<AppIntent[]>(ApiTopic.FindIntentsByContext, context);
+            return channelClient.DispatchAsync<AppIntent[]>(ApiTopic.FindIntentsByContext, new { context });
         }
 
         internal static Task<Channel[]> GetAllChannels()
@@ -59,7 +59,7 @@ namespace OpenFin.FDC3
         {
             if (identity == null)
             {
-                return channelClient.DispatchAsync<Channel>(ApiTopic.GetChannel, JValue.CreateUndefined());
+                return channelClient.DispatchAsync<Channel>(ApiTopic.GetChannel, new { identity = JValue.CreateUndefined() });
             }
             else
             {

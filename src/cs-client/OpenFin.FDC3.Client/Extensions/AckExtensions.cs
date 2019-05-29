@@ -1,11 +1,11 @@
 ﻿using Newtonsoft.Json.Linq;
-using Fin = Openfin.Desktop;
+using Openfin.Desktop;
 
 namespace OpenFin.FDC3
 {
     internal static class AckExtensions
     {
-        internal static bool HasAcked(this Fin.Ack ack)
+        internal static bool HasAcked(this Ack ack)
         { 
             return (bool)(ack.getData() as JValue).Value;
         }

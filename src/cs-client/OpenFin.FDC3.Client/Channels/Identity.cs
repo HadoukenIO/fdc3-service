@@ -8,13 +8,12 @@ using System.Threading.Tasks;
 
 namespace OpenFin.FDC3.Channels
 {
-    public class Identity : IOpenfinEntity
+    public class Identity 
     {
-        [JsonIgnore]
-        public Runtime Runtime => throw new NotImplementedException();
-
+        [JsonProperty("uuid")]
         public string Uuid { get; set; }
 
+        [JsonProperty("name")]
         public string Name  {get; set;}
     }
 }
