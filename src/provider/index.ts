@@ -86,7 +86,7 @@ export class Main {
     /**
      * Find apps that can handle an intent.
      *
-     * Includes running apps that are not registered on the directory [SERVICE-479]
+     * Includes running apps that are not registered on the directory
      * @param payload Contains the intent type to find information for
      */
     private async findIntent(payload: FindIntentPayload): Promise<AppIntent> {
