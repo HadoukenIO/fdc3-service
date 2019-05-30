@@ -1,4 +1,4 @@
-import {Application} from 'openfin/_v2/main';
+import {Application as OpenFinApplication} from 'openfin/_v2/main';
 
 import {AppId, Application as DirectoryApplication} from '../client/directory';
 
@@ -103,7 +103,7 @@ export class MetadataStore {
      * @param appData An FDC3 application directory record
      * @param app An OpenFin application that has been created from 'appData'
      */
-    public update(appData: DirectoryApplication, app: Application): void {
+    public update(appData: DirectoryApplication, app: OpenFinApplication): void {
         if (typeof appData.appId !== 'string') {
             throw new TypeError('Invalid appData passed to MetadataStore. "id" must be a string.');
         }

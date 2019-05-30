@@ -6,7 +6,7 @@ import {AsyncInit} from '../controller/AsyncInit';
 import {Signal1, Signal2} from '../common/Signal';
 import {Application, IntentType} from '../../client/main';
 import {deferredPromise} from '../../client/internal';
-import {FDC3Error, OpenError, withTimeout, Timeouts} from '../../client/errors';
+import {FDC3Error, OpenError, ResolveError, withTimeout, Timeouts} from '../../client/errors';
 
 import {Environment} from './Environment';
 import {AppWindow, ContextSpec} from './AppWindow';
@@ -42,7 +42,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
         }
 
-        return new FinAppWindow(app!.identity, appInfo);
+        return this.wrapApplication(appInfo, app!.identity);
     }
 
     public wrapApplication(appInfo: Application, identity: Identity): AppWindow {
@@ -102,7 +102,7 @@ class FinAppWindow {
         return this._id;
     }
 
-    public get identity(): Identity {
+    public get identity(): Readonly<Identity> {
         return this._window.identity;
     }
 
@@ -114,6 +114,14 @@ class FinAppWindow {
         return this._contexts;
     }
 
+    public get intentListeners(): ReadonlyArray<string> {
+        return Object.keys(this._intentListeners);
+    }
+
+    public hasIntentListener(intentName: string): boolean {
+        return this._intentListeners[intentName] === true;
+    }
+
     public addIntentListener(intentName: string): void {
         this._intentListeners[intentName] = true;
         this._onIntentListenerAdded.emit(intentName);
@@ -123,18 +131,14 @@ class FinAppWindow {
         delete this._intentListeners[intentName];
     }
 
-    public hasAnyIntentListener() {
-        return Object.keys(this._intentListeners).length > 0;
-    }
-
     public focus(): Promise<void> {
         return this._window.setAsForeground();
     }
 
     public async ensureReadyToReceiveIntent(intent: IntentType): Promise<void> {
-        if (this._intentListeners[intent]) {
+        if (this.hasIntentListener(intent)) {
             // App has already registered the intent listener
-            return Promise.resolve();
+            return;
         }
 
         // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
@@ -150,8 +154,7 @@ class FinAppWindow {
 
         if (didTimeout) {
             slot.remove();
-            throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for intent listener to be added. intent = ${intent}`);
+            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added. intent = ${intent}`);
         }
     }
 }
-

@@ -36,23 +36,28 @@ export class AppDirectory {
         });
     }
 
+    /**
+     * Get information about intents that expect contexts of a given type, and the apps that handle those intents
+     *
+     * Note this only considers directory apps and not "ad hoc" windows, as the latter don't specify context types when adding intent listeners
+     * @param contextType type of context to find intents for
+     */
     public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
         await this.refreshDirectory();
         const appIntentsByName: {[intentName: string]: AppIntent} = {};
         this._directory.forEach((app: Application) => {
             (app.intents || []).forEach(intent => {
                 if (intent.contexts && intent.contexts.includes(contextType)) {
-                    if (appIntentsByName[intent.name]) {
-                        appIntentsByName[intent.name].apps.push(app);
-                    } else {
+                    if (!appIntentsByName[intent.name]) {
                         appIntentsByName[intent.name] = {
                             intent: {
                                 name: intent.name,
                                 displayName: intent.displayName || intent.name
                             },
-                            apps: [app]
+                            apps: []
                         };
                     }
+                    appIntentsByName[intent.name].apps.push(app);
                 }
             });
         });

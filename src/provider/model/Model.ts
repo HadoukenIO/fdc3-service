@@ -1,7 +1,7 @@
 import {injectable, inject} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 
-import {Application} from '../../client/main';
+import {Application, AppName, AppId} from '../../client/directory';
 import {Inject} from '../common/Injectables';
 import {Signal0} from '../common/Signal';
 
@@ -36,12 +36,12 @@ export class Model {
     @inject(Inject.ENVIRONMENT)
     private readonly _environment!: Environment;
 
-    private readonly _windows: AppWindow[];
+    private readonly _windowsById: {[id: string]: AppWindow};
     private readonly _channels: ContextChannel[];
     private readonly onWindowAdded: Signal0 = new Signal0();
 
     constructor(@inject(Inject.ENVIRONMENT) environment: Environment) {
-        this._windows = [];
+        this._windowsById = {};
         this._channels = [];
 
         environment.windowCreated.add(this.onWindowCreated, this);
@@ -49,7 +49,7 @@ export class Model {
     }
 
     public get windows(): ReadonlyArray<AppWindow> {
-        return this._windows;
+        return Object.values(this._windowsById);
     }
 
     public get channels(): ReadonlyArray<ContextChannel> {
@@ -57,17 +57,89 @@ export class Model {
     }
 
     public getWindow(identity: Identity): AppWindow|null {
-        return this._windows.find(w => w.id === getId(identity)) || null;
+        return this._windowsById[getId(identity)] || null;
     }
 
-    public findWindow(appInfo: Application, options?: FindOptions): AppWindow|null {
-        return this.findWindows(appInfo, options)[0] || null;
+    public findWindowByAppId(appId: AppId, options?: FindOptions): AppWindow|null {
+        return this.findWindow(appWindow => appWindow.appInfo.appId === appId, options);
     }
 
-    public findWindows(appInfo: Application, options?: FindOptions): AppWindow[] {
+    public findWindowByAppName(name: AppName, options?: FindOptions): AppWindow|null {
+        return this.findWindow(appWindow => appWindow.appInfo.name === name, options);
+    }
+
+    /**
+     * Registers an appWindow in the model
+     * @param appInfo Application info, either from the app directory, or 'crafted' for a non-registered app
+     * @param identity Window identity
+     * @param isInAppDirectory boolean indicating whether the app is registered in the app directory
+     */
+    public registerWindow(appInfo: Application, identity: Identity, isInAppDirectory: boolean): AppWindow {
+        const appWindow = this._environment.wrapApplication(appInfo, identity);
+        console.info(`Registering window [${isInAppDirectory ? '' : 'NOT '}in app directory] ${appWindow.id}`);
+        this._windowsById[appWindow.id] = appWindow;
+        this.onWindowAdded.emit();
+
+        return appWindow;
+    }
+
+    public async findOrCreate(appInfo: Application, prefer?: FindFilter): Promise<AppWindow> {
+        const matchingWindow = this.findWindowByAppId(appInfo.appId, {prefer});
+
+        if (matchingWindow) {
+            await matchingWindow.focus();
+            return matchingWindow;
+        } else {
+            const createPromise = this._environment.createApplication(appInfo);
+            const signalPromise = new Promise<AppWindow>(resolve => {
+                const slot = this.onWindowAdded.add(() => {
+                    const matchingWindow = this.findWindowByAppId(appInfo.appId, {prefer});
+                    if (matchingWindow) {
+                        slot.remove();
+                        resolve(matchingWindow);
+                    }
+                });
+            });
+            return Promise.all([signalPromise, createPromise]).then(([app])=> app);
+        }
+    }
+
+    /**
+     * Gets apps that can handle an intent
+     *
+     * Includes windows that are not in the app directory but have registered a listener for it
+     * @param intentType intent type
+     */
+    public async getApplicationsForIntent(intentType: string): Promise<Application[]> {
+        const allAppWindows = this.windows;
+
+        // Include appInfos for any appWindows in model that have registered a listener for the intent
+        const appsInModelWithIntent = allAppWindows
+            .filter(appWindow => appWindow.hasIntentListener(intentType))
+            .reduce<Application[]>((apps, appWindow) => {
+                if (apps.some(app => app.appId === appWindow.appInfo.appId)) {
+                    // AppInfo has already been added by another window on the same app also listening for the same intent
+                    return apps;
+                }
+                return apps.concat([appWindow.appInfo]);
+            }, []);
+
+        // Include only directory apps without appWindows in the model, as these take precedence
+        const directoryAppsWithIntent = await this._directory.getAppsByIntent(intentType);
+        const directoryAppsNotInModel = directoryAppsWithIntent
+            .filter(directoryApp => !allAppWindows.some(appWindow => appWindow.appInfo.appId === directoryApp.appId));
+
+        return [...appsInModelWithIntent, ...directoryAppsNotInModel];
+    }
+
+    private findWindow(predicate: (appWindow: AppWindow) => boolean, options?: FindOptions): AppWindow|null {
+        return this.findWindows(predicate, options)[0] || null;
+    }
+
+    private findWindows(predicate: (appWindow: AppWindow) => boolean, options?: FindOptions): AppWindow[] {
         const {prefer, require} = options || {prefer: undefined, require: undefined};
-        const windows = this._windows.filter(appWindow => {
-            if (appWindow.appInfo.appId !== appInfo.appId) {
+        const windows = this.windows.filter(appWindow => {
+            if (!predicate(appWindow)) {
                 return false;
             } else if (require !== undefined) {
                 return Model.matchesFilter(appWindow, require);
@@ -87,52 +159,31 @@ export class Model {
         return windows;
     }
 
-    public async findOrCreate(appInfo: Application, prefer?: FindFilter): Promise<AppWindow> {
-        const matchingWindow = this.findWindow(appInfo, {prefer});
-
-        if (matchingWindow) {
-            await matchingWindow.focus();
-            return matchingWindow;
-        } else {
-            const createPromise = this._environment.createApplication(appInfo);
-            const signalPromise = new Promise<AppWindow>(resolve => {
-                const slot = this.onWindowAdded.add(() => {
-                    const matchingWindow = this.findWindow(appInfo, {prefer});
-                    if (matchingWindow) {
-                        slot.remove();
-                        resolve(matchingWindow);
-                    }
-                });
-            });
-            return Promise.all([signalPromise, createPromise]).then(([app])=> app);
-        }
-    }
-
     private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
         const apps = await this._directory.getAllApps();
-        const appInfo = apps.find(app => app.manifest.startsWith(manifestUrl));
+        const appInfoFromDirectory = apps.find(app => app.manifest.startsWith(manifestUrl));
 
-        if (appInfo) {
-            const id: string = getId(identity);
-
-            if (!this._windows.some(window => window.id === id)) {
-                console.info(`Registering window ${id}`);
-                const appWindow = this._environment.wrapApplication(appInfo, identity);
-                this._windows.push(appWindow);
-                this.onWindowAdded.emit();
-            } else {
-                console.info(`Ignoring window created event for ${id} - window was already registered`);
-            }
+        if (!appInfoFromDirectory) {
+            // If the app is not in directory we ignore it. We'll add it to the model if and when it adds its first intent listener
+            return;
         }
+
+        const id: string = getId(identity);
+        if (this._windowsById[id]) {
+            console.info(`Ignoring window created event for ${id} - window was already registered`);
+            return;
+        }
+
+        this.registerWindow(appInfoFromDirectory, identity, true);
     }
 
     private onWindowClosed(identity: Identity): void {
         const id: string = getId(identity);
-        const index = this._windows.findIndex(window => window.id === id);
+        const window = this._windowsById[id];
 
-        if (index >= 0) {
+        if (window) {
             console.info(`Removing window ${id}`);
-            this._windows.splice(index, 1);
+            delete this._windowsById[id];
         }
     }
 
@@ -141,7 +192,7 @@ export class Model {
             case FindFilter.WITH_CONTEXT_LISTENER:
                 return window.contexts.length > 0;
             case FindFilter.WITH_INTENT_LISTENER:
-                return window.hasAnyIntentListener();
+                return window.intentListeners.length > 0;
         }
     }
 }

@@ -33,7 +33,7 @@ export class IntentHandler {
             return this.raiseWithTarget(intent);
         }
 
-        const apps: Application[] = await this._directory.getAppsByIntent(intent.type);
+        const apps: Application[] = await this._model.getApplicationsForIntent(intent.type);
 
         if (apps.length === 0) {
             throw new FDC3Error(ResolveError.NoAppsFound, 'No applications available to handle this intent');
@@ -47,16 +47,30 @@ export class IntentHandler {
     }
 
     private async raiseWithTarget(intent: IntentWithTarget): Promise<IntentResolution> {
-        const appInfo = await this._directory.getAppByName(intent.target);
+        let appInfo: Application|null;
 
-        if (!appInfo) {
-            throw new FDC3Error(ResolveError.TargetAppNotInDirectory, `No app in directory with name: ${intent.target}`);
+        const appWindow = this._model.findWindowByAppName(intent.target);
+
+        if (appWindow) {
+            // Target app is running -> fire intent at it
+            appInfo = appWindow.appInfo;
+        } else {
+            // Target app not running -> Try to find in directory
+            appInfo = await this._directory.getAppByName(intent.target);
+            if (!appInfo) {
+                throw new FDC3Error(
+                    ResolveError.TargetAppNotAvailable,
+                    `Couldn't resolve intent target '${intent.target}'. No matching app in directory or currently running.`
+                );
+            }
+
+            // Target app is in directory -> ensure that it handles intent
+            if (!(appInfo.intents || []).some(appIntent => appIntent.name === intent.type)) {
+                throw new FDC3Error(ResolveError.TargetAppDoesNotHandleIntent, `App '${intent.target}' does not handle intent '${intent.type}'`);
+            }
         }
 
-        if (!(appInfo.intents || []).some(appIntent => appIntent.name === intent.type)) {
-            throw new FDC3Error(ResolveError.TargetAppDoesNotHandleIntent, `App '${intent.target}' does not handle intent '${intent.type}'`);
-        }
-
+        // At this point we are certain that the target app -whether already running or not- can handle the intent
         return this.fireIntent(intent, appInfo);
     }
 

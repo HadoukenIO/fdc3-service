@@ -5,6 +5,7 @@ import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
 import {Inject} from '../common/Injectables';
 import {AppDirectory} from '../model/AppDirectory';
+import {Model} from '../model/Model';
 import {Intent, Application} from '../../client/main';
 import {SERVICE_IDENTITY} from '../../client/internal';
 
@@ -71,6 +72,9 @@ export class SelectorHandler extends AsyncInit {
     @inject(Inject.APP_DIRECTORY)
     private _directory!: AppDirectory;
 
+    @inject(Inject.MODEL)
+    private _model!: Model;
+
     private _window!: _Window;
     private _channel!: ChannelClient;
 
@@ -110,7 +114,7 @@ export class SelectorHandler extends AsyncInit {
     public async handleIntent(intent: Intent): Promise<SelectorResult> {
         const msg: SelectorArgs = {
             intent,
-            applications: await this._directory.getAppsByIntent(intent.type)
+            applications: await this._model.getApplicationsForIntent(intent.type)
         };
 
         await this._window.show();
