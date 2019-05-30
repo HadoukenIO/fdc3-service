@@ -197,8 +197,8 @@ only the first listener is triggered', async () => {
                         const promise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppInDirectory.name);
 
                         await expect(promise).toThrowFDC3Error(
-                            ResolveError.TargetAppDoesNotHandleIntent,
-                            `App '${testAppInDirectory.name}' has not registered listeners for intent '${validPayload.intent}'`
+                            ResolveError.IntentTimeout,
+                            `Timeout waiting for intent listener to be added. intent = ${validPayload.intent}`
                         );
                     });
                     test('When calling unsubscribe from a second intent listener, then calling raiseIntent from another app, \
@@ -228,8 +228,8 @@ the second listener is not triggered', async () => {
                         const promise = fdc3Remote.raiseIntent(testManagerIdentity, invalidPayload.intent, invalidPayload.context, testAppInDirectory.name);
 
                         await expect(promise).toThrowFDC3Error(
-                            ResolveError.TargetAppDoesNotHandleIntent,
-                            `App '${testAppInDirectory.name}' has not registered listeners for intent '${invalidPayload.intent}'`
+                            ResolveError.IntentTimeout,
+                            `Timeout waiting for intent listener to be added. intent = ${invalidPayload.intent}`
                         );
                     });
                 });
@@ -299,8 +299,8 @@ the second listener is not triggered', async () => {
                             );
 
                             await expect(promise).toThrowFDC3Error(
-                                ResolveError.TargetAppDoesNotHandleIntent,
-                                `App '${testAppNotInDirectory.name}' has not registered listeners for intent '${invalidPayload.intent}'`
+                                ResolveError.IntentTimeout,
+                                `Timeout waiting for intent listener to be added. intent = ${invalidPayload.intent}`
                             );
                         });
                     });
@@ -341,8 +341,8 @@ only the first listener is triggered', async () => {
                             const promise = fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppNotInDirectory.name);
 
                             await expect(promise).toThrowFDC3Error(
-                                ResolveError.TargetAppDoesNotHandleIntent,
-                                `App '${testAppNotInDirectory.name}' has not registered listeners for intent '${validPayload.intent}'`
+                                ResolveError.IntentTimeout,
+                                `Timeout waiting for intent listener to be added. intent = ${validPayload.intent}`
                             );
                         });
                         test('When calling unsubscribe from a second intent listener, then calling raiseIntent from another app, \

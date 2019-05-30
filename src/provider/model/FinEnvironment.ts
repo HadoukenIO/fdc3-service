@@ -6,7 +6,7 @@ import {AsyncInit} from '../controller/AsyncInit';
 import {Signal1, Signal2} from '../common/Signal';
 import {Application, IntentType} from '../../client/main';
 import {deferredPromise} from '../../client/internal';
-import {FDC3Error, OpenError, withTimeout, Timeouts} from '../../client/errors';
+import {FDC3Error, OpenError, ResolveError, withTimeout, Timeouts} from '../../client/errors';
 
 import {Environment} from './Environment';
 import {AppWindow, ContextSpec} from './AppWindow';
@@ -136,7 +136,7 @@ class FinAppWindow {
     }
 
     public async ensureReadyToReceiveIntent(intent: IntentType): Promise<void> {
-        if (this._intentListeners[intent]) {
+        if (this.hasIntentListener(intent)) {
             // App has already registered the intent listener
             return;
         }
@@ -154,8 +154,7 @@ class FinAppWindow {
 
         if (didTimeout) {
             slot.remove();
-            throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for intent listener to be added. intent = ${intent}`);
+            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added. intent = ${intent}`);
         }
     }
 }
-

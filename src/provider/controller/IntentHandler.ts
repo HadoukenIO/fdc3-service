@@ -52,14 +52,7 @@ export class IntentHandler {
         const appWindow = this._model.findWindowByAppName(intent.target);
 
         if (appWindow) {
-            // Target app is running -> ensure that intent is registered in model
-            if (!appWindow.hasIntentListener(intent.type)) {
-                throw new FDC3Error(
-                    ResolveError.TargetAppDoesNotHandleIntent,
-                    `App '${intent.target}' has not registered listeners for intent '${intent.type}'`
-                );
-            }
-
+            // Target app is running -> fire intent at it
             appInfo = appWindow.appInfo;
         } else {
             // Target app not running -> Try to find in directory

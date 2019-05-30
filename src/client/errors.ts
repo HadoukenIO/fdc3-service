@@ -10,6 +10,7 @@ export enum ResolveError {
     NoAppsFound = 'NoAppsFound',
     TargetAppNotInDirectory = 'TargetAppNotInDirectory',
     TargetAppDoesNotHandleIntent = 'TargetAppDoesNotHandleIntent',
+    IntentTimeout = 'IntentTimeout',
     ResolverUnavailable = 'ResolverUnavailable',
     ResolverTimeout = 'ResolverTimeout',
     ResolverClosedOrCancelled = 'ResolverClosedOrCancelled',
