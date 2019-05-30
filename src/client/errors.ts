@@ -8,7 +8,7 @@ export enum OpenError {
 
 export enum ResolveError {
     NoAppsFound = 'NoAppsFound',
-    TargetAppNotInDirectory = 'TargetAppNotInDirectory',
+    TargetAppNotAvailable = 'TargetAppNotAvailable',
     TargetAppDoesNotHandleIntent = 'TargetAppDoesNotHandleIntent',
     IntentTimeout = 'IntentTimeout',
     ResolverUnavailable = 'ResolverUnavailable',

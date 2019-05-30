@@ -68,33 +68,6 @@ export class Model {
         return this.findWindow(appWindow => appWindow.appInfo.name === name, options);
     }
 
-    private findWindow(predicate: (appWindow: AppWindow) => boolean, options?: FindOptions): AppWindow|null {
-        return this.findWindows(predicate, options)[0] || null;
-    }
-
-    private findWindows(predicate: (appWindow: AppWindow) => boolean, options?: FindOptions): AppWindow[] {
-        const {prefer, require} = options || {prefer: undefined, require: undefined};
-        const windows = this.windows.filter(appWindow => {
-            if (!predicate(appWindow)) {
-                return false;
-            } else if (require !== undefined) {
-                return Model.matchesFilter(appWindow, require);
-            } else {
-                return true;
-            }
-        });
-
-        if (windows.length > 0 && prefer !== undefined) {
-            const preferredWindows = windows.filter(appWindow => Model.matchesFilter(appWindow, prefer));
-
-            if (preferredWindows.length > 0) {
-                return preferredWindows;
-            }
-        }
-
-        return windows;
-    }
-
     /**
      * Registers an appWindow in the model
      * @param appInfo Application info, either from the app directory, or 'crafted' for a non-registered app
@@ -134,7 +107,7 @@ export class Model {
     /**
      * Gets apps that can handle an intent
      *
-     * Includes windows that are not in the app directory but have registered a listener for it [SERVICE-479]
+     * Includes windows that are not in the app directory but have registered a listener for it
      * @param intentType intent type
      */
     public async getApplicationsForIntent(intentType: string): Promise<Application[]> {
@@ -157,6 +130,33 @@ export class Model {
             .filter(directoryApp => !allAppWindows.some(appWindow => appWindow.appInfo.appId === directoryApp.appId));
 
         return [...appsInModelWithIntent, ...directoryAppsNotInModel];
+    }
+
+    private findWindow(predicate: (appWindow: AppWindow) => boolean, options?: FindOptions): AppWindow|null {
+        return this.findWindows(predicate, options)[0] || null;
+    }
+
+    private findWindows(predicate: (appWindow: AppWindow) => boolean, options?: FindOptions): AppWindow[] {
+        const {prefer, require} = options || {prefer: undefined, require: undefined};
+        const windows = this.windows.filter(appWindow => {
+            if (!predicate(appWindow)) {
+                return false;
+            } else if (require !== undefined) {
+                return Model.matchesFilter(appWindow, require);
+            } else {
+                return true;
+            }
+        });
+
+        if (windows.length > 0 && prefer !== undefined) {
+            const preferredWindows = windows.filter(appWindow => Model.matchesFilter(appWindow, prefer));
+
+            if (preferredWindows.length > 0) {
+                return preferredWindows;
+            }
+        }
+
+        return windows;
     }
 
     private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
