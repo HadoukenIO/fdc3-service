@@ -4,8 +4,8 @@
 
 import {Identity} from 'openfin/_v2/main';
 
-import {tryServiceDispatch, channelPromise} from './connection';
-import {APITopic} from './internal';
+import {tryServiceDispatch} from './connection';
+import {APIFromClientTopic} from './internal';
 
 export type ChannelId = string;
 
@@ -52,7 +52,7 @@ export interface ChannelChangedEvent {
  * Get all created channels
  */
 export async function getAllChannels(): Promise<Channel[]> {
-    return tryServiceDispatch(APITopic.GET_ALL_CHANNELS, {});
+    return tryServiceDispatch(APIFromClientTopic.GET_ALL_CHANNELS, {});
 }
 
 /**
@@ -61,14 +61,14 @@ export async function getAllChannels(): Promise<Channel[]> {
  * Use the special constant 'global' to revert to the global channel.
  */
 export async function joinChannel(id: ChannelId, identity?: Identity): Promise<void> {
-    return tryServiceDispatch(APITopic.JOIN_CHANNEL, {id, identity});
+    return tryServiceDispatch(APIFromClientTopic.JOIN_CHANNEL, {id, identity});
 }
 
 /**
  * Returns the channel that the current window is assigned to
  */
 export async function getChannel(identity?: Identity): Promise<Channel> {
-    return tryServiceDispatch(APITopic.GET_CHANNEL, {identity});
+    return tryServiceDispatch(APIFromClientTopic.GET_CHANNEL, {identity});
 }
 
 /**
@@ -76,5 +76,5 @@ export async function getChannel(identity?: Identity): Promise<Channel> {
  *
  */
 export async function getChannelMembers(id: ChannelId): Promise<Identity[]> {
-    return tryServiceDispatch(APITopic.GET_CHANNEL_MEMBERS, {id});
+    return tryServiceDispatch(APIFromClientTopic.GET_CHANNEL_MEMBERS, {id});
 }

@@ -31,7 +31,7 @@ describe('Resolving applications by intent', () => {
                 const expectedAppNames = directory.filter(app => app.intents && app.intents.some(intent => intent.name === validIntent)).map(app => app.name);
 
                 // Resolve the valid intent
-                const actualAppNames = await fdc3Remote.resolve(testManagerIdentity, validIntent).then(apps => apps.map(app => app.name));
+                const actualAppNames = await fdc3Remote.findIntent(testManagerIdentity, validIntent).then(apps => apps.map(app => app.name));
 
                 // Compare the two arrays (sorted as order doesn't matter)
                 expect(actualAppNames.sort()).toEqual(expectedAppNames.sort());
@@ -40,10 +40,10 @@ describe('Resolving applications by intent', () => {
 
         test('When calling resolve with an intent which no directory applications accept, the promise resolves to an empty array', async () => {
             // Resolve the invalid intent
-            const actualApps = await fdc3Remote.resolve(testManagerIdentity, invalidIntent);
+            const actualApps = await fdc3Remote.findIntent(testManagerIdentity, invalidIntent);
 
             // Expect no apps returned
-            expect(actualApps.length).toBe(0);
+            expect(actualApps).toEqual([]);
         });
     });
 

@@ -11,8 +11,9 @@
  */
 
 import {Identity} from 'openfin/_v2/main';
+import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 
-import {Application, Context, IntentType, ChannelId, Channel} from '../../../src/client/main';
+import {Application, Context, IntentType, ChannelId, Channel, AppIntent} from '../../../src/client/main';
 import {RaiseIntentPayload} from '../../../src/client/internal';
 import {FDC3Event, FDC3EventType} from '../../../src/client/connection';
 
@@ -22,11 +23,11 @@ const ofBrowser = new OFPuppeteerBrowser();
 
 export async function open(executionTarget: Identity, name: string, context?: Context): Promise<void> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, name: string, context?: Context): Promise<void> {
-        return this.fdc3.open(name, context);
-    }, name, context);
+        return this.fdc3.open(name, context).catch(this.errorHandler);
+    }, name, context).catch(handlePuppeteerError);
 }
 
-export async function resolve(executionTarget: Identity, intent: IntentType, context?: Context): Promise<Application[]> {
+export async function findIntent(executionTarget: Identity, intent: IntentType, context?: Context): Promise<Application[]> {
     return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, intent: IntentType, context?: Context): Promise<Application[]> {
         return this.fdc3.findIntent(intent, context).then(appIntent => appIntent.apps);
     }, intent, context);
@@ -47,32 +48,44 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
 
 export async function getAllChannels(executionTarget: Identity): Promise<Channel[]> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext): Promise<Channel[]> {
-        return this.fdc3.getAllChannels();
-    });
+        return this.fdc3.getAllChannels().catch(this.errorHandler);
+    }).catch(handlePuppeteerError);
 }
 
 export async function joinChannel(executionTarget: Identity, channelId: ChannelId, identity?: Identity): Promise<void> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, channelId: ChannelId, identity?: Identity): Promise<void> {
-        return this.fdc3.joinChannel(channelId, identity);
-    }, channelId, identity);
+        return this.fdc3.joinChannel(channelId, identity).catch(this.errorHandler);
+    }, channelId, identity).catch(handlePuppeteerError);
 }
 
 export async function getChannel(executionTarget: Identity, identity?: Identity): Promise<Channel> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, identity?: Identity): Promise<Channel> {
-        return this.fdc3.getChannel(identity);
-    }, identity);
+        return this.fdc3.getChannel(identity).catch(this.errorHandler);
+    }, identity).catch(handlePuppeteerError);
 }
 
 export async function getChannelMembers(executionTarget: Identity, channelId: ChannelId): Promise<Identity[]> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, channelId: ChannelId): Promise<Identity[]> {
-        return this.fdc3.getChannelMembers(channelId);
-    }, channelId);
+        return this.fdc3.getChannelMembers(channelId).catch(this.errorHandler);
+    }, channelId).catch(handlePuppeteerError);
 }
 
 export async function raiseIntent(executionTarget: Identity, intent: IntentType, context: Context, target?: string): Promise<void> {
     return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, payload: RaiseIntentPayload): Promise<void> {
-        await this.fdc3.raiseIntent(payload.intent, payload.context, payload.target);
-    }, {intent, context, target});
+        await this.fdc3.raiseIntent(payload.intent, payload.context, payload.target).catch(this.errorHandler);
+    }, {intent, context, target}).catch(handlePuppeteerError);
+}
+
+/**
+ * Create an OpenFin window under the same app as the `executionTarget`
+ * @param executionTarget Identity of the app/window on which to run the command
+ * @param windowOptions standard `fin.Window.create` options
+ */
+export async function createFinWindow(executionTarget: Identity, windowOptions: WindowOption): Promise<Identity> {
+    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, payload: WindowOption): Promise<Identity> {
+        const window = await this.fin.Window.create(payload);
+        return window.identity;
+    }, windowOptions);
 }
 
 export interface RemoteContextListener {
@@ -262,4 +275,30 @@ export async function getRemoteEventListener(executionTarget: Identity, listener
             }
         };
     }
+}
+
+export async function findIntentsByContext(executionTarget: Identity, context: Context): Promise<AppIntent[]> {
+    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, context: Context): Promise<AppIntent[]> {
+        return this.fdc3.findIntentsByContext(context).catch(this.errorHandler);
+    }, context).catch(handlePuppeteerError);
+}
+
+/**
+ * Puppeteer catches and rethrows errors its own way, losing information on extra fields (e.g. `code` for FDC3Error objects).
+ * So what we do is serialize all these fields into the single `message` from the client apps, then from here strip back whatever puppeteer
+ * added (Evaluation failed...) and parse the actual error object so we can check for the right info in our integration tests.
+ * @param error Error returned by puppeteer
+ */
+function handlePuppeteerError(error: Error): never {
+    try {
+        // Strip-away boilerplate added by puppeteer when returning errors from client apps
+        const payload = error.message.replace('Evaluation failed: Error: ', '').split('\n')[0];
+
+        // Append additional error fields to Error object
+        const errorInfo = JSON.parse(payload);
+        Object.assign(error, errorInfo);
+    } catch (e) {
+        // Not an FDC3Error, continue as normal
+    }
+    throw error;
 }

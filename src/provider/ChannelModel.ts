@@ -1,9 +1,15 @@
 import {Identity} from 'openfin/_v2/main';
+import {inject, injectable} from 'inversify';
 
 import {Channel, ChannelId, GLOBAL_CHANNEL_ID, ChannelChangedEvent} from '../client/contextChannels';
 import {Context} from '../client/main';
+import {FDC3Error, ChannelError} from '../client/errors';
+import {APIFromClientTopic} from '../client/internal';
 
-import {Signal1} from './Signal';
+import {Signal1} from './common/Signal';
+import {Inject} from './common/Injectables';
+import {APIHandler} from './APIHandler';
+
 
 type IdentityHash = string;
 
@@ -56,12 +62,9 @@ const PURPLE_CHANNEL: Channel = {
     color: 0xFF00FF
 };
 
-export function createChannelModel(connectionSignal: Signal1<Identity>, disconnectionSignal:Signal1<Identity>) {
-    const userChannels = [RED_CHANNEL, ORANGE_CHANNEL, YELLOW_CHANNEL, GREEN_CHANNEL, BLUE_CHANNEL, PURPLE_CHANNEL];
+const USER_CHANNELS = [RED_CHANNEL, ORANGE_CHANNEL, YELLOW_CHANNEL, GREEN_CHANNEL, BLUE_CHANNEL, PURPLE_CHANNEL];
 
-    return new ChannelModel(GLOBAL_CHANNEL, userChannels, connectionSignal, disconnectionSignal);
-}
-
+@injectable()
 export class ChannelModel {
     public readonly onChannelChanged: Signal1<ChannelChangedEvent> = new Signal1<ChannelChangedEvent>();
 
@@ -74,18 +77,18 @@ export class ChannelModel {
 
     private _globalChannel: Channel;
 
-    public constructor(globalChannel: Channel, userChannels: Channel[], onConnection: Signal1<Identity>, onDisconnection:Signal1<Identity>) {
-        this._globalChannel = globalChannel;
+    public constructor(@inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>) {
+        this._globalChannel = GLOBAL_CHANNEL;
 
         this._channels.splice(0, 0, this._globalChannel);
-        this._channels.splice(0, 0, ...userChannels);
+        this._channels.splice(0, 0, ...USER_CHANNELS);
 
         for (const channel of this._channels) {
             this._channelIdToChannelMap.set(channel.id, channel);
         }
 
-        onConnection.add(this.onConnection, this);
-        onDisconnection.add(this.onDisconnection, this);
+        apiHandler.onConnection.add(this.onConnection, this);
+        apiHandler.onDisconnection.add(this.onDisconnection, this);
     }
 
     public getAllChannels(): Channel[] {
@@ -168,7 +171,7 @@ export class ChannelModel {
 
     private validateChannelId(channelId: string): void {
         if (!this._channelIdToChannelMap.has(channelId)) {
-            throw new Error('No channel with channelId: ' + channelId);
+            throw new FDC3Error(ChannelError.ChannelDoesNotExist, 'No channel with channelId: ' + channelId);
         }
     }
 

@@ -1,11 +1,13 @@
 import * as React from 'react';
 
 import {Contact} from '../../apps/ContactsApp';
+import {AppIntent} from '../../../client/main';
 
 import {ContactsRow} from './ContactsRow';
 
 interface ContactTableProps {
     items?: Contact[];
+    appIntents: AppIntent[]
 }
 
 export function ContactsTable(props: ContactTableProps): React.ReactElement {
@@ -24,7 +26,12 @@ export function ContactsTable(props: ContactTableProps): React.ReactElement {
             </thead>
             <tbody>
                 {
-                    items!.map((item) => <ContactsRow key={item.name} item={item} selected={item === selectedItem} handleSelect={setSelectedItem} />)}
+                    items!.map((item) => <ContactsRow
+                        key={item.name}
+                        item={item}
+                        selected={item === selectedItem}
+                        appIntents={props.appIntents}
+                        handleSelect={setSelectedItem} />)}
             </tbody>
         </table>
     );

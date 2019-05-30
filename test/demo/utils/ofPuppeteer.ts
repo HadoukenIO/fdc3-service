@@ -15,6 +15,7 @@ export interface TestWindowEventListener {
 export type TestWindowContext = Window&{
     fin: Fin;
     fdc3: typeof import('../../../src/client/main');
+    errorHandler(error: Error): never;
     contextListeners: ContextListener[];
     intentListeners: {[intent: string]: IntentListener[]};
     eventListeners: TestWindowEventListener[];

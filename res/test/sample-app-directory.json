@@ -16,10 +16,33 @@
         }
     ],
     "intents": [
-        {"name": "DialCall"},
-        {"name": "StartCall"},
-        {"name": "SaveContact"},
-        {"name": "ViewChart"}
+        {
+            "name": "test.IntentName",
+            "displayName": "Test Intent"
+        },
+        {
+            "name": "DialCall",
+            "displayName": "Dial",
+            "contexts": ["contact"],
+            "customConfig": {
+                "icon": "fa-tty"
+            }
+        },
+        {
+            "name": "StartCall",
+            "displayName": "Call",
+            "customConfig": {
+                "icon": "fa-phone"
+            }
+        },
+        {
+            "name": "SaveContact",
+            "displayName": "Save"
+        },
+        {
+            "name": "ViewChart",
+            "displayName": "View Chart"
+        }
     ]
 },
 {
@@ -99,7 +122,7 @@
     "name": "test-app-preregistered-1",
     "manifest": "http://localhost:3923/test/configs/test-app-preregistered-1.json",
     "manifestType": "openfin",
-    "title": "Test App Preregistered 2",
+    "title": "Test App Preregistered 1",
     "description": "App for testing fdc3 service. Has intent and context listeners auto-registered on load",
     "images": [],
     "contactEmail": "support@openfin.co",
@@ -112,6 +135,7 @@
         }
     ],
     "intents": [
+        {"name": "test.IntentNamePreregistered"},
         {"name": "DialCall"},
         {"name": "StartCall"},
         {"name": "SaveContact"},
@@ -149,6 +173,25 @@
     "manifestType": "openfin",
     "title": "Failure to launch",
     "description": "This app intentionally has an invalid manifest and will not launch",
+    "images": [],
+    "contactEmail": "support@openfin.co",
+    "supportEmail": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icons": [
+        {
+            "icon": "http://localhost:3923/demo/img/app-icons/blotter.svg"
+        }
+    ],
+    "intents": []
+},
+{
+    "appId": "800",
+    "name": "test-app-takes-long-to-load-manifest",
+    "manifest": "http://localhost:3923/fakeDelay/?t=30500",
+    "manifestType": "openfin",
+    "title": "Takes forever to load manifest",
+    "description": "This app's manifest points to an endpoint which intentionally delays the response to test timeouts",
     "images": [],
     "contactEmail": "support@openfin.co",
     "supportEmail": "support@openfin.co",

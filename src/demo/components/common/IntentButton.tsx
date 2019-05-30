@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import {IntentResolution} from '../../../client/main';
+
 interface IntentButtonProps {
   title?: string;
   iconClassName?: string;
@@ -26,7 +28,6 @@ export function IntentButton(props: IntentButtonProps): React.ReactElement {
             })
             .catch(err => {
                 setButtonState(ButtonStateType.ERROR);
-                alert(`Intent failed with message '${err.message}'`);
             });
     };
 
