@@ -30,22 +30,24 @@ export function getId(identity: Identity): string {
 
 @injectable()
 export class Model {
-    @inject(Inject.APP_DIRECTORY)
-    private _directory!: AppDirectory;
-
-    @inject(Inject.ENVIRONMENT)
-    private readonly _environment!: Environment;
+    private _directory: AppDirectory;
+    private readonly _environment: Environment;
 
     private readonly _windowsById: {[id: string]: AppWindow};
     private readonly _channels: ContextChannel[];
     private readonly onWindowAdded: Signal0 = new Signal0();
 
-    constructor(@inject(Inject.ENVIRONMENT) environment: Environment) {
+    constructor(
+        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
+        @inject(Inject.ENVIRONMENT) environment: Environment
+    ) {
         this._windowsById = {};
         this._channels = [];
 
-        environment.windowCreated.add(this.onWindowCreated, this);
-        environment.windowClosed.add(this.onWindowClosed, this);
+        this._directory = directory;
+        this._environment = environment;
+        this._environment.windowCreated.add(this.onWindowCreated, this);
+        this._environment.windowClosed.add(this.onWindowClosed, this);
     }
 
     public get windows(): ReadonlyArray<AppWindow> {
