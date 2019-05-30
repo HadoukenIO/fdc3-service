@@ -16,14 +16,22 @@ export function LauncherApp(): React.ReactElement {
     React.useEffect(() => {
         fdc3.findIntent(null!)
             .then(async (appIntent) => setApplications(appIntent.apps))
-            .catch(console.log);
+            .catch(console.error);
     }, []);
 
-    const openApp = (app: Application) => {
+    const openApp = async (app: Application) => {
         console.log(`Opening app ${app.title}`);
-        fdc3.open(app.appId)
-            .then(() => console.log(`Opened app ${app.title}`))
-            .catch(console.log);
+        try {
+            await fdc3.open(app.appId);
+            console.log(`Opened app ${app.title}`);
+        } catch (e) {
+            // Stringifying an `Error` omits the message!
+            const error: any = {
+                message: e.message,
+                ...e
+            };
+            console.error(e, error);
+        }
     };
 
     return (

@@ -11,35 +11,11 @@
  */
 
 /**
- * Union of currently supported context types.
- *
- * The inclusion of ContextBase allows the use of any other contexts which implement
- * the specification correctly.
- */
-export type Context = SecurityContext|OrganizationContext|ContactContext|ContextBase;
-
-export interface SecurityContext extends ContextBase {
-    type: 'security';
-    id: {[key: string]: string}&{default: string};
-}
-
-export interface OrganizationContext extends ContextBase {
-    type: 'organization';
-    id: {[key: string]: string}&{default: string};
-}
-
-export interface ContactContext extends ContextBase {
-    type: 'contact';
-    name: string;
-    id: {email?: string; twitter?: string; phone?: string};
-}
-
-/**
- * Base object that all contexts must extend.
+ * General-purpose context type
  *
  * A context object is open for extension with any custom properties/metadata.
  */
-export interface ContextBase {
+export interface Context {
     /**
      * The type of the context that uniquely identifies it, e.g. "fdc3.instrument"
      * Used to refer to the accepted context(s) when declaring intents.
@@ -56,10 +32,25 @@ export interface ContextBase {
      * An optional map of any equivalent identifiers for the
      * context type, e.g. ISIN, CUSIP, etc. for an instrument.
      */
-    id?: {[k: string]: string|undefined;};
+    id?: {[key: string]: string|undefined;};
 
     /**
      * A context object is open for extension with any custom properties/metadata.
      */
-    [k: string]: any;  // tslint:disable-line:no-any
+    [key: string]: unknown;
+}
+
+// Built-in contexts
+export interface ContactContext extends Context {
+    type: 'fdc3.contact';
+    name: string;
+    id: {[key: string]: string}&{email?: string; twitter?: string; phone?: string};
+}
+export interface SecurityContext extends Context {
+    type: 'fdc3.security';
+    id: {[key: string]: string}&{default: string};
+}
+export interface OrganizationContext extends Context {
+    type: 'fdc3.organization';
+    id: {[key: string]: string}&{default: string};
 }

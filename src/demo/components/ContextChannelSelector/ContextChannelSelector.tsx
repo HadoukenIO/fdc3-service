@@ -30,20 +30,24 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
         });
     }, []);
 
-    const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const handleChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
         const {value: id} = event.currentTarget;
         const selectedChannel = channels.find(channel => channel.id === id);
 
-        joinChannel(id)
-            .then(() => {
-                setCurrentChannelId(id);
-                if (selectedChannel) {
-                    setColor(selectedChannel.color);
-                }
-            })
-            .catch(error => {
-                console.error(`Unable to join channel ${id}! ${error.message}`);
-            });
+        try {
+            await joinChannel(id);
+            setCurrentChannelId(id);
+            if (selectedChannel) {
+                setColor(selectedChannel.color);
+            }
+        } catch (e) {
+            // Stringifying an `Error` omits the message!
+            const error: any = {
+                message: e.message,
+                ...e
+            };
+            console.error(`Unable to join channel ${id}! ${error.message}`, e);
+        }
     };
 
     return (

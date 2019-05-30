@@ -4,31 +4,34 @@ import * as fdc3 from '../../../client/main';
 import {ContactContext} from '../../../client/context';
 import {Contact} from '../../apps/ContactsApp';
 import {IntentButton} from '../common/IntentButton';
-
 import './ContactsRow.css';
-
+import {AppIntent} from '../../../client/main';
 
 interface ContactRowProps {
     item: Contact;
     selected: boolean;
     handleSelect: (item: Contact | null) => void;
+    appIntents: AppIntent[];
 }
 
 export function ContactsRow(props: ContactRowProps): React.ReactElement {
     const {item, selected, handleSelect} = props;
 
-    const handleDial = async (): Promise<void> => {
+    const handleAppIntent = async (appIntent: AppIntent): Promise<void> => {
         if (handleSelect) {
             handleSelect(null);
         }
-        await fdc3.raiseIntent(fdc3.Intents.DIAL_CALL, getContext());
+        await fdc3.raiseIntent(appIntent.intent.name, getContext());
     };
 
-    const handleCall = async (): Promise<void> => {
-        if (handleSelect) {
-            handleSelect(null);
+    const getIntentIcon = (appIntent: AppIntent): string => {
+        if (appIntent && appIntent.apps.length > 0 && appIntent.apps[0].intents) {
+            const intent = appIntent.apps[0].intents.find(intent => intent.name === appIntent.intent.name);
+            if (intent && intent.customConfig) {
+                return intent.customConfig.icon;
+            }
         }
-        await fdc3.raiseIntent(fdc3.Intents.START_CALL, getContext());
+        return 'fa-file';
     };
 
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -41,7 +44,7 @@ export function ContactsRow(props: ContactRowProps): React.ReactElement {
 
     const getContext = (): ContactContext => {
         return {
-            type: 'contact',
+            type: 'fdc3.contact',
             name: item.name,
             id: {
                 email: item.email!,
@@ -56,8 +59,16 @@ export function ContactsRow(props: ContactRowProps): React.ReactElement {
             <td>{item.email}</td>
             <td>{item.phone}</td>
             <td>
-                <IntentButton action={handleDial} title="Dial" iconClassName="fa-tty" />
-                <IntentButton action={handleCall} title="Call" iconClassName="fa-phone" />
+                {
+                    (props.appIntents || []).map(appIntent => (
+                        <IntentButton
+                            key={appIntent.intent.name}
+                            action={() => handleAppIntent(appIntent)}
+                            title={appIntent.intent.displayName}
+                            iconClassName={getIntentIcon(appIntent)}
+                        />
+                    ))
+                }
             </td>
         </tr>
     );

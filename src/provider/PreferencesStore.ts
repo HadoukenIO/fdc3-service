@@ -1,5 +1,4 @@
-import {Application} from '../client/directory';
-import * as fdc3 from '../client/main';
+import {IntentType} from '../client/main';
 
 /**
  * The type given to application identifiers
@@ -37,22 +36,22 @@ export class PreferencesStore {
         this.appIntentPrefs = {};
     }
 
-    public getPreferredApp(sourceApp: ApplicationID, intent: fdc3.IntentType): ApplicationID|null {
+    public getPreferredApp(sourceApp: ApplicationID, intent: IntentType): ApplicationID | null {
         const appPrefs: IntentPreferences = this.appIntentPrefs[sourceApp];
         return (appPrefs && appPrefs[intent]) || this.globalPrefs[intent] || null;
     }
 
-    public setGlobalPreference(intent: fdc3.IntentType, targetApp: ApplicationID): void {
+    public setGlobalPreference(intent: IntentType, targetApp: ApplicationID): void {
         this.globalPrefs[intent] = targetApp;
         this.save();
     }
 
-    public clearGlobalPreference(intent: fdc3.IntentType): void {
+    public clearGlobalPreference(intent: IntentType): void {
         delete this.globalPrefs[intent];
         this.save();
     }
 
-    public setAppPreference(sourceApp: ApplicationID, intent: fdc3.IntentType, targetApp: ApplicationID): void {
+    public setAppPreference(sourceApp: ApplicationID, intent: IntentType, targetApp: ApplicationID): void {
         let appPrefs: IntentPreferences = this.appIntentPrefs[sourceApp];
 
         if (!appPrefs) {
@@ -64,7 +63,7 @@ export class PreferencesStore {
         this.save();
     }
 
-    public clearAppPreference(sourceApp: ApplicationID, intent: fdc3.IntentType): void {
+    public clearAppPreference(sourceApp: ApplicationID, intent: IntentType): void {
         const appPrefs: IntentPreferences = this.appIntentPrefs[sourceApp];
 
         if (appPrefs) {

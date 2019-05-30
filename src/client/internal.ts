@@ -30,40 +30,45 @@ export const SERVICE_CHANNEL = 'of-fdc3-service-v1';
 /**
  * Enum containing all and only actions that the provider can accept.
  */
-export enum APITopic {
+export enum APIFromClientTopic {
     OPEN = 'OPEN',
     FIND_INTENT = 'FIND-INTENT',
-    FIND_INTENTS_BY_CONTEXT = 'FIND-INTENT-BY-CONTEXT',
+    FIND_INTENTS_BY_CONTEXT = 'FIND-INTENTS-BY-CONTEXT',
     BROADCAST = 'BROADCAST',
     RAISE_INTENT = 'RAISE-INTENT',
+    ADD_INTENT_LISTENER = 'ADD-INTENT-LISTENER',
+    REMOVE_INTENT_LISTENER = 'REMOVE-INTENT-LISTENER',
     GET_ALL_CHANNELS = 'GET-ALL-CHANNELS',
     JOIN_CHANNEL = 'JOIN-CHANNEL',
     GET_CHANNEL = 'GET-CHANNEL',
     GET_CHANNEL_MEMBERS = 'GET-CHANNEL-MEMBERS'
 }
 
-export interface TopicPayloadMap {
-    [APITopic.OPEN]: OpenPayload;
-    [APITopic.FIND_INTENT]: FindIntentPayload;
-    [APITopic.FIND_INTENTS_BY_CONTEXT]: FindIntentsByContextPayload;
-    [APITopic.BROADCAST]: BroadcastPayload;
-    [APITopic.RAISE_INTENT]: RaiseIntentPayload;
-    [APITopic.GET_ALL_CHANNELS]: GetAllChannelsPayload;
-    [APITopic.JOIN_CHANNEL]: JoinChannelPayload;
-    [APITopic.GET_CHANNEL]: GetChannelPayload;
-    [APITopic.GET_CHANNEL_MEMBERS]: GetChannelMembersPayload;
+/**
+ * Enum containing all and only actions that the client can accept.
+ */
+export enum APIToClientTopic {
+  INTENT = 'INTENT',
+  CONTEXT = 'CONTEXT',
 }
 
-export interface TopicResponseMap {
-    [APITopic.OPEN]: void;
-    [APITopic.FIND_INTENT]: AppIntent;
-    [APITopic.FIND_INTENTS_BY_CONTEXT]: AppIntent[];
-    [APITopic.BROADCAST]: void;
-    [APITopic.RAISE_INTENT]: IntentResolution;
-    [APITopic.GET_ALL_CHANNELS]: Channel[];
-    [APITopic.JOIN_CHANNEL]: void;
-    [APITopic.GET_CHANNEL]: Channel;
-    [APITopic.GET_CHANNEL_MEMBERS]: Identity[];
+export type APIFromClient = {
+    [APIFromClientTopic.OPEN]: [OpenPayload, void];
+    [APIFromClientTopic.FIND_INTENT]: [FindIntentPayload, AppIntent];
+    [APIFromClientTopic.FIND_INTENTS_BY_CONTEXT]: [FindIntentsByContextPayload, AppIntent[]];
+    [APIFromClientTopic.BROADCAST]: [BroadcastPayload, void];
+    [APIFromClientTopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
+    [APIFromClientTopic.ADD_INTENT_LISTENER]: [IntentListenerPayload, void];
+    [APIFromClientTopic.REMOVE_INTENT_LISTENER]: [IntentListenerPayload, void];
+    [APIFromClientTopic.GET_ALL_CHANNELS]: [GetAllChannelsPayload, Channel[]];
+    [APIFromClientTopic.JOIN_CHANNEL]: [JoinChannelPayload, void];
+    [APIFromClientTopic.GET_CHANNEL]: [GetChannelPayload, Channel];
+    [APIFromClientTopic.GET_CHANNEL_MEMBERS]: [GetChannelMembersPayload, Identity[]];
+}
+
+export type APIToClient = {
+    [APIToClientTopic.CONTEXT]: [ContextPayload, void];
+    [APIToClientTopic.INTENT]: [IntentPayload, any];
 }
 
 export interface OpenPayload {
@@ -88,6 +93,11 @@ export interface RaiseIntentPayload {
     target?: string;
 }
 
+export interface IntentPayload {
+    intent: string;
+    context: Context;
+}
+
 export interface GetAllChannelsPayload {
 
 }
@@ -103,4 +113,26 @@ export interface GetChannelPayload {
 
 export interface GetChannelMembersPayload {
     id: ChannelId;
+}
+
+export interface ContextPayload {
+    context: Context;
+}
+
+export interface IntentListenerPayload {
+  intent: string;
+}
+
+/**
+ * Creates a deferred promise and returns it along with handlers to resolve/reject it imperatively
+ * @returns a tuple with the promise and its resolve/reject handlers
+ */
+export function deferredPromise<T = void>(): [Promise<T>, (value?: T) => void, (reason?: any) => void] {
+    let res: (value?: T) => void;
+    let rej: (reason?: any) => void;
+    const p = new Promise<T>((r, rj) => {
+        res = r;
+        rej = rj;
+    });
+    return [p, res!, rej!];
 }
