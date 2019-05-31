@@ -363,16 +363,18 @@ only the first listener is triggered exactly once with the correct context, and 
                 });
             });
         });
-    });
+    }); // With a target
 
-    describe('Without a target', () => {
-        describe('With no apps in the directory registered to accept the raised intent', () => {
-            const intentNotInDirectory = 'test.IntentNotInDirectory';
-            const context = {type: 'dummyContext'};
+    describe.only('Without a target', () => {
+        describe('0 apps in directory registered to accept the raised intent', () => {
+            const notInDirectory = {
+                intent: 'test.IntentNotInDirectory',
+                context: {type: 'dummyContext'}
+            };
 
             describe('And no running ad-hoc apps with listeners registered for the raised intent', () => {
                 test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
-                    const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, intentNotInDirectory, context);
+                    const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, notInDirectory.intent, notInDirectory.context);
 
                     await expect(resultPromise).toThrowFDC3Error(
                         ResolveError.NoAppsFound,
@@ -380,6 +382,214 @@ only the first listener is triggered exactly once with the correct context, and 
                     );
                 });
             });
+
+            describe('But there are running ad-hoc apps with a listener registered for the raised intent', () => {
+                const testAppNotInDirectory = {
+                    uuid: 'test-app-not-in-directory',
+                    name: 'test-app-not-in-directory',
+                    manifestUrl: 'http://localhost:3923/test/configs/test-app-not-in-directory.json'
+                };
+                let listener: fdc3Remote.RemoteIntentListener;
+
+                beforeEach(async () => {
+                    await fin.Application.startFromManifest(testAppNotInDirectory.manifestUrl);
+                    listener = await fdc3Remote.addIntentListener(testAppNotInDirectory, notInDirectory.intent);
+                });
+
+                afterEach(async () => {
+                    await fin.Application.wrapSync(testAppNotInDirectory).quit().catch(() => {});
+                });
+
+                describe('Just 1 ad-hoc app with a listener registered for the intent', () => {
+                    test('When calling raiseIntent the listener is triggered once', async () => {
+                        await fdc3Remote.raiseIntent(testManagerIdentity, notInDirectory.intent, notInDirectory.context);
+
+                        const receivedContexts = await listener.getReceivedContexts();
+                        expect(receivedContexts).toEqual([notInDirectory.context]);
+                    });
+
+                    test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it errors', async () => {
+                        await listener.unsubscribe();
+                        const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, notInDirectory.intent, notInDirectory.context);
+
+                        await expect(resultPromise).toThrowFDC3Error(
+                            ResolveError.NoAppsFound,
+                            'No applications available to handle this intent'
+                        );
+                    });
+                });
+
+                describe('2 ad-hoc apps, both of them with a listener registered for the intent', () => {
+                    const testAppNotInDirectory2 = {
+                        uuid: 'test-app-not-in-directory-2',
+                        name: 'test-app-not-in-directory-2',
+                        manifestUrl: 'http://localhost:3923/test/configs/test-app-not-in-directory-2.json'
+                    };
+                    let listener2: fdc3Remote.RemoteIntentListener;
+
+                    beforeEach(async () => {
+                        await fin.Application.startFromManifest(testAppNotInDirectory2.manifestUrl);
+                        listener2 = await fdc3Remote.addIntentListener(testAppNotInDirectory2, notInDirectory.intent);
+                    });
+
+                    afterEach(async () => {
+                        await fin.Application.wrapSync(testAppNotInDirectory2).quit().catch(() => {});
+                    });
+
+                    test.todo('When calling raiseIntent, the resolver is displayed with both apps');
+
+                    test('When calling unsubscribe from the intent listener on the first app, then calling raiseIntent from another app, \
+then the second listener is triggered exactly once with the correct context', async () => {
+                        await listener.unsubscribe();
+                        await fdc3Remote.raiseIntent(testManagerIdentity, notInDirectory.intent, notInDirectory.context);
+
+                        const receivedContexts = await listener.getReceivedContexts();
+                        expect(receivedContexts).toEqual([]);
+
+                        const receivedContexts2 = await listener2.getReceivedContexts();
+                        expect(receivedContexts2).toEqual([notInDirectory.context]);
+                    });
+                });
+            });
+        }); // 0 apps in directory
+
+        describe('1 app in directory registered to accept the raised intent', () => {
+            const onlyIn1App = {
+                intent: 'test.IntentOnlyOnApp4',
+                context: {type: 'dummyContext'}
+            };
+            const testAppWithUniqueIntent = {
+                uuid: 'test-app-4',
+                name: 'test-app-4',
+                appId: '400'
+            };
+
+            describe('With the registered app running', () => {
+                beforeEach(async () => {
+                    await fdc3Remote.open(testManagerIdentity, testAppWithUniqueIntent.uuid);
+                });
+
+                afterEach(async () => {
+                    await fin.Application.wrapSync(testAppWithUniqueIntent).quit().catch(() => {});
+                });
+
+                describe('But the app does not have the listener registered on the model', () => {
+                    // This case is equivalent to 0 apps in directory
+                    describe('And no running ad-hoc apps with listeners registered for the raised intent', () => {
+                        test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
+                            const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, onlyIn1App.intent, onlyIn1App.context);
+
+                            await expect(resultPromise).toThrowFDC3Error(
+                                ResolveError.NoAppsFound,
+                                'No applications available to handle this intent'
+                            );
+                        });
+                    });
+
+                    describe('But there are running ad-hoc apps with a listener registered for the raised intent', () => {
+                        const testAppNotInDirectory = {
+                            uuid: 'test-app-not-in-directory',
+                            name: 'test-app-not-in-directory',
+                            manifestUrl: 'http://localhost:3923/test/configs/test-app-not-in-directory.json'
+                        };
+                        let listener: fdc3Remote.RemoteIntentListener;
+
+                        beforeEach(async () => {
+                            await fin.Application.startFromManifest(testAppNotInDirectory.manifestUrl);
+                            listener = await fdc3Remote.addIntentListener(testAppNotInDirectory, onlyIn1App.intent);
+                        });
+
+                        afterEach(async () => {
+                            await fin.Application.wrapSync(testAppNotInDirectory).quit().catch(() => {});
+                        });
+
+                        describe('Just 1 ad-hoc app with a listener registered for the intent', () => {
+                            test('When calling raiseIntent the listener is triggered once', async () => {
+                                await fdc3Remote.raiseIntent(testManagerIdentity, onlyIn1App.intent, onlyIn1App.context);
+
+                                const receivedContexts = await listener.getReceivedContexts();
+                                expect(receivedContexts).toEqual([onlyIn1App.context]);
+                            });
+
+                            test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it errors', async () => {
+                                await listener.unsubscribe();
+                                const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, onlyIn1App.intent, onlyIn1App.context);
+
+                                await expect(resultPromise).toThrowFDC3Error(
+                                    ResolveError.NoAppsFound,
+                                    'No applications available to handle this intent'
+                                );
+                            });
+                        });
+
+                        describe('2 ad-hoc apps, both of them with a listener registered for the intent', () => {
+                            const testAppNotInDirectory2 = {
+                                uuid: 'test-app-not-in-directory-2',
+                                name: 'test-app-not-in-directory-2',
+                                manifestUrl: 'http://localhost:3923/test/configs/test-app-not-in-directory-2.json'
+                            };
+                            let listener2: fdc3Remote.RemoteIntentListener;
+
+                            beforeEach(async () => {
+                                await fin.Application.startFromManifest(testAppNotInDirectory2.manifestUrl);
+                                listener2 = await fdc3Remote.addIntentListener(testAppNotInDirectory2, onlyIn1App.intent);
+                            });
+
+                            afterEach(async () => {
+                                await fin.Application.wrapSync(testAppNotInDirectory2).quit().catch(() => {});
+                            });
+
+                            test.todo('When calling raiseIntent, the resolver is displayed with both apps');
+
+                            test('When calling unsubscribe from the intent listener on the first app, then calling raiseIntent from another app, \
+then the second listener is triggered exactly once with the correct context', async () => {
+                                await listener.unsubscribe();
+                                await fdc3Remote.raiseIntent(testManagerIdentity, onlyIn1App.intent, onlyIn1App.context);
+
+                                const receivedContexts = await listener.getReceivedContexts();
+                                expect(receivedContexts).toEqual([]);
+
+                                const receivedContexts2 = await listener2.getReceivedContexts();
+                                expect(receivedContexts2).toEqual([onlyIn1App.context]);
+                            });
+                        });
+                    });
+                }); // 1 app in directory, running, but hasn't registered listener
+
+                describe('And the app has registered a listener for the intent', () => {
+                    let listener: fdc3Remote.RemoteIntentListener;
+
+                    beforeEach(async () => {
+                        listener = await fdc3Remote.addIntentListener(testAppWithUniqueIntent, onlyIn1App.intent);
+                    });
+                    describe('And no running ad-hoc apps with listeners registered for the raised intent', () => {
+                        // Raise directly
+                        test.todo('When calling raiseIntent from another app the listener is triggered exactly once with the correct context');
+                    });
+
+                    describe('But there is a running ad-hoc app with a listener registered for the same intent', () => {
+                        // Launch resolver
+                        test.todo('When calling raiseIntent from another app, the resolver should be displayed with both apps');
+                    });
+                }); // 1 app in directory, running, has registered listener
+            }); // 1 app in directory, running
+
+            describe('With the registered app not running', () => {
+                describe('And no running ad-hoc apps with listeners registered for the raised intent', () => {
+                    describe('When the directory app does not register the intent listener after opening', () => {
+                        test.todo('When calling raiseIntent from another app, the directory app should open and receive the intent with the correct context');
+                    });
+
+                    describe('When the directory app registers the intent listener after opening', () => {
+                        // beforeEach ??
+                        test.todo('When calling raiseIntent from another app, the app should open but a timeout error should be thrown');
+                    });
+                });
+
+                describe('But there is a running ad-hoc app with a listener registered for the same intent', () => {
+                    test.todo('When calling raiseIntent from another app, the resolver should be displayed with the directory + ad-hoc app');
+                });
+            }); // 1 app in directory, not running
 
             describe('But there is a running ad-hoc app with a listener registered for the raised intent', () => {
                 const testAppNotInDirectory = {
@@ -391,57 +601,17 @@ only the first listener is triggered exactly once with the correct context, and 
 
                 beforeEach(async () => {
                     await fin.Application.startFromManifest(testAppNotInDirectory.manifestUrl);
-                    listener = await fdc3Remote.addIntentListener(testAppNotInDirectory, intentNotInDirectory);
+                    listener = await fdc3Remote.addIntentListener(testAppNotInDirectory, onlyIn1App.intent);
                 });
 
                 afterEach(async () => {
                     await fin.Application.wrapSync(testAppNotInDirectory).quit().catch(() => {});
                 });
-
-                test('When calling raiseIntent the listener is triggered once', async () => {
-                    await fdc3Remote.raiseIntent(testManagerIdentity, intentNotInDirectory, context);
-
-                    const receivedContexts = await listener.getReceivedContexts();
-                    expect(receivedContexts).toEqual([context]);
-                });
-
-                test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it errors with no apps found', async () => {
-                    await listener.unsubscribe();
-                    const resultPromise = fdc3Remote.raiseIntent(testManagerIdentity, intentNotInDirectory, context);
-
-                    await expect(resultPromise).toThrowFDC3Error(
-                        ResolveError.NoAppsFound,
-                        'No applications available to handle this intent'
-                    );
-                });
             });
-        });
+        }); // 1 app in directory
 
-        // TODO: find a way to dynamically set the app directory for these tests
-        describe('With exactly one app registered to accept the raised intent', () => {
-            describe('And no running ad-hoc apps with listeners registered for the raised intent', () => {
-                describe('With the registered app running', () => {
-                    test.todo('When calling raiseIntent from another app the listener is triggered exactly once with the correct context');
-
-                    test.todo('But the app does not have the listener registered on the model');
-                });
-
-                describe('With the registered app not running', () => {
-                    test.todo('The targeted app opens and its listener is triggered exactly once with the correct context');
-
-                    describe('But there is a running ad-hoc app with a listener registered for the same intent', () => {
-                        // TODO: Should show resolver with running app + directory app
-                    });
-                });
-            });
-
-            describe('But there is a running ad-hoc app with a listener registered for the raised intent', () => {
-
-            });
-        });
-
-        describe('With multiple apps registered to accept the raised intent', () => {
+        describe('>1 app in directory registered to accept the raised intent', () => {
             test.todo('TODO: figure out how to test the resolver UI properly');
-        });
-    });
+        }); // >1 app in directory
+    }); // Without a target
 });
