@@ -206,7 +206,7 @@ only the first listener is triggered', async () => {
                     });
 
                     test('When calling unsubscribe from a second intent listener, then calling raiseIntent from another app, \
-the first listener is triggered exactly once with the correct context', async () => {
+only the first listener is triggered exactly once with the correct context, and the second is not triggered', async () => {
                         const shortLivedListener = await fdc3Remote.addIntentListener(testAppInDirectory, validPayload.intent);
                         await shortLivedListener.unsubscribe();
 
@@ -214,17 +214,9 @@ the first listener is triggered exactly once with the correct context', async ()
 
                         const receivedContexts = await listener.getReceivedContexts();
                         expect(receivedContexts).toEqual([validPayload.context]);
-                    });
 
-                    test('When calling unsubscribe from a second intent listener, then calling raiseIntent from another app, \
-the second listener is not triggered', async () => {
-                        const shortLivedListener = await fdc3Remote.addIntentListener(testAppInDirectory, validPayload.intent);
-                        await shortLivedListener.unsubscribe();
-
-                        await fdc3Remote.raiseIntent(testManagerIdentity, validPayload.intent, validPayload.context, testAppInDirectory.name);
-
-                        const receivedContexts = await shortLivedListener.getReceivedContexts();
-                        expect(receivedContexts).toEqual([]);
+                        const shortLivedReceivedContexts = await shortLivedListener.getReceivedContexts();
+                        expect(shortLivedReceivedContexts).toEqual([]);
                     });
                 });
 
@@ -449,7 +441,7 @@ only the first listener is triggered exactly once with the correct context, and 
         });
 
         describe('With multiple apps registered to accept the raised intent', () => {
-            // TODO: figure out how to test the resolver UI properly
+            test.todo('TODO: figure out how to test the resolver UI properly');
         });
     });
 });
