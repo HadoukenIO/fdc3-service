@@ -31,7 +31,7 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
             setCurrentChannelId(channel);
         });
         getDesktopChannels().then(channels => {
-            setChannels(channels);
+            setChannels([defaultChannel, ...channels]);
         });
     }, []);
 
