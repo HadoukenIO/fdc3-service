@@ -122,23 +122,20 @@ namespace OpenFin.FDC3
                 throw new NullReferenceException("ChannelClient must be created before registering topics.");
             }
 
-            channelClient.RegisterTopic<RaiseIntentPayload, object>(ChannelTopicConstants.Intent, payload =>
+            channelClient.RegisterTopic<RaiseIntentPayload>(ChannelTopicConstants.Intent, payload =>
             {
                 var listeners = intentListeners.Where(x => x.Key == payload.Intent).ToList();
-                listeners.ForEach(x => x.Value?.Invoke(payload.Context));
-                return null;
+                listeners.ForEach(x => x.Value?.Invoke(payload.Context));                
             });
 
-            channelClient.RegisterTopic<ContextBase, object>(ChannelTopicConstants.Context, payload =>
+            channelClient.RegisterTopic<ContextBase>(ChannelTopicConstants.Context, payload =>
             {
-                contextListeners?.Invoke(payload);
-                return null;
+                contextListeners?.Invoke(payload);                
             });
 
-            channelClient.RegisterTopic<ChannelChangedPayload, object>(ChannelTopicConstants.Event, @event =>
+            channelClient.RegisterTopic<ChannelChangedPayload>(ChannelTopicConstants.Event, @event =>
             {
-                channelChangedHandlers?.Invoke(@event);
-                return null;
+                channelChangedHandlers?.Invoke(@event);                
             });
         }
     }
