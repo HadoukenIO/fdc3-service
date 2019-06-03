@@ -3,7 +3,7 @@ import 'reflect-metadata';
 
 import {Identity} from 'openfin/_v2/main';
 
-import {ResolveError} from '../../src/client/errors';
+import {ResolveError, Timeouts, FDC3Error} from '../../src/client/errors';
 import {Intent} from '../../src/client/intents';
 
 import {fin} from './utils/fin';
@@ -140,37 +140,36 @@ describe('Intent listeners and raising intents', () => {
                     });
 
                     describe('And the listener is added after a delay', () => {
-                        const testAppDelayedListenerIdentity = {
-                            uuid: 'test-app-1',
-                            name: 'test-app-1',
-                            appId: '550'
-                        };
-                        test('The targeted app opens and its listener is triggered just once after it is set up, with the correct context', async () => {
-                            // We dont await for this promise here because it wouldn't resolve.
-                            // It's going to resolve only after we add the listener to the test app
-                            const raiseIntentPromise = raiseIntent(validIntent, testAppDelayedListenerIdentity);
+                        afterEach(async () => {
+                            await fin.Application.wrapSync(testAppInDirectory).quit();
+                        });
+                        describe('Delay is short enough for the intent handshake to succeed', () => {
+                            test('The targeted app opens and its listener is triggered just once after it is set up, with the correct context', async () => {
+                                // Raise the intent but only add the intent listener after the some time
+                                await raiseDelayedIntentWithTarget(validIntent, testAppInDirectory, 1500);
 
-                            while (!await fin.Application.wrapSync(testAppDelayedListenerIdentity).isRunning()) {
-                                await delay(500);
-                            }
-                            // App should now be running
+                                // Since the time is under the listener handshake timeout, intent should be triggered correctly
+                                const listener = await fdc3Remote.getRemoteIntentListener(testAppInDirectory, validIntent.type);
+                                const receivedContexts = await listener.getReceivedContexts();
+                                expect(receivedContexts).toEqual([validIntent.context]);
+                            }, appStartupTime + 1500);
+                        });
 
-                            // We want to have a delay between the app running and the intent listener being set up,
-                            // so that we can test the "add intent" handshake message.  If the app is fast enough setting up,
-                            // the intent message may go through anyway, but we want to simulate the case where the app
-                            // takes some time between starting up and actually setting up the intent listener.
-                            await delay(1500);
-                            await fdc3Remote.addIntentListener(testAppDelayedListenerIdentity, validIntent.type);
+                        describe('Delay is longer than the threshold to add intent listeners', () => {
+                            test('The targeted app opens but it times out waiting for the listener to be added', async () => {
+                                // Raise the intent but only add the intent listener after the listener handshake timeout has been exceeded
+                                const raiseIntentPromise = raiseDelayedIntentWithTarget(
+                                    validIntent,
+                                    testAppInDirectory,
+                                    Timeouts.ADD_INTENT_LISTENER + 2000
+                                );
 
-                            // Now the promise can resolve because the listener it was waiting for has just been registered
-                            await raiseIntentPromise;
-
-                            const listener = await fdc3Remote.getRemoteIntentListener(testAppDelayedListenerIdentity, validIntent.type);
-                            const receivedContexts = await listener.getReceivedContexts();
-                            expect(receivedContexts).toEqual([validIntent.context]);
-
-                            await fin.Application.wrapSync(testAppDelayedListenerIdentity).quit();
-                        }, appStartupTime + 1500);
+                                await expect(raiseIntentPromise).toThrowFDC3Error(
+                                    ResolveError.IntentTimeout,
+                                    `Timeout waiting for intent listener to be added. intent = ${validIntent.type}`
+                                );
+                            }, appStartupTime + 1500);
+                        });
                     });
                 });
             });
@@ -372,7 +371,7 @@ only the first listener is triggered exactly once with the correct context, and 
                 describe('But the app does not have the listener registered on the model', () => {
                     // This case is equivalent to 0 apps in directory
                     noTarget_noDirectoryAppCanHandleIntent(uniqueIntent);
-                }); // 1 app in directory, running, but hasn't registered listener
+                });
 
                 describe('And the app has registered a listener for the intent', () => {
                     let directoryAppListener: fdc3Remote.RemoteIntentListener;
@@ -397,7 +396,7 @@ only the first listener is triggered exactly once with the correct context, and 
                 }); // 1 app in directory, running, has registered listener
             }); // 1 app in directory, running
 
-            describe('With the registered app not running', () => {
+            describe('With the registered app not running', () => { // ! 221
                 describe('And no running ad-hoc apps with listeners registered for the raised intent', () => {
                     describe('When the directory app registers the intent listener after opening', () => {
                         test.todo('When calling raiseIntent from another app, the directory app should open and receive the intent with the correct context');
@@ -426,6 +425,43 @@ only the first listener is triggered exactly once with the correct context, and 
 //
 // Common / reusable cases
 //
+
+/**
+ * Raise an intent against a target app (waiting for it to start if not already), and add an intent listener after some delay.
+ * Returns the promise from raising the intent
+ * @param intent intent to raise
+ * @param targetApp target app
+ * @param delayMs time in milliseconds to wait after the app is running and before the intent listener is added
+ */
+async function raiseDelayedIntentWithTarget(intent: Intent, targetApp: AppIdentity, delayMs: number) {
+    let err: FDC3Error | undefined = undefined;
+
+    // We dont await for this promise - that's up to the function caller.
+    // It's going to resolve only after we add the listener to the test app
+    const raiseIntentPromise = raiseIntent(intent, targetApp).catch(e => {
+        err = e;
+    });
+
+    while (!await fin.Application.wrapSync(targetApp).isRunning()) {
+        await delay(500);
+    }
+    // App should now be running
+
+    // We want to have a delay between the app running and the intent listener being set up,
+    // so that we can test the "add intent" handshake message. If the app is fast enough setting up,
+    // the intent message may go through anyway, but we want to simulate the case where the app
+    // takes some time between starting up and actually setting up the intent listener.
+    await delay(delayMs);
+
+    await fdc3Remote.addIntentListener(targetApp, intent.type);
+
+    // At this point the promise can be resolved if the listener it was waiting for has just been registered,
+    // or rejected due to `raiseIntent` timing out
+    if (err) {
+        throw err;
+    }
+    return raiseIntentPromise;
+}
 
 function noTarget_noDirectoryAppCanHandleIntent(intent: Intent) {
     describe('And no running ad-hoc apps with listeners registered for the raised intent', () => {
