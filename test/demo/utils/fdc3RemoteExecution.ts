@@ -13,13 +13,45 @@
 import {Identity} from 'openfin/_v2/main';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 
-import {Application, Context, IntentType, ChannelId, Channel, AppIntent} from '../../../src/client/main';
+import {Application, Context, IntentType, AppIntent, ChannelBase, ChannelId, DefaultChannel, DesktopChannel} from '../../../src/client/main';
 import {RaiseIntentPayload} from '../../../src/client/internal';
 import {FDC3Event, FDC3EventType} from '../../../src/client/connection';
 
-import {OFPuppeteerBrowser, TestWindowContext} from './ofPuppeteer';
+import {OFPuppeteerBrowser, TestWindowContext, TestChannelTransport} from './ofPuppeteer';
 
 const ofBrowser = new OFPuppeteerBrowser();
+
+const remoteChannels: {[id: string]: RemoteChannel} = {};
+
+export interface RemoteChannel {
+    channel: ChannelBase;
+    id: string;
+
+    getMembers: () => Promise<Identity[]>;
+    join: (identity?: Identity) => Promise<void>
+}
+
+export interface RemoteContextListener {
+    remoteIdentity: Identity;
+    id: number;
+    unsubscribe: () => Promise<void>;
+    getReceivedContexts: () => Promise<Context[]>;
+}
+
+export interface RemoteIntentListener {
+    remoteIdentity: Identity;
+    id: number;
+    intent: IntentType;
+    unsubscribe: () => Promise<void>;
+    getReceivedContexts: () => Promise<Context[]>;
+}
+
+export interface RemoteEventListener {
+    remoteIdentity: Identity;
+    id: number;
+    getReceivedEvents: () => Promise<FDC3Event[]>;
+    unsubscribe: () => Promise<void>;
+}
 
 export async function open(executionTarget: Identity, name: string, context?: Context): Promise<void> {
     return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, name: string, context?: Context): Promise<void> {
@@ -46,30 +78,6 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
         .then(() => new Promise<void>(res => setTimeout(res, 100)));  // Broadcast is fire-and-forget. Slight delay to allow for service to handle
 }
 
-export async function getAllChannels(executionTarget: Identity): Promise<Channel[]> {
-    return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext): Promise<Channel[]> {
-        return this.fdc3.getAllChannels().catch(this.errorHandler);
-    }).catch(handlePuppeteerError);
-}
-
-export async function joinChannel(executionTarget: Identity, channelId: ChannelId, identity?: Identity): Promise<void> {
-    return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, channelId: ChannelId, identity?: Identity): Promise<void> {
-        return this.fdc3.joinChannel(channelId, identity).catch(this.errorHandler);
-    }, channelId, identity).catch(handlePuppeteerError);
-}
-
-export async function getChannel(executionTarget: Identity, identity?: Identity): Promise<Channel> {
-    return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, identity?: Identity): Promise<Channel> {
-        return this.fdc3.getChannel(identity).catch(this.errorHandler);
-    }, identity).catch(handlePuppeteerError);
-}
-
-export async function getChannelMembers(executionTarget: Identity, channelId: ChannelId): Promise<Identity[]> {
-    return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, channelId: ChannelId): Promise<Identity[]> {
-        return this.fdc3.getChannelMembers(channelId).catch(this.errorHandler);
-    }, channelId).catch(handlePuppeteerError);
-}
-
 export async function raiseIntent(executionTarget: Identity, intent: IntentType, context: Context, target?: string): Promise<void> {
     return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, payload: RaiseIntentPayload): Promise<void> {
         await this.fdc3.raiseIntent(payload.intent, payload.context, payload.target).catch(this.errorHandler);
@@ -86,21 +94,6 @@ export async function createFinWindow(executionTarget: Identity, windowOptions: 
         const window = await this.fin.Window.create(payload);
         return window.identity;
     }, windowOptions);
-}
-
-export interface RemoteContextListener {
-    remoteIdentity: Identity;
-    id: number;
-    unsubscribe: () => Promise<void>;
-    getReceivedContexts: () => Promise<Context[]>;
-}
-
-export interface RemoteIntentListener {
-    remoteIdentity: Identity;
-    id: number;
-    intent: IntentType;
-    unsubscribe: () => Promise<void>;
-    getReceivedContexts: () => Promise<Context[]>;
 }
 
 export async function addContextListener(executionTarget: Identity): Promise<RemoteContextListener> {
@@ -210,12 +203,6 @@ export async function getRemoteIntentListener(executionTarget: Identity, intent:
         }
     };
 }
-export interface RemoteEventListener {
-    remoteIdentity: Identity;
-    id: number;
-    getReceivedEvents: () => Promise<FDC3Event[]>;
-    unsubscribe: () => Promise<void>;
-}
 
 export async function addEventListener(executionTarget: Identity, eventType: FDC3EventType): Promise<RemoteEventListener> {
     const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext, eventType: FDC3EventType): number {
@@ -281,6 +268,80 @@ export async function findIntentsByContext(executionTarget: Identity, context: C
     return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, context: Context): Promise<AppIntent[]> {
         return this.fdc3.findIntentsByContext(context).catch(this.errorHandler);
     }, context).catch(handlePuppeteerError);
+}
+
+export async function getDesktopChannels(executionTarget: Identity): Promise<RemoteChannel[]> {
+    const channels = await ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext): Promise<TestChannelTransport[]> {
+        const channels = await this.fdc3.getDesktopChannels().catch(this.errorHandler);
+
+        return channels.map(this.serializeChannel);
+    }).catch(handlePuppeteerError);
+
+    return channels.map(channel => deserializeChannel(executionTarget, channel));
+}
+
+export async function getChannelById(executionTarget: Identity, id: ChannelId): Promise<RemoteChannel|null> {
+    const testChannelTransport = await ofBrowser.executeOnWindow(
+        executionTarget,
+        async function(this: TestWindowContext, id: ChannelId): Promise<TestChannelTransport|null> {
+            const channel = await this.fdc3.getChannelById(id).catch(this.errorHandler);
+
+            return channel ? this.serializeChannel(channel) : null;
+        },
+        id
+    ).catch(handlePuppeteerError);
+
+    return testChannelTransport ? deserializeChannel(executionTarget, testChannelTransport) : null;
+}
+
+export async function getCurrentChannel(executionTarget: Identity, identity?: Identity): Promise<RemoteChannel> {
+    const testChannelTransport = await ofBrowser.executeOnWindow(
+        executionTarget,
+        async function(this: TestWindowContext, identity?: Identity): Promise<TestChannelTransport> {
+            const channel = await this.fdc3.getCurrentChannel(identity).catch(this.errorHandler);
+
+            return this.serializeChannel(channel);
+        },
+        identity
+    ).catch(handlePuppeteerError);
+
+    return deserializeChannel(executionTarget, testChannelTransport);
+}
+
+function deserializeChannel(executionTarget: Identity, transport: TestChannelTransport): RemoteChannel {
+    let remoteChannel = remoteChannels[transport.id];
+
+    if (!remoteChannel) {
+        remoteChannel = {
+            id: transport.id,
+            channel: transport.channel as ChannelBase,
+            join: async (identity?: Identity) => {
+                return ofBrowser.executeOnWindow(executionTarget, async function(channelInstanceId: string, identity?: Identity): Promise<void> {
+                    return this.channelTransports[channelInstanceId].channel.join(identity);
+                }, transport.id, identity);
+            },
+            getMembers: async () => {
+                return ofBrowser.executeOnWindow(executionTarget, async function(channelInstanceId: string): Promise<Identity[]> {
+                    return this.channelTransports[channelInstanceId].channel.getMembers();
+                }, transport.id);
+            }
+        };
+
+        switch (transport.constructor) {
+            case 'DefaultChannel':
+                Object.setPrototypeOf(transport.channel, DefaultChannel);
+                break;
+            case 'DesktopChannel':
+                Object.setPrototypeOf(transport.channel, DesktopChannel);
+                break;
+            default:
+                throw new Error(`Unexpected channel constructor received: ${transport.constructor}`);
+        }
+
+        remoteChannels[transport.id] = remoteChannel;
+    }
+
+    return remoteChannel;
 }
 
 /**

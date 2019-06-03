@@ -3,7 +3,7 @@ import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, GetAllChannelsPayload, JoinChannelPayload, GetChannelPayload, GetChannelMembersPayload, IntentListenerPayload} from '../client/internal';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Intent, Channel} from '../client/main';
 import {FDC3Error, ResolveError, OpenError} from '../client/errors';
 
@@ -56,10 +56,10 @@ export class Main {
             [APIFromClientTopic.RAISE_INTENT]: this.raiseIntent.bind(this),
             [APIFromClientTopic.ADD_INTENT_LISTENER]: this.addIntentListener.bind(this),
             [APIFromClientTopic.REMOVE_INTENT_LISTENER]: this.removeIntentListener.bind(this),
-            [APIFromClientTopic.GET_ALL_CHANNELS]: this.getAllChannels.bind(this),
-            [APIFromClientTopic.JOIN_CHANNEL]: this.joinChannel.bind(this),
-            [APIFromClientTopic.GET_CHANNEL]: this.getChannel.bind(this),
-            [APIFromClientTopic.GET_CHANNEL_MEMBERS]: this.getChannelMembers.bind(this)
+            [APIFromClientTopic.GET_DESKTOP_CHANNELS]: this.getDesktopChannels.bind(this),
+            [APIFromClientTopic.GET_CURRENT_CHANNEL]: this.getCurrentChannel.bind(this),
+            [APIFromClientTopic.CHANNEL_GET_MEMBERS]: this.channelGetMembers.bind(this),
+            [APIFromClientTopic.CHANNEL_JOIN]: this.channelJoin.bind(this)
         });
 
         console.log('Service Initialised');
@@ -130,22 +130,6 @@ export class Main {
         return this._intents.raise(intent);
     }
 
-    private async getAllChannels(payload: GetAllChannelsPayload, source: ProviderIdentity): Promise<Channel[]> {
-        return this._contexts.getAllChannels(payload, source);
-    }
-
-    private async joinChannel(payload: JoinChannelPayload, source: ProviderIdentity): Promise<void> {
-        return this._contexts.joinChannel(payload, source);
-    }
-
-    private async getChannel(payload: GetChannelPayload, source: ProviderIdentity): Promise<Channel> {
-        return this._contexts.getChannel(payload, source);
-    }
-
-    private async getChannelMembers(payload: GetChannelMembersPayload, source: ProviderIdentity): Promise<Identity[]> {
-        return this._contexts.getChannelMembers(payload, source);
-    }
-
     private async addIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): Promise<void> {
         let appWindow = this._model.getWindow(identity);
 
@@ -184,6 +168,27 @@ export class Main {
             // If for some odd reason the window is not in the model it's still OK to return successfully,
             // as the caller's intention was to remove a listener and the listener is certainly not there.
         }
+    }
+
+    private async getDesktopChannels(payload: GetDesktopChannelsPayload, source: ProviderIdentity): Promise<DesktopChannelTransport[]> {
+        return this._contexts.getDesktopChannels();
+    }
+
+    private async getCurrentChannel(payload: GetCurrentChannelPayload, source: ProviderIdentity): Promise<ChannelTransport> {
+        const identity = payload.identity || source;
+
+        return this._contexts.getCurrentChannel(identity);
+    }
+
+    private async channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): Promise<Identity[]> {
+        return this._contexts.getChannelMembers(payload.id);
+    }
+
+    private async channelJoin(payload: ChannelJoinPayload, source: ProviderIdentity): Promise<void> {
+        const id = payload.id;
+        const identity = payload.identity || source;
+
+        return this._contexts.joinChannel(id, identity);
     }
 }
 

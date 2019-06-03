@@ -3,16 +3,19 @@ import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
 import {AppWindow} from '../model/AppWindow';
-import {Context, ChannelChangedEvent, Channel} from '../../client/main';
+import {Context, ChannelChangedEvent, Channel, ChannelId} from '../../client/main';
 import {ChannelModel} from '../ChannelModel';
 import {APIHandler} from '../APIHandler';
 import {
     APIFromClientTopic,
-    GetAllChannelsPayload,
-    JoinChannelPayload,
-    GetChannelPayload,
-    GetChannelMembersPayload,
-    APIToClientTopic
+    GetDesktopChannelsPayload,
+    GetCurrentChannelPayload,
+    ChannelGetMembersPayload,
+    ChannelJoinPayload,
+    APIToClientTopic,
+    DesktopChannelTransport,
+    ChannelTransport,
+    EventTransport
 } from '../../client/internal';
 import {Inject} from '../common/Injectables';
 import {getId} from '../model/Model';
@@ -48,7 +51,7 @@ export class ContextHandler {
      * @param source App sending the context. It won't receive the broadcast
      */
     public broadcast(context: Context, source: Identity): void {
-        const channel = this._channelModel.getChannel(source);
+        const channel = this._channelModel.getChannelForWindow(source);
         const channelMembers = this._channelModel.getChannelMembers(channel.id);
 
         this._channelModel.setContext(channel.id, context);
@@ -61,32 +64,28 @@ export class ContextHandler {
             .forEach(identity => this.send(identity, context));
     }
 
-    public getAllChannels(payload: GetAllChannelsPayload, source: ProviderIdentity): Channel[] {
-        return this._channelModel.getAllChannels();
+    public getDesktopChannels(): DesktopChannelTransport[] {
+        return this._channelModel.getDesktopChannels().slice();
     }
 
-    public async joinChannel(payload: JoinChannelPayload, source: ProviderIdentity): Promise<void> {
-        const identity = payload.identity || source;
+    public getCurrentChannel(identity: Identity): ChannelTransport {
+        return this._channelModel.getChannelForWindow(identity);
+    }
 
-        this._channelModel.joinChannel(identity, payload.id);
-        const context = this._channelModel.getContext(payload.id);
+    public getChannelMembers(id: ChannelId): Identity[] {
+        return this._channelModel.getChannelMembers(id);
+    }
+
+    public async joinChannel(id: ChannelId, identity: Identity): Promise<void> {
+        this._channelModel.joinChannel(identity, id);
+        const context = this._channelModel.getContext(id);
 
         if (context) {
             await this.send(identity, context);
         }
     }
 
-    public getChannel(payload: GetChannelPayload, source: ProviderIdentity): Channel {
-        const identity = payload.identity || source;
-
-        return this._channelModel.getChannel(identity);
-    }
-
-    public getChannelMembers(payload: GetChannelMembersPayload, source: ProviderIdentity): Identity[] {
-        return this._channelModel.getChannelMembers(payload.id);
-    }
-
-    private onChannelChangedHandler(event: ChannelChangedEvent): void {
+    private onChannelChangedHandler(event: EventTransport<ChannelChangedEvent>): void {
         this._apiHandler.channel.publish('event', event);
     }
 }

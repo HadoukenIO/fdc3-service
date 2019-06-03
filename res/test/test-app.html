@@ -22,9 +22,32 @@
             throw error;
         }
 
+        function serializeChannel(channel) {
+            let transport = window.channelTransports.find(transport => transport.channel === channel);
+
+            if (!transport) {
+                transport = {
+                    id: uuidv4(),
+                    channel,
+                    constructor: channel.constructor.name,
+                }
+
+                window.channelTransports[transport.id] = transport;
+            }
+
+            return transport;
+        }
+
+        function uuidv4() {
+            return (Math.random()
+                    .toString(36)
+                    .substring(2) + new Date().getTime().toString(36));
+        }
+
         window.contextListeners = [];
         window.intentListeners = [];
         window.eventListeners = [];
+        window.channelTransports = [];
         window.receivedContexts = [];
         window.receivedIntents = [];
         window.receivedEvents = [];
