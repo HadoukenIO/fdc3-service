@@ -30,7 +30,7 @@ export function getId(identity: Identity): string {
 
 @injectable()
 export class Model {
-    private _directory: AppDirectory;
+    private readonly _directory: AppDirectory;
     private readonly _environment: Environment;
 
     private readonly _windowsById: {[id: string]: AppWindow};

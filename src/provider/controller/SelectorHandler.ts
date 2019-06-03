@@ -69,8 +69,8 @@ export interface SelectorResult {
 export class SelectorHandler extends AsyncInit {
     private static SELECTOR_NAME: string = 'fdc3-selector';
 
-    private _directory: AppDirectory;
-    private _model: Model;
+    private readonly _directory: AppDirectory;
+    private readonly _model: Model;
 
     private _window!: _Window;
     private _channel!: ChannelClient;

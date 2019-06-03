@@ -15,10 +15,10 @@ import {SelectorHandler, SelectorResult} from './SelectorHandler';
 
 @injectable()
 export class IntentHandler {
-    private _directory: AppDirectory;
-    private _model: Model;
-    private _selector: SelectorHandler;
-    private _apiHandler: APIHandler<APIToClientTopic>;
+    private readonly _directory: AppDirectory;
+    private readonly _model: Model;
+    private readonly _selector: SelectorHandler;
+    private readonly _apiHandler: APIHandler<APIToClientTopic>;
 
     private _promise: Promise<IntentResolution>|null;
 

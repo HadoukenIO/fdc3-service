@@ -19,11 +19,11 @@ import {Injector} from './common/Injector';
 export class Main {
     private _config = null;
 
-    private _directory: AppDirectory;
-    private _model: Model;
-    private _contexts: ContextHandler;
-    private _intents: IntentHandler;
-    private _apiHandler: APIHandler<APIFromClientTopic>;
+    private readonly _directory: AppDirectory;
+    private readonly _model: Model;
+    private readonly _contexts: ContextHandler;
+    private readonly _intents: IntentHandler;
+    private readonly _apiHandler: APIHandler<APIFromClientTopic>;
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
