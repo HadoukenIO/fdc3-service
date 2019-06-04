@@ -283,6 +283,17 @@ export async function findIntentsByContext(executionTarget: Identity, context: C
     }, context).catch(handlePuppeteerError);
 }
 
+export async function clickHTMLElement(executionTarget: Identity, elementSelector: string): Promise<boolean> {
+    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, elementSelector: string): Promise<boolean> {
+        const element = this.document.querySelector(elementSelector) as HTMLElement;
+        if (!element) {
+            return false;
+        }
+        element.click();
+        return true;
+    }, elementSelector);
+}
+
 /**
  * Puppeteer catches and rethrows errors its own way, losing information on extra fields (e.g. `code` for FDC3Error objects).
  * So what we do is serialize all these fields into the single `message` from the client apps, then from here strip back whatever puppeteer

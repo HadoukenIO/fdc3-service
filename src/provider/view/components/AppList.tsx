@@ -49,7 +49,7 @@ export function AppList(): React.ReactElement {
             <h2 className="app-header">Select an appliction:</h2>
             <div className="list-section app-container">
                 {applications.map((app: Application) => (
-                    <AppCard key={app.appId} app={app} selectHandler={onAppSelect} openHandler={onAppOpen} selected={selectedApplication === app} />
+                    <AppCard key={app.appId || app.name} app={app} selectHandler={onAppSelect} openHandler={onAppOpen} selected={selectedApplication === app} />
                 ))}
             </div>
             <div className="list-section w3-border-top w3-light-grey">
@@ -61,9 +61,9 @@ export function AppList(): React.ReactElement {
                         <option value={DefaultAction.ALWAYS_FOR_APP}>Remember for this application only</option>
                     </select>
 
-                    <div className="open-btn w3-button w3-bar w3-green w3-large" onClick={onOpen}>Open Application</div>
+                    <div id="btn-open" className="open-btn w3-button w3-bar w3-green w3-large" onClick={onOpen}>Open Application</div>
                 </div>
-                <div className="w3-button w3-bar w3-red w3-small" onClick={onCancel}>Cancel</div>
+                <div id="btn-cancel" className="w3-button w3-bar w3-red w3-small" onClick={onCancel}>Cancel</div>
             </div>
         </div>
     );

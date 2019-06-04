@@ -23,10 +23,11 @@ export function AppCard(props: AppCardProps): React.ReactElement {
         event.stopPropagation();
         openHandler(app);
     };
+    const className = 'app-card w3-card w3-round-large w3-button' + (selected ? ' selected' : '');
     return (
-        <div className={'app-card w3-card w3-round-large w3-button' + (selected ? ' selected' : '')} onClick={clickHandler} onDoubleClick={doubleClickHandler}>
+        <div id={app.name} className={className} onClick={clickHandler} onDoubleClick={doubleClickHandler}>
             {(app.icons && app.icons.length > 0) && <img className="" src={app.icons![0].icon} />}
-            <h3>{app.title}</h3>
+            <h3>{app.title || app.name}</h3>
             <div className="w3-clear" />
         </div>
     );

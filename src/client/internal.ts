@@ -23,6 +23,14 @@ export const SERVICE_IDENTITY = {
 };
 
 /**
+ * The identity of the selector window, running on the FDC3 service application
+ */
+export const SELECTOR_IDENTITY: Identity = {
+    uuid: SERVICE_IDENTITY.uuid,
+    name: 'fdc3-selector'
+};
+
+/**
  * Name of the IAB channel use to communicate between client and provider
  */
 export const SERVICE_CHANNEL = 'of-fdc3-service-v1';

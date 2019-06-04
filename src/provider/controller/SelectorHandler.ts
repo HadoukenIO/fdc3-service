@@ -7,7 +7,7 @@ import {Inject} from '../common/Injectables';
 import {AppDirectory} from '../model/AppDirectory';
 import {Model} from '../model/Model';
 import {Intent, Application} from '../../client/main';
-import {SERVICE_IDENTITY} from '../../client/internal';
+import {SELECTOR_IDENTITY} from '../../client/internal';
 
 import {AsyncInit} from './AsyncInit';
 
@@ -67,8 +67,6 @@ export interface SelectorResult {
 
 @injectable()
 export class SelectorHandler extends AsyncInit {
-    private static SELECTOR_NAME: string = 'fdc3-selector';
-
     @inject(Inject.APP_DIRECTORY)
     private _directory!: AppDirectory;
 
@@ -84,7 +82,7 @@ export class SelectorHandler extends AsyncInit {
     protected async init(): Promise<void> {
         const options: WindowOption = {
             url: SELECTOR_URL,
-            name: SelectorHandler.SELECTOR_NAME,
+            name: SELECTOR_IDENTITY.name,
             // alwaysOnTop: true,
             autoShow: false,
             saveWindowState: false,
@@ -96,7 +94,7 @@ export class SelectorHandler extends AsyncInit {
         };
 
         // Close any existing selector window (in case service is restarted)
-        await fin.Window.wrapSync({uuid: SERVICE_IDENTITY.uuid, name: SelectorHandler.SELECTOR_NAME}).close(true).catch(() => {});
+        await fin.Window.wrapSync(SELECTOR_IDENTITY).close(true).catch(() => {});
 
         // Create selector
         this._window = await fin.Window.create(options);

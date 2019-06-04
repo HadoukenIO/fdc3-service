@@ -4,12 +4,15 @@ import 'reflect-metadata';
 import {Identity} from 'openfin/_v2/main';
 
 import {ResolveError, Timeouts, FDC3Error} from '../../src/client/errors';
+import {SELECTOR_IDENTITY} from '../../src/client/internal';
 import {Intent} from '../../src/client/intents';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay} from './utils/delay';
 import {appStartupTime} from './constants';
+
+const resolverWindowIdentity = SELECTOR_IDENTITY;
 
 const testManagerIdentity: AppIdentity = {
     uuid: 'test-app',
@@ -86,6 +89,14 @@ const validIntent: Intent = {
             twitter: '@testname'
         }
     }
+};
+
+/**
+ * An intent registered by multiple apps in the directory
+ */
+const intentInManyApps: Intent = {
+    type: 'DialCall',
+    context: {type: 'dial-call-context'}
 };
 
 /**
@@ -389,10 +400,23 @@ only the first listener is triggered exactly once with the correct context, and 
                     });
 
                     describe('But there is a running ad-hoc app with a listener registered for the same intent', () => {
-                        const adHocAppListener = setupStartNonDirectoryAppWithIntentListener(uniqueIntent);
+                        const adHocAppListener = setupStartNonDirectoryAppWithIntentListener(uniqueIntent, testAppNotInDirectory);
 
-                        test('When calling raiseIntent from another app, the resolver should be displayed with both apps', async () => {
-                            // await raiseIntent(uniqueIntent);
+                        describe('When calling raiseIntent from another app, the resolver is displayed with both apps.', () => {
+                            test('When closing the selector, an error is thrown', async () => {
+                                await expect(raiseIntentExpectResolverAndClose(uniqueIntent)).toThrowFDC3Error(
+                                    ResolveError.ResolverClosedOrCancelled,
+                                    'Selector closed or cancelled'
+                                );
+                            });
+                            test_raiseIntentExpectResolverSelectApp(
+                                'When choosing the directory app on the selector, it receives intent',
+                                () => [uniqueIntent, testAppWithUniqueIntent, directoryAppListener]
+                            );
+                            test_raiseIntentExpectResolverSelectApp(
+                                'When choosing the ad-hoc app on the selector, it receives intent',
+                                () => [uniqueIntent, testAppNotInDirectory, adHocAppListener.current]
+                            );
                         });
                     });
                 }); // 1 app in directory, running, has registered listener
@@ -423,8 +447,8 @@ only the first listener is triggered exactly once with the correct context, and 
                     });
 
                     describe('When the directory app registers the intent listener after opening', () => { // ! 22111
-                        test('When calling raiseIntent from another app, the app should open and receive the intent with the correct context', async () => {
-                            await delay(1000); // For some reason a 'could not find specified executionTarget' error is thrown without this delay
+                        test('When calling raiseIntent from another app, the app opens and receives the intent with the correct context', async () => {
+                            await delay(2000); // For some reason a 'could not find specified executionTarget' error is thrown without a delay here
 
                             await fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
                             await raiseIntentPromise;
@@ -438,15 +462,38 @@ only the first listener is triggered exactly once with the correct context, and 
                 });
 
                 describe('But there is a running ad-hoc app with a listener registered for the same intent', () => { // ! 2212
-                    const listener = setupStartNonDirectoryAppWithIntentListener(uniqueIntent);
+                    const adHocAppListener = setupStartNonDirectoryAppWithIntentListener(uniqueIntent, testAppNotInDirectory);
 
-                    test.todo('When calling raiseIntent from another app, the resolver should be displayed with the directory + ad-hoc app');
+                    describe('When calling raiseIntent from another app, the resolver is displayed with the directory + ad-hoc app', () => {
+                        test('When closing the selector, an error is thrown', async () => {
+                            await expect(raiseIntentExpectResolverAndClose(uniqueIntent)).toThrowFDC3Error(
+                                ResolveError.ResolverClosedOrCancelled,
+                                'Selector closed or cancelled'
+                            );
+                        });
+                        test.todo('When choosing the directory app on the selector, it receives intent (needs to register listener after opening)');
+                        test_raiseIntentExpectResolverSelectApp(
+                            'When choosing the ad-hoc app on the selector, it receives intent',
+                            () => [uniqueIntent, testAppNotInDirectory, adHocAppListener.current]
+                        );
+                    });
                 });
             }); // 1 app in directory, not running
         }); // 1 app in directory
 
         describe('>1 app in directory registered to accept the raised intent', () => {
-            test.todo('TODO: figure out how to test the resolver UI properly');
+            describe('When calling raiseIntent from another app, the resolver is displayed with multiple apps', () => {
+                test('When closing the selector, an error is thrown', async () => {
+                    await expect(raiseIntentExpectResolverAndClose(intentInManyApps)).toThrowFDC3Error(
+                        ResolveError.ResolverClosedOrCancelled,
+                        'Selector closed or cancelled'
+                    );
+                });
+                test_raiseIntentExpectResolverSelectApp(
+                    'When choosing on the selector an app that preregisters the intent, it receives it',
+                    () => [intentInManyApps, testAppWithPreregisteredListeners]
+                );
+            });
         }); // >1 app in directory
     }); // Without a target
 });
@@ -493,6 +540,86 @@ async function raiseDelayedIntentWithTarget(intent: Intent, targetApp: AppIdenti
 }
 
 /**
+ * Raises an intent and `expect`s that the resolver window shows, then closes it
+ * @param intent intent to raise
+ */
+async function raiseIntentAndExpectResolverToShow(intent: Intent) {
+    // Raise intent but don't await - promise won't resolve until an app is selected on the resolver
+    const raiseIntentPromise = raiseIntent(intent);
+
+    while (!await fin.Window.wrapSync(resolverWindowIdentity).isShowing()) {
+        await delay(500);
+    }
+
+    const isResolverShowing = await fin.Window.wrapSync(resolverWindowIdentity).isShowing();
+    expect(isResolverShowing).toBe(true);
+
+    return [raiseIntentPromise] as [Promise<void>];
+}
+
+function raiseIntentExpectResolverAndClose(intent: Intent): Promise<void> {
+    return new Promise<void>(async (resolve, reject) => {
+        const [raiseIntentPromise] = await raiseIntentAndExpectResolverToShow(intent);
+        raiseIntentPromise.catch(async e => {
+            // After the resolver is cancelled, wait for some time before rejecting to give the resolver window enough time to close.
+            await delay(500);
+            reject(e);
+        });
+        await closeResolver();
+    });
+}
+
+async function test_raiseIntentExpectResolverSelectApp(title: string, getParams: () =>
+    [Intent, AppIdentity, fdc3Remote.RemoteIntentListener?]) {
+    test(title, async () => {
+        const [intent, app, listener] = getParams();
+        const [raiseIntentPromise] = await raiseIntentAndExpectResolverToShow(intent);
+        await selectResolverApp(app.name);
+        await raiseIntentPromise; // Now the intent resolves
+
+        // If no intent listener provided, try to fetch it "live"
+        const remoteListener = listener || await fdc3Remote.getRemoteIntentListener(app, intent.type);
+
+        const receivedContexts = await remoteListener.getReceivedContexts();
+        expect(receivedContexts).toEqual([intent.context]);
+    });
+}
+
+/**
+ * Closes the resolver by remotely clicking the Cancel button in it
+ */
+async function closeResolver() {
+    const cancelClicked = await fdc3Remote.clickHTMLElement(resolverWindowIdentity, '#btn-cancel');
+    if (!cancelClicked) {
+        throw new Error('Error clicking cancel button on resolver. Make sure it has id="btn-cancel".');
+    }
+    await delay(100); // Give the UI some time to process the click and close the window
+
+    const isResolverShowing = await fin.Window.wrapSync(resolverWindowIdentity).isShowing();
+    expect(isResolverShowing).toBe(false);
+}
+
+/**
+ * Selects an app on the resolver by remotely clicking on its button and subsequently on the 'open' button
+ * @param appName name of app to open
+ */
+async function selectResolverApp(appName: string) {
+    const appClicked = await fdc3Remote.clickHTMLElement(resolverWindowIdentity, `#${appName}`);
+    if (!appClicked) {
+        throw new Error(`App with name '${appName}' not found in resolver`);
+    }
+    await delay(100);
+    const openClicked = await fdc3Remote.clickHTMLElement(resolverWindowIdentity, '#btn-open');
+    if (!openClicked) {
+        throw new Error('Error clicking open button on resolver. Make sure it has id="btn-open".');
+    }
+    await delay(100);
+
+    const isResolverShowing = await fin.Window.wrapSync(resolverWindowIdentity).isShowing();
+    expect(isResolverShowing).toBe(false);
+}
+
+/**
  * This case occurs when either:
  * - there are no directory apps for a given intent, or
  * - there are directory apps for the intent, but are running and haven't registered listeners for the intent
@@ -509,7 +636,7 @@ function noTarget_noDirectoryAppCanHandleIntent(intent: Intent) {
     });
 
     describe('But there are running ad-hoc apps with a listener registered for the raised intent', () => {
-        const listener = setupStartNonDirectoryAppWithIntentListener(intent);
+        const listener = setupStartNonDirectoryAppWithIntentListener(intent, testAppNotInDirectory);
 
         describe('Just 1 ad-hoc app with a listener registered for the intent', () => {
             test('When calling raiseIntent the listener is triggered once', async () => {
@@ -531,7 +658,22 @@ function noTarget_noDirectoryAppCanHandleIntent(intent: Intent) {
         describe('2 ad-hoc apps, both of them with a listener registered for the intent', () => {
             const listener2 = setupStartNonDirectoryAppWithIntentListener(intent, testAppNotInDirectory2);
 
-            test.todo('When calling raiseIntent, the resolver is displayed with both apps');
+            describe('When calling raiseIntent, the resolver is displayed with both apps', () => {
+                test('When closing the selector, an error is thrown', async () => {
+                    await expect(raiseIntentExpectResolverAndClose(intent)).toThrowFDC3Error(
+                        ResolveError.ResolverClosedOrCancelled,
+                        'Selector closed or cancelled'
+                    );
+                });
+                test_raiseIntentExpectResolverSelectApp(
+                    'When choosing the directory app on the selector, it receives intent',
+                    () => [intent, testAppNotInDirectory, listener.current]
+                );
+                test_raiseIntentExpectResolverSelectApp(
+                    'When choosing the ad-hoc app on the selector, it receives intent',
+                    () => [intent, testAppNotInDirectory2, listener2.current]
+                );
+            });
 
             test('When calling unsubscribe from the intent listener on the first app, then calling raiseIntent from another app, \
 then the second listener is triggered exactly once with the correct context', async () => {
@@ -581,7 +723,7 @@ function setupStartNonDirectoryApp(app: NonDirectoryApp = testAppNotInDirectory)
  * @param intent intent to add listener to. Listener is returned, boxed in an object
  * @param app app info. Defaults to `test-app-not-in-directory`
  */
-function setupStartNonDirectoryAppWithIntentListener(intent: Intent, app: NonDirectoryApp = testAppNotInDirectory): Boxed<fdc3Remote.RemoteIntentListener> {
+function setupStartNonDirectoryAppWithIntentListener(intent: Intent, app: NonDirectoryApp): Boxed<fdc3Remote.RemoteIntentListener> {
     setupStartNonDirectoryApp(app);
     const listener: Boxed<fdc3Remote.RemoteIntentListener> = {current: undefined!};
 
