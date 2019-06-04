@@ -1,8 +1,9 @@
 import 'jest';
 import {connect, Fin, Identity, Application} from 'hadouken-js-adapter';
 
-import {ChannelError} from '../../src/client/errors';
+import {ChannelError} from '../../src/common/errors';
 import {ChannelId, DefaultChannel, DesktopChannel} from '../../src/client/contextChannels';
+import {IdentityError} from '../../src/client/main';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {appStartupTime} from './constants';
@@ -108,8 +109,8 @@ describe('When broadcasting on default channel', () => {
     });
 });
 
-describe('When broadcasting on a user channel', () => {
-    test('Context is received by windows on that user channel only', async () => {
+describe('When broadcasting on a desktop channel', () => {
+    test('Context is received by windows on that desktop channel only', async () => {
         const [red1Window, red2Window, defaultWindow, blueWindow] = await setupWindows('red', 'red', 'default', 'blue');
 
         const redListener = await fdc3Remote.addContextListener(red2Window);
@@ -131,7 +132,7 @@ describe('When broadcasting on a user channel', () => {
         expect(blueReceivedContexts).toHaveLength(0);
     }, appStartupTime * 4);
 
-    test('Context is received by window that has left and rejoined user channel', async () => {
+    test('Context is received by window that has left and rejoined desktop channel', async () => {
         const [blueWindow, channelChangingWindow] = await setupWindows('blue', undefined);
 
         // Change the channel of our window
@@ -198,7 +199,7 @@ describe('When joining a channel', () => {
         expect(purpleChannelMembers).not.toContainEqual(channelChangingWindow);
     });
 
-    test('Window receives cached context for user channel', async () => {
+    test('Window receives cached context for desktop channel', async () => {
         const [yellowWindow, channelChangingWindow] = await setupWindows('yellow', 'red');
 
         // Broadcast our test context on the yellow channel
@@ -230,7 +231,7 @@ describe('When joining a channel', () => {
         expect(receivedContexts).toHaveLength(0);
     });
 
-    test('channel-changed event is fired for user channel', async () => {
+    test('channel-changed event is fired for desktop channel', async () => {
         const [listeningWindow, channelChangingWindow] = await setupWindows(undefined, undefined);
 
         const listener = await fdc3Remote.addEventListener(listeningWindow, 'channel-changed');
@@ -291,7 +292,54 @@ describe('When joining a channel', () => {
         await joinChannel(receiveWindow, 'green');
         receivedContexts = await receiveWindowListener.getReceivedContexts();
         expect(receivedContexts).toEqual([testContext]);
-    }, appStartupTime * 2);
+    }, appStartupTime * 2),
+
+    test('If an invalid identity is provided, an FDC3 error is thrown', async () => {
+        const channel = await fdc3Remote.getChannelById(testManagerIdentity, 'purple');
+
+        const invalidIdentity: Identity = {irrelevantProperty: 'irrelevantValue'} as unknown as Identity;
+
+        expect(channel.join(invalidIdentity)).toThrowFDC3Error(
+            IdentityError.InvalidIdentity,
+            `Invalid identity: ${JSON.stringify(invalidIdentity)}`
+        );
+    });
+
+    test('If an identity for a window that does not exist is provided, an FDC3 error is thrown', async () => {
+        const channel = await fdc3Remote.getChannelById(testManagerIdentity, 'yellow');
+
+        const nonExistentWindowIdentity: Identity = {uuid: 'does-not-exist', name: 'does-not-exist'};
+
+        expect(channel.join(nonExistentWindowIdentity)).toThrowFDC3Error(
+            IdentityError.WindowWithIdentityNotFound,
+            `No connection to FDC3 service found from window with identity: ${JSON.stringify(nonExistentWindowIdentity)}`
+        );
+    });
+
+    describe('When a non-FDC3 app is running', () => {
+        const testAppNotFdc3 = {
+            uuid: 'test-app-not-fdc3',
+            name: 'test-app-not-fdc3',
+            manifestUrl: 'http://localhost:3923/test/configs/test-app-not-fdc3.json'
+        };
+
+        beforeEach(async () => {
+            await fin.Application.startFromManifest(testAppNotFdc3.manifestUrl);
+        });
+
+        afterEach(async () => {
+            await fin.Application.wrapSync(testAppNotFdc3).quit(true);
+        });
+
+        test('If the non-FDC3 app identity is provided, an FDC3 error is thrown', async () => {
+            const channel = await fdc3Remote.getChannelById(testManagerIdentity, 'orange');
+            expect(channel.join(testAppNotFdc3)).toThrowFDC3Error(
+                IdentityError.WindowWithIdentityNotFound,
+                `No connection to FDC3 service found from window with identity: \
+${JSON.stringify({uuid: testAppNotFdc3.uuid, name: testAppNotFdc3.name})}`
+            );
+        });
+    });
 });
 
 describe('When starting an app', () => {
@@ -310,6 +358,41 @@ describe('When starting an app', () => {
     }, appStartupTime * 2);
 });
 
+describe('When getting the list of desktop channels', () => {
+    test('All expected channels are returned', async () => {
+        const channels = await fdc3Remote.getDesktopChannels(testManagerIdentity);
+
+        const reducedChannels = channels.map(channel => ({id: channel.channel.id, type: channel.channel.type}));
+
+        expect(reducedChannels).toContainEqual({id: 'red', type: 'desktop'});
+        expect(reducedChannels).toContainEqual({id: 'orange', type: 'desktop'});
+        expect(reducedChannels).toContainEqual({id: 'yellow', type: 'desktop'});
+        expect(reducedChannels).toContainEqual({id: 'green', type: 'desktop'});
+        expect(reducedChannels).toContainEqual({id: 'blue', type: 'desktop'});
+        expect(reducedChannels).toContainEqual({id: 'purple', type: 'desktop'});
+
+        for (const channel of channels) {
+            expect(channel).toBeChannel({}, DesktopChannel);
+        }
+    });
+
+    test('Subsequent calls return the same channel instances', async () => {
+        const channels1 = await fdc3Remote.getDesktopChannels(testManagerIdentity);
+        const channels2 = await fdc3Remote.getDesktopChannels(testManagerIdentity);
+
+        for (const channel of channels1) {
+            expect(channels2).toContain(channel);
+        }
+    });
+
+    test('When also querying a channel by ID, the same channel instance is returned', async () => {
+        const channels = await fdc3Remote.getDesktopChannels(testManagerIdentity);
+        const redChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'red');
+
+        expect(channels).toContain(redChannel);
+    });
+});
+
 describe('When getting a channel by ID', () => {
     test('When the ID provided is \'default\', the default channel is returned', async () => {
         await expect(fdc3Remote.getChannelById(testManagerIdentity, 'default')).resolves.toBeChannel({id: 'default', type: 'default'}, DefaultChannel);
@@ -319,7 +402,7 @@ describe('When getting a channel by ID', () => {
         await expect(fdc3Remote.getChannelById(testManagerIdentity, 'green')).resolves.toBeChannel({id: 'green', type: 'desktop'}, DesktopChannel);
     });
 
-    test('Subsequent calls return the same instance', async () => {
+    test('Subsequent calls return the same channel instance', async () => {
         const redChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'red');
         await expect(fdc3Remote.getChannelById(testManagerIdentity, 'red')).resolves.toBe(redChannel);
     });
@@ -331,5 +414,68 @@ describe('When getting a channel by ID', () => {
             ChannelError.ChannelDoesNotExist,
             'No channel with channelId: non-existent-channel'
         );
+    });
+});
+
+describe('When querying the current channel', () => {
+    test('If no identity is provided, the channel of the current window is returned', async () => {
+        const [redWindow] = await setupWindows('red');
+
+        await expect(fdc3Remote.getCurrentChannel(redWindow)).resolves.toBeChannel({id: 'red', type: 'desktop'}, DesktopChannel);
+    });
+
+    test('If querying the channel of a different window, the correct result is returned', async () => {
+        const [purpleWindow, greenWindow] = await setupWindows('purple', 'green');
+
+        await expect(fdc3Remote.getCurrentChannel(purpleWindow, greenWindow)).resolves.toBeChannel({id: 'green', type: 'desktop'}, DesktopChannel);
+    });
+
+    test('Subsequent calls return the same channel instance', async () => {
+        const [blueWindow] = await setupWindows('blue');
+
+        const blueChannel = await fdc3Remote.getCurrentChannel(blueWindow);
+        await expect(fdc3Remote.getCurrentChannel(blueWindow)).resolves.toBe(blueChannel);
+    });
+
+    test('If an invalid identity is provided, an FDC3 error is thrown', async () => {
+        const invalidIdentity: Identity = {irrelevantProperty: 'irrelevantValue'} as unknown as Identity;
+
+        expect(fdc3Remote.getCurrentChannel(testManagerIdentity, invalidIdentity)).toThrowFDC3Error(
+            IdentityError.InvalidIdentity,
+            `Invalid identity: ${JSON.stringify(invalidIdentity)}`
+        );
+    });
+
+    test('If an identity for a window that does not exist is provided, an FDC3 error is thrown', async () => {
+        const nonExistentWindowIdentity: Identity = {uuid: 'does-not-exist', name: 'does-not-exist'};
+
+        expect(fdc3Remote.getCurrentChannel(testManagerIdentity, nonExistentWindowIdentity)).toThrowFDC3Error(
+            IdentityError.WindowWithIdentityNotFound,
+            `No connection to FDC3 service found from window with identity: ${JSON.stringify(nonExistentWindowIdentity)}`
+        );
+    });
+
+    describe('When a non-FDC3 app is running', () => {
+        const testAppNotFdc3 = {
+            uuid: 'test-app-not-fdc3',
+            name: 'test-app-not-fdc3',
+            manifestUrl: 'http://localhost:3923/test/configs/test-app-not-fdc3.json'
+        };
+
+        beforeEach(async () => {
+            await fin.Application.startFromManifest(testAppNotFdc3.manifestUrl);
+        });
+
+        afterEach(async () => {
+            await fin.Application.wrapSync(testAppNotFdc3).quit(true);
+        });
+
+        test('If the non-FDC3 window identity is provided, an FDC3 error is thrown', async () => {
+            expect(fdc3Remote.getCurrentChannel(testManagerIdentity, testAppNotFdc3)).toThrowFDC3Error(
+                IdentityError.WindowWithIdentityNotFound,
+                `No connection to FDC3 service found from window with identity: \
+${JSON.stringify({uuid: testAppNotFdc3.uuid, name: testAppNotFdc3.name})}`
+            );
+        });
     });
 });

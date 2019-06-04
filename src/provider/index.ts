@@ -3,9 +3,10 @@ import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport} from '../client/internal';
-import {AppIntent, IntentResolution, Application, Intent, Channel} from '../client/main';
-import {FDC3Error, ResolveError, OpenError} from '../client/errors';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport, GetChannelByIdPayload, EventTransport} from '../client/internal';
+import {AppIntent, IntentResolution, Application, Intent, ChannelChangedEvent} from '../client/main';
+import {FDC3Error, ResolveError, OpenError, IdentityError} from '../common/errors';
+import {parseIdentity} from '../common/validation';
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
@@ -14,6 +15,7 @@ import {ContextHandler} from './controller/ContextHandler';
 import {IntentHandler} from './controller/IntentHandler';
 import {APIHandler} from './APIHandler';
 import {Injector} from './common/Injector';
+import {ChannelModel} from './ChannelModel';
 
 @injectable()
 export class Main {
@@ -31,6 +33,9 @@ export class Main {
     @inject(Inject.INTENT_HANDLER)
     private _intents!: IntentHandler;
 
+    @inject(Inject.CHANNEL_MODEL)
+    private _channelModel!: ChannelModel;
+
     @inject(Inject.API_HANDLER)
     private _apiHandler!: APIHandler<APIFromClientTopic>;
 
@@ -41,6 +46,7 @@ export class Main {
             directory: this._directory,
             model: this._model,
             contexts: this._contexts,
+            channelModel: this._channelModel,
             intents: this._intents
         });
 
@@ -57,12 +63,19 @@ export class Main {
             [APIFromClientTopic.ADD_INTENT_LISTENER]: this.addIntentListener.bind(this),
             [APIFromClientTopic.REMOVE_INTENT_LISTENER]: this.removeIntentListener.bind(this),
             [APIFromClientTopic.GET_DESKTOP_CHANNELS]: this.getDesktopChannels.bind(this),
+            [APIFromClientTopic.GET_CHANNEL_BY_ID]: this.getChannelById.bind(this),
             [APIFromClientTopic.GET_CURRENT_CHANNEL]: this.getCurrentChannel.bind(this),
             [APIFromClientTopic.CHANNEL_GET_MEMBERS]: this.channelGetMembers.bind(this),
             [APIFromClientTopic.CHANNEL_JOIN]: this.channelJoin.bind(this)
         });
 
+        this._channelModel.onChannelChanged.add(this.onChannelChangedHandler, this);
+
         console.log('Service Initialised');
+    }
+
+    private onChannelChangedHandler(event: EventTransport<ChannelChangedEvent>): void {
+        this._apiHandler.channel.publish('event', event);
     }
 
     private async open(payload: OpenPayload): Promise<void> {
@@ -160,7 +173,7 @@ export class Main {
         appWindow.addIntentListener(payload.intent);
     }
 
-    private async removeIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): Promise<void> {
+    private removeIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): void {
         const appWindow = this._model.getWindow(identity);
         if (appWindow) {
             appWindow.removeIntentListener(payload.intent);
@@ -170,25 +183,49 @@ export class Main {
         }
     }
 
-    private async getDesktopChannels(payload: GetDesktopChannelsPayload, source: ProviderIdentity): Promise<DesktopChannelTransport[]> {
-        return this._contexts.getDesktopChannels();
+    private getDesktopChannels(payload: GetDesktopChannelsPayload, source: ProviderIdentity): Readonly<DesktopChannelTransport[]> {
+        return this._channelModel.getDesktopChannels();
     }
 
-    private async getCurrentChannel(payload: GetCurrentChannelPayload, source: ProviderIdentity): Promise<ChannelTransport> {
+    private getChannelById(payload: GetChannelByIdPayload, source: ProviderIdentity): ChannelTransport {
+        return this._channelModel.getChannelById(payload.id);
+    }
+
+    private getCurrentChannel(payload: GetCurrentChannelPayload, source: ProviderIdentity): ChannelTransport {
         const identity = payload.identity || source;
 
-        return this._contexts.getCurrentChannel(identity);
+        this.validateIdentity(identity);
+
+        return this._channelModel.getChannelForWindow(identity);
     }
 
-    private async channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): Promise<Identity[]> {
-        return this._contexts.getChannelMembers(payload.id);
+    private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): Identity[] {
+        return this._channelModel.getChannelMembers(payload.id);
     }
 
     private async channelJoin(payload: ChannelJoinPayload, source: ProviderIdentity): Promise<void> {
         const id = payload.id;
         const identity = payload.identity || source;
 
-        return this._contexts.joinChannel(id, identity);
+        this.validateIdentity(identity);
+
+        this._channelModel.joinChannel(identity, id);
+        const context = this._channelModel.getContext(id);
+
+        if (context) {
+            await this._contexts.send(identity, context);
+        }
+    }
+
+    private validateIdentity(identity: Identity): void {
+        identity = parseIdentity(identity);
+
+        if (!this._apiHandler.isClientConnection(identity)) {
+            throw new FDC3Error(
+                IdentityError.WindowWithIdentityNotFound,
+                `No connection to FDC3 service found from window with identity: ${JSON.stringify(identity)}`
+            );
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 import 'jest';
-import {ResolveError} from '../../src/client/errors';
+import {ResolveError} from '../../src/common/errors';
 import {Context} from '../../src/client/context';
 
 import {fin} from './utils/fin';

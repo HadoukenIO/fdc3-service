@@ -3,7 +3,7 @@ import {inject, injectable} from 'inversify';
 
 import {Channel, ChannelId, DEFAULT_CHANNEL_ID, ChannelChangedEvent} from '../client/contextChannels';
 import {Context} from '../client/main';
-import {FDC3Error, ChannelError} from '../client/errors';
+import {FDC3Error, ChannelError} from '../common/errors';
 import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, EventTransport} from '../client/internal';
 
 import {Signal1} from './common/Signal';
@@ -84,8 +84,13 @@ export class ChannelModel {
         apiHandler.onDisconnection.add(this.onDisconnection, this);
     }
 
-    public getDesktopChannels(): ReadonlyArray<DesktopChannelTransport> {
+    public getDesktopChannels(): Readonly<DesktopChannelTransport[]> {
         return DESKTOP_CHANNELS;
+    }
+
+    public getChannelById(channelId: ChannelId): ChannelTransport {
+        this.validateChannelId(channelId);
+        return this._channelIdToChannelMap.get(channelId)!;
     }
 
     public joinChannel(identity: Identity, channelId: ChannelId): void {

@@ -18,10 +18,12 @@ export enum ResolveError {
 }
 
 export enum ChannelError {
-    // When getChannel / joinChannel on a non existing channel id
-    ChannelDoesNotExist = 'ChannelDoesNotExist',
-    // When trying to create a channel that already exists
-    ChannelAlreadyExists = 'ChannelAlreadyExists'
+    ChannelDoesNotExist = 'ChannelDoesNotExist'
+}
+
+export enum IdentityError {
+    InvalidIdentity = 'InvalidIdentity',
+    WindowWithIdentityNotFound = 'WindowWithIdentityNotFound'
 }
 
 export class FDC3Error extends Error {

@@ -10,6 +10,8 @@
  */
 import {Identity} from 'openfin/_v2/main';
 
+import {FDC3Error, IdentityError} from '../common/errors';
+
 import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution} from './main';
 import {Channel, ChannelId, DefaultChannel, DesktopChannel} from './contextChannels';
@@ -40,6 +42,7 @@ export enum APIFromClientTopic {
     ADD_INTENT_LISTENER = 'ADD-INTENT-LISTENER',
     REMOVE_INTENT_LISTENER = 'REMOVE-INTENT-LISTENER',
     GET_DESKTOP_CHANNELS = 'GET-DESKTOP-CHANNELS',
+    GET_CHANNEL_BY_ID = 'GET-CHANNEL-BY-ID',
     GET_CURRENT_CHANNEL = 'GET-CURRENT-CHANNEL',
     CHANNEL_GET_MEMBERS = 'CHANNEL-GET-MEMBERS',
     CHANNEL_JOIN = 'CHANNEL-JOIN'
@@ -62,6 +65,7 @@ export type APIFromClient = {
     [APIFromClientTopic.ADD_INTENT_LISTENER]: [IntentListenerPayload, void];
     [APIFromClientTopic.REMOVE_INTENT_LISTENER]: [IntentListenerPayload, void];
     [APIFromClientTopic.GET_DESKTOP_CHANNELS]: [GetDesktopChannelsPayload, DesktopChannelTransport[]];
+    [APIFromClientTopic.GET_CHANNEL_BY_ID]: [GetChannelByIdPayload, ChannelTransport];
     [APIFromClientTopic.GET_CURRENT_CHANNEL]: [GetCurrentChannelPayload, ChannelTransport];
     [APIFromClientTopic.CHANNEL_GET_MEMBERS]: [ChannelGetMembersPayload, Identity[]];
     [APIFromClientTopic.CHANNEL_JOIN]: [ChannelJoinPayload, void];
@@ -121,6 +125,10 @@ export interface GetDesktopChannelsPayload {
 
 }
 
+export interface GetChannelByIdPayload {
+    id: ChannelId;
+}
+
 export interface GetCurrentChannelPayload {
     identity?: Identity;
 }
@@ -145,18 +153,4 @@ export interface ContextPayload {
 export interface IntentPayload {
     intent: string;
     context: Context;
-}
-
-/**
- * Creates a deferred promise and returns it along with handlers to resolve/reject it imperatively
- * @returns a tuple with the promise and its resolve/reject handlers
- */
-export function deferredPromise<T = void>(): [Promise<T>, (value?: T) => void, (reason?: any) => void] {
-    let res: (value?: T) => void;
-    let rej: (reason?: any) => void;
-    const p = new Promise<T>((r, rj) => {
-        res = r;
-        rej = rj;
-    });
-    return [p, res!, rej!];
 }

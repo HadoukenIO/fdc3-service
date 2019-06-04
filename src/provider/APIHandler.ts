@@ -4,7 +4,7 @@ import {ChannelProvider} from 'openfin/_v2/api/interappbus/channel/provider';
 import {Identity} from 'openfin/_v2/main';
 
 import {SERVICE_CHANNEL} from '../client/internal';
-import {FDC3Error} from '../client/errors';
+import {FDC3Error} from '../common/errors';
 
 import {Signal1} from './common/Signal';
 
@@ -40,7 +40,7 @@ export type APISpecification<T extends Enum> = {
  * Given an entry from an APISpecification, defines the function signature of a callback that is can be registered to
  * handle that API call.
  */
-export type APIAction<T extends APIDefinition> = (payload: T[0], source: ProviderIdentity) => Promise<T[1]>;
+export type APIAction<T extends APIDefinition> = (payload: T[0], source: ProviderIdentity) => APIActionReturn<T[1]>;
 
 /**
  * Defines an object that contains a callback for each API method.
@@ -50,6 +50,12 @@ export type APIAction<T extends APIDefinition> = (payload: T[0], source: Provide
 export type APIImplementation<T extends Enum, S extends APISpecification<T>> = {
     [K in T]: APIAction<S[K]>;
 };
+
+/**
+ * Accept both async and non-async actions. Optionally accept the readonly version of the given type, given
+ * we trust APIHandler not to alter its contents
+ */
+type APIActionReturn<T> = T | Readonly<T> | Promise<T> | Promise<Readonly<T>>;
 
 /**
  * Generic client/provider interaction handler.
@@ -86,11 +92,14 @@ export class APIHandler<T extends Enum> {
 
         for (const action in actionHandlerMap) {
             if (actionHandlerMap.hasOwnProperty(action)) {
-                this._providerChannel.register(action, (payload, source) =>
-                    actionHandlerMap[action](payload, source)
-                        .catch(error => {
-                            throw FDC3Error.serialize(error);
-                        }));
+                this._providerChannel.register(action, async (payload, source) => {
+                    try {
+                        const result = await actionHandlerMap[action](payload, source);
+                        return result;
+                    } catch (error) {
+                        throw FDC3Error.serialize(error);
+                    }
+                });
             }
         }
     }

@@ -317,13 +317,13 @@ function deserializeChannel(executionTarget: Identity, transport: TestChannelTra
             channel: transport.channel as ChannelBase,
             join: async (identity?: Identity) => {
                 return ofBrowser.executeOnWindow(executionTarget, async function(channelInstanceId: string, identity?: Identity): Promise<void> {
-                    return this.channelTransports[channelInstanceId].channel.join(identity);
-                }, transport.id, identity);
+                    return this.channelTransports[channelInstanceId].channel.join(identity).catch(this.errorHandler);
+                }, transport.id, identity).catch(handlePuppeteerError);
             },
             getMembers: async () => {
                 return ofBrowser.executeOnWindow(executionTarget, async function(channelInstanceId: string): Promise<Identity[]> {
-                    return this.channelTransports[channelInstanceId].channel.getMembers();
-                }, transport.id);
+                    return this.channelTransports[channelInstanceId].channel.getMembers().catch(this.errorHandler);
+                }, transport.id).catch(handlePuppeteerError);
             }
         };
 
