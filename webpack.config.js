@@ -16,7 +16,7 @@ module.exports = [
     }, webpackTools.versionPlugin),
     webpackTools.createConfig(`${outputDir}/provider`, './src/provider/index.ts', undefined, webpackTools.manifestPlugin, webpackTools.versionPlugin),
     webpackTools.createConfig(`${outputDir}/provider/ui`, {
-        'ui': './src/provider/view/Selector.tsx'
+        'resolver': './src/provider/view/Resolver.tsx'
     }, undefined, webpackTools.versionPlugin),
     webpackTools.createConfig(`${outputDir}/demo`, {
         app: './src/demo/index.tsx'

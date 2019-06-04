@@ -53,7 +53,7 @@ li {
     height: 20px;
     width: 20px;
     margin-right: 30px;
-    background-image: url("img/exit.png");
+    background-image: url("../assets/exit.png");
     background-position: 50%;
     background-size: 9px 9px;
     background-repeat: no-repeat;
