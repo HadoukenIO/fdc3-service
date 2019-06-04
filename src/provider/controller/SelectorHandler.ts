@@ -20,7 +20,7 @@ const SELECTOR_URL = (() => {
     }
 
     // Locate the default selector HTML page, relative to the location of the provider
-    return providerLocation.replace('provider.html', 'ui/selector.html');
+    return providerLocation.replace('provider.html', 'ui/resolver');
 })();
 
 /**
@@ -91,8 +91,8 @@ export class SelectorHandler extends AsyncInit {
             defaultCentered: true,
             frame: false,
             resizable: false,
-            defaultWidth: 400,
-            defaultHeight: 670
+            defaultWidth: 600,
+            defaultHeight: 700
         };
 
         // Close any existing selector window (in case service is restarted)
