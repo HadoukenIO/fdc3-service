@@ -5,13 +5,13 @@ import {SelectorArgs, SelectorResult} from '../../controller/SelectorHandler';
 
 import {AppCard} from './AppCard';
 
-let sendSuccess: (result: {app: Application, action: string}) => void;
+let sendSuccess: (result: {app: Application}) => void;
 let sendError: (result: string) => void;
 
 export function AppList(): React.ReactElement {
     const [applications, setApplications] = React.useState<Application[]>([]);
 
-    const onAppOpen = (app: Application) => sendSuccess({app, action: 'ALWAYS_ASK'});
+    const onAppOpen = (app: Application) => sendSuccess({app});
     const onCancel = (event: React.MouseEvent<HTMLDivElement>) => {
         event.stopPropagation();
         sendSuccess(null!);
@@ -32,7 +32,6 @@ export function AppList(): React.ReactElement {
             });
         });
     }, []);
-
 
     return (
         <div>

@@ -24,32 +24,6 @@ const SELECTOR_URL = (() => {
 })();
 
 /**
- * When the user is shown an app selector popup, they have the option of telling
- * the service how to handle similar intents in the future.
- *
- * This enum defines the options available to users.
- */
-export const enum DefaultAction {
-    /**
-     * Service should always show the app selection UI, to allow the user to
-     * choose which application to use.
-     */
-    ALWAYS_ASK = 'ALWAYS_ASK',
-
-    /**
-     * The service should always use the current selection when the intent is
-     * coming from the app that fired the current intent.
-     */
-    ALWAYS_FOR_APP = 'ALWAYS_FOR_APP',
-
-    /**
-     * The service should always use the current selection, whenever an intent of
-     * this type is fired.
-     */
-    ALWAYS_FOR_INTENT = 'ALWAYS_FOR_INTENT'
-}
-
-/**
  * Data passed to app selector when it is invoked by the provider
  */
 export interface SelectorArgs {
@@ -62,7 +36,6 @@ export interface SelectorArgs {
  */
 export interface SelectorResult {
     app: Application;
-    action: string;
 }
 
 @injectable()
