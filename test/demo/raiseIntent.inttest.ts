@@ -381,7 +381,7 @@ only the first listener is triggered exactly once with the correct context, and 
                     });
                     describe('And no running ad-hoc apps with listeners registered for the raised intent', () => {
                         test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
-                            await raiseIntent(uniqueIntent, testAppWithUniqueIntent);
+                            await raiseIntent(uniqueIntent);
 
                             const receivedContexts = await directoryAppListener.getReceivedContexts();
                             expect(receivedContexts).toEqual([uniqueIntent.context]);
@@ -391,26 +391,55 @@ only the first listener is triggered exactly once with the correct context, and 
                     describe('But there is a running ad-hoc app with a listener registered for the same intent', () => {
                         const adHocAppListener = setupStartNonDirectoryAppWithIntentListener(uniqueIntent);
 
-                        test.todo('When calling raiseIntent from another app, the resolver should be displayed with both apps');
+                        test('When calling raiseIntent from another app, the resolver should be displayed with both apps', async () => {
+                            // await raiseIntent(uniqueIntent);
+                        });
                     });
                 }); // 1 app in directory, running, has registered listener
             }); // 1 app in directory, running
 
             describe('With the registered app not running', () => { // ! 221
-                describe('And no running ad-hoc apps with listeners registered for the raised intent', () => {
-                    describe('When the directory app registers the intent listener after opening', () => {
-                        test.todo('When calling raiseIntent from another app, the directory app should open and receive the intent with the correct context');
+                describe('And no running ad-hoc apps with listeners registered for the raised intent', () => { // ! 2211
+                    let raiseIntentPromise: Promise<void>;
+                    beforeEach(async () => {
+                        raiseIntentPromise = raiseIntent(uniqueIntent);
+                        // Wait for app to open after raising intent
+                        while (!await fin.Application.wrapSync(testAppWithUniqueIntent).isRunning()) {
+                            await delay(500);
+                        }
+                        await expect(fin.Application.wrapSync(testAppWithUniqueIntent).isRunning()).resolves.toBe(true);
+                    });
+                    afterEach(async () => {
+                        await fin.Application.wrapSync(testAppWithUniqueIntent).quit();
                     });
 
-                    describe('When the directory app does not register the intent listener after opening', () => {
-                        test.todo('When calling raiseIntent from another app, the app should open but a timeout error should be thrown');
+                    describe('When the directory app does not register the intent listener after opening', () => { // ! 22112
+                        test('When calling raiseIntent from another app, the app opens but it times out waiting for the listener to be added', async () => {
+                            await expect(raiseIntentPromise).toThrowFDC3Error(
+                                ResolveError.IntentTimeout,
+                                `Timeout waiting for intent listener to be added. intent = ${uniqueIntent.type}`
+                            );
+                        });
+                    });
+
+                    describe('When the directory app registers the intent listener after opening', () => { // ! 22111
+                        test('When calling raiseIntent from another app, the app should open and receive the intent with the correct context', async () => {
+                            await delay(1000); // For some reason a 'could not find specified executionTarget' error is thrown without this delay
+
+                            await fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
+                            await raiseIntentPromise;
+
+                            const listener = await fdc3Remote.getRemoteIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
+                            const receivedContexts = await listener.getReceivedContexts();
+
+                            expect(receivedContexts).toEqual([uniqueIntent.context]);
+                        });
                     });
                 });
 
-                describe('But there is a running ad-hoc app with a listener registered for the same intent', () => {
+                describe('But there is a running ad-hoc app with a listener registered for the same intent', () => { // ! 2212
                     const listener = setupStartNonDirectoryAppWithIntentListener(uniqueIntent);
 
-                    // TODO: write tests
                     test.todo('When calling raiseIntent from another app, the resolver should be displayed with the directory + ad-hoc app');
                 });
             }); // 1 app in directory, not running
@@ -463,6 +492,12 @@ async function raiseDelayedIntentWithTarget(intent: Intent, targetApp: AppIdenti
     return raiseIntentPromise;
 }
 
+/**
+ * This case occurs when either:
+ * - there are no directory apps for a given intent, or
+ * - there are directory apps for the intent, but are running and haven't registered listeners for the intent
+ * @param intent intent
+ */
 function noTarget_noDirectoryAppCanHandleIntent(intent: Intent) {
     describe('And no running ad-hoc apps with listeners registered for the raised intent', () => {
         test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
