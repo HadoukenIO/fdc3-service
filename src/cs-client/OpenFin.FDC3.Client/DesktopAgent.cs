@@ -121,7 +121,7 @@ namespace OpenFin.FDC3
                         fdcService.run();
                     }
 
-                    Connection.ConnectionInitializationComplete += exception =>
+                    Connection.ConnectionInitializationComplete = exception =>
                     {
                         InitializationComplete?.Invoke(exception);
                         isInitialized = true;
