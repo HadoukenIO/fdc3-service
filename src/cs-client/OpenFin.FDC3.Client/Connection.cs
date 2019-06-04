@@ -17,9 +17,9 @@ namespace OpenFin.FDC3
     {
         internal static Action<Exception> ConnectionInitializationComplete;
         private static ChannelClient channelClient;
-        private static Action<ChannelChangedPayload> channelChangedHandlers { get; set; }
-        private static Action<ContextBase> contextListeners { get; set; }
-        private static List<KeyValuePair<string, Action<ContextBase>>> intentListeners { get; set; }
+        private static Action<ChannelChangedPayload> channelChangedHandlers;
+        private static Action<ContextBase> contextListeners;
+        private static Dictionary<string, Action<ContextBase>> intentListeners;
         internal static void AddChannelChangedEventListener(Action<ChannelChangedPayload> handler)
         {
             channelChangedHandlers += handler;
@@ -32,7 +32,16 @@ namespace OpenFin.FDC3
 
         internal static void AddIntentListener(string intent, Action<ContextBase> handler)
         {
-            intentListeners.Add(new KeyValuePair<string, Action<ContextBase>>(intent, handler));
+            foreach(var key in intentListeners.Keys)
+            {
+                Action<ContextBase> action;
+
+                if(intentListeners.TryGetValue(key, out action))
+                {
+                    intentListeners[intent] += handler;
+                    break;
+                }
+            }            
         }
 
         internal static Task Broadcast(Context.ContextBase context)
@@ -74,7 +83,7 @@ namespace OpenFin.FDC3
 
         internal static void Initialize(Runtime runtimeInstance)
         {
-            intentListeners = new List<KeyValuePair<string, Action<ContextBase>>>();
+            intentListeners = new Dictionary<string, Action<ContextBase>>();
             channelClient = runtimeInstance.InterApplicationBus.Channel.CreateClient(Fdc3ServiceConstants.ServiceChannel);
 
             registerChannelTopics();
@@ -108,12 +117,18 @@ namespace OpenFin.FDC3
         }
         internal static void UnsubscribeIntentListener(string intent)
         {
-            intentListeners.RemoveAll(x => x.Key == intent);
+            if(intentListeners.ContainsKey(intent))
+            {
+                intentListeners.Remove(intent);
+            }            
         }
 
         internal static void UnsubscribeIntentListener(string intent, Action<ContextBase> handler)
         {
-            intentListeners.RemoveAll(x => x.Key == intent && x.Value == handler);
+            if(intentListeners.ContainsKey(intent))
+            {
+                intentListeners[intent] -= handler;
+            }            
         }
         private static void registerChannelTopics()
         {
