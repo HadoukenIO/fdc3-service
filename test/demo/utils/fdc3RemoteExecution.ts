@@ -280,18 +280,18 @@ export async function getDesktopChannels(executionTarget: Identity): Promise<Rem
     return channels.map(channel => deserializeChannel(executionTarget, channel));
 }
 
-export async function getChannelById(executionTarget: Identity, id: ChannelId): Promise<RemoteChannel|null> {
+export async function getChannelById(executionTarget: Identity, id: ChannelId): Promise<RemoteChannel> {
     const testChannelTransport = await ofBrowser.executeOnWindow(
         executionTarget,
-        async function(this: TestWindowContext, id: ChannelId): Promise<TestChannelTransport|null> {
+        async function(this: TestWindowContext, id: ChannelId): Promise<TestChannelTransport> {
             const channel = await this.fdc3.getChannelById(id).catch(this.errorHandler);
 
-            return channel ? this.serializeChannel(channel) : null;
+            return this.serializeChannel(channel);
         },
         id
     ).catch(handlePuppeteerError);
 
-    return testChannelTransport ? deserializeChannel(executionTarget, testChannelTransport) : null;
+    return deserializeChannel(executionTarget, testChannelTransport);
 }
 
 export async function getCurrentChannel(executionTarget: Identity, identity?: Identity): Promise<RemoteChannel> {

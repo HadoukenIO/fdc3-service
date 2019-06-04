@@ -262,7 +262,7 @@ describe('When joining a channel', () => {
         expect(payload[0]).toHaveProperty('identity', channelChangingWindow);
     }, appStartupTime * 2);
 
-    test('If everything is unsubscribed, and something rejoins, there is no data held in the channel', async ()=>{
+    test('If everything is unsubscribed, and something rejoins, there is no data held in the channel', async () => {
         // First, set up a pair of windows on different channels. Yellow will be unused; green will be the
         // interesting one. Broadcast on green. No one is listening, no one hears.
         const [sendWindow, receiveWindow] = await setupWindows('green', 'yellow');
@@ -292,18 +292,6 @@ describe('When joining a channel', () => {
         receivedContexts = await receiveWindowListener.getReceivedContexts();
         expect(receivedContexts).toEqual([testContext]);
     }, appStartupTime * 2);
-
-    test.skip('If the channel to join does not exist, an FDC3Error is thrown', async () => {
-        const [window] = await setupWindows(undefined);
-
-        // Join a non-existent channel
-        const joinChannelPromise = joinChannel(window, 'non-existent-channel');
-
-        await expect(joinChannelPromise).toThrowFDC3Error(
-            ChannelError.ChannelDoesNotExist,
-            'No channel with channelId: non-existent-channel'
-        );
-    });
 });
 
 describe('When starting an app', () => {
@@ -320,4 +308,28 @@ describe('When starting an app', () => {
         expect(payload[0]).toHaveProperty('previousChannel.id', undefined);
         expect(payload[0]).toHaveProperty('identity', channelChangingWindow);
     }, appStartupTime * 2);
+});
+
+describe('When getting a channel by ID', () => {
+    test('When the ID provided is \'default\', the default channel is returned', async () => {
+        await expect(fdc3Remote.getChannelById(testManagerIdentity, 'default')).resolves.toBeChannel({id: 'default', type: 'default'}, DefaultChannel);
+    });
+
+    test('When the ID provided is \'green\', a desktop channel is returned', async () => {
+        await expect(fdc3Remote.getChannelById(testManagerIdentity, 'green')).resolves.toBeChannel({id: 'green', type: 'desktop'}, DesktopChannel);
+    });
+
+    test('Subsequent calls return the same instance', async () => {
+        const redChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'red');
+        await expect(fdc3Remote.getChannelById(testManagerIdentity, 'red')).resolves.toBe(redChannel);
+    });
+
+    test('If the channel does not exist, an FDC3Error is thrown', async () => {
+        const getChannelByIdPromise = fdc3Remote.getChannelById(testManagerIdentity, 'non-existent-channel');
+
+        await expect(getChannelByIdPromise).toThrowFDC3Error(
+            ChannelError.ChannelDoesNotExist,
+            'No channel with channelId: non-existent-channel'
+        );
+    });
 });

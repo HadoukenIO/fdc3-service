@@ -130,7 +130,7 @@ export class ChannelModel {
 
     private validateChannelId(channelId: string): void {
         if (!this._channelIdToChannelMap.has(channelId)) {
-            throw new FDC3Error(ChannelError.ChannelDoesNotExist, 'No channel with channelId: ' + channelId);
+            throw new FDC3Error(ChannelError.ChannelDoesNotExist, `No channel with channelId: ${channelId}`);
         }
     }
 

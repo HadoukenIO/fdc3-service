@@ -6,6 +6,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {tryServiceDispatch} from './connection';
 import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport} from './internal';
+import {FDC3Error, ChannelError} from './errors';
 
 export type ChannelId = string;
 
@@ -172,12 +173,15 @@ export async function getDesktopChannels(): Promise<DesktopChannel[]> {
 /**
  * Fetches a channel object for a given channel identifier. The `channelId` property maps to the {@link Channel.id} field.
  *
- * TODO (SERVICE-429): Decide what happens if calling with an invalid channel ID. Will the client know it's
- * invalid?.. Also, what if desktop channel list hasn't yet been fetched from provider? (may need to be made async).
- * @param channelId The ID of the channel to fetch.
+ * @param channelId The ID of the channel to return
+ * @throws `FDC3Error`: If the channel specified by `channelId` does not exist
  */
-export async function getChannelById(channelId: ChannelId): Promise<Channel|null> {
+export async function getChannelById(channelId: ChannelId): Promise<Channel> {
     await getDesktopChannels();
+
+    if (!channelLookup[channelId]) {
+        throw new FDC3Error(ChannelError.ChannelDoesNotExist, `No channel with channelId: ${channelId}`);
+    }
 
     return channelLookup[channelId];
 }

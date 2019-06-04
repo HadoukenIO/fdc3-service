@@ -23,7 +23,13 @@
         }
 
         function serializeChannel(channel) {
-            let transport = window.channelTransports.find(transport => transport.channel === channel);
+            let transport;
+            for (const id in window.channelTransports) {
+                if (window.channelTransports[id].channel === channel) {
+                    transport = window.channelTransports[id];
+                    break;
+                }
+            }
 
             if (!transport) {
                 transport = {
@@ -31,7 +37,6 @@
                     channel,
                     constructor: channel.constructor.name,
                 }
-
                 window.channelTransports[transport.id] = transport;
             }
 
@@ -47,7 +52,7 @@
         window.contextListeners = [];
         window.intentListeners = [];
         window.eventListeners = [];
-        window.channelTransports = [];
+        window.channelTransports = {};
         window.receivedContexts = [];
         window.receivedIntents = [];
         window.receivedEvents = [];
