@@ -364,6 +364,8 @@ describe('When getting the list of desktop channels', () => {
 
         const reducedChannels = channels.map(channel => ({id: channel.channel.id, type: channel.channel.type}));
 
+        expect(reducedChannels).toHaveLength(6);
+
         expect(reducedChannels).toContainEqual({id: 'red', type: 'desktop'});
         expect(reducedChannels).toContainEqual({id: 'orange', type: 'desktop'});
         expect(reducedChannels).toContainEqual({id: 'yellow', type: 'desktop'});
@@ -379,6 +381,8 @@ describe('When getting the list of desktop channels', () => {
     test('Subsequent calls return the same channel instances', async () => {
         const channels1 = await fdc3Remote.getDesktopChannels(testManagerIdentity);
         const channels2 = await fdc3Remote.getDesktopChannels(testManagerIdentity);
+
+        expect(channels2).toHaveLength(channels1.length);
 
         for (const channel of channels1) {
             expect(channels2).toContain(channel);
