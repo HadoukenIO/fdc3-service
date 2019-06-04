@@ -13,7 +13,7 @@
 import {Identity} from 'openfin/_v2/main';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 
-import {Application, Context, IntentType, AppIntent, ChannelBase, ChannelId, DefaultChannel, DesktopChannel} from '../../../src/client/main';
+import {Application, Context, IntentType, AppIntent, ChannelId, DefaultChannel, DesktopChannel, Channel} from '../../../src/client/main';
 import {RaiseIntentPayload} from '../../../src/client/internal';
 import {FDC3Event, FDC3EventType} from '../../../src/client/connection';
 
@@ -24,7 +24,7 @@ const ofBrowser = new OFPuppeteerBrowser();
 const remoteChannels: {[id: string]: RemoteChannel} = {};
 
 export interface RemoteChannel {
-    channel: ChannelBase;
+    channel: Channel;
     id: string;
 
     getMembers: () => Promise<Identity[]>;
@@ -314,7 +314,7 @@ function deserializeChannel(executionTarget: Identity, transport: TestChannelTra
     if (!remoteChannel) {
         remoteChannel = {
             id: transport.id,
-            channel: transport.channel as ChannelBase,
+            channel: transport.channel as Channel,
             join: async (identity?: Identity) => {
                 return ofBrowser.executeOnWindow(executionTarget, async function(channelInstanceId: string, identity?: Identity): Promise<void> {
                     return this.channelTransports[channelInstanceId].channel.join(identity).catch(this.errorHandler);
