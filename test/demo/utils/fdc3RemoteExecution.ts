@@ -27,10 +27,10 @@ export async function open(executionTarget: Identity, name: string, context?: Co
     }, name, context).catch(handlePuppeteerError);
 }
 
-export async function findIntent(executionTarget: Identity, intent: IntentType, context?: Context): Promise<Application[]> {
-    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, intent: IntentType, context?: Context): Promise<Application[]> {
-        return this.fdc3.findIntent(intent, context).then(appIntent => appIntent.apps);
-    }, intent, context);
+export async function findIntent(executionTarget: Identity, intent: IntentType, context?: Context): Promise<AppIntent> {
+    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, intent: IntentType, context?: Context): Promise<AppIntent> {
+        return this.fdc3.findIntent(intent, context).catch(this.errorHandler);
+    }, intent, context).catch(handlePuppeteerError);
 }
 
 export async function broadcast(executionTarget: Identity, context: Context): Promise<void> {

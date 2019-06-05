@@ -1,6 +1,9 @@
 import 'jest';
+
+import {Identity} from 'openfin/_v2/main';
+
 import {ResolveError} from '../../src/client/errors';
-import {Context} from '../../src/client/context';
+import {Context, AppIntent} from '../../src/client/main';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
@@ -10,9 +13,20 @@ const testManagerIdentity = {
     name: 'test-app'
 };
 
+/**
+ * A context missing the mandatory `type` field
+ */
 const invalidContext = {
     twitter: '@testname'
 } as unknown as Context;
+
+/**
+ * A context not accepted by any intent in any directory app
+ */
+const unknownContext = {
+    type: 'test.ContextTypeUnknown',
+    name: 'Test Name'
+};
 
 describe('Resolving intents by context, findIntentsByContext', () => {
     beforeEach(async () => {
@@ -31,24 +45,19 @@ describe('Resolving intents by context, findIntentsByContext', () => {
     });
 
     describe('When calling findIntentsByContext with a context type not accepted by any directory app', () => {
-        const context = {
-            type: 'test.ContextTypeUnknown',
-            name: 'Test Name'
-        };
-
         test('The promise resolves to an empty array', async () => {
-            const receivedAppIntents = await fdc3Remote.findIntentsByContext(testManagerIdentity, context);
+            const receivedAppIntents = await findIntentsByContext(unknownContext);
             expect(receivedAppIntents).toEqual([]);
         });
     });
 
     describe('When calling findIntentsByContext with a context type accepted by some directory app', () => {
-        const context = {
+        const contactContext = {
             type: 'contact',
             name: 'Test Name'
         };
         test('The promise resolves to an array of all compatible AppIntents', async () => {
-            const receivedAppIntents = await fdc3Remote.findIntentsByContext(testManagerIdentity, context);
+            const receivedAppIntents = await findIntentsByContext(contactContext);
             expect(receivedAppIntents).toEqual([
                 {
                     intent: {
@@ -66,3 +75,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
         });
     });
 });
+
+function findIntentsByContext(context: Context, sendFromIdentity?: Identity): Promise<AppIntent[]> {
+    return fdc3Remote.findIntentsByContext(sendFromIdentity || testManagerIdentity, context);
+}

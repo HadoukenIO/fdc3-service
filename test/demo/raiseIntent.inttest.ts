@@ -422,8 +422,8 @@ only the first listener is triggered exactly once with the correct context, and 
                 }); // 1 app in directory, running, has registered listener
             }); // 1 app in directory, running
 
-            describe('With the registered app not running', () => { // ! 221
-                describe('And no running ad-hoc apps with listeners registered for the raised intent', () => { // ! 2211
+            describe('With the registered app not running', () => {
+                describe('And no running ad-hoc apps with listeners registered for the raised intent', () => {
                     let raiseIntentPromise: Promise<void>;
                     beforeEach(async () => {
                         raiseIntentPromise = raiseIntent(uniqueIntent);
@@ -437,7 +437,7 @@ only the first listener is triggered exactly once with the correct context, and 
                         await fin.Application.wrapSync(testAppWithUniqueIntent).quit();
                     });
 
-                    describe('When the directory app does not register the intent listener after opening', () => { // ! 22112
+                    describe('When the directory app does not register the intent listener after opening', () => {
                         test('When calling raiseIntent from another app, the app opens but it times out waiting for the listener to be added', async () => {
                             await expect(raiseIntentPromise).toThrowFDC3Error(
                                 ResolveError.IntentTimeout,
@@ -446,7 +446,7 @@ only the first listener is triggered exactly once with the correct context, and 
                         });
                     });
 
-                    describe('When the directory app registers the intent listener after opening', () => { // ! 22111
+                    describe('When the directory app registers the intent listener after opening', () => {
                         test('When calling raiseIntent from another app, the app opens and receives the intent with the correct context', async () => {
                             await delay(2000); // For some reason a 'could not find specified executionTarget' error is thrown without a delay here
 
@@ -461,7 +461,7 @@ only the first listener is triggered exactly once with the correct context, and 
                     });
                 });
 
-                describe('But there is a running ad-hoc app with a listener registered for the same intent', () => { // ! 2212
+                describe('But there is a running ad-hoc app with a listener registered for the same intent', () => {
                     const adHocAppListener = setupStartNonDirectoryAppWithIntentListener(uniqueIntent, testAppNotInDirectory);
 
                     describe('When calling raiseIntent from another app, the resolver is displayed with the directory + ad-hoc app', () => {
