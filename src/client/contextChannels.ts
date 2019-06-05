@@ -89,8 +89,8 @@ abstract class ChannelBase {
      * If the channel has a current context (see {@link getCurrentContext}) then that context will be immediately passed to
      * the given window upon joining the channel, via its context listener(s).
      *
-     * Note that all windows will always belong to exactly one channel at all times. If you wish to leave a channel, the
-     * only way to do so is to re-join the default channel. This can be done by calling `channels.defaultChannel.join()`.
+     * Note that all windows will always belong to exactly one channel at all times. If you wish to leave a channel,
+     * the only way to do so is to join another channel. A window may rejoin the default channel by calling `channels.defaultChannel.join()`.
      *
      * @param identity The window that should be added to this channel. If omitted, will use the window that calls this method.
      * @throws `FDC3Error`: If `identity` is not a valid {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}
@@ -152,7 +152,7 @@ export const DEFAULT_CHANNEL_ID: ChannelId = 'default';
 /**
  * The channel in which all windows will initially be placed.
  *
- * All FDC3-registered windows will belong to exactly one channel at all times. If they have not explicitly
+ * All windows will belong to exactly one channel at all times. If they have not explicitly
  * been placed into a channel via a {@link Channel.join} call, they will be in this channel.
  *
  * If an app wishes to leave a desktop channel it can do so by (re-)joining this channel.
