@@ -19,20 +19,25 @@ import {Injector} from './common/Injector';
 export class Main {
     private _config = null;
 
-    @inject(Inject.APP_DIRECTORY)
-    private _directory!: AppDirectory;
+    private readonly _directory: AppDirectory;
+    private readonly _model: Model;
+    private readonly _contexts: ContextHandler;
+    private readonly _intents: IntentHandler;
+    private readonly _apiHandler: APIHandler<APIFromClientTopic>;
 
-    @inject(Inject.MODEL)
-    private _model!: Model;
-
-    @inject(Inject.CONTEXT_HANDLER)
-    private _contexts!: ContextHandler;
-
-    @inject(Inject.INTENT_HANDLER)
-    private _intents!: IntentHandler;
-
-    @inject(Inject.API_HANDLER)
-    private _apiHandler!: APIHandler<APIFromClientTopic>;
+    constructor(
+        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
+        @inject(Inject.MODEL) model: Model,
+        @inject(Inject.CONTEXT_HANDLER) contexts: ContextHandler,
+        @inject(Inject.INTENT_HANDLER) intents: IntentHandler,
+        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
+    ) {
+        this._directory = directory;
+        this._model = model;
+        this._contexts = contexts;
+        this._intents = intents;
+        this._apiHandler = apiHandler;
+    }
 
     public async register(): Promise<void> {
         Object.assign(window, {
