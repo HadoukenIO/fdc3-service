@@ -67,14 +67,20 @@ export interface SelectorResult {
 
 @injectable()
 export class SelectorHandler extends AsyncInit {
-    @inject(Inject.APP_DIRECTORY)
-    private _directory!: AppDirectory;
-
-    @inject(Inject.MODEL)
-    private _model!: Model;
+    private readonly _directory: AppDirectory;
+    private readonly _model: Model;
 
     private _window!: _Window;
     private _channel!: ChannelClient;
+
+    constructor(
+        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
+        @inject(Inject.MODEL) model: Model,
+    ) {
+        super();
+        this._directory = directory;
+        this._model = model;
+    }
 
     /**
      * Performs one-off initialisation
