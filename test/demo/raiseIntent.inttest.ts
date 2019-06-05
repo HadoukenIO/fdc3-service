@@ -271,18 +271,23 @@ the second listener is not triggered', async () => {
                     await expect(fdc3Remote.addIntentListener(testAppNotInDirectory, validPayload.intent)).resolves.not.toThrow();
                 });
 
-                describe('When the target has *not* registered any listeners (therefore the FDC3 service is *not* aware of the window)', () => {
+                describe('When the target has not connected to FDC3 (therefore the FDC3 service is *not* aware of the window)', () => {
+                    const testAppNotFdc3 = {
+                        uuid: 'test-app-not-fdc3',
+                        name: 'test-app-not-fdc3',
+                        manifestUrl: 'http://localhost:3923/test/configs/test-app-not-fdc3.json'
+                    };
                     test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
                         const promise = fdc3Remote.raiseIntent(
                             testManagerIdentity,
                             validPayload.intent,
                             validPayload.context,
-                            testAppNotInDirectory.name
+                            testAppNotFdc3.name
                         );
 
                         await expect(promise).toThrowFDC3Error(
                             ResolveError.TargetAppNotAvailable,
-                            `Couldn't resolve intent target '${testAppNotInDirectory.name}'. No matching app in directory or currently running.`
+                            `Couldn't resolve intent target '${testAppNotFdc3.name}'. No matching app in directory or currently running.`
                         );
                     });
                 });

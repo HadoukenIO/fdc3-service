@@ -15,7 +15,7 @@ import {ContextHandler} from './controller/ContextHandler';
 import {IntentHandler} from './controller/IntentHandler';
 import {APIHandler} from './APIHandler';
 import {Injector} from './common/Injector';
-import {ChannelModel} from './ChannelModel';
+import {ChannelHandler} from './controller/ChannelHandler';
 
 @injectable()
 export class Main {
@@ -23,24 +23,24 @@ export class Main {
 
     private readonly _directory: AppDirectory;
     private readonly _model: Model;
-    private readonly _contexts: ContextHandler;
-    private readonly _intents: IntentHandler;
-    private readonly _channelModel: ChannelModel;
+    private readonly _contextHandler: ContextHandler;
+    private readonly _intentHandler: IntentHandler;
+    private readonly _channelHandler: ChannelHandler;
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
         @inject(Inject.MODEL) model: Model,
-        @inject(Inject.CONTEXT_HANDLER) contexts: ContextHandler,
-        @inject(Inject.INTENT_HANDLER) intents: IntentHandler,
-        @inject(Inject.CHANNEL_MODEL) channelModel: ChannelModel,
+        @inject(Inject.CONTEXT_HANDLER) contextHandler: ContextHandler,
+        @inject(Inject.INTENT_HANDLER) intentHandler: IntentHandler,
+        @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
     ) {
         this._directory = directory;
         this._model = model;
-        this._contexts = contexts;
-        this._intents = intents;
-        this._channelModel = channelModel;
+        this._contextHandler = contextHandler;
+        this._intentHandler = intentHandler;
+        this._channelHandler = channelHandler;
         this._apiHandler = apiHandler;
     }
 
@@ -50,9 +50,9 @@ export class Main {
             config: this._config,
             directory: this._directory,
             model: this._model,
-            contexts: this._contexts,
-            channelModel: this._channelModel,
-            intents: this._intents
+            contextHandler: this._contextHandler,
+            intentHandler: this._intentHandler,
+            channelHandler: this._channelHandler
         });
 
         // Wait for creation of any injected components that require async initialization
@@ -74,7 +74,8 @@ export class Main {
             [APIFromClientTopic.CHANNEL_JOIN]: this.channelJoin.bind(this)
         });
 
-        this._channelModel.onChannelChanged.add(this.onChannelChangedHandler, this);
+        this._channelHandler.registerChannels();
+        this._channelHandler.onChannelChanged.add(this.onChannelChangedHandler, this);
 
         console.log('Service Initialised');
     }
@@ -97,7 +98,7 @@ export class Main {
             if (!payload.context.type) {
                 throw new FDC3Error(OpenError.InvalidContext, `Context not valid. context = ${JSON.stringify(payload.context)}`);
             }
-            this._contexts.send(appWindow, payload.context);
+            this._contextHandler.send(appWindow, payload.context);
         }
     }
 
@@ -135,7 +136,10 @@ export class Main {
     }
 
     private async broadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {
-        await this._contexts.broadcast(payload.context, source);
+        this.validateIdentity(source);
+        const appWindow = this._model.getWindow(source)!;
+
+        await this._contextHandler.broadcast(payload.context, appWindow);
     }
 
     private async raiseIntent(payload: RaiseIntentPayload): Promise<IntentResolution> {
@@ -145,36 +149,13 @@ export class Main {
             target: payload.target
         };
 
-        return this._intents.raise(intent);
+        return this._intentHandler.raise(intent);
     }
 
     private async addIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): Promise<void> {
-        let appWindow = this._model.getWindow(identity);
+        this.validateIdentity(identity);
+        const appWindow = this._model.getWindow(identity)!;
 
-        // Window is not in model - this should mean that the app is not in the directory, as directory apps are immediately added to model upon window creation
-        if (!appWindow) {
-            let appInfo: Application;
-
-            // Attempt to copy appInfo from another appWindow in the model from the same app
-            const appWindowFromSameApp = this._model.findWindowByAppId(identity.uuid);
-            if (appWindowFromSameApp) {
-                appInfo = appWindowFromSameApp.appInfo;
-            } else {
-                // There are no appWindows in the model with the same app uuid - Produce minimal appInfo from window information
-                const application = fin.Application.wrapSync(identity);
-                const applicationInfo = await application.getInfo();
-                appInfo = {
-                    appId: identity.uuid,
-                    name: identity.uuid,
-                    title: (applicationInfo.manifest as {title?: string}).title,
-                    manifestType: 'openfin',
-                    manifest: applicationInfo.manifestUrl
-                };
-            }
-            appWindow = this._model.registerWindow(appInfo, identity, false);
-        }
-
-        // Finally, add the intent listener
         appWindow.addIntentListener(payload.intent);
     }
 
@@ -189,11 +170,11 @@ export class Main {
     }
 
     private getDesktopChannels(payload: GetDesktopChannelsPayload, source: ProviderIdentity): ReadonlyArray<DesktopChannelTransport> {
-        return this._channelModel.getDesktopChannels();
+        return this._channelHandler.getDesktopChannels().map(channel => channel.serialize());
     }
 
     private getChannelById(payload: GetChannelByIdPayload, source: ProviderIdentity): ChannelTransport {
-        return this._channelModel.getChannelById(payload.id);
+        return this._channelHandler.getChannelById(payload.id);
     }
 
     private getCurrentChannel(payload: GetCurrentChannelPayload, source: ProviderIdentity): ChannelTransport {
@@ -201,11 +182,11 @@ export class Main {
 
         this.validateIdentity(identity);
 
-        return this._channelModel.getChannelForWindow(identity);
+        return this._model.getWindow(identity)!.channel.serialize();
     }
 
-    private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): Identity[] {
-        return this._channelModel.getChannelMembers(payload.id);
+    private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): ReadonlyArray<Identity> {
+        return this._channelHandler.getChannelMembers(payload.id).map(appWindow => appWindow.identity);
     }
 
     private async channelJoin(payload: ChannelJoinPayload, source: ProviderIdentity): Promise<void> {
@@ -214,18 +195,18 @@ export class Main {
 
         this.validateIdentity(identity);
 
-        this._channelModel.joinChannel(identity, id);
-        const context = this._channelModel.getContext(id);
+        this._channelHandler.joinChannel(this._model.getWindow(identity)!, id);
+        const context = this._channelHandler.getChannelContext(id);
 
         if (context) {
-            await this._contexts.send(identity, context);
+            await this._contextHandler.send(identity, context);
         }
     }
 
     private validateIdentity(identity: Identity): void {
         identity = parseIdentity(identity);
 
-        if (!this._apiHandler.isClientConnection(identity)) {
+        if (!this._model.getWindow(identity)) {
             throw new FDC3Error(
                 IdentityError.WindowWithIdentityNotFound,
                 `No connection to FDC3 service found from window with identity: ${JSON.stringify(identity)}`

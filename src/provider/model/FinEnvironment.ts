@@ -4,12 +4,12 @@ import {Identity, Window} from 'openfin/_v2/main';
 
 import {AsyncInit} from '../controller/AsyncInit';
 import {Signal1, Signal2} from '../common/Signal';
-import {Application, IntentType} from '../../client/main';
+import {Application, IntentType, ContextListener, ChannelId} from '../../client/main';
 import {FDC3Error, OpenError, ResolveError, withTimeout, Timeouts} from '../../common/errors';
 import {deferredPromise} from '../../common/async';
 
 import {Environment} from './Environment';
-import {AppWindow, ContextSpec} from './AppWindow';
+import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 import {getId} from './Model';
 
@@ -31,7 +31,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
      */
     public readonly windowClosed: Signal1<Identity> = new Signal1();
 
-    public async createApplication(appInfo: Application): Promise<AppWindow> {
+    public async createApplication(appInfo: Application, channel: ContextChannel): Promise<AppWindow> {
         const [didTimeout, app] = await withTimeout(
             Timeouts.APP_START_FROM_MANIFEST,
             fin.Application.startFromManifest(appInfo.manifest).catch(e => {
@@ -42,11 +42,11 @@ export class FinEnvironment extends AsyncInit implements Environment {
             throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
         }
 
-        return this.wrapApplication(appInfo, app!.identity);
+        return this.wrapApplication(appInfo, app!.identity, channel);
     }
 
-    public wrapApplication(appInfo: Application, identity: Identity): AppWindow {
-        return new FinAppWindow(identity, appInfo);
+    public wrapApplication(appInfo: Application, identity: Identity, channel: ContextChannel): AppWindow {
+        return new FinAppWindow(identity, appInfo, channel);
     }
 
     protected async init(): Promise<void> {
@@ -79,21 +79,29 @@ interface IntentMap {
     [key: string]: boolean;
 }
 
+interface ContextMap {
+    [key: string]: boolean;
+}
+
 class FinAppWindow {
     private readonly _id: string;
     private readonly _appInfo: Application;
     private readonly _window: Window;
 
     private readonly _intentListeners: IntentMap;
-    private readonly _contexts: ContextSpec[];
+    private readonly _contextListeners: ContextMap;
 
-    constructor(identity: Identity, appInfo: Application) {
+    public channel: ContextChannel;
+
+    constructor(identity: Identity, appInfo: Application, channel: ContextChannel) {
         this._id = getId(identity);
         this._window = fin.Window.wrapSync(identity);
         this._appInfo = appInfo;
 
         this._intentListeners = {};
-        this._contexts = [];
+        this._contextListeners = {};
+
+        this.channel = channel;
     }
 
     private readonly _onIntentListenerAdded: Signal1<IntentType> = new Signal1();
@@ -110,8 +118,8 @@ class FinAppWindow {
         return this._appInfo;
     }
 
-    public get contexts(): ReadonlyArray<ContextChannel> {
-        return this._contexts;
+    public get contextListeners(): ReadonlyArray<ChannelId> {
+        return Object.keys(this._contextListeners);
     }
 
     public get intentListeners(): ReadonlyArray<string> {

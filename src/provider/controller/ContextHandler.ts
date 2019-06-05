@@ -3,52 +3,67 @@ import {Identity} from 'openfin/_v2/main';
 
 import {AppWindow} from '../model/AppWindow';
 import {Context} from '../../client/main';
-import {ChannelModel} from '../ChannelModel';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic, APIToClientTopic} from '../../client/internal';
 import {Inject} from '../common/Injectables';
-import {getId} from '../model/Model';
+import {getId, Model} from '../model/Model';
+import {ContextChannel} from '../model/ContextChannel';
+
+import {ChannelHandler} from './ChannelHandler';
 
 @injectable()
 export class ContextHandler {
+    private readonly _channelHandler: ChannelHandler;
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
-    private readonly _channelModel: ChannelModel;
 
     constructor(
-        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
-        @inject(Inject.CHANNEL_MODEL) channelModel: ChannelModel
+        @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
+        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>
     ) {
+        this._channelHandler = channelHandler;
         this._apiHandler = apiHandler;
-        this._channelModel = channelModel;
     }
 
     // TODO: Remove ability to pass an Identity, standardise on AppWindow
     /**
      * Send a context to a specific app. Fire and forget
-     * @param app App to send the context to
+     * @param window Window to send the context to
      * @param context Context to be sent
      */
-    public async send(app: AppWindow|Identity, context: Context): Promise<void> {
-        const identity: Identity = (app as AppWindow).identity || app;
+    public async send(window: AppWindow|Identity, context: Context): Promise<void> {
+        const identity: Identity = (window as AppWindow).identity || window;
         await this._apiHandler.channel.dispatch(identity, APIToClientTopic.CONTEXT, context);
     }
 
     /**
-     * Broadcast context to all apps in the same channel as the sender, except the sender itself. Fire and forget
+     * Broadcast context onto the channel the source window is a member of. The context will be received by all
+     * windows in the channel, or listening to the channel, except for the sender itself
+     *
      * @param context Context to send
-     * @param source App sending the context. It won't receive the broadcast
+     * @param source Window sending the context. It won't receive the broadcast
      */
-    public broadcast(context: Context, source: Identity): void {
-        const channel = this._channelModel.getChannelForWindow(source);
-        const channelMembers = this._channelModel.getChannelMembers(channel.id);
+    public broadcast(context: Context, source: AppWindow): void {
+        this.broadcastOnChannel(context, source, source.channel);
+    }
 
-        this._channelModel.setContext(channel.id, context);
+    /**
+     * Broadcast context onto the provided channel. The context will be received by all windows in the channel, or
+     * listening to the channel, except for the sender itself
+     *
+     * @param context Context to send
+     * @param source Window sending the context. It won't receive the broadcast
+     * @param channel ContextChannel to broadcast on
+     */
+    public async broadcastOnChannel(context: Context, source: AppWindow, channel: ContextChannel): Promise<void> {
+        const listeningWindows = this._channelHandler.getWindowsListeningToChannel(channel);
 
-        const sourceId = getId(source);
+        channel.setLastBroadcastContext(context);
 
-        channelMembers
+        const sourceId = getId(source.identity);
+
+        listeningWindows
             // Sender window should not receive its own broadcasts
-            .filter(identity => getId(identity) !== sourceId)
-            .forEach(identity => this.send(identity, context));
+            .filter(window => getId(window.identity) !== sourceId)
+            .forEach(window => this.send(window.identity, context));
     }
 }
