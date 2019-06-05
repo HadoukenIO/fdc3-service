@@ -11,13 +11,13 @@ import {APIToClientTopic} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
 
 import {ContextHandler} from './ContextHandler';
-import {SelectorHandler, SelectorResult} from './SelectorHandler';
+import {ResolverHandler, ResolverResult} from './ResolverHandler';
 
 @injectable()
 export class IntentHandler {
     @inject(Inject.APP_DIRECTORY) private _directory!: AppDirectory;
     @inject(Inject.MODEL) private _model!: Model;
-    @inject(Inject.SELECTOR) private _selector!: SelectorHandler;
+    @inject(Inject.RESOLVER) private _resolver!: ResolverHandler;
     @inject(Inject.CONTEXT_HANDLER) private _contexts!: ContextHandler;
 
     private _promise: Promise<IntentResolution>|null;
@@ -87,13 +87,13 @@ export class IntentHandler {
     private async startResolve(intent: Intent): Promise<IntentResolution> {
         console.log('Handling intent', intent.type);
 
-        // Show selector
-        const selection: SelectorResult|null = await this._selector.handleIntent(intent).catch(e => {
+        // Show resolver
+        const selection: ResolverResult|null = await this._resolver.handleIntent(intent).catch(e => {
             console.warn(e);
             return null;
         });
         if (!selection) {
-            throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Selector closed or cancelled');
+            throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Resolver closed or cancelled');
         }
 
         // Handle response

@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import {Application} from '../../../client/directory';
-import {SelectorArgs, SelectorResult} from '../../controller/SelectorHandler';
+import {ResolverArgs, ResolverResult} from '../../controller/ResolverHandler';
 
 import {AppCard} from './AppCard';
 
@@ -19,13 +19,13 @@ export function AppList(): React.ReactElement {
 
 
     React.useEffect(() => {
-        fin.InterApplicationBus.Channel.create('selector').then(channel => {
+        fin.InterApplicationBus.Channel.create('resolver').then(channel => {
             Object.assign(window, {channel});
 
-            channel.register('resolve', async (args: SelectorArgs) => {
+            channel.register('resolve', async (args: ResolverArgs) => {
                 setApplications(args.applications);
 
-                return new Promise<SelectorResult>((resolve, reject) => {
+                return new Promise<ResolverResult>((resolve, reject) => {
                     sendSuccess = resolve;
                     sendError = reject;
                 });
