@@ -17,8 +17,17 @@
 }
 
 ::-webkit-scrollbar {
-    display: none;
-}
+    width: 10px;
+  }
+
+::-webkit-scrollbar-track {
+    background:  #303038;
+
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #45454c;
+  }
   
 body {
     background: #000000;
@@ -102,7 +111,7 @@ li {
 
 #app-list ul {
     flex: 1;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 #app-list li {
@@ -111,6 +120,10 @@ li {
     display: flex;
     align-items: center;
     border-bottom: 1px solid #333333;
+}
+
+#app-list li:last-child {
+    border-bottom: none;
 }
 
 #app-list li:hover {
@@ -123,6 +136,11 @@ li {
     border-radius: 6px;
 }
 
-#app-list li>h1 {
-    margin-left: 18px;
+#app-list li h1 {
+    margin: 0 18px 0 18px;
+    overflow: hidden;
+    display: -webkit-box;
+    text-overflow: ellipsis;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2; 
 }
