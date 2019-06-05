@@ -278,7 +278,7 @@ only the first listener is triggered exactly once with the correct context, and 
             });
 
             describe('When the target (which is an ad-hoc app) is running', () => {
-                setupStartNonDirectoryApp();
+                setupStartNonDirectoryApp(testAppNotInDirectory);
 
                 test('When calling addIntentListener for the first time, the promise resolves and there are no errors', async () => {
                     await expect(fdc3Remote.addIntentListener(testAppNotInDirectory, validIntent.type)).resolves.not.toThrow();
@@ -708,7 +708,7 @@ function setupOpenDirectoryApp(app: AppIdentity) {
  * Registers `beforeEach` to start an app from its `manifestUrl`, and `afterEach` to quit
  * @param app app info. Defaults to `test-app-not-in-directory`
  */
-function setupStartNonDirectoryApp(app: NonDirectoryApp = testAppNotInDirectory) {
+function setupStartNonDirectoryApp(app: NonDirectoryApp) {
     beforeEach(async () => {
         await fin.Application.startFromManifest(app.manifestUrl);
     });
