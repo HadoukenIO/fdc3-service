@@ -34,7 +34,7 @@ export function AppList(): React.ReactElement {
     }, []);
 
     return (
-        <div>
+        <div id="container">
             <div id="header">
                 <h1>Select an Application</h1>
                 <div id="exit" onClick={onCancel}></div>

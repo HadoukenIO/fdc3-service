@@ -64,8 +64,8 @@ export class ResolverHandler extends AsyncInit {
             defaultCentered: true,
             frame: false,
             resizable: false,
-            defaultWidth: 600,
-            defaultHeight: 700
+            defaultWidth: 500,
+            defaultHeight: 600
         };
 
         // Close any existing resolver window (in case service is restarted)
