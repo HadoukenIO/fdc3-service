@@ -15,16 +15,24 @@ import {SelectorHandler, SelectorResult} from './SelectorHandler';
 
 @injectable()
 export class IntentHandler {
-    @inject(Inject.APP_DIRECTORY) private _directory!: AppDirectory;
-    @inject(Inject.MODEL) private _model!: Model;
-    @inject(Inject.SELECTOR) private _selector!: SelectorHandler;
-    @inject(Inject.CONTEXT_HANDLER) private _contexts!: ContextHandler;
+    private readonly _directory: AppDirectory;
+    private readonly _model: Model;
+    private readonly _selector: SelectorHandler;
+    private readonly _apiHandler: APIHandler<APIToClientTopic>;
 
     private _promise: Promise<IntentResolution>|null;
-    private _apiHandler: APIHandler<APIToClientTopic>;
 
-    constructor(@inject(Inject.API_HANDLER) apiHandler: APIHandler<APIToClientTopic>) {
+    constructor(
+        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
+        @inject(Inject.MODEL) model: Model,
+        @inject(Inject.SELECTOR) selector: SelectorHandler,
+        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIToClientTopic>,
+    ) {
+        this._directory = directory;
+        this._model = model;
+        this._selector = selector;
         this._apiHandler = apiHandler;
+
         this._promise = null;
     }
 

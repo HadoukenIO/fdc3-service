@@ -11,8 +11,8 @@ import {getId} from '../model/Model';
 
 @injectable()
 export class ContextHandler {
-    private _apiHandler: APIHandler<APIFromClientTopic>;
-    private _channelModel: ChannelModel;
+    private readonly _apiHandler: APIHandler<APIFromClientTopic>;
+    private readonly _channelModel: ChannelModel;
 
     constructor(
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
