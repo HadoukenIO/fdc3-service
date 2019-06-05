@@ -84,7 +84,7 @@ export class ChannelModel {
         apiHandler.onDisconnection.add(this.onDisconnection, this);
     }
 
-    public getDesktopChannels(): Readonly<DesktopChannelTransport[]> {
+    public getDesktopChannels(): ReadonlyArray<DesktopChannelTransport> {
         return DESKTOP_CHANNELS;
     }
 

@@ -188,7 +188,7 @@ export class Main {
         }
     }
 
-    private getDesktopChannels(payload: GetDesktopChannelsPayload, source: ProviderIdentity): Readonly<DesktopChannelTransport[]> {
+    private getDesktopChannels(payload: GetDesktopChannelsPayload, source: ProviderIdentity): ReadonlyArray<DesktopChannelTransport> {
         return this._channelModel.getDesktopChannels();
     }
 
