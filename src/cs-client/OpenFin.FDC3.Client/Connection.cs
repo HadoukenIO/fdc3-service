@@ -41,7 +41,9 @@ namespace OpenFin.FDC3
                     intentListeners[intent] += handler;
                     break;
                 }
-            }            
+            }
+
+            intentListeners.Add(intent, handler);
         }
 
         internal static Task Broadcast(Context.ContextBase context)
@@ -139,8 +141,10 @@ namespace OpenFin.FDC3
 
             channelClient.RegisterTopic<RaiseIntentPayload>(ChannelTopicConstants.Intent, payload =>
             {
-                var listeners = intentListeners.Where(x => x.Key == payload.Intent).ToList();
-                listeners.ForEach(x => x.Value?.Invoke(payload.Context));                
+                if(intentListeners.ContainsKey(payload.Intent))
+                {
+                    intentListeners[payload.Intent].Invoke(payload.Context);
+                }                
             });
 
             channelClient.RegisterTopic<ContextBase>(ChannelTopicConstants.Context, payload =>

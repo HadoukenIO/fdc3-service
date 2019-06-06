@@ -9,19 +9,7 @@ namespace OpenFin.FDC3.Tests
 {
     [TestClass]
     public class ContextChannelsTests
-    {
-        [TestMethod]
-        public void AccessingUninitializedContextChannelsObject_ThrowsException()
-        {
-            Assert.ThrowsException<OpenFinInitializationException>(
-                () =>
-                {
-                    if (DesktopAgent.InitializationComplete != null)
-                        DesktopAgent.InitializationComplete = null;
-
-                    var instance = DesktopAgent.ContextChannels;
-                });
-        }
+    {  
 
         [TestMethod]
         public async Task GetAllChannelsAsync_GettingAvailableChannels_ReturnsChannelsList()
