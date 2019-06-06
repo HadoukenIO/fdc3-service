@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {render} from 'react-dom';
 
-import {AppList} from './components/AppList';
+import {Resolver} from './components/Resolver';
 
-render(<AppList />, document.getElementById('react-app'));
+render(<Resolver />, document.getElementById('react-app'));

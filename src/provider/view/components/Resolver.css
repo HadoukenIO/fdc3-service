@@ -1,0 +1,80 @@
+
+:root {
+    /*
+        The standard left padding which everything is pushed over by.
+    */
+    --left-padding: 33px;
+}
+
+* {
+    padding: 0px;
+    margin: 0px;
+    -webkit-user-select: none;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+  }
+
+::-webkit-scrollbar-track {
+    background:  #303038;
+
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #45454c;
+  }
+  
+body {
+    background: #000000;
+    overflow: hidden;
+    font-family: Akkurat;
+}
+
+h1 {
+    color: white;
+    font-size: 20px;
+    font-weight: 400;
+    letter-spacing: 0.15px;
+}
+
+li {
+    list-style: none;
+}
+
+#container {
+    height: 100%;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/*
+    Header
+*/
+
+#header {
+    height: 92px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#header h1 {
+    padding-left: var(--left-padding);
+}
+
+#header #exit {
+    height: 20px;
+    width: 20px;
+    margin-right: 30px;
+    background-image: url("../../../../res/provider/ui/resolver/assets/exit.png");
+    background-position: 50%;
+    background-size: 9px 9px;
+    background-repeat: no-repeat;
+}
+
+#header #exit:hover {
+    background-color: #3e3d51;
+    border-radius: 10px;
+}

@@ -1,0 +1,26 @@
+#app-list {
+    color: white;
+    background: #0a0a0a;
+    display: flex;
+    flex: 1;
+	flex-direction: column;
+}
+
+#app-list p {
+    background: #303038;
+    color: #5a5a63;
+    height: 25px;
+    padding-left: var(--left-padding);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    line-height: 19px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+}
+
+#app-list ul {
+    flex: 1;
+    overflow-y: auto;
+}
