@@ -69,10 +69,14 @@ li {
     height: 20px;
     width: 20px;
     margin-right: 30px;
-    /* background defined in global css located in res/ui/resolver */
-    background-position: 50%;
-    background-size: 9px 9px;
-    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#header #exit img {
+    height: 10px;
+    width: 10px;
 }
 
 #header #exit:hover {

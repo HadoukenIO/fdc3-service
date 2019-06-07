@@ -19,7 +19,6 @@ export function Resolver(): React.ReactElement {
         sendSuccess(null!);
     };
 
-
     React.useEffect(() => {
         fin.InterApplicationBus.Channel.create('resolver').then(channel => {
             Object.assign(window, {channel});
@@ -39,7 +38,9 @@ export function Resolver(): React.ReactElement {
         <div id="container">
             <div id="header">
                 <h1>Select an Application</h1>
-                <div id="exit" onClick={onCancel}></div>
+                <div id="exit" onClick={onCancel}>
+                    <img src="assets/exit.png" />
+                </div>
             </div>
             <AppList applications={applications} openHandler={onAppOpen}/>
         </div>
