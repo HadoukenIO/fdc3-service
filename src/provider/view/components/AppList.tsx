@@ -8,7 +8,7 @@ import './AppList.css';
 
 interface AppListProps {
     applications: Application[];
-    openHandler: (app: Application) => void;
+    onAppOpen: (app: Application) => void;
 }
 
 export function AppList(props: AppListProps): React.ReactElement {
@@ -17,7 +17,7 @@ export function AppList(props: AppListProps): React.ReactElement {
             <p>Apps</p>
             <ul>
                 {props.applications.map((app: Application) => (
-                    <AppCard key={app.appId} app={app} openHandler={props.openHandler} />
+                    <AppCard key={app.appId} app={app} openHandler={props.onAppOpen} />
                 ))}
             </ul>
         </div>

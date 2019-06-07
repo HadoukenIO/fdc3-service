@@ -13,8 +13,8 @@ let sendError: (result: string) => void;
 export function Resolver(): React.ReactElement {
     const [applications, setApplications] = React.useState<Application[]>([]);
 
-    const onAppOpen = (app: Application) => sendSuccess({app});
-    const onCancel = (event: React.MouseEvent<HTMLDivElement>) => {
+    const handleAppOpen = (app: Application) => sendSuccess({app});
+    const handleCancel = (event: React.MouseEvent<HTMLDivElement>) => {
         event.stopPropagation();
         sendSuccess(null!);
     };
@@ -38,11 +38,11 @@ export function Resolver(): React.ReactElement {
         <div id="container">
             <div id="header">
                 <h1>Select an Application</h1>
-                <div id="exit" onClick={onCancel}>
+                <div id="exit" onClick={handleCancel}>
                     <img src="assets/exit.png" />
                 </div>
             </div>
-            <AppList applications={applications} openHandler={onAppOpen}/>
+            <AppList applications={applications} onAppOpen={handleAppOpen}/>
         </div>
     );
 }
