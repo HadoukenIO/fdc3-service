@@ -139,6 +139,18 @@ class FinAppWindow {
         delete this._intentListeners[intentName];
     }
 
+    public hasContextListener(channelId: ChannelId): boolean {
+        return this._contextListeners[channelId] === true;
+    }
+
+    public addContextListener(channelId: ChannelId): void {
+        this._contextListeners[channelId] = true;
+    }
+
+    public removeContextListener(channelId: ChannelId): void {
+        delete this._contextListeners[channelId];
+    }
+
     public focus(): Promise<void> {
         return this._window.setAsForeground();
     }

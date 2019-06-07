@@ -45,7 +45,9 @@ export enum APIFromClientTopic {
     CHANNEL_GET_MEMBERS = 'CHANNEL-GET-MEMBERS',
     CHANNEL_JOIN = 'CHANNEL-JOIN',
     CHANNEL_BROADCAST = 'CHANNEL-BROADCAST',
-    CHANNEL_GET_CURRENT_CONTEXT = 'CHANNEL-GET-CURRENT-CONTEXT'
+    CHANNEL_GET_CURRENT_CONTEXT = 'CHANNEL-GET-CURRENT-CONTEXT',
+    CHANNEL_ADD_CONTEXT_LISTENER = 'CHANNEL-ADD-CONTEXT-LISTENER',
+    CHANNEL_REMOVE_CONTEXT_LISTENER = 'CHANNEL-REMOVE-CONTEXT-LISTENER'
 }
 
 /**
@@ -54,6 +56,7 @@ export enum APIFromClientTopic {
 export enum APIToClientTopic {
   INTENT = 'INTENT',
   CONTEXT = 'CONTEXT',
+  CHANNEL_CONTTEXT = 'CHANNEL-CONTEXT'
 }
 
 export type APIFromClient = {
@@ -71,11 +74,14 @@ export type APIFromClient = {
     [APIFromClientTopic.CHANNEL_JOIN]: [ChannelJoinPayload, void];
     [APIFromClientTopic.CHANNEL_BROADCAST]: [ChannelBroadcastPayload, void];
     [APIFromClientTopic.CHANNEL_GET_CURRENT_CONTEXT]: [ChannelGetCurrentContextPayload, Context|null];
+    [APIFromClientTopic.CHANNEL_ADD_CONTEXT_LISTENER]: [ChannelAddContextListenerPayload, void];
+    [APIFromClientTopic.CHANNEL_REMOVE_CONTEXT_LISTENER]: [ChannelRemoveContextListenerPayload, void];
 }
 
 export type APIToClient = {
     [APIToClientTopic.CONTEXT]: [ContextPayload, void];
-    [APIToClientTopic.INTENT]: [IntentPayload, any];
+    [APIToClientTopic.INTENT]: [IntentPayload, void];
+    [APIToClientTopic.CHANNEL_CONTTEXT]: [ChannelContextPayload, void];
 }
 
 export type TransportMappings<T> =
@@ -153,6 +159,14 @@ export interface ChannelGetCurrentContextPayload {
     id: ChannelId,
 }
 
+export interface ChannelAddContextListenerPayload {
+    id: ChannelId;
+}
+
+export interface ChannelRemoveContextListenerPayload {
+    id: ChannelId;
+}
+
 export interface IntentListenerPayload {
     intent: string;
 }
@@ -164,4 +178,9 @@ export interface ContextPayload {
 export interface IntentPayload {
     intent: string;
     context: Context;
+}
+
+export interface ChannelContextPayload {
+    channel: ChannelId,
+    context: Context
 }

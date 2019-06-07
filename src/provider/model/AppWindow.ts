@@ -29,6 +29,12 @@ export interface AppWindow {
 
     removeIntentListener(intentName: string): void;
 
+    hasContextListener(channelId: ChannelId): boolean;
+
+    addContextListener(channelId: ChannelId): void;
+
+    removeContextListener(channelId: ChannelId): void;
+
     focus(): Promise<void>;
 
     ensureReadyToReceiveIntent(intent: IntentType): Promise<void>;

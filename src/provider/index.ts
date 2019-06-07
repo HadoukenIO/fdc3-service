@@ -3,7 +3,7 @@ import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport, GetChannelByIdPayload, EventTransport, ChannelBroadcastPayload, ChannelGetCurrentContextPayload} from '../client/internal';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport, GetChannelByIdPayload, EventTransport, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Intent, ChannelChangedEvent, Context} from '../client/main';
 import {FDC3Error, ResolveError, OpenError, IdentityError} from '../common/errors';
 import {parseIdentity} from '../common/validation';
@@ -74,7 +74,9 @@ export class Main {
             [APIFromClientTopic.CHANNEL_GET_MEMBERS]: this.channelGetMembers.bind(this),
             [APIFromClientTopic.CHANNEL_JOIN]: this.channelJoin.bind(this),
             [APIFromClientTopic.CHANNEL_BROADCAST]: this.channelBroadcast.bind(this),
-            [APIFromClientTopic.CHANNEL_GET_CURRENT_CONTEXT]: this.channelGetCurrentContext.bind(this)
+            [APIFromClientTopic.CHANNEL_GET_CURRENT_CONTEXT]: this.channelGetCurrentContext.bind(this),
+            [APIFromClientTopic.CHANNEL_ADD_CONTEXT_LISTENER]: this.channelAddContextListener.bind(this),
+            [APIFromClientTopic.CHANNEL_REMOVE_CONTEXT_LISTENER]: this.channelRemoveContextListener.bind(this)
         });
 
         this._channelHandler.registerChannels();
@@ -185,18 +187,21 @@ export class Main {
     }
 
     private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): ReadonlyArray<Identity> {
-        return this._channelHandler.getChannelMembers(payload.id).map(appWindow => appWindow.identity);
+        const channel = this._channelHandler.getChannelById(payload.id);
+
+        return this._channelHandler.getChannelMembers(channel).map(appWindow => appWindow.identity);
     }
 
     private async channelJoin(payload: ChannelJoinPayload, source: ProviderIdentity): Promise<void> {
-        const id = payload.id;
-        const identity = payload.identity || source;
+        const appWindow = this.getWindow(payload.identity || source);
 
-        this._channelHandler.joinChannel(this.getWindow(identity), id);
-        const context = this._channelHandler.getChannelContext(id);
+        const channel = this._channelHandler.getChannelById(payload.id);
+
+        this._channelHandler.joinChannel(appWindow, channel);
+        const context = this._channelHandler.getChannelContext(channel);
 
         if (context) {
-            await this._contextHandler.send(identity, context);
+            await this._contextHandler.send(appWindow, context);
         }
     }
 
@@ -208,7 +213,26 @@ export class Main {
     }
 
     private channelGetCurrentContext(payload: ChannelGetCurrentContextPayload, source: ProviderIdentity): Context | null {
-        return this._channelHandler.getChannelContext(payload.id);
+        const channel = this._channelHandler.getChannelById(payload.id);
+
+        return this._channelHandler.getChannelContext(channel);
+    }
+
+    private channelAddContextListener(payload: ChannelAddContextListenerPayload, source: ProviderIdentity): void {
+        const appWindow = this.getWindow(source);
+
+        appWindow.addContextListener(payload.id);
+    }
+
+    private channelRemoveContextListener(payload: ChannelRemoveContextListenerPayload, source: ProviderIdentity): void {
+        const appWindow = this.attemptGetWindow(source);
+
+        if (appWindow) {
+            appWindow.removeContextListener(payload.id);
+        } else {
+            // If for some odd reason the window is not in the model it's still OK to return successfully,
+            // as the caller's intention was to remove a listener and the listener is certainly not there.
+        }
     }
 
     private getWindow(identity: Identity): AppWindow {

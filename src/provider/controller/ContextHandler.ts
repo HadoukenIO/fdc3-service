@@ -1,8 +1,9 @@
 import {injectable, inject} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
+import _WindowModule from 'openfin/_v2/api/window/window';
 
 import {AppWindow} from '../model/AppWindow';
-import {Context} from '../../client/main';
+import {Context, Channel} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic, APIToClientTopic} from '../../client/internal';
 import {Inject} from '../common/Injectables';
@@ -24,15 +25,13 @@ export class ContextHandler {
         this._apiHandler = apiHandler;
     }
 
-    // TODO: Remove ability to pass an Identity, standardise on AppWindow
     /**
-     * Send a context to a specific app. Fire and forget
+     * Send a context to a specific app
      * @param window Window to send the context to
      * @param context Context to be sent
      */
-    public async send(window: AppWindow|Identity, context: Context): Promise<void> {
-        const identity: Identity = (window as AppWindow).identity || window;
-        await this._apiHandler.channel.dispatch(identity, APIToClientTopic.CONTEXT, context);
+    public async send(window: AppWindow, context: Context): Promise<void> {
+        await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.CONTEXT, context);
     }
 
     /**
@@ -55,15 +54,31 @@ export class ContextHandler {
      * @param channel ContextChannel to broadcast on
      */
     public async broadcastOnChannel(context: Context, source: AppWindow, channel: ContextChannel): Promise<void> {
+        const memberWindows = this._channelHandler.getChannelMembers(channel);
         const listeningWindows = this._channelHandler.getWindowsListeningToChannel(channel);
 
         channel.setLastBroadcastContext(context);
 
         const sourceId = getId(source.identity);
 
+        memberWindows
+            // Sender window should not receive its own broadcasts
+            .filter(window => getId(window.identity) !== sourceId)
+            .forEach(window => this.send(window, context));
+
         listeningWindows
             // Sender window should not receive its own broadcasts
             .filter(window => getId(window.identity) !== sourceId)
-            .forEach(window => this.send(window.identity, context));
+            .forEach(window => this.sendOnChannel(window, context, channel));
+    }
+
+    /**
+     * Send a context to a specific app on a specific channel
+     * @param window Window to send the context to
+     * @param context Context to be sent
+     * @param channel Channel context is to be sent on
+     */
+    private async sendOnChannel(window: AppWindow, context: Context, channel: ContextChannel): Promise<void> {
+        await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.CHANNEL_CONTTEXT, {channel, context});
     }
 }

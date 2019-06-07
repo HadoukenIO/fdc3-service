@@ -69,8 +69,7 @@ export class ChannelHandler {
     }
 
     public getWindowsListeningToChannel(channel: ContextChannel): ReadonlyArray<AppWindow> {
-        // TODO - Can we drop the `|| window.channel === channel`? May be a break old clients
-        return this._model.windows.filter(window => window.contextListeners.indexOf(channel.id) !== -1 || window.channel === channel);
+        return this._model.windows.filter(window => window.hasContextListener(channel.id));
     }
 
     public getChannelById(channelId: ChannelId): ContextChannel {
@@ -78,19 +77,15 @@ export class ChannelHandler {
         return this._model.getChannel(channelId)!;
     }
 
-    public getChannelMembers(channelId: ChannelId): ReadonlyArray<AppWindow> {
-        this.validateChannelId(channelId);
-
-        return this._model.windows.filter(window => window.channel.id === channelId);
+    public getChannelMembers(channel: ContextChannel): ReadonlyArray<AppWindow> {
+        return this._model.windows.filter(window => window.channel === channel);
     }
 
-    public getChannelContext(channelId: ChannelId): Context | null {
-        const channel = this.getChannelById(channelId);
+    public getChannelContext(channel: ContextChannel): Context | null {
         return channel.getStoredContext();
     }
 
-    public joinChannel(appWindow: AppWindow, id: ChannelId): void {
-        const channel = this.getChannelById(id);
+    public joinChannel(appWindow: AppWindow, channel: ContextChannel): void {
         const previousChannel = appWindow.channel;
 
         appWindow.channel = channel;

@@ -7,7 +7,7 @@ import {Identity} from 'openfin/_v2/main';
 import {tryServiceDispatch, eventEmitter, FDC3Event, FDC3EventType, getServicePromise} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
-import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload} from './internal';
+import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ContextPayload} from './internal';
 import {ChannelChangedEvent} from './contextChannels';
 
 /**
@@ -207,6 +207,7 @@ if (typeof fin !== 'undefined') {
             });
         });
 
+        // TODO: For consistency this should be ContextPayload, but would break back-compat
         channelClient.register(APIToClientTopic.CONTEXT, (payload: Context) => {
             contextListeners.forEach((listener: ContextListener) => {
                 listener.handler(payload);

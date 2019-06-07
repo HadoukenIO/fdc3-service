@@ -9,6 +9,7 @@ import {parseIdentity} from '../common/validation';
 import {tryServiceDispatch} from './connection';
 import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport} from './internal';
 import {Context} from './context';
+import {ContextListener} from './main';
 
 export type ChannelId = string;
 
@@ -43,6 +44,10 @@ export interface ChannelChangedEvent {
      * Will be `null` if the window has just been created, and so doesn't have a previous channel.
      */
     previousChannel: Channel|null;
+}
+
+interface ChannelContextListener extends ContextListener {
+    id: ChannelId;
 }
 
 /**
@@ -132,6 +137,42 @@ abstract class ChannelBase {
     public async join(identity?: Identity): Promise<void> {
         return tryServiceDispatch(APIFromClientTopic.CHANNEL_JOIN, {id: this.id, identity: identity && parseIdentity(identity)});
     }
+
+    /**
+     * Event that is fired whenever a window broadcasts on this channel.
+     *
+     * This can be triggered by a window belonging to the channel calling the top-level FDC3 `brodcast` function, or by
+     * any window calling this channel's {@link Channel.broadcast} method.
+     *
+     * @param handler Function that should be called whenever a context is broadcast on this channel
+     */
+    public async addBroadcastListener(handler: (context: Context) => void): Promise<ContextListener> {
+        const listener: ChannelContextListener = {
+            id: this.id,
+            handler,
+            unsubscribe: async () => {
+                const index: number = channelContextListeners.indexOf(listener);
+
+                if (index >= 0) {
+                    channelContextListeners.splice(index, 1);
+
+                    if (!hasChannelContextListener(this.id)) {
+                        await tryServiceDispatch(APIFromClientTopic.CHANNEL_REMOVE_CONTEXT_LISTENER, {id: this.id});
+                    }
+                }
+
+                return index >= 0;
+            }
+        };
+
+        const hasContextListenerBefore = hasChannelContextListener(this.id);
+        channelContextListeners.push(listener);
+
+        if (!hasContextListenerBefore) {
+            await tryServiceDispatch(APIFromClientTopic.CHANNEL_ADD_CONTEXT_LISTENER, {id: this.id});
+        }
+        return listener;
+    }
 }
 
 /**
@@ -195,6 +236,8 @@ const channelLookup: {[id: string]: Channel} = {
     [DEFAULT_CHANNEL_ID]: defaultChannel
 };
 
+const channelContextListeners: ChannelContextListener[] = [];
+
 /**
  * Gets all user-visible channels.
  *
@@ -248,4 +291,8 @@ export function getChannelObject<T extends Channel = Channel>(channelTransport: 
     }
 
     return channel as T;
+}
+
+function hasChannelContextListener(id: ChannelId) {
+    return channelContextListeners.some(listener => listener.id === id);
 }
