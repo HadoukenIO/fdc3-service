@@ -6,3 +6,10 @@
     font-family: Akkurat;
     src: url(../assets/Akkurat.ttf);
 }
+
+/*
+    We are not handling the res directory correctly to allow webpacking assets to work, so this needs to go here for now.
+*/
+#header #exit {
+    background-image: url("../assets/exit.png");
+}
