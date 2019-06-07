@@ -1,15 +1,12 @@
 import {injectable, inject} from 'inversify';
-import {Channel} from 'openfin/_v2/api/interappbus/channel';
-import {Identity} from 'openfin/_v2/main';
 
 import {Model} from '../model/Model';
 import {Inject} from '../common/Injectables';
-import {DEFAULT_CHANNEL_ID, DefaultChannel, ChannelId, FDC3Error, ChannelError, getChannelById, ChannelChangedEvent, Context} from '../../client/main';
+import {DEFAULT_CHANNEL_ID, ChannelId, FDC3Error, ChannelError, ChannelChangedEvent, Context} from '../../client/main';
 import {DesktopContextChannel, DefaultContextChannel, ContextChannel} from '../model/ContextChannel';
 import {AppWindow} from '../model/AppWindow';
 import {Signal1} from '../common/Signal';
-import {EventTransport, APIFromClientTopic} from '../../client/internal';
-import {APIHandler} from '../APIHandler';
+import {EventTransport} from '../../client/internal';
 
 const DESKTOP_CHANNELS = [
     {

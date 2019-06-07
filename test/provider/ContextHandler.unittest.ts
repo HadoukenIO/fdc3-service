@@ -9,7 +9,6 @@ import {APIFromClientTopic, APIToClientTopic} from '../../src/client/internal';
 import {createMockAppWindow} from '../mocks';
 import {ChannelHandler} from '../../src/provider/controller/ChannelHandler';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
-import {Context} from '../../src/client/main';
 
 jest.mock('../../src/provider/controller/ChannelHandler');
 jest.mock('../../src/provider/APIHandler');
