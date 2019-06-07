@@ -11,9 +11,8 @@
 import {Identity} from 'openfin/_v2/main';
 
 import {AppName} from './directory';
-import {AppIntent, Context, IntentResolution} from './main';
+import {AppIntent, Context, IntentResolution, FDC3Event} from './main';
 import {Channel, ChannelId, DefaultChannel, DesktopChannel} from './contextChannels';
-import {FDC3Event} from './connection';
 
 /**
  * The identity of the main application window of the service provider
