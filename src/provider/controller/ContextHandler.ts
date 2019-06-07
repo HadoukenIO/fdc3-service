@@ -3,7 +3,7 @@ import {Identity} from 'openfin/_v2/main';
 import _WindowModule from 'openfin/_v2/api/window/window';
 
 import {AppWindow} from '../model/AppWindow';
-import {Context, Channel} from '../../client/main';
+import {Context} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic, APIToClientTopic} from '../../client/internal';
 import {Inject} from '../common/Injectables';

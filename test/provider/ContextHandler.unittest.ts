@@ -17,7 +17,7 @@ const testContext = {type: 'test-context-payload'};
 const mockDispatch: jest.Mock<Promise<any>, [Identity, string, any]> = jest.fn<Promise<any>, [Identity, string, any]>();
 
 let contextHandler: ContextHandler;
-let mockGetWindowsListeningToChannel: jest.Mock<AppWindow[], [ContextChannel]>;
+let mockGetChannelMembers: jest.Mock<AppWindow[], [ContextChannel]>;
 
 function createMockAppWindowWithName(name: string): AppWindow {
     const mockAppWindow: AppWindow = createMockAppWindow();
@@ -26,8 +26,8 @@ function createMockAppWindowWithName(name: string): AppWindow {
     return mockAppWindow;
 }
 
-function setGetWindowsListeningToChannelToReturn(...windows: AppWindow[]): void {
-    mockGetWindowsListeningToChannel.mockImplementation(() => {
+function setGetChannelMembersToReturn(...windows: AppWindow[]): void {
+    mockGetChannelMembers.mockImplementation(() => {
         return windows;
     });
 }
@@ -37,7 +37,7 @@ beforeEach(() => {
 
     const mockChannelHandler = new ChannelHandler(null!);
     // Grab getChannelMembers so we can control its result for each test
-    mockGetWindowsListeningToChannel = mockChannelHandler.getWindowsListeningToChannel as jest.Mock<AppWindow[], [ContextChannel]>;
+    mockGetChannelMembers = mockChannelHandler.getChannelMembers as jest.Mock<AppWindow[], [ContextChannel]>;
 
     const mockApiHandler = new APIHandler<APIFromClientTopic>();
     // Set up channel.dispatch on our mock APIHandler so we can spy on it
@@ -60,7 +60,7 @@ describe('When broadcasting a Context using ContextHandler', () => {
     it('When ContextModel provides only the source window, the Context is not dispatched', async () => {
         const sourceAppWindow = createMockAppWindowWithName('source');
 
-        setGetWindowsListeningToChannelToReturn(sourceAppWindow);
+        setGetChannelMembersToReturn(sourceAppWindow);
 
         await contextHandler.broadcast(testContext, sourceAppWindow);
 
@@ -70,7 +70,7 @@ describe('When broadcasting a Context using ContextHandler', () => {
     it('The relevant channel has its last broadcast context set', async () => {
         const sourceAppWindow = createMockAppWindowWithName('source');
 
-        setGetWindowsListeningToChannelToReturn(sourceAppWindow);
+        setGetChannelMembersToReturn(sourceAppWindow);
 
         await contextHandler.broadcast(testContext, sourceAppWindow);
 
@@ -82,7 +82,7 @@ describe('When broadcasting a Context using ContextHandler', () => {
         const targetAppWindow1 = createMockAppWindowWithName('target-1');
         const targetAppWindow2 = createMockAppWindowWithName('target-2');
 
-        setGetWindowsListeningToChannelToReturn(sourceAppWindow, targetAppWindow1, targetAppWindow2);
+        setGetChannelMembersToReturn(sourceAppWindow, targetAppWindow1, targetAppWindow2);
 
         await contextHandler.broadcast(testContext, sourceAppWindow);
 
