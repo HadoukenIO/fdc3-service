@@ -19,7 +19,7 @@ export type Channel = DesktopChannel|DefaultChannel;
  *
  * This event can be used to track all channel changes, rather than listening only to a specific channel.
  *
- * @event 'channel'
+ * @event
  */
 export interface ChannelChangedEvent {
     type: 'channel-changed';

@@ -15,10 +15,10 @@ declare global {
 
             /**
              * Used to test that a RemoteChannel represents the expected client-side Channel
-             * @param channel An object with optional `id` and `type` properties that if present we expect the channel to match
+             * @param channel An object with optional `id` and `type` properties that if present we expect the channel to match, or the `ChannlId`
              * @param classType The class we expect the channel to be an instance of
              */
-            toBeChannel(channel: {id?: ChannelId, type?: string} | string, classType?: Function): R;
+            toBeChannel(channel: {id?: ChannelId, type?: string} | ChannelId, classType?: Function): R;
         }
     }
 }
@@ -49,7 +49,7 @@ expect.extend({
         }
     },
 
-    toBeChannel(receivedChannel: RemoteChannel, expectedChannel: {id?: ChannelId, type?: string} | string, channelType?: Function) {
+    toBeChannel(receivedChannel: RemoteChannel, expectedChannel: {id?: ChannelId, type?: string} | ChannelId, channelType?: Function) {
         const inflatedExpectedChannel = typeof expectedChannel === 'string' ? {id: expectedChannel} : expectedChannel;
 
         let pass = true;
