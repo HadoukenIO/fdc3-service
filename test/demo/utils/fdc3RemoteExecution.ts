@@ -28,7 +28,7 @@ export interface RemoteChannel {
     id: string;
 
     getMembers: () => Promise<Identity[]>;
-    join: (identity?: Identity) => Promise<void>
+    join: (identity?: Identity) => Promise<void>;
 }
 
 export interface RemoteContextListener {
