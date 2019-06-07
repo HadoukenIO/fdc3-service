@@ -52,8 +52,7 @@ export type APIImplementation<T extends Enum, S extends APISpecification<T>> = {
 };
 
 /**
- * Accept both async and non-async actions. Optionally accept the readonly version of the given type, given
- * we trust APIHandler not to alter its contents
+ * Accept both async and non-async actions. Optionally accept the readonly version of the given type
  */
 type APIActionReturn<T> = T | Readonly<T> | Promise<T> | Promise<Readonly<T>>;
 
@@ -95,6 +94,8 @@ export class APIHandler<T extends Enum> {
                 this._providerChannel.register(action, async (payload, source) => {
                     try {
                         const result = await actionHandlerMap[action](payload, source);
+
+                        // We trust that ChannelProvider isn't going to modify the return result, so safe to return a readonly type
                         return result;
                     } catch (error) {
                         throw FDC3Error.serialize(error);
