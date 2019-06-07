@@ -5,8 +5,8 @@
 import {Identity} from 'openfin/_v2/main';
 
 import {parseIdentity} from './utils/validation';
-import {tryServiceDispatch} from './connection';
-import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport} from './internal';
+import {tryServiceDispatch, getServicePromise} from './connection';
+import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, APIToClientTopic, ChannelContextPayload} from './internal';
 import {Context} from './context';
 import {ContextListener} from './main';
 
@@ -294,4 +294,18 @@ export function getChannelObject<T extends Channel = Channel>(channelTransport: 
 
 function hasChannelContextListener(id: ChannelId) {
     return channelContextListeners.some(listener => listener.id === id);
+}
+
+if (typeof fin !== 'undefined') {
+    getServicePromise().then(channelClient => {
+        channelClient.register(APIToClientTopic.CHANNEL_CONTEXT, (payload: ChannelContextPayload) => {
+            channelContextListeners.forEach((listener: ChannelContextListener) => {
+                if (listener.id === payload.channel) {
+                    listener.handler(payload.context);
+                }
+            });
+        });
+    }, reason => {
+        console.warn('Unable to register client Context and Intent handlers. getServicePromise() rejected with reason:', reason);
+    });
 }

@@ -97,6 +97,12 @@ export class ChannelHandler {
         this.onChannelChanged.emit({type: 'channel-changed', identity: appWindow.identity, channel, previousChannel});
     }
 
+    public setLastBroadcastOnChannel(channel: ContextChannel, context: Context): void {
+        if (this._model.windows.some(window => window.channel === channel)) {
+            channel.setLastBroadcastContext(context);
+        }
+    }
+
     private onModelWindowAdded(window: AppWindow): void {
         this.onChannelChanged.emit({type: 'channel-changed', identity: window.identity, channel: window.channel, previousChannel: null});
     }

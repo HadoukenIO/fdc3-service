@@ -55,7 +55,7 @@ export enum APIFromClientTopic {
 export enum APIToClientTopic {
   INTENT = 'INTENT',
   CONTEXT = 'CONTEXT',
-  CHANNEL_CONTTEXT = 'CHANNEL-CONTEXT'
+  CHANNEL_CONTEXT = 'CHANNEL-CONTEXT'
 }
 
 export type APIFromClient = {
@@ -80,7 +80,7 @@ export type APIFromClient = {
 export type APIToClient = {
     [APIToClientTopic.CONTEXT]: [ContextPayload, void];
     [APIToClientTopic.INTENT]: [IntentPayload, void];
-    [APIToClientTopic.CHANNEL_CONTTEXT]: [ChannelContextPayload, void];
+    [APIToClientTopic.CHANNEL_CONTEXT]: [ChannelContextPayload, void];
 }
 
 export type TransportMappings<T> =

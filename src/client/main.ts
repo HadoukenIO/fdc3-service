@@ -92,37 +92,6 @@ const eventEmitter = new EventEmitter();
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
-if (typeof fin !== 'undefined') {
-    getServicePromise().then(channelClient => {
-        channelClient.register('event', async (event: FDC3Event) => {
-            // Special-handling for some event types, to convert transport-type event to client-side event.
-            if (event.type === 'channel-changed') {
-                event.channel = event.channel ? getChannelObject(event.channel) : null;
-                event.previousChannel = event.previousChannel ? getChannelObject(event.previousChannel) : null;
-            }
-
-            eventEmitter.emit(event.type, event);
-        });
-
-        channelClient.register(APIToClientTopic.INTENT, (payload: RaiseIntentPayload) => {
-            intentListeners.forEach((listener: IntentListener) => {
-                if (payload.intent === listener.intent) {
-                    listener.handler(payload.context);
-                }
-            });
-        });
-
-        // TODO: For consistency this should be ContextPayload, but would break back-compat
-        channelClient.register(APIToClientTopic.CONTEXT, (payload: Context) => {
-            contextListeners.forEach((listener: ContextListener) => {
-                listener.handler(payload);
-            });
-        });
-    }, resason => {
-        console.warn('Unable to register client Context and Intent handlers. getServicePromise() rejected with reason:', resason);
-    });
-}
-
 /**
  * A Desktop Agent is a desktop component (or aggregate of components) that serves as a
  * launcher and message router (broker) for applications in its domain.
@@ -310,4 +279,35 @@ export function removeEventListener(eventType: FDC3EventType, handler: (eventPay
 
 function hasIntentListener(intent: string): boolean {
     return intentListeners.some(intentListener => intentListener.intent === intent);
+}
+
+if (typeof fin !== 'undefined') {
+    getServicePromise().then(channelClient => {
+        channelClient.register('event', async (event: FDC3Event) => {
+            // Special-handling for some event types, to convert transport-type event to client-side event.
+            if (event.type === 'channel-changed') {
+                event.channel = event.channel ? getChannelObject(event.channel) : null;
+                event.previousChannel = event.previousChannel ? getChannelObject(event.previousChannel) : null;
+            }
+
+            eventEmitter.emit(event.type, event);
+        });
+
+        channelClient.register(APIToClientTopic.INTENT, (payload: RaiseIntentPayload) => {
+            intentListeners.forEach((listener: IntentListener) => {
+                if (payload.intent === listener.intent) {
+                    listener.handler(payload.context);
+                }
+            });
+        });
+
+        // TODO: For consistency this should be ContextPayload, but would break back-compat
+        channelClient.register(APIToClientTopic.CONTEXT, (payload: Context) => {
+            contextListeners.forEach((listener: ContextListener) => {
+                listener.handler(payload);
+            });
+        });
+    }, reason => {
+        console.warn('Unable to register client Context and Intent handlers. getServicePromise() rejected with reason:', reason);
+    });
 }

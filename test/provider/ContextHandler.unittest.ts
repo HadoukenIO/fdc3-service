@@ -17,7 +17,12 @@ const testContext = {type: 'test-context-payload'};
 const mockDispatch: jest.Mock<Promise<any>, [Identity, string, any]> = jest.fn<Promise<any>, [Identity, string, any]>();
 
 let contextHandler: ContextHandler;
+
+let mockChannelHandler: ChannelHandler;
+let mockApiHandler: APIHandler<APIFromClientTopic>;
+
 let mockGetChannelMembers: jest.Mock<AppWindow[], [ContextChannel]>;
+let mockGetWindowsListeningToChannel: jest.Mock<AppWindow[], [ContextChannel]>;
 
 function createMockAppWindowWithName(name: string): AppWindow {
     const mockAppWindow: AppWindow = createMockAppWindow();
@@ -32,14 +37,24 @@ function setGetChannelMembersToReturn(...windows: AppWindow[]): void {
     });
 }
 
+function setGetWindowsListeningToChannelToReturn(...windows: AppWindow[]): void {
+    mockGetWindowsListeningToChannel.mockImplementation(() => {
+        return windows;
+    });
+}
+
 beforeEach(() => {
     jest.resetAllMocks();
 
-    const mockChannelHandler = new ChannelHandler(null!);
-    // Grab getChannelMembers so we can control its result for each test
+    mockChannelHandler = new ChannelHandler(null!);
+    // Grab getChannelMembers and getWindowsListeningToChannel so we can control their result for each test
     mockGetChannelMembers = mockChannelHandler.getChannelMembers as jest.Mock<AppWindow[], [ContextChannel]>;
+    mockGetWindowsListeningToChannel = mockChannelHandler.getWindowsListeningToChannel as jest.Mock<AppWindow[], [ContextChannel]>;
 
-    const mockApiHandler = new APIHandler<APIFromClientTopic>();
+    setGetChannelMembersToReturn();
+    setGetWindowsListeningToChannelToReturn();
+
+    mockApiHandler = new APIHandler<APIFromClientTopic>();
     // Set up channel.dispatch on our mock APIHandler so we can spy on it
     (mockApiHandler as any)['channel'] = {dispatch: mockDispatch};
 
@@ -74,7 +89,7 @@ describe('When broadcasting a Context using ContextHandler', () => {
 
         await contextHandler.broadcast(testContext, sourceAppWindow);
 
-        expect(sourceAppWindow.channel.setLastBroadcastContext).toBeCalledWith(testContext);
+        expect(mockChannelHandler.setLastBroadcastOnChannel).toBeCalledWith(sourceAppWindow.channel, testContext);
     });
 
     it('When ContextModel provides multiple windows, all windows except the source window are dispatched to', async () => {

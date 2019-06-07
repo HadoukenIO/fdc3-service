@@ -1,5 +1,4 @@
 import {injectable, inject} from 'inversify';
-import {Identity} from 'openfin/_v2/main';
 import _WindowModule from 'openfin/_v2/api/window/window';
 
 import {AppWindow} from '../model/AppWindow';
@@ -57,7 +56,7 @@ export class ContextHandler {
         const memberWindows = this._channelHandler.getChannelMembers(channel);
         const listeningWindows = this._channelHandler.getWindowsListeningToChannel(channel);
 
-        channel.setLastBroadcastContext(context);
+        this._channelHandler.setLastBroadcastOnChannel(channel, context);
 
         const sourceId = getId(source.identity);
 
@@ -79,6 +78,6 @@ export class ContextHandler {
      * @param channel Channel context is to be sent on
      */
     private async sendOnChannel(window: AppWindow, context: Context, channel: ContextChannel): Promise<void> {
-        await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.CHANNEL_CONTTEXT, {channel, context});
+        await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.CHANNEL_CONTEXT, {channel, context});
     }
 }
