@@ -49,7 +49,7 @@ expect.extend({
         }
     },
 
-    toBeChannel(receivedChannel: RemoteChannel, expectedChannel: {id?: ChannelId, type?: string} | string, channelType?: Function) {
+    toBeChannel(receivedChannel: RemoteChannel, expectedChannel: {id?: ChannelId, type?: string} | ChannelId, channelType?: Function) {
         const inflatedExpectedChannel = typeof expectedChannel === 'string' ? {id: expectedChannel} : expectedChannel;
 
         let pass = true;
