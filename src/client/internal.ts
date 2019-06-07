@@ -10,8 +10,6 @@
  */
 import {Identity} from 'openfin/_v2/main';
 
-import {FDC3Error, IdentityError} from '../common/errors';
-
 import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution} from './main';
 import {Channel, ChannelId, DefaultChannel, DesktopChannel} from './contextChannels';
@@ -45,7 +43,9 @@ export enum APIFromClientTopic {
     GET_CHANNEL_BY_ID = 'GET-CHANNEL-BY-ID',
     GET_CURRENT_CHANNEL = 'GET-CURRENT-CHANNEL',
     CHANNEL_GET_MEMBERS = 'CHANNEL-GET-MEMBERS',
-    CHANNEL_JOIN = 'CHANNEL-JOIN'
+    CHANNEL_JOIN = 'CHANNEL-JOIN',
+    CHANNEL_BROADCAST = 'CHANNEL-BROADCAST',
+    CHANNEL_GET_CURRENT_CONTEXT = 'CHANNEL-GET-CURRENT-CONTEXT'
 }
 
 /**
@@ -69,6 +69,8 @@ export type APIFromClient = {
     [APIFromClientTopic.GET_CURRENT_CHANNEL]: [GetCurrentChannelPayload, ChannelTransport];
     [APIFromClientTopic.CHANNEL_GET_MEMBERS]: [ChannelGetMembersPayload, Identity[]];
     [APIFromClientTopic.CHANNEL_JOIN]: [ChannelJoinPayload, void];
+    [APIFromClientTopic.CHANNEL_BROADCAST]: [ChannelBroadcastPayload, void];
+    [APIFromClientTopic.CHANNEL_GET_CURRENT_CONTEXT]: [ChannelGetCurrentContextPayload, Context|null];
 }
 
 export type APIToClient = {
@@ -140,6 +142,15 @@ export interface ChannelGetMembersPayload {
 export interface ChannelJoinPayload {
     id: ChannelId;
     identity?: Identity;
+}
+
+export interface ChannelBroadcastPayload {
+    id: ChannelId,
+    context: Context
+}
+
+export interface ChannelGetCurrentContextPayload {
+    id: ChannelId,
 }
 
 export interface IntentListenerPayload {

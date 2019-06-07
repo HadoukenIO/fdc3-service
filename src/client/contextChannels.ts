@@ -8,6 +8,7 @@ import {parseIdentity} from '../common/validation';
 
 import {tryServiceDispatch} from './connection';
 import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport} from './internal';
+import {Context} from './context';
 
 export type ChannelId = string;
 
@@ -80,6 +81,37 @@ abstract class ChannelBase {
      */
     public async getMembers(): Promise<Identity[]> {
         return tryServiceDispatch(APIFromClientTopic.CHANNEL_GET_MEMBERS, {id: this.id});
+    }
+
+    /**
+     * Broadcasts the given context on this channel.
+     *
+     * Note that this function can be used without first joining the channel, allowing applications to broadcast on
+     * channels that they aren't a member of.
+     *
+     * This broadcast will be received by all windows that are members of this channel, *except* for the window that
+     * makes the broadcast. This matches the behaviour of the top-level FDC3 `broadcast` function.
+     *
+     * @param context The context to broadcast to all windows on this channel
+     */
+    public async broadcast(context: Context): Promise<void> {
+        return tryServiceDispatch(APIFromClientTopic.CHANNEL_BROADCAST, {id: this.id, context});
+    }
+
+    /**
+     * Returns the last context that was broadcast on this channel. All channels initially have no context, until a
+     * window is added to the channel and then broadcasts. If there is not yet any context on the channel, this method
+     * will return `null`. The context is also reset back into it's initial context-less state whenever a channel is
+     * cleared of all windows.
+     *
+     * The context of a channel will be captured regardless of how the context is broadcasted on this channel - whether
+     * using the top-level FDC3 `broadcast` function, or using the channel-level {@link broadcast} function on this
+     * object.
+     *
+     * NOTE: Only non-default channels are stateful, for the default channel this method will always return `null`.
+     */
+    public async getCurrentContext(): Promise<Context|null> {
+        return tryServiceDispatch(APIFromClientTopic.CHANNEL_GET_CURRENT_CONTEXT, {id: this.id});
     }
 
     /**

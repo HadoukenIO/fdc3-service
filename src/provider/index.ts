@@ -3,8 +3,8 @@ import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport, GetChannelByIdPayload, EventTransport} from '../client/internal';
-import {AppIntent, IntentResolution, Application, Intent, ChannelChangedEvent} from '../client/main';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport, GetChannelByIdPayload, EventTransport, ChannelBroadcastPayload, ChannelGetCurrentContextPayload} from '../client/internal';
+import {AppIntent, IntentResolution, Application, Intent, ChannelChangedEvent, Context} from '../client/main';
 import {FDC3Error, ResolveError, OpenError, IdentityError} from '../common/errors';
 import {parseIdentity} from '../common/validation';
 
@@ -16,6 +16,7 @@ import {IntentHandler} from './controller/IntentHandler';
 import {APIHandler} from './APIHandler';
 import {Injector} from './common/Injector';
 import {ChannelHandler} from './controller/ChannelHandler';
+import {AppWindow} from './model/AppWindow';
 
 @injectable()
 export class Main {
@@ -71,7 +72,9 @@ export class Main {
             [APIFromClientTopic.GET_CHANNEL_BY_ID]: this.getChannelById.bind(this),
             [APIFromClientTopic.GET_CURRENT_CHANNEL]: this.getCurrentChannel.bind(this),
             [APIFromClientTopic.CHANNEL_GET_MEMBERS]: this.channelGetMembers.bind(this),
-            [APIFromClientTopic.CHANNEL_JOIN]: this.channelJoin.bind(this)
+            [APIFromClientTopic.CHANNEL_JOIN]: this.channelJoin.bind(this),
+            [APIFromClientTopic.CHANNEL_BROADCAST]: this.channelBroadcast.bind(this),
+            [APIFromClientTopic.CHANNEL_GET_CURRENT_CONTEXT]: this.channelGetCurrentContext.bind(this)
         });
 
         this._channelHandler.registerChannels();
@@ -136,8 +139,7 @@ export class Main {
     }
 
     private async broadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {
-        this.validateIdentity(source);
-        const appWindow = this._model.getWindow(source)!;
+        const appWindow = this.getWindow(source);
 
         await this._contextHandler.broadcast(payload.context, appWindow);
     }
@@ -152,15 +154,14 @@ export class Main {
         return this._intentHandler.raise(intent);
     }
 
-    private async addIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): Promise<void> {
-        this.validateIdentity(identity);
-        const appWindow = this._model.getWindow(identity)!;
+    private async addIntentListener(payload: IntentListenerPayload, source: ProviderIdentity): Promise<void> {
+        const appWindow = this.getWindow(source);
 
         appWindow.addIntentListener(payload.intent);
     }
 
-    private removeIntentListener(payload: IntentListenerPayload, identity: ProviderIdentity): void {
-        const appWindow = this._model.getWindow(identity);
+    private removeIntentListener(payload: IntentListenerPayload, source: ProviderIdentity): void {
+        const appWindow = this.attemptGetWindow(source);
         if (appWindow) {
             appWindow.removeIntentListener(payload.intent);
         } else {
@@ -180,9 +181,7 @@ export class Main {
     private getCurrentChannel(payload: GetCurrentChannelPayload, source: ProviderIdentity): ChannelTransport {
         const identity = payload.identity || source;
 
-        this.validateIdentity(identity);
-
-        return this._model.getWindow(identity)!.channel.serialize();
+        return this.getWindow(identity).channel.serialize();
     }
 
     private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): ReadonlyArray<Identity> {
@@ -193,9 +192,7 @@ export class Main {
         const id = payload.id;
         const identity = payload.identity || source;
 
-        this.validateIdentity(identity);
-
-        this._channelHandler.joinChannel(this._model.getWindow(identity)!, id);
+        this._channelHandler.joinChannel(this.getWindow(identity), id);
         const context = this._channelHandler.getChannelContext(id);
 
         if (context) {
@@ -203,15 +200,33 @@ export class Main {
         }
     }
 
-    private validateIdentity(identity: Identity): void {
-        identity = parseIdentity(identity);
+    private async channelBroadcast(payload: ChannelBroadcastPayload, source: ProviderIdentity): Promise<void> {
+        const appWindow = this.getWindow(source);
+        const channel = this._channelHandler.getChannelById(payload.id);
 
-        if (!this._model.getWindow(identity)) {
+        await this._contextHandler.broadcastOnChannel(payload.context, appWindow, channel);
+    }
+
+    private channelGetCurrentContext(payload: ChannelGetCurrentContextPayload, source: ProviderIdentity): Context | null {
+        return this._channelHandler.getChannelContext(payload.id);
+    }
+
+    private getWindow(identity: Identity): AppWindow {
+        identity = parseIdentity(identity);
+        const window = this._model.getWindow(identity);
+
+        if (!window) {
             throw new FDC3Error(
                 IdentityError.WindowWithIdentityNotFound,
                 `No connection to FDC3 service found from window with identity: ${JSON.stringify(identity)}`
             );
+        } else {
+            return window;
         }
+    }
+
+    private attemptGetWindow(identity: Identity): AppWindow | null {
+        return this._model.getWindow(parseIdentity(identity));
     }
 }
 
