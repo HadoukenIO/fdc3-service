@@ -23,7 +23,7 @@ export * from './contextChannels';
 export * from './context';
 export * from './directory';
 export * from './intents';
-export * from '../common/errors';
+export * from './errors';
 
 /**
  * Intent descriptor

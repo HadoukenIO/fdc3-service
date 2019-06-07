@@ -5,8 +5,8 @@ import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport, GetChannelByIdPayload, EventTransport, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Intent, ChannelChangedEvent, Context} from '../client/main';
-import {FDC3Error, ResolveError, OpenError, IdentityError} from '../common/errors';
-import {parseIdentity} from '../common/validation';
+import {FDC3Error, ResolveError, OpenError, IdentityError} from '../client/errors';
+import {parseIdentity} from '../client/utils/validation';
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';

@@ -15,8 +15,7 @@ import {EventEmitter} from 'events';
 
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
-import {FDC3Error} from '../common/errors';
-
+import {FDC3Error} from './errors';
 import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient} from './internal';
 import {ChannelChangedEvent, getChannelObject} from './contextChannels';
 

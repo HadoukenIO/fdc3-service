@@ -1,6 +1,6 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {FDC3Error, IdentityError} from './errors';
+import {FDC3Error, IdentityError} from '../errors';
 
 /**
  * Validates the provided identity and returns an identity stripped of any extraneous properties

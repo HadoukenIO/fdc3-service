@@ -1,7 +1,8 @@
 import 'jest';
 import 'reflect-metadata';
 
-import {ResolveError} from '../../src/common/errors';
+
+import {ResolveError} from '../../src/client/errors';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';

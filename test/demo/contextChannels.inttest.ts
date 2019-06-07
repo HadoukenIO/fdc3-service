@@ -1,9 +1,8 @@
 import 'jest';
 import {connect, Fin, Identity, Application} from 'hadouken-js-adapter';
 
-import {ChannelError} from '../../src/common/errors';
 import {ChannelId, DefaultChannel, DesktopChannel} from '../../src/client/contextChannels';
-import {IdentityError} from '../../src/client/main';
+import {IdentityError, ChannelError} from '../../src/client/errors';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {appStartupTime} from './constants';
