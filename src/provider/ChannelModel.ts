@@ -3,7 +3,7 @@ import {inject, injectable} from 'inversify';
 
 import {Channel, ChannelId, DEFAULT_CHANNEL_ID, ChannelChangedEvent} from '../client/contextChannels';
 import {Context} from '../client/main';
-import {FDC3Error, ChannelError} from '../common/errors';
+import {FDC3Error, ChannelError} from '../client/errors';
 import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, EventTransport} from '../client/internal';
 
 import {Signal1} from './common/Signal';

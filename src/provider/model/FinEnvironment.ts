@@ -5,8 +5,8 @@ import {Identity, Window} from 'openfin/_v2/main';
 import {AsyncInit} from '../controller/AsyncInit';
 import {Signal1, Signal2} from '../common/Signal';
 import {Application, IntentType} from '../../client/main';
-import {FDC3Error, OpenError, ResolveError, withTimeout, Timeouts} from '../../common/errors';
-import {deferredPromise} from '../../common/async';
+import {FDC3Error, OpenError, ResolveError, withTimeout, Timeouts} from '../../client/errors';
+import {deferredPromise} from '../../client/utils/async';
 
 import {Environment} from './Environment';
 import {AppWindow, ContextSpec} from './AppWindow';

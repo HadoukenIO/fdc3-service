@@ -4,8 +4,7 @@
 
 import {Identity} from 'openfin/_v2/main';
 
-import {parseIdentity} from '../common/validation';
-
+import {parseIdentity} from './utils/validation';
 import {tryServiceDispatch} from './connection';
 import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport} from './internal';
 

@@ -4,7 +4,7 @@ import {ChannelProvider} from 'openfin/_v2/api/interappbus/channel/provider';
 import {Identity} from 'openfin/_v2/main';
 
 import {SERVICE_CHANNEL} from '../client/internal';
-import {FDC3Error} from '../common/errors';
+import {FDC3Error} from '../client/errors';
 
 import {Signal1} from './common/Signal';
 

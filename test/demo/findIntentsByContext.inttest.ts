@@ -1,6 +1,6 @@
 import 'jest';
-import {ResolveError} from '../../src/common/errors';
 import {Context} from '../../src/client/context';
+import {ResolveError} from '../../src/client/errors';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';

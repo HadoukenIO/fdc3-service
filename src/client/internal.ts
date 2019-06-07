@@ -10,8 +10,7 @@
  */
 import {Identity} from 'openfin/_v2/main';
 
-import {FDC3Error, IdentityError} from '../common/errors';
-
+import {FDC3Error, IdentityError} from './errors';
 import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution} from './main';
 import {Channel, ChannelId, DefaultChannel, DesktopChannel} from './contextChannels';
