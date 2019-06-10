@@ -41,11 +41,14 @@ async function setupWindows(...channels: (ChannelId|undefined)[]): Promise<Ident
 
     const offset = startedApps.length;
 
-    const result: Identity[] = await Promise.all(channels.map(async (channel, index) => {
-        const identity = appIdentities[index + offset];
+    const result: Identity[] = [];
+
+    for (let i = 0; i < channels.length; i++) {
+        const channel = channels[i];
+        const identity = appIdentities[i + offset];
 
         await fdc3Remote.open(testManagerIdentity, identity.uuid);
-        const app = fin.Application.wrapSync(appIdentities[index + offset]);
+        const app = fin.Application.wrapSync(appIdentities[i + offset]);
 
         await expect(app.isRunning()).resolves.toBe(true);
 
@@ -54,8 +57,8 @@ async function setupWindows(...channels: (ChannelId|undefined)[]): Promise<Ident
             await joinChannel(identity, channel);
         }
 
-        return identity;
-    }));
+        result.push(identity);
+    }
 
     return result;
 }
