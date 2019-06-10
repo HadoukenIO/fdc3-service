@@ -293,15 +293,12 @@ describe('When joining a channel', () => {
         expect(receivedContexts).toEqual([testContext]);
     }, appStartupTime * 2),
 
-    test('If an invalid identity is provided, an FDC3 error is thrown', async () => {
+    test('If an invalid identity is provided, a TypeError is thrown', async () => {
         const channel = await fdc3Remote.getChannelById(testManagerIdentity, 'purple');
 
         const invalidIdentity: Identity = {irrelevantProperty: 'irrelevantValue'} as unknown as Identity;
 
-        expect(channel.join(invalidIdentity)).toThrowFDC3Error(
-            IdentityError.InvalidIdentity,
-            `Invalid identity: ${JSON.stringify(invalidIdentity)}`
-        );
+        await expect(channel.join(invalidIdentity)).rejects.toThrowError(new TypeError(`${JSON.stringify(invalidIdentity)} is not a valid Identity`));
     });
 
     test('If an identity for a window that does not exist is provided, an FDC3 error is thrown', async () => {
@@ -440,13 +437,11 @@ describe('When querying the current channel', () => {
         await expect(fdc3Remote.getCurrentChannel(blueWindow)).resolves.toBe(blueChannel);
     });
 
-    test('If an invalid identity is provided, an FDC3 error is thrown', async () => {
+    test('If an invalid identity is provided, a TypeError is thrown', async () => {
         const invalidIdentity: Identity = {irrelevantProperty: 'irrelevantValue'} as unknown as Identity;
 
-        expect(fdc3Remote.getCurrentChannel(testManagerIdentity, invalidIdentity)).toThrowFDC3Error(
-            IdentityError.InvalidIdentity,
-            `Invalid identity: ${JSON.stringify(invalidIdentity)}`
-        );
+        await expect(fdc3Remote.getCurrentChannel(testManagerIdentity, invalidIdentity)).rejects
+            .toThrowError(new TypeError(`${JSON.stringify(invalidIdentity)} is not a valid Identity`));
     });
 
     test('If an identity for a window that does not exist is provided, an FDC3 error is thrown', async () => {

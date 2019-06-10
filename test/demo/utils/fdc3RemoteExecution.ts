@@ -13,7 +13,7 @@
 import {Identity} from 'openfin/_v2/main';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 
-import {Application, Context, IntentType, AppIntent, ChannelId, DefaultChannel, DesktopChannel, Channel} from '../../../src/client/main';
+import {Application, Context, IntentType, AppIntent, ChannelId, DefaultChannel, DesktopChannel, Channel, deserializeError} from '../../../src/client/main';
 import {RaiseIntentPayload} from '../../../src/client/internal';
 import {FDC3Event, FDC3EventType} from '../../../src/client/connection';
 
@@ -353,13 +353,11 @@ function deserializeChannel(executionTarget: Identity, transport: TestChannelTra
 function handlePuppeteerError(error: Error): never {
     try {
         // Strip-away boilerplate added by puppeteer when returning errors from client apps
-        const payload = error.message.replace('Evaluation failed: Error: ', '').split('\n')[0];
+        error.message = error.message.replace('Evaluation failed: Error: ', '').split('\n')[0];
 
-        // Append additional error fields to Error object
-        const errorInfo = JSON.parse(payload);
-        Object.assign(error, errorInfo);
+        error = deserializeError(error);
     } catch (e) {
-        // Not an FDC3Error, continue as normal
+        // Not an error type we explicitly handle, continue as normal
     }
     throw error;
 }
