@@ -13,7 +13,7 @@
  */
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
-import {FDC3Error} from './errors';
+import {deserializeError} from './errors';
 import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient} from './internal';
 
 /**
@@ -66,6 +66,6 @@ export async function tryServiceDispatch<T extends APIFromClientTopic>(action: T
     const channel: ChannelClient = await getServicePromise();
     return (channel.dispatch(action, payload) as Promise<APIFromClient[T][1]>)
         .catch(error => {
-            throw FDC3Error.deserialize(error);
+            throw deserializeError(error);
         });
 }

@@ -4,7 +4,7 @@ import {ChannelProvider} from 'openfin/_v2/api/interappbus/channel/provider';
 import {Identity} from 'openfin/_v2/main';
 
 import {SERVICE_CHANNEL} from '../client/internal';
-import {FDC3Error} from '../client/errors';
+import {serializeError} from '../client/main';
 
 import {Signal1} from './common/Signal';
 
@@ -98,7 +98,7 @@ export class APIHandler<T extends Enum> {
                         // We trust that ChannelProvider isn't going to modify the return result, so safe to return a readonly type
                         return result;
                     } catch (error) {
-                        throw FDC3Error.serialize(error);
+                        throw serializeError(error);
                     }
                 });
             }

@@ -1,7 +1,5 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {FDC3Error, IdentityError} from '../errors';
-
 /**
  * Validates the provided identity and returns an identity stripped of any extraneous properties
  */
@@ -29,6 +27,6 @@ export function validateIdentityIsWellFormed(identity: Identity): void {
     }
 
     if (error) {
-        throw new FDC3Error(IdentityError.InvalidIdentity, `Invalid identity: ${JSON.stringify(identity)}`);
+        throw new TypeError(`${JSON.stringify(identity)} is not a valid Identity`);
     }
 }
