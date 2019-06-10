@@ -306,7 +306,7 @@ describe('When joining a channel', () => {
 
         const nonExistentWindowIdentity: Identity = {uuid: 'does-not-exist', name: 'does-not-exist'};
 
-        expect(channel.join(nonExistentWindowIdentity)).toThrowFDC3Error(
+        await expect(channel.join(nonExistentWindowIdentity)).toThrowFDC3Error(
             IdentityError.WindowWithIdentityNotFound,
             `No connection to FDC3 service found from window with identity: ${JSON.stringify(nonExistentWindowIdentity)}`
         );
@@ -329,7 +329,7 @@ describe('When joining a channel', () => {
 
         test('If the non-FDC3 app identity is provided, an FDC3 error is thrown', async () => {
             const channel = await fdc3Remote.getChannelById(testManagerIdentity, 'orange');
-            expect(channel.join(testAppNotFdc3)).toThrowFDC3Error(
+            await expect(channel.join(testAppNotFdc3)).toThrowFDC3Error(
                 IdentityError.WindowWithIdentityNotFound,
                 `No connection to FDC3 service found from window with identity: \
 ${JSON.stringify({uuid: testAppNotFdc3.uuid, name: testAppNotFdc3.name})}`
@@ -447,7 +447,7 @@ describe('When querying the current channel', () => {
     test('If an identity for a window that does not exist is provided, an FDC3 error is thrown', async () => {
         const nonExistentWindowIdentity: Identity = {uuid: 'does-not-exist', name: 'does-not-exist'};
 
-        expect(fdc3Remote.getCurrentChannel(testManagerIdentity, nonExistentWindowIdentity)).toThrowFDC3Error(
+        await expect(fdc3Remote.getCurrentChannel(testManagerIdentity, nonExistentWindowIdentity)).toThrowFDC3Error(
             IdentityError.WindowWithIdentityNotFound,
             `No connection to FDC3 service found from window with identity: ${JSON.stringify(nonExistentWindowIdentity)}`
         );
@@ -469,7 +469,7 @@ describe('When querying the current channel', () => {
         });
 
         test('If the non-FDC3 window identity is provided, an FDC3 error is thrown', async () => {
-            expect(fdc3Remote.getCurrentChannel(testManagerIdentity, testAppNotFdc3)).toThrowFDC3Error(
+            await expect(fdc3Remote.getCurrentChannel(testManagerIdentity, testAppNotFdc3)).toThrowFDC3Error(
                 IdentityError.WindowWithIdentityNotFound,
                 `No connection to FDC3 service found from window with identity: \
 ${JSON.stringify({uuid: testAppNotFdc3.uuid, name: testAppNotFdc3.name})}`
