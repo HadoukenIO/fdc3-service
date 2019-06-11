@@ -155,8 +155,6 @@ export async function addEventListener(executionTarget: Identity, eventType: FDC
         const listenerID = this.eventListeners.length;
 
         const handler = (payload: FDC3Event) => {
-            console.log('****** receiving event a pushing');
-
             this.receivedEvents.push({listenerID, payload});
         };
 
@@ -179,8 +177,6 @@ export async function addEventListener(executionTarget: Identity, eventType: FDC
         },
         getReceivedEvents: async (): Promise<FDC3Event[]> => {
             return ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): FDC3Event[] {
-                this.console.log('getting events ', id, this.receivedEvents);
-
                 return this.receivedEvents.filter(entry => entry.listenerID === id).map(entry => entry.payload);
             }, id);
         }
