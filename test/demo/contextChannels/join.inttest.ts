@@ -324,4 +324,13 @@ describe('When joining a channel', () => {
             }]);
         });
     });
+
+    test('When no target window is specified, the current window is used', async () => {
+        const blueChannel = await fdc3Remote.getChannelById(channelChangingApp, 'blue');
+
+        await blueChannel.join();
+
+        await expect(fdc3Remote.getCurrentChannel(channelChangingApp)).resolves.toHaveProperty('channel', blueChannel.channel);
+        await expect(blueChannel.getMembers()).resolves.toEqual([{uuid: channelChangingApp.uuid, name: channelChangingApp.name}]);
+    });
 });
