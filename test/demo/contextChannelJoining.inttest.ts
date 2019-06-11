@@ -7,8 +7,8 @@ import {testManagerIdentity, appStartupTime, testAppNotInDirectory, testAppNotFd
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 
 /*
- * Tests simple behaviour of ContextChannel.getMembers() and the channel-changed event, before testing how they and getCurrentChannel()
- * are influenced by ContextChannel.join()
+ * Tests simple behaviour of Channel.getMembers() and the channel-changed event, before testing how they and getCurrentChannel()
+ * are influenced by Channel.join()
  */
 
 let fin: Fin;
