@@ -3,7 +3,6 @@ export enum OpenError {
     ErrorOnLaunch = 'ErrorOnLaunch',
     AppTimeout = 'AppTimeout',
     ResolverUnavailable = 'ResolverUnavailable',
-    InvalidContext = 'InvalidContext'
 }
 
 export enum ResolveError {
@@ -14,7 +13,6 @@ export enum ResolveError {
     ResolverUnavailable = 'ResolverUnavailable',
     ResolverTimeout = 'ResolverTimeout',
     ResolverClosedOrCancelled = 'ResolverClosedOrCancelled',
-    InvalidContext = 'InvalidContext'
 }
 
 export enum ChannelError {

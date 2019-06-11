@@ -11,6 +11,7 @@ import {Context} from './context';
 import {Application} from './directory';
 import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload} from './internal';
 import {ChannelChangedEvent, getChannelObject} from './contextChannels';
+import {parseContext} from './utils/validation';
 
 /**
  * This file was copied from the FDC3 v1 specification.
@@ -120,7 +121,7 @@ const contextListeners: ContextListener[] = [];
  * ```
  */
 export async function open(name: string, context?: Context): Promise<void> {
-    return tryServiceDispatch(APIFromClientTopic.OPEN, {name, context});
+    return tryServiceDispatch(APIFromClientTopic.OPEN, {name, context: context && parseContext(context)});
 }
 
 /**
@@ -147,7 +148,7 @@ export async function open(name: string, context?: Context): Promise<void> {
  * ```
  */
 export async function findIntent(intent: string, context?: Context): Promise<AppIntent> {
-    return tryServiceDispatch(APIFromClientTopic.FIND_INTENT, {intent, context});
+    return tryServiceDispatch(APIFromClientTopic.FIND_INTENT, {intent, context: context && parseContext(context)});
 }
 
 /**
@@ -184,7 +185,7 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  * ```
  */
 export async function findIntentsByContext(context: Context): Promise<AppIntent[]> {
-    return tryServiceDispatch(APIFromClientTopic.FIND_INTENTS_BY_CONTEXT, {context});
+    return tryServiceDispatch(APIFromClientTopic.FIND_INTENTS_BY_CONTEXT, {context: parseContext(context)});
 }
 
 /**
@@ -194,7 +195,7 @@ export async function findIntentsByContext(context: Context): Promise<AppIntent[
  * ```
  */
 export function broadcast(context: Context): void {
-    tryServiceDispatch(APIFromClientTopic.BROADCAST, {context});
+    tryServiceDispatch(APIFromClientTopic.BROADCAST, {context: parseContext(context)});
 }
 
 /**
@@ -207,7 +208,7 @@ export function broadcast(context: Context): void {
  * ```
  */
 export async function raiseIntent(intent: string, context: Context, target?: string): Promise<IntentResolution> {
-    return tryServiceDispatch(APIFromClientTopic.RAISE_INTENT, {intent, context, target});
+    return tryServiceDispatch(APIFromClientTopic.RAISE_INTENT, {intent, context: parseContext(context), target});
 }
 
 /**

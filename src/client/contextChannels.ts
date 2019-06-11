@@ -4,7 +4,7 @@
 
 import {Identity} from 'openfin/_v2/main';
 
-import {parseIdentity} from './utils/validation';
+import {parseIdentity, parseContext} from './utils/validation';
 import {tryServiceDispatch, getServicePromise} from './connection';
 import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, APIToClientTopic, ChannelContextPayload} from './internal';
 import {Context} from './context';
@@ -134,7 +134,7 @@ abstract class ChannelBase {
      * @param context The context to broadcast to all windows on this channel
      */
     public async broadcast(context: Context): Promise<void> {
-        return tryServiceDispatch(APIFromClientTopic.CHANNEL_BROADCAST, {id: this.id, context});
+        return tryServiceDispatch(APIFromClientTopic.CHANNEL_BROADCAST, {id: this.id, context: parseContext(context)});
     }
 
     /**

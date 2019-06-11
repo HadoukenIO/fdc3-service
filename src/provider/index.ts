@@ -6,7 +6,7 @@ import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport, GetChannelByIdPayload, EventTransport, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Intent, ChannelChangedEvent, Context} from '../client/main';
 import {FDC3Error, ResolveError, OpenError, IdentityError} from '../client/errors';
-import {parseIdentity} from '../client/utils/validation';
+import {parseIdentity, parseContext} from '../client/utils/validation';
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
@@ -105,10 +105,7 @@ export class Main {
         const appWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_CONTEXT_LISTENER);
 
         if (payload.context) {
-            if (!payload.context.type) {
-                throw new FDC3Error(OpenError.InvalidContext, `Context not valid. context = ${JSON.stringify(payload.context)}`);
-            }
-            this._contextHandler.send(appWindow, payload.context);
+            this._contextHandler.send(appWindow, parseContext(payload.context));
         }
     }
 
@@ -138,23 +135,19 @@ export class Main {
     }
 
     private async findIntentsByContext (payload: FindIntentsByContextPayload): Promise<AppIntent[]> {
-        if (payload.context && payload.context.type) {
-            return this._directory.getAppIntentsByContext(payload.context.type);
-        } else {
-            throw new FDC3Error(ResolveError.InvalidContext, `Context not valid. context = ${JSON.stringify(payload.context)}`);
-        }
+        return this._directory.getAppIntentsByContext(parseContext(payload.context).type);
     }
 
     private async broadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {
         const appWindow = this.getWindow(source);
 
-        await this._contextHandler.broadcast(payload.context, appWindow);
+        await this._contextHandler.broadcast(parseContext(payload.context), appWindow);
     }
 
     private async raiseIntent(payload: RaiseIntentPayload): Promise<IntentResolution> {
         const intent: Intent = {
             type: payload.intent,
-            context: payload.context,
+            context: parseContext(payload.context),
             target: payload.target
         };
 
@@ -214,7 +207,7 @@ export class Main {
         const appWindow = this.getWindow(source);
         const channel = this._channelHandler.getChannelById(payload.id);
 
-        await this._contextHandler.broadcastOnChannel(payload.context, appWindow, channel);
+        await this._contextHandler.broadcastOnChannel(parseContext(payload.context), appWindow, channel);
     }
 
     private channelGetCurrentContext(payload: ChannelGetCurrentContextPayload, source: ProviderIdentity): Context | null {

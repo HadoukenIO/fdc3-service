@@ -108,10 +108,7 @@ data [broken in provider re-arch, to be fixed in future story]', async () => {
         test('When passing a known app name but invalid context, the service returns an FDC3Error', async () => {
             const openPromise = fdc3Remote.open(testManagerIdentity, testAppIdentity1.name!, invalidContext);
 
-            await expect(openPromise).toThrowFDC3Error(
-                OpenError.InvalidContext,
-                `Context not valid. context = ${JSON.stringify(invalidContext)}`
-            );
+            await expect(openPromise).rejects.toThrowError(new TypeError(`${JSON.stringify(invalidContext)} is not a valid Context`));
         });
 
         test('When passing an unknown app name with any context the service returns an FDC3Error', async () => {

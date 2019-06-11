@@ -60,11 +60,7 @@ export function ContactsApp(): React.ReactElement {
             setAppIntents(appIntents);
         })
             .catch(error => {
-                if (error.code === ResolveError.InvalidContext) {
-                    console.log('Invalid context!', context);
-                } else {
-                    console.log('Error from fdc3.findIntentsByContext', error);
-                }
+                console.warn('Error from fdc3.findIntentsByContext', error);
             });
     }, []);
 
