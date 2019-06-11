@@ -17,21 +17,11 @@ import {Application, Context, IntentType, AppIntent, ChannelId, DefaultChannel, 
 import {RaiseIntentPayload} from '../../../src/client/internal';
 
 import {OFPuppeteerBrowser, TestWindowContext, TestChannelTransport} from './ofPuppeteer';
+import {RemoteChannel} from './RemoteChannel';
 
-const ofBrowser = new OFPuppeteerBrowser();
+export const ofBrowser = new OFPuppeteerBrowser();
 
 const remoteChannels: {[id: string]: RemoteChannel} = {};
-
-export interface RemoteChannel {
-    channel: Channel;
-    id: string;
-
-    getMembers: () => Promise<Identity[]>;
-    getCurrentContext: () => Promise<Context|null>;
-    join: (identity?: Identity) => Promise<void>;
-    broadcast: (context: Context) => Promise<void>;
-    addBroadcastListener: () => Promise<RemoteContextListener>;
-}
 
 export interface RemoteContextListener {
     remoteIdentity: Identity;
@@ -254,75 +244,25 @@ export async function getCurrentChannel(executionTarget: Identity, identity?: Id
     return deserializeChannel(executionTarget, testChannelTransport);
 }
 
-function deserializeChannel(executionTarget: Identity, transport: TestChannelTransport): RemoteChannel {
-    let remoteChannel = remoteChannels[transport.id];
+/**
+ * Puppeteer catches and rethrows errors its own way, losing information on extra fields (e.g. `code` for FDC3Error objects).
+ * So what we do is serialize all these fields into the single `message` from the client apps, then from here strip back whatever puppeteer
+ * added (Evaluation failed...) and parse the actual error object so we can check for the right info in our integration tests.
+ * @param error Error returned by puppeteer
+ */
+export function handlePuppeteerError(error: Error): never {
+    try {
+        // Strip-away boilerplate added by puppeteer when returning errors from client apps
+        error.message = error.message.replace('Evaluation failed: Error: ', '').split('\n')[0];
 
-    if (!remoteChannel) {
-        remoteChannel = {
-            id: transport.id,
-            channel: transport.channel as Channel,
-            getMembers: async () => {
-                return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, channelInstanceId: string): Promise<Identity[]> {
-                    return this.channelTransports[channelInstanceId].channel.getMembers().catch(this.errorHandler);
-                }, transport.id).catch(handlePuppeteerError);
-            },
-            getCurrentContext: async () => {
-                return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, channelInstanceId: string): Promise<Context|null> {
-                    return this.channelTransports[channelInstanceId].channel.getCurrentContext().catch(this.errorHandler);
-                }, transport.id).catch(handlePuppeteerError);
-            },
-            join: async (identity?: Identity) => {
-                return ofBrowser.executeOnWindow(
-                    executionTarget,
-                    async function(this: TestWindowContext, channelInstanceId: string, identity?: Identity): Promise<void> {
-                        return this.channelTransports[channelInstanceId].channel.join(identity).catch(this.errorHandler);
-                    },
-                    transport.id,
-                    identity
-                ).catch(handlePuppeteerError);
-            },
-            broadcast: async (context: Context) => {
-                return ofBrowser.executeOnWindow(
-                    executionTarget,
-                    async function(this: TestWindowContext, channelInstanceId: string, context: Context): Promise<void> {
-                        return this.channelTransports[channelInstanceId].channel.broadcast(context).catch(this.errorHandler);
-                    },
-                    transport.id,
-                    context
-                ).catch(handlePuppeteerError);
-            },
-            addBroadcastListener: async () => {
-                const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext, channelInstanceId: string): number {
-                    const listenerID = this.contextListeners.length;
-                    this.channelTransports[channelInstanceId].channel.addBroadcastListener((context) => {
-                        this.receivedContexts.push({listenerID, context});
-                    });
-                    return listenerID;
-                }, transport.id);
-
-                return createRemoteContextListener(executionTarget, id);
-            }
-
-        };
-
-        switch (transport.constructor) {
-            case 'DefaultChannel':
-                Object.setPrototypeOf(transport.channel, DefaultChannel);
-                break;
-            case 'DesktopChannel':
-                Object.setPrototypeOf(transport.channel, DesktopChannel);
-                break;
-            default:
-                throw new Error(`Unexpected channel constructor received: ${transport.constructor}`);
-        }
-
-        remoteChannels[transport.id] = remoteChannel;
+        error = deserializeError(error);
+    } catch (e) {
+        // Not an error type we explicitly handle, continue as normal
     }
-
-    return remoteChannel;
+    throw error;
 }
 
-function createRemoteContextListener(executionTarget: Identity, id: number): RemoteContextListener {
+export function createRemoteContextListener(executionTarget: Identity, id: number): RemoteContextListener {
     return {
         remoteIdentity: executionTarget,
         id,
@@ -338,6 +278,18 @@ function createRemoteContextListener(executionTarget: Identity, id: number): Rem
             }, id);
         }
     };
+}
+
+
+function deserializeChannel(executionTarget: Identity, transport: TestChannelTransport): RemoteChannel {
+    let remoteChannel = remoteChannels[transport.id];
+
+    if (!remoteChannel) {
+        remoteChannel = new RemoteChannel(executionTarget, transport);
+        remoteChannels[transport.id] = remoteChannel;
+    }
+
+    return remoteChannel;
 }
 
 function createRemoteIntentListener(executionTarget: Identity, id: number, intent: string) {
@@ -357,22 +309,4 @@ function createRemoteIntentListener(executionTarget: Identity, id: number, inten
             }, intent, id);
         }
     };
-}
-
-/**
- * Puppeteer catches and rethrows errors its own way, losing information on extra fields (e.g. `code` for FDC3Error objects).
- * So what we do is serialize all these fields into the single `message` from the client apps, then from here strip back whatever puppeteer
- * added (Evaluation failed...) and parse the actual error object so we can check for the right info in our integration tests.
- * @param error Error returned by puppeteer
- */
-function handlePuppeteerError(error: Error): never {
-    try {
-        // Strip-away boilerplate added by puppeteer when returning errors from client apps
-        error.message = error.message.replace('Evaluation failed: Error: ', '').split('\n')[0];
-
-        error = deserializeError(error);
-    } catch (e) {
-        // Not an error type we explicitly handle, continue as normal
-    }
-    throw error;
 }

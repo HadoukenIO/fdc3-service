@@ -5,6 +5,7 @@ import {IdentityError} from '../../src/client/main';
 
 import {testManagerIdentity, appStartupTime, testAppNotInDirectory, testAppNotFdc3, testAppInDirectory1} from './constants';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
+import {RemoteChannel} from './utils/RemoteChannel';
 
 /*
  * Tests simple behaviour of Channel.getMembers() and the channel-changed event, before testing how they and getCurrentChannel()
@@ -144,7 +145,7 @@ describe('When listening for a channel-changed event', () => {
 });
 
 describe('When attempting to join a channel', () => {
-    let blueChannel: fdc3Remote.RemoteChannel;
+    let blueChannel: RemoteChannel;
 
     beforeEach(async () => {
         blueChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'blue');
@@ -207,7 +208,7 @@ describe('When joining a channel', () => {
     const channelChangingApp = testAppNotInDirectory;
 
     let listener: fdc3Remote.RemoteEventListener;
-    let defaultChannel: fdc3Remote.RemoteChannel;
+    let defaultChannel: RemoteChannel;
 
     beforeEach(async () => {
         await fdc3Remote.open(testManagerIdentity, listeningApp.name);
@@ -223,7 +224,7 @@ describe('When joining a channel', () => {
     });
 
     describe('When joining the \'orange\' channel', () => {
-        let organgeChannel: fdc3Remote.RemoteChannel;
+        let organgeChannel: RemoteChannel;
 
         beforeEach(async () => {
             organgeChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'orange');
@@ -259,7 +260,7 @@ describe('When joining a channel', () => {
     });
 
     describe('When joining the \'blue\' channel twice', () => {
-        let blueChannel: fdc3Remote.RemoteChannel;
+        let blueChannel: RemoteChannel;
 
         beforeEach(async () => {
             blueChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'blue');
@@ -285,7 +286,7 @@ describe('When joining a channel', () => {
     });
 
     describe('When joining the \'purple\' channel, and re-joining the default channel', () => {
-        let purpleChannel: fdc3Remote.RemoteChannel;
+        let purpleChannel: RemoteChannel;
 
         beforeEach(async () => {
             purpleChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'purple');

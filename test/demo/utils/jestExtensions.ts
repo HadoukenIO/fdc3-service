@@ -1,7 +1,7 @@
 import 'jest';
 import {ChannelId} from '../../../src/client/main';
 
-import {RemoteChannel} from './fdc3RemoteExecution';
+import {RemoteChannel} from './RemoteChannel';
 
 declare global {
     namespace jest {
