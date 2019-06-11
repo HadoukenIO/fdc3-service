@@ -6,6 +6,10 @@ import {DesktopChannel, DefaultChannel, ChannelError, IdentityError} from '../..
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory, appStartupTime, testAppNotFdc3} from './constants';
 
+/**
+ * Tests getDesktopChannels(), getChannelById(), and getCurrentChannel()
+ */
+
 let fin: Fin;
 
 beforeAll(async () => {

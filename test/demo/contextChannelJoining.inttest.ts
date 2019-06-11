@@ -6,6 +6,11 @@ import {IdentityError} from '../../src/client/main';
 import {testManagerIdentity, appStartupTime, testAppNotInDirectory, testAppNotFdc3, testAppInDirectory1} from './constants';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 
+/*
+ * Tests simple behaviour of ContextChannel.getMembers() and the channel-changed event, before testing how they and getCurrentChannel()
+ * are influenced by ContextChannel.join()
+ */
+
 let fin: Fin;
 
 beforeAll(async () => {
