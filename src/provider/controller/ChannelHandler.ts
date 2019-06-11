@@ -88,13 +88,15 @@ export class ChannelHandler {
     public joinChannel(appWindow: AppWindow, channel: ContextChannel): void {
         const previousChannel = appWindow.channel;
 
-        appWindow.channel = channel;
+        if (previousChannel !== channel) {
+            appWindow.channel = channel;
 
-        if (this.isChannelEmpty(previousChannel)) {
-            previousChannel.clearStoredContext();
+            if (this.isChannelEmpty(previousChannel)) {
+                previousChannel.clearStoredContext();
+            }
+
+            this.onChannelChanged.emit({type: 'channel-changed', identity: appWindow.identity, channel, previousChannel});
         }
-
-        this.onChannelChanged.emit({type: 'channel-changed', identity: appWindow.identity, channel, previousChannel});
     }
 
     public setLastBroadcastOnChannel(channel: ContextChannel, context: Context): void {

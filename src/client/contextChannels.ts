@@ -306,6 +306,6 @@ if (typeof fin !== 'undefined') {
             });
         });
     }, reason => {
-        console.warn('Unable to register client Context and Intent handlers. getServicePromise() rejected with reason:', reason);
+        console.warn('Unable to register client channel context handlers. getServicePromise() rejected with reason:', reason);
     });
 }

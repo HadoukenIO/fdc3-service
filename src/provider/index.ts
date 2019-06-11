@@ -86,7 +86,12 @@ export class Main {
     }
 
     private onChannelChangedHandler(event: EventTransport<ChannelChangedEvent>): void {
-        this._apiHandler.channel.publish('event', event);
+        this._apiHandler.channel.publish('event', {
+            type: event.type,
+            identity: parseIdentity(event.identity),
+            channel: event.channel,
+            previousChannel: event.previousChannel
+        });
     }
 
     private async open(payload: OpenPayload): Promise<void> {
@@ -189,7 +194,7 @@ export class Main {
     private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): ReadonlyArray<Identity> {
         const channel = this._channelHandler.getChannelById(payload.id);
 
-        return this._channelHandler.getChannelMembers(channel).map(appWindow => appWindow.identity);
+        return this._channelHandler.getChannelMembers(channel).map(appWindow => parseIdentity(appWindow.identity));
     }
 
     private async channelJoin(payload: ChannelJoinPayload, source: ProviderIdentity): Promise<void> {

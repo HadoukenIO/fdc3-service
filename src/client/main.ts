@@ -290,6 +290,8 @@ if (typeof fin !== 'undefined') {
                 event.previousChannel = event.previousChannel ? getChannelObject(event.previousChannel) : null;
             }
 
+            console.log('Emitting event', event.type, event);
+
             eventEmitter.emit(event.type, event);
         });
 

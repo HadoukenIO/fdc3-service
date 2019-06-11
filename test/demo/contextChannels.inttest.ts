@@ -69,12 +69,6 @@ async function joinChannel(identity: Identity, channel: ChannelId): Promise<void
     return remoteChannel.join();
 }
 
-async function getChannelMembers(identity: Identity, channel: ChannelId): Promise<Identity[]> {
-    const remoteChannel = (await fdc3Remote.getChannelById(identity, channel))!;
-
-    return remoteChannel.getMembers();
-}
-
 describe('When broadcasting on default channel', () => {
     test('Context is received by default windows only', async () => {
         const [defaultWindow, blueWindow] = await setupWindows(undefined, 'blue');
@@ -153,54 +147,6 @@ describe('When broadcasting on a desktop channel', () => {
 });
 
 describe('When joining a channel', () => {
-    test('Window is listed as a member of the channel', async () => {
-        const [greenWindow] = await setupWindows('green');
-
-        const greenChannelMembers = await getChannelMembers(testManagerIdentity, 'green');
-        const defaultChannelMembers = await getChannelMembers(testManagerIdentity, 'default');
-
-        // Check the channel of our green window is green
-        await expect(fdc3Remote.getCurrentChannel(greenWindow)).resolves.toBeChannel('green');
-
-        // Check our green window is only listed in the green channel
-        expect(greenChannelMembers).toContainEqual(greenWindow);
-        expect(defaultChannelMembers).not.toContainEqual(greenWindow);
-    });
-
-    test('Window is listed as a member of the correct channel after changing channel', async () => {
-        const [channelChangingWindow] = await setupWindows('orange');
-
-        // Change the channel of our window
-        await joinChannel(channelChangingWindow, 'red');
-
-        const redChannelMembers = await getChannelMembers(channelChangingWindow, 'red');
-        const orangeChannelMembers = await getChannelMembers(channelChangingWindow, 'orange');
-
-        // Check the channel of our window is red
-        await expect(fdc3Remote.getCurrentChannel(channelChangingWindow)).resolves.toBeChannel('red');
-
-        // Check our window is only listed in the red channel
-        expect(redChannelMembers).toContainEqual(channelChangingWindow);
-        expect(orangeChannelMembers).not.toContainEqual(channelChangingWindow);
-    });
-
-    test('Window is listed as a member of the correct channel after rejoining the default channel', async () => {
-        const [channelChangingWindow] = await setupWindows('purple');
-
-        // Change the channel of our window
-        await joinChannel(channelChangingWindow, 'default');
-
-        const defaultChannelMembers = await getChannelMembers(channelChangingWindow, 'default');
-        const purpleChannelMembers = await getChannelMembers(channelChangingWindow, 'purple');
-
-        // Check the channel of our window is default
-        await expect(fdc3Remote.getCurrentChannel(channelChangingWindow)).resolves.toBeChannel('default');
-
-        // Check our window is only listed in the default channel
-        expect(defaultChannelMembers).toContainEqual(channelChangingWindow);
-        expect(purpleChannelMembers).not.toContainEqual(channelChangingWindow);
-    });
-
     test('Window receives cached context for desktop channel', async () => {
         const [yellowWindow, channelChangingWindow] = await setupWindows('yellow', 'red');
 
@@ -233,38 +179,6 @@ describe('When joining a channel', () => {
         expect(receivedContexts).toHaveLength(0);
     });
 
-    test('channel-changed event is fired for desktop channel', async () => {
-        const [listeningWindow, channelChangingWindow] = await setupWindows(undefined, undefined);
-
-        const listener = await fdc3Remote.addEventListener(listeningWindow, 'channel-changed');
-
-        // Change the channel of our window to green
-        await joinChannel(channelChangingWindow, 'green');
-
-        // Check we received a channel-changed event
-        const payload = await listener.getReceivedEvents();
-        expect(payload).toHaveLength(1);
-        expect(payload[0]).toHaveProperty('channel.id', 'green');
-        expect(payload[0]).toHaveProperty('previousChannel.id', 'default');
-        expect(payload[0]).toHaveProperty('identity', channelChangingWindow);
-    }, appStartupTime * 2);
-
-    test('channel-changed event is fired for default channel', async () => {
-        const [listeningWindow, channelChangingWindow] = await setupWindows(undefined, 'blue');
-
-        const listener = await fdc3Remote.addEventListener(listeningWindow, 'channel-changed');
-
-        // Change the channel of our window to green
-        await joinChannel(channelChangingWindow, 'default');
-
-        // Check we received a channel-changed event
-        const payload = await listener.getReceivedEvents();
-        expect(payload).toHaveLength(1);
-        expect(payload[0]).toHaveProperty('channel.id', 'default');
-        expect(payload[0]).toHaveProperty('previousChannel.id', 'blue');
-        expect(payload[0]).toHaveProperty('identity', channelChangingWindow);
-    }, appStartupTime * 2);
-
     test('If everything is unsubscribed, and something rejoins, there is no data held in the channel', async () => {
         // First, set up a pair of windows on different channels. Yellow will be unused; green will be the
         // interesting one. Broadcast on green. No one is listening, no one hears.
@@ -283,8 +197,6 @@ describe('When joining a channel', () => {
         // the state data to be dropped
         await joinChannel(sendWindow, 'yellow');
         await joinChannel(receiveWindow, 'yellow');
-        const members = await getChannelMembers(receiveWindow, 'green');
-        expect(members).toEqual([]);
 
         // Now, subscribe to the green channel again. Because the state data is dropped, we won't get a callback,
         // and our received contexts will be unchanged (remember, receivedContexts is the life history of all
@@ -294,65 +206,5 @@ describe('When joining a channel', () => {
         await joinChannel(receiveWindow, 'green');
         receivedContexts = await receiveWindowListener.getReceivedContexts();
         expect(receivedContexts).toEqual([testContext]);
-    }, appStartupTime * 2),
-
-    test('If an invalid identity is provided, a TypeError is thrown', async () => {
-        const channel = await fdc3Remote.getChannelById(testManagerIdentity, 'purple');
-
-        const invalidIdentity: Identity = {irrelevantProperty: 'irrelevantValue'} as unknown as Identity;
-
-        await expect(channel.join(invalidIdentity)).rejects.toThrowError(new TypeError(`${JSON.stringify(invalidIdentity)} is not a valid Identity`));
-    });
-
-    test('If an identity for a window that does not exist is provided, an FDC3 error is thrown', async () => {
-        const channel = await fdc3Remote.getChannelById(testManagerIdentity, 'yellow');
-
-        const nonExistentWindowIdentity: Identity = {uuid: 'does-not-exist', name: 'does-not-exist'};
-
-        await expect(channel.join(nonExistentWindowIdentity)).toThrowFDC3Error(
-            IdentityError.WindowWithIdentityNotFound,
-            `No connection to FDC3 service found from window with identity: ${JSON.stringify(nonExistentWindowIdentity)}`
-        );
-    });
-
-    describe('When a non-FDC3 app is running', () => {
-        const testAppNotFdc3 = {
-            uuid: 'test-app-not-fdc3',
-            name: 'test-app-not-fdc3',
-            manifestUrl: 'http://localhost:3923/test/configs/test-app-not-fdc3.json'
-        };
-
-        beforeEach(async () => {
-            await fin.Application.startFromManifest(testAppNotFdc3.manifestUrl);
-        });
-
-        afterEach(async () => {
-            await fin.Application.wrapSync(testAppNotFdc3).quit(true);
-        });
-
-        test('If the non-FDC3 app identity is provided, an FDC3 error is thrown', async () => {
-            const channel = await fdc3Remote.getChannelById(testManagerIdentity, 'orange');
-            await expect(channel.join(testAppNotFdc3)).toThrowFDC3Error(
-                IdentityError.WindowWithIdentityNotFound,
-                `No connection to FDC3 service found from window with identity: \
-${JSON.stringify({uuid: testAppNotFdc3.uuid, name: testAppNotFdc3.name})}`
-            );
-        });
-    });
-});
-
-describe('When starting an app', () => {
-    test('channel-changed event is fired for default channel', async () => {
-        const [listeningWindow] = await setupWindows(undefined);
-        const listener = await fdc3Remote.addEventListener(listeningWindow, 'channel-changed');
-
-        const [channelChangingWindow] = await setupWindows(undefined);
-
-        // Check we received a channel-changed event
-        const payload = await listener.getReceivedEvents();
-        expect(payload).toHaveLength(1);
-        expect(payload[0]).toHaveProperty('channel.id', 'default');
-        expect(payload[0]).toHaveProperty('previousChannel.id', undefined);
-        expect(payload[0]).toHaveProperty('identity', channelChangingWindow);
     }, appStartupTime * 2);
 });

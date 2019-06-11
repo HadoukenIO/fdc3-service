@@ -4,7 +4,7 @@ import {Identity} from 'openfin/_v2/main';
 import {DesktopChannel, DefaultChannel, ChannelError, IdentityError} from '../../src/client/main';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
-import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory, appStartupTime} from './constants';
+import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory, appStartupTime, testAppNotFdc3} from './constants';
 
 let fin: Fin;
 
@@ -158,12 +158,6 @@ describe('When getting the current channel without specifying a FDC3 window', ()
     });
 
     describe('When a non-FDC3 app is running', () => {
-        const testAppNotFdc3 = {
-            uuid: 'test-app-not-fdc3',
-            name: 'test-app-not-fdc3',
-            manifestUrl: 'http://localhost:3923/test/configs/test-app-not-fdc3.json'
-        };
-
         beforeEach(async () => {
             await fin.Application.startFromManifest(testAppNotFdc3.manifestUrl);
         }, appStartupTime);
