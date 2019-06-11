@@ -64,13 +64,16 @@ export class RemoteChannel {
     }
 
     public async addBroadcastListener(): Promise<RemoteContextListener> {
-        const id = await ofBrowser.executeOnWindow(this.executionTarget, function(this:TestWindowContext, channelInstanceId: string): number {
-            const listenerID = this.contextListeners.length;
-            this.channelTransports[channelInstanceId].channel.addBroadcastListener((context) => {
-                this.receivedContexts.push({listenerID, context});
-            });
-            return listenerID;
-        }, this.id);
+        const id = await ofBrowser.executeOnWindow(
+            this.executionTarget,
+            async function(this:TestWindowContext, channelInstanceId: string): Promise<number> {
+                const listenerID = this.contextListeners.length;
+                this.contextListeners[listenerID] = await this.channelTransports[channelInstanceId].channel.addBroadcastListener((context) => {
+                    this.receivedContexts.push({listenerID, context});
+                });
+                return listenerID;
+            }, this.id
+        );
 
         return createRemoteContextListener(this.executionTarget, id);
     }
