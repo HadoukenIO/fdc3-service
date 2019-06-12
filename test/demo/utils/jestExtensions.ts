@@ -15,7 +15,7 @@ declare global {
 
             /**
              * Used to test that a RemoteChannel represents the expected client-side Channel
-             * @param channel An object with optional `id` and `type` properties that if present we expect the channel to match, or the `ChannlId`
+             * @param channel An object with optional `id` and `type` properties that if present we expect the channel to match, or the `ChannelId`
              * @param classType The class we expect the channel to be an instance of
              */
             toBeChannel(channel: {id?: ChannelId, type?: string} | ChannelId, classType?: Function): R;
