@@ -42,15 +42,7 @@ function validateIdentityIsWellFormed(identity: Identity): void {
     }
 
     if (error) {
-        // Provided object may not be stringify-able (e.g., due to circular references), so we need to try-catch
-        let stringifiedIdentity: string;
-        try {
-            stringifiedIdentity = JSON.stringify(identity);
-        } catch (e) {
-            stringifiedIdentity = 'Provided Identity';
-        }
-
-        throw new TypeError(`${stringifiedIdentity} is not a valid Identity`);
+        throw new TypeError(`${safeStringify(identity, 'Provided Identity')} is not a valid Identity`);
     }
 }
 
@@ -73,6 +65,18 @@ function validateContextIsWellFormed(context: Context): void {
     }
 
     if (error) {
-        throw new TypeError(`${JSON.stringify(context)} is not a valid Context`);
+        throw new TypeError(`${safeStringify(context, 'Provided Context')} is not a valid Context`);
     }
+}
+
+function safeStringify(value: any, fallback: string): string {
+    // Provided object may not be stringify-able (e.g., due to circular references), so we need to try-catch
+    let result: string;
+    try {
+        result = JSON.stringify(value);
+    } catch (e) {
+        result = fallback;
+    }
+
+    return result;
 }
