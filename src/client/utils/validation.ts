@@ -1,3 +1,7 @@
+/**
+ * @hidden
+ */
+
 import {Identity} from 'openfin/_v2/main';
 
 /**
