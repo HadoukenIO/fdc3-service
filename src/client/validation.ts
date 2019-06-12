@@ -2,9 +2,12 @@
  * @hidden
  */
 
+/**
+ * Helpers for validating objects passed across IAB channels
+ */
 import {Identity} from 'openfin/_v2/main';
 
-import {Context} from '../context';
+import {Context} from './context';
 
 /**
  * Validates the provided Identity and returns an Identity stripped of any extraneous properties
