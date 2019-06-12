@@ -3,10 +3,10 @@ import {connect, Fin, Identity, Application} from 'hadouken-js-adapter';
 
 import {ChannelId} from '../../../src/client/contextChannels';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
-import {appStartupTime, testManagerIdentity} from '../constants';
+import {appStartupTime, testManagerIdentity, testAppNotInDirectory} from '../constants';
 
 /*
- * Tests top-level broadcast() and addContextListener() calls interact with Channel.join()
+ * Tests top-level broadcast(), and addContextListener() calls, and how they interact with Channel.join()
  */
 const testContext = {type: 'test-context', name: 'contextName1', id: {name: 'contextID1'}};
 
@@ -101,6 +101,19 @@ describe('When broadcasting on default channel', () => {
         const receivedContexts = await channelChangingListener.getReceivedContexts();
         expect(receivedContexts).toEqual([testContext]);
     }, appStartupTime);
+
+    test('Context is not received by broadcasting window', async () => {
+        const [defaultWindow] = await setupWindows(undefined);
+
+        const defaultListener = await fdc3Remote.addContextListener(defaultWindow);
+
+        // Broadcast our context on the default channel in our default window
+        await fdc3Remote.broadcast(defaultWindow, testContext);
+
+        // Check the default window did not received our test context
+        const defaultContexts = await defaultListener.getReceivedContexts();
+        expect(defaultContexts).toEqual([]);
+    }, appStartupTime * 2);
 });
 
 describe('When broadcasting on a desktop channel', () => {
@@ -143,10 +156,23 @@ describe('When broadcasting on a desktop channel', () => {
         const receivedContexts = await channelChangingWindowListener.getReceivedContexts();
         expect(receivedContexts).toEqual([testContext]);
     }, appStartupTime * 2);
+
+    test('Context is not received by broadcasting window', async () => {
+        const [yellowWindow] = await setupWindows('yellow');
+
+        const yellowListener = await fdc3Remote.addContextListener(yellowWindow);
+
+        // Broadcast our context on the default channel in our default window
+        await fdc3Remote.broadcast(yellowWindow, testContext);
+
+        // Check the default window did not received our test context
+        const defaultContexts = await yellowListener.getReceivedContexts();
+        expect(defaultContexts).toEqual([]);
+    }, appStartupTime * 2);
 });
 
 describe('When joining a channel', () => {
-    test('Window receives cached context for desktop channel', async () => {
+    test('When the channel is a desktop channel, joining window receives cached context', async () => {
         const [yellowWindow, channelChangingWindow] = await setupWindows('yellow', 'red');
 
         // Broadcast our test context on the yellow channel
@@ -162,7 +188,7 @@ describe('When joining a channel', () => {
         expect(receivedContexts).toEqual([testContext]);
     }, appStartupTime * 2);
 
-    test('Window does not receive cached context for default channel', async () => {
+    test('When the channel is the default channel, joining window receives no cached context', async () => {
         const [channelChangingWindow] = await setupWindows('red');
 
         // Broadcast our test context on the default channel
@@ -178,32 +204,70 @@ describe('When joining a channel', () => {
         expect(receivedContexts).toHaveLength(0);
     });
 
-    test('If everything is unsubscribed, and something rejoins, there is no data held in the channel', async () => {
-        // First, set up a pair of windows on different channels. Yellow will be unused; green will be the
-        // interesting one. Broadcast on green. No one is listening, no one hears.
-        const [sendWindow, receiveWindow] = await setupWindows('green', 'yellow');
-        const receiveWindowListener = await fdc3Remote.addContextListener(receiveWindow);
-        await fdc3Remote.broadcast(sendWindow, testContext);
-        let receivedContexts = await receiveWindowListener.getReceivedContexts();
-        expect(receivedContexts).toHaveLength(0);
+    test('When the channel is a desktop channel, which was occupied but is now empty, joining window receives no cached context', async () => {
+        const [broadcastingWindow, listeningWindow] = await setupWindows('green', 'yellow');
 
-        // Now join green, and we should a callback because of the current state of the green channel.
-        await joinChannel(receiveWindow, 'green');
-        receivedContexts = await receiveWindowListener.getReceivedContexts();
-        expect(receivedContexts).toEqual([testContext]);
+        // Broadcast to the currently occupied green channel, setting a cached context
+        await fdc3Remote.broadcast(broadcastingWindow, testContext);
 
-        // Move all the windows to a different channel, so no one is listening to green. This should cause
-        // the state data to be dropped
-        await joinChannel(sendWindow, 'yellow');
-        await joinChannel(receiveWindow, 'yellow');
+        // Ensure that the green channel has a cached context
+        const preClearingListener = await fdc3Remote.addContextListener(listeningWindow);
+        await joinChannel(listeningWindow, 'green');
+        // Check our cached context has been received
+        const preClearingReceivedContexts = await preClearingListener.getReceivedContexts();
+        expect(preClearingReceivedContexts).toEqual([testContext]);
 
-        // Now, subscribe to the green channel again. Because the state data is dropped, we won't get a callback,
-        // and our received contexts will be unchanged (remember, receivedContexts is the life history of all
-        // the contexts received)
-        receivedContexts = await receiveWindowListener.getReceivedContexts();
-        expect(receivedContexts).toEqual([testContext]);
-        await joinChannel(receiveWindow, 'green');
-        receivedContexts = await receiveWindowListener.getReceivedContexts();
-        expect(receivedContexts).toEqual([testContext]);
+        // Have both our windows leave the green channel. This should leave the channel unoccupied, so cached context should be cleared
+        await joinChannel(broadcastingWindow, 'yellow');
+        await joinChannel(listeningWindow, 'yellow');
+
+        // Have our listening window join the green channel and listen for the result
+        const listener = await fdc3Remote.addContextListener(listeningWindow);
+        await joinChannel(listeningWindow, 'green');
+
+        // Check no cached context has been received, given that the green channel has been emptied
+        const receivedContexts = await listener.getReceivedContexts();
+        expect(receivedContexts).toEqual([]);
     }, appStartupTime * 2);
+});
+
+describe('When using a non-directory app', () => {
+    beforeEach(async () => {
+        await fin.Application.startFromManifest(testAppNotInDirectory.manifestUrl);
+    }, appStartupTime * 2);
+
+    afterEach(async () => {
+        await fin.Application.wrapSync(testAppNotInDirectory).quit(true);
+    });
+
+    test('When broadcasting from the non-directory app, contexts are received as expected', async () => {
+        const [orangeWindow] = await setupWindows('orange');
+
+        const directoryListener = await fdc3Remote.addContextListener(orangeWindow);
+
+        // Put our non-directory app in the orange channel
+        await joinChannel(testAppNotInDirectory, 'orange');
+
+        // Broadcast from our non-directory app
+        await fdc3Remote.broadcast(testAppNotInDirectory, testContext);
+
+        // Check listener recevied our context from the non-directory app
+        await expect(directoryListener.getReceivedContexts()).resolves.toEqual([testContext]);
+    });
+
+    test('When listening from the non-directory app, contexts are received as expected', async () => {
+        const [blueWindow] = await setupWindows('blue');
+
+        // Set up a listener on the non-directory app
+        const nonDirectoryListener = await fdc3Remote.addContextListener(testAppNotInDirectory);
+
+        // Put our non-directory app in the blue channel
+        await joinChannel(testAppNotInDirectory, 'blue');
+
+        // Broadcast from our directory app
+        await fdc3Remote.broadcast(blueWindow, testContext);
+
+        // Check listener recevied our context from the non-directory app
+        await expect(nonDirectoryListener.getReceivedContexts()).resolves.toEqual([testContext]);
+    });
 });
