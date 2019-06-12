@@ -6,7 +6,7 @@ import {AsyncInit} from '../controller/AsyncInit';
 import {Signal1, Signal2} from '../common/Signal';
 import {Application, IntentType} from '../../client/main';
 import {FDC3Error, OpenError, ResolveError, withTimeout, Timeouts} from '../../client/errors';
-import {deferredPromise} from '../../client/utils/async';
+import {deferredPromise} from '../utils/async';
 
 import {Environment} from './Environment';
 import {AppWindow, ContextSpec} from './AppWindow';
