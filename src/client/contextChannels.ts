@@ -145,7 +145,7 @@ abstract class ChannelBase {
      *
      * @param handler Function that should be called whenever a context is broadcast on this channel
      */
-    public async addBroadcastListener(handler: (context: Context) => void): Promise<ContextListener> {
+    public async addContextListener(handler: (context: Context) => void): Promise<ContextListener> {
         const listener: ChannelContextListener = {
             id: this.id,
             handler,

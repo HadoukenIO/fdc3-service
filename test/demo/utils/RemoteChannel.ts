@@ -63,12 +63,12 @@ export class RemoteChannel {
         ).catch(handlePuppeteerError);
     }
 
-    public async addBroadcastListener(): Promise<RemoteContextListener> {
+    public async addContextListener(): Promise<RemoteContextListener> {
         const id = await ofBrowser.executeOnWindow(
             this.executionTarget,
             async function(this:TestWindowContext, channelInstanceId: string): Promise<number> {
                 const listenerID = this.contextListeners.length;
-                this.contextListeners[listenerID] = await this.channelTransports[channelInstanceId].channel.addBroadcastListener((context) => {
+                this.contextListeners[listenerID] = await this.channelTransports[channelInstanceId].channel.addContextListener((context) => {
                     this.receivedContexts.push({listenerID, context});
                 });
                 return listenerID;

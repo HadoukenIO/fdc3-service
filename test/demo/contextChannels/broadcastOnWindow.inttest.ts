@@ -46,7 +46,7 @@ async function setupWindows(...channels: (ChannelId|undefined)[]): Promise<Ident
         const channel = channels[i];
         const identity = appIdentities[i + offset];
 
-        await fdc3Remote.open(testManagerIdentity, identity.uuid);
+        await fdc3Remote.open(testManagerIdentity, identity.name);
         const app = fin.Application.wrapSync(appIdentities[i + offset]);
 
         await expect(app.isRunning()).resolves.toBe(true);
@@ -64,7 +64,6 @@ async function setupWindows(...channels: (ChannelId|undefined)[]): Promise<Ident
 
 async function joinChannel(identity: Identity, channel: ChannelId): Promise<void> {
     const remoteChannel = (await fdc3Remote.getChannelById(identity, channel))!;
-
     return remoteChannel.join();
 }
 
@@ -101,24 +100,25 @@ describe('When broadcasting on default channel', () => {
         // Check our window received our test context
         const receivedContexts = await channelChangingListener.getReceivedContexts();
         expect(receivedContexts).toEqual([testContext]);
-    });
+    }, appStartupTime);
 });
 
 describe('When broadcasting on a desktop channel', () => {
     test('Context is received by windows on that desktop channel only', async () => {
-        const [red1Window, red2Window, defaultWindow, blueWindow] = await setupWindows('red', 'red', 'default', 'blue');
+        const [redBroadcastingWindow, redListeningWindow, defaultWindow, blueWindow] = await setupWindows('red', 'red', 'default', 'blue');
 
-        const redListener = await fdc3Remote.addContextListener(red2Window);
+        const redListener = await fdc3Remote.addContextListener(redListeningWindow);
         const defaultListener = await fdc3Remote.addContextListener(defaultWindow);
         const blueListener = await fdc3Remote.addContextListener(blueWindow);
 
         // Broadcast our context on the red channel
-        await fdc3Remote.broadcast(red1Window, testContext);
+        await fdc3Remote.broadcast(redBroadcastingWindow, testContext);
 
         // Check our red window received our test context
         const redReceivedContexts = await redListener.getReceivedContexts();
         expect(redReceivedContexts).toEqual([testContext]);
 
+        // Check the default window received no context
         const defaultReceivedContexts = await defaultListener.getReceivedContexts();
         expect(defaultReceivedContexts).toHaveLength(0);
 

@@ -14,6 +14,18 @@ export const testAppInDirectory2 = {
     appId: '200'
 };
 
+export const testAppInDirectory3 = {
+    uuid: 'test-app-3',
+    name: 'test-app-3',
+    appId: '300'
+};
+
+export const testAppInDirectory4 = {
+    uuid: 'test-app-4',
+    name: 'test-app-4',
+    appId: '400'
+};
+
 export const testAppNotInDirectory = {
     uuid: 'test-app-not-in-directory',
     name: 'test-app-not-in-directory',

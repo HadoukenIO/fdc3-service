@@ -139,7 +139,7 @@ describe('Intent listeners and raising intents', () => {
 
             describe('When the target is running', () => {
                 beforeEach(async () => {
-                    await fdc3Remote.open(testManagerIdentity, testAppInDirectory.uuid);
+                    await fdc3Remote.open(testManagerIdentity, testAppInDirectory.name);
                 });
 
                 afterEach(async () => {
