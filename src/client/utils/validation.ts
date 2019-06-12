@@ -1,3 +1,7 @@
+/**
+ * @hidden
+ */
+
 import {Identity} from 'openfin/_v2/main';
 
 import {Context} from '../context';
@@ -38,7 +42,15 @@ function validateIdentityIsWellFormed(identity: Identity): void {
     }
 
     if (error) {
-        throw new TypeError(`${JSON.stringify(identity)} is not a valid Identity`);
+        // Provided object may not be stringify-able (e.g., due to circular references), so we need to try-catch
+        let stringifiedIdentity: string;
+        try {
+            stringifiedIdentity = JSON.stringify(identity);
+        } catch (e) {
+            stringifiedIdentity = 'Provided Identity';
+        }
+
+        throw new TypeError(`${stringifiedIdentity} is not a valid Identity`);
     }
 }
 
