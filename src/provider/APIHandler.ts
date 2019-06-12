@@ -93,6 +93,7 @@ export class APIHandler<T extends Enum> {
             if (actionHandlerMap.hasOwnProperty(action)) {
                 this._providerChannel.register(action, async (payload, source) => {
                     try {
+                        // We need the 'await' here, rather than simply returning the result, to collapse both T and Promise<T> to T
                         const result = await actionHandlerMap[action](payload, source);
 
                         // We trust that ChannelProvider isn't going to modify the return result, so safe to return a readonly type
