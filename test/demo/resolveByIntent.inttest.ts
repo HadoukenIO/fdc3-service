@@ -5,11 +5,7 @@ import {Application as DirectoryApp} from '../../src/client/directory';
 import {Intents} from '../../src/client/intents';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
-
-const testManagerIdentity = {
-    uuid: 'test-app',
-    name: 'test-app'
-};
+import {testManagerIdentity} from './constants';
 
 describe('Resolving applications by intent', () => {
     describe('Without context', () => {

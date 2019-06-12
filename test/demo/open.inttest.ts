@@ -7,11 +7,7 @@ import {OpenError, Timeouts} from '../../src/client/errors';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
-
-const testManagerIdentity = {
-    uuid: 'test-app',
-    name: 'test-app'
-};
+import {testManagerIdentity} from './constants';
 
 describe('Opening applications with the FDC3 client', () => {
     beforeEach(async () => {

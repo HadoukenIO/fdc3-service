@@ -4,11 +4,7 @@ import {ResolveError} from '../../src/client/errors';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
-
-const testManagerIdentity = {
-    uuid: 'test-app',
-    name: 'test-app'
-};
+import {testManagerIdentity} from './constants';
 
 const invalidContext = {
     twitter: '@testname'

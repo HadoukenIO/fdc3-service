@@ -1,18 +1,12 @@
 import 'jest';
 import 'reflect-metadata';
 
-
 import {ResolveError} from '../../src/client/errors';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay} from './utils/delay';
-import {appStartupTime} from './constants';
-
-const testManagerIdentity = {
-    uuid: 'test-app',
-    name: 'test-app'
-};
+import {appStartupTime, testManagerIdentity} from './constants';
 
 const validPayload = {
     intent: 'test.IntentName',

@@ -13,7 +13,7 @@ let fin: Fin;
 
 beforeAll(async () => {
     fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-contextChannels-get.inttest.ts'});
-    await expect(fin.Application.wrapSync({uuid: 'test-app', name: 'test-app'}).isRunning()).resolves.toBe(true);
+    await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
 });
 
 describe('When getting the list of desktop channels', () => {

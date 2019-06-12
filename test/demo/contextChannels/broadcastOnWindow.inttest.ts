@@ -3,14 +3,11 @@ import {connect, Fin, Identity, Application} from 'hadouken-js-adapter';
 
 import {ChannelId} from '../../../src/client/contextChannels';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
-import {appStartupTime} from '../constants';
+import {appStartupTime, testManagerIdentity} from '../constants';
 
 /*
- * Tests how existing broadcast() and addContextListener() calls interact with Channel.join()
+ * Tests top-level broadcast() and addContextListener() calls interact with Channel.join()
  */
-
-const testManagerIdentity = {uuid: 'test-app', name: 'test-app'};
-
 const testContext = {type: 'test-context', name: 'contextName1', id: {name: 'contextID1'}};
 
 const startedApps:Application[] = [];
@@ -19,7 +16,7 @@ let fin: Fin;
 
 beforeAll(async () => {
     fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-contextChannels-broadcastOnWindow.inttest.ts'});
-    await expect(fin.Application.wrapSync({uuid: 'test-app', name: 'test-app'}).isRunning()).resolves.toBe(true);
+    await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
 });
 
 afterEach(async () => {
