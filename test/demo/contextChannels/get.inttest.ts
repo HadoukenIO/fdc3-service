@@ -37,13 +37,28 @@ describe('When getting a channel by ID', () => {
         await expect(fdc3Remote.getChannelById(testManagerIdentity, 'red')).resolves.toBe(redChannel);
     });
 
-    test('If the channel does not exist, an FDC3Error is thrown', async () => {
+    test('When the ID does not correspond to a channel, an FDC3Error is thrown', async () => {
         const getChannelByIdPromise = fdc3Remote.getChannelById(testManagerIdentity, 'non-existent-channel');
 
         await expect(getChannelByIdPromise).toThrowFDC3Error(
             ChannelError.ChannelDoesNotExist,
             'No channel with channelId: non-existent-channel'
         );
+    });
+
+    test('When the ID is null, a TypeError is thrown', async () => {
+        const getChannelByIdPromise = fdc3Remote.getChannelById(testManagerIdentity, null!);
+
+        await expect(getChannelByIdPromise).rejects.
+            toThrowError(new TypeError(`${JSON.stringify(null)} is not a valid ChannelId`));
+    });
+
+    test('When the ID is an object, a TypeError is thrown', async () => {
+        const invalidChannelId = {irrelevantProperty: 'irrelevantValue'} as unknown as string;
+        const getChannelByIdPromise = fdc3Remote.getChannelById(testManagerIdentity, invalidChannelId);
+
+        await expect(getChannelByIdPromise).rejects.
+            toThrowError(new TypeError(`${JSON.stringify(invalidChannelId)} is not a valid ChannelId`));
     });
 });
 

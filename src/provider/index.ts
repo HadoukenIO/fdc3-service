@@ -6,7 +6,7 @@ import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport, GetChannelByIdPayload, EventTransport, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Intent, ChannelChangedEvent, Context} from '../client/main';
 import {FDC3Error, OpenError, IdentityError} from '../client/errors';
-import {parseIdentity, parseContext} from '../client/validation';
+import {parseIdentity, parseContext, parseChannelId} from '../client/validation';
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
@@ -175,7 +175,7 @@ export class Main {
     }
 
     private getChannelById(payload: GetChannelByIdPayload, source: ProviderIdentity): ChannelTransport {
-        return this._channelHandler.getChannelById(payload.id);
+        return this._channelHandler.getChannelById(parseChannelId(payload.id));
     }
 
     private getCurrentChannel(payload: GetCurrentChannelPayload, source: ProviderIdentity): ChannelTransport {
