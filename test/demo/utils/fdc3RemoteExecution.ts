@@ -141,7 +141,7 @@ export async function getRemoteIntentListener(executionTarget: Identity, intent:
 }
 
 export async function addEventListener(executionTarget: Identity, eventType: FDC3EventType): Promise<RemoteEventListener> {
-    const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext, eventType: FDC3EventType): number {
+    const id = await ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, eventType: FDC3EventType): number {
         const listenerID = this.eventListeners.length;
 
         const handler = (payload: FDC3Event) => {

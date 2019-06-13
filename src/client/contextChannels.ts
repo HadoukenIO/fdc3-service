@@ -18,7 +18,8 @@ export type ChannelId = string;
 
 export type Channel = DesktopChannel | DefaultChannel;
 
-type ChannelEvent = ChannelWindowAddedEvent | ChannelWindowRemovedEvent;
+export type ChannelEvent = ChannelWindowAddedEvent | ChannelWindowRemovedEvent;
+export type ChannelEventType = 'window-added' | 'window-removed';
 
 /**
  * Event fired when a window is added to a channel. See {@link Channel.addEventListener}.
