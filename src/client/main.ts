@@ -9,7 +9,7 @@ import {Identity} from 'openfin/_v2/main';
 import {tryServiceDispatch, getServicePromise} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
-import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload} from './internal';
+import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, EventTransport} from './internal';
 import {ChannelChangedEvent, getChannelObject} from './contextChannels';
 import {parseContext, validateEnvironment} from './validation';
 
@@ -294,7 +294,7 @@ function hasIntentListener(intent: string): boolean {
 
 if (typeof fin !== 'undefined') {
     getServicePromise().then(channelClient => {
-        channelClient.register('event', async (event: FDC3Event) => {
+        channelClient.register('event', async (event: EventTransport<FDC3Event>) => {
             // Special-handling for some event types, to convert transport-type event to client-side event.
             if (event.type === 'channel-changed') {
                 event.channel = event.channel ? getChannelObject(event.channel) : null;

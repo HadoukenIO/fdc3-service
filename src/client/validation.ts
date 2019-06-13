@@ -8,6 +8,7 @@
 import {Identity} from 'openfin/_v2/main';
 
 import {Context} from './context';
+import {ChannelId} from './contextChannels';
 
 /**
  * Validates the provided Identity and returns an Identity stripped of any extraneous properties
@@ -25,6 +26,15 @@ export function parseContext(context: Context): Context {
     validateContextIsWellFormed(context);
 
     return context;
+}
+
+/**
+ * Validates the provided ChannelId
+ */
+export function parseChannelId(channelId: ChannelId): ChannelId {
+    validateChannelIdIsWellFormed(channelId);
+
+    return channelId;
 }
 
 /**
@@ -78,6 +88,15 @@ function validateContextIsWellFormed(context: Context): void {
 
     if (error) {
         throw new TypeError(`${safeStringify(context, 'Provided Context')} is not a valid Context`);
+    }
+}
+
+/**
+ * Checks that the provided ChannelId is a string
+ */
+function validateChannelIdIsWellFormed(channelId: ChannelId): void {
+    if (channelId === null || typeof channelId !== 'string') {
+        throw new TypeError(`${safeStringify(channelId, 'Provided ChannelId')} is not a valid ChannelId`);
     }
 }
 

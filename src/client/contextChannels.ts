@@ -4,7 +4,7 @@
 
 import {Identity} from 'openfin/_v2/main';
 
-import {parseIdentity, parseContext, validateEnvironment} from './validation';
+import {parseIdentity, parseContext, validateEnvironment, parseChannelId} from './validation';
 import {tryServiceDispatch, getServicePromise} from './connection';
 import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, APIToClientTopic, ChannelContextPayload} from './internal';
 import {Context} from './context';
@@ -265,10 +265,11 @@ export async function getDesktopChannels(): Promise<DesktopChannel[]> {
  * Fetches a channel object for a given channel identifier. The `channelId` property maps to the {@link Channel.id} field.
  *
  * @param channelId The ID of the channel to return
+ * @throws `TypeError`: If `channelId` is not a valid ChannelId
  * @throws `FDC3Error`: If the channel specified by `channelId` does not exist
  */
 export async function getChannelById(channelId: ChannelId): Promise<Channel> {
-    const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_CHANNEL_BY_ID, {id: channelId});
+    const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_CHANNEL_BY_ID, {id: parseChannelId(channelId)});
 
     return getChannelObject(channelTransport);
 }
