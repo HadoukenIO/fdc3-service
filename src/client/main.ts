@@ -294,11 +294,23 @@ function hasIntentListener(intent: string): boolean {
 
 if (typeof fin !== 'undefined') {
     getServicePromise().then(channelClient => {
-        channelClient.register('event', async (event: EventTransport<FDC3Event>) => {
+        channelClient.register('event', async (eventTransport: EventTransport<FDC3Event>) => {
+            let event: FDC3Event;
+
             // Special-handling for some event types, to convert transport-type event to client-side event.
-            if (event.type === 'channel-changed') {
-                event.channel = event.channel ? getChannelObject(event.channel) : null;
-                event.previousChannel = event.previousChannel ? getChannelObject(event.previousChannel) : null;
+            if (eventTransport.type === 'channel-changed') {
+                const channelChangedEventTransport = eventTransport as EventTransport<ChannelChangedEvent>;
+
+                const type = channelChangedEventTransport.type;
+                const identity = channelChangedEventTransport.identity;
+                const channel = channelChangedEventTransport.channel ? getChannelObject(channelChangedEventTransport.channel) : null;
+                const previousChannel = channelChangedEventTransport.previousChannel ? getChannelObject(channelChangedEventTransport.previousChannel) : null;
+
+                const channelChangedEvent: ChannelChangedEvent = {type, identity, channel, previousChannel};
+
+                event = channelChangedEvent;
+            } else {
+                event = eventTransport as FDC3Event;
             }
 
             eventEmitter.emit(event.type, event);

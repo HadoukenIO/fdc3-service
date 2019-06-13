@@ -85,9 +85,9 @@ export type APIToClient = {
 }
 
 export type TransportMappings<T> =
-    T extends Channel ? ChannelTransport :
-    T extends DefaultChannel ? ChannelTransport :
     T extends DesktopChannel ? DesktopChannelTransport :
+    T extends DefaultChannel ? ChannelTransport :
+    T extends Channel ? ChannelTransport :
     T;
 
 export type EventTransport<T extends FDC3Event> = {
