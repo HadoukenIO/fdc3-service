@@ -10,7 +10,7 @@ import {tryServiceDispatch, getServicePromise} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
 import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload} from './internal';
-import {ChannelChangedEvent, getChannelObject} from './contextChannels';
+import {ChannelChangedEvent, getChannelObject, dispatchChannelEvents} from './contextChannels';
 import {parseContext, validateEnvironment} from './validation';
 
 /**
@@ -301,6 +301,7 @@ if (typeof fin !== 'undefined') {
                 event.previousChannel = event.previousChannel ? getChannelObject(event.previousChannel) : null;
             }
 
+            dispatchChannelEvents(event);
             eventEmitter.emit(event.type, event);
         });
 

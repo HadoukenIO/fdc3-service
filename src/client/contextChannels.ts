@@ -2,22 +2,94 @@
  * @module ContextChannels
  */
 
+/* eslint-disable no-dupe-class-members */
+
+import {EventEmitter} from 'events';
+
 import {Identity} from 'openfin/_v2/main';
 
 import {parseIdentity, parseContext, validateEnvironment} from './validation';
 import {tryServiceDispatch, getServicePromise} from './connection';
 import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, APIToClientTopic, ChannelContextPayload} from './internal';
 import {Context} from './context';
-import {ContextListener} from './main';
+import {ContextListener, FDC3Event} from './main';
 
 export type ChannelId = string;
 
-export type Channel = DesktopChannel|DefaultChannel;
+export type Channel = DesktopChannel | DefaultChannel;
+
+type ChannelEvent = ChannelWindowAddedEvent | ChannelWindowRemovedEvent;
+
+/**
+ * Event fired when a window is added to a channel. See {@link Channel.addEventListener}.
+ *
+ * Note that this event will typically fire as part of a pair - since windows must always belong to a channel, a window
+ * can only join a channel by leaving it's previous channel. The exceptions to this rule are when the window is created
+ * and destroyed when there will be no previous channel or no current channel, respectively.
+ *
+ * @event
+ */
+export interface ChannelWindowAddedEvent {
+    type: 'window-added';
+
+    /**
+     * The window that has just been added to the channel.
+     */
+    identity: Identity;
+
+    /**
+     * The channel that window now belongs to. Will always be the channel object that {@link Channel.addEventListener} was
+     * called on.
+     */
+    channel: Channel;
+
+    /**
+     * The channel that the window belonged to previously.
+     *
+     * Will be `null` if this event is being fired on a newly-created window.
+     */
+    previousChannel: Channel | null;
+}
+
+/**
+ * Event fired when a window is removed from a channel. See {@link Channel.addEventListener}.
+ *
+ * Note that this event will typically fire as part of a pair - since windows must always belong to a channel, a window
+ * can only join a channel by leaving it's previous channel. The exceptions to this rule are when the window is created
+ * and destroyed when there will be no previous channel or no current channel, respectively.
+ *
+ * To listen for channel changes across all (or multiple) channel, there is also a top-level {@link ChannelChangedEvent}.
+ *
+ * @event
+ */
+export interface ChannelWindowRemovedEvent {
+    type: 'window-removed';
+
+    /**
+     * The window that has just been added to the channel.
+     */
+    identity: Identity;
+
+    /**
+     * The channel that the window now belongs to.
+     *
+     * Will be `null` if the window is leaving the channel due to it being closed.
+     */
+    channel: Channel | null;
+
+    /**
+     * The channel that the window belonged to previously. Will always be the channel object that {@link Channel.addEventListener} was
+     * called on.
+     */
+    previousChannel: Channel;
+}
 
 /**
  * Event fired whenever a window changes channel. See {@link addEventListener}.
  *
  * This event can be used to track all channel changes, rather than listening only to a specific channel.
+ *
+ * See also {@link ChannelWindowAddedEvent}/{@link ChannelWindowRemovedEvent}
  *
  * @event
  */
@@ -75,6 +147,8 @@ abstract class ChannelBase {
     protected constructor(id: string, type: string) {
         this.id = id;
         this.type = type;
+
+        channelEventEmitters[id] = new EventEmitter();
     }
 
     /**
@@ -175,6 +249,47 @@ abstract class ChannelBase {
         }
         return listener;
     }
+
+    /**
+     * Event that is fired whenever a window changes joins this channel. This includes switching to/from the default
+     * channel.
+     *
+     * The event also includes which channel the window was in previously. The `channel` property within the
+     * event will always be this channel instance.
+     */
+    public addEventListener(eventType: 'window-added', listener: (event: ChannelWindowAddedEvent) => void): void;
+
+    /**
+     * Event that is fired whenever a window changes leaves this channel. This includes switching to/from the default
+     * channel.
+     *
+     * The event also includes which channel the window is being added to. The `previousChannel` property within the
+     * event will always be this channel instance.
+     */
+    public addEventListener(eventType: 'window-removed', listener: (event: ChannelWindowRemovedEvent) => void): void;
+
+    public addEventListener<E extends ChannelEvent>(eventType: E['type'], listener: (event: E) => void): void {
+        validateEnvironment();
+
+        channelEventEmitters[this.id].addListener(eventType, listener);
+    }
+
+    public removeEventListener(eventType: 'window-added', listener: (event: ChannelWindowAddedEvent) => void): void;
+    public removeEventListener(eventType: 'window-removed', listener: (event: ChannelWindowRemovedEvent) => void): void;
+
+    /**
+     * Removes a listener previously added with {@link addEventListener}.
+     *
+     * Has no effect if `eventType` isn't a valid event, or `listener` isn't a callback registered against `eventType`.
+     *
+     * @param eventType The event being unsubscribed from
+     * @param listener The callback function to remove
+     */
+    public removeEventListener<E extends ChannelEvent>(eventType: E['type'], listener: (event: E) => void): void {
+        validateEnvironment();
+
+        channelEventEmitters[this.id].removeListener(eventType, listener);
+    }
 }
 
 /**
@@ -227,6 +342,8 @@ export class DefaultChannel extends ChannelBase {
         super(DEFAULT_CHANNEL_ID, 'default');
     }
 }
+
+const channelEventEmitters: {[key: string]: EventEmitter} = {};
 
 /**
  * @hidden
@@ -305,6 +422,38 @@ export function getChannelObject<T extends Channel = Channel>(channelTransport: 
     }
 
     return channel as T;
+}
+
+/**
+ * @hidden
+ */
+export function dispatchChannelEvents(event: ChannelChangedEvent): void {
+    const channel = event.channel;
+    const previousChannel = event.previousChannel;
+
+    if (previousChannel) {
+        const previousChannelEmitter = channelEventEmitters[previousChannel.id];
+        const windowRemovedEvent: ChannelWindowRemovedEvent = {
+            type: 'window-removed',
+            identity: event.identity,
+            channel: channel,
+            previousChannel: previousChannel
+        };
+
+        previousChannelEmitter.emit('window-removed', windowRemovedEvent);
+    }
+
+    if (channel) {
+        const channelEmitter = channelEventEmitters[channel.id];
+        const windowAddedEvent: ChannelWindowAddedEvent = {
+            type: 'window-added',
+            identity: event.identity,
+            channel: channel,
+            previousChannel: previousChannel
+        };
+
+        channelEmitter.emit('window-added', windowAddedEvent);
+    }
 }
 
 function hasChannelContextListener(id: ChannelId) {
