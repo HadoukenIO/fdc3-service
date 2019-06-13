@@ -35,7 +35,7 @@ describe('Opening applications with the FDC3 client', () => {
 
             // Check that the app is now running
             await expect(fin.Application.wrapSync(testAppIdentity1).isRunning()).resolves.toBe(true);
-        }, 10000);
+        });
 
         test('When passing an unknown app name the service returns an FDC3Error', async () => {
             // From the launcher app, call fdc3.open with an unregistered name
@@ -64,7 +64,7 @@ describe('Opening applications with the FDC3 client', () => {
                 await expect(fin.Application.wrapSync(testAppIdentity1).isRunning()).resolves.toBe(true);
                 // And that the app is focused
                 await expect(fin.System.getFocusedWindow().then(w => w.uuid)).resolves.toBe(testAppIdentity1.uuid);
-            }, 10000);
+            });
 
             test('When opening a an app, the running-state of other apps has no effect', async () => {
                 // From the launcher app, call fdc3.open with a second app name
@@ -73,7 +73,7 @@ describe('Opening applications with the FDC3 client', () => {
                 // Check that both apps are running
                 await expect(fin.Application.wrapSync(testAppIdentity1).isRunning()).resolves.toBe(true);
                 await expect(fin.Application.wrapSync(testAppIdentity2).isRunning()).resolves.toBe(true);
-            }, 10000);
+            });
         });
     });
 
@@ -170,7 +170,7 @@ and does not trigger the context listener of the already open app [broken in pro
 
                 // Check that the first app did not receive a context
                 expect(firstReceivedContexts).toHaveLength(0);
-            }, 10000);
+            });
         });
     });
 
