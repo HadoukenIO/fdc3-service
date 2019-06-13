@@ -12,7 +12,7 @@ import {parseIdentity, parseContext, validateEnvironment} from './validation';
 import {tryServiceDispatch, getServicePromise} from './connection';
 import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, APIToClientTopic, ChannelContextPayload} from './internal';
 import {Context} from './context';
-import {ContextListener, FDC3Event} from './main';
+import {ContextListener} from './main';
 
 export type ChannelId = string;
 
