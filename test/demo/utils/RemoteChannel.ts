@@ -1,9 +1,8 @@
 import {Identity} from 'openfin/_v2/main';
-import {Payload} from 'openfin/_v2/transport/transport';
 
-import {Channel, DefaultChannel, DesktopChannel, Context, ChannelEventType, ChannelEvent, ChannelWindowRemovedEvent, ChannelWindowAddedEvent} from '../../../src/client/main';
+import {Channel, DefaultChannel, DesktopChannel, Context, ChannelEventType, ChannelEvent} from '../../../src/client/main';
 
-import {RemoteContextListener, ofBrowser, handlePuppeteerError, createRemoteContextListener, RemoteEventListener} from './fdc3RemoteExecution';
+import {RemoteContextListener, ofBrowser, handlePuppeteerError, createRemoteContextListener} from './fdc3RemoteExecution';
 import {TestChannelTransport, TestWindowContext} from './ofPuppeteer';
 
 export interface RemoteChannelEventListener {
