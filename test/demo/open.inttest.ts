@@ -3,7 +3,8 @@ import 'jest';
 import {Identity} from 'openfin/_v2/main';
 
 import {Context, OrganizationContext} from '../../src/client/main';
-import {OpenError, Timeouts} from '../../src/client/errors';
+import {OpenError} from '../../src/client/errors';
+import {Timeouts} from '../../src/provider/constants';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';

@@ -3,8 +3,7 @@ import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 import {ChannelProvider} from 'openfin/_v2/api/interappbus/channel/provider';
 import {Identity} from 'openfin/_v2/main';
 
-import {SERVICE_CHANNEL} from '../client/internal';
-import {serializeError} from '../client/main';
+import {SERVICE_CHANNEL, serializeError} from '../client/internal';
 
 import {Signal1} from './common/Signal';
 

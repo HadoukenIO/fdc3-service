@@ -13,8 +13,7 @@
  */
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
-import {deserializeError} from './errors';
-import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient} from './internal';
+import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient, deserializeError} from './internal';
 
 /**
  * The version of the NPM package.

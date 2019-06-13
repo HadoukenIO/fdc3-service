@@ -4,7 +4,7 @@
 
 import {Identity} from 'openfin/_v2/main';
 
-import {parseIdentity, parseContext} from './utils/validation';
+import {parseIdentity, parseContext, validateEnvironment} from './validation';
 import {tryServiceDispatch, getServicePromise} from './connection';
 import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, APIToClientTopic, ChannelContextPayload} from './internal';
 import {Context} from './context';
@@ -114,7 +114,7 @@ abstract class ChannelBase {
      * the only way to do so is to join another channel. A window may rejoin the default channel by calling `channels.defaultChannel.join()`.
      *
      * @param identity The window that should be added to this channel. If omitted, will use the window that calls this method.
-     * @throws `FDC3Error`: If `identity` is not a valid {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}
+     * @throws `TypeError`: If `identity` is not a valid {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}
      * @throws `FDC3Error`: If the window specified by `identity` does not exist
      * @throws `FDC3Error`: If the window specified by `identity` does not integrate FDC3 (determined by inclusion of the client API module)
      */
@@ -132,6 +132,7 @@ abstract class ChannelBase {
      * makes the broadcast. This matches the behaviour of the top-level FDC3 `broadcast` function.
      *
      * @param context The context to broadcast to all windows on this channel
+     * @throws `TypeError`: If `context` is not a valid Context
      */
     public async broadcast(context: Context): Promise<void> {
         return tryServiceDispatch(APIFromClientTopic.CHANNEL_BROADCAST, {id: this.id, context: parseContext(context)});
@@ -146,6 +147,8 @@ abstract class ChannelBase {
      * @param handler Function that should be called whenever a context is broadcast on this channel
      */
     public async addContextListener(handler: (context: Context) => void): Promise<ContextListener> {
+        validateEnvironment();
+
         const listener: ChannelContextListener = {
             id: this.id,
             handler,
@@ -197,6 +200,9 @@ export class DesktopChannel extends ChannelBase {
      */
     public readonly color: number;
 
+    /**
+     * @hidden
+     */
     public constructor(transport: DesktopChannelTransport) {
         super(transport.id, 'desktop');
 
@@ -214,11 +220,17 @@ export class DesktopChannel extends ChannelBase {
 export class DefaultChannel extends ChannelBase {
     public readonly type!: 'default';
 
+    /**
+     * @hidden
+     */
     public constructor() {
         super(DEFAULT_CHANNEL_ID, 'default');
     }
 }
 
+/**
+ * @hidden
+ */
 export const DEFAULT_CHANNEL_ID: ChannelId = 'default';
 
 /**
@@ -265,7 +277,7 @@ export async function getChannelById(channelId: ChannelId): Promise<Channel> {
  * Returns the channel that the current window is assigned to.
  *
  * @param identity The window to query. If omitted, will use the window that calls this method.
- * @throws `FDC3Error`: If `identity` is not a valid {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}
+ * @throws `TypeError`: If `identity` is not a valid {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}
  * @throws `FDC3Error`: If the window specified by `identity` does not exist
  * @throws `FDC3Error`: If the window specified by `identity` does not integrate FDC3 (determined by inclusion of the client API module)
  */
@@ -275,6 +287,9 @@ export async function getCurrentChannel(identity?: Identity): Promise<Channel> {
     return getChannelObject(channelTransport);
 }
 
+/**
+ * @hidden
+ */
 export function getChannelObject<T extends Channel = Channel>(channelTransport: ChannelTransport): T {
     let channel: Channel = channelLookup[channelTransport.id];
 

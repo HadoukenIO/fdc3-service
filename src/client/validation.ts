@@ -28,6 +28,15 @@ export function parseContext(context: Context): Context {
 }
 
 /**
+ * Validates we're running inside an OpenFin environment
+ */
+export function validateEnvironment(): void {
+    if (typeof fin === 'undefined') {
+        throw new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.');
+    }
+}
+
+/**
  * Checks that the provided Identity adheres to the `Identity` interface
  */
 function validateIdentityIsWellFormed(identity: Identity): void {

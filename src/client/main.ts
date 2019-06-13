@@ -11,7 +11,7 @@ import {Context} from './context';
 import {Application} from './directory';
 import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload} from './internal';
 import {ChannelChangedEvent, getChannelObject} from './contextChannels';
-import {parseContext} from './utils/validation';
+import {parseContext, validateEnvironment} from './validation';
 
 /**
  * This file was copied from the FDC3 v1 specification.
@@ -193,6 +193,8 @@ export async function findIntentsByContext(context: Context): Promise<AppIntent[
  * ```javascript
  *  agent.broadcast(context);
  * ```
+ *
+ * @throws `TypeError`: If `context` is not a valid Context
  */
 export function broadcast(context: Context): void {
     tryServiceDispatch(APIFromClientTopic.BROADCAST, {context: parseContext(context)});
@@ -215,6 +217,8 @@ export async function raiseIntent(intent: string, context: Context, target?: str
  * Adds a listener for incoming Intents from the Agent.
  */
 export function addIntentListener(intent: string, handler: (context: Context) => void): IntentListener {
+    validateEnvironment();
+
     const listener: IntentListener = {
         intent,
         handler,
@@ -246,6 +250,8 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
  * Adds a listener for incoming context broadcast from the Desktop Agent.
  */
 export function addContextListener(handler: (context: Context) => void): ContextListener {
+    validateEnvironment();
+
     const listener: ContextListener = {
         handler,
         unsubscribe: () => {
@@ -271,10 +277,14 @@ export function addContextListener(handler: (context: Context) => void): Context
 export function addEventListener(eventType: 'channel-changed', handler: (event: ChannelChangedEvent) => void): void;
 
 export function addEventListener(eventType: FDC3EventType, handler: (event: FDC3Event) => void, identity?: Identity): void {
+    validateEnvironment();
+
     eventEmitter.addListener(eventType, handler);
 }
 
 export function removeEventListener(eventType: FDC3EventType, handler: (eventPayload: ChannelChangedEvent) => void): void {
+    validateEnvironment();
+
     eventEmitter.removeListener(eventType, handler);
 }
 

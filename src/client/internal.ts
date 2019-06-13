@@ -3,9 +3,9 @@
  */
 
 /**
- * File contains types used to communicate between client and provider.
+ * File contains types and helpers used to communicate between client and provider.
  *
- * These types are a part of the client, but are not required by applications wishing to interact with the service.
+ * These exports are a part of the client, but are not required by applications wishing to interact with the service.
  * This file is excluded from the public-facing TypeScript documentation.
  */
 import {Identity} from 'openfin/_v2/main';
@@ -13,6 +13,7 @@ import {Identity} from 'openfin/_v2/main';
 import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution, FDC3Event} from './main';
 import {Channel, ChannelId, DefaultChannel, DesktopChannel} from './contextChannels';
+import {FDC3Error} from './errors';
 
 /**
  * The identity of the main application window of the service provider
@@ -182,4 +183,48 @@ export interface IntentPayload {
 export interface ChannelContextPayload {
     channel: ChannelId,
     context: Context
+}
+
+/**
+ * If error is a type we explicitly handle (e.g., `TypeError`, `FDC3Error`) so it can be identified as the correct type at the client's end
+ * Otherwise return the error itself
+ * @param error The error
+ */
+export function serializeError(error: Error | FDC3Error): Error {
+    if (error.name === 'FDC3Error') {
+        return new Error(JSON.stringify({
+            name: 'FDC3Error',
+            code: (error as FDC3Error).code,
+            message: error.message
+        }));
+    } else if (error.name === 'TypeError') {
+        return new Error(JSON.stringify({
+            name: 'TypeError',
+            message: error.message
+        }));
+    }
+
+    return error;
+}
+
+/**
+ * Check if the error was a serialized error, and if so reconstruct as the correct type
+ * Otherwise return the error itself
+ * @param error The error
+ */
+export function deserializeError(error: Error): Error | FDC3Error {
+    try {
+        const errorData = JSON.parse(error.message);
+        if (errorData && errorData.name) {
+            if (errorData.name === 'FDC3Error') {
+                return new FDC3Error(errorData.code, errorData.message);
+            } else if (errorData.name === 'TypeError') {
+                return new TypeError(errorData.message);
+            }
+        }
+    } catch (e) {
+        // Payload wasn't a serialized JSON object
+    }
+
+    return error;
 }
