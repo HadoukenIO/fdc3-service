@@ -12,6 +12,7 @@ let sendError: (result: string) => void;
 
 export function Resolver(): React.ReactElement {
     const [applications, setApplications] = React.useState<Application[]>([]);
+    const [intent, setIntent] = React.useState<String>();
 
     const handleAppOpen = (app: Application) => sendSuccess({app});
     const handleCancel = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -25,6 +26,7 @@ export function Resolver(): React.ReactElement {
 
             channel.register('resolve', async (args: ResolverArgs) => {
                 setApplications(args.applications);
+                setIntent(`Open "${prettyPrintIntent(args.intent.type)}" with`);
 
                 return new Promise<ResolverResult>((resolve, reject) => {
                     sendSuccess = resolve;
@@ -37,7 +39,7 @@ export function Resolver(): React.ReactElement {
     return (
         <div id="container">
             <div id="header">
-                <h1>Open Application With</h1>
+                <h1>{intent}</h1>
                 <div id="exit" onClick={handleCancel}>
                     <img src="assets/exit.png" />
                 </div>
@@ -48,4 +50,8 @@ export function Resolver(): React.ReactElement {
             </div>
         </div>
     );
+}
+
+function prettyPrintIntent(intent: string) {
+    return intent.split('.')[1].replace(/([A-Z]+)/g, ' $1').replace(/([A-Z][a-z])/g, ' $1').replace('_', ' ').trimLeft().toLowerCase();
 }
