@@ -52,6 +52,20 @@ export function Resolver(): React.ReactElement {
     );
 }
 
+/**
+ *  - Strip-off the namespace - remove the first dot character (if there is one) and anything preceding it.
+ *  - Split the resulting string into individual words. Any of the following will be taken as a word separator:
+ *  - A space, hyphen or underscore character
+ *  - A lowercase letter followed by an uppercase character
+ *  - Capitalise the first letter of each word, with every other character being lowercase
+ *
+ * Some examples of the above rules:
+ * - fdc3.ViewChart -> 'Open "View Chart" with'
+ * - fdc3.StartChat -> 'Open "Start Chat" with'
+ * - myorg.ViewChart -> 'Open "View Chart" with'
+ * - myorg.START_CHAT -> 'Open "Start Chat" with'
+ * - myorg.FETCH_RFQ -> 'Open "Fetch Rfq" with'
+ */
 function prettyPrintIntent(intent: string) {
-    return intent.split('.')[1].replace(/([A-Z]+)/g, ' $1').replace(/([A-Z][a-z])/g, ' $1').replace('_', ' ').trimLeft().toLowerCase();
+    return intent.split('.')[1].replace(/([A-Z]+)/g, ' $1').replace(/([A-Z][a-z])/g, ' $1').replace('_', ' ').replace('-', ' ').trimLeft().toLowerCase();
 }
