@@ -97,11 +97,9 @@ export class RemoteChannel {
                 };
 
                 const unsubscribe = () => {
-                    // TODO: Type magic to make this not necessary
                     channel.removeEventListener(eventType as any, handler as any);
                 };
 
-                // TODO: Type magic to make this not necessary
                 channel.addEventListener(eventType as any, handler as any);
                 this.channelEventListeners[listenerID] = {handler, unsubscribe};
                 return listenerID;
