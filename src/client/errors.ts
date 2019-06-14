@@ -18,53 +18,64 @@ export enum ResolveError {
 }
 
 export enum ChannelError {
-    // When getChannel / joinChannel on a non existing channel id
-    ChannelDoesNotExist = 'ChannelDoesNotExist',
-    // When trying to create a channel that already exists
-    ChannelAlreadyExists = 'ChannelAlreadyExists'
+    ChannelDoesNotExist = 'ChannelDoesNotExist'
+}
+
+export enum IdentityError {
+    WindowWithIdentityNotFound = 'WindowWithIdentityNotFound'
 }
 
 export class FDC3Error extends Error {
-    /**
-     * If error is FDC3 specific, serialize it as { code, message } so it can be identified as an `FDC3Error` at the client's end.
-     * Otherwise return the error itself
-     * @param error The error
-     */
-    public static serialize(error: Error | FDC3Error): Error {
-        if (error instanceof FDC3Error) {
-            return new Error(JSON.stringify({
-                code: error.code,
-                message: error.message
-            }));
-        }
-
-        return error;
-    }
-
-    /**
-     * Check if the error was a serialized FDC3 error, and if so reconstruct as a typed FDC3Error
-     * Otherwise return the error itself
-     * @param error The error
-     */
-    public static deserialize(error: Error): Error | FDC3Error {
-        try {
-            const fdc3Error = JSON.parse(error.message);
-            if (fdc3Error && fdc3Error.code && fdc3Error.message) {
-                return new FDC3Error(fdc3Error.code, fdc3Error.message);
-            }
-        } catch (e) {
-            // Payload wasn't a serialized JSON object
-        }
-
-        return error;
-    }
-
     public code: string;
     public constructor(code: string, message: string) {
         super(message);
         this.name = 'FDC3Error';
         this.code = code;
     }
+}
+
+/**
+ * If error is a type we explicitly handle (e.g., `TypeError`, `FDC3Error`) so it can be identified as the correct type at the client's end
+ * Otherwise return the error itself
+ * @param error The error
+ */
+export function serializeError(error: Error | FDC3Error): Error {
+    if (error.name === 'FDC3Error') {
+        return new Error(JSON.stringify({
+            name: 'FDC3Error',
+            code: (error as FDC3Error).code,
+            message: error.message
+        }));
+    } else if (error.name === 'TypeError') {
+        return new Error(JSON.stringify({
+            name: 'TypeError',
+            message: error.message
+        }));
+    }
+
+    return error;
+}
+
+/**
+ * Check if the error was a serialized error, and if so reconstruct as the correct type
+ * Otherwise return the error itself
+ * @param error The error
+ */
+export function deserializeError(error: Error): Error | FDC3Error {
+    try {
+        const errorData = JSON.parse(error.message);
+        if (errorData && errorData.name) {
+            if (errorData.name === 'FDC3Error') {
+                return new FDC3Error(errorData.code, errorData.message);
+            } else if (errorData.name === 'TypeError') {
+                return new TypeError(errorData.message);
+            }
+        }
+    } catch (e) {
+        // Payload wasn't a serialized JSON object
+    }
+
+    return error;
 }
 
 /**
