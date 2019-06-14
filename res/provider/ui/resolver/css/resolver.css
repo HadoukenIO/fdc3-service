@@ -1,0 +1,8 @@
+/*
+    TODO: Add fonts to webpack bundling.  JIRA SERVICE-527.  Once completed we can remove this, 
+    and reference to this css in the HTML.
+*/
+@font-face {
+    font-family: Akkurat;
+    src: url(../assets/Akkurat.ttf);
+}

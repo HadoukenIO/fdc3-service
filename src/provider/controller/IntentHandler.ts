@@ -11,13 +11,13 @@ import {APIToClientTopic} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
 
 import {ContextHandler} from './ContextHandler';
-import {SelectorHandler, SelectorResult} from './SelectorHandler';
+import {ResolverHandler, ResolverResult} from './ResolverHandler';
 
 @injectable()
 export class IntentHandler {
     private readonly _directory: AppDirectory;
     private readonly _model: Model;
-    private readonly _selector: SelectorHandler;
+    private readonly _resolver: ResolverHandler;
     private readonly _apiHandler: APIHandler<APIToClientTopic>;
 
     private _promise: Promise<IntentResolution>|null;
@@ -25,12 +25,12 @@ export class IntentHandler {
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
         @inject(Inject.MODEL) model: Model,
-        @inject(Inject.SELECTOR) selector: SelectorHandler,
+        @inject(Inject.RESOLVER) selector: ResolverHandler,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIToClientTopic>,
     ) {
         this._directory = directory;
         this._model = model;
-        this._selector = selector;
+        this._resolver = selector;
         this._apiHandler = apiHandler;
 
         this._promise = null;
@@ -95,13 +95,13 @@ export class IntentHandler {
     private async startResolve(intent: Intent): Promise<IntentResolution> {
         console.log('Handling intent', intent.type);
 
-        // Show selector
-        const selection: SelectorResult|null = await this._selector.handleIntent(intent).catch(e => {
+        // Show resolver
+        const selection: ResolverResult|null = await this._resolver.handleIntent(intent).catch(e => {
             console.warn(e);
             return null;
         });
         if (!selection) {
-            throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Selector closed or cancelled');
+            throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Resolver closed or cancelled');
         }
 
         // Handle response
