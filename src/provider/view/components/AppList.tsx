@@ -14,7 +14,7 @@ interface AppListProps {
 export function AppList(props: AppListProps): React.ReactElement {
     return (
         <div id="app-list">
-            <p>Apps</p>
+            <p>Available Applications</p>
             <ul>
                 {props.applications.map((app: Application) => (
                     <AppCard key={app.appId} app={app} openHandler={props.onAppOpen} />

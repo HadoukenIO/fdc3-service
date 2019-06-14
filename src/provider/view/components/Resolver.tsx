@@ -37,12 +37,15 @@ export function Resolver(): React.ReactElement {
     return (
         <div id="container">
             <div id="header">
-                <h1>Select an Application</h1>
+                <h1>Open Application With</h1>
                 <div id="exit" onClick={handleCancel}>
                     <img src="assets/exit.png" />
                 </div>
             </div>
             <AppList applications={applications} onAppOpen={handleAppOpen}/>
+            <div id="cancel" onClick={handleCancel}>
+                <h1>Cancel</h1>
+            </div>
         </div>
     );
 }

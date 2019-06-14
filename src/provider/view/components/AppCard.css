@@ -1,9 +1,8 @@
 .app-card {
     height: 85px;
-    padding-left: var(--left-padding);
     display: flex;
     align-items: center;
-    border-bottom: 1px solid #333333;
+    border-top: 1px solid #494848;
 }
 
 .app-card:last-child {
@@ -11,17 +10,20 @@
 }
 
 .app-card:hover {
-    background: #252637;
+    background: #262626;;
 }
 
 .app-card>.icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 6px;
+    width: 50px;
+    height: 50px;
+    border-radius: 18px;
+    margin-left: 12px;
+    box-shadow: 0px 17px 43px -13px rgba(0,0,0,0.6);
 }
 
 .app-card>h1 {
-    margin: 0 18px 0 18px;
+    font-size:16px;
+    margin: 0 14px 0 14px;
     overflow: hidden;
     display: -webkit-box;
     text-overflow: ellipsis;
