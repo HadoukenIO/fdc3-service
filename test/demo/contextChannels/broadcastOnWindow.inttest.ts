@@ -171,13 +171,14 @@ describe('When broadcasting on a desktop channel', () => {
     }, appStartupTime * 2);
 });
 
-describe('When joining a channel', () => {
-    test('When the channel is a desktop channel, joining window receives cached context', async () => {
+describe('When adding a context listener', () => {
+    test('A context is received when joining a desktop channel that has been broadcast on and has remained occupied', async () => {
         const [yellowWindow, channelChangingWindow] = await setupWindows('yellow', 'red');
 
-        // Broadcast our test context on the yellow channel
+        // Broadcast our test context on the yellow channel to give the channel a cached context
         await fdc3Remote.broadcast(yellowWindow, testContext);
 
+        // Set up our context listener
         const channelChangingListener = await fdc3Remote.addContextListener(channelChangingWindow);
 
         // Change the channel of our now-red window to yellow
@@ -188,15 +189,16 @@ describe('When joining a channel', () => {
         expect(receivedContexts).toEqual([testContext]);
     }, appStartupTime * 2);
 
-    test('When the channel is the default channel, joining window receives no cached context', async () => {
-        const [channelChangingWindow] = await setupWindows('red');
+    test('No context is received when joining the default channel, which has been broadcast on and has remained occupied', async () => {
+        const [defaultWindow, channelChangingWindow] = await setupWindows('default', 'red');
 
         // Broadcast our test context on the default channel
-        await fdc3Remote.broadcast(testManagerIdentity, testContext);
+        await fdc3Remote.broadcast(defaultWindow, testContext);
 
+        // Set up our context listener
         const channelChangingWindowListener = await fdc3Remote.addContextListener(channelChangingWindow);
 
-        // Change the channel of our window to default
+        // Change the channel of our now-red window to default
         await joinChannel(channelChangingWindow, 'default');
 
         // Check our now-default window received no context
@@ -204,7 +206,7 @@ describe('When joining a channel', () => {
         expect(receivedContexts).toHaveLength(0);
     });
 
-    test('When the channel is a desktop channel, which was occupied but is now empty, joining window receives no cached context', async () => {
+    test('No context is received when joining a desktop channel that has been emptied since last being broadcast on', async () => {
         const [broadcastingWindow, listeningWindow] = await setupWindows('green', 'yellow');
 
         // Broadcast to the currently occupied green channel, setting a cached context
