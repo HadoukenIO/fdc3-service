@@ -589,9 +589,9 @@ async function test_raiseIntentExpectResolverSelectApp(title: string, getParams:
  * Closes the resolver by remotely clicking the Cancel button in it
  */
 async function closeResolver() {
-    const cancelClicked = await fdc3Remote.clickHTMLElement(resolverWindowIdentity, '#btn-cancel');
+    const cancelClicked = await fdc3Remote.clickHTMLElement(resolverWindowIdentity, '#cancel');
     if (!cancelClicked) {
-        throw new Error('Error clicking cancel button on resolver. Make sure it has id="btn-cancel".');
+        throw new Error('Error clicking cancel button on resolver. Make sure it has id="cancel".');
     }
     await delay(100); // Give the UI some time to process the click and close the window
 
@@ -600,18 +600,13 @@ async function closeResolver() {
 }
 
 /**
- * Selects an app on the resolver by remotely clicking on its button and subsequently on the 'open' button
+ * Selects an app on the resolver by remotely clicking on its button
  * @param appName name of app to open
  */
 async function selectResolverApp(appName: string) {
     const appClicked = await fdc3Remote.clickHTMLElement(resolverWindowIdentity, `#${appName}`);
     if (!appClicked) {
         throw new Error(`App with name '${appName}' not found in resolver`);
-    }
-    await delay(100);
-    const openClicked = await fdc3Remote.clickHTMLElement(resolverWindowIdentity, '#btn-open');
-    if (!openClicked) {
-        throw new Error('Error clicking open button on resolver. Make sure it has id="btn-open".');
     }
     await delay(100);
 
