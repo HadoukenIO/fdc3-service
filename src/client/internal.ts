@@ -10,9 +10,11 @@
  */
 import {Identity} from 'openfin/_v2/main';
 
+import {FDC3Error, IdentityError} from './errors';
 import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution} from './main';
-import {Channel, ChannelId} from './contextChannels';
+import {Channel, ChannelId, DefaultChannel, DesktopChannel} from './contextChannels';
+import {FDC3Event} from './connection';
 
 /**
  * The identity of the main application window of the service provider
@@ -46,10 +48,11 @@ export enum APIFromClientTopic {
     RAISE_INTENT = 'RAISE-INTENT',
     ADD_INTENT_LISTENER = 'ADD-INTENT-LISTENER',
     REMOVE_INTENT_LISTENER = 'REMOVE-INTENT-LISTENER',
-    GET_ALL_CHANNELS = 'GET-ALL-CHANNELS',
-    JOIN_CHANNEL = 'JOIN-CHANNEL',
-    GET_CHANNEL = 'GET-CHANNEL',
-    GET_CHANNEL_MEMBERS = 'GET-CHANNEL-MEMBERS'
+    GET_DESKTOP_CHANNELS = 'GET-DESKTOP-CHANNELS',
+    GET_CHANNEL_BY_ID = 'GET-CHANNEL-BY-ID',
+    GET_CURRENT_CHANNEL = 'GET-CURRENT-CHANNEL',
+    CHANNEL_GET_MEMBERS = 'CHANNEL-GET-MEMBERS',
+    CHANNEL_JOIN = 'CHANNEL-JOIN'
 }
 
 /**
@@ -68,10 +71,11 @@ export type APIFromClient = {
     [APIFromClientTopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
     [APIFromClientTopic.ADD_INTENT_LISTENER]: [IntentListenerPayload, void];
     [APIFromClientTopic.REMOVE_INTENT_LISTENER]: [IntentListenerPayload, void];
-    [APIFromClientTopic.GET_ALL_CHANNELS]: [GetAllChannelsPayload, Channel[]];
-    [APIFromClientTopic.JOIN_CHANNEL]: [JoinChannelPayload, void];
-    [APIFromClientTopic.GET_CHANNEL]: [GetChannelPayload, Channel];
-    [APIFromClientTopic.GET_CHANNEL_MEMBERS]: [GetChannelMembersPayload, Identity[]];
+    [APIFromClientTopic.GET_DESKTOP_CHANNELS]: [GetDesktopChannelsPayload, DesktopChannelTransport[]];
+    [APIFromClientTopic.GET_CHANNEL_BY_ID]: [GetChannelByIdPayload, ChannelTransport];
+    [APIFromClientTopic.GET_CURRENT_CHANNEL]: [GetCurrentChannelPayload, ChannelTransport];
+    [APIFromClientTopic.CHANNEL_GET_MEMBERS]: [ChannelGetMembersPayload, Identity[]];
+    [APIFromClientTopic.CHANNEL_JOIN]: [ChannelJoinPayload, void];
 }
 
 export type APIToClient = {
@@ -79,14 +83,37 @@ export type APIToClient = {
     [APIToClientTopic.INTENT]: [IntentPayload, any];
 }
 
+export type TransportMappings<T> =
+    T extends Channel ? ChannelTransport :
+    T extends DefaultChannel ? ChannelTransport :
+    T extends DesktopChannel ? DesktopChannelTransport :
+    T;
+
+export type EventTransport<T extends FDC3Event> = {
+    [K in keyof T]: TransportMappings<T[K]>;
+}
+
+export interface ChannelTransport {
+    id: ChannelId;
+    type: string;
+}
+
+export interface DesktopChannelTransport extends ChannelTransport {
+    type: 'desktop';
+    name: string;
+    color: number;
+}
+
 export interface OpenPayload {
     name: AppName;
     context?: Context;
 }
+
 export interface FindIntentPayload {
     intent: string;
     context?: Context;
 }
+
 export interface FindIntentsByContextPayload {
     context: Context;
 }
@@ -101,46 +128,36 @@ export interface RaiseIntentPayload {
     target?: string;
 }
 
-export interface IntentPayload {
-    intent: string;
-    context: Context;
-}
-
-export interface GetAllChannelsPayload {
+export interface GetDesktopChannelsPayload {
 
 }
 
-export interface JoinChannelPayload {
-    id: ChannelId,
-    identity?: Identity
-}
-
-export interface GetChannelPayload {
-    identity?: Identity
-}
-
-export interface GetChannelMembersPayload {
+export interface GetChannelByIdPayload {
     id: ChannelId;
+}
+
+export interface GetCurrentChannelPayload {
+    identity?: Identity;
+}
+
+export interface ChannelGetMembersPayload {
+    id: ChannelId;
+}
+
+export interface ChannelJoinPayload {
+    id: ChannelId;
+    identity?: Identity;
+}
+
+export interface IntentListenerPayload {
+    intent: string;
 }
 
 export interface ContextPayload {
     context: Context;
 }
 
-export interface IntentListenerPayload {
-  intent: string;
-}
-
-/**
- * Creates a deferred promise and returns it along with handlers to resolve/reject it imperatively
- * @returns a tuple with the promise and its resolve/reject handlers
- */
-export function deferredPromise<T = void>(): [Promise<T>, (value?: T) => void, (reason?: any) => void] {
-    let res: (value?: T) => void;
-    let rej: (reason?: any) => void;
-    const p = new Promise<T>((r, rj) => {
-        res = r;
-        rej = rj;
-    });
-    return [p, res!, rej!];
+export interface IntentPayload {
+    intent: string;
+    context: Context;
 }

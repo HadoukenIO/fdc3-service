@@ -15,9 +15,9 @@ import {EventEmitter} from 'events';
 
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
+import {deserializeError} from './errors';
 import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient} from './internal';
-import {ChannelChangedEvent} from './contextChannels';
-import {FDC3Error} from './errors';
+import {ChannelChangedEvent, getChannelObject} from './contextChannels';
 
 /**
  * The version of the NPM package.
@@ -58,7 +58,13 @@ export function getServicePromise(): Promise<ChannelClient> {
             channelPromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}}).then((channel: ChannelClient) => {
                 // Register service listeners
                 channel.register('WARN', (payload: any) => console.warn(payload));  // tslint:disable-line:no-any
-                channel.register('event', (event: FDC3Event) => {
+                channel.register('event', async (event: FDC3Event) => {
+                    // Special-handling for some event types, to convert transport-type event to client-side event.
+                    if (event.type === 'channel-changed') {
+                        event.channel = event.channel ? getChannelObject(event.channel) : null;
+                        event.previousChannel = event.previousChannel ? getChannelObject(event.previousChannel) : null;
+                    }
+
                     eventEmitter.emit(event.type, event);
                 });
                 // Any unregistered action will simply return false
@@ -82,6 +88,6 @@ export async function tryServiceDispatch<T extends APIFromClientTopic>(action: T
     const channel: ChannelClient = await getServicePromise();
     return (channel.dispatch(action, payload) as Promise<APIFromClient[T][1]>)
         .catch(error => {
-            throw FDC3Error.deserialize(error);
+            throw deserializeError(error);
         });
 }

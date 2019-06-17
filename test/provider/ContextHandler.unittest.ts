@@ -8,7 +8,7 @@ import {ChannelModel} from '../../src/provider/ChannelModel';
 import {Signal1} from '../../src/provider/common/Signal';
 import {ChannelChangedEvent, ChannelId, Channel} from '../../src/client/main';
 import {AppWindow} from '../../src/provider/model/AppWindow';
-import {APIFromClientTopic, APIToClientTopic} from '../../src/client/internal';
+import {APIFromClientTopic, APIToClientTopic, ChannelTransport} from '../../src/client/internal';
 import {createMockAppWindow} from '../mocks';
 
 jest.mock('../../src/provider/APIHandler');
@@ -42,7 +42,7 @@ beforeEach(() => {
 
     const mockChannelModel = new ChannelModel(null!);
     // Modify default mock ChannelModel just enough to let ContextHandler work
-    (mockChannelModel.getChannel as jest.Mock<Channel, [Identity]>).mockImplementation((identity: Identity) => {
+    (mockChannelModel.getChannelForWindow as jest.Mock<ChannelTransport, [Identity]>).mockImplementation((identity: Identity) => {
         return {id: 'test', type: 'user', name: 'test', color: 0};
     });
     (mockChannelModel as any)['onChannelChanged'] = new Signal1<ChannelChangedEvent>();

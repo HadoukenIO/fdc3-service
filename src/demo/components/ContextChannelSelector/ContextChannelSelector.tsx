@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import {Channel, getChannel, getAllChannels, joinChannel, GLOBAL_CHANNEL_ID, ChannelId} from '../../../client/contextChannels';
+import {Channel, defaultChannel, getCurrentChannel, getDesktopChannels, DesktopChannel} from '../../../client/contextChannels';
 
 import './ContextChannelSelector.css';
 
@@ -17,36 +17,44 @@ ContextChannelSelector.defaultProps = {
 */
 export function ContextChannelSelector(props: ContextChannelSelectorProps): React.ReactElement {
     const {float} = props;
-    const [currentChannelId, setCurrentChannelId] = React.useState<ChannelId>(GLOBAL_CHANNEL_ID);
+    const [currentChannelId, setCurrentChannelId] = React.useState<Channel>(defaultChannel);
     const [color, setColor] = React.useState<number>(0xFFFFFF);
     const [channels, setChannels] = React.useState<Channel[]>([]);
     React.useEffect(() => {
-        getChannel().then(channel => {
-            setColor(channel.color);
-            setCurrentChannelId(channel.id);
+        getCurrentChannel().then(channel => {
+            if (channel.type === 'desktop') {
+                setColor(channel.color);
+            } else {
+                // Use white for default channel
+                setColor(0xFFFFFF);
+            }
+            setCurrentChannelId(channel);
         });
-        getAllChannels().then(channels => {
-            setChannels(channels);
+        getDesktopChannels().then(channels => {
+            setChannels([defaultChannel, ...channels]);
         });
     }, []);
 
-    const handleChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const {value: id} = event.currentTarget;
         const selectedChannel = channels.find(channel => channel.id === id);
 
-        try {
-            await joinChannel(id);
-            setCurrentChannelId(id);
-            if (selectedChannel) {
-                setColor(selectedChannel.color);
-            }
-        } catch (e) {
-            // Stringifying an `Error` omits the message!
-            const error: any = {
-                message: e.message,
-                ...e
-            };
-            console.error(`Unable to join channel ${id}! ${error.message}`, e);
+        if (selectedChannel) {
+            selectedChannel
+                .join()
+                .then(() => {
+                    setCurrentChannelId(selectedChannel);
+                    if (selectedChannel) {
+                        if (selectedChannel.type === 'desktop') {
+                            setColor(selectedChannel.color);
+                        }
+                    } else {
+                        setColor(0xFFFFFF);
+                    }
+                })
+                .catch((error: Error) => {
+                    console.error(`Unable to join channel ${id}! ${error.message}`);
+                });
         }
     };
 
@@ -54,7 +62,7 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
         <div className={`context-channel ${float ? 'float' : ''}`}>
             <div className='selector'>
                 <div className="color" style={{backgroundColor: numberToHex(color)}}></div>
-                <select value={currentChannelId} onChange={handleChange}>
+                <select value={currentChannelId.id} onChange={handleChange}>
                     {
                         channels.map((channel, index) => {
                             return (
@@ -62,7 +70,7 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
                                     key={channel.id + index}
                                     value={channel.id}
                                 >
-                                    {channel.name}
+                                    {(channel as DesktopChannel).name || 'Default'}
                                 </option>
                             );
                         })
