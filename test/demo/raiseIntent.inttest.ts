@@ -750,9 +750,9 @@ interface NonDirectoryAppIdentity extends AppIdentity {
     manifestUrl: string;
 }
 
-function raiseIntent(intent: Intent, target?: AppIdentity, sendFromIdentity?: Identity): Promise<void> {
+function raiseIntent(intent: Intent, target?: AppIdentity): Promise<void> {
     return fdc3Remote.raiseIntent(
-        sendFromIdentity || testManagerIdentity,
+        testManagerIdentity,
         intent.type,
         intent.context,
         target ? target.name : undefined

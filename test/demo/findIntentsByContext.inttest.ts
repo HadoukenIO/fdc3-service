@@ -76,6 +76,6 @@ describe('Resolving intents by context, findIntentsByContext', () => {
     });
 });
 
-function findIntentsByContext(context: Context, sendFromIdentity?: Identity): Promise<AppIntent[]> {
-    return fdc3Remote.findIntentsByContext(sendFromIdentity || testManagerIdentity, context);
+function findIntentsByContext(context: Context): Promise<AppIntent[]> {
+    return fdc3Remote.findIntentsByContext(testManagerIdentity, context);
 }

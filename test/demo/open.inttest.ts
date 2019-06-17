@@ -196,6 +196,6 @@ and does not trigger the context listener of the already open app [broken in pro
     }, Timeouts.APP_START_FROM_MANIFEST + 2000);
 });
 
-function open(appName: string, context: Context | undefined = undefined, sendFromIdentity?: Identity): Promise<void> {
-    return fdc3Remote.open(sendFromIdentity || testManagerIdentity, appName, context);
+function open(appName: string, context?: Context | undefined): Promise<void> {
+    return fdc3Remote.open(testManagerIdentity, appName, context);
 }

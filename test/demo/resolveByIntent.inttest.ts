@@ -140,8 +140,8 @@ function getDirectoryAppsForIntent(directory: DirectoryApp[], targetIntent: stri
     return directory.filter(app => app.intents && app.intents.some(intent => intent.name === targetIntent)).map(app => app.name).sort();
 }
 
-function findIntent(intent: string, context: Context | undefined = undefined, sendFromIdentity?: Identity): Promise<DirectoryApp[]> {
-    return fdc3Remote.findIntent(sendFromIdentity || testManagerIdentity, intent, context)
+function findIntent(intent: string, context?: Context | undefined): Promise<DirectoryApp[]> {
+    return fdc3Remote.findIntent(testManagerIdentity, intent, context)
         .then(appIntent => appIntent.apps);
 }
 
@@ -149,7 +149,7 @@ function findIntent(intent: string, context: Context | undefined = undefined, se
 
 function setupOpenDirectoryApp(app: AppIdentity) {
     beforeEach(async () => {
-        await fdc3Remote.open(testManagerIdentity, app.uuid);
+        await fdc3Remote.open(testManagerIdentity, app.name);
     });
 
     afterEach(async () => {
