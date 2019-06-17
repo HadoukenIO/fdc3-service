@@ -7,11 +7,11 @@ import {Inject} from '../common/Injectables';
 import {AppDirectory} from '../model/AppDirectory';
 import {Model} from '../model/Model';
 import {Intent, Application} from '../../client/main';
-import {SELECTOR_IDENTITY} from '../../client/internal';
+import {RESOLVER_IDENTITY} from '../../client/internal';
 
 import {AsyncInit} from './AsyncInit';
 
-const SELECTOR_URL = (() => {
+const RESOLVER_URL = (() => {
     let providerLocation = window.location.href;
 
     if (providerLocation.indexOf('http://localhost') === 0) {
@@ -52,7 +52,7 @@ export const enum DefaultAction {
 /**
  * Data passed to app selector when it is invoked by the provider
  */
-export interface SelectorArgs {
+export interface ResolverArgs {
     intent: Intent;
     applications: Application[];
 }
@@ -60,13 +60,13 @@ export interface SelectorArgs {
 /**
  * Data returned by app selector when the user has made a selection
  */
-export interface SelectorResult {
+export interface ResolverResult {
     app: Application;
     action: string;
 }
 
 @injectable()
-export class SelectorHandler extends AsyncInit {
+export class ResolverHandler extends AsyncInit {
     private readonly _directory: AppDirectory;
     private readonly _model: Model;
 
@@ -87,8 +87,8 @@ export class SelectorHandler extends AsyncInit {
      */
     protected async init(): Promise<void> {
         const options: WindowOption = {
-            url: SELECTOR_URL,
-            name: SELECTOR_IDENTITY.name,
+            url: RESOLVER_URL,
+            name: RESOLVER_IDENTITY.name,
             // alwaysOnTop: true,
             autoShow: false,
             saveWindowState: false,
@@ -100,7 +100,7 @@ export class SelectorHandler extends AsyncInit {
         };
 
         // Close any existing selector window (in case service is restarted)
-        await fin.Window.wrapSync(SELECTOR_IDENTITY).close(true).catch(() => {});
+        await fin.Window.wrapSync(RESOLVER_IDENTITY).close(true).catch(() => {});
 
         // Create selector
         this._window = await fin.Window.create(options);
@@ -115,15 +115,15 @@ export class SelectorHandler extends AsyncInit {
      *
      * @param intent Intent that is about to be resolved
      */
-    public async handleIntent(intent: Intent): Promise<SelectorResult> {
-        const msg: SelectorArgs = {
+    public async handleIntent(intent: Intent): Promise<ResolverResult> {
+        const msg: ResolverArgs = {
             intent,
             applications: await this._model.getApplicationsForIntent(intent.type)
         };
 
         await this._window.show();
         await this._window.setAsForeground();
-        const selection: SelectorResult = await this._channel.dispatch('resolve', msg).catch(console.error);
+        const selection: ResolverResult = await this._channel.dispatch('resolve', msg).catch(console.error);
         await this._window.hide();
 
         return selection;

@@ -23,11 +23,11 @@ export const SERVICE_IDENTITY = {
 };
 
 /**
- * The identity of the selector window, running on the FDC3 service application
+ * The identity of the resolver window, running on the FDC3 service application
  */
-export const SELECTOR_IDENTITY: Identity = {
+export const RESOLVER_IDENTITY: Identity = {
     uuid: SERVICE_IDENTITY.uuid,
-    name: 'fdc3-selector'
+    name: 'fdc3-resolver'
 };
 
 /**

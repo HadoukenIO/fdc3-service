@@ -11,7 +11,7 @@ enum Injectable {
     ENVIRONMENT,
     INTENT_HANDLER,
     MODEL,
-    SELECTOR,
+    RESOLVER,
     CHANNEL_MODEL
 }
 
