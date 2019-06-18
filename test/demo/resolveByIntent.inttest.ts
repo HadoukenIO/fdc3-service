@@ -1,37 +1,25 @@
 import 'jest';
 import fetch from 'node-fetch';
-import {Identity} from 'openfin/_v2/main';
 
 import {Application as DirectoryApp} from '../../src/client/directory';
-import {Intents} from '../../src/client/intents';
 import {Context} from '../../src/client/main';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay} from './utils/delay';
-
-const testManagerIdentity = {
-    uuid: 'test-app',
-    name: 'test-app'
-};
-
-const testAppInDirectory = {
-    uuid: 'test-app-1',
-    name: 'test-app-1',
-    appId: '100'
-};
-
-const testAppNotInDirectory: NonDirectoryApp = {
-    uuid: 'test-app-not-in-directory',
-    name: 'test-app-not-in-directory',
-    manifestUrl: 'http://localhost:3923/test/configs/test-app-not-in-directory.json'
-};
+import {setupStartNonDirectoryApp, setupOpenDirectoryApp} from './utils/common';
+import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1} from './constants';
 
 const validIntent = 'DialCall';
 
 const invalidIntent = 'some-nonexistent-intent';
 
 describe('Resolving applications by intent', () => {
+    beforeEach(async () => {
+        // The main launcher app should remain running for the duration of all tests.
+        await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
+    });
+
     describe('Without context', () => {
         let directory: DirectoryApp[];
 
@@ -63,12 +51,12 @@ the returned object lists all and only those apps which accept the intent', asyn
             });
 
             describe('When a directory app is running', () => {
-                setupOpenDirectoryApp(testAppInDirectory);
+                setupOpenDirectoryApp(testAppInDirectory1);
 
                 describe('But it does not register a listener for an intent it is supposed to handle', () => {
                     test('When calling findIntent with the intent, the app is NOT returned', async () => {
                         const appsForIntent = getDirectoryAppsForIntent(directory, validIntent);
-                        const expectedAppNames = appsForIntent.filter(app => app !== testAppInDirectory.name);
+                        const expectedAppNames = appsForIntent.filter(app => app !== testAppInDirectory1.name);
 
                         const actualAppNames = await findIntent(validIntent).then(apps => apps.map(app => app.name));
 
@@ -78,7 +66,7 @@ the returned object lists all and only those apps which accept the intent', asyn
 
                 describe('And it has registered a listener for an intent it is supposed to handle', () => {
                     beforeEach(async () => {
-                        await fdc3Remote.addIntentListener(testAppInDirectory, validIntent);
+                        await fdc3Remote.addIntentListener(testAppInDirectory1, validIntent);
                         await delay(300);
                     });
 
@@ -96,9 +84,7 @@ the returned object lists all and only those apps which accept the intent', asyn
         });
 
         describe('With an ad-hoc app running', () => {
-            beforeEach(async () => {
-                setupStartNonDirectoryApp(testAppNotInDirectory);
-            });
+            setupStartNonDirectoryApp(testAppNotInDirectory1);
 
             describe('But the ad-hoc app has not registered a listener for the intent', () => {
                 test('When calling findIntent with the intent, the ad-hoc app is NOT included in the results', async () => {
@@ -113,13 +99,13 @@ the returned object lists all and only those apps which accept the intent', asyn
             });
             describe('And the ad-hoc app has registered a listener for the intent', () => {
                 beforeEach(async () => {
-                    await fdc3Remote.addIntentListener(testAppNotInDirectory, validIntent);
+                    await fdc3Remote.addIntentListener(testAppNotInDirectory1, validIntent);
                     await delay(300);
                 });
 
                 test('When calling findIntent with the intent, the ad-hoc app is returned among the results', async () => {
                     const directoryAppsForIntent = getDirectoryAppsForIntent(directory, validIntent);
-                    const expectedAppNames = directoryAppsForIntent.concat([testAppNotInDirectory.name]).sort();
+                    const expectedAppNames = directoryAppsForIntent.concat([testAppNotInDirectory1.name]).sort();
 
                     // Resolve the valid intent
                     const actualAppNames = await findIntent(validIntent).then(apps => apps.map(app => app.name));
@@ -143,36 +129,4 @@ function getDirectoryAppsForIntent(directory: DirectoryApp[], targetIntent: stri
 function findIntent(intent: string, context?: Context | undefined): Promise<DirectoryApp[]> {
     return fdc3Remote.findIntent(testManagerIdentity, intent, context)
         .then(appIntent => appIntent.apps);
-}
-
-// TODO: The below helper functions and types are copied from `raiseIntent` tests. Should put everything in a util file
-
-function setupOpenDirectoryApp(app: AppIdentity) {
-    beforeEach(async () => {
-        await fdc3Remote.open(testManagerIdentity, app.name);
-    });
-
-    afterEach(async () => {
-        await fin.Application.wrapSync(app).quit().catch(() => {});
-    });
-}
-
-function setupStartNonDirectoryApp(app: NonDirectoryApp) {
-    beforeEach(async () => {
-        await fin.Application.startFromManifest(app.manifestUrl);
-    });
-
-    afterEach(async () => {
-        await fin.Application.wrapSync(app).quit().catch(() => {});
-    });
-}
-
-interface AppIdentity {
-    uuid: string;
-    name: string;
-    appId?: string;
-}
-
-interface NonDirectoryApp extends AppIdentity {
-    manifestUrl: string;
 }

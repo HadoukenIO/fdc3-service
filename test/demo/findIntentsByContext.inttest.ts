@@ -1,17 +1,11 @@
 import 'jest';
 
-import {Identity} from 'openfin/_v2/main';
-
 import {ResolveError} from '../../src/client/errors';
 import {Context, AppIntent} from '../../src/client/main';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
-
-const testManagerIdentity = {
-    uuid: 'test-app',
-    name: 'test-app'
-};
+import {testManagerIdentity} from './constants';
 
 /**
  * A context missing the mandatory `type` field

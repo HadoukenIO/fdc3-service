@@ -47,7 +47,7 @@ async function setupWindows(...channels: (ChannelId|undefined)[]): Promise<Ident
         const channel = channels[i];
         const identity = appIdentities[i + offset];
 
-        await fdc3Remote.open(testManagerIdentity, identity.uuid);
+        await fdc3Remote.open(testManagerIdentity, identity.name);
         const app = fin.Application.wrapSync(appIdentities[i + offset]);
 
         await expect(app.isRunning()).resolves.toBe(true);
