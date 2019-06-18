@@ -79,17 +79,16 @@ describe('Opening applications with the FDC3 client', () => {
         });
 
         describe('With the app not running', () => {
-            test.skip('When passing a valid app name and a valid context, the app opens and its context listener is triggered with the correct\
-data [broken in provider re-arch, to be fixed in future story]', async () => {
+            test('When passing a valid app name and a valid context, the app opens and its context listener is triggered with the correct data', async () => {
                 // From the launcher app, call fdc3.open with a valid name and context
                 await open(testAppWithPreregisteredListeners1.name, validContext);
 
                 // Check that the app is now running
-                await expect(fin.Application.wrapSync({uuid: testAppWithPreregisteredListeners1.uuid}).isRunning()).resolves.toBe(true);
+                await expect(fin.Application.wrapSync(testAppWithPreregisteredListeners1).isRunning()).resolves.toBe(true);
 
                 // Retrieve the list of contexts the app received
                 const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
-                const receivedContexts: Context[] = await preregisteredListener.getReceivedContexts();
+                const receivedContexts = await preregisteredListener.getReceivedContexts();
 
                 // Check that the app received the context passed in open and nothing else
                 expect(receivedContexts).toEqual([validContext]);
@@ -132,32 +131,32 @@ data [broken in provider re-arch, to be fixed in future story]', async () => {
 
                 // Retrieve the list of contexts the app received
                 const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
-                const receivedContexts: Context[] = await preregisteredListener.getReceivedContexts();
+                const receivedContexts = await preregisteredListener.getReceivedContexts();
 
                 // Check that the app received the context passed in open and nothing else
                 expect(receivedContexts).toEqual([validContext]);
             });
 
-            test.skip('When an app is already running, opening a second app with context works as expected \
-and does not trigger the context listener of the already open app [broken in provider re-arch, to be fixed in future story]', async () => {
+            test('When an app is already running, opening a second app with context works as expected \
+and does not trigger the context listener of the already open app', async () => {
                 // From the launcher app, call fdc3.open with the name of as second app
                 await open(testAppWithPreregisteredListeners2.name, validContext);
                 // Check that the second app started
-                await expect(fin.Application.wrapSync({uuid: testAppWithPreregisteredListeners2.uuid}).isRunning()).resolves.toBe(true);
+                await expect(fin.Application.wrapSync(testAppWithPreregisteredListeners2).isRunning()).resolves.toBe(true);
 
                 // Retrieve the list of contexts the second app received
                 const listener2 = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners2);
-                const secondReceivedContexts: Context[] = await listener2.getReceivedContexts();
+                const receivedContexts2 = await listener2.getReceivedContexts();
 
                 // Check that the second app received the context passed in open and nothing else
-                expect(secondReceivedContexts).toEqual([validContext]);
+                expect(receivedContexts2).toEqual([validContext]);
 
                 // Retrieve the list of contexts the first app received
                 const listener1 = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
-                const firstReceivedContexts: Context[] = await listener1.getReceivedContexts();
+                const receivedContexts1 = await listener1.getReceivedContexts();
 
                 // Check that the first app did not receive a context
-                expect(firstReceivedContexts).toHaveLength(0);
+                expect(receivedContexts1).toEqual([]);
 
                 await fin.Application.wrapSync(testAppWithPreregisteredListeners2).quit().catch(() => {});
             });
