@@ -9,7 +9,7 @@ import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay} from './utils/delay';
 import {
-    AppIdentity, DirectoryAppIdentity,
+    AppIdentity, DirectoryAppIdentity, quitApp,
     setupOpenDirectoryApp, setupStartNonDirectoryApp, setupStartNonDirectoryAppWithIntentListener
 } from './utils/common';
 import {
@@ -33,7 +33,7 @@ const preregisteredIntent: Intent = {
 const testAppWithUniqueIntent = testAppInDirectory4;
 
 /**
- * Intent that is only handled by a single app in the directory (`test-app-4`)
+ * Intent that is only registered by a single app in the directory (`test-app-4`)
  */
 const uniqueIntent: Intent = {
     type: 'test.IntentOnlyOnApp4',
@@ -109,13 +109,13 @@ describe('Intent listeners and raising intents', () => {
 
                             expect(receivedContexts).toEqual([preregisteredIntent.context]);
 
-                            await fin.Application.wrapSync(testAppWithPreregisteredListeners1).quit();
+                            await quitApp(testAppWithPreregisteredListeners1);
                         });
                     });
 
                     describe('And the listener is added after a delay', () => {
                         afterEach(async () => {
-                            await fin.Application.wrapSync(testAppInDirectory1).quit();
+                            await quitApp(testAppInDirectory1);
                         });
                         describe('Delay is short enough for the intent handshake to succeed', () => {
                             test('The targeted app opens and its listener is triggered just once after it is set up, with the correct context', async () => {
@@ -395,7 +395,7 @@ the first listener is triggered exactly once with the correct context, and the s
                         await expect(fin.Application.wrapSync(testAppWithUniqueIntent).isRunning()).resolves.toBe(true);
                     });
                     afterEach(async () => {
-                        await fin.Application.wrapSync(testAppWithUniqueIntent).quit();
+                        await quitApp(testAppWithUniqueIntent);
                     });
 
                     describe('When the directory app does not register the intent listener after opening', () => {
@@ -432,7 +432,21 @@ the first listener is triggered exactly once with the correct context, and the s
                                 'Resolver closed or cancelled'
                             );
                         });
-                        test.todo('When choosing the directory app on the resolver, it receives intent (needs to register listener after opening)');
+                        test('When choosing the directory app on the resolver, it receives intent (needs to register listener after opening)', async () => {
+                            await delay(2000); // For some reason a 'could not find specified executionTarget' error is thrown without a delay here
+
+                            const [raiseIntentPromise] = await raiseIntentAndExpectResolverToShow(uniqueIntent);
+                            await selectResolverApp(testAppWithUniqueIntent.name);
+
+                            await delay(1000); // Give the app some time to start and load the fdc3 client
+                            await fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
+                            await raiseIntentPromise;
+
+                            const listener = await fdc3Remote.getRemoteIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
+                            const receivedContexts = await listener.getReceivedContexts();
+
+                            expect(receivedContexts).toEqual([uniqueIntent.context]);
+                        });
 
                         test('When choosing the ad-hoc app on the resolver, it receives intent', async () => {
                             await raiseIntentExpectResolverSelectApp(uniqueIntent, testAppNotInDirectory1, adHocAppListener.current);
@@ -587,18 +601,18 @@ function noTarget_noDirectoryAppCanHandleIntent(intent: Intent) {
     });
 
     describe('But there are running ad-hoc apps with a listener registered for the raised intent', () => {
-        const listener = setupStartNonDirectoryAppWithIntentListener(intent, testAppNotInDirectory1);
+        const listener1 = setupStartNonDirectoryAppWithIntentListener(intent, testAppNotInDirectory1);
 
         describe('Just 1 ad-hoc app with a listener registered for the intent', () => {
             test('When calling raiseIntent the listener is triggered once', async () => {
                 await raiseIntent(intent);
 
-                const receivedContexts = await listener.current.getReceivedContexts();
+                const receivedContexts = await listener1.current.getReceivedContexts();
                 expect(receivedContexts).toEqual([intent.context]);
             });
 
             test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it errors', async () => {
-                await listener.current.unsubscribe();
+                await listener1.current.unsubscribe();
                 await expect(raiseIntent(intent)).toThrowFDC3Error(
                     ResolveError.NoAppsFound,
                     'No applications available to handle this intent'
@@ -616,20 +630,20 @@ function noTarget_noDirectoryAppCanHandleIntent(intent: Intent) {
                         'Resolver closed or cancelled'
                     );
                 });
-                test('When choosing the directory app on the resolver, it receives intent', async () => {
-                    await raiseIntentExpectResolverSelectApp(intent, testAppNotInDirectory1, listener.current);
+                test('When choosing the first app on the resolver, it receives intent', async () => {
+                    await raiseIntentExpectResolverSelectApp(intent, testAppNotInDirectory1, listener1.current);
                 });
-                test('When choosing the ad-hoc app on the resolver, it receives intent', async () => {
+                test('When choosing the second app on the resolver, it receives intent', async () => {
                     await raiseIntentExpectResolverSelectApp(intent, testAppNotInDirectory2, listener2.current);
                 });
             });
 
             test('When calling unsubscribe from the intent listener on the first app, then calling raiseIntent from another app, \
 then the second listener is triggered exactly once with the correct context', async () => {
-                await listener.current.unsubscribe();
+                await listener1.current.unsubscribe();
                 await raiseIntent(intent);
 
-                const receivedContexts = await listener.current.getReceivedContexts();
+                const receivedContexts = await listener1.current.getReceivedContexts();
                 expect(receivedContexts).toEqual([]);
 
                 const receivedContexts2 = await listener2.current.getReceivedContexts();

@@ -5,13 +5,21 @@ import {OpenError, Timeouts} from '../../src/client/errors';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
-import {setupOpenDirectoryApp} from './utils/common';
+import {quitApp, setupOpenDirectoryApp} from './utils/common';
 import {
     testManagerIdentity, testAppInDirectory1, testAppInDirectory2,
     testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2
 } from './constants';
 
 describe('Opening applications with the FDC3 client', () => {
+    beforeAll(async () => {
+        // Make sure there are no leftover instances running from previous tests
+        await quitApp(
+            testAppInDirectory1, testAppInDirectory2,
+            testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2
+        );
+    });
+
     beforeEach(async () => {
         // The main launcher app should remain running for the duration of all tests.
         await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
@@ -26,7 +34,7 @@ describe('Opening applications with the FDC3 client', () => {
                 // Check that the app is now running
                 await expect(fin.Application.wrapSync(testAppInDirectory1).isRunning()).resolves.toBe(true);
 
-                await fin.Application.wrapSync(testAppInDirectory1).quit().catch(() => {});
+                await quitApp(testAppInDirectory1);
             });
 
             test('When passing an unknown app name the service returns an FDC3Error', async () => {
@@ -64,7 +72,7 @@ describe('Opening applications with the FDC3 client', () => {
                 await expect(fin.Application.wrapSync(testAppInDirectory1).isRunning()).resolves.toBe(true);
                 await expect(fin.Application.wrapSync(testAppInDirectory2).isRunning()).resolves.toBe(true);
 
-                await fin.Application.wrapSync(testAppInDirectory2).quit().catch(() => {});
+                await quitApp(testAppInDirectory2);
             });
         });
     });
@@ -75,7 +83,7 @@ describe('Opening applications with the FDC3 client', () => {
 
         afterEach(async () => {
             // Close all test apps and suppress any errors since the apps may not be running
-            await fin.Application.wrapSync(testAppWithPreregisteredListeners1).quit().catch(() => {});
+            await quitApp(testAppWithPreregisteredListeners1);
         });
 
         describe('With the app not running', () => {
@@ -158,7 +166,7 @@ and does not trigger the context listener of the already open app', async () => 
                 // Check that the first app did not receive a context
                 expect(receivedContexts1).toEqual([]);
 
-                await fin.Application.wrapSync(testAppWithPreregisteredListeners2).quit().catch(() => {});
+                await quitApp(testAppWithPreregisteredListeners2);
             });
         });
     });

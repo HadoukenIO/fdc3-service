@@ -23,42 +23,39 @@ export interface NonDirectoryAppIdentity extends AppIdentity {
     manifestUrl: string;
 }
 
+/**
+ * Quits an OpenFin app (or multiple in parallel) using `force=true` and swallowing errors
+ * @param apps Identities of the apps to quit
+ */
+export async function quitApp(...apps: Identity[]) {
+    await Promise.all(apps.map(app => fin.Application.wrapSync(app).quit(true).catch(() => {})));
+}
 
 /**
  * Registers `beforeEach` to open an app in the directory via FDC3's `open` method, and `afterEach` to quit
  * @param app app identity
- * @param swallowQuitErrors Indicates whether to ignore errors thrown by `Application.quit()`
  */
-export function setupOpenDirectoryApp(app: DirectoryAppIdentity, swallowQuitErrors: boolean = true) {
+export function setupOpenDirectoryApp(app: DirectoryAppIdentity) {
     beforeEach(async () => {
         await fdc3Remote.open(testManagerIdentity, app.name);
     });
 
     afterEach(async () => {
-        let p = fin.Application.wrapSync(app).quit();
-        if (swallowQuitErrors) {
-            p = p.catch(() => {});
-        }
-        await p;
+        await quitApp(app);
     });
 }
 
 /**
  * Registers `beforeEach` to start an app from its `manifestUrl`, and `afterEach` to quit
  * @param app app info.
- * @param swallowQuitErrors Indicates whether to ignore errors thrown by `Application.quit()`
  */
-export function setupStartNonDirectoryApp(app: NonDirectoryAppIdentity, swallowQuitErrors: boolean = true) {
+export function setupStartNonDirectoryApp(app: NonDirectoryAppIdentity) {
     beforeEach(async () => {
         await fin.Application.startFromManifest(app.manifestUrl);
     });
 
     afterEach(async () => {
-        let p = fin.Application.wrapSync(app).quit();
-        if (swallowQuitErrors) {
-            p = p.catch(() => {});
-        }
-        await p;
+        await quitApp(app);
     });
 }
 
