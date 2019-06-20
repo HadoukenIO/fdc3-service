@@ -34,10 +34,47 @@ export function LauncherApp(): React.ReactElement {
         }
     };
 
+    const launchApp = async (app: Application) => {
+        console.log(`Launching app ${app.title}`);
+        try {
+            await fin.Application.startFromManifest(app.manifest);
+            console.log(`Launched app ${app.title}`);
+        } catch (e) {
+            // Stringifying an `Error` omits the message!
+            const error: any = {
+                message: e.message,
+                ...e
+            };
+            console.error(e, error);
+        }
+    };
+
     return (
         <div>
             <h1>Launcher</h1>
-            {applications.map((app, index) => <AppCard key={app.appId + index} app={app} handleClick={openApp} />)}
+            {applications.map((app, index) => <AppCard key={app.appId + index} app={app} handleClick={openApp} isDirectoryApp />)}
+            <hr/>
+            <h2>Non-directory apps</h2>
+            {NON_DIRECTORY_APPS.map((app, index) => <AppCard key={app.appId + index} app={app} handleClick={launchApp} />)}
         </div>
     );
 }
+
+const NON_DIRECTORY_APPS: Application[] = ([
+    ['blotter'],
+    ['contacts'],
+    ['dialer'],
+    ['charts-red', 'charts'],
+    ['charts-green', 'charts'],
+    ['charts-blue', 'charts']
+] as Array<[string, string?]>).map(([id, icon]) => ({
+    appId: `${id}-nodir`,
+    name: `${id}-nodir`,
+    manifestType: 'openfin',
+    manifest: `http://localhost:3923/demo/configs/non-directory/app-${id}-nodir.json`,
+    icons: [
+        {icon: `http://localhost:3923/demo/img/app-icons/${icon || id}.svg`}
+    ],
+    title: `${id}`,
+    description: `Sample ${id} (no dir)`
+}));

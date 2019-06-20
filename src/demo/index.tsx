@@ -23,11 +23,12 @@ import {LauncherApp} from './apps/LauncherApp';
 
 function App(): React.ReactElement {
     let uuid: string = fin.Window.me.uuid;
-    let color: string = uuid.split('-')[2];
-    if (color) {
-        uuid = uuid.slice(0, uuid.length - color.length - 1);
-    } else {
-        color = 'blue-grey';
+
+    let color = 'blue-grey';
+    const regexResult = /-(red|green|blue)/.exec(uuid);
+    if (regexResult && regexResult.length > 1) {
+        color = regexResult[1];
+        uuid = uuid.replace(/-(red|green|blue)/, '');
     }
     const cssURL = `https://www.w3schools.com/lib/w3-theme-${color}.css`;
 
@@ -47,7 +48,7 @@ function SelectApp(props: SelectAppProps): React.ReactElement {
     const {uuid} = props;
     let selectedApp: JSX.Element;
 
-    switch (uuid) {
+    switch (uuid.replace('-nodir', '')) {
         case 'fdc3-launcher':
             selectedApp = <LauncherApp />;
             break;
