@@ -61,19 +61,20 @@ export function LauncherApp(): React.ReactElement {
 }
 
 const NON_DIRECTORY_APPS: Application[] = ([
-    ['blotter'],
-    ['contacts'],
-    ['dialer'],
+    ['blotter', 'blotter'],
+    ['contacts', 'contacts'],
+    ['dialer', 'dialer'],
     ['charts-red', 'charts'],
     ['charts-green', 'charts'],
-    ['charts-blue', 'charts']
-] as Array<[string, string?]>).map(([id, icon]) => ({
+    ['charts-blue', 'charts'],
+    ['news', 'news']
+] as Array<[string, string]>).map(([id, icon]) => ({
     appId: `${id}-nodir`,
     name: `${id}-nodir`,
     manifestType: 'openfin',
     manifest: `http://localhost:3923/demo/configs/non-directory/app-${id}-nodir.json`,
     icons: [
-        {icon: `http://localhost:3923/demo/img/app-icons/${icon || id}.svg`}
+        {icon: `http://localhost:3923/demo/img/app-icons/${icon}.svg`}
     ],
     title: `${id}`,
     description: `Sample ${id} (no dir)`

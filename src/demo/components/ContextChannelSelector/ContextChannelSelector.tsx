@@ -47,6 +47,8 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
                     if (selectedChannel) {
                         if (selectedChannel.type === 'desktop') {
                             setColor(selectedChannel.color);
+                        } else {
+                            setColor(0xFFFFFF);
                         }
                     } else {
                         setColor(0xFFFFFF);

@@ -6,6 +6,7 @@ import {ChartsApp} from './apps/ChartsApp';
 import {ContactsApp} from './apps/ContactsApp';
 import {DialerApp} from './apps/DialerApp';
 import {LauncherApp} from './apps/LauncherApp';
+import {NewsApp} from './apps/NewsApp';
 
 /*
  * This file defines the entry point for all of the applications in this project. This "bootstrap" is intended to allow
@@ -63,6 +64,9 @@ function SelectApp(props: SelectAppProps): React.ReactElement {
             break;
         case 'fdc3-dialer':
             selectedApp = <DialerApp />;
+            break;
+        case 'fdc3-news':
+            selectedApp = <NewsApp />;
             break;
 
         default:
