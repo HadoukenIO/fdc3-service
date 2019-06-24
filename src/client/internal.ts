@@ -25,14 +25,6 @@ export const SERVICE_IDENTITY = {
 };
 
 /**
- * The identity of the resolver window, running on the FDC3 service application
- */
-export const RESOLVER_IDENTITY: Identity = {
-    uuid: SERVICE_IDENTITY.uuid,
-    name: 'fdc3-resolver'
-};
-
-/**
  * Name of the IAB channel use to communicate between client and provider
  */
 export const SERVICE_CHANNEL = 'of-fdc3-service-v1';

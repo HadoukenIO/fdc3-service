@@ -2,7 +2,6 @@ import 'jest';
 import 'reflect-metadata';
 
 import {ResolveError, Timeouts, FDC3Error} from '../../src/client/errors';
-import {RESOLVER_IDENTITY} from '../../src/client/internal';
 import {Intent} from '../../src/client/intents';
 
 import {fin} from './utils/fin';
@@ -13,11 +12,9 @@ import {
     setupOpenDirectoryApp, setupStartNonDirectoryApp, setupStartNonDirectoryAppWithIntentListener
 } from './utils/common';
 import {
-    appStartupTime, testManagerIdentity, testAppInDirectory1, testAppInDirectory4,
+    appStartupTime, resolverWindowIdentity, testManagerIdentity, testAppInDirectory1, testAppInDirectory4,
     testAppNotInDirectory1, testAppNotInDirectory2, testAppWithPreregisteredListeners1
 } from './constants';
-
-const resolverWindowIdentity = RESOLVER_IDENTITY;
 
 /**
  * Intent registered by `testAppWithPreregisteredListeners1` right after opening
