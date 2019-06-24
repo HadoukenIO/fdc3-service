@@ -37,8 +37,18 @@ export function LauncherApp(): React.ReactElement {
     const launchApp = async (app: Application) => {
         console.log(`Launching app ${app.title}`);
         try {
-            await fin.Application.startFromManifest(app.manifest);
-            console.log(`Launched app ${app.title}`);
+            try {
+                await fin.Application.startFromManifest(app.manifest);
+                console.log(`Launched app ${app.title}`);
+            } catch (e) {
+                if (/Application with specified UUID is already running/.test(e.message)) {
+                    const window = fin.Window.wrapSync({uuid: app.appId, name: app.appId});
+                    await window.setAsForeground();
+                    console.log(`App ${app.title} was already running - focused`);
+                } else {
+                    throw e;
+                }
+            }
         } catch (e) {
             // Stringifying an `Error` omits the message!
             const error: any = {
@@ -52,30 +62,30 @@ export function LauncherApp(): React.ReactElement {
     return (
         <div>
             <h1>Launcher</h1>
-            {applications.map((app, index) => <AppCard key={app.appId + index} app={app} handleClick={openApp} isDirectoryApp />)}
+            {applications.map((app, index) => <AppCard key={app.appId + index} app={app} handleClick={openApp} isDirectoryApp={true} />)}
             <hr/>
             <h2>Non-directory apps</h2>
-            {NON_DIRECTORY_APPS.map((app, index) => <AppCard key={app.appId + index} app={app} handleClick={launchApp} />)}
+            {NON_DIRECTORY_APPS.map((app, index) => <AppCard key={app.appId + index} app={app} handleClick={launchApp} isDirectoryApp={false} />)}
         </div>
     );
 }
 
 const NON_DIRECTORY_APPS: Application[] = ([
-    ['blotter', 'blotter'],
-    ['contacts', 'contacts'],
-    ['dialer', 'dialer'],
-    ['charts-red', 'charts'],
-    ['charts-green', 'charts'],
-    ['charts-blue', 'charts'],
-    ['news', 'news']
-] as Array<[string, string]>).map(([id, icon]) => ({
-    appId: `${id}-nodir`,
-    name: `${id}-nodir`,
+    {id: 'blotter', icon: 'blotter', title: 'Blotter', description: ''},
+    {id: 'contacts', icon: 'contacts', title: 'Contacts', description: ''},
+    {id: 'dialer', icon: 'dialer', title: 'Dialer', description: ''},
+    {id: 'charts-red', icon: 'charts', title: 'Red Charts', description: ''},
+    {id: 'charts-green', icon: 'charts', title: 'Green Charts', description: ''},
+    {id: 'charts-blue', icon: 'charts', title: 'Blue Charts', description: ''},
+    {id: 'news', icon: 'news', title: 'News Feed', description: ''}
+] as Array<{id: string, icon: string, title: string, description: string}>).map(({id, icon, title, description}) => ({
+    appId: `fdc3-${id}-nodir`,
+    name: `fdc3-${id}-nodir`,
     manifestType: 'openfin',
     manifest: `http://localhost:3923/demo/configs/non-directory/app-${id}-nodir.json`,
     icons: [
         {icon: `http://localhost:3923/demo/img/app-icons/${icon}.svg`}
     ],
-    title: `${id}`,
-    description: `Sample ${id} (no dir)`
+    title: title || id,
+    description: description || `Sample ${title || id} app`
 }));

@@ -3,12 +3,12 @@ import {NewsItem} from './NewsCard';
 export function fetchNews(symbol: string) {
     return new Promise<NewsItem[]>(resolve => {
         setTimeout(() => {
-            resolve([symbol, symbol, symbol].map(getFakeNews).sort(byDate));
+            resolve([symbol, symbol, symbol].map(getNewsItem).sort(byDate));
         }, 100 + Math.random() * 500);
     });
 }
 
-function getFakeNews(symbol: string): NewsItem {
+function getNewsItem(symbol: string): NewsItem {
     return {
         date: getRandomDate(),
         headline: getRandomHeadline(symbol)
@@ -20,7 +20,7 @@ function getRandomDate() {
 }
 
 function getRandomHeadline(symbol: string) {
-    return `This is a fake news article for ${symbol}`;
+    return `Important news about ${symbol}`;
 }
 
 function byDate(a: NewsItem, b: NewsItem) {

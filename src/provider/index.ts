@@ -162,8 +162,7 @@ export class Main {
                 appInfo = appWindowFromSameApp.appInfo;
             } else {
                 // There are no appWindows in the model with the same app uuid - Produce minimal appInfo from window information
-                const application = fin.Application.wrapSync(identity);
-                appInfo = await this.getApplicationInfo(application);
+                appInfo = await this.getApplicationInfo(identity);
             }
             appWindow = this._model.registerWindow(appInfo, identity, false);
         }
@@ -227,12 +226,17 @@ export class Main {
         }
     }
 
-    private async getApplicationInfo(application: OFApplication): Promise<Application> {
+    /**
+     * Retrieves application info from a window's identity
+     * @param identity `Identity` of the window to get the app info from
+     */
+    private async getApplicationInfo(identity: Identity): Promise<Application> {
         type OFManifest = {
             shortcut?: {name?: string, icon: string},
             startup_app: {uuid: string, name?: string, icon?: string}
         };
 
+        const application = fin.Application.wrapSync(identity);
         const applicationInfo = await application.getInfo();
         const {shortcut, startup_app} = applicationInfo.manifest as OFManifest;
 

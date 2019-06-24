@@ -23,13 +23,12 @@ import {NewsApp} from './apps/NewsApp';
 
 
 function App(): React.ReactElement {
-    let uuid: string = fin.Window.me.uuid;
+    const {uuid} = fin.Window.me;
 
     let color = 'blue-grey';
     const regexResult = /-(red|green|blue)/.exec(uuid);
     if (regexResult && regexResult.length > 1) {
         color = regexResult[1];
-        uuid = uuid.replace(/-(red|green|blue)/, '');
     }
     const cssURL = `https://www.w3schools.com/lib/w3-theme-${color}.css`;
 
@@ -49,23 +48,32 @@ function SelectApp(props: SelectAppProps): React.ReactElement {
     const {uuid} = props;
     let selectedApp: JSX.Element;
 
-    switch (uuid.replace('-nodir', '')) {
+    switch (uuid) {
         case 'fdc3-launcher':
+        case 'fdc3-launcher-nodir':
             selectedApp = <LauncherApp />;
             break;
         case 'fdc3-blotter':
+        case 'fdc3-blotter-nodir':
             selectedApp = <BlotterApp />;
             break;
-        case 'fdc3-charts':
+        case 'fdc3-charts-red':
+        case 'fdc3-charts-green':
+        case 'fdc3-charts-blue':
+        case 'fdc3-charts-red-nodir':
+        case 'fdc3-charts-green-nodir':
+        case 'fdc3-charts-blue-nodir':
             selectedApp = <ChartsApp />;
             break;
         case 'fdc3-contacts':
+        case 'fdc3-contacts-nodir':
             selectedApp = <ContactsApp />;
             break;
         case 'fdc3-dialer':
+        case 'fdc3-dialer-nodir':
             selectedApp = <DialerApp />;
             break;
-        case 'fdc3-news':
+        case 'fdc3-news-nodir':
             selectedApp = <NewsApp />;
             break;
 
