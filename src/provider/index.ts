@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
+import {ApplicationInfo} from 'openfin/_v2/api/application/application';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport, GetChannelByIdPayload, EventTransport} from '../client/internal';
@@ -166,7 +167,7 @@ export class Main {
                 appInfo = {
                     appId: identity.uuid,
                     name: identity.uuid,
-                    title: (applicationInfo.manifest as {title?: string}).title,
+                    title: this.getAppTitle(applicationInfo),
                     manifestType: 'openfin',
                     manifest: applicationInfo.manifestUrl
                 };
@@ -231,6 +232,11 @@ export class Main {
                 `No connection to FDC3 service found from window with identity: ${JSON.stringify(identity)}`
             );
         }
+    }
+
+    private getAppTitle(applicationInfo: ApplicationInfo): string {
+        const manifest = applicationInfo.manifest as {startup_app:{name:string}};
+        return manifest.startup_app.name;
     }
 }
 
