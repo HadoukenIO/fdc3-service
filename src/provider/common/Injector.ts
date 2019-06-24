@@ -6,7 +6,7 @@ import {AppDirectory} from '../model/AppDirectory';
 import {IntentHandler} from '../controller/IntentHandler';
 import {ContextHandler} from '../controller/ContextHandler';
 import {Model} from '../model/Model';
-import {SelectorHandler} from '../controller/SelectorHandler';
+import {ResolverHandler} from '../controller/ResolverHandler';
 import {AsyncInit} from '../controller/AsyncInit';
 import {FinEnvironment} from '../model/FinEnvironment';
 import {APIHandler} from '../APIHandler';
@@ -29,7 +29,7 @@ type Types = {
     [Inject.INTENT_HANDLER]: IntentHandler,
     [Inject.EVENT_HANDLER]: EventHandler,
     [Inject.MODEL]: Model,
-    [Inject.SELECTOR]: SelectorHandler,
+    [Inject.RESOLVER]: ResolverHandler,
 };
 
 /**
@@ -47,7 +47,7 @@ const Bindings = {
     [Inject.INTENT_HANDLER]: IntentHandler,
     [Inject.EVENT_HANDLER]: EventHandler,
     [Inject.MODEL]: Model,
-    [Inject.SELECTOR]: SelectorHandler
+    [Inject.RESOLVER]: ResolverHandler
 };
 
 type Keys = (keyof typeof Inject & keyof typeof Bindings & keyof Types);

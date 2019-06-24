@@ -13,7 +13,7 @@ enum Injectable {
     INTENT_HANDLER,
     EVENT_HANDLER,
     MODEL,
-    SELECTOR,
+    RESOLVER,
 }
 
 type InjectableMap = {
