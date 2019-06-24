@@ -1,3 +1,10 @@
+/**
+ * @hidden
+ */
+
+/**
+  * Class for hepling take events that have arrived at the client via the IAB channel, and dispatching them on the correct client-side object
+  */
 import {EventEmitter} from 'events';
 
 import {FDC3Event, FDC3EventType} from './main';
@@ -5,9 +12,6 @@ import {EventTransport} from './internal';
 
 let eventHandler: EventRouter | null;
 
-/**
- * @hidden
- */
 export function getEventRouter(): EventRouter {
     if (!eventHandler) {
         eventHandler = new EventRouter();
@@ -16,9 +20,6 @@ export function getEventRouter(): EventRouter {
     return eventHandler;
 }
 
-/**
- * @hidden
- */
 export class EventRouter {
     private readonly _emitterProviders: {[targetType: string]: (targetId: string) => EventEmitter};
     private readonly _deserializers: {[eventType: string]: (event: EventTransport<FDC3Event>) => FDC3Event};
