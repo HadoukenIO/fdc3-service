@@ -1,5 +1,4 @@
 import {EventEmitter} from 'events';
-import {emit} from 'cluster';
 
 import {getEventRouter, EventRouter} from '../../src/client/EventRouter';
 import {EventTransport} from '../../src/client/internal';
@@ -11,13 +10,11 @@ beforeEach(() => {
     eventRouter = new EventRouter();
 });
 
-it('getEventHandler returns without error', () => {
-    expect(() => {
-        getEventRouter();
-    }).resolves;
+it('getEventRouter returns without error', () => {
+    expect(getEventRouter()).toBeInstanceOf(EventRouter);
 });
 
-it('Subsequent calls to getEventHandler return the same EventRouter', () => {
+it('Subsequent calls to getEventRouter return the same EventRouter', () => {
     const eventRouter1 = getEventRouter();
     const eventRouter2 = getEventRouter();
 
