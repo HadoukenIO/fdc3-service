@@ -1,0 +1,111 @@
+/* Akkurat font defined in global css located in res/ui/resolver */
+
+:root {
+    /*
+        The standard left padding which everything is pushed over by.
+    */
+    --left-padding: 33px;
+}
+
+* {
+    padding: 0px;
+    margin: 0px;
+    -webkit-user-select: none;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+  }
+
+::-webkit-scrollbar-track {
+    background:  #303038;
+
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #45454c;
+  }
+  
+body {
+    background: #000000;
+    overflow: hidden;
+    font-family: Akkurat;
+}
+
+h1 {
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+li {
+    list-style: none;
+}
+
+#container {
+    height: 100%;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/*
+    Header
+*/
+
+#header {
+    height: 28px;
+    background: #3A3A3A;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#header h1 {
+    font-size: 10px;
+    margin-left: 8px;
+    text-transform: capitalize; 
+}
+
+#header #exit {
+    height: 20px;
+    width: 20px;
+    margin-right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#header #exit img {
+    height: 40%;
+    width: 40%;
+}
+
+#header #exit:hover {
+    background-color: #313131;
+    border-radius: 10px;
+}
+
+#cancel {
+    background: #313131;
+    height: 42px;
+    border-top: 1px solid #494848;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#cancel:hover {
+    color: #A3A0A0;
+    background: #494848;
+}
+
+#cancel>h1 {
+    color: #A3A0A0;
+    font-size: 16px;
+}
+
+#cancel:hover>h1 {
+    color:white;
+}
+

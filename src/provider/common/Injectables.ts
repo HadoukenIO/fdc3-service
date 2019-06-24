@@ -12,7 +12,7 @@ enum Injectable {
     ENVIRONMENT,
     INTENT_HANDLER,
     MODEL,
-    SELECTOR,
+    RESOLVER,
 }
 
 type InjectableMap = {
