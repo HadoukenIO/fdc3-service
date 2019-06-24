@@ -28,7 +28,7 @@ export function createMockAppWindow(): AppWindow {
     };
 }
 
-function createMockChannel(): ContextChannel {
+export function createMockChannel(): ContextChannel {
     return {
         id: '',
         type: '',

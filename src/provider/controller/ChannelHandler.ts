@@ -68,25 +68,25 @@ export class ChannelHandler {
         return this._model.channels.filter(channel => channel.type === 'desktop') as DesktopContextChannel[];
     }
 
-    public getWindowsListeningForContextsOnChannel(channel: ContextChannel): ReadonlyArray<AppWindow> {
-        return this._model.windows.filter(window => window.hasContextListener(channel));
-    }
-
-    public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: FDC3ChannelEventType): ReadonlyArray<AppWindow> {
-        return this._model.windows.filter(window => window.hasChannelEventListener(channel, eventType));
-    }
-
     public getChannelById(channelId: ChannelId): ContextChannel {
         this.validateChannelId(channelId);
         return this._model.getChannel(channelId)!;
+    }
+
+    public getChannelContext(channel: ContextChannel): Context | null {
+        return channel.getStoredContext();
     }
 
     public getChannelMembers(channel: ContextChannel): ReadonlyArray<AppWindow> {
         return this._model.windows.filter(window => window.channel === channel);
     }
 
-    public getChannelContext(channel: ContextChannel): Context | null {
-        return channel.getStoredContext();
+    public getWindowsListeningForContextsOnChannel(channel: ContextChannel): ReadonlyArray<AppWindow> {
+        return this._model.windows.filter(window => window.hasContextListener(channel));
+    }
+
+    public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: FDC3ChannelEventType): ReadonlyArray<AppWindow> {
+        return this._model.windows.filter(window => window.hasChannelEventListener(channel, eventType));
     }
 
     public joinChannel(appWindow: AppWindow, channel: ContextChannel): void {
