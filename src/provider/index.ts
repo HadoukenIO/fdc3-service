@@ -3,7 +3,7 @@ import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport, GetChannelByIdPayload, EventTransport, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload} from '../client/internal';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport, GetChannelByIdPayload, EventTransport, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Intent, ChannelChangedEvent, Context} from '../client/main';
 import {FDC3Error, OpenError, IdentityError} from '../client/errors';
 import {parseIdentity, parseContext, parseChannelId} from '../client/validation';
@@ -14,9 +14,11 @@ import {FindFilter, Model} from './model/Model';
 import {ContextHandler} from './controller/ContextHandler';
 import {IntentHandler} from './controller/IntentHandler';
 import {APIHandler} from './APIHandler';
+import {EventHandler} from './controller/EventHandler';
 import {Injector} from './common/Injector';
 import {ChannelHandler} from './controller/ChannelHandler';
 import {AppWindow} from './model/AppWindow';
+import {ContextChannel} from './model/ContextChannel';
 
 @injectable()
 export class Main {
@@ -27,6 +29,7 @@ export class Main {
     private readonly _contextHandler: ContextHandler;
     private readonly _intentHandler: IntentHandler;
     private readonly _channelHandler: ChannelHandler;
+    private readonly _eventHandler: EventHandler;
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
 
     constructor(
@@ -35,6 +38,7 @@ export class Main {
         @inject(Inject.CONTEXT_HANDLER) contextHandler: ContextHandler,
         @inject(Inject.INTENT_HANDLER) intentHandler: IntentHandler,
         @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
+        @inject(Inject.EVENT_HANDLER) eventHandler: EventHandler,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
     ) {
         this._directory = directory;
@@ -42,6 +46,7 @@ export class Main {
         this._contextHandler = contextHandler;
         this._intentHandler = intentHandler;
         this._channelHandler = channelHandler;
+        this._eventHandler = eventHandler;
         this._apiHandler = apiHandler;
     }
 
@@ -76,7 +81,9 @@ export class Main {
             [APIFromClientTopic.CHANNEL_BROADCAST]: this.channelBroadcast.bind(this),
             [APIFromClientTopic.CHANNEL_GET_CURRENT_CONTEXT]: this.channelGetCurrentContext.bind(this),
             [APIFromClientTopic.CHANNEL_ADD_CONTEXT_LISTENER]: this.channelAddContextListener.bind(this),
-            [APIFromClientTopic.CHANNEL_REMOVE_CONTEXT_LISTENER]: this.channelRemoveContextListener.bind(this)
+            [APIFromClientTopic.CHANNEL_REMOVE_CONTEXT_LISTENER]: this.channelRemoveContextListener.bind(this),
+            [APIFromClientTopic.CHANNEL_ADD_EVENT_LISTENER]: this.channelAddEventListener.bind(this),
+            [APIFromClientTopic.CHANNEL_REMOVE_EVENT_LISTENER]: this.channelRemoveEventListener.bind(this)
         });
 
         this._channelHandler.registerChannels();
@@ -85,13 +92,8 @@ export class Main {
         console.log('Service Initialised');
     }
 
-    private onChannelChangedHandler(event: EventTransport<ChannelChangedEvent>): void {
-        this._apiHandler.channel.publish('event', {
-            type: event.type,
-            identity: parseIdentity(event.identity),
-            channel: event.channel,
-            previousChannel: event.previousChannel
-        });
+    private async onChannelChangedHandler(appWindow: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null): Promise<void> {
+        return this._eventHandler.dispatchEventOnChannelChanged(appWindow, channel, previousChannel);
     }
 
     private async open(payload: OpenPayload): Promise<void> {
@@ -105,7 +107,7 @@ export class Main {
         const appWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_CONTEXT_LISTENER);
 
         if (payload.context) {
-            this._contextHandler.send(appWindow, parseContext(payload.context));
+            return this._contextHandler.send(appWindow, parseContext(payload.context));
         }
     }
 
@@ -141,7 +143,7 @@ export class Main {
     private async broadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {
         const appWindow = this.getWindow(source);
 
-        await this._contextHandler.broadcast(parseContext(payload.context), appWindow);
+        return this._contextHandler.broadcast(parseContext(payload.context), appWindow);
     }
 
     private async raiseIntent(payload: RaiseIntentPayload): Promise<IntentResolution> {
@@ -199,7 +201,7 @@ export class Main {
         const context = this._channelHandler.getChannelContext(channel);
 
         if (context) {
-            await this._contextHandler.send(appWindow, context);
+            return this._contextHandler.send(appWindow, context);
         }
     }
 
@@ -207,7 +209,7 @@ export class Main {
         const appWindow = this.getWindow(source);
         const channel = this._channelHandler.getChannelById(payload.id);
 
-        await this._contextHandler.broadcastOnChannel(parseContext(payload.context), appWindow, channel);
+        return this._contextHandler.broadcastOnChannel(parseContext(payload.context), appWindow, channel);
     }
 
     private channelGetCurrentContext(payload: ChannelGetCurrentContextPayload, source: ProviderIdentity): Context | null {
@@ -218,15 +220,36 @@ export class Main {
 
     private channelAddContextListener(payload: ChannelAddContextListenerPayload, source: ProviderIdentity): void {
         const appWindow = this.getWindow(source);
+        const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
 
-        appWindow.addContextListener(payload.id);
+        appWindow.addContextListener(channel);
     }
 
     private channelRemoveContextListener(payload: ChannelRemoveContextListenerPayload, source: ProviderIdentity): void {
         const appWindow = this.attemptGetWindow(source);
+        const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
 
         if (appWindow) {
-            appWindow.removeContextListener(payload.id);
+            appWindow.removeContextListener(channel);
+        } else {
+            // If for some odd reason the window is not in the model it's still OK to return successfully,
+            // as the caller's intention was to remove a listener and the listener is certainly not there.
+        }
+    }
+
+    private channelAddEventListener(payload: ChannelAddEventListenerPayload, source: ProviderIdentity): void {
+        const appWindow = this.getWindow(source);
+        const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
+
+        appWindow.addChannelEventListener(channel, payload.eventType);
+    }
+
+    private channelRemoveEventListener(payload: ChannelRemoveEventListenerPayload, source: ProviderIdentity): void {
+        const appWindow = this.attemptGetWindow(source);
+        const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
+
+        if (appWindow) {
+            appWindow.removeChannelEventListener(channel, payload.eventType);
         } else {
             // If for some odd reason the window is not in the model it's still OK to return successfully,
             // as the caller's intention was to remove a listener and the listener is certainly not there.

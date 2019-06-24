@@ -11,6 +11,7 @@ enum Injectable {
     CONTEXT_HANDLER,
     ENVIRONMENT,
     INTENT_HANDLER,
+    EVENT_HANDLER,
     MODEL,
     SELECTOR,
 }

@@ -1,6 +1,6 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {Channel, DefaultChannel, DesktopChannel, Context, ChannelEventType, ChannelEvent} from '../../../src/client/main';
+import {Channel, DefaultChannel, DesktopChannel, Context, FDC3ChannelEvent, FDC3ChannelEventType} from '../../../src/client/main';
 
 import {RemoteContextListener, ofBrowser, handlePuppeteerError, createRemoteContextListener} from './fdc3RemoteExecution';
 import {TestChannelTransport, TestWindowContext} from './ofPuppeteer';
@@ -8,7 +8,7 @@ import {TestChannelTransport, TestWindowContext} from './ofPuppeteer';
 export interface RemoteChannelEventListener {
     remoteIdentity: Identity;
     id: number;
-    getReceivedEvents: () => Promise<ChannelEvent[]>;
+    getReceivedEvents: () => Promise<FDC3ChannelEvent[]>;
     unsubscribe: () => Promise<void>;
 }
 
@@ -85,14 +85,14 @@ export class RemoteChannel {
         return createRemoteContextListener(this.executionTarget, id);
     }
 
-    public async addEventListener(eventType: ChannelEventType): Promise<RemoteChannelEventListener> {
+    public async addEventListener(eventType: FDC3ChannelEventType): Promise<RemoteChannelEventListener> {
         const id = await ofBrowser.executeOnWindow(
             this.executionTarget,
-            function(this: TestWindowContext, channelInstanceId: string, eventType: ChannelEventType): number {
+            function(this: TestWindowContext, channelInstanceId: string, eventType: FDC3ChannelEventType): number {
                 const listenerID = this.channelEventListeners.length;
                 const channel = this.channelTransports[channelInstanceId].channel;
 
-                const handler = (payload: ChannelEvent) => {
+                const handler = (payload: FDC3ChannelEvent) => {
                     this.receivedChannelEvents.push({listenerID, payload});
                 };
 
@@ -116,8 +116,8 @@ export class RemoteChannel {
                     this.channelEventListeners[id].unsubscribe();
                 }, id);
             },
-            getReceivedEvents: async (): Promise<ChannelEvent[]> => {
-                return ofBrowser.executeOnWindow(this.executionTarget, function(this: TestWindowContext, id: number): ChannelEvent[] {
+            getReceivedEvents: async (): Promise<FDC3ChannelEvent[]> => {
+                return ofBrowser.executeOnWindow(this.executionTarget, function(this: TestWindowContext, id: number): FDC3ChannelEvent[] {
                     return this.receivedChannelEvents.filter(entry => entry.listenerID === id).map(entry => entry.payload);
                 }, id);
             }

@@ -49,7 +49,7 @@ beforeEach(() => {
     mockChannelHandler = new ChannelHandler(null!);
     // Grab getChannelMembers and getWindowsListeningToChannel so we can control their result for each test
     mockGetChannelMembers = mockChannelHandler.getChannelMembers as jest.Mock<AppWindow[], [ContextChannel]>;
-    mockGetWindowsListeningToChannel = mockChannelHandler.getWindowsListeningToChannel as jest.Mock<AppWindow[], [ContextChannel]>;
+    mockGetWindowsListeningToChannel = mockChannelHandler.getWindowsListeningForContextsOnChannel as jest.Mock<AppWindow[], [ContextChannel]>;
 
     setGetChannelMembersToReturn();
     setGetWindowsListeningToChannelToReturn();

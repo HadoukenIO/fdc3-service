@@ -2,7 +2,7 @@ import {Fin, Identity} from 'openfin/_v2/main';
 import {Browser, Page} from 'puppeteer';
 import {connect} from 'hadouken-js-adapter';
 
-import {Context, IntentType, ContextListener, IntentListener, Channel, FDC3Event, ChannelEvent} from '../../../src/client/main';
+import {Context, IntentType, ContextListener, IntentListener, Channel, FDC3Event, FDC3ChannelEvent} from '../../../src/client/main';
 
 declare const global: NodeJS.Global & {__BROWSER__: Browser};
 
@@ -32,7 +32,7 @@ export type TestWindowContext = Window&{
     receivedContexts: {listenerID: number, context: Context}[];
     receivedEvents: {listenerID: number, payload: FDC3Event}[];
     receivedIntents: {listenerID: number, intent: IntentType, context: Context}[];
-    receivedChannelEvents: {listenerID: number, payload: ChannelEvent}[];
+    receivedChannelEvents: {listenerID: number, payload: FDC3ChannelEvent}[];
 };
 
 export interface TestChannelTransport {

@@ -10,16 +10,17 @@ import {Identity} from 'openfin/_v2/main';
 
 import {parseIdentity, parseContext, validateEnvironment, parseChannelId} from './validation';
 import {tryServiceDispatch, getServicePromise} from './connection';
-import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, APIToClientTopic, ChannelContextPayload} from './internal';
+import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, APIToClientTopic, ChannelContextPayload, EventTransport} from './internal';
 import {Context} from './context';
 import {ContextListener} from './main';
+import {getEventHandler} from './EventRouter';
 
 export type ChannelId = string;
 
 export type Channel = DesktopChannel | DefaultChannel;
 
-export type ChannelEvent = ChannelWindowAddedEvent | ChannelWindowRemovedEvent;
-export type ChannelEventType = 'window-added' | 'window-removed';
+export type FDC3ChannelEvent = ChannelWindowAddedEvent | ChannelWindowRemovedEvent;
+export type FDC3ChannelEventType = 'window-added' | 'window-removed';
 
 /**
  * Event fired when a window is added to a channel. See {@link Channel.addEventListener}.
@@ -258,7 +259,7 @@ abstract class ChannelBase {
      * The event also includes which channel the window was in previously. The `channel` property within the
      * event will always be this channel instance.
      */
-    public addEventListener(eventType: 'window-added', listener: (event: ChannelWindowAddedEvent) => void): void;
+    public async addEventListener(eventType: 'window-added', listener: (event: ChannelWindowAddedEvent) => void): Promise<void>;
 
     /**
      * Event that is fired whenever a window changes leaves this channel. This includes switching to/from the default
@@ -267,16 +268,21 @@ abstract class ChannelBase {
      * The event also includes which channel the window is being added to. The `previousChannel` property within the
      * event will always be this channel instance.
      */
-    public addEventListener(eventType: 'window-removed', listener: (event: ChannelWindowRemovedEvent) => void): void;
+    public async addEventListener(eventType: 'window-removed', listener: (event: ChannelWindowRemovedEvent) => void): Promise<void>;
 
-    public addEventListener<E extends ChannelEvent>(eventType: E['type'], listener: (event: E) => void): void {
+    public async addEventListener<E extends FDC3ChannelEvent>(eventType: E['type'], listener: (event: E) => void): Promise<void> {
         validateEnvironment();
 
+        const hasEventListenerBefore = channelEventEmitters[this.id].listenerCount(eventType) > 0;
         channelEventEmitters[this.id].addListener(eventType, listener);
+
+        if (!hasEventListenerBefore) {
+            await tryServiceDispatch(APIFromClientTopic.CHANNEL_ADD_EVENT_LISTENER, {id: this.id, eventType});
+        }
     }
 
-    public removeEventListener(eventType: 'window-added', listener: (event: ChannelWindowAddedEvent) => void): void;
-    public removeEventListener(eventType: 'window-removed', listener: (event: ChannelWindowRemovedEvent) => void): void;
+    public async removeEventListener(eventType: 'window-added', listener: (event: ChannelWindowAddedEvent) => void): Promise<void>;
+    public async removeEventListener(eventType: 'window-removed', listener: (event: ChannelWindowRemovedEvent) => void): Promise<void>;
 
     /**
      * Removes a listener previously added with {@link addEventListener}.
@@ -286,10 +292,14 @@ abstract class ChannelBase {
      * @param eventType The event being unsubscribed from
      * @param listener The callback function to remove
      */
-    public removeEventListener<E extends ChannelEvent>(eventType: E['type'], listener: (event: E) => void): void {
+    public async removeEventListener<E extends FDC3ChannelEvent>(eventType: E['type'], listener: (event: E) => void): Promise<void> {
         validateEnvironment();
 
         channelEventEmitters[this.id].removeListener(eventType, listener);
+
+        if (channelEventEmitters[this.id].listenerCount(eventType) === 0) {
+            await tryServiceDispatch(APIFromClientTopic.CHANNEL_REMOVE_EVENT_LISTENER, {id: this.id, eventType});
+        }
     }
 }
 
@@ -462,6 +472,28 @@ function hasChannelContextListener(id: ChannelId) {
     return channelContextListeners.some(listener => listener.id === id);
 }
 
+function onWindowAdded(eventTransport: any): FDC3ChannelEvent {
+    const channelWindowAddedEventTransport = eventTransport;
+
+    const type = channelWindowAddedEventTransport.type;
+    const identity = channelWindowAddedEventTransport.identity;
+    const channel = getChannelObject(channelWindowAddedEventTransport.channel!);
+    const previousChannel = channelWindowAddedEventTransport.previousChannel ? getChannelObject(channelWindowAddedEventTransport.previousChannel) : null;
+
+    return {type: 'window-added', identity, channel, previousChannel};
+}
+
+function onWindowRemoved(eventTransport: any): FDC3ChannelEvent {
+    const channelWindowRemovedEventTransport = eventTransport;
+
+    const type = channelWindowRemovedEventTransport.type;
+    const identity = channelWindowRemovedEventTransport.identity;
+    const channel = channelWindowRemovedEventTransport.channel ? getChannelObject(channelWindowRemovedEventTransport.channel) : null;
+    const previousChannel = getChannelObject(channelWindowRemovedEventTransport.previousChannel!);
+
+    return {type: 'window-removed', identity, channel, previousChannel};
+}
+
 if (typeof fin !== 'undefined') {
     getServicePromise().then(channelClient => {
         channelClient.register(APIToClientTopic.CHANNEL_CONTEXT, (payload: ChannelContextPayload) => {
@@ -471,6 +503,15 @@ if (typeof fin !== 'undefined') {
                 }
             });
         });
+
+        const eventHandler = getEventHandler();
+
+        eventHandler.registerEmitterProvider('channel', (channelId: ChannelId) => {
+            return channelEventEmitters[channelId];
+        });
+
+        eventHandler.registerDeserializer('window-added', onWindowAdded);
+        eventHandler.registerDeserializer('window-removed', onWindowRemoved);
     }, reason => {
         console.warn('Unable to register client channel context handlers. getServicePromise() rejected with reason:', reason);
     });

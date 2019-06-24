@@ -4,10 +4,11 @@ import {Identity, Window} from 'openfin/_v2/main';
 
 import {AsyncInit} from '../controller/AsyncInit';
 import {Signal1, Signal2} from '../common/Signal';
-import {Application, IntentType, ChannelId} from '../../client/main';
+import {Application, IntentType, ChannelId, FDC3ChannelEventType} from '../../client/main';
 import {FDC3Error, OpenError, ResolveError} from '../../client/errors';
 import {deferredPromise, withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
+import {parseIdentity} from '../../client/validation';
 
 import {Environment} from './Environment';
 import {AppWindow} from './AppWindow';
@@ -47,7 +48,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     public wrapApplication(appInfo: Application, identity: Identity, channel: ContextChannel): AppWindow {
-        return new FinAppWindow(identity, appInfo, channel);
+        return new FinAppWindow(parseIdentity(identity), appInfo, channel);
     }
 
     protected async init(): Promise<void> {
@@ -84,13 +85,18 @@ interface ContextMap {
     [key: string]: boolean;
 }
 
-class FinAppWindow {
+interface ChannelEventMap {
+    [channelId: string]: {[eventId: string]: boolean};
+}
+
+class FinAppWindow implements AppWindow {
     private readonly _id: string;
     private readonly _appInfo: Application;
     private readonly _window: Window;
 
     private readonly _intentListeners: IntentMap;
     private readonly _contextListeners: ContextMap;
+    private readonly _channelEventListeners: ChannelEventMap;
 
     public channel: ContextChannel;
 
@@ -101,6 +107,7 @@ class FinAppWindow {
 
         this._intentListeners = {};
         this._contextListeners = {};
+        this._channelEventListeners = {};
 
         this.channel = channel;
     }
@@ -140,16 +147,34 @@ class FinAppWindow {
         delete this._intentListeners[intentName];
     }
 
-    public hasContextListener(channelId: ChannelId): boolean {
-        return this._contextListeners[channelId] === true;
+    public hasContextListener(channel: ContextChannel): boolean {
+        return this._contextListeners[channel.id] === true;
     }
 
-    public addContextListener(channelId: ChannelId): void {
-        this._contextListeners[channelId] = true;
+    public addContextListener(channel: ContextChannel): void {
+        this._contextListeners[channel.id] = true;
     }
 
-    public removeContextListener(channelId: ChannelId): void {
-        delete this._contextListeners[channelId];
+    public removeContextListener(channel: ContextChannel): void {
+        delete this._contextListeners[channel.id];
+    }
+
+    public hasChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): boolean {
+        return this._channelEventListeners[channel.id] && (this._channelEventListeners[channel.id][eventType] === true);
+    }
+
+    public addChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void {
+        if (!this._channelEventListeners[channel.id]) {
+            this._channelEventListeners[channel.id] = {};
+        }
+
+        this._channelEventListeners[channel.id][eventType] = true;
+    }
+
+    public removeChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void {
+        if (this._channelEventListeners[channel.id]) {
+            delete this._channelEventListeners[channel.id][eventType];
+        }
     }
 
     public focus(): Promise<void> {
