@@ -6,7 +6,7 @@ import {ContextHandler} from '../../src/provider/controller/ContextHandler';
 import {APIHandler} from '../../src/provider/APIHandler';
 import {AppWindow} from '../../src/provider/model/AppWindow';
 import {APIFromClientTopic, APIToClientTopic} from '../../src/client/internal';
-import {createMockAppWindow} from '../mocks';
+import {createMockAppWindow, createMockChannel} from '../mocks';
 import {ChannelHandler} from '../../src/provider/controller/ChannelHandler';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
 
@@ -25,10 +25,7 @@ let mockGetChannelMembers: jest.Mock<AppWindow[], [ContextChannel]>;
 let mockGetWindowsListeningToChannel: jest.Mock<AppWindow[], [ContextChannel]>;
 
 function createMockAppWindowWithName(name: string): AppWindow {
-    const mockAppWindow: AppWindow = createMockAppWindow();
-    mockAppWindow.identity = {uuid: 'test', name};
-
-    return mockAppWindow;
+    return {...createMockAppWindow(), identity: {uuid: 'test', name}};
 }
 
 function setGetChannelMembersToReturn(...windows: AppWindow[]): void {
@@ -72,7 +69,7 @@ describe('When sending a Context using ContextHandler', () => {
 });
 
 describe('When broadcasting a Context using ContextHandler', () => {
-    it('When ContextModel provides only the source window, the Context is not dispatched', async () => {
+    it('When ChannelHandler provides only the source window, the Context is not dispatched', async () => {
         const sourceAppWindow = createMockAppWindowWithName('source');
 
         setGetChannelMembersToReturn(sourceAppWindow);
@@ -92,7 +89,7 @@ describe('When broadcasting a Context using ContextHandler', () => {
         expect(mockChannelHandler.setLastBroadcastOnChannel).toBeCalledWith(sourceAppWindow.channel, testContext);
     });
 
-    it('When ContextModel provides multiple windows, all windows except the source window are dispatched to', async () => {
+    it('When ChannelHandler provides multiple channel member windows, all windows except the source window are dispatched to', async () => {
         const sourceAppWindow = createMockAppWindowWithName('source');
         const targetAppWindow1 = createMockAppWindowWithName('target-1');
         const targetAppWindow2 = createMockAppWindowWithName('target-2');
@@ -105,5 +102,57 @@ describe('When broadcasting a Context using ContextHandler', () => {
 
         expect(mockDispatch.mock.calls).toContainEqual([targetAppWindow1.identity, APIToClientTopic.CONTEXT, testContext]);
         expect(mockDispatch.mock.calls).toContainEqual([targetAppWindow2.identity, APIToClientTopic.CONTEXT, testContext]);
+    });
+
+    it('When ChannelHandler provides multiple listening windows, all windows except the source window are dispatched to', async () => {
+        const sourceAppWindow = createMockAppWindowWithName('source');
+        const targetAppWindow1 = createMockAppWindowWithName('target-1');
+        const targetAppWindow2 = createMockAppWindowWithName('target-2');
+
+        sourceAppWindow.channel = {...createMockChannel(), id: 'source-channel'};
+        setGetWindowsListeningToChannelToReturn(sourceAppWindow, targetAppWindow1, targetAppWindow2);
+
+        await contextHandler.broadcast(testContext, sourceAppWindow);
+
+        expect(mockDispatch).toBeCalledTimes(2);
+
+        expect(mockDispatch.mock.calls).toContainEqual([
+            targetAppWindow1.identity,
+            APIToClientTopic.CHANNEL_CONTEXT,
+            {context: testContext, channel: 'source-channel'}
+        ]);
+        expect(mockDispatch.mock.calls).toContainEqual([
+            targetAppWindow2.identity,
+            APIToClientTopic.CHANNEL_CONTEXT,
+            {context: testContext, channel: 'source-channel'}
+        ]);
+    });
+
+    it('When ChannelHandler provides both listening and channel member windows, all windows except the source window are dispatched to', async () => {
+        const sourceAppWindow = createMockAppWindowWithName('source');
+        const targetAppWindow1 = createMockAppWindowWithName('target-1');
+        const targetAppWindow2 = createMockAppWindowWithName('target-2');
+
+        sourceAppWindow.channel = {...createMockChannel(), id: 'source-channel'};
+        setGetChannelMembersToReturn(sourceAppWindow, targetAppWindow1, targetAppWindow2);
+        setGetWindowsListeningToChannelToReturn(sourceAppWindow, targetAppWindow1, targetAppWindow2);
+
+        await contextHandler.broadcast(testContext, sourceAppWindow);
+
+        expect(mockDispatch).toBeCalledTimes(4);
+
+        expect(mockDispatch.mock.calls).toContainEqual([targetAppWindow1.identity, APIToClientTopic.CONTEXT, testContext]);
+        expect(mockDispatch.mock.calls).toContainEqual([targetAppWindow2.identity, APIToClientTopic.CONTEXT, testContext]);
+
+        expect(mockDispatch.mock.calls).toContainEqual([
+            targetAppWindow1.identity,
+            APIToClientTopic.CHANNEL_CONTEXT,
+            {context: testContext, channel: 'source-channel'}
+        ]);
+        expect(mockDispatch.mock.calls).toContainEqual([
+            targetAppWindow2.identity,
+            APIToClientTopic.CHANNEL_CONTEXT,
+            {context: testContext, channel: 'source-channel'}
+        ]);
     });
 });
