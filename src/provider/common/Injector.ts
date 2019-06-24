@@ -44,7 +44,7 @@ const Bindings = {
     [Inject.ENVIRONMENT]: FinEnvironment,
     [Inject.INTENT_HANDLER]: IntentHandler,
     [Inject.MODEL]: Model,
-    [Inject.RESOLVER]: ResolverHandler,
+    [Inject.RESOLVER]: ResolverHandler
 };
 
 type Keys = (keyof typeof Inject & keyof typeof Bindings & keyof Types);
