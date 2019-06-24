@@ -12,8 +12,8 @@ import {parseIdentity, parseContext, validateEnvironment, parseChannelId} from '
 import {tryServiceDispatch, getServicePromise} from './connection';
 import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, APIToClientTopic, ChannelContextPayload, EventTransport} from './internal';
 import {Context} from './context';
-import {ContextListener} from './main';
-import {getEventHandler} from './EventRouter';
+import {ContextListener, FDC3Event} from './main';
+import {getEventRouter} from './EventRouter';
 
 export type ChannelId = string;
 
@@ -472,10 +472,9 @@ function hasChannelContextListener(id: ChannelId) {
     return channelContextListeners.some(listener => listener.id === id);
 }
 
-function onWindowAdded(eventTransport: any): FDC3ChannelEvent {
-    const channelWindowAddedEventTransport = eventTransport;
+function onWindowAdded(eventTransport: EventTransport<FDC3Event>): FDC3ChannelEvent {
+    const channelWindowAddedEventTransport = eventTransport as EventTransport<ChannelWindowAddedEvent>;
 
-    const type = channelWindowAddedEventTransport.type;
     const identity = channelWindowAddedEventTransport.identity;
     const channel = getChannelObject(channelWindowAddedEventTransport.channel!);
     const previousChannel = channelWindowAddedEventTransport.previousChannel ? getChannelObject(channelWindowAddedEventTransport.previousChannel) : null;
@@ -483,10 +482,9 @@ function onWindowAdded(eventTransport: any): FDC3ChannelEvent {
     return {type: 'window-added', identity, channel, previousChannel};
 }
 
-function onWindowRemoved(eventTransport: any): FDC3ChannelEvent {
-    const channelWindowRemovedEventTransport = eventTransport;
+function onWindowRemoved(eventTransport: EventTransport<FDC3Event>): FDC3ChannelEvent {
+    const channelWindowRemovedEventTransport = eventTransport as EventTransport<ChannelWindowRemovedEvent>;
 
-    const type = channelWindowRemovedEventTransport.type;
     const identity = channelWindowRemovedEventTransport.identity;
     const channel = channelWindowRemovedEventTransport.channel ? getChannelObject(channelWindowRemovedEventTransport.channel) : null;
     const previousChannel = getChannelObject(channelWindowRemovedEventTransport.previousChannel!);
@@ -504,7 +502,7 @@ if (typeof fin !== 'undefined') {
             });
         });
 
-        const eventHandler = getEventHandler();
+        const eventHandler = getEventRouter();
 
         eventHandler.registerEmitterProvider('channel', (channelId: ChannelId) => {
             return channelEventEmitters[channelId];

@@ -12,7 +12,7 @@ import {Application} from './directory';
 import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, EventTransport} from './internal';
 import {ChannelChangedEvent, getChannelObject, FDC3ChannelEvent, FDC3ChannelEventType} from './contextChannels';
 import {parseContext, validateEnvironment} from './validation';
-import {getEventHandler} from './EventRouter';
+import {getEventRouter} from './EventRouter';
 
 /**
  * This file was copied from the FDC3 v1 specification.
@@ -324,7 +324,7 @@ if (typeof fin !== 'undefined') {
             });
         });
 
-        const eventHandler = getEventHandler();
+        const eventHandler = getEventRouter();
 
         channelClient.register('event', (eventTransport: EventTransport<FDC3Event>) => {
             eventHandler.dispatchEvent(eventTransport);

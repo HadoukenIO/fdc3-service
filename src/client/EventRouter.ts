@@ -8,7 +8,7 @@ let eventHandler: EventRouter | null;
 /**
  * @hidden
  */
-export function getEventHandler(): EventRouter {
+export function getEventRouter(): EventRouter {
     if (!eventHandler) {
         eventHandler = new EventRouter();
     }
@@ -20,16 +20,16 @@ export function getEventHandler(): EventRouter {
  * @hidden
  */
 export class EventRouter {
-    private readonly _emitterFetchers: {[targetType: string]: (targetId: string) => EventEmitter};
+    private readonly _emitterProviders: {[targetType: string]: (targetId: string) => EventEmitter};
     private readonly _deserializers: {[eventType: string]: (event: EventTransport<FDC3Event>) => FDC3Event};
 
     public constructor() {
-        this._emitterFetchers = {};
+        this._emitterProviders = {};
         this._deserializers = {};
     }
 
     public registerEmitterProvider(targetType: string, emitterProvider: (targetId: string) => EventEmitter): void {
-        this._emitterFetchers[targetType] = emitterProvider;
+        this._emitterProviders[targetType] = emitterProvider;
     }
 
     public registerDeserializer(eventType: FDC3EventType, handler: (event: EventTransport<FDC3Event>) => FDC3Event): void {
@@ -41,7 +41,7 @@ export class EventRouter {
 
         const deserializedEvent = deserializer(event);
 
-        const emitter = this._emitterFetchers[event.target.type](event.target.id);
+        const emitter = this._emitterProviders[event.target.type](event.target.id);
 
         emitter.emit(event.type, deserializedEvent);
     }
