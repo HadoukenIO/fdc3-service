@@ -14,7 +14,7 @@ jest.mock('../../src/provider/controller/ChannelHandler');
 jest.mock('../../src/provider/APIHandler');
 
 const testContext = {type: 'test-context-payload'};
-const mockDispatch: jest.Mock<Promise<any>, [Identity, string, any]> = jest.fn<Promise<any>, [Identity, string, any]>();
+const mockDispatch = jest.fn<Promise<any>, [Identity, string, any]>();
 
 let contextHandler: ContextHandler;
 

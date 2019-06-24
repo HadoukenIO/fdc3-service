@@ -10,10 +10,11 @@ import {createMockChannel, createMockAppWindow} from '../mocks';
 
 jest.mock('../../src/provider/model/Model');
 
-let mockModel: Model;
-let channelHandler: ChannelHandler;
+const mockOnChannelChanged = jest.fn<void, [AppWindow, ContextChannel | null, ContextChannel | null]>();
 
-let onChannelChangedResults: [AppWindow, ContextChannel | null, ContextChannel | null][];
+let mockModel: Model;
+
+let channelHandler: ChannelHandler;
 
 beforeEach(() => {
     jest.resetAllMocks();
@@ -23,10 +24,8 @@ beforeEach(() => {
     (mockModel as any)['onWindowRemoved'] = new Signal1<AppWindow>();
 
     channelHandler = new ChannelHandler(mockModel);
-
-    onChannelChangedResults = [];
     channelHandler.onChannelChanged.add((appWindow: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null) => {
-        onChannelChangedResults.push([appWindow, channel, previousChannel]);
+        mockOnChannelChanged(appWindow, channel, previousChannel);
     });
 });
 
@@ -36,7 +35,7 @@ it('When registering channels, ChannelHandler adds expected channels to the mode
     expect(mockModel.registerChannel).toBeCalledTimes(7);
 });
 
-it('When getting desktop channels, only ChannelHandler only returns desktop channels', () => {
+it('When getting desktop channels, ChannelHandler only returns desktop channels', () => {
     const testChannels = [
         {...createMockChannel(), id: 'test-1'},
         {...createMockChannel(), id: 'test-2'},
@@ -178,7 +177,7 @@ describe('When joining a channel', () => {
 
         channelHandler.joinChannel(testWindow, testChannel2);
 
-        expect(onChannelChangedResults).toEqual([[testWindow, testChannel2, testChannel1]]);
+        expect(mockOnChannelChanged.mock.calls).toEqual([[testWindow, testChannel2, testChannel1]]);
     });
 
     it('If not changing channel, ChannelHandler fires a onChannelChanged signal', () => {
@@ -189,7 +188,7 @@ describe('When joining a channel', () => {
 
         channelHandler.joinChannel(testWindow, testChannel);
 
-        expect(onChannelChangedResults).toEqual([]);
+        expect(mockOnChannelChanged).toBeCalledTimes(0);
     });
 
     it('If the previous channel is now empty, ChannelHandler clears the context of the previous channel', () => {
@@ -224,7 +223,7 @@ it('When a window is added to the Model, ChannelHandler fires a onChannelChanged
 
     mockModel.onWindowAdded.emit(testWindow);
 
-    expect(onChannelChangedResults).toEqual([[testWindow, testWindow.channel, null]]);
+    expect(mockOnChannelChanged.mock.calls).toEqual([[testWindow, testWindow.channel, null]]);
 });
 
 describe('When a window is removed from the Model', () => {
@@ -234,7 +233,7 @@ describe('When a window is removed from the Model', () => {
 
         mockModel.onWindowRemoved.emit(testWindow);
 
-        expect(onChannelChangedResults).toEqual([[testWindow, null, testWindow.channel]]);
+        expect(mockOnChannelChanged.mock.calls).toEqual([[testWindow, null, testWindow.channel]]);
     });
 
     it('If the window\'s channel is now empty, ChannelHandler clears the context of the channel', () => {
