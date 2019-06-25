@@ -23,6 +23,7 @@ import {NewsApp} from './apps/NewsApp';
 
 
 function App(): React.ReactElement {
+    // Note that we require demo app UUIDs to follow a 'fdc3-$NAME[-$COLOUR][-nodir]' convention
     const {uuid} = fin.Window.me;
     let appToken = uuid.replace('fdc3-', '').replace('-nodir', '');
 
