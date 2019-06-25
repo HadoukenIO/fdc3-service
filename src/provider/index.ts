@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
+import {Application as OFApplication} from 'openfin/_v2/api/application/application';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport, GetChannelByIdPayload, EventTransport} from '../client/internal';
@@ -161,15 +162,7 @@ export class Main {
                 appInfo = appWindowFromSameApp.appInfo;
             } else {
                 // There are no appWindows in the model with the same app uuid - Produce minimal appInfo from window information
-                const application = fin.Application.wrapSync(identity);
-                const applicationInfo = await application.getInfo();
-                appInfo = {
-                    appId: identity.uuid,
-                    name: identity.uuid,
-                    title: (applicationInfo.manifest as {title?: string}).title,
-                    manifestType: 'openfin',
-                    manifest: applicationInfo.manifestUrl
-                };
+                appInfo = await this.getApplicationInfo(identity);
             }
             appWindow = this._model.registerWindow(appInfo, identity, false);
         }
@@ -231,6 +224,35 @@ export class Main {
                 `No connection to FDC3 service found from window with identity: ${JSON.stringify(identity)}`
             );
         }
+    }
+
+    /**
+     * Retrieves application info from a window's identity
+     * @param identity `Identity` of the window to get the app info from
+     */
+    private async getApplicationInfo(identity: Identity): Promise<Application> {
+        type OFManifest = {
+            shortcut?: {name?: string, icon: string},
+            startup_app: {uuid: string, name?: string, icon?: string}
+        };
+
+        const application = fin.Application.wrapSync(identity);
+        const applicationInfo = await application.getInfo();
+        const {shortcut, startup_app} = applicationInfo.manifest as OFManifest;
+
+        const title = (shortcut && shortcut.name) || startup_app.name || startup_app.uuid;
+        const icon = (shortcut && shortcut.icon) || startup_app.icon;
+
+        const appInfo: Application = {
+            appId: application.identity.uuid,
+            name: application.identity.uuid,
+            title: title,
+            icons: icon ? [{icon}] : undefined,
+            manifestType: 'openfin',
+            manifest: applicationInfo.manifestUrl
+        };
+
+        return appInfo;
     }
 }
 

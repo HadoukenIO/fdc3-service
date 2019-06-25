@@ -1,0 +1,46 @@
+.news-app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.news-feed {
+    margin: 20px;
+}
+
+.news-loader {
+    text-align: center;
+}
+
+.news-loader:after {
+    content: '⏳';
+    font-size: 80px;
+}
+
+.news-feed > ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.news-item {
+    margin: 20px;
+    padding: 5px;
+}
+
+.news-item__date {
+    margin-bottom: 5px;
+}
+
+.news-item__date__date:before {
+    content: '📅';
+    margin-right: 3px;
+}
+.news-item__date__time:before {
+    content: '⌚';
+    margin-left: 10px;
+    margin-right: 3px;
+}
+
+.news-item__headline {
+}
