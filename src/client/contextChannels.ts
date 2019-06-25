@@ -141,7 +141,7 @@ abstract class ChannelBase {
     /**
      * Event that is fired whenever a window broadcasts on this channel.
      *
-     * This can be triggered by a window belonging to the channel calling the top-level FDC3 `brodcast` function, or by
+     * This can be triggered by a window belonging to the channel calling the top-level FDC3 `broadcast` function, or by
      * any window calling this channel's {@link Channel.broadcast} method.
      *
      * @param handler Function that should be called whenever a context is broadcast on this channel
