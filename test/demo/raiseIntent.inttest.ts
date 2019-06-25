@@ -575,24 +575,6 @@ async function raiseDelayedIntentWithTarget(intent: Intent, targetApp: Directory
     return raiseIntentPromise;
 }
 
-/**
- * Raises an intent and `expect`s that the resolver window shows, then closes it
- * @param intent intent to raise
- */
-async function raiseIntentAndExpectResolverToShow(intent: Intent): Promise<[Promise<void>]> {
-    // Raise intent but don't await - promise won't resolve until an app is selected on the resolver
-    const raiseIntentPromise = raiseIntent(intent);
-
-    while (!await fin.Window.wrapSync(resolverWindowIdentity).isShowing()) {
-        await delay(500);
-    }
-
-    const isResolverShowing = await fin.Window.wrapSync(resolverWindowIdentity).isShowing();
-    expect(isResolverShowing).toBe(true);
-
-    return [raiseIntentPromise] as [Promise<void>];
-}
-
 function raiseIntentExpectResolverAndClose(intent: Intent): Promise<void> {
     return new Promise<void>(async (resolve, reject) => {
         const [raiseIntentPromise] = await raiseIntentAndExpectResolverToShow(intent);
@@ -615,6 +597,24 @@ async function raiseIntentExpectResolverSelectApp(intent: Intent, app: AppIdenti
 
     const receivedContexts = await remoteListener.getReceivedContexts();
     expect(receivedContexts).toEqual([intent.context]);
+}
+
+/**
+ * Raises an intent and `expect`s that the resolver window shows, then closes it
+ * @param intent intent to raise
+ */
+async function raiseIntentAndExpectResolverToShow(intent: Intent): Promise<[Promise<void>]> {
+    // Raise intent but don't await - promise won't resolve until an app is selected on the resolver
+    const raiseIntentPromise = raiseIntent(intent);
+
+    while (!await fin.Window.wrapSync(resolverWindowIdentity).isShowing()) {
+        await delay(500);
+    }
+
+    const isResolverShowing = await fin.Window.wrapSync(resolverWindowIdentity).isShowing();
+    expect(isResolverShowing).toBe(true);
+
+    return [raiseIntentPromise] as [Promise<void>];
 }
 
 /**
