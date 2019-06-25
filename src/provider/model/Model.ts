@@ -47,7 +47,7 @@ export class Model {
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
         @inject(Inject.ENVIRONMENT) environment: Environment,
-        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
+        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>
     ) {
         this._windowsById = {};
         this._channelsById = {};
@@ -60,16 +60,16 @@ export class Model {
         apiHandler.onConnection.add(this.onApiHandlerConnection, this);
     }
 
-    public get windows(): ReadonlyArray<AppWindow> {
+    public get windows(): AppWindow[] {
         return Object.values(this._windowsById);
+    }
+
+    public get channels(): ContextChannel[] {
+        return Object.values(this._channelsById);
     }
 
     public getWindow(identity: Identity): AppWindow|null {
         return this._windowsById[getId(identity)] || null;
-    }
-
-    public get channels(): ReadonlyArray<ContextChannel> {
-        return Object.values(this._channelsById);
     }
 
     public getChannel(id: ChannelId): ContextChannel|null {
