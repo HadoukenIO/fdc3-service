@@ -194,7 +194,7 @@ describe('When attempting to join a channel', () => {
             );
     });
 
-    describe('When a non-FDC3 has been started', () => {
+    describe('When a non-FDC3 app has been started', () => {
         beforeEach(async () => {
             await fin.Application.startFromManifest(testAppNotFdc3.manifestUrl);
         }, appStartupTime);
@@ -213,7 +213,7 @@ ${JSON.stringify({uuid: testAppNotFdc3.uuid, name: testAppNotFdc3.name})}`
         });
     });
 
-    describe('When an FDC3 has been started', () => {
+    describe('When an FDC3 app has been started', () => {
         beforeEach(async () => {
             await fdc3Remote.open(testManagerIdentity, testAppInDirectory1.name);
         }, appStartupTime);
