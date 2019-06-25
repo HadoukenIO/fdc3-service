@@ -115,11 +115,11 @@ describe('When listening for a channel-changed event', () => {
     const testParams: TestParam[] = [
         [
             'an FDC3 app',
-            testAppInDirectory2 as Identity,
+            testAppInDirectory2,
             async () => fdc3Remote.open(testManagerIdentity, testAppInDirectory2.name)
         ], [
             'a non directory app',
-            testAppNotInDirectory as Identity,
+            testAppNotInDirectory,
             async () => fin.Application.startFromManifest(testAppNotInDirectory.manifestUrl).then(() => {})
         ]
     ];
