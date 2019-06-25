@@ -6,7 +6,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {parseIdentity, parseContext, validateEnvironment, parseChannelId} from './validation';
 import {tryServiceDispatch, getServicePromise} from './connection';
-import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, APIToClientTopic, ChannelContextPayload} from './internal';
+import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, APIToClientTopic, HandleChannelContextPayload} from './internal';
 import {Context} from './context';
 import {ContextListener} from './main';
 
@@ -314,7 +314,7 @@ function hasChannelContextListener(id: ChannelId) {
 
 if (typeof fin !== 'undefined') {
     getServicePromise().then(channelClient => {
-        channelClient.register(APIToClientTopic.CHANNEL_CONTEXT, (payload: ChannelContextPayload) => {
+        channelClient.register(APIToClientTopic.HANDLE_CHANNEL_CONTEXT, (payload: HandleChannelContextPayload) => {
             channelContextListeners.forEach((listener: ChannelContextListener) => {
                 if (listener.channel.id === payload.channel) {
                     listener.handler(payload.context);

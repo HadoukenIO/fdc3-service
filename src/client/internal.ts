@@ -54,9 +54,9 @@ export enum APIFromClientTopic {
  * Enum containing all and only actions that the client can accept.
  */
 export enum APIToClientTopic {
-  INTENT = 'INTENT',
-  CONTEXT = 'CONTEXT',
-  CHANNEL_CONTEXT = 'CHANNEL-CONTEXT'
+    INTENT = 'INTENT',
+    CONTEXT = 'CONTEXT',
+    HANDLE_CHANNEL_CONTEXT = 'HANDLE-CHANNEL-CONTEXT'
 }
 
 export type APIFromClient = {
@@ -81,7 +81,7 @@ export type APIFromClient = {
 export type APIToClient = {
     [APIToClientTopic.CONTEXT]: [ContextPayload, void];
     [APIToClientTopic.INTENT]: [IntentPayload, void];
-    [APIToClientTopic.CHANNEL_CONTEXT]: [ChannelContextPayload, void];
+    [APIToClientTopic.HANDLE_CHANNEL_CONTEXT]: [HandleChannelContextPayload, void];
 }
 
 export type TransportMappings<T> =
@@ -180,7 +180,7 @@ export interface IntentPayload {
     context: Context;
 }
 
-export interface ChannelContextPayload {
+export interface HandleChannelContextPayload {
     channel: ChannelId,
     context: Context
 }
