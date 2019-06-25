@@ -48,7 +48,7 @@ export class ChannelHandler {
 
     private readonly _model: Model;
 
-    constructor(@inject(Inject.MODEL) model: Model,) {
+    constructor(@inject(Inject.MODEL) model: Model) {
         this._model = model;
 
         this._model.onWindowAdded.add(this.onModelWindowAdded, this);
