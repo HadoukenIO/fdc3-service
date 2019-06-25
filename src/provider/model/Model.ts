@@ -144,7 +144,6 @@ export class Model {
      * @param isInAppDirectory boolean indicating whether the app is registered in the app directory
      */
     private registerWindow(appInfo: Application, identity: Identity, isInAppDirectory: boolean): AppWindow {
-        // TODO: Should apps not in the directory have a channel?
         const appWindow = this._environment.wrapApplication(appInfo, identity, this._channelsById[DEFAULT_CHANNEL_ID]);
         appWindow.channel = this._channelsById[DEFAULT_CHANNEL_ID];
 
