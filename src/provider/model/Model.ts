@@ -4,12 +4,13 @@ import {Identity} from 'openfin/_v2/main';
 import {Application, AppName, AppId} from '../../client/directory';
 import {Inject} from '../common/Injectables';
 import {Signal0, Signal1} from '../common/Signal';
-import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
+import {ChannelId, DEFAULT_CHANNEL_ID, DefaultChannel, DesktopChannel} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
+import {DESKTOP_CHANNELS} from '../constants';
 
 import {AppWindow} from './AppWindow';
-import {ContextChannel} from './ContextChannel';
+import {ContextChannel, DefaultContextChannel, DesktopContextChannel} from './ContextChannel';
 import {Environment} from './Environment';
 import {AppDirectory} from './AppDirectory';
 
@@ -58,6 +59,11 @@ export class Model {
         this._environment.windowClosed.add(this.onWindowClosed, this);
 
         apiHandler.onConnection.add(this.onApiHandlerConnection, this);
+
+        this._channelsById[DEFAULT_CHANNEL_ID] = new DefaultContextChannel(DEFAULT_CHANNEL_ID);
+        for (const channel of DESKTOP_CHANNELS) {
+            this._channelsById[channel.id] = new DesktopContextChannel(channel.id, channel.name, channel.color);
+        }
     }
 
     public get windows(): AppWindow[] {
@@ -131,10 +137,6 @@ export class Model {
             .filter(directoryApp => !allAppWindows.some(appWindow => appWindow.appInfo.appId === directoryApp.appId));
 
         return [...appsInModelWithIntent, ...directoryAppsNotInModel];
-    }
-
-    public registerChannel(channel: ContextChannel): void {
-        this._channelsById[channel.id] = channel;
     }
 
     /**

@@ -8,40 +8,6 @@ import {AppWindow} from '../model/AppWindow';
 import {Signal1} from '../common/Signal';
 import {EventTransport} from '../../client/internal';
 
-const DESKTOP_CHANNELS = [
-    {
-        id: 'red',
-        name: 'Red',
-        color: 0xFF0000
-    },
-    {
-        id: 'orange',
-        name: 'Orange',
-        color: 0xFF8000
-    },
-    {
-        id: 'yellow',
-        name: 'Yellow',
-        color: 0xFFFF00
-    },
-    {
-        id: 'green',
-        name: 'Green',
-        color: 0x00FF00
-    },
-    {
-        id: 'blue',
-        name: 'Blue',
-        color: 0x0000FF
-    },
-    {
-        id: 'purple',
-        name: 'Purple',
-        color: 0xFF00FF
-    }
-];
-
-
 @injectable()
 export class ChannelHandler {
     public readonly onChannelChanged: Signal1<EventTransport<ChannelChangedEvent>> = new Signal1<EventTransport<ChannelChangedEvent>>();
@@ -53,15 +19,6 @@ export class ChannelHandler {
 
         this._model.onWindowAdded.add(this.onModelWindowAdded, this);
         this._model.onWindowRemoved.add(this.onModelWindowRemoved, this);
-    }
-
-    public registerChannels(): void {
-        const defaultChannel = new DefaultContextChannel(DEFAULT_CHANNEL_ID);
-
-        this._model.registerChannel(defaultChannel);
-        for (const channel of DESKTOP_CHANNELS) {
-            this._model.registerChannel(new DesktopContextChannel(channel.id, channel.name, channel.color));
-        }
     }
 
     public getDesktopChannels(): DesktopContextChannel[] {

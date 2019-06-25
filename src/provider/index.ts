@@ -79,7 +79,6 @@ export class Main {
             [APIFromClientTopic.CHANNEL_REMOVE_CONTEXT_LISTENER]: this.channelRemoveContextListener.bind(this)
         });
 
-        this._channelHandler.registerChannels();
         this._channelHandler.onChannelChanged.add(this.onChannelChangedHandler, this);
 
         console.log('Service Initialised');
