@@ -132,7 +132,7 @@ abstract class ChannelBase {
      * makes the broadcast. This matches the behaviour of the top-level FDC3 `broadcast` function.
      *
      * @param context The context to broadcast to all windows on this channel
-     * @throws `TypeError`: If `context` is not a valid Context
+     * @throws `TypeError`: If `context` is not a valid {@link Context}
      */
     public async broadcast(context: Context): Promise<void> {
         return tryServiceDispatch(APIFromClientTopic.CHANNEL_BROADCAST, {id: this.id, context: parseContext(context)});
