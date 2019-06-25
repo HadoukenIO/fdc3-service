@@ -46,7 +46,7 @@ const validIntent: Intent = {
         type: 'contact',
         name: 'Test Name',
         id: {
-            twitter: '@testname'
+            twitter: 'testname'
         }
     }
 };
