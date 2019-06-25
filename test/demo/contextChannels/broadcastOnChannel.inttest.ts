@@ -1,10 +1,10 @@
-import {Fin, connect} from 'hadouken-js-adapter';
 import {Identity} from 'openfin/_v2/main';
 
 import {testAppInDirectory1, testManagerIdentity, appStartupTime, testAppInDirectory2, testAppNotInDirectory} from '../constants';
 import {ChannelId, Context} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel} from '../utils/RemoteChannel';
+import {fin} from '../utils/fin';
 
 /**
  * Tests Channel.broadcast(), its interaction with Channel.getCurrentContext(), and Channel.addContextListener
@@ -12,10 +12,8 @@ import {RemoteChannel} from '../utils/RemoteChannel';
 
 const testContext = {type: 'test-context', name: 'contextName1', id: {name: 'contextID1'}};
 
-let fin: Fin;
 
 beforeAll(async () => {
-    fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-contextChannels-broadcastOnChannel.inttest.ts'});
     await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
 });
 

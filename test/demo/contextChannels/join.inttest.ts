@@ -1,20 +1,17 @@
-import {connect, Fin} from 'hadouken-js-adapter';
 import {Identity} from 'openfin/_v2/main';
 
 import {IdentityError} from '../../../src/client/main';
 import {testManagerIdentity, appStartupTime, testAppNotInDirectory, testAppNotFdc3, testAppInDirectory1, testAppInDirectory2} from '../constants';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel} from '../utils/RemoteChannel';
+import {fin} from '../utils/fin';
 
 /*
  * Tests simple behaviour of Channel.getMembers() and the channel-changed event, before testing how they and getCurrentChannel()
  * are influenced by Channel.join()
  */
 
-let fin: Fin;
-
 beforeAll(async () => {
-    fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-contextChannels-join.ts'});
     await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
 });
 
