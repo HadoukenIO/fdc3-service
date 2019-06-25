@@ -6,7 +6,7 @@ import {testManagerIdentity} from '../constants';
 import {fin} from './fin';
 import * as fdc3Remote from './fdc3RemoteExecution';
 
-export type Boxed<T> = { current: T }
+export type Boxed<T> = {value: T}
 
 /**
  * Identity with a mandatory `name`
@@ -66,10 +66,10 @@ export function setupStartNonDirectoryAppBookends(app: NonDirectoryAppIdentity):
  */
 export function setupStartNonDirectoryAppWithIntentListenerBookends(intent: Intent, app: NonDirectoryAppIdentity): Boxed<fdc3Remote.RemoteIntentListener> {
     setupStartNonDirectoryAppBookends(app);
-    const listener: Boxed<fdc3Remote.RemoteIntentListener> = {current: undefined!};
+    const listener: Boxed<fdc3Remote.RemoteIntentListener> = {value: undefined!};
 
     beforeEach(async () => {
-        listener.current = await fdc3Remote.addIntentListener(app, intent.type);
+        listener.value = await fdc3Remote.addIntentListener(app, intent.type);
     });
 
     return listener;

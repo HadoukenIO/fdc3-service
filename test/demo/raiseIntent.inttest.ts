@@ -373,7 +373,7 @@ the first listener is triggered exactly once with the correct context, and the s
                                 await raiseIntentExpectResolverSelectApp(uniqueIntent, testAppWithUniqueIntent, directoryAppListener);
                             });
                             test('When choosing the ad-hoc app on the resolver, it receives intent', async () => {
-                                await raiseIntentExpectResolverSelectApp(uniqueIntent, testAppNotInDirectory1, adHocAppListener.current);
+                                await raiseIntentExpectResolverSelectApp(uniqueIntent, testAppNotInDirectory1, adHocAppListener.value);
                             });
                         });
                     });
@@ -446,7 +446,7 @@ the first listener is triggered exactly once with the correct context, and the s
                         });
 
                         test('When choosing the ad-hoc app on the resolver, it receives intent', async () => {
-                            await raiseIntentExpectResolverSelectApp(uniqueIntent, testAppNotInDirectory1, adHocAppListener.current);
+                            await raiseIntentExpectResolverSelectApp(uniqueIntent, testAppNotInDirectory1, adHocAppListener.value);
                         });
                     });
                 });
@@ -492,12 +492,12 @@ function setupNoTargetAndNoDirectoryAppCanHandleIntentTests(intent: Intent): voi
             test('When calling raiseIntent the listener is triggered once', async () => {
                 await raiseIntent(intent);
 
-                const receivedContexts = await listener1.current.getReceivedContexts();
+                const receivedContexts = await listener1.value.getReceivedContexts();
                 expect(receivedContexts).toEqual([intent.context]);
             });
 
             test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it errors', async () => {
-                await listener1.current.unsubscribe();
+                await listener1.value.unsubscribe();
                 await expect(raiseIntent(intent)).toThrowFDC3Error(
                     ResolveError.NoAppsFound,
                     'No applications available to handle this intent'
@@ -516,22 +516,22 @@ function setupNoTargetAndNoDirectoryAppCanHandleIntentTests(intent: Intent): voi
                     );
                 });
                 test('When choosing the first app on the resolver, it receives intent', async () => {
-                    await raiseIntentExpectResolverSelectApp(intent, testAppNotInDirectory1, listener1.current);
+                    await raiseIntentExpectResolverSelectApp(intent, testAppNotInDirectory1, listener1.value);
                 });
                 test('When choosing the second app on the resolver, it receives intent', async () => {
-                    await raiseIntentExpectResolverSelectApp(intent, testAppNotInDirectory2, listener2.current);
+                    await raiseIntentExpectResolverSelectApp(intent, testAppNotInDirectory2, listener2.value);
                 });
             });
 
             test('When calling unsubscribe from the intent listener on the first app, then calling raiseIntent from another app, \
 then the second listener is triggered exactly once with the correct context', async () => {
-                await listener1.current.unsubscribe();
+                await listener1.value.unsubscribe();
                 await raiseIntent(intent);
 
-                const receivedContexts = await listener1.current.getReceivedContexts();
+                const receivedContexts = await listener1.value.getReceivedContexts();
                 expect(receivedContexts).toEqual([]);
 
-                const receivedContexts2 = await listener2.current.getReceivedContexts();
+                const receivedContexts2 = await listener2.value.getReceivedContexts();
                 expect(receivedContexts2).toEqual([intent.context]);
             });
         });
