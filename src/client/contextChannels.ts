@@ -10,9 +10,16 @@ import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, APIToClie
 import {Context} from './context';
 import {ContextListener} from './main';
 
+/**
+ * Type used to identify specific Channels. Though simply an alias of `string`, use of this type indicates usage of the string
+ * as a channel indentifier, and that the user should avoid assuming any internal structure and instead treat as a fully opaque object
+ */
 export type ChannelId = string;
 
-export type Channel = DesktopChannel|DefaultChannel;
+/**
+ * Union of all possible concrete channel classes that may be returned by the service.
+ */
+export type Channel = DesktopChannel | DefaultChannel;
 
 /**
  * Event fired whenever a window changes channel. See {@link addEventListener}.
@@ -50,9 +57,10 @@ interface ChannelContextListener extends ContextListener {
 }
 
 /**
- * Object representing a context channel.
+ * Class representing a context channel. All interactions with a context channel happen through the methods on here.
  *
- * All interactions with a context channel happen through the methods on here.
+ * When users wish to generically handle both {@link DesktopChannel}s and the {@link DefaultChannel}, generally the
+ * {@link Channel} type should be used instead of {@link ChannelBase}.
  */
 export abstract class ChannelBase {
     /**

@@ -324,7 +324,7 @@ if (typeof fin !== 'undefined') {
             });
         });
 
-        // TODO: For consistency this should be ContextPayload, but would break back-compat
+        // TODO: When we're ready to make a breaking change, change `payload: Context` to `payload: ContextPayload` (SERVICE-533)
         channelClient.register(APIToClientTopic.CONTEXT, (payload: Context) => {
             contextListeners.forEach((listener: ContextListener) => {
                 listener.handler(payload);
