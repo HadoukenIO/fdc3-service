@@ -13,7 +13,7 @@
 import {Identity} from 'openfin/_v2/main';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 
-import {Application, Context, IntentType, AppIntent, ChannelId, DefaultChannel, DesktopChannel, Channel, deserializeError} from '../../../src/client/main';
+import {Context, IntentType, AppIntent, ChannelId, DefaultChannel, DesktopChannel, Channel, deserializeError} from '../../../src/client/main';
 import {RaiseIntentPayload} from '../../../src/client/internal';
 import {FDC3Event, FDC3EventType} from '../../../src/client/connection';
 

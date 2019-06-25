@@ -5,7 +5,7 @@ import {OpenError, Timeouts} from '../../src/client/errors';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
-import {quitApp, setupOpenDirectoryApp} from './utils/common';
+import {quitApp, setupOpenDirectoryAppBookends} from './utils/common';
 import {
     testManagerIdentity, testAppInDirectory1, testAppInDirectory2,
     testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2
@@ -49,7 +49,7 @@ describe('Opening applications with the FDC3 client', () => {
         });
 
         describe('With an app already running', () => {
-            setupOpenDirectoryApp(testAppInDirectory1);
+            setupOpenDirectoryAppBookends(testAppInDirectory1);
 
             test('When opening the already running app the app is focused and the promise resolves', async () => {
                 // Focus another window so we do not get false positives from the first open focusing
@@ -123,7 +123,7 @@ describe('Opening applications with the FDC3 client', () => {
         });
 
         describe('With an app already running', () => {
-            setupOpenDirectoryApp(testAppWithPreregisteredListeners1);
+            setupOpenDirectoryAppBookends(testAppWithPreregisteredListeners1);
 
             test('When opening the running app it is focused, its context listener is triggered with the correct data, and the promise resolves', async () => {
                 // Focus another window so we do not get false positives from the first open focusing

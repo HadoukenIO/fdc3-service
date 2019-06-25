@@ -35,7 +35,7 @@ export async function quitApp(...apps: Identity[]) {
  * Registers `beforeEach` to open an app in the directory via FDC3's `open` method, and `afterEach` to quit
  * @param app app identity
  */
-export function setupOpenDirectoryApp(app: DirectoryAppIdentity) {
+export function setupOpenDirectoryAppBookends(app: DirectoryAppIdentity): void {
     beforeEach(async () => {
         await fdc3Remote.open(testManagerIdentity, app.name);
     });
@@ -49,7 +49,7 @@ export function setupOpenDirectoryApp(app: DirectoryAppIdentity) {
  * Registers `beforeEach` to start an app from its `manifestUrl`, and `afterEach` to quit
  * @param app app info.
  */
-export function setupStartNonDirectoryApp(app: NonDirectoryAppIdentity) {
+export function setupStartNonDirectoryAppBookends(app: NonDirectoryAppIdentity): void {
     beforeEach(async () => {
         await fin.Application.startFromManifest(app.manifestUrl);
     });
@@ -64,8 +64,8 @@ export function setupStartNonDirectoryApp(app: NonDirectoryAppIdentity) {
  * @param intent intent to add listener to. Listener is returned, boxed in an object
  * @param app app info.
  */
-export function setupStartNonDirectoryAppWithIntentListener(intent: Intent, app: NonDirectoryAppIdentity): Boxed<fdc3Remote.RemoteIntentListener> {
-    setupStartNonDirectoryApp(app);
+export function setupStartNonDirectoryAppWithIntentListenerBookends(intent: Intent, app: NonDirectoryAppIdentity): Boxed<fdc3Remote.RemoteIntentListener> {
+    setupStartNonDirectoryAppBookends(app);
     const listener: Boxed<fdc3Remote.RemoteIntentListener> = {current: undefined!};
 
     beforeEach(async () => {

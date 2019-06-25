@@ -11,7 +11,7 @@ import {testManagerIdentity} from './constants';
  * A context missing the mandatory `type` field
  */
 const invalidContext = {
-    twitter: '@testname'
+    twitter: 'testname'
 } as unknown as Context;
 
 /**
