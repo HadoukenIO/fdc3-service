@@ -64,11 +64,11 @@ export class ChannelHandler {
         }
     }
 
-    public getDesktopChannels(): ReadonlyArray<DesktopContextChannel> {
+    public getDesktopChannels(): DesktopContextChannel[] {
         return this._model.channels.filter(channel => channel.type === 'desktop') as DesktopContextChannel[];
     }
 
-    public getWindowsListeningToChannel(channel: ContextChannel): ReadonlyArray<AppWindow> {
+    public getWindowsListeningToChannel(channel: ContextChannel): AppWindow[] {
         return this._model.windows.filter(window => window.hasContextListener(channel.id));
     }
 
@@ -77,7 +77,7 @@ export class ChannelHandler {
         return this._model.getChannel(channelId)!;
     }
 
-    public getChannelMembers(channel: ContextChannel): ReadonlyArray<AppWindow> {
+    public getChannelMembers(channel: ContextChannel): AppWindow[] {
         return this._model.windows.filter(window => window.channel === channel);
     }
 
