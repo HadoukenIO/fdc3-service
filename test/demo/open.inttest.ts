@@ -12,14 +12,6 @@ import {
 } from './constants';
 
 describe('Opening applications with the FDC3 client', () => {
-    beforeAll(async () => {
-        // Make sure there are no leftover instances running from previous tests
-        await quitApp(
-            testAppInDirectory1, testAppInDirectory2,
-            testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2
-        );
-    });
-
     beforeEach(async () => {
         // The main launcher app should remain running for the duration of all tests.
         await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
