@@ -71,13 +71,13 @@ export function LauncherApp(): React.ReactElement {
 }
 
 const NON_DIRECTORY_APPS: Application[] = ([
-    {id: 'blotter', icon: 'blotter', title: 'Blotter', description: ''},
-    {id: 'contacts', icon: 'contacts', title: 'Contacts', description: ''},
-    {id: 'dialer', icon: 'dialer', title: 'Dialer', description: ''},
-    {id: 'charts-red', icon: 'charts', title: 'Red Charts', description: ''},
-    {id: 'charts-green', icon: 'charts', title: 'Green Charts', description: ''},
-    {id: 'charts-blue', icon: 'charts', title: 'Blue Charts', description: ''},
-    {id: 'news', icon: 'news', title: 'News Feed', description: ''}
+    {id: 'blotter', icon: 'blotter', title: 'Blotter', description: 'Sample non-directory blotter app'},
+    {id: 'contacts', icon: 'contacts', title: 'Contacts', description: 'Sample non-directory contacts app'},
+    {id: 'dialer', icon: 'dialer', title: 'Dialer', description: 'Sample non-directory dialer app'},
+    {id: 'charts-pink', icon: 'charts', title: 'Charts: Pink', description: 'A non-directory charting app'},
+    {id: 'charts-grey', icon: 'charts', title: 'Charts: Grey', description: 'Another non-directory charting app'},
+    {id: 'charts-teal', icon: 'charts', title: 'Charts: Teal', description: 'Another non-directory charting app'},
+    {id: 'news', icon: 'news', title: 'News Feed', description: 'Sample non-directory news app'}
 ] as Array<{id: string, icon: string, title: string, description: string}>).map(({id, icon, title, description}) => ({
     appId: `fdc3-${id}-nodir`,
     name: `fdc3-${id}-nodir`,
@@ -87,5 +87,5 @@ const NON_DIRECTORY_APPS: Application[] = ([
         {icon: `http://localhost:3923/demo/img/app-icons/${icon}.svg`}
     ],
     title: title || id,
-    description: description || `Sample ${title || id} app`
+    description
 }));

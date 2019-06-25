@@ -26,7 +26,7 @@ function App(): React.ReactElement {
     const {uuid} = fin.Window.me;
 
     let color = 'blue-grey';
-    const regexResult = /-(red|green|blue)/.exec(uuid);
+    const regexResult = /-(red|green|blue|grey|pink|teal)/.exec(uuid);
     if (regexResult && regexResult.length > 1) {
         color = regexResult[1];
     }
