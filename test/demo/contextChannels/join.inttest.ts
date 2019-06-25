@@ -114,8 +114,8 @@ describe('When listening for a channel-changed event', () => {
         }
     });
 
-    type TestParam = string | Identity | (() => Promise<any>);
-    const testParams = [
+    type TestParam = [string, Identity, () => Promise<any>];
+    const testParams: TestParam[] = [
         [
             'an FDC3 app',
             testAppInDirectory2 as Identity,
@@ -127,17 +127,17 @@ describe('When listening for a channel-changed event', () => {
         ]
     ];
 
-    test.each(testParams)('Event is recevied when %s starts', async (titleParam: TestParam, appIdentity: TestParam, openFunction: TestParam) => {
+    test.each(testParams)('Event is recevied when %s starts', async (titleParam: string, appIdentity: Identity, openFunction: () => Promise<any>) => {
         // Set up our listener
         const listener = await fdc3Remote.addEventListener(listeningApp, 'channel-changed');
 
         // Open our app
-        await (openFunction as (() => Promise<void>))();
+        await openFunction();
 
         // Check we received a channel-changed event
         await expect(listener.getReceivedEvents()).resolves.toEqual([{
             type: 'channel-changed',
-            identity: {uuid: (appIdentity as Identity).uuid, name: (appIdentity as Identity).name},
+            identity: {uuid: appIdentity.uuid, name: appIdentity.name},
             channel: {id: 'default', type: 'default'},
             previousChannel: null
         }]);
