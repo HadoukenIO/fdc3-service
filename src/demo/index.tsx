@@ -24,61 +24,54 @@ import {NewsApp} from './apps/NewsApp';
 
 function App(): React.ReactElement {
     const {uuid} = fin.Window.me;
+    let appToken = uuid.replace('fdc3-', '').replace('-nodir', '');
 
     let color = 'blue-grey';
     const regexResult = /-(red|green|blue|grey|pink|teal)/.exec(uuid);
     if (regexResult && regexResult.length > 1) {
         color = regexResult[1];
+        appToken = appToken.replace(`-${color}`, '');
     }
     const cssURL = `https://www.w3schools.com/lib/w3-theme-${color}.css`;
 
     return (
         <React.Fragment>
             <link rel="stylesheet" type="text/css" href={cssURL} />
-            <SelectApp uuid={uuid} />
+            <SelectApp appToken={appToken} />
         </React.Fragment>
     );
 }
 
 interface SelectAppProps {
-    uuid: string;
+    appToken: string;
 }
 
 function SelectApp(props: SelectAppProps): React.ReactElement {
-    const {uuid} = props;
+    const {appToken} = props;
     let selectedApp: JSX.Element;
 
-    switch (uuid) {
-        case 'fdc3-launcher':
-        case 'fdc3-launcher-nodir':
+    switch (appToken) {
+        case 'launcher':
             selectedApp = <LauncherApp />;
             break;
-        case 'fdc3-blotter':
-        case 'fdc3-blotter-nodir':
+        case 'blotter':
             selectedApp = <BlotterApp />;
             break;
-        case 'fdc3-charts-red':
-        case 'fdc3-charts-green':
-        case 'fdc3-charts-blue':
-        case 'fdc3-charts-red-nodir':
-        case 'fdc3-charts-green-nodir':
-        case 'fdc3-charts-blue-nodir':
+        case 'charts':
             selectedApp = <ChartsApp />;
             break;
-        case 'fdc3-contacts':
-        case 'fdc3-contacts-nodir':
+        case 'contacts':
             selectedApp = <ContactsApp />;
             break;
-        case 'fdc3-dialer':
-        case 'fdc3-dialer-nodir':
+        case 'dialer':
             selectedApp = <DialerApp />;
             break;
-        case 'fdc3-news-nodir':
+        case 'news':
             selectedApp = <NewsApp />;
             break;
 
         default:
-            selectedApp = (<div>Unknown application uuid: &quot;{uuid}&quot;. Add application to index.tsx</div>);
+            selectedApp = (<div>Unknown application token: &quot;{appToken}&quot;. Add application to index.tsx</div>);
     }
     return selectedApp;
 }
