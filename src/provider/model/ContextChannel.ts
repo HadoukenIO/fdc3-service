@@ -36,6 +36,10 @@ abstract class ContextChannelBase implements ContextChannel {
 export class DefaultContextChannel extends ContextChannelBase {
     public readonly type!: 'default';
 
+    public constructor(id: ChannelId) {
+        super(id, 'default');
+    }
+
     public getStoredContext(): Context | null {
         return null;
     }
@@ -46,10 +50,6 @@ export class DefaultContextChannel extends ContextChannelBase {
 
     public clearStoredContext(): void {
 
-    }
-
-    public constructor(id: ChannelId) {
-        super(id, 'default');
     }
 }
 
