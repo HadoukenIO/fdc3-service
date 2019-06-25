@@ -28,46 +28,43 @@ describe('When getting members of a channel', () => {
         await expect(defaultChannel.getMembers()).resolves.toEqual([]);
     });
 
-    describe('When an FDC3 app has been starterd', () => {
+    type TestParam = [string, Identity, () => Promise<any>];
+    const testParams: TestParam[] = [
+        [
+            'an FDC3 app',
+            testAppInDirectory1,
+            async () => fdc3Remote.open(testManagerIdentity, testAppInDirectory1.name)
+        ], [
+            'a non directory app',
+            testAppNotInDirectory,
+            async () => fin.Application.startFromManifest(testAppNotInDirectory.manifestUrl).then(() => {})
+        ]
+    ];
+
+    describe.each(testParams)('When %s has been starterd', (titleParam: string, appIdentity: Identity, openFunction: () => Promise<any>) => {
         beforeEach(async () => {
-            await fdc3Remote.open(testManagerIdentity, testAppInDirectory1.name);
+            await openFunction();
         }, appStartupTime);
 
         afterEach(async () => {
-            const app = fin.Application.wrapSync(testAppInDirectory1);
+            const app = fin.Application.wrapSync(appIdentity);
             if (await app.isRunning()) {
                 await app.quit(true);
             }
         });
 
-        test('When the channel is the default channel, result contains the FDC3 app', async () => {
+        test('When the channel is the default channel, result contains the app', async () => {
             const defaultChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'default');
 
-            await expect(defaultChannel.getMembers()).resolves.toContainEqual({uuid: testAppInDirectory1.uuid, name: testAppInDirectory1.name});
+            await expect(defaultChannel.getMembers()).resolves.toContainEqual({uuid: appIdentity.uuid, name: appIdentity.name});
         });
 
-        test('After closing the FDC3 app, result does not contains the FDC3 app', async () => {
+        test('After closing the app, result does not contains the app', async () => {
             const defaultChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'default');
 
-            await fin.Application.wrapSync(testAppInDirectory1).quit(true);
+            await fin.Application.wrapSync(appIdentity).quit(true);
 
             await expect(defaultChannel.getMembers()).resolves.toEqual([testManagerIdentity]);
-        });
-    });
-
-    describe('When a non-directory app has been started', () => {
-        beforeEach(async () => {
-            await fin.Application.startFromManifest(testAppNotInDirectory.manifestUrl);
-        }, appStartupTime);
-
-        afterEach(async () => {
-            await fin.Application.wrapSync(testAppNotInDirectory).quit(true);
-        });
-
-        test('When the channel is the default channel, result contains the non-directory app', async () => {
-            const defaultChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'default');
-
-            await expect(defaultChannel.getMembers()).resolves.toContainEqual({uuid: testAppNotInDirectory.uuid, name: testAppNotInDirectory.name});
         });
     });
 
