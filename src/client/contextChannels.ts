@@ -46,7 +46,7 @@ export interface ChannelChangedEvent {
 }
 
 interface ChannelContextListener extends ContextListener {
-    id: ChannelId;
+    channel: Channel;
 }
 
 /**
@@ -150,7 +150,7 @@ abstract class ChannelBase {
         validateEnvironment();
 
         const listener: ChannelContextListener = {
-            id: this.id,
+            channel: this as Channel,
             handler,
             unsubscribe: async () => {
                 const index: number = channelContextListeners.indexOf(listener);
@@ -309,14 +309,14 @@ export function getChannelObject<T extends Channel = Channel>(channelTransport: 
 }
 
 function hasChannelContextListener(id: ChannelId) {
-    return channelContextListeners.some(listener => listener.id === id);
+    return channelContextListeners.some(listener => listener.channel.id === id);
 }
 
 if (typeof fin !== 'undefined') {
     getServicePromise().then(channelClient => {
         channelClient.register(APIToClientTopic.CHANNEL_CONTEXT, (payload: ChannelContextPayload) => {
             channelContextListeners.forEach((listener: ChannelContextListener) => {
-                if (listener.id === payload.channel) {
+                if (listener.channel.id === payload.channel) {
                     listener.handler(payload.context);
                 }
             });
