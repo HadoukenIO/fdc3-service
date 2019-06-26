@@ -41,7 +41,7 @@ describe('When getting members of a channel', () => {
         ]
     ];
 
-    describe.each(testParams)('When %s has been starterd', (titleParam: string, appIdentity: Identity, openFunction: () => Promise<any>) => {
+    describe.each(testParams)('When %s has been started', (titleParam: string, appIdentity: Identity, openFunction: () => Promise<any>) => {
         beforeEach(async () => {
             await openFunction();
         }, appStartupTime);
