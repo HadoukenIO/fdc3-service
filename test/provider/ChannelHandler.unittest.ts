@@ -29,12 +29,6 @@ beforeEach(() => {
     });
 });
 
-it('When registering channels, ChannelHandler adds expected channels to the model', () => {
-    channelHandler.registerChannels();
-
-    expect(mockModel.registerChannel).toBeCalledTimes(7);
-});
-
 it('When getting desktop channels, ChannelHandler only returns desktop channels', () => {
     const testChannels = [
         {...createMockChannel(), id: 'test-1'},
