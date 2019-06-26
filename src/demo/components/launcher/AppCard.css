@@ -19,6 +19,4 @@
 
 .app-card p {
     margin: 5px 0;
-    white-space: nowrap;
-    text-overflow: ellipsis;
 }

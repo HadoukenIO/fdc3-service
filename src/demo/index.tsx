@@ -6,6 +6,7 @@ import {ChartsApp} from './apps/ChartsApp';
 import {ContactsApp} from './apps/ContactsApp';
 import {DialerApp} from './apps/DialerApp';
 import {LauncherApp} from './apps/LauncherApp';
+import {NewsApp} from './apps/NewsApp';
 
 /*
  * This file defines the entry point for all of the applications in this project. This "bootstrap" is intended to allow
@@ -22,50 +23,56 @@ import {LauncherApp} from './apps/LauncherApp';
 
 
 function App(): React.ReactElement {
-    let uuid: string = fin.Window.me.uuid;
-    let color: string = uuid.split('-')[2];
-    if (color) {
-        uuid = uuid.slice(0, uuid.length - color.length - 1);
-    } else {
-        color = 'blue-grey';
+    // Note that we require demo app UUIDs to follow a 'fdc3-$NAME[-$COLOUR][-nodir]' convention
+    const {uuid} = fin.Window.me;
+    let appToken = uuid.replace('fdc3-', '').replace('-nodir', '');
+
+    let color = 'blue-grey';
+    const regexResult = /-(red|green|blue|grey|pink|teal)/.exec(uuid);
+    if (regexResult && regexResult.length > 1) {
+        color = regexResult[1];
+        appToken = appToken.replace(`-${color}`, '');
     }
     const cssURL = `https://www.w3schools.com/lib/w3-theme-${color}.css`;
 
     return (
         <React.Fragment>
             <link rel="stylesheet" type="text/css" href={cssURL} />
-            <SelectApp uuid={uuid} />
+            <SelectApp appToken={appToken} />
         </React.Fragment>
     );
 }
 
 interface SelectAppProps {
-    uuid: string;
+    appToken: string;
 }
 
 function SelectApp(props: SelectAppProps): React.ReactElement {
-    const {uuid} = props;
+    const {appToken} = props;
     let selectedApp: JSX.Element;
 
-    switch (uuid) {
-        case 'fdc3-launcher':
+    switch (appToken) {
+        case 'launcher':
             selectedApp = <LauncherApp />;
             break;
-        case 'fdc3-blotter':
+        case 'blotter':
             selectedApp = <BlotterApp />;
             break;
-        case 'fdc3-charts':
+        case 'charts':
             selectedApp = <ChartsApp />;
             break;
-        case 'fdc3-contacts':
+        case 'contacts':
             selectedApp = <ContactsApp />;
             break;
-        case 'fdc3-dialer':
+        case 'dialer':
             selectedApp = <DialerApp />;
+            break;
+        case 'news':
+            selectedApp = <NewsApp />;
             break;
 
         default:
-            selectedApp = (<div>Unknown application uuid: &quot;{uuid}&quot;. Add application to index.tsx</div>);
+            selectedApp = (<div>Unknown application token: &quot;{appToken}&quot;. Add application to index.tsx</div>);
     }
     return selectedApp;
 }
