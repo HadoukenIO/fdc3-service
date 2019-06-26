@@ -399,8 +399,6 @@ the first listener is triggered exactly once with the correct context, and the s
 
                     describe('When the directory app registers the intent listener after opening', () => {
                         test('When calling raiseIntent from another app, the app opens and receives the intent with the correct context', async () => {
-                            await delay(2000); // For some reason a 'could not find specified executionTarget' error is thrown without a delay here
-
                             await fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
                             await raiseIntentPromise;
 
@@ -426,8 +424,6 @@ the first listener is triggered exactly once with the correct context, and the s
                             setupQuitAppAfterEach(testAppWithUniqueIntent);
 
                             test('It receives intent', async () => {
-                                await delay(2000); // For some reason a 'could not find specified executionTarget' error is thrown without a delay here
-
                                 const [raiseIntentPromise] = await raiseIntentAndExpectResolverToShow(uniqueIntent);
                                 await selectResolverApp(testAppWithUniqueIntent.name);
 
