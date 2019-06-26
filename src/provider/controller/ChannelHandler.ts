@@ -2,8 +2,8 @@ import {injectable, inject} from 'inversify';
 
 import {Model} from '../model/Model';
 import {Inject} from '../common/Injectables';
-import {DEFAULT_CHANNEL_ID, ChannelId, FDC3Error, ChannelError, ChannelChangedEvent, Context} from '../../client/main';
-import {DesktopContextChannel, DefaultContextChannel, ContextChannel} from '../model/ContextChannel';
+import {ChannelId, FDC3Error, ChannelError, ChannelChangedEvent, Context} from '../../client/main';
+import {DesktopContextChannel, ContextChannel} from '../model/ContextChannel';
 import {AppWindow} from '../model/AppWindow';
 import {Signal1} from '../common/Signal';
 import {EventTransport} from '../../client/internal';
