@@ -7,46 +7,13 @@ import {DesktopContextChannel, DefaultContextChannel, ContextChannel} from '../m
 import {AppWindow} from '../model/AppWindow';
 import {Signal3} from '../common/Signal';
 
-const DESKTOP_CHANNELS = [
-    {
-        id: 'red',
-        name: 'Red',
-        color: 0xFF0000
-    },
-    {
-        id: 'orange',
-        name: 'Orange',
-        color: 0xFF8000
-    },
-    {
-        id: 'yellow',
-        name: 'Yellow',
-        color: 0xFFFF00
-    },
-    {
-        id: 'green',
-        name: 'Green',
-        color: 0x00FF00
-    },
-    {
-        id: 'blue',
-        name: 'Blue',
-        color: 0x0000FF
-    },
-    {
-        id: 'purple',
-        name: 'Purple',
-        color: 0xFF00FF
-    }
-];
-
 @injectable()
 export class ChannelHandler {
     public readonly onChannelChanged: Signal3<AppWindow, ContextChannel | null, ContextChannel | null>;
 
     private readonly _model: Model;
 
-    constructor(@inject(Inject.MODEL) model: Model,) {
+    constructor(@inject(Inject.MODEL) model: Model) {
         this._model = model;
 
         this.onChannelChanged = new Signal3<AppWindow, ContextChannel | null, ContextChannel | null>();
@@ -55,17 +22,12 @@ export class ChannelHandler {
         this._model.onWindowRemoved.add(this.onModelWindowRemoved, this);
     }
 
-    public registerChannels(): void {
-        const defaultChannel = new DefaultContextChannel(DEFAULT_CHANNEL_ID);
-
-        this._model.registerChannel(defaultChannel);
-        for (const channel of DESKTOP_CHANNELS) {
-            this._model.registerChannel(new DesktopContextChannel(channel.id, channel.name, channel.color));
-        }
+    public getDesktopChannels(): DesktopContextChannel[] {
+        return this._model.channels.filter(channel => channel.type === 'desktop') as DesktopContextChannel[];
     }
 
-    public getDesktopChannels(): ReadonlyArray<DesktopContextChannel> {
-        return this._model.channels.filter(channel => channel.type === 'desktop') as DesktopContextChannel[];
+    public getWindowsListeningToChannel(channel: ContextChannel): AppWindow[] {
+        return this._model.windows.filter(window => window.hasContextListener(channel));
     }
 
     public getChannelById(channelId: ChannelId): ContextChannel {
@@ -77,15 +39,15 @@ export class ChannelHandler {
         return channel.getStoredContext();
     }
 
-    public getChannelMembers(channel: ContextChannel): ReadonlyArray<AppWindow> {
+    public getChannelMembers(channel: ContextChannel): AppWindow[] {
         return this._model.windows.filter(window => window.channel === channel);
     }
 
-    public getWindowsListeningForContextsOnChannel(channel: ContextChannel): ReadonlyArray<AppWindow> {
+    public getWindowsListeningForContextsOnChannel(channel: ContextChannel): AppWindow[] {
         return this._model.windows.filter(window => window.hasContextListener(channel));
     }
 
-    public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: FDC3ChannelEventType): ReadonlyArray<AppWindow> {
+    public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: FDC3ChannelEventType): AppWindow[] {
         return this._model.windows.filter(window => window.hasChannelEventListener(channel, eventType));
     }
 

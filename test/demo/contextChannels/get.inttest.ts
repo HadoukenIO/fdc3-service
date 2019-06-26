@@ -1,18 +1,15 @@
-import {connect, Fin} from 'hadouken-js-adapter';
 import {Identity} from 'openfin/_v2/main';
 
 import {DesktopChannel, DefaultChannel, ChannelError, IdentityError, ChannelId} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory, appStartupTime, testAppNotFdc3} from '../constants';
+import {fin} from '../utils/fin';
 
 /**
  * Tests getDesktopChannels(), getChannelById(), and getCurrentChannel()
  */
 
-let fin: Fin;
-
 beforeAll(async () => {
-    fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-contextChannels-get.inttest.ts'});
     await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
 });
 

@@ -1,20 +1,17 @@
-import {connect, Fin} from 'hadouken-js-adapter';
 import {Identity} from 'openfin/_v2/main';
 
 import {IdentityError, DEFAULT_CHANNEL_ID} from '../../../src/client/main';
 import {testManagerIdentity, appStartupTime, testAppNotInDirectory, testAppNotFdc3, testAppInDirectory1, testAppInDirectory2} from '../constants';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel, RemoteChannelEventListener} from '../utils/RemoteChannel';
+import {fin} from '../utils/fin';
 
 /*
  * Tests simple behaviour of Channel.getMembers() and the channel-changed and Channel events, before testing how they and getCurrentChannel()
  * are influenced by Channel.join()
  */
 
-let fin: Fin;
-
 beforeAll(async () => {
-    fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-contextChannels-join.ts'});
     await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
 });
 
@@ -31,46 +28,43 @@ describe('When getting members of a channel', () => {
         await expect(defaultChannel.getMembers()).resolves.toEqual([]);
     });
 
-    describe('When an FDC3 app has been starterd', () => {
+    type TestParam = [string, Identity, () => Promise<any>];
+    const testParams: TestParam[] = [
+        [
+            'an FDC3 app',
+            testAppInDirectory1,
+            async () => fdc3Remote.open(testManagerIdentity, testAppInDirectory1.name)
+        ], [
+            'a non directory app',
+            testAppNotInDirectory,
+            async () => fin.Application.startFromManifest(testAppNotInDirectory.manifestUrl).then(() => {})
+        ]
+    ];
+
+    describe.each(testParams)('When %s has been starterd', (titleParam: string, appIdentity: Identity, openFunction: () => Promise<any>) => {
         beforeEach(async () => {
-            await fdc3Remote.open(testManagerIdentity, testAppInDirectory1.name);
+            await openFunction();
         }, appStartupTime);
 
         afterEach(async () => {
-            const app = fin.Application.wrapSync(testAppInDirectory1);
+            const app = fin.Application.wrapSync(appIdentity);
             if (await app.isRunning()) {
                 await app.quit(true);
             }
         });
 
-        test('When the channel is the default channel, result contains the FDC3 app', async () => {
+        test('When the channel is the default channel, result contains the app', async () => {
             const defaultChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'default');
 
-            await expect(defaultChannel.getMembers()).resolves.toContainEqual({uuid: testAppInDirectory1.uuid, name: testAppInDirectory1.name});
+            await expect(defaultChannel.getMembers()).resolves.toContainEqual({uuid: appIdentity.uuid, name: appIdentity.name});
         });
 
-        test('After closing the FDC3 app, result does not contains the FDC3 app', async () => {
+        test('After closing the app, result does not contains the app', async () => {
             const defaultChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'default');
 
-            await fin.Application.wrapSync(testAppInDirectory1).quit(true);
+            await fin.Application.wrapSync(appIdentity).quit(true);
 
             await expect(defaultChannel.getMembers()).resolves.toEqual([testManagerIdentity]);
-        });
-    });
-
-    describe('When a non-directory app has been started', () => {
-        beforeEach(async () => {
-            await fin.Application.startFromManifest(testAppNotInDirectory.manifestUrl);
-        }, appStartupTime);
-
-        afterEach(async () => {
-            await fin.Application.wrapSync(testAppNotInDirectory).quit(true);
-        });
-
-        test('When the channel is the default channel, result contains the non-directory app', async () => {
-            const defaultChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'default');
-
-            await expect(defaultChannel.getMembers()).resolves.toContainEqual({uuid: testAppNotInDirectory.uuid, name: testAppNotInDirectory.name});
         });
     });
 
@@ -120,30 +114,30 @@ describe('When listening for channel-changed and Channel events', () => {
         }
     });
 
-    type TestParam = string | Identity | (() => Promise<any>);
-    const testParams = [
+    type TestParam = [string, Identity, () => Promise<any>];
+    const testParams: TestParam[] = [
         [
             'an FDC3 app',
-            testAppInDirectory2 as Identity,
+            testAppInDirectory2,
             async () => fdc3Remote.open(testManagerIdentity, testAppInDirectory2.name)
         ],
         [
             'a non directory app',
-            testAppNotInDirectory as Identity,
+            testAppNotInDirectory,
             async () => fin.Application.startFromManifest(testAppNotInDirectory.manifestUrl).then(() => {})
         ]
     ];
 
-    test.each(testParams)('Events are recevied when %s starts', async (titleParam: TestParam, appIdentity: TestParam, openFunction: TestParam) => {
+    test.each(testParams)('Events are recevied when %s starts', async (titleParam: string, appIdentity: Identity, openFunction: () => Promise<any>) => {
         // Set up our listener
         const channelChangedListener = await fdc3Remote.addEventListener(listeningApp, 'channel-changed');
         const windowAddedListener = await defaultChannel.addEventListener('window-added');
 
         // Open our app
-        await (openFunction as (() => Promise<void>))();
+        await openFunction();
 
         const expectedEvent = {
-            identity: {uuid: (appIdentity as Identity).uuid, name: (appIdentity as Identity).name},
+            identity: {uuid: appIdentity.uuid, name: appIdentity.name},
             channel: {id: 'default', type: 'default'},
             previousChannel: null
         };
@@ -224,7 +218,7 @@ describe('When attempting to join a channel', () => {
             );
     });
 
-    describe('When a non-FDC3 has been started', () => {
+    describe('When a non-FDC3 app has been started', () => {
         beforeEach(async () => {
             await fin.Application.startFromManifest(testAppNotFdc3.manifestUrl);
         }, appStartupTime);
@@ -243,7 +237,7 @@ ${JSON.stringify({uuid: testAppNotFdc3.uuid, name: testAppNotFdc3.name})}`
         });
     });
 
-    describe('When an FDC3 has been started', () => {
+    describe('When an FDC3 app has been started', () => {
         beforeEach(async () => {
             await fdc3Remote.open(testManagerIdentity, testAppInDirectory1.name);
         }, appStartupTime);

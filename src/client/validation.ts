@@ -14,42 +14,6 @@ import {ChannelId} from './contextChannels';
  * Validates the provided Identity and returns an Identity stripped of any extraneous properties
  */
 export function parseIdentity(identity: Identity): Identity {
-    validateIdentityIsWellFormed(identity);
-
-    return {uuid: identity.uuid, name: identity.name || identity.uuid};
-}
-
-/**
- * Validates the provided Context. No properties are stripped, as these are permitted by the FDC3 specification
- */
-export function parseContext(context: Context): Context {
-    validateContextIsWellFormed(context);
-
-    return context;
-}
-
-/**
- * Validates the provided ChannelId
- */
-export function parseChannelId(channelId: ChannelId): ChannelId {
-    validateChannelIdIsWellFormed(channelId);
-
-    return channelId;
-}
-
-/**
- * Validates we're running inside an OpenFin environment
- */
-export function validateEnvironment(): void {
-    if (typeof fin === 'undefined') {
-        throw new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.');
-    }
-}
-
-/**
- * Checks that the provided Identity adheres to the `Identity` interface
- */
-function validateIdentityIsWellFormed(identity: Identity): void {
     let error = false;
 
     if (identity === null || typeof identity !== 'object') {
@@ -66,12 +30,14 @@ function validateIdentityIsWellFormed(identity: Identity): void {
     if (error) {
         throw new TypeError(`${safeStringify(identity, 'Provided Identity')} is not a valid Identity`);
     }
+
+    return {uuid: identity.uuid, name: identity.name || identity.uuid};
 }
 
 /**
- * Checks that the provided Context adheres to the `Context` interface
+ * Validates the provided Context. No properties are stripped, as these are permitted by the FDC3 specification
  */
-function validateContextIsWellFormed(context: Context): void {
+export function parseContext(context: Context): Context {
     let error = false;
 
     if (context === null || typeof context !== 'object') {
@@ -89,14 +55,27 @@ function validateContextIsWellFormed(context: Context): void {
     if (error) {
         throw new TypeError(`${safeStringify(context, 'Provided Context')} is not a valid Context`);
     }
+
+    return context;
 }
 
 /**
- * Checks that the provided ChannelId is a string
+ * Validates the provided ChannelId
  */
-function validateChannelIdIsWellFormed(channelId: ChannelId): void {
-    if (channelId === null || typeof channelId !== 'string') {
+export function parseChannelId(channelId: ChannelId): ChannelId {
+    if (typeof channelId !== 'string') {
         throw new TypeError(`${safeStringify(channelId, 'Provided ChannelId')} is not a valid ChannelId`);
+    }
+
+    return channelId;
+}
+
+/**
+ * Validates we're running inside an OpenFin environment
+ */
+export function validateEnvironment(): void {
+    if (typeof fin === 'undefined') {
+        throw new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.');
     }
 }
 

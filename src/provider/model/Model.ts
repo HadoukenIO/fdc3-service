@@ -1,15 +1,16 @@
-import {injectable, inject} from 'inversify';
+import {injectable, inject, id} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 
 import {Application, AppName, AppId} from '../../client/directory';
 import {Inject} from '../common/Injectables';
 import {Signal0, Signal1} from '../common/Signal';
-import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
+import {ChannelId, DEFAULT_CHANNEL_ID, DefaultChannel, DesktopChannel} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
+import {DESKTOP_CHANNELS} from '../constants';
 
 import {AppWindow} from './AppWindow';
-import {ContextChannel} from './ContextChannel';
+import {ContextChannel, DefaultContextChannel, DesktopContextChannel} from './ContextChannel';
 import {Environment} from './Environment';
 import {AppDirectory} from './AppDirectory';
 
@@ -47,7 +48,7 @@ export class Model {
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
         @inject(Inject.ENVIRONMENT) environment: Environment,
-        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
+        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>
     ) {
         this._windowsById = {};
         this._channelsById = {};
@@ -58,18 +59,23 @@ export class Model {
         this._environment.windowClosed.add(this.onWindowClosed, this);
 
         apiHandler.onConnection.add(this.onApiHandlerConnection, this);
+
+        this._channelsById[DEFAULT_CHANNEL_ID] = new DefaultContextChannel(DEFAULT_CHANNEL_ID);
+        for (const channel of DESKTOP_CHANNELS) {
+            this._channelsById[channel.id] = new DesktopContextChannel(channel.id, channel.name, channel.color);
+        }
     }
 
-    public get windows(): ReadonlyArray<AppWindow> {
+    public get windows(): AppWindow[] {
         return Object.values(this._windowsById);
+    }
+
+    public get channels(): ContextChannel[] {
+        return Object.values(this._channelsById);
     }
 
     public getWindow(identity: Identity): AppWindow|null {
         return this._windowsById[getId(identity)] || null;
-    }
-
-    public get channels(): ReadonlyArray<ContextChannel> {
-        return Object.values(this._channelsById);
     }
 
     public getChannel(id: ChannelId): ContextChannel|null {
@@ -133,10 +139,6 @@ export class Model {
         return [...appsInModelWithIntent, ...directoryAppsNotInModel];
     }
 
-    public registerChannel(channel: ContextChannel): void {
-        this._channelsById[channel.id] = channel;
-    }
-
     /**
      * Registers an appWindow in the model
      * @param appInfo Application info, either from the app directory, or 'crafted' for a non-registered app
@@ -144,7 +146,6 @@ export class Model {
      * @param isInAppDirectory boolean indicating whether the app is registered in the app directory
      */
     private registerWindow(appInfo: Application, identity: Identity, isInAppDirectory: boolean): AppWindow {
-        // TODO: Should apps not in the directory have a channel?
         const appWindow = this._environment.wrapApplication(appInfo, identity, this._channelsById[DEFAULT_CHANNEL_ID]);
         appWindow.channel = this._channelsById[DEFAULT_CHANNEL_ID];
 
@@ -229,18 +230,40 @@ export class Model {
                 // There are no appWindows in the model with the same app uuid - Produce minimal appInfo from window information
                 const application = fin.Application.wrapSync(identity);
                 // TODO: Think about this race condition - for a breif period a window can be connected but not in the model
-                const applicationInfo = await application.getInfo();
-                appInfo = {
-                    appId: identity.uuid,
-                    name: identity.uuid,
-                    title: (applicationInfo.manifest as {title?: string}).title,
-                    manifestType: 'openfin',
-                    manifest: applicationInfo.manifestUrl
-                };
+                appInfo = await this.getApplicationInfo(identity);
             }
 
             this.registerWindow(appInfo, identity, false);
         }
+    }
+
+    /**
+     * Retrieves application info from a window's identity
+     * @param identity `Identity` of the window to get the app info from
+     */
+    private async getApplicationInfo(identity: Identity): Promise<Application> {
+        type OFManifest = {
+            shortcut?: {name?: string, icon: string},
+            startup_app: {uuid: string, name?: string, icon?: string}
+        };
+
+        const application = fin.Application.wrapSync(identity);
+        const applicationInfo = await application.getInfo();
+        const {shortcut, startup_app} = applicationInfo.manifest as OFManifest;
+
+        const title = (shortcut && shortcut.name) || startup_app.name || startup_app.uuid;
+        const icon = (shortcut && shortcut.icon) || startup_app.icon;
+
+        const appInfo: Application = {
+            appId: application.identity.uuid,
+            name: application.identity.uuid,
+            title: title,
+            icons: icon ? [{icon}] : undefined,
+            manifestType: 'openfin',
+            manifest: applicationInfo.manifestUrl
+        };
+
+        return appInfo;
     }
 
     private static matchesFilter(window: AppWindow, filter: FindFilter): boolean {

@@ -1,10 +1,10 @@
-import {Fin, connect} from 'hadouken-js-adapter';
 import {Identity} from 'openfin/_v2/main';
 
 import {testAppInDirectory1, testManagerIdentity, appStartupTime, testAppInDirectory2, testAppNotInDirectory} from '../constants';
 import {ChannelId, Context} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel} from '../utils/RemoteChannel';
+import {fin} from '../utils/fin';
 
 /**
  * Tests Channel.broadcast(), its interaction with Channel.getCurrentContext(), and Channel.addContextListener
@@ -12,10 +12,8 @@ import {RemoteChannel} from '../utils/RemoteChannel';
 
 const testContext = {type: 'test-context', name: 'contextName1', id: {name: 'contextID1'}};
 
-let fin: Fin;
 
 beforeAll(async () => {
-    fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-contextChannels-broadcastOnChannel.inttest.ts'});
     await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
 });
 
@@ -295,18 +293,18 @@ describe('When using a non-directory app', () => {
         await fin.Application.wrapSync(testAppNotInDirectory).quit(true);
     });
 
-    type TestParam = string | Identity;
-    const params = [
+    type TestParam = [string, string, Identity, Identity];
+    const params: TestParam[] = [
         ['the app', 'a directory app', testAppNotInDirectory, testAppInDirectory1],
         ['a directory app', 'the app', testAppInDirectory1, testAppNotInDirectory]
     ];
 
     test.each(params)(
         'When broadcasting from %s, context can be received by %s',
-        async (titleParam1: TestParam, titleParam2: TestParam, broadcastingApp: TestParam, listeningApp: TestParam) => {
+        async (titleParam1: string, titleParam2: string, broadcastingApp: Identity, listeningApp: Identity) => {
             // Set up our broadcasting and listening channels
-            const broadcastingChannel = await fdc3Remote.getChannelById(broadcastingApp as Identity, 'red');
-            const listeningChannel = await fdc3Remote.getChannelById(listeningApp as Identity, 'red');
+            const broadcastingChannel = await fdc3Remote.getChannelById(broadcastingApp, 'red');
+            const listeningChannel = await fdc3Remote.getChannelById(listeningApp, 'red');
 
             // Set up our listener
             const listener = await listeningChannel.addContextListener();
