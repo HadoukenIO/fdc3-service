@@ -1,0 +1,20 @@
+{
+    "devtools_port": 9090,
+    "licenseKey": "64605fac-add3-48a0-8710-64b38e96a2dd",
+    "startup_app": {
+        "name": "FDC3 Blotter POC (Non-Directory)",
+        "description": "OpenFin FDC3 Sample Application",
+        "url": "http://localhost:3923/demo/index.html",
+        "icon": "http://localhost:3923/demo/img/app-icons/blotter.ico",
+        "uuid": "fdc3-blotter-nodir",
+        "autoShow": true
+    },
+    "services": [{
+        "name": "fdc3",
+        "manifestUrl": "http://localhost:3923/provider/app.json"
+    }],
+    "runtime": {
+        "arguments": "",
+        "version": "10.66.39.43"
+    }
+}

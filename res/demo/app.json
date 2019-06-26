@@ -7,7 +7,7 @@
         "url": "http://localhost:3923/demo/index.html",
         "uuid": "fdc3-launcher",
         "autoShow": true,
-        "defaultHeight": 400,
+        "defaultHeight": 660,
         "defaultWidth": 500
     },
     "services": [
