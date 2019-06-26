@@ -4,7 +4,7 @@ import {Identity} from 'openfin/_v2/main';
 import {Application, AppName, AppId} from '../../client/directory';
 import {Inject} from '../common/Injectables';
 import {Signal0, Signal1} from '../common/Signal';
-import {ChannelId, DEFAULT_CHANNEL_ID, DefaultChannel, DesktopChannel} from '../../client/main';
+import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {DESKTOP_CHANNELS} from '../constants';
