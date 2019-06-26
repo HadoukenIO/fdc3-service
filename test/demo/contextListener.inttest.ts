@@ -3,6 +3,7 @@ import {OrganizationContext} from '../../src/client/main';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
+import {setupTeardown} from './utils/common';
 
 const testManagerIdentity = {
     uuid: 'test-app',
@@ -13,14 +14,11 @@ const testAppUrl = 'http://localhost:3923/test/test-app.html';
 
 const validContext: OrganizationContext = {type: 'fdc3.organization', name: 'OpenFin', id: {default: 'openfin'}};
 
+setupTeardown();
+
 // These tests all use the default channel for context broadcasts and listeners
 // Context-passing in a channelled environment is tested in a seperate file
 describe('Context listeners and broadcasting', () => {
-    beforeEach(async () => {
-        // The main launcher app should remain running for the duration of all tests.
-        await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
-    });
-
     test('When calling broadcast with no apps running, the promise resolves and there are no errors', async () => {
         await expect(fdc3Remote.broadcast(testManagerIdentity, validContext)).resolves.not.toThrowError();
     });

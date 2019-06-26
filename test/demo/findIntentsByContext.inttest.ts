@@ -3,9 +3,9 @@ import 'jest';
 import {ResolveError} from '../../src/client/errors';
 import {Context, AppIntent} from '../../src/client/main';
 
-import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {testManagerIdentity} from './constants';
+import {setupTeardown} from './utils/common';
 
 /**
  * A context missing the mandatory `type` field
@@ -22,12 +22,9 @@ const unknownContext = {
     name: 'Test Name'
 };
 
-describe('Resolving intents by context, findIntentsByContext', () => {
-    beforeEach(async () => {
-        // The main launcher app should remain running for the duration of all tests.
-        await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
-    });
+setupTeardown();
 
+describe('Resolving intents by context, findIntentsByContext', () => {
     describe('When calling findIntentsByContext with an invalid context', () => {
         test('The promise rejects with an FDC3Error', async () => {
             const findIntentsPromise = fdc3Remote.findIntentsByContext(testManagerIdentity, invalidContext);

@@ -4,22 +4,18 @@ import fetch from 'node-fetch';
 import {Application as DirectoryApp} from '../../src/client/directory';
 import {Context, AppIntent} from '../../src/client/main';
 
-import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay} from './utils/delay';
-import {setupStartNonDirectoryAppBookends, setupOpenDirectoryAppBookends} from './utils/common';
+import {setupStartNonDirectoryAppBookends, setupOpenDirectoryAppBookends, setupTeardown} from './utils/common';
 import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1} from './constants';
 
 const validIntent = 'DialCall';
 
 const invalidIntent = 'some-nonexistent-intent';
 
-describe('Resolving applications by intent', () => {
-    beforeEach(async () => {
-        // The main launcher app should remain running for the duration of all tests.
-        await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
-    });
+setupTeardown();
 
+describe('Resolving applications by intent', () => {
     describe('Without context', () => {
         let directory: DirectoryApp[];
 

@@ -1,11 +1,13 @@
 import 'jest';
-import {connect, Fin, Identity, Application} from 'hadouken-js-adapter';
+import {Identity, Application} from 'hadouken-js-adapter';
 
 import {ChannelId, DefaultChannel, DesktopChannel} from '../../src/client/contextChannels';
 import {IdentityError, ChannelError} from '../../src/client/errors';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {appStartupTime} from './constants';
+import {setupTeardown} from './utils/common';
+import {fin} from './utils/fin';
 
 const testManagerIdentity = {uuid: 'test-app', name: 'test-app'};
 
@@ -13,12 +15,7 @@ const testContext = {type: 'test-context', name: 'contextName1', id: {name: 'con
 
 const startedApps:Application[] = [];
 
-let fin: Fin;
-
-beforeAll(async () => {
-    fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-contextChannels.ts'});
-    await expect(fin.Application.wrapSync({uuid: 'test-app', name: 'test-app'}).isRunning()).resolves.toBe(true);
-});
+setupTeardown();
 
 afterEach(async () => {
     jest.clearAllMocks();

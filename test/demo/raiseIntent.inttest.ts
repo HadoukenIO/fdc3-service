@@ -8,8 +8,8 @@ import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay} from './utils/delay';
 import {
-    AppIdentity, DirectoryAppIdentity, quitApp,
-    setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupStartNonDirectoryAppWithIntentListenerBookends
+    AppIdentity, DirectoryAppIdentity, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends,
+    setupStartNonDirectoryAppWithIntentListenerBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning
 } from './utils/common';
 import {
     appStartupTime, resolverWindowIdentity, testManagerIdentity, testAppInDirectory1, testAppInDirectory4,
@@ -75,12 +75,9 @@ const intentNotInDirectory: Intent = {
     context: {type: 'dummyContext'}
 };
 
-describe('Intent listeners and raising intents', () => {
-    beforeEach(async () => {
-        // The main launcher app should remain running for the duration of all tests.
-        await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
-    });
+setupTeardown();
 
+describe('Intent listeners and raising intents', () => {
     describe('With a target', () => {
         describe('When the target is in the directory', () => {
             describe('When the target is not running', () => {
@@ -95,6 +92,8 @@ describe('Intent listeners and raising intents', () => {
 
                 describe('When the target is registered to accept the raised intent', () => {
                     describe('And the listener is registered right after opening the app', () => {
+                        setupQuitAppAfterEach(testAppWithPreregisteredListeners1);
+
                         test('The targeted app opens and its listener is triggered exactly once with the correct context', async () => {
                             await raiseIntent(preregisteredIntent, testAppWithPreregisteredListeners1);
 
@@ -105,15 +104,12 @@ describe('Intent listeners and raising intents', () => {
                             const receivedContexts = await listener.getReceivedContexts();
 
                             expect(receivedContexts).toEqual([preregisteredIntent.context]);
-
-                            await quitApp(testAppWithPreregisteredListeners1);
                         });
                     });
 
                     describe('And the listener is added after a delay', () => {
-                        afterEach(async () => {
-                            await quitApp(testAppInDirectory1);
-                        });
+                        setupQuitAppAfterEach(testAppInDirectory1);
+
                         describe('Delay is short enough for the intent handshake to succeed', () => {
                             test('The targeted app opens and its listener is triggered just once after it is set up, with the correct context', async () => {
                                 // Raise the intent but only add the intent listener after the some time
@@ -383,17 +379,14 @@ the first listener is triggered exactly once with the correct context, and the s
             describe('With the registered app not running', () => {
                 describe('And no running ad-hoc apps with listeners registered for the raised intent', () => {
                     let raiseIntentPromise: Promise<void>;
+
                     beforeEach(async () => {
                         raiseIntentPromise = raiseIntent(uniqueIntent);
                         // Wait for app to open after raising intent
-                        while (!await fin.Application.wrapSync(testAppWithUniqueIntent).isRunning()) {
-                            await delay(500);
-                        }
-                        await expect(fin.Application.wrapSync(testAppWithUniqueIntent).isRunning()).resolves.toBe(true);
+                        await waitForAppToBeRunning(testAppWithUniqueIntent);
                     });
-                    afterEach(async () => {
-                        await quitApp(testAppWithUniqueIntent);
-                    });
+
+                    setupQuitAppAfterEach(testAppWithUniqueIntent);
 
                     describe('When the directory app does not register the intent listener after opening', () => {
                         test('When calling raiseIntent from another app, the app opens but it times out waiting for the listener to be added', async () => {
@@ -429,20 +422,25 @@ the first listener is triggered exactly once with the correct context, and the s
                                 'Resolver closed or cancelled'
                             );
                         });
-                        test('When choosing the directory app on the resolver, it receives intent (needs to register listener after opening)', async () => {
-                            await delay(2000); // For some reason a 'could not find specified executionTarget' error is thrown without a delay here
+                        describe('When choosing the directory app on the resolver, and the app registers the intent listener after opening', () => {
+                            setupQuitAppAfterEach(testAppWithUniqueIntent);
 
-                            const [raiseIntentPromise] = await raiseIntentAndExpectResolverToShow(uniqueIntent);
-                            await selectResolverApp(testAppWithUniqueIntent.name);
+                            test('It receives intent', async () => {
+                                await delay(2000); // For some reason a 'could not find specified executionTarget' error is thrown without a delay here
 
-                            await delay(1000); // Give the app some time to start and load the fdc3 client
-                            await fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
-                            await raiseIntentPromise;
+                                const [raiseIntentPromise] = await raiseIntentAndExpectResolverToShow(uniqueIntent);
+                                await selectResolverApp(testAppWithUniqueIntent.name);
 
-                            const listener = await fdc3Remote.getRemoteIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
-                            const receivedContexts = await listener.getReceivedContexts();
+                                await waitForAppToBeRunning(testAppWithUniqueIntent);
+                                await delay(1000); // Give the app some time to load the fdc3 client
+                                await fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
+                                await raiseIntentPromise;
 
-                            expect(receivedContexts).toEqual([uniqueIntent.context]);
+                                const listener = await fdc3Remote.getRemoteIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
+                                const receivedContexts = await listener.getReceivedContexts();
+
+                                expect(receivedContexts).toEqual([uniqueIntent.context]);
+                            });
                         });
 
                         test('When choosing the ad-hoc app on the resolver, it receives intent', async () => {
@@ -461,8 +459,12 @@ the first listener is triggered exactly once with the correct context, and the s
                         'Resolver closed or cancelled'
                     );
                 });
-                test('When choosing on the resolver an app that preregisters the intent, it receives it', async () => {
-                    await raiseIntentExpectResolverSelectApp(intentInManyApps, testAppWithPreregisteredListeners1);
+                describe('When choosing on the resolver an app that preregisters the intent', () => {
+                    setupQuitAppAfterEach(testAppWithPreregisteredListeners1);
+
+                    test('It receives it', async () => {
+                        await raiseIntentExpectResolverSelectApp(intentInManyApps, testAppWithPreregisteredListeners1);
+                    });
                 });
             });
         });
@@ -554,9 +556,8 @@ async function raiseDelayedIntentWithTarget(intent: Intent, targetApp: Directory
         err = e;
     });
 
-    while (!await fin.Application.wrapSync(targetApp).isRunning()) {
-        await delay(500);
-    }
+    await waitForAppToBeRunning(targetApp);
+
     // App should now be running
 
     // We want to have a delay between the app running and the intent listener being set up,

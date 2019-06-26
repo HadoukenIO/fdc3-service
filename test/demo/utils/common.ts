@@ -5,6 +5,7 @@ import {testManagerIdentity} from '../constants';
 
 import {fin} from './fin';
 import * as fdc3Remote from './fdc3RemoteExecution';
+import {delay} from './delay';
 
 export type Boxed<T> = {value: T}
 
@@ -29,6 +30,12 @@ export interface NonDirectoryAppIdentity extends AppIdentity {
  */
 export async function quitApp(...apps: Identity[]) {
     await Promise.all(apps.map(app => fin.Application.wrapSync(app).quit(true).catch(() => {})));
+}
+
+export async function waitForAppToBeRunning(app: Identity): Promise<void> {
+    while (!await fin.Application.wrapSync(app).isRunning()) {
+        await delay(500);
+    }
 }
 
 /**
@@ -73,4 +80,28 @@ export function setupStartNonDirectoryAppWithIntentListenerBookends(intent: Inte
     });
 
     return listener;
+}
+
+export function setupQuitAppAfterEach(...apps: Identity[]): void {
+    afterEach(async () => {
+        await quitApp(...apps);
+    });
+}
+
+export function setupTeardown(): void {
+    afterAll(async () => {
+        const expectedRunningAppIdentities = ['fdc3-service', testManagerIdentity.uuid];
+
+        const runningAppInfos = await fin.System.getAllApplications();
+
+        const runningAppIdentities = runningAppInfos.map(appInfo => appInfo.uuid);
+
+        for (const identity of runningAppIdentities) {
+            if (!expectedRunningAppIdentities.includes(identity)) {
+                await quitApp({uuid: identity});
+            }
+        }
+
+        expect(runningAppIdentities).toEqual(expectedRunningAppIdentities);
+    });
 }

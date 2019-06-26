@@ -5,18 +5,15 @@ import {OpenError, Timeouts} from '../../src/client/errors';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
-import {quitApp, setupOpenDirectoryAppBookends} from './utils/common';
+import {quitApp, setupOpenDirectoryAppBookends, setupTeardown} from './utils/common';
 import {
     testManagerIdentity, testAppInDirectory1, testAppInDirectory2,
     testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2
 } from './constants';
 
-describe('Opening applications with the FDC3 client', () => {
-    beforeEach(async () => {
-        // The main launcher app should remain running for the duration of all tests.
-        await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
-    });
+setupTeardown();
 
+describe('Opening applications with the FDC3 client', () => {
     describe('Without context', () => {
         describe('With the app not running', () => {
             test('When passing a valid app name the app opens and the promise resolves', async () => {
