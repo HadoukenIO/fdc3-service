@@ -20,7 +20,7 @@ export class IntentHandler {
     private readonly _resolver: ResolverHandler;
     private readonly _apiHandler: APIHandler<APIToClientTopic>;
 
-    private _promise: Promise<IntentResolution>|null;
+    private _resolvePromise: Promise<IntentResolution>|null;
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
@@ -33,7 +33,7 @@ export class IntentHandler {
         this._resolver = selector;
         this._apiHandler = apiHandler;
 
-        this._promise = null;
+        this._resolvePromise = null;
     }
 
     public async raise(intent: Intent): Promise<IntentResolution> {
@@ -50,7 +50,7 @@ export class IntentHandler {
             return this.fireIntent(intent, apps[0]);
         } else {
             // Prompt the user to select an application to use
-            return this.resolve(intent);
+            return this.queueResolve(intent);
         }
     }
 
@@ -78,18 +78,18 @@ export class IntentHandler {
             }
         }
 
-        // At this point we are certain that the target app -whether already running or not- can handle the intent
+        // At this point we are certain that the target app - whether already running or not - can handle the intent
         return this.fireIntent(intent, appInfo);
     }
 
-    private async resolve(intent: Intent): Promise<IntentResolution> {
-        if (this._promise) {
-            this._promise = this._promise!.catch(() => {}).then(() => this.startResolve(intent));
+    private async queueResolve(intent: Intent): Promise<IntentResolution> {
+        if (this._resolvePromise) {
+            this._resolvePromise = this._resolvePromise.catch(() => {}).then(() => this.startResolve(intent));
         } else {
-            this._promise = this.startResolve(intent);
+            this._resolvePromise = this.startResolve(intent);
         }
 
-        return this._promise;
+        return this._resolvePromise;
     }
 
     private async startResolve(intent: Intent): Promise<IntentResolution> {
@@ -133,5 +133,5 @@ interface IntentWithTarget extends Intent {
 
 // Guard to help narrow down Intent into IntentWithTarget
 function hasTarget(intent: Intent): intent is IntentWithTarget {
-    return intent && !!intent.target;
+    return !!intent.target;
 }

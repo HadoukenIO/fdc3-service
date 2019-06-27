@@ -82,12 +82,8 @@ export class Model {
         return this._channelsById[id] || null;
     }
 
-    public findWindowByAppId(appId: AppId, options?: FindOptions): AppWindow|null {
-        return this.findWindow(appWindow => appWindow.appInfo.appId === appId, options);
-    }
-
-    public findWindowByAppName(name: AppName, options?: FindOptions): AppWindow|null {
-        return this.findWindow(appWindow => appWindow.appInfo.name === name, options);
+    public findWindowByAppName(name: AppName): AppWindow|null {
+        return this.findWindow(appWindow => appWindow.appInfo.name === name);
     }
 
     public async findOrCreate(appInfo: Application, prefer?: FindFilter): Promise<AppWindow> {
@@ -139,52 +135,6 @@ export class Model {
         return [...appsInModelWithIntent, ...directoryAppsNotInModel];
     }
 
-    /**
-     * Registers an appWindow in the model
-     * @param appInfo Application info, either from the app directory, or 'crafted' for a non-registered app
-     * @param identity Window identity
-     * @param isInAppDirectory boolean indicating whether the app is registered in the app directory
-     */
-    private registerWindow(appInfo: Application, identity: Identity, isInAppDirectory: boolean): AppWindow {
-        const appWindow = this._environment.wrapApplication(appInfo, identity, this._channelsById[DEFAULT_CHANNEL_ID]);
-        appWindow.channel = this._channelsById[DEFAULT_CHANNEL_ID];
-
-        console.info(`Registering window [${isInAppDirectory ? '' : 'NOT '}in app directory] ${appWindow.id}`);
-        this._windowsById[appWindow.id] = appWindow;
-        this._onWindowRegisteredInternal.emit();
-
-        this.onWindowAdded.emit(appWindow);
-
-        return appWindow;
-    }
-
-    private findWindow(predicate: (appWindow: AppWindow) => boolean, options?: FindOptions): AppWindow|null {
-        return this.findWindows(predicate, options)[0] || null;
-    }
-
-    private findWindows(predicate: (appWindow: AppWindow) => boolean, options?: FindOptions): AppWindow[] {
-        const {prefer, require} = options || {prefer: undefined, require: undefined};
-        const windows = this.windows.filter(appWindow => {
-            if (!predicate(appWindow)) {
-                return false;
-            } else if (require !== undefined) {
-                return Model.matchesFilter(appWindow, require);
-            } else {
-                return true;
-            }
-        });
-
-        if (windows.length > 0 && prefer !== undefined) {
-            const preferredWindows = windows.filter(appWindow => Model.matchesFilter(appWindow, prefer));
-
-            if (preferredWindows.length > 0) {
-                return preferredWindows;
-            }
-        }
-
-        return windows;
-    }
-
     private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
         const apps = await this._directory.getAllApps();
         const appInfoFromDirectory = apps.find(app => app.manifest.startsWith(manifestUrl));
@@ -234,6 +184,56 @@ export class Model {
 
             this.registerWindow(appInfo, identity, false);
         }
+    }
+
+    /**
+     * Registers an appWindow in the model
+     * @param appInfo Application info, either from the app directory, or 'crafted' for a non-registered app
+     * @param identity Window identity
+     * @param isInAppDirectory boolean indicating whether the app is registered in the app directory
+     */
+    private registerWindow(appInfo: Application, identity: Identity, isInAppDirectory: boolean): AppWindow {
+        const appWindow = this._environment.wrapApplication(appInfo, identity, this._channelsById[DEFAULT_CHANNEL_ID]);
+        appWindow.channel = this._channelsById[DEFAULT_CHANNEL_ID];
+
+        console.info(`Registering window [${isInAppDirectory ? '' : 'NOT '}in app directory] ${appWindow.id}`);
+        this._windowsById[appWindow.id] = appWindow;
+        this._onWindowRegisteredInternal.emit();
+
+        this.onWindowAdded.emit(appWindow);
+
+        return appWindow;
+    }
+
+    private findWindowByAppId(appId: AppId, options?: FindOptions): AppWindow|null {
+        return this.findWindow(appWindow => appWindow.appInfo.appId === appId, options);
+    }
+
+    private findWindow(predicate: (appWindow: AppWindow) => boolean, options?: FindOptions): AppWindow|null {
+        return this.findWindows(predicate, options)[0] || null;
+    }
+
+    private findWindows(predicate: (appWindow: AppWindow) => boolean, options?: FindOptions): AppWindow[] {
+        const {prefer, require} = options || {prefer: undefined, require: undefined};
+        const windows = this.windows.filter(appWindow => {
+            if (!predicate(appWindow)) {
+                return false;
+            } else if (require !== undefined) {
+                return Model.matchesFilter(appWindow, require);
+            } else {
+                return true;
+            }
+        });
+
+        if (windows.length > 0 && prefer !== undefined) {
+            const preferredWindows = windows.filter(appWindow => Model.matchesFilter(appWindow, prefer));
+
+            if (preferredWindows.length > 0) {
+                return preferredWindows;
+            }
+        }
+
+        return windows;
     }
 
     /**
