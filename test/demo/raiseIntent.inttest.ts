@@ -9,7 +9,7 @@ import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay} from './utils/delay';
 import {
     AppIdentity, DirectoryAppIdentity, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends,
-    setupStartNonDirectoryAppWithIntentListenerBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning
+    setupStartNonDirectoryAppWithIntentListenerBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning, Boxed
 } from './utils/common';
 import {
     appStartupTime, resolverWindowIdentity, testManagerIdentity, testAppInDirectory1, testAppInDirectory4,
@@ -424,7 +424,7 @@ the first listener is triggered exactly once with the correct context, and the s
                             setupQuitAppAfterEach(testAppWithUniqueIntent);
 
                             test('It receives intent', async () => {
-                                const [raiseIntentPromise] = await raiseIntentAndExpectResolverToShow(uniqueIntent);
+                                const raiseIntentPromise = (await raiseIntentAndExpectResolverToShow(uniqueIntent)).value;
                                 await selectResolverApp(testAppWithUniqueIntent.name);
 
                                 await waitForAppToBeRunning(testAppWithUniqueIntent);
@@ -543,13 +543,13 @@ then the second listener is triggered exactly once with the correct context', as
  * @param delayMs time in milliseconds to wait after the app is running and before the intent listener is added
  */
 async function raiseDelayedIntentWithTarget(intent: Intent, targetApp: DirectoryAppIdentity, delayMs: number): Promise<void> {
-    let err: FDC3Error | undefined = undefined;
-
     // We dont await for this promise - that's up to the function caller.
     // It's going to resolve only after we add the listener to the test app
-    const raiseIntentPromise = raiseIntent(intent, targetApp).catch(e => {
-        err = e;
-    });
+    const raiseIntentPromise = raiseIntent(intent, targetApp);
+
+    // This prevents jest registering a test failure in the case where this rejects before the promise is returned, but does not intefere
+    // with any later processing
+    raiseIntentPromise.catch(() => {});
 
     await waitForAppToBeRunning(targetApp);
 
@@ -565,26 +565,23 @@ async function raiseDelayedIntentWithTarget(intent: Intent, targetApp: Directory
 
     // At this point the promise can be resolved if the listener it was waiting for has just been registered,
     // or rejected due to `raiseIntent` timing out
-    if (err) {
-        throw err;
-    }
     return raiseIntentPromise;
 }
 
-function raiseIntentExpectResolverAndClose(intent: Intent): Promise<void> {
-    return new Promise<void>(async (resolve, reject) => {
-        const [raiseIntentPromise] = await raiseIntentAndExpectResolverToShow(intent);
-        raiseIntentPromise.catch(async e => {
-            // After the resolver is cancelled, wait for some time before rejecting to give the resolver window enough time to close.
-            await delay(500);
-            reject(e);
-        });
-        await closeResolver();
-    });
+async function raiseIntentExpectResolverAndClose(intent: Intent): Promise<void> {
+    const raiseIntentPromise = (await raiseIntentAndExpectResolverToShow(intent)).value;
+
+    // This prevents jest registering a test failure in the case where this rejects before the promise is returned, but does not intefere
+    // with any later processing
+    raiseIntentPromise.catch(() => {});
+    
+    await closeResolver();
+
+    return raiseIntentPromise;
 }
 
 async function raiseIntentExpectResolverSelectApp(intent: Intent, app: AppIdentity, listener?: fdc3Remote.RemoteIntentListener): Promise<void> {
-    const [raiseIntentPromise] = await raiseIntentAndExpectResolverToShow(intent);
+    const raiseIntentPromise = (await raiseIntentAndExpectResolverToShow(intent)).value;
     await selectResolverApp(app.name);
     await raiseIntentPromise; // Now the intent resolves
 
@@ -599,7 +596,7 @@ async function raiseIntentExpectResolverSelectApp(intent: Intent, app: AppIdenti
  * Raises an intent and `expect`s that the resolver window shows, then closes it
  * @param intent intent to raise
  */
-async function raiseIntentAndExpectResolverToShow(intent: Intent): Promise<[Promise<void>]> {
+async function raiseIntentAndExpectResolverToShow(intent: Intent): Promise<Boxed<Promise<void>>> {
     // Raise intent but don't await - promise won't resolve until an app is selected on the resolver
     const raiseIntentPromise = raiseIntent(intent);
 
@@ -610,7 +607,7 @@ async function raiseIntentAndExpectResolverToShow(intent: Intent): Promise<[Prom
     const isResolverShowing = await fin.Window.wrapSync(resolverWindowIdentity).isShowing();
     expect(isResolverShowing).toBe(true);
 
-    return [raiseIntentPromise] as [Promise<void>];
+    return {value: raiseIntentPromise};
 }
 
 /**
