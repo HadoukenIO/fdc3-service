@@ -1,7 +1,7 @@
 import 'jest';
 import 'reflect-metadata';
 
-import {ResolveError, Timeouts, FDC3Error} from '../../src/client/errors';
+import {ResolveError, Timeouts} from '../../src/client/errors';
 import {Intent} from '../../src/client/intents';
 
 import {fin} from './utils/fin';
