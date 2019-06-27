@@ -428,7 +428,6 @@ the first listener is triggered exactly once with the correct context, and the s
                                 await selectResolverApp(testAppWithUniqueIntent.name);
 
                                 await waitForAppToBeRunning(testAppWithUniqueIntent);
-                                await delay(1000); // Give the app some time to load the fdc3 client
                                 await fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
                                 await raiseIntentPromise;
 

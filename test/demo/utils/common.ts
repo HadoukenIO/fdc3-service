@@ -34,8 +34,11 @@ export async function quitApp(...apps: Identity[]) {
 
 export async function waitForAppToBeRunning(app: Identity): Promise<void> {
     while (!await fin.Application.wrapSync(app).isRunning()) {
-        await delay(500);
+        await delay(100);
     }
+
+    // Additional delay to ensure app window is ready for puppeteer connection
+    await delay(500);
 }
 
 /**
