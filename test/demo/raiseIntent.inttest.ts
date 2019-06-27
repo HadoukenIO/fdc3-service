@@ -574,7 +574,7 @@ async function raiseIntentExpectResolverAndClose(intent: Intent): Promise<void> 
     // This prevents jest registering a test failure in the case where this rejects before the promise is returned, but does not intefere
     // with any later processing
     raiseIntentPromise.catch(() => {});
-    
+
     await closeResolver();
 
     return raiseIntentPromise;
