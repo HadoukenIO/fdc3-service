@@ -1,4 +1,4 @@
-import {injectable, inject, id} from 'inversify';
+import {injectable, inject} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 
 import {Application, AppName, AppId} from '../../client/directory';
