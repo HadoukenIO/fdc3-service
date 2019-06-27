@@ -4,7 +4,7 @@ import {Identity} from 'openfin/_v2/main';
 import {Application, AppName, AppId} from '../../client/directory';
 import {Inject} from '../common/Injectables';
 import {Signal0, Signal1} from '../common/Signal';
-import {ChannelId, DEFAULT_CHANNEL_ID, DefaultChannel, DesktopChannel} from '../../client/main';
+import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {DESKTOP_CHANNELS} from '../constants';
@@ -228,8 +228,7 @@ export class Model {
                 appInfo = appWindowFromSameApp.appInfo;
             } else {
                 // There are no appWindows in the model with the same app uuid - Produce minimal appInfo from window information
-                const application = fin.Application.wrapSync(identity);
-                // TODO: Think about this race condition - for a breif period a window can be connected but not in the model
+                // TODO: Think about this race condition - for a brief period a window can be connected but not in the model
                 appInfo = await this.getApplicationInfo(identity);
             }
 
