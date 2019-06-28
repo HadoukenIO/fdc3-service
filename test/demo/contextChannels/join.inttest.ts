@@ -503,7 +503,7 @@ describe('When joining a channel', () => {
     });
 });
 
-describe.only('When using a non-directory app', () => {
+describe('When using a non-directory app', () => {
     beforeEach(async () => {
         await fin.Application.startFromManifest(testAppNotInDirectory.manifestUrl);
     }, appStartupTime * 2);
