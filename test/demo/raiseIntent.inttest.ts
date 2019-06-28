@@ -3,6 +3,7 @@ import 'reflect-metadata';
 
 import {ResolveError, Timeouts} from '../../src/client/errors';
 import {Intent} from '../../src/client/intents';
+import {RESOLVER_IDENTITY} from '../../src/provider/utils/constants';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
@@ -12,7 +13,7 @@ import {
     setupStartNonDirectoryAppWithIntentListenerBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning, Boxed
 } from './utils/common';
 import {
-    appStartupTime, resolverWindowIdentity, testManagerIdentity, testAppInDirectory1, testAppInDirectory4,
+    appStartupTime, testManagerIdentity, testAppInDirectory1, testAppInDirectory4,
     testAppNotInDirectory1, testAppNotInDirectory2, testAppWithPreregisteredListeners1
 } from './constants';
 
@@ -600,11 +601,11 @@ async function raiseIntentAndExpectResolverToShow(intent: Intent): Promise<Boxed
     // Raise intent but don't await - promise won't resolve until an app is selected on the resolver
     const raiseIntentPromise = raiseIntent(intent);
 
-    while (!await fin.Window.wrapSync(resolverWindowIdentity).isShowing()) {
+    while (!await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing()) {
         await delay(500);
     }
 
-    const isResolverShowing = await fin.Window.wrapSync(resolverWindowIdentity).isShowing();
+    const isResolverShowing = await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing();
     expect(isResolverShowing).toBe(true);
 
     return {value: raiseIntentPromise};
@@ -614,13 +615,13 @@ async function raiseIntentAndExpectResolverToShow(intent: Intent): Promise<Boxed
  * Closes the resolver by remotely clicking the Cancel button in it
  */
 async function closeResolver(): Promise<void> {
-    const cancelClicked = await fdc3Remote.clickHTMLElement(resolverWindowIdentity, '#cancel');
+    const cancelClicked = await fdc3Remote.clickHTMLElement(RESOLVER_IDENTITY, '#cancel');
     if (!cancelClicked) {
         throw new Error('Error clicking cancel button on resolver. Make sure it has id="cancel".');
     }
     await delay(100); // Give the UI some time to process the click and close the window
 
-    const isResolverShowing = await fin.Window.wrapSync(resolverWindowIdentity).isShowing();
+    const isResolverShowing = await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing();
     expect(isResolverShowing).toBe(false);
 }
 
@@ -629,13 +630,13 @@ async function closeResolver(): Promise<void> {
  * @param appName name of app to open
  */
 async function selectResolverApp(appName: string): Promise<void> {
-    const appClicked = await fdc3Remote.clickHTMLElement(resolverWindowIdentity, `#${appName}`);
+    const appClicked = await fdc3Remote.clickHTMLElement(RESOLVER_IDENTITY, `#${appName}`);
     if (!appClicked) {
         throw new Error(`App with name '${appName}' not found in resolver`);
     }
     await delay(100);
 
-    const isResolverShowing = await fin.Window.wrapSync(resolverWindowIdentity).isShowing();
+    const isResolverShowing = await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing();
     expect(isResolverShowing).toBe(false);
 }
 

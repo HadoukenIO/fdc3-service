@@ -1,15 +1,8 @@
-import {SERVICE_IDENTITY} from '../../src/client/internal';
-
 import {AppIdentity, NonDirectoryAppIdentity, DirectoryAppIdentity} from './utils/common';
 
 export const appStartupTime = 30 * 1000;
 
 export const testManagerIdentity: AppIdentity = {uuid: 'test-app', name: 'test-app'};
-
-export const resolverWindowIdentity: AppIdentity = {
-    uuid: SERVICE_IDENTITY.uuid,
-    name: 'fdc3-resolver'
-};
 
 export const testAppInDirectory1: DirectoryAppIdentity = {
     uuid: 'test-app-1',

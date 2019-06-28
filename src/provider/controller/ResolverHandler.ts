@@ -1,6 +1,5 @@
 import {_Window} from 'openfin/_v2/api/window/window';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
-import {Identity} from 'openfin/_v2/main';
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 import {injectable, inject} from 'inversify';
 
@@ -8,14 +7,9 @@ import {Inject} from '../common/Injectables';
 import {AppDirectory} from '../model/AppDirectory';
 import {Model} from '../model/Model';
 import {Intent, Application} from '../../client/main';
-import {SERVICE_IDENTITY} from '../../client/internal';
+import {RESOLVER_IDENTITY} from '../utils/constants';
 
 import {AsyncInit} from './AsyncInit';
-
-const RESOLVER_IDENTITY: Identity = {
-    uuid: SERVICE_IDENTITY.uuid,
-    name: 'fdc3-resolver'
-};
 
 const RESOLVER_URL = (() => {
     let providerLocation = window.location.href;
