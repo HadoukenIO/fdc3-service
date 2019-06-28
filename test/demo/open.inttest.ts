@@ -5,7 +5,7 @@ import {OpenError, Timeouts} from '../../src/client/errors';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
-import {quitApp, setupOpenDirectoryAppBookends, setupTeardown} from './utils/common';
+import {quitApps, setupOpenDirectoryAppBookends, setupTeardown} from './utils/common';
 import {
     testManagerIdentity, testAppInDirectory1, testAppInDirectory2,
     testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2
@@ -23,7 +23,7 @@ describe('Opening applications with the FDC3 client', () => {
                 // Check that the app is now running
                 await expect(fin.Application.wrapSync(testAppInDirectory1).isRunning()).resolves.toBe(true);
 
-                await quitApp(testAppInDirectory1);
+                await quitApps(testAppInDirectory1);
             });
 
             test('When passing an unknown app name the service returns an FDC3Error', async () => {
@@ -61,7 +61,7 @@ describe('Opening applications with the FDC3 client', () => {
                 await expect(fin.Application.wrapSync(testAppInDirectory1).isRunning()).resolves.toBe(true);
                 await expect(fin.Application.wrapSync(testAppInDirectory2).isRunning()).resolves.toBe(true);
 
-                await quitApp(testAppInDirectory2);
+                await quitApps(testAppInDirectory2);
             });
         });
     });
@@ -72,7 +72,7 @@ describe('Opening applications with the FDC3 client', () => {
 
         afterEach(async () => {
             // Close all test apps and suppress any errors since the apps may not be running
-            await quitApp(testAppWithPreregisteredListeners1);
+            await quitApps(testAppWithPreregisteredListeners1);
         });
 
         describe('With the app not running', () => {
@@ -155,7 +155,7 @@ and does not trigger the context listener of the already open app', async () => 
                 // Check that the first app did not receive a context
                 expect(receivedContexts1).toEqual([]);
 
-                await quitApp(testAppWithPreregisteredListeners2);
+                await quitApps(testAppWithPreregisteredListeners2);
             });
         });
     });
