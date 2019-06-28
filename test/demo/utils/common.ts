@@ -10,18 +10,16 @@ import {delay} from './delay';
 
 export type Boxed<T> = {value: T}
 
-/**
- * Identity with a mandatory `name`
- */
-export interface AppIdentity extends Identity {
-    name: string; // Make inherited field mandatory
+export interface TestAppData {
+    name: string; // Note that this may be treated as a 'name' in the FDC3 app directory sense, or a 'name' in the OpenFin window Identity sense
+    uuid: string; 
 }
 
-export interface DirectoryAppIdentity extends AppIdentity {
+export interface DirectoryTestAppData extends TestAppData {
     appId: string;
 }
 
-export interface NonDirectoryAppIdentity extends AppIdentity {
+export interface NonDirectoryTestAppData extends TestAppData {
     manifestUrl: string;
 }
 
@@ -56,7 +54,7 @@ export async function waitForAppToBeRunning(app: Identity): Promise<void> {
  * Registers `beforeEach` to open an app in the directory via FDC3's `open` method, and `afterEach` to quit
  * @param app app identity
  */
-export function setupOpenDirectoryAppBookends(app: DirectoryAppIdentity): void {
+export function setupOpenDirectoryAppBookends(app: DirectoryTestAppData): void {
     beforeEach(async () => {
         await fdc3Remote.open(testManagerIdentity, app.name);
     });
@@ -70,7 +68,7 @@ export function setupOpenDirectoryAppBookends(app: DirectoryAppIdentity): void {
  * Registers `beforeEach` to start an app from its `manifestUrl`, and `afterEach` to quit
  * @param app app info.
  */
-export function setupStartNonDirectoryAppBookends(app: NonDirectoryAppIdentity): void {
+export function setupStartNonDirectoryAppBookends(app: NonDirectoryTestAppData): void {
     beforeEach(async () => {
         await fin.Application.startFromManifest(app.manifestUrl);
     });
@@ -85,7 +83,7 @@ export function setupStartNonDirectoryAppBookends(app: NonDirectoryAppIdentity):
  * @param intent intent to add listener to. Listener is returned, boxed in an object
  * @param app app info.
  */
-export function setupStartNonDirectoryAppWithIntentListenerBookends(intent: Intent, app: NonDirectoryAppIdentity): Boxed<fdc3Remote.RemoteIntentListener> {
+export function setupStartNonDirectoryAppWithIntentListenerBookends(intent: Intent, app: NonDirectoryTestAppData): Boxed<fdc3Remote.RemoteIntentListener> {
     setupStartNonDirectoryAppBookends(app);
     const listener: Boxed<fdc3Remote.RemoteIntentListener> = {value: undefined!};
 

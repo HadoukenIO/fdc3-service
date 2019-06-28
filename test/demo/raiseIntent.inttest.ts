@@ -9,7 +9,7 @@ import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay} from './utils/delay';
 import {
-    AppIdentity, DirectoryAppIdentity, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends,
+    TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends,
     setupStartNonDirectoryAppWithIntentListenerBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning, Boxed
 } from './utils/common';
 import {
@@ -543,7 +543,7 @@ then the second listener is triggered exactly once with the correct context', as
  * @param targetApp target app
  * @param delayMs time in milliseconds to wait after the app is running and before the intent listener is added
  */
-async function raiseDelayedIntentWithTarget(intent: Intent, targetApp: DirectoryAppIdentity, delayMs: number): Promise<void> {
+async function raiseDelayedIntentWithTarget(intent: Intent, targetApp: DirectoryTestAppData, delayMs: number): Promise<void> {
     // We dont await for this promise - that's up to the function caller.
     // It's going to resolve only after we add the listener to the test app
     const raiseIntentPromise = raiseIntent(intent, targetApp);
@@ -581,7 +581,7 @@ async function raiseIntentExpectResolverAndClose(intent: Intent): Promise<void> 
     return raiseIntentPromise;
 }
 
-async function raiseIntentExpectResolverSelectApp(intent: Intent, app: AppIdentity, listener?: fdc3Remote.RemoteIntentListener): Promise<void> {
+async function raiseIntentExpectResolverSelectApp(intent: Intent, app: TestAppData, listener?: fdc3Remote.RemoteIntentListener): Promise<void> {
     const raiseIntentPromise = (await raiseIntentAndExpectResolverToShow(intent)).value;
     await selectResolverApp(app.name);
     await raiseIntentPromise; // Now the intent resolves
@@ -640,7 +640,7 @@ async function selectResolverApp(appName: string): Promise<void> {
     expect(isResolverShowing).toBe(false);
 }
 
-function raiseIntent(intent: Intent, target?: AppIdentity): Promise<void> {
+function raiseIntent(intent: Intent, target?: TestAppData): Promise<void> {
     return fdc3Remote.raiseIntent(
         testManagerIdentity,
         intent.type,
