@@ -12,7 +12,7 @@ export type Boxed<T> = {value: T}
 
 export interface TestAppData {
     name: string; // Note that this may be treated as a 'name' in the FDC3 app directory sense, or a 'name' in the OpenFin window Identity sense
-    uuid: string; 
+    uuid: string;
 }
 
 export interface DirectoryTestAppData extends TestAppData {
