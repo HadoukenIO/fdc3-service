@@ -1,7 +1,8 @@
 import {Identity} from 'openfin/_v2/main';
 
 import {Intent} from '../../../src/client/intents';
-import {testManagerIdentity} from '../constants';
+import {testManagerIdentity, appStartupTime} from '../constants';
+import {withTimeout} from '../../../src/client/main';
 
 import {fin} from './fin';
 import * as fdc3Remote from './fdc3RemoteExecution';
@@ -33,8 +34,18 @@ export async function quitApps(...apps: Identity[]) {
 }
 
 export async function waitForAppToBeRunning(app: Identity): Promise<void> {
-    while (!await fin.Application.wrapSync(app).isRunning()) {
-        await delay(100);
+    let timedOut = false;
+
+    [timedOut] = await withTimeout(appStartupTime, new Promise<void>(async (resolve) => {
+        while (!await fin.Application.wrapSync(app).isRunning() && !timedOut) {
+            await delay(100);
+        }
+
+        resolve();
+    }));
+
+    if (timedOut) {
+        throw new Error(`Timeout waiting for app ${JSON.stringify(app)} to start`);
     }
 
     // Additional delay to ensure app window is ready for puppeteer connection
