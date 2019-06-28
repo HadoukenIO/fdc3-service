@@ -28,7 +28,7 @@ export interface NonDirectoryAppIdentity extends AppIdentity {
  * Quits an OpenFin app (or multiple in parallel) using `force=true` and swallowing errors
  * @param apps Identities of the apps to quit
  */
-export async function quitApp(...apps: Identity[]) {
+export async function quitApps(...apps: Identity[]) {
     await Promise.all(apps.map(app => fin.Application.wrapSync(app).quit(true).catch(() => {})));
 }
 
@@ -51,7 +51,7 @@ export function setupOpenDirectoryAppBookends(app: DirectoryAppIdentity): void {
     });
 
     afterEach(async () => {
-        await quitApp(app);
+        await quitApps(app);
     });
 }
 
@@ -65,7 +65,7 @@ export function setupStartNonDirectoryAppBookends(app: NonDirectoryAppIdentity):
     });
 
     afterEach(async () => {
-        await quitApp(app);
+        await quitApps(app);
     });
 }
 
@@ -87,7 +87,7 @@ export function setupStartNonDirectoryAppWithIntentListenerBookends(intent: Inte
 
 export function setupQuitAppAfterEach(...apps: Identity[]): void {
     afterEach(async () => {
-        await quitApp(...apps);
+        await quitApps(...apps);
     });
 }
 
@@ -101,7 +101,7 @@ export function setupTeardown(): void {
 
         for (const identity of runningAppIdentities) {
             if (!expectedRunningAppIdentities.includes(identity)) {
-                await quitApp({uuid: identity});
+                await quitApps({uuid: identity});
             }
         }
 
