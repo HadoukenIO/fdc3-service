@@ -4,6 +4,7 @@ import 'reflect-metadata';
 import {ResolveError} from '../../src/client/errors';
 import {Intent} from '../../src/client/intents';
 import {RESOLVER_IDENTITY} from '../../src/provider/utils/constants';
+import {Timeouts} from '../../src/provider/constants';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
@@ -16,7 +17,6 @@ import {
     appStartupTime, testManagerIdentity, testAppInDirectory1, testAppInDirectory4,
     testAppNotInDirectory1, testAppNotInDirectory2, testAppWithPreregisteredListeners1, testAppNotFdc3
 } from './constants';
-import { Timeouts } from '../../src/provider/constants';
 
 /**
  * Intent registered by `testAppWithPreregisteredListeners1` right after opening
