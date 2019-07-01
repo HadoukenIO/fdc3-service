@@ -5,6 +5,7 @@ import {ChannelId, Context} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel} from '../utils/RemoteChannel';
 import {fin} from '../utils/fin';
+import {setupTeardown} from '../utils/common';
 
 /**
  * Tests Channel.broadcast(), its interaction with Channel.getCurrentContext(), and Channel.addContextListener
@@ -12,10 +13,7 @@ import {fin} from '../utils/fin';
 
 const testContext = {type: 'test-context', name: 'contextName1', id: {name: 'contextID1'}};
 
-
-beforeAll(async () => {
-    await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
-});
+setupTeardown();
 
 describe('When attempting to broadcast on a channel object', () => {
     let defaultChannel: RemoteChannel;

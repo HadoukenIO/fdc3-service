@@ -5,15 +5,14 @@ import {testManagerIdentity, appStartupTime, testAppNotInDirectory1, testAppNotF
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel} from '../utils/RemoteChannel';
 import {fin} from '../utils/fin';
+import {setupTeardown} from '../utils/common';
 
 /*
  * Tests simple behaviour of Channel.getMembers() and the channel-changed event, before testing how they and getCurrentChannel()
  * are influenced by Channel.join()
  */
 
-beforeAll(async () => {
-    await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
-});
+setupTeardown();
 
 describe('When getting members of a channel', () => {
     test('When the channel is the default channel, only the test manager is returned', async () => {

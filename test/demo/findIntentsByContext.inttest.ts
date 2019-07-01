@@ -3,7 +3,7 @@ import 'jest';
 import {Context, AppIntent} from '../../src/client/main';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
-import {testManagerIdentity} from './constants';
+import {testManagerIdentity, testAppInDirectory1} from './constants';
 import {setupTeardown} from './utils/common';
 
 /**
@@ -54,7 +54,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
                     apps: [
                         expect.objectContaining({
                             appId: '100',
-                            name: 'test-app-1'
+                            name: testAppInDirectory1.name
                         })
                     ]
                 }

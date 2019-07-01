@@ -4,12 +4,13 @@ import {Application} from 'openfin/_v2/main';
 
 import {Application as DirectoryApplication} from '../../src/client/directory';
 import {AppMetadata, MetadataStore} from '../../src/provider/MetadataStore';
+import {testAppInDirectory1, testAppInDirectory2, testAppInDirectory3, testAppInDirectory4} from '../demo/constants';
 
 const fakeApps: {appData: DirectoryApplication, app: Application}[] = [
-    {appData: {appId: '1'}, app: {identity: {uuid: 'test-app-1'}}},
-    {appData: {appId: '2'}, app: {identity: {uuid: 'test-app-2'}}},
-    {appData: {appId: '3'}, app: {identity: {uuid: 'test-app-3'}}},
-    {appData: {appId: '4'}, app: {identity: {uuid: 'test-app-4'}}}
+    {appData: {appId: '1'}, app: {identity: {uuid: testAppInDirectory1.uuid}}},
+    {appData: {appId: '2'}, app: {identity: {uuid: testAppInDirectory2.uuid}}},
+    {appData: {appId: '3'}, app: {identity: {uuid: testAppInDirectory3.uuid}}},
+    {appData: {appId: '4'}, app: {identity: {uuid: testAppInDirectory4.uuid}}}
 ] as {appData: DirectoryApplication, app: Application}[];  // Do an explicit cast for TS. Only need very small sub-set for this test.
 
 beforeEach(() => {

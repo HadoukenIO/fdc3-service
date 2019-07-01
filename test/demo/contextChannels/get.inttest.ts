@@ -4,14 +4,13 @@ import {DesktopChannel, DefaultChannel, ChannelError, IdentityError, ChannelId} 
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, appStartupTime, testAppNotFdc3} from '../constants';
 import {fin} from '../utils/fin';
+import {setupTeardown} from '../utils/common';
 
 /**
  * Tests getDesktopChannels(), getChannelById(), and getCurrentChannel()
  */
 
-beforeAll(async () => {
-    await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
-});
+setupTeardown();
 
 describe('When getting a channel by ID', () => {
     test('When the ID provided is \'default\', the default channel is returned', async () => {

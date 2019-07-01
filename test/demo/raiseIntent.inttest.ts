@@ -235,20 +235,22 @@ the first listener is triggered exactly once with the correct context, and the s
                 });
             });
 
+            describe('When the target is running but is not in the directory and does not connect to FDC3', () => {
+                setupStartNonDirectoryAppBookends(testAppNotFdc3);
+
+                test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
+                    await expect(raiseIntent(validIntent, testAppNotFdc3)).toThrowFDC3Error(
+                        ResolveError.TargetAppNotAvailable,
+                        `Couldn't resolve intent target '${testAppNotFdc3.name}'. No matching app in directory or currently running.`
+                    );
+                });
+            });
+
             describe('When the target (which is an ad-hoc app) is running', () => {
                 setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
 
                 test('When calling addIntentListener for the first time, the promise resolves and there are no errors', async () => {
                     await expect(fdc3Remote.addIntentListener(testAppNotInDirectory1, validIntent.type)).resolves.not.toThrow();
-                });
-
-                describe('When the target has not connected to FDC3 (therefore the FDC3 service is *not* aware of the window)', () => {
-                    test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
-                        await expect(raiseIntent(validIntent, testAppNotFdc3)).toThrowFDC3Error(
-                            ResolveError.TargetAppNotAvailable,
-                            `Couldn't resolve intent target '${testAppNotFdc3.name}'. No matching app in directory or currently running.`
-                        );
-                    });
                 });
 
                 describe('When the target has registered any listeners (so the FDC3 service has the window in the model)', () => {
