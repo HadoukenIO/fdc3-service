@@ -1,12 +1,8 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {Application, IntentType} from '../../client/main';
+import {Application, IntentType, ChannelId} from '../../client/main';
 
 import {ContextChannel} from './ContextChannel';
-
-export interface ContextSpec {
-    type: string;
-}
 
 /**
  * Model interface, representing a window that has connected to the service.
@@ -21,15 +17,23 @@ export interface AppWindow {
 
     appInfo: Readonly<Application>;
 
-    contexts: ReadonlyArray<ContextChannel>;
+    channel: ContextChannel;
 
     intentListeners: ReadonlyArray<string>;
+
+    contextListeners: ReadonlyArray<ChannelId>;
 
     hasIntentListener(intentName: string): boolean;
 
     addIntentListener(intentName: string): void;
 
     removeIntentListener(intentName: string): void;
+
+    hasContextListener(channelId: ChannelId): boolean;
+
+    addContextListener(channelId: ChannelId): void;
+
+    removeContextListener(channelId: ChannelId): void;
 
     focus(): Promise<void>;
 

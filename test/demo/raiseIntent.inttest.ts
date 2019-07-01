@@ -1,7 +1,7 @@
 import 'jest';
 import 'reflect-metadata';
 
-import {ResolveError, Timeouts} from '../../src/client/errors';
+import {ResolveError} from '../../src/client/errors';
 import {Intent} from '../../src/client/intents';
 import {RESOLVER_IDENTITY} from '../../src/provider/utils/constants';
 
@@ -14,8 +14,9 @@ import {
 } from './utils/common';
 import {
     appStartupTime, testManagerIdentity, testAppInDirectory1, testAppInDirectory4,
-    testAppNotInDirectory1, testAppNotInDirectory2, testAppWithPreregisteredListeners1
+    testAppNotInDirectory1, testAppNotInDirectory2, testAppWithPreregisteredListeners1, testAppNotFdc3
 } from './constants';
+import { Timeouts } from '../../src/provider/constants';
 
 /**
  * Intent registered by `testAppWithPreregisteredListeners1` right after opening
@@ -241,11 +242,11 @@ the first listener is triggered exactly once with the correct context, and the s
                     await expect(fdc3Remote.addIntentListener(testAppNotInDirectory1, validIntent.type)).resolves.not.toThrow();
                 });
 
-                describe('When the target has *not* registered any listeners (therefore the FDC3 service is *not* aware of the window)', () => {
+                describe('When the target has not connected to FDC3 (therefore the FDC3 service is *not* aware of the window)', () => {
                     test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
-                        await expect(raiseIntent(validIntent, testAppNotInDirectory1)).toThrowFDC3Error(
+                        await expect(raiseIntent(validIntent, testAppNotFdc3)).toThrowFDC3Error(
                             ResolveError.TargetAppNotAvailable,
-                            `Couldn't resolve intent target '${testAppNotInDirectory1.name}'. No matching app in directory or currently running.`
+                            `Couldn't resolve intent target '${testAppNotFdc3.name}'. No matching app in directory or currently running.`
                         );
                     });
                 });

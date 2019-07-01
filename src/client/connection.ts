@@ -11,13 +11,9 @@
  * These types are a part of the client, but are not required by applications wishing to interact with the service.
  * This file is excluded from the public-facing TypeScript documentation.
  */
-import {EventEmitter} from 'events';
-
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
-import {deserializeError} from './errors';
-import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient} from './internal';
-import {ChannelChangedEvent, getChannelObject} from './contextChannels';
+import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient, deserializeError} from './internal';
 
 /**
  * The version of the NPM package.
@@ -25,17 +21,6 @@ import {ChannelChangedEvent, getChannelObject} from './contextChannels';
  * Webpack replaces any instances of this constant with a hard-coded string at build time.
  */
 declare const PACKAGE_VERSION: string;
-
-/**
- * Defines all events that are fired by the service
- */
-export type FDC3Event = ChannelChangedEvent;
-export type FDC3EventType = 'channel-changed';
-
-/**
- * The event emitter to emit events received from the service.  All addEventListeners will tap into this.
- */
-export const eventEmitter = new EventEmitter();
 
 /**
  * Promise to the channel object that allows us to connect to the client
@@ -58,15 +43,7 @@ export function getServicePromise(): Promise<ChannelClient> {
             channelPromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}}).then((channel: ChannelClient) => {
                 // Register service listeners
                 channel.register('WARN', (payload: any) => console.warn(payload));  // tslint:disable-line:no-any
-                channel.register('event', async (event: FDC3Event) => {
-                    // Special-handling for some event types, to convert transport-type event to client-side event.
-                    if (event.type === 'channel-changed') {
-                        event.channel = event.channel ? getChannelObject(event.channel) : null;
-                        event.previousChannel = event.previousChannel ? getChannelObject(event.previousChannel) : null;
-                    }
 
-                    eventEmitter.emit(event.type, event);
-                });
                 // Any unregistered action will simply return false
                 channel.setDefaultAction(() => false);
 

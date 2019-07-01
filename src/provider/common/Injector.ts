@@ -11,7 +11,7 @@ import {AsyncInit} from '../controller/AsyncInit';
 import {FinEnvironment} from '../model/FinEnvironment';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
-import {ChannelModel} from '../ChannelModel';
+import {ChannelHandler} from '../controller/ChannelHandler';
 
 import {Inject} from './Injectables';
 
@@ -22,12 +22,12 @@ import {Inject} from './Injectables';
 type Types = {
     [Inject.API_HANDLER]: APIHandler<APIFromClientTopic>,
     [Inject.APP_DIRECTORY]: AppDirectory,
+    [Inject.CHANNEL_HANDLER]: ChannelHandler,
     [Inject.CONTEXT_HANDLER]: ContextHandler,
     [Inject.ENVIRONMENT]: Environment,
     [Inject.INTENT_HANDLER]: IntentHandler,
     [Inject.MODEL]: Model,
     [Inject.RESOLVER]: ResolverHandler,
-    [Inject.CHANNEL_MODEL]: ChannelModel
 };
 
 /**
@@ -39,12 +39,12 @@ type Types = {
 const Bindings = {
     [Inject.API_HANDLER]: APIHandler,
     [Inject.APP_DIRECTORY]: AppDirectory,
+    [Inject.CHANNEL_HANDLER]: ChannelHandler,
     [Inject.CONTEXT_HANDLER]: ContextHandler,
     [Inject.ENVIRONMENT]: FinEnvironment,
     [Inject.INTENT_HANDLER]: IntentHandler,
     [Inject.MODEL]: Model,
-    [Inject.RESOLVER]: ResolverHandler,
-    [Inject.CHANNEL_MODEL]: ChannelModel
+    [Inject.RESOLVER]: ResolverHandler
 };
 
 type Keys = (keyof typeof Inject & keyof typeof Bindings & keyof Types);

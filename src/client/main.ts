@@ -2,13 +2,16 @@
  * @module Index
  */
 
+import {EventEmitter} from 'events';
+
 import {Identity} from 'openfin/_v2/main';
 
-import {tryServiceDispatch, eventEmitter, FDC3Event, FDC3EventType, getServicePromise} from './connection';
+import {tryServiceDispatch, getServicePromise} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
-import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload} from './internal';
-import {ChannelChangedEvent} from './contextChannels';
+import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, EventTransport} from './internal';
+import {ChannelChangedEvent, getChannelObject} from './contextChannels';
+import {parseContext, validateEnvironment} from './validation';
 
 /**
  * This file was copied from the FDC3 v1 specification.
@@ -77,6 +80,20 @@ export interface IntentListener {
 }
 
 /**
+ * Defines all events that are fired by the service
+ */
+export type FDC3Event = ChannelChangedEvent;
+export type FDC3EventType = 'channel-changed';
+
+/**
+ * The event emitter to emit events received from the service.  All addEventListeners will tap into this.
+ */
+const eventEmitter = new EventEmitter();
+
+const intentListeners: IntentListener[] = [];
+const contextListeners: ContextListener[] = [];
+
+/**
  * A Desktop Agent is a desktop component (or aggregate of components) that serves as a
  * launcher and message router (broker) for applications in its domain.
  *
@@ -104,7 +121,7 @@ export interface IntentListener {
  * ```
  */
 export async function open(name: string, context?: Context): Promise<void> {
-    return tryServiceDispatch(APIFromClientTopic.OPEN, {name, context});
+    return tryServiceDispatch(APIFromClientTopic.OPEN, {name, context: context && parseContext(context)});
 }
 
 /**
@@ -131,7 +148,7 @@ export async function open(name: string, context?: Context): Promise<void> {
  * ```
  */
 export async function findIntent(intent: string, context?: Context): Promise<AppIntent> {
-    return tryServiceDispatch(APIFromClientTopic.FIND_INTENT, {intent, context});
+    return tryServiceDispatch(APIFromClientTopic.FIND_INTENT, {intent, context: context && parseContext(context)});
 }
 
 /**
@@ -168,7 +185,7 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  * ```
  */
 export async function findIntentsByContext(context: Context): Promise<AppIntent[]> {
-    return tryServiceDispatch(APIFromClientTopic.FIND_INTENTS_BY_CONTEXT, {context});
+    return tryServiceDispatch(APIFromClientTopic.FIND_INTENTS_BY_CONTEXT, {context: parseContext(context)});
 }
 
 /**
@@ -176,9 +193,11 @@ export async function findIntentsByContext(context: Context): Promise<AppIntent[
  * ```javascript
  *  agent.broadcast(context);
  * ```
+ *
+ * @throws `TypeError`: If `context` is not a valid Context
  */
 export function broadcast(context: Context): void {
-    tryServiceDispatch(APIFromClientTopic.BROADCAST, {context});
+    tryServiceDispatch(APIFromClientTopic.BROADCAST, {context: parseContext(context)});
 }
 
 /**
@@ -191,36 +210,15 @@ export function broadcast(context: Context): void {
  * ```
  */
 export async function raiseIntent(intent: string, context: Context, target?: string): Promise<IntentResolution> {
-    return tryServiceDispatch(APIFromClientTopic.RAISE_INTENT, {intent, context, target});
-}
-
-const intentListeners: IntentListener[] = [];
-const contextListeners: ContextListener[] = [];
-
-if (typeof fin !== 'undefined') {
-    getServicePromise().then(channelClient => {
-        channelClient.register(APIToClientTopic.INTENT, (payload: RaiseIntentPayload) => {
-            intentListeners.forEach((listener: IntentListener) => {
-                if (payload.intent === listener.intent) {
-                    listener.handler(payload.context);
-                }
-            });
-        });
-
-        channelClient.register(APIToClientTopic.CONTEXT, (payload: Context) => {
-            contextListeners.forEach((listener: ContextListener) => {
-                listener.handler(payload);
-            });
-        });
-    }, resason => {
-        console.warn('Unable to register client Context and Intent handlers. getServicePromise() rejected with reason:', resason);
-    });
+    return tryServiceDispatch(APIFromClientTopic.RAISE_INTENT, {intent, context: parseContext(context), target});
 }
 
 /**
  * Adds a listener for incoming Intents from the Agent.
  */
 export function addIntentListener(intent: string, handler: (context: Context) => void): IntentListener {
+    validateEnvironment();
+
     const listener: IntentListener = {
         intent,
         handler,
@@ -252,6 +250,8 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
  * Adds a listener for incoming context broadcast from the Desktop Agent.
  */
 export function addContextListener(handler: (context: Context) => void): ContextListener {
+    validateEnvironment();
+
     const listener: ContextListener = {
         handler,
         unsubscribe: () => {
@@ -277,13 +277,60 @@ export function addContextListener(handler: (context: Context) => void): Context
 export function addEventListener(eventType: 'channel-changed', handler: (event: ChannelChangedEvent) => void): void;
 
 export function addEventListener(eventType: FDC3EventType, handler: (event: FDC3Event) => void, identity?: Identity): void {
+    validateEnvironment();
+
     eventEmitter.addListener(eventType, handler);
 }
 
 export function removeEventListener(eventType: FDC3EventType, handler: (eventPayload: ChannelChangedEvent) => void): void {
+    validateEnvironment();
+
     eventEmitter.removeListener(eventType, handler);
 }
 
 function hasIntentListener(intent: string): boolean {
     return intentListeners.some(intentListener => intentListener.intent === intent);
+}
+
+if (typeof fin !== 'undefined') {
+    getServicePromise().then(channelClient => {
+        channelClient.register('event', async (eventTransport: EventTransport<FDC3Event>) => {
+            let event: FDC3Event;
+
+            // Special-handling for some event types, to convert transport-type event to client-side event.
+            if (eventTransport.type === 'channel-changed') {
+                const channelChangedEventTransport = eventTransport as EventTransport<ChannelChangedEvent>;
+
+                const type = channelChangedEventTransport.type;
+                const identity = channelChangedEventTransport.identity;
+                const channel = channelChangedEventTransport.channel ? getChannelObject(channelChangedEventTransport.channel) : null;
+                const previousChannel = channelChangedEventTransport.previousChannel ? getChannelObject(channelChangedEventTransport.previousChannel) : null;
+
+                const channelChangedEvent: ChannelChangedEvent = {type, identity, channel, previousChannel};
+
+                event = channelChangedEvent;
+            } else {
+                event = eventTransport as FDC3Event;
+            }
+
+            eventEmitter.emit(event.type, event);
+        });
+
+        channelClient.register(APIToClientTopic.INTENT, (payload: RaiseIntentPayload) => {
+            intentListeners.forEach((listener: IntentListener) => {
+                if (payload.intent === listener.intent) {
+                    listener.handler(payload.context);
+                }
+            });
+        });
+
+        // TODO: When we're ready to make a breaking change, change `payload: Context` to `payload: ContextPayload` (SERVICE-533)
+        channelClient.register(APIToClientTopic.CONTEXT, (payload: Context) => {
+            contextListeners.forEach((listener: ContextListener) => {
+                listener.handler(payload);
+            });
+        });
+    }, reason => {
+        console.warn('Unable to register client Context and Intent handlers. getServicePromise() rejected with reason:', reason);
+    });
 }

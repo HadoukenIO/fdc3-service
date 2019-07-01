@@ -8,8 +8,22 @@
     </script>
     <script>
 
-        function errorHandler(error) {
-            throw fdc3.serializeError(error);
+        /*
+         * Mirror of serializeError(), makes sure puppeteer serializes all the relevant error information back to the test host
+         */
+         function errorHandler(error) {
+            if (error.name === 'FDC3Error') {
+                throw new Error(JSON.stringify({
+                    name: 'FDC3Error',
+                    code: error.code,
+                    message: error.message
+                }));
+            } else if (error.name === 'TypeError') {
+                throw new Error(JSON.stringify({
+                    name: 'TypeError',
+                    message: error.message
+                }));
+            }
         }
 
         function serializeChannel(channel) {

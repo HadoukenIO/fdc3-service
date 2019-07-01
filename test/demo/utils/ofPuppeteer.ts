@@ -2,8 +2,7 @@ import {Fin, Identity} from 'openfin/_v2/main';
 import {Browser, Page} from 'puppeteer';
 import {connect} from 'hadouken-js-adapter';
 
-import {Context, IntentType, ContextListener, IntentListener, Channel} from '../../../src/client/main';
-import {FDC3Event} from '../../../src/client/connection';
+import {Context, IntentType, ContextListener, IntentListener, Channel, FDC3Event} from '../../../src/client/main';
 
 declare const global: NodeJS.Global & {__BROWSER__: Browser};
 

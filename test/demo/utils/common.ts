@@ -1,8 +1,8 @@
 import {Identity} from 'openfin/_v2/main';
 
 import {Intent} from '../../../src/client/intents';
+import {withTimeout} from '../../../src/provider/utils/async';
 import {testManagerIdentity, appStartupTime} from '../constants';
-import {withTimeout} from '../../../src/client/main';
 
 import {fin} from './fin';
 import * as fdc3Remote from './fdc3RemoteExecution';

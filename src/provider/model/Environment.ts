@@ -4,6 +4,7 @@ import {Signal1, Signal2} from '../common/Signal';
 import {Application} from '../../client/main';
 
 import {AppWindow} from './AppWindow';
+import {ContextChannel} from './ContextChannel';
 
 export interface Environment {
     windowCreated: Signal2<Identity, string>;
@@ -15,10 +16,10 @@ export interface Environment {
      * * FDC3Error if app fails to start
      * * FDC3Error if timeout trying to start app
      */
-    createApplication: (appInfo: Application) => Promise<AppWindow>;
+    createApplication: (appInfo: Application, channel: ContextChannel) => Promise<AppWindow>;
 
     /**
      * Creates an `AppWindow` object for an existing window.
      */
-    wrapApplication: (appInfo: Application, identity: Identity) => AppWindow;
+    wrapApplication: (appInfo: Application, identity: Identity, channel: ContextChannel) => AppWindow;
 }
