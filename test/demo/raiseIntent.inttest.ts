@@ -630,7 +630,7 @@ async function closeResolver(): Promise<void> {
  * @param appName name of app to open
  */
 async function selectResolverApp(appName: string): Promise<void> {
-    const appClicked = await fdc3Remote.clickHTMLElement(RESOLVER_IDENTITY, `#${appName}`);
+    const appClicked = await fdc3Remote.clickHTMLElement(RESOLVER_IDENTITY, `.app-card[data-appname="${appName}"]`);
     if (!appClicked) {
         throw new Error(`App with name '${appName}' not found in resolver`);
     }

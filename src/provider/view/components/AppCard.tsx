@@ -19,7 +19,7 @@ export function AppCard(props: AppCardProps): React.ReactElement {
     };
 
     return (
-        <li id={app.name} className="app-card" onClick={clickHandler}>
+        <li className="app-card" data-appname={app.name} onClick={clickHandler}>
             {(app.icons && app.icons.length > 0) && <img className="icon" src={app.icons[0].icon} />}
             <h1>{app.title || app.name}</h1>
         </li>
