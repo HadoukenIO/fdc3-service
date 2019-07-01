@@ -13,7 +13,7 @@
 import {Identity} from 'openfin/_v2/main';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 
-import {Application, Context, IntentType, AppIntent, ChannelId, FDC3Event, FDC3EventType} from '../../../src/client/main';
+import {Application, Context, IntentType, AppIntent, ChannelId, FDC3Event, FDC3EventType, FDC3MainEventType} from '../../../src/client/main';
 import {RaiseIntentPayload, deserializeError} from '../../../src/client/internal';
 
 import {OFPuppeteerBrowser, TestWindowContext, TestChannelTransport} from './ofPuppeteer';
@@ -140,8 +140,8 @@ export async function getRemoteIntentListener(executionTarget: Identity, intent:
     return createRemoteIntentListener(executionTarget, listenerID, intent);
 }
 
-export async function addEventListener(executionTarget: Identity, eventType: FDC3EventType): Promise<RemoteEventListener> {
-    const id = await ofBrowser.executeOnWindow(executionTarget, function(this:TestWindowContext, eventType: FDC3EventType): number {
+export async function addEventListener(executionTarget: Identity, eventType: FDC3MainEventType): Promise<RemoteEventListener> {
+    const id = await ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, eventType: FDC3MainEventType): number {
         const listenerID = this.eventListeners.length;
 
         const handler = (payload: FDC3Event) => {

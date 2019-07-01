@@ -10,8 +10,9 @@ import {tryServiceDispatch, getServicePromise} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
 import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, EventTransport} from './internal';
-import {ChannelChangedEvent, getChannelObject} from './contextChannels';
+import {ChannelChangedEvent, getChannelObject, FDC3ChannelEvent, FDC3ChannelEventType} from './contextChannels';
 import {parseContext, validateEnvironment} from './validation';
+import {getEventRouter} from './EventRouter';
 
 /**
  * This file was copied from the FDC3 v1 specification.
@@ -82,11 +83,14 @@ export interface IntentListener {
 /**
  * Defines all events that are fired by the service
  */
-export type FDC3Event = ChannelChangedEvent;
-export type FDC3EventType = 'channel-changed';
+export type FDC3Event = FDC3MainEvent | FDC3ChannelEvent;
+export type FDC3EventType = FDC3MainEventType | FDC3ChannelEventType;
+
+export type FDC3MainEvent = ChannelChangedEvent;
+export type FDC3MainEventType = 'channel-changed'
 
 /**
- * The event emitter to emit events received from the service.  All addEventListeners will tap into this.
+ * The event emitter to emit events received from the service. All addEventListeners will tap into this.
  */
 const eventEmitter = new EventEmitter();
 
@@ -276,13 +280,13 @@ export function addContextListener(handler: (context: Context) => void): Context
  */
 export function addEventListener(eventType: 'channel-changed', handler: (event: ChannelChangedEvent) => void): void;
 
-export function addEventListener(eventType: FDC3EventType, handler: (event: FDC3Event) => void, identity?: Identity): void {
+export function addEventListener(eventType: FDC3MainEventType, handler: (event: FDC3MainEvent) => void, identity?: Identity): void {
     validateEnvironment();
 
     eventEmitter.addListener(eventType, handler);
 }
 
-export function removeEventListener(eventType: FDC3EventType, handler: (eventPayload: ChannelChangedEvent) => void): void {
+export function removeEventListener(eventType: FDC3MainEventType, handler: (event: FDC3MainEvent) => void): void {
     validateEnvironment();
 
     eventEmitter.removeListener(eventType, handler);
@@ -292,30 +296,19 @@ function hasIntentListener(intent: string): boolean {
     return intentListeners.some(intentListener => intentListener.intent === intent);
 }
 
+function onChannelChanged(eventTransport: EventTransport<FDC3Event>): FDC3Event {
+    const channelChangedEventTransport = eventTransport as EventTransport<ChannelChangedEvent>;
+
+    const type = channelChangedEventTransport.type;
+    const identity = channelChangedEventTransport.identity;
+    const channel = channelChangedEventTransport.channel ? getChannelObject(channelChangedEventTransport.channel) : null;
+    const previousChannel = channelChangedEventTransport.previousChannel ? getChannelObject(channelChangedEventTransport.previousChannel) : null;
+
+    return {type, identity, channel, previousChannel};
+}
+
 if (typeof fin !== 'undefined') {
     getServicePromise().then(channelClient => {
-        channelClient.register('event', async (eventTransport: EventTransport<FDC3Event>) => {
-            let event: FDC3Event;
-
-            // Special-handling for some event types, to convert transport-type event to client-side event.
-            if (eventTransport.type === 'channel-changed') {
-                const channelChangedEventTransport = eventTransport as EventTransport<ChannelChangedEvent>;
-
-                const type = channelChangedEventTransport.type;
-                const identity = channelChangedEventTransport.identity;
-                const channel = channelChangedEventTransport.channel ? getChannelObject(channelChangedEventTransport.channel) : null;
-                const previousChannel = channelChangedEventTransport.previousChannel ? getChannelObject(channelChangedEventTransport.previousChannel) : null;
-
-                const channelChangedEvent: ChannelChangedEvent = {type, identity, channel, previousChannel};
-
-                event = channelChangedEvent;
-            } else {
-                event = eventTransport as FDC3Event;
-            }
-
-            eventEmitter.emit(event.type, event);
-        });
-
         channelClient.register(APIToClientTopic.INTENT, (payload: RaiseIntentPayload) => {
             intentListeners.forEach((listener: IntentListener) => {
                 if (payload.intent === listener.intent) {
@@ -330,6 +323,15 @@ if (typeof fin !== 'undefined') {
                 listener.handler(payload);
             });
         });
+
+        const eventHandler = getEventRouter();
+
+        channelClient.register('event', (eventTransport: EventTransport<FDC3Event>) => {
+            eventHandler.dispatchEvent(eventTransport);
+        });
+
+        eventHandler.registerEmitterProvider('main', () => eventEmitter);
+        eventHandler.registerDeserializer('channel-changed', onChannelChanged);
     }, reason => {
         console.warn('Unable to register client Context and Intent handlers. getServicePromise() rejected with reason:', reason);
     });

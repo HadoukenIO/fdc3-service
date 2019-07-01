@@ -1,13 +1,13 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {IdentityError} from '../../../src/client/main';
+import {IdentityError, DEFAULT_CHANNEL_ID} from '../../../src/client/main';
 import {testManagerIdentity, appStartupTime, testAppNotInDirectory, testAppNotFdc3, testAppInDirectory1, testAppInDirectory2} from '../constants';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
-import {RemoteChannel} from '../utils/RemoteChannel';
+import {RemoteChannel, RemoteChannelEventListener} from '../utils/RemoteChannel';
 import {fin} from '../utils/fin';
 
 /*
- * Tests simple behaviour of Channel.getMembers() and the channel-changed event, before testing how they and getCurrentChannel()
+ * Tests simple behaviour of Channel.getMembers() and the channel-changed and Channel events, before testing how they and getCurrentChannel()
  * are influenced by Channel.join()
  */
 
@@ -85,11 +85,14 @@ describe('When getting members of a channel', () => {
     });
 });
 
-describe('When listening for a channel-changed event', () => {
+describe('When listening for channel-changed and Channel events', () => {
     const listeningApp = testAppInDirectory1;
+    let defaultChannel: RemoteChannel;
 
     beforeEach(async () => {
         await fdc3Remote.open(testManagerIdentity, listeningApp.name);
+
+        defaultChannel = await fdc3Remote.getChannelById(testManagerIdentity, DEFAULT_CHANNEL_ID);
     }, appStartupTime);
 
     afterEach(async () => {
@@ -117,54 +120,75 @@ describe('When listening for a channel-changed event', () => {
             'an FDC3 app',
             testAppInDirectory2,
             async () => fdc3Remote.open(testManagerIdentity, testAppInDirectory2.name)
-        ], [
+        ],
+        [
             'a non directory app',
             testAppNotInDirectory,
             async () => fin.Application.startFromManifest(testAppNotInDirectory.manifestUrl).then(() => {})
         ]
     ];
 
-    test.each(testParams)('Event is recevied when %s starts', async (titleParam: string, appIdentity: Identity, openFunction: () => Promise<any>) => {
+    test.each(testParams)('Events are recevied when %s starts', async (titleParam: string, appIdentity: Identity, openFunction: () => Promise<any>) => {
         // Set up our listener
-        const listener = await fdc3Remote.addEventListener(listeningApp, 'channel-changed');
+        const channelChangedListener = await fdc3Remote.addEventListener(listeningApp, 'channel-changed');
+        const windowAddedListener = await defaultChannel.addEventListener('window-added');
 
         // Open our app
         await openFunction();
 
-        // Check we received a channel-changed event
-        await expect(listener.getReceivedEvents()).resolves.toEqual([{
-            type: 'channel-changed',
+        const expectedEvent = {
             identity: {uuid: appIdentity.uuid, name: appIdentity.name},
             channel: {id: 'default', type: 'default'},
             previousChannel: null
+        };
+
+        // Check we received window-added event
+        await expect(windowAddedListener.getReceivedEvents()).resolves.toEqual([{
+            type: 'window-added', ...expectedEvent
+        }]);
+
+        // Check we received a channel-changed event
+        await expect(channelChangedListener.getReceivedEvents()).resolves.toEqual([{
+            type: 'channel-changed', ...expectedEvent
         }]);
     }, appStartupTime);
 
-    test('Event is not received when a non-FDC3 app starts', async () => {
+    test('No events are received when a non-FDC3 app starts', async () => {
         // Set up our listener
-        const listener = await fdc3Remote.addEventListener(listeningApp, 'channel-changed');
+        const channelChangedListener = await fdc3Remote.addEventListener(listeningApp, 'channel-changed');
+        const windowAddedListener = await defaultChannel.addEventListener('window-added');
 
         // Start our non-FDC3 app
         await fin.Application.startFromManifest(testAppNotFdc3.manifestUrl);
 
         // Check no event is received
-        await expect(listener.getReceivedEvents()).resolves.toEqual([]);
+        await expect(channelChangedListener.getReceivedEvents()).resolves.toEqual([]);
+        await expect(windowAddedListener.getReceivedEvents()).resolves.toEqual([]);
     });
 
     test('Event is received when an FDC3 app quits', async () => {
         // Open our FDC3 app ahead of setting up our listener
         await fdc3Remote.open(testManagerIdentity, testAppInDirectory2.name);
 
-        // Set up our listener then quit the app
-        const listener = await fdc3Remote.addEventListener(listeningApp, 'channel-changed');
+        // Set up our listeners then quit the app
+        const channelChangedListener = await fdc3Remote.addEventListener(listeningApp, 'channel-changed');
+        const windowRemovedListener = await defaultChannel.addEventListener('window-removed');
         await fin.Application.wrapSync(testAppInDirectory2).quit(true);
 
-        // Check we received a channel-changed event
-        await expect(listener.getReceivedEvents()).resolves.toEqual([{
-            type: 'channel-changed',
+        const expectedEvent = {
             identity: {uuid: testAppInDirectory2.uuid, name: testAppInDirectory2.name},
             channel: null,
             previousChannel: {id: 'default', type: 'default'}
+        };
+
+        // Check we received a window-removed event
+        await expect(windowRemovedListener.getReceivedEvents()).resolves.toEqual([{
+            type: 'window-removed', ...expectedEvent
+        }]);
+
+        // Check we received a channel-changed event
+        await expect(channelChangedListener.getReceivedEvents()).resolves.toEqual([{
+            type: 'channel-changed', ...expectedEvent
         }]);
     }, appStartupTime);
 });
@@ -232,16 +256,22 @@ describe('When joining a channel', () => {
     const listeningApp = testAppInDirectory1;
     const joiningApp = testAppInDirectory2;
 
-    let listener: fdc3Remote.RemoteEventListener;
+    let channelChangedListener: fdc3Remote.RemoteEventListener;
     let defaultChannel: RemoteChannel;
+
+    let defaultChannelWindowAddedListener: RemoteChannelEventListener;
+    let defaultChannelWindowRemovedListener: RemoteChannelEventListener;
 
     beforeEach(async () => {
         await fdc3Remote.open(testManagerIdentity, listeningApp.name);
         await fdc3Remote.open(testManagerIdentity, joiningApp.name);
 
-        // Set up our listener and default channel
-        listener = await fdc3Remote.addEventListener(joiningApp, 'channel-changed');
+        // Set up our listeners and default channel
+        channelChangedListener = await fdc3Remote.addEventListener(joiningApp, 'channel-changed');
         defaultChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'default');
+
+        defaultChannelWindowAddedListener = await defaultChannel.addEventListener('window-added');
+        defaultChannelWindowRemovedListener = await defaultChannel.addEventListener('window-removed');
     }, appStartupTime * 2);
 
     afterEach(async () => {
@@ -270,29 +300,46 @@ describe('When joining a channel', () => {
 
             // Check our desktop channel contains our joining app
             await expect(desktopChannel.getMembers()).resolves.toEqual([{
-                uuid: joiningApp.uuid,
-                name: joiningApp.name
+                uuid: joiningApp.uuid, name: joiningApp.name
             }]);
 
             // Check the default channel does not contain our joining app
             await expect(defaultChannel.getMembers()).resolves.not.toContain([{
-                uuid: joiningApp.uuid,
-                name: joiningApp.name
+                uuid: joiningApp.uuid, name: joiningApp.name
             }]);
             // We expect the default channel to contain the test manager and the listening window
             await expect(defaultChannel.getMembers()).resolves.toHaveLength(2);
         });
 
-        test('A channel-change event is fired', async () => {
+        test('The expected events are received', async () => {
+            // Set up listeners on our desktop channel
+            const desktopChannelWindowAddedListener = await desktopChannel.addEventListener('window-added');
+            const desktopChannelWindowRemovedListener = await desktopChannel.addEventListener('window-removed');
+
             // Join our desktop channel
             await desktopChannel.join(joiningApp);
 
-            //  Check we a channel-changed event
-            await expect(listener.getReceivedEvents()).resolves.toEqual([{
-                type: 'channel-changed',
+            const expectedEvent = {
                 identity: {uuid: joiningApp.uuid, name: joiningApp.name},
                 channel: desktopChannel.channel,
                 previousChannel: {id: 'default', type: 'default'}
+            };
+
+            // Check we received the expected events on the default channel
+            await expect(defaultChannelWindowAddedListener.getReceivedEvents()).resolves.toEqual([]);
+            await expect(defaultChannelWindowRemovedListener.getReceivedEvents()).resolves.toEqual([{
+                type: 'window-removed', ...expectedEvent
+            }]);
+
+            // Check we received the expected events on the desktop channel
+            await expect(desktopChannelWindowAddedListener.getReceivedEvents()).resolves.toEqual([{
+                type: 'window-added', ...expectedEvent
+            }]);
+            await expect(desktopChannelWindowRemovedListener.getReceivedEvents()).resolves.toEqual([]);
+
+            // Check we a channel-changed event
+            await expect(channelChangedListener.getReceivedEvents()).resolves.toEqual([{
+                type: 'channel-changed', ...expectedEvent
             }]);
         });
     });
@@ -311,23 +358,29 @@ describe('When joining a channel', () => {
 
             // Check our joining window is only present once when getting channel members
             await expect(blueChannel.getMembers()).resolves.toEqual([{
-                uuid: joiningApp.uuid,
-                name: joiningApp.name
+                uuid: joiningApp.uuid, name: joiningApp.name
             }]);
         });
 
-        test('A channel-change event is fired only once', async () => {
+        test('The expected events are received only once', async () => {
+            // Set up listeners on our blue channel
+            const blueChannelWindowAddedListener = await blueChannel.addEventListener('window-added');
+            const blueChannelWindowRemovedListener = await blueChannel.addEventListener('window-removed');
+
             // Join the channel twice
             await blueChannel.join(joiningApp);
             await blueChannel.join(joiningApp);
 
+            // Check the expected events on the default channel are received only once
+            await expect(defaultChannelWindowAddedListener.getReceivedEvents()).resolves.toHaveLength(0);
+            await expect(defaultChannelWindowRemovedListener.getReceivedEvents()).resolves.toHaveLength(1);
+
+            // Check the expected events on the blue channel are received only once
+            await expect(blueChannelWindowAddedListener.getReceivedEvents()).resolves.toHaveLength(1);
+            await expect(blueChannelWindowRemovedListener.getReceivedEvents()).resolves.toHaveLength(0);
+
             // Check the channel-changed event is only received once
-            await expect(listener.getReceivedEvents()).resolves.toEqual([{
-                type: 'channel-changed',
-                identity: {uuid: joiningApp.uuid, name: joiningApp.name},
-                channel: blueChannel.channel,
-                previousChannel: {id: 'default', type: 'default'}
-            }]);
+            await expect(channelChangedListener.getReceivedEvents()).resolves.toHaveLength(1);
         });
     });
 
@@ -357,30 +410,55 @@ describe('When joining a channel', () => {
 
             // Check the default channel contains our joining window
             await expect(defaultChannel.getMembers()).resolves.toContainEqual({
-                uuid: joiningApp.uuid,
-                name: joiningApp.name
+                uuid: joiningApp.uuid, name: joiningApp.name
             });
             // We expect the default channel to contain our joining window, the test manager, and the listening window
             await expect(defaultChannel.getMembers()).resolves.toHaveLength(3);
         });
 
         test('A channel-change event is fired twice', async () => {
+            // Set up listeners on our purple channel
+            const purpleChannelWindowAddedListener = await purpleChannel.addEventListener('window-added');
+            const purpleChannelWindowRemovedListener = await purpleChannel.addEventListener('window-removed');
+
             // Leave and re-join the default channel
             await purpleChannel.join(joiningApp);
             await defaultChannel.join(joiningApp);
 
-            // Check events are fired for both leaving and re-joining
-            await expect(listener.getReceivedEvents()).resolves.toEqual([{
-                type: 'channel-changed',
+            const expectedEvent1 = {
                 identity: {uuid: joiningApp.uuid, name: joiningApp.name},
                 channel: purpleChannel.channel,
                 previousChannel: {id: 'default', type: 'default'}
-            },
-            {
-                type: 'channel-changed',
+            };
+
+            const expectedEvent2 = {
                 identity: {uuid: joiningApp.uuid, name: joiningApp.name},
                 channel: {id: 'default', type: 'default'},
                 previousChannel: purpleChannel.channel
+            };
+
+            // Check expected events are received on the default channel for leaving and rejoining
+            await expect(defaultChannelWindowRemovedListener.getReceivedEvents()).resolves.toEqual([{
+                type: 'window-removed', ...expectedEvent1
+            }]);
+            await expect(defaultChannelWindowAddedListener.getReceivedEvents()).resolves.toEqual([{
+                type: 'window-added', ...expectedEvent2
+            }]);
+
+            // Check expected events are received on the purple channel for joining then leaving
+            await expect(purpleChannelWindowAddedListener.getReceivedEvents()).resolves.toEqual([{
+                type: 'window-added', ...expectedEvent1
+            }]);
+            await expect(purpleChannelWindowRemovedListener.getReceivedEvents()).resolves.toEqual([{
+                type: 'window-removed', ...expectedEvent2
+            }]);
+
+            // Check channel-changed are received for both leaving and re-joining
+            await expect(channelChangedListener.getReceivedEvents()).resolves.toEqual([{
+                type: 'channel-changed', ...expectedEvent1
+            },
+            {
+                type: 'channel-changed', ...expectedEvent2
             }]);
         });
     });
@@ -389,6 +467,10 @@ describe('When joining a channel', () => {
         // Get a desktop channel from our joining window
         const blueChannel = await fdc3Remote.getChannelById(joiningApp, 'blue');
 
+        // Set up listeners for our blue channel
+        const blueChannelWindowAddedListener = await blueChannel.addEventListener('window-added');
+        const blueChannelWindowRemovedListener = await blueChannel.addEventListener('window-removed');
+
         // Join the channel
         await blueChannel.join();
 
@@ -396,12 +478,27 @@ describe('When joining a channel', () => {
         await expect(fdc3Remote.getCurrentChannel(joiningApp)).resolves.toHaveProperty('channel', blueChannel.channel);
         await expect(blueChannel.getMembers()).resolves.toEqual([{uuid: joiningApp.uuid, name: joiningApp.name}]);
 
-        // Check event is received
-        await expect(listener.getReceivedEvents()).resolves.toEqual([{
-            type: 'channel-changed',
+        const expectedEvent = {
             identity: {uuid: joiningApp.uuid, name: joiningApp.name},
             channel: blueChannel.channel,
             previousChannel: {id: 'default', type: 'default'}
+        };
+
+        // Check expected events are received on the default channel
+        await expect(defaultChannelWindowAddedListener.getReceivedEvents()).resolves.toEqual([]);
+        await expect(defaultChannelWindowRemovedListener.getReceivedEvents()).resolves.toEqual([{
+            type: 'window-removed', ...expectedEvent
+        }]);
+
+        // Check expected events are received on the blue channel
+        await expect(blueChannelWindowAddedListener.getReceivedEvents()).resolves.toEqual([{
+            type: 'window-added', ...expectedEvent
+        }]);
+        await expect(blueChannelWindowRemovedListener.getReceivedEvents()).resolves.toEqual([]);
+
+        // Check channel-changed event is received
+        await expect(channelChangedListener.getReceivedEvents()).resolves.toEqual([{
+            type: 'channel-changed', ...expectedEvent
         }]);
     });
 });
@@ -416,11 +513,18 @@ describe('When using a non-directory app', () => {
     });
 
     test('The app can join a channel as expected', async () => {
-        // Get a desktop channel from our non-directory window
+        // Get a desktop channel and the default channel from our non-directory window
+        const defaultChannel = await fdc3Remote.getChannelById(testAppNotInDirectory, 'default');
         const greenChannel = await fdc3Remote.getChannelById(testAppNotInDirectory, 'green');
 
-        // Set up a listener in the non-directory window
-        const listener = await fdc3Remote.addEventListener(testAppNotInDirectory, 'channel-changed');
+        // Set up our listeners in the non-directory window
+        const channelChangedListener = await fdc3Remote.addEventListener(testAppNotInDirectory, 'channel-changed');
+
+        const defaultChannelWindowAddedListener = await defaultChannel.addEventListener('window-added');
+        const defaultChannelWindowRemovedListener = await defaultChannel.addEventListener('window-removed');
+
+        const greenChannelWindowAddedListener = await greenChannel.addEventListener('window-added');
+        const greenChannelWindowRemovedListener = await greenChannel.addEventListener('window-removed');
 
         // Join the channel
         await greenChannel.join();
@@ -429,12 +533,27 @@ describe('When using a non-directory app', () => {
         await expect(fdc3Remote.getCurrentChannel(testAppNotInDirectory)).resolves.toHaveProperty('channel', greenChannel.channel);
         await expect(greenChannel.getMembers()).resolves.toEqual([{uuid: testAppNotInDirectory.uuid, name: testAppNotInDirectory.name}]);
 
-        // Check event is received
-        await expect(listener.getReceivedEvents()).resolves.toEqual([{
-            type: 'channel-changed',
+        const expectedEvent = {
             identity: {uuid: testAppNotInDirectory.uuid, name: testAppNotInDirectory.name},
             channel: greenChannel.channel,
             previousChannel: {id: 'default', type: 'default'}
+        };
+
+        // Check expected events are received on the default channel
+        await expect(defaultChannelWindowAddedListener.getReceivedEvents()).resolves.toEqual([]);
+        await expect(defaultChannelWindowRemovedListener.getReceivedEvents()).resolves.toEqual([{
+            type: 'window-removed', ...expectedEvent
+        }]);
+
+        // Check expected events are received on the green channel
+        await expect(greenChannelWindowAddedListener.getReceivedEvents()).resolves.toEqual([{
+            type: 'window-added', ...expectedEvent
+        }]);
+        await expect(greenChannelWindowRemovedListener.getReceivedEvents()).resolves.toEqual([]);
+
+        // Check channel-changed event is received
+        await expect(channelChangedListener.getReceivedEvents()).resolves.toEqual([{
+            type: 'channel-changed', ...expectedEvent
         }]);
     });
 });
