@@ -7,12 +7,12 @@
 enum Injectable {
     API_HANDLER,
     APP_DIRECTORY,
+    CHANNEL_HANDLER,
     CONTEXT_HANDLER,
     ENVIRONMENT,
     INTENT_HANDLER,
     MODEL,
     RESOLVER,
-    CHANNEL_MODEL
 }
 
 type InjectableMap = {

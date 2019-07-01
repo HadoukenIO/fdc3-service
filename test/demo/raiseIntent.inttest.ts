@@ -1,18 +1,12 @@
 import 'jest';
 import 'reflect-metadata';
 
-
 import {ResolveError} from '../../src/client/errors';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay} from './utils/delay';
-import {appStartupTime} from './constants';
-
-const testManagerIdentity = {
-    uuid: 'test-app',
-    name: 'test-app'
-};
+import {appStartupTime, testManagerIdentity} from './constants';
 
 const validPayload = {
     intent: 'test.IntentName',
@@ -145,7 +139,7 @@ describe('Intent listeners and raising intents', () => {
 
             describe('When the target is running', () => {
                 beforeEach(async () => {
-                    await fdc3Remote.open(testManagerIdentity, testAppInDirectory.uuid);
+                    await fdc3Remote.open(testManagerIdentity, testAppInDirectory.name);
                 });
 
                 afterEach(async () => {
@@ -272,18 +266,23 @@ the second listener is not triggered', async () => {
                     await expect(fdc3Remote.addIntentListener(testAppNotInDirectory, validPayload.intent)).resolves.not.toThrow();
                 });
 
-                describe('When the target has *not* registered any listeners (therefore the FDC3 service is *not* aware of the window)', () => {
+                describe('When the target has not connected to FDC3 (therefore the FDC3 service is *not* aware of the window)', () => {
+                    const testAppNotFdc3 = {
+                        uuid: 'test-app-not-fdc3',
+                        name: 'test-app-not-fdc3',
+                        manifestUrl: 'http://localhost:3923/test/configs/test-app-not-fdc3.json'
+                    };
                     test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
                         const promise = fdc3Remote.raiseIntent(
                             testManagerIdentity,
                             validPayload.intent,
                             validPayload.context,
-                            testAppNotInDirectory.name
+                            testAppNotFdc3.name
                         );
 
                         await expect(promise).toThrowFDC3Error(
                             ResolveError.TargetAppNotAvailable,
-                            `Couldn't resolve intent target '${testAppNotInDirectory.name}'. No matching app in directory or currently running.`
+                            `Couldn't resolve intent target '${testAppNotFdc3.name}'. No matching app in directory or currently running.`
                         );
                     });
                 });

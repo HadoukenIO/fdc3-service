@@ -3,15 +3,12 @@ import 'jest';
 import {Identity} from 'openfin/_v2/main';
 
 import {Context, OrganizationContext} from '../../src/client/main';
-import {OpenError, Timeouts} from '../../src/client/errors';
+import {OpenError} from '../../src/client/errors';
+import {Timeouts} from '../../src/provider/constants';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
-
-const testManagerIdentity = {
-    uuid: 'test-app',
-    name: 'test-app'
-};
+import {testManagerIdentity} from './constants';
 
 describe('Opening applications with the FDC3 client', () => {
     beforeEach(async () => {
@@ -108,10 +105,7 @@ data [broken in provider re-arch, to be fixed in future story]', async () => {
         test('When passing a known app name but invalid context, the service returns an FDC3Error', async () => {
             const openPromise = fdc3Remote.open(testManagerIdentity, testAppIdentity1.name!, invalidContext);
 
-            await expect(openPromise).toThrowFDC3Error(
-                OpenError.InvalidContext,
-                `Context not valid. context = ${JSON.stringify(invalidContext)}`
-            );
+            await expect(openPromise).rejects.toThrowError(new TypeError(`${JSON.stringify(invalidContext)} is not a valid Context`));
         });
 
         test('When passing an unknown app name with any context the service returns an FDC3Error', async () => {

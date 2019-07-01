@@ -3,11 +3,7 @@ import {OrganizationContext} from '../../src/client/main';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
-
-const testManagerIdentity = {
-    uuid: 'test-app',
-    name: 'test-app'
-};
+import {testManagerIdentity} from './constants';
 
 const testAppUrl = 'http://localhost:3923/test/test-app.html';
 
