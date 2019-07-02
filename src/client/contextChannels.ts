@@ -448,7 +448,7 @@ function hasChannelContextListener(id: ChannelId) {
     return channelContextListeners.some(listener => listener.channel.id === id);
 }
 
-function onWindowAdded(eventTransport: EventTransport<FDC3Event>): FDC3ChannelEvent {
+function deserializeWindowAddedEvent(eventTransport: EventTransport<FDC3Event>): FDC3ChannelEvent {
     const channelWindowAddedEventTransport = eventTransport as EventTransport<ChannelWindowAddedEvent>;
 
     const identity = channelWindowAddedEventTransport.identity;
@@ -458,7 +458,7 @@ function onWindowAdded(eventTransport: EventTransport<FDC3Event>): FDC3ChannelEv
     return {type: 'window-added', identity, channel, previousChannel};
 }
 
-function onWindowRemoved(eventTransport: EventTransport<FDC3Event>): FDC3ChannelEvent {
+function deserializeWindowRemovedEvent(eventTransport: EventTransport<FDC3Event>): FDC3ChannelEvent {
     const channelWindowRemovedEventTransport = eventTransport as EventTransport<ChannelWindowRemovedEvent>;
 
     const identity = channelWindowRemovedEventTransport.identity;
@@ -484,8 +484,8 @@ if (typeof fin !== 'undefined') {
             return channelEventEmitters[channelId];
         });
 
-        eventHandler.registerDeserializer('window-added', onWindowAdded);
-        eventHandler.registerDeserializer('window-removed', onWindowRemoved);
+        eventHandler.registerDeserializer('window-added', deserializeWindowAddedEvent);
+        eventHandler.registerDeserializer('window-removed', deserializeWindowRemovedEvent);
     }, reason => {
         console.warn('Unable to register client channel context handlers. getServicePromise() rejected with reason:', reason);
     });
