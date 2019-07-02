@@ -444,38 +444,6 @@ export function getChannelObject<T extends Channel = Channel>(channelTransport: 
     return channel as T;
 }
 
-/**
- * @hidden
- */
-export function dispatchChannelEvents(event: ChannelChangedEvent): void {
-    const channel = event.channel;
-    const previousChannel = event.previousChannel;
-
-    if (previousChannel) {
-        const previousChannelEmitter = channelEventEmitters[previousChannel.id];
-        const windowRemovedEvent: ChannelWindowRemovedEvent = {
-            type: 'window-removed',
-            identity: event.identity,
-            channel: channel,
-            previousChannel: previousChannel
-        };
-
-        previousChannelEmitter.emit('window-removed', windowRemovedEvent);
-    }
-
-    if (channel) {
-        const channelEmitter = channelEventEmitters[channel.id];
-        const windowAddedEvent: ChannelWindowAddedEvent = {
-            type: 'window-added',
-            identity: event.identity,
-            channel: channel,
-            previousChannel: previousChannel
-        };
-
-        channelEmitter.emit('window-added', windowAddedEvent);
-    }
-}
-
 function hasChannelContextListener(id: ChannelId) {
     return channelContextListeners.some(listener => listener.channel.id === id);
 }
