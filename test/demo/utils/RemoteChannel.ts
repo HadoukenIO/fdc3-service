@@ -62,12 +62,17 @@ export class RemoteChannel {
     public async broadcast(context: Context): Promise<void> {
         return ofBrowser.executeOnWindow(
             this.executionTarget,
-            async function(this: TestWindowContext, channelInstanceId: string, context: Context): Promise<void> {
-                return this.channelTransports[channelInstanceId].channel.broadcast(context).catch(this.errorHandler);
+            function(this: TestWindowContext, channelInstanceId: string, context: Context): void {
+                try {
+                    return this.channelTransports[channelInstanceId].channel.broadcast(context);
+                } catch (error) {
+                    this.errorHandler(error);
+                }
             },
             this.id,
             context
-        ).catch(handlePuppeteerError);
+        ).then(() => new Promise<void>(res => setTimeout(res, 100))) // Broadcast is fire-and-forget. Slight delay to allow for service to handle
+            .catch(handlePuppeteerError);
     }
 
     public async addContextListener(): Promise<RemoteContextListener> {

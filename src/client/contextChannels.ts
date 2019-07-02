@@ -218,8 +218,8 @@ export abstract class ChannelBase {
      * @param context The context to broadcast to all windows on this channel
      * @throws `TypeError`: If `context` is not a valid {@link Context}
      */
-    public async broadcast(context: Context): Promise<void> {
-        return tryServiceDispatch(APIFromClientTopic.CHANNEL_BROADCAST, {id: this.id, context: parseContext(context)});
+    public broadcast(context: Context): void {
+        tryServiceDispatch(APIFromClientTopic.CHANNEL_BROADCAST, {id: this.id, context: parseContext(context)});
     }
 
     /**
