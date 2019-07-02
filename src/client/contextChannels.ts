@@ -316,7 +316,7 @@ export function getChannelObject<T extends Channel = Channel>(channelTransport: 
     return channel as T;
 }
 
-function hasChannelContextListener(id: ChannelId) {
+function hasChannelContextListener(id: ChannelId): boolean {
     return channelContextListeners.some(listener => listener.channel.id === id);
 }
 
