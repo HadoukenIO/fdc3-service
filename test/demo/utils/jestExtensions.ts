@@ -24,7 +24,7 @@ declare global {
 }
 
 expect.extend({
-    async toThrowFDC3Error<T = any>(received: Promise<T> | (() => any), code: string, message?: string | RegExp) {
+    async toThrowFDC3Error<T = any>(received: Promise<T> | (() => T), code: string, message?: string | RegExp) {
         try {
             if (received instanceof Promise) {
                 await received;
