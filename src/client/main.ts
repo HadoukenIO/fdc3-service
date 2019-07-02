@@ -87,7 +87,7 @@ export type FDC3Event = FDC3MainEvent | FDC3ChannelEvent;
 export type FDC3EventType = FDC3MainEventType | FDC3ChannelEventType;
 
 export type FDC3MainEvent = ChannelChangedEvent;
-export type FDC3MainEventType = 'channel-changed'
+export type FDC3MainEventType = FDC3MainEvent['type'];
 
 /**
  * The event emitter to emit events received from the service. All addEventListeners will tap into this.

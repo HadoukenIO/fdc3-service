@@ -27,7 +27,7 @@ export type ChannelId = string;
 export type Channel = DesktopChannel | DefaultChannel;
 
 export type FDC3ChannelEvent = ChannelWindowAddedEvent | ChannelWindowRemovedEvent;
-export type FDC3ChannelEventType = 'window-added' | 'window-removed';
+export type FDC3ChannelEventType = FDC3ChannelEvent['type'];
 
 /**
  * Event fired when a window is added to a channel. See {@link Channel.addEventListener}.
