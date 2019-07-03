@@ -51,7 +51,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
     public wrapApplication(appInfo: Application, identity: Identity, channel: ContextChannel): AppWindow {
         identity = parseIdentity(identity);
-        const creationTime =  this.windowCreationTimes.hasOwnProperty(getId(identity)) ? this.windowCreationTimes[getId(identity)] : undefined;
+        const creationTime = this.windowCreationTimes.hasOwnProperty(getId(identity)) ? this.windowCreationTimes[getId(identity)] : undefined;
 
         return new FinAppWindow(identity, appInfo, channel, creationTime);
     }
@@ -121,7 +121,7 @@ class FinAppWindow implements AppWindow {
         this._intentListeners = {};
         this._contextListeners = {};
         this._channelEventListeners = {};
-    
+
         this.channel = channel;
     }
 
