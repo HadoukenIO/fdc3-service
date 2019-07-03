@@ -14,16 +14,6 @@ import {ContextChannel, DefaultContextChannel, DesktopContextChannel} from './Co
 import {Environment} from './Environment';
 import {AppDirectory} from './AppDirectory';
 
-export enum FindFilter {
-    WITH_CONTEXT_LISTENER,
-    WITH_INTENT_LISTENER
-}
-
-export interface FindOptions {
-    prefer?: FindFilter;
-    require?: FindFilter;
-}
-
 /**
  * Generates a unique `string` id for a window based on its application's uuid and window name
  * @param identity
@@ -82,28 +72,24 @@ export class Model {
         return this._channelsById[id] || null;
     }
 
-    public findWindowByAppName(name: AppName): AppWindow|null {
-        return this.findWindow(appWindow => appWindow.appInfo.name === name);
-    }
+    public async findOrCreate(appInfo: Application): Promise<AppWindow[]> {
+        const matchingWindows = this.findWindowsByAppId(appInfo.appId);
 
-    public async findOrCreate(appInfo: Application, prefer?: FindFilter): Promise<AppWindow> {
-        const matchingWindow = this.findWindowByAppId(appInfo.appId, {prefer});
-
-        if (matchingWindow) {
-            await matchingWindow.focus();
-            return matchingWindow;
+        if (matchingWindows.length > 0) {
+            await Promise.all(matchingWindows.map(window => window.focus()));
+            return matchingWindows;
         } else {
             const createPromise = this._environment.createApplication(appInfo, this._channelsById[DEFAULT_CHANNEL_ID]);
-            const signalPromise = new Promise<AppWindow>(resolve => {
+            const signalPromise = new Promise<AppWindow[]>(resolve => {
                 const slot = this._onWindowRegisteredInternal.add(() => {
-                    const matchingWindow = this.findWindowByAppId(appInfo.appId, {prefer});
-                    if (matchingWindow) {
+                    const matchingWindows = this.findWindowsByAppId(appInfo.appId);
+                    if (matchingWindows.length > 0) {
                         slot.remove();
-                        resolve(matchingWindow);
+                        resolve(matchingWindows);
                     }
                 });
             });
-            return Promise.all([signalPromise, createPromise]).then(([app])=> app);
+            return Promise.all([signalPromise, createPromise]).then(([windows]) => windows);
         }
     }
 
@@ -133,6 +119,10 @@ export class Model {
             .filter(directoryApp => !allAppWindows.some(appWindow => appWindow.appInfo.appId === directoryApp.appId));
 
         return [...appsInModelWithIntent, ...directoryAppsNotInModel];
+    }
+
+    public findWindowsByAppName(name: AppName): AppWindow[] {
+        return this.findWindows(appWindow => appWindow.appInfo.name === name);
     }
 
     private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
@@ -173,9 +163,9 @@ export class Model {
             let appInfo: Application;
 
             // Attempt to copy appInfo from another appWindow in the model from the same app
-            const appWindowFromSameApp = this.findWindowByAppId(identity.uuid);
-            if (appWindowFromSameApp) {
-                appInfo = appWindowFromSameApp.appInfo;
+            const appWindowsFromSameApp = this.findWindowsByAppId(identity.uuid);
+            if (appWindowsFromSameApp.length > 0) {
+                appInfo = appWindowsFromSameApp[0].appInfo;
             } else {
                 // There are no appWindows in the model with the same app uuid - Produce minimal appInfo from window information
                 // TODO: Think about this race condition - for a brief period a window can be connected but not in the model
@@ -205,35 +195,12 @@ export class Model {
         return appWindow;
     }
 
-    private findWindowByAppId(appId: AppId, options?: FindOptions): AppWindow|null {
-        return this.findWindow(appWindow => appWindow.appInfo.appId === appId, options);
+    private findWindowsByAppId(appId: AppId): AppWindow[] {
+        return this.findWindows(appWindow => appWindow.appInfo.appId === appId);
     }
 
-    private findWindow(predicate: (appWindow: AppWindow) => boolean, options?: FindOptions): AppWindow|null {
-        return this.findWindows(predicate, options)[0] || null;
-    }
-
-    private findWindows(predicate: (appWindow: AppWindow) => boolean, options?: FindOptions): AppWindow[] {
-        const {prefer, require} = options || {prefer: undefined, require: undefined};
-        const windows = this.windows.filter(appWindow => {
-            if (!predicate(appWindow)) {
-                return false;
-            } else if (require !== undefined) {
-                return Model.matchesFilter(appWindow, require);
-            } else {
-                return true;
-            }
-        });
-
-        if (windows.length > 0 && prefer !== undefined) {
-            const preferredWindows = windows.filter(appWindow => Model.matchesFilter(appWindow, prefer));
-
-            if (preferredWindows.length > 0) {
-                return preferredWindows;
-            }
-        }
-
-        return windows;
+    private findWindows(predicate: (appWindow: AppWindow) => boolean): AppWindow[] {
+        return this.windows.filter(predicate);
     }
 
     /**
@@ -263,14 +230,5 @@ export class Model {
         };
 
         return appInfo;
-    }
-
-    private static matchesFilter(window: AppWindow, filter: FindFilter): boolean {
-        switch (filter) {
-            case FindFilter.WITH_CONTEXT_LISTENER:
-                return window.contextListeners.length > 0;
-            case FindFilter.WITH_INTENT_LISTENER:
-                return window.intentListeners.length > 0;
-        }
     }
 }

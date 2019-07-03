@@ -24,7 +24,7 @@ export function createMockAppWindow(): AppWindow {
         addChannelEventListener: jest.fn<void, [ContextChannel, FDC3ChannelEventType]>(),
         removeChannelEventListener: jest.fn<void, [ContextChannel, FDC3ChannelEventType]>(),
         focus: jest.fn<Promise<void>, []>(),
-        ensureReadyToReceiveIntent: jest.fn<Promise<void>, [IntentType]>()
+        isReadyToReceiveIntent: jest.fn<Promise<boolean>, [IntentType]>()
     };
 }
 

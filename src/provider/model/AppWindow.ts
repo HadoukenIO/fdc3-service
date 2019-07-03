@@ -43,5 +43,5 @@ export interface AppWindow {
 
     focus(): Promise<void>;
 
-    ensureReadyToReceiveIntent(intent: IntentType): Promise<void>;
+    isReadyToReceiveIntent(intent: IntentType): Promise<boolean>;
 }

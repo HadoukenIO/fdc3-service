@@ -4,13 +4,12 @@ import {Inject} from '../common/Injectables';
 import {Intent} from '../../client/intents';
 import {IntentResolution, Application} from '../../client/main';
 import {FDC3Error, ResolveError} from '../../client/errors';
-import {FindFilter, Model} from '../model/Model';
+import {Model} from '../model/Model';
 import {AppDirectory} from '../model/AppDirectory';
 import {AppWindow} from '../model/AppWindow';
 import {APIToClientTopic} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
 
-import {ContextHandler} from './ContextHandler';
 import {ResolverHandler, ResolverResult} from './ResolverHandler';
 
 @injectable()
@@ -57,11 +56,11 @@ export class IntentHandler {
     private async raiseWithTarget(intent: IntentWithTarget): Promise<IntentResolution> {
         let appInfo: Application|null;
 
-        const appWindow = this._model.findWindowByAppName(intent.target);
+        const appWindows = this._model.findWindowsByAppName(intent.target);
 
-        if (appWindow) {
+        if (appWindows.length > 0) {
             // Target app is running -> fire intent at it
-            appInfo = appWindow.appInfo;
+            appInfo = appWindows[0].appInfo;
         } else {
             // Target app not running -> Try to find in directory
             appInfo = await this._directory.getAppByName(intent.target);
@@ -110,13 +109,27 @@ export class IntentHandler {
     }
 
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
-        const appWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_INTENT_LISTENER);
-        await appWindow.ensureReadyToReceiveIntent(intent.type);
-        const data = await this._apiHandler.channel.dispatch(appWindow.identity, APIToClientTopic.INTENT, {context: intent.context, intent: intent.type});
+        const appWindows = await this._model.findOrCreate(appInfo);
+
+        const dispatchResults = await Promise.all(appWindows.map(async (window: AppWindow): Promise<[boolean, any]> => {
+            if (await window.isReadyToReceiveIntent(intent.type)) {
+                const data = await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.INTENT, {context: intent.context, intent: intent.type});
+                return [true, data];
+            } else {
+                return [false, undefined];
+            }
+        }));
+
+        if (dispatchResults.every(dispatchResult => dispatchResult[0] === false)) {
+            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added. intent = ${intent.type}`);
+        }
+
+        const dispatchResultData = dispatchResults.filter((dispatchResult) => dispatchResult[0]).map(dispatchResult => dispatchResult[1]);
+
         const result: IntentResolution = {
             source: appInfo.name,
             version: '1.0.0',
-            data
+            data: dispatchResultData.length === 1 ? dispatchResultData[0] : dispatchResultData
         };
 
         // Handle next queued intent

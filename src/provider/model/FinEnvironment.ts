@@ -181,10 +181,10 @@ class FinAppWindow implements AppWindow {
         return this._window.setAsForeground();
     }
 
-    public async ensureReadyToReceiveIntent(intent: IntentType): Promise<void> {
+    public async isReadyToReceiveIntent(intent: IntentType): Promise<boolean> {
         if (this.hasIntentListener(intent)) {
             // App has already registered the intent listener
-            return;
+            return true;
         }
 
         // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
@@ -200,7 +200,9 @@ class FinAppWindow implements AppWindow {
 
         if (didTimeout) {
             slot.remove();
-            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added. intent = ${intent}`);
+            return false;
+        } else {
+            return true;
         }
     }
 }

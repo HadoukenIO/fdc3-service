@@ -4,13 +4,13 @@ import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport, GetChannelByIdPayload, EventTransport, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload} from '../client/internal';
-import {AppIntent, IntentResolution, Application, Intent, ChannelChangedEvent, Context} from '../client/main';
+import {AppIntent, IntentResolution, Application, Intent, Context} from '../client/main';
 import {FDC3Error, OpenError, IdentityError} from '../client/errors';
 import {parseIdentity, parseContext, parseChannelId} from '../client/validation';
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
-import {FindFilter, Model} from './model/Model';
+import {Model} from './model/Model';
 import {ContextHandler} from './controller/ContextHandler';
 import {IntentHandler} from './controller/IntentHandler';
 import {APIHandler} from './APIHandler';
@@ -103,10 +103,12 @@ export class Main {
         }
 
         // This can throw FDC3Errors if app fails to open or times out
-        const appWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_CONTEXT_LISTENER);
+        const appWindows = await this._model.findOrCreate(appInfo);
 
         if (payload.context) {
-            return this._contextHandler.send(appWindow, parseContext(payload.context));
+            return Promise.all(appWindows.map(window => {
+                return this._contextHandler.send(window, parseContext(payload.context!));
+            })).then(() => {});
         }
     }
 
