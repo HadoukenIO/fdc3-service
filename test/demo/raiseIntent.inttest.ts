@@ -14,7 +14,7 @@ const validPayload = {
         type: 'contact',
         name: 'Test Name',
         id: {
-            twitter: '@testname'
+            twitter: 'testname'
         }
     }
 };
@@ -24,7 +24,7 @@ const validPayloadPreregistered = {
         type: 'contact',
         name: 'Test Name',
         id: {
-            twitter: '@testname'
+            twitter: 'testname'
         }
     }
 };

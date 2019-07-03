@@ -76,7 +76,7 @@ describe('Opening applications with the FDC3 client', () => {
 
     describe('With context', () => {
         const validContext: OrganizationContext = {type: 'fdc3.organization', name: 'OpenFin', id: {default: 'openfin'}};
-        const invalidContext = {twitter: '@testname'} as unknown as Context; // Invalid because `type` is missing
+        const invalidContext = {twitter: 'testname'} as unknown as Context; // Invalid because `type` is missing
         const testAppIdentity1: Identity = {uuid: 'test-app-preregistered-1', name: 'test-app-preregistered-1'};
         const testAppIdentity2: Identity = {uuid: 'test-app-preregistered-2', name: 'test-app-preregistered-2'};
 

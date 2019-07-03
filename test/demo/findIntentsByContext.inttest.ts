@@ -7,7 +7,7 @@ import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {testManagerIdentity} from './constants';
 
 const invalidContext = {
-    twitter: '@testname'
+    twitter: 'testname'
 } as unknown as Context;
 
 describe('Resolving intents by context, findIntentsByContext', () => {
