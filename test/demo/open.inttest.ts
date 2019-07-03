@@ -63,7 +63,7 @@ describe('Opening applications with the FDC3 client', () => {
                 await expect(fin.System.getFocusedWindow().then(w => w.uuid)).resolves.toBe(testAppIdentity1.uuid);
             });
 
-            test('When opening a an app, the running-state of other apps has no effect', async () => {
+            test('When opening an app, the running-state of other apps has no effect', async () => {
                 // From the launcher app, call fdc3.open with a second app name
                 await fdc3Remote.open(testManagerIdentity, testAppIdentity2.name!);
 
