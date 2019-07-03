@@ -1,19 +1,18 @@
 import {Identity} from 'openfin/_v2/main';
 
 import {IdentityError, DEFAULT_CHANNEL_ID} from '../../../src/client/main';
-import {testManagerIdentity, appStartupTime, testAppNotInDirectory, testAppNotFdc3, testAppInDirectory1, testAppInDirectory2} from '../constants';
+import {testManagerIdentity, appStartupTime, testAppNotInDirectory1, testAppNotFdc3, testAppInDirectory1, testAppInDirectory2} from '../constants';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel, RemoteChannelEventListener} from '../utils/RemoteChannel';
 import {fin} from '../utils/fin';
+import {setupTeardown} from '../utils/common';
 
 /*
  * Tests simple behaviour of Channel.getMembers() and the channel-changed and Channel events, before testing how they and getCurrentChannel()
  * are influenced by Channel.join()
  */
 
-beforeAll(async () => {
-    await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
-});
+setupTeardown();
 
 describe('When getting members of a channel', () => {
     test('When the channel is the default channel, only the test manager is returned', async () => {
@@ -36,8 +35,8 @@ describe('When getting members of a channel', () => {
             async () => fdc3Remote.open(testManagerIdentity, testAppInDirectory1.name)
         ], [
             'a non directory app',
-            testAppNotInDirectory,
-            async () => fin.Application.startFromManifest(testAppNotInDirectory.manifestUrl).then(() => {})
+            testAppNotInDirectory1,
+            async () => fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl).then(() => {})
         ]
     ];
 
@@ -103,7 +102,7 @@ describe('When listening for channel-changed and Channel events', () => {
             await inDirectoryApp.quit(true);
         }
 
-        const notInDirectoryApp = fin.Application.wrapSync(testAppNotInDirectory);
+        const notInDirectoryApp = fin.Application.wrapSync(testAppNotInDirectory1);
         if (await notInDirectoryApp.isRunning()) {
             await notInDirectoryApp.quit(true);
         }
@@ -123,8 +122,8 @@ describe('When listening for channel-changed and Channel events', () => {
         ],
         [
             'a non directory app',
-            testAppNotInDirectory,
-            async () => fin.Application.startFromManifest(testAppNotInDirectory.manifestUrl).then(() => {})
+            testAppNotInDirectory1,
+            async () => fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl).then(() => {})
         ]
     ];
 
@@ -505,20 +504,20 @@ describe('When joining a channel', () => {
 
 describe('When using a non-directory app', () => {
     beforeEach(async () => {
-        await fin.Application.startFromManifest(testAppNotInDirectory.manifestUrl);
+        await fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl);
     }, appStartupTime * 2);
 
     afterEach(async () => {
-        await fin.Application.wrapSync(testAppNotInDirectory).quit(true);
+        await fin.Application.wrapSync(testAppNotInDirectory1).quit(true);
     });
 
     test('The app can join a channel as expected', async () => {
         // Get a desktop channel and the default channel from our non-directory window
-        const defaultChannel = await fdc3Remote.getChannelById(testAppNotInDirectory, 'default');
-        const greenChannel = await fdc3Remote.getChannelById(testAppNotInDirectory, 'green');
+        const defaultChannel = await fdc3Remote.getChannelById(testAppNotInDirectory1, 'default');
+        const greenChannel = await fdc3Remote.getChannelById(testAppNotInDirectory1, 'green');
 
         // Set up our listeners in the non-directory window
-        const channelChangedListener = await fdc3Remote.addEventListener(testAppNotInDirectory, 'channel-changed');
+        const channelChangedListener = await fdc3Remote.addEventListener(testAppNotInDirectory1, 'channel-changed');
 
         const defaultChannelWindowAddedListener = await defaultChannel.addEventListener('window-added');
         const defaultChannelWindowRemovedListener = await defaultChannel.addEventListener('window-removed');
@@ -530,11 +529,11 @@ describe('When using a non-directory app', () => {
         await greenChannel.join();
 
         // Check that the joining window is now a member of the desktop channel
-        await expect(fdc3Remote.getCurrentChannel(testAppNotInDirectory)).resolves.toHaveProperty('channel', greenChannel.channel);
-        await expect(greenChannel.getMembers()).resolves.toEqual([{uuid: testAppNotInDirectory.uuid, name: testAppNotInDirectory.name}]);
+        await expect(fdc3Remote.getCurrentChannel(testAppNotInDirectory1)).resolves.toHaveProperty('channel', greenChannel.channel);
+        await expect(greenChannel.getMembers()).resolves.toEqual([{uuid: testAppNotInDirectory1.uuid, name: testAppNotInDirectory1.name}]);
 
         const expectedEvent = {
-            identity: {uuid: testAppNotInDirectory.uuid, name: testAppNotInDirectory.name},
+            identity: {uuid: testAppNotInDirectory1.uuid, name: testAppNotInDirectory1.name},
             channel: greenChannel.channel,
             previousChannel: {id: 'default', type: 'default'}
         };
