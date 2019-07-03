@@ -17,7 +17,7 @@ export function AppList(props: AppListProps): React.ReactElement {
             <p>Available Applications</p>
             <ul>
                 {props.applications.map((app: Application) => (
-                    <AppCard key={app.appId} app={app} openHandler={props.onAppOpen} />
+                    <AppCard key={app.appId || app.name} app={app} openHandler={props.onAppOpen} />
                 ))}
             </ul>
         </div>

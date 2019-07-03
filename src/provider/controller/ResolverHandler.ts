@@ -1,13 +1,13 @@
 import {_Window} from 'openfin/_v2/api/window/window';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
-import {injectable, inject} from 'inversify';
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
+import {injectable, inject} from 'inversify';
 
 import {Inject} from '../common/Injectables';
 import {AppDirectory} from '../model/AppDirectory';
 import {Model} from '../model/Model';
 import {Intent, Application} from '../../client/main';
-import {SERVICE_IDENTITY} from '../../client/internal';
+import {RESOLVER_IDENTITY} from '../utils/constants';
 
 import {AsyncInit} from './AsyncInit';
 
@@ -40,8 +40,6 @@ export interface ResolverResult {
 
 @injectable()
 export class ResolverHandler extends AsyncInit {
-    private static RESOLVER_NAME: string = 'fdc3-resolver';
-
     private readonly _directory: AppDirectory;
     private readonly _model: Model;
 
@@ -63,7 +61,7 @@ export class ResolverHandler extends AsyncInit {
     protected async init(): Promise<void> {
         const options: WindowOption = {
             url: RESOLVER_URL,
-            name: ResolverHandler.RESOLVER_NAME,
+            name: RESOLVER_IDENTITY.name,
             // alwaysOnTop: true,
             autoShow: false,
             saveWindowState: false,
@@ -75,7 +73,7 @@ export class ResolverHandler extends AsyncInit {
         };
 
         // Close any existing resolver window (in case service is restarted)
-        await fin.Window.wrapSync({uuid: SERVICE_IDENTITY.uuid, name: ResolverHandler.RESOLVER_NAME}).close(true).catch(() => {});
+        await fin.Window.wrapSync(RESOLVER_IDENTITY).close(true).catch(() => {});
 
         // Create resolver
         this._window = await fin.Window.create(options);

@@ -24,12 +24,12 @@ export class IntentHandler {
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
         @inject(Inject.MODEL) model: Model,
-        @inject(Inject.RESOLVER) selector: ResolverHandler,
+        @inject(Inject.RESOLVER) resolver: ResolverHandler,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIToClientTopic>,
     ) {
         this._directory = directory;
         this._model = model;
-        this._resolver = selector;
+        this._resolver = resolver;
         this._apiHandler = apiHandler;
 
         this._resolvePromise = null;
