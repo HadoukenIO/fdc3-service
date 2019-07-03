@@ -1,5 +1,5 @@
 import {WindowEvent} from 'openfin/_v2/api/events/base';
-import {injectable} from 'inversify';
+import {injectable, id} from 'inversify';
 import {Identity, Window} from 'openfin/_v2/main';
 
 import {AsyncInit} from '../controller/AsyncInit';
@@ -33,6 +33,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
      */
     public readonly windowClosed: Signal1<Identity> = new Signal1();
 
+    private readonly windowCreationTimes: {[id: string]: number} = {};
+
     public async createApplication(appInfo: Application, channel: ContextChannel): Promise<AppWindow> {
         const [didTimeout, app] = await withTimeout(
             Timeouts.APP_START_FROM_MANIFEST,
@@ -48,16 +50,23 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     public wrapApplication(appInfo: Application, identity: Identity, channel: ContextChannel): AppWindow {
-        return new FinAppWindow(parseIdentity(identity), appInfo, channel);
+        identity = parseIdentity(identity);
+        const creationTime =  this.windowCreationTimes.hasOwnProperty(getId(identity)) ? this.windowCreationTimes[getId(identity)] : undefined;
+
+        return new FinAppWindow(identity, appInfo, channel, creationTime);
     }
 
     protected async init(): Promise<void> {
         fin.System.addListener('window-created', (event: WindowEvent<'system', 'window-created'>) => {
             const identity = {uuid: event.uuid, name: event.name};
+            this.windowCreationTimes[getId(identity)] = Date.now();
+
             this.registerWindow(identity);
         });
         fin.System.addListener('window-closed', (event: WindowEvent<'system', 'window-closed'>) => {
             const identity = {uuid: event.uuid, name: event.name};
+            delete this.windowCreationTimes[getId(identity)];
+
             this.windowClosed.emit(identity);
         });
 
@@ -90,25 +99,29 @@ interface ChannelEventMap {
 }
 
 class FinAppWindow implements AppWindow {
+    public channel: ContextChannel;
+
     private readonly _id: string;
     private readonly _appInfo: Application;
     private readonly _window: Window;
+
+    private readonly _creationTime: number | undefined;
 
     private readonly _intentListeners: IntentMap;
     private readonly _contextListeners: ContextMap;
     private readonly _channelEventListeners: ChannelEventMap;
 
-    public channel: ContextChannel;
-
-    constructor(identity: Identity, appInfo: Application, channel: ContextChannel) {
+    constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined) {
         this._id = getId(identity);
         this._window = fin.Window.wrapSync(identity);
         this._appInfo = appInfo;
 
+        this._creationTime = creationTime;
+
         this._intentListeners = {};
         this._contextListeners = {};
         this._channelEventListeners = {};
-
+    
         this.channel = channel;
     }
 
@@ -187,22 +200,29 @@ class FinAppWindow implements AppWindow {
             return true;
         }
 
-        // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
-        const [waitForIntentListenerAddedPromise, resolve] = deferredPromise();
-        const slot = this._onIntentListenerAdded.add(intentAdded => {
-            if (intentAdded === intent) {
-                slot.remove();
-                resolve();
-            }
-        });
+        const age = this._creationTime === undefined ? undefined : Date.now() - this._creationTime;
 
-        const [didTimeout] = await withTimeout(Timeouts.ADD_INTENT_LISTENER, waitForIntentListenerAddedPromise);
-
-        if (didTimeout) {
-            slot.remove();
-            return false;
+        if (age === undefined || age >= Timeouts.ADD_INTENT_LISTENER) {
+            // App has been running for a while
+            return this.hasIntentListener(intent);
         } else {
-            return true;
+            // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
+            const [waitForIntentListenerAddedPromise, resolve] = deferredPromise();
+            const slot = this._onIntentListenerAdded.add(intentAdded => {
+                if (intentAdded === intent) {
+                    slot.remove();
+                    resolve();
+                }
+            });
+
+            const [didTimeout] = await withTimeout(Timeouts.ADD_INTENT_LISTENER - age, waitForIntentListenerAddedPromise);
+
+            if (didTimeout) {
+                slot.remove();
+                return false;
+            } else {
+                return true;
+            }
         }
     }
 }
