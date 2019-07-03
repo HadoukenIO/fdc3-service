@@ -108,7 +108,7 @@ class FinAppWindow implements AppWindow {
     private readonly _creationTime: number | undefined;
 
     private readonly _intentListeners: IntentMap;
-    private readonly _contextListeners: ContextMap;
+    private readonly _channelContextListeners: ContextMap;
     private readonly _channelEventListeners: ChannelEventMap;
 
     constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined) {
@@ -119,7 +119,7 @@ class FinAppWindow implements AppWindow {
         this._creationTime = creationTime;
 
         this._intentListeners = {};
-        this._contextListeners = {};
+        this._channelContextListeners = {};
         this._channelEventListeners = {};
 
         this.channel = channel;
@@ -139,8 +139,8 @@ class FinAppWindow implements AppWindow {
         return this._appInfo;
     }
 
-    public get contextListeners(): ReadonlyArray<ChannelId> {
-        return Object.keys(this._contextListeners);
+    public get channelContextListeners(): ReadonlyArray<ChannelId> {
+        return Object.keys(this._channelContextListeners);
     }
 
     public get intentListeners(): ReadonlyArray<string> {
@@ -160,16 +160,16 @@ class FinAppWindow implements AppWindow {
         delete this._intentListeners[intentName];
     }
 
-    public hasContextListener(channel: ContextChannel): boolean {
-        return this._contextListeners[channel.id] === true;
+    public hasChannelContextListener(channel: ContextChannel): boolean {
+        return this._channelContextListeners[channel.id] === true;
     }
 
-    public addContextListener(channel: ContextChannel): void {
-        this._contextListeners[channel.id] = true;
+    public addChannelContextListener(channel: ContextChannel): void {
+        this._channelContextListeners[channel.id] = true;
     }
 
-    public removeContextListener(channel: ContextChannel): void {
-        delete this._contextListeners[channel.id];
+    public removeChannelContextListener(channel: ContextChannel): void {
+        delete this._channelContextListeners[channel.id];
     }
 
     public hasChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): boolean {

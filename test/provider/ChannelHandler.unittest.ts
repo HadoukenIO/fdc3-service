@@ -97,8 +97,8 @@ it('When querying which windows are listening for contexts on a channel, Channel
 
     const testChannel = createMockChannel();
 
-    (testWindows[0].hasContextListener as jest.Mock<boolean, [ContextChannel]>).mockImplementation((channel) => true);
-    (testWindows[2].hasContextListener as jest.Mock<boolean, [ContextChannel]>).mockImplementation((channel) => true);
+    (testWindows[0].hasChannelContextListener as jest.Mock<boolean, [ContextChannel]>).mockImplementation((channel) => true);
+    (testWindows[2].hasChannelContextListener as jest.Mock<boolean, [ContextChannel]>).mockImplementation((channel) => true);
 
     (mockModel as any)['windows'] = testWindows;
 

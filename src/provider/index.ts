@@ -223,7 +223,7 @@ export class Main {
         const appWindow = this.getWindow(source);
         const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
 
-        appWindow.addContextListener(channel);
+        appWindow.addChannelContextListener(channel);
     }
 
     private channelRemoveContextListener(payload: ChannelRemoveContextListenerPayload, source: ProviderIdentity): void {
@@ -231,7 +231,7 @@ export class Main {
         const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
 
         if (appWindow) {
-            appWindow.removeContextListener(channel);
+            appWindow.removeChannelContextListener(channel);
         } else {
             // If for some odd reason the window is not in the model it's still OK to return successfully,
             // as the caller's intention was to remove a listener and the listener is certainly not there.

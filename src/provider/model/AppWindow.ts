@@ -21,7 +21,7 @@ export interface AppWindow {
 
     intentListeners: ReadonlyArray<string>;
 
-    contextListeners: ReadonlyArray<ChannelId>;
+    channelContextListeners: ReadonlyArray<ChannelId>;
 
     hasIntentListener(intentName: string): boolean;
 
@@ -29,11 +29,11 @@ export interface AppWindow {
 
     removeIntentListener(intentName: string): void;
 
-    hasContextListener(channel: ContextChannel): boolean;
+    hasChannelContextListener(channel: ContextChannel): boolean;
 
-    addContextListener(channel: ContextChannel): void;
+    addChannelContextListener(channel: ContextChannel): void;
 
-    removeContextListener(channel: ContextChannel): void;
+    removeChannelContextListener(channel: ContextChannel): void;
 
     hasChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): boolean;
 
