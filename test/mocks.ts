@@ -6,7 +6,7 @@ import {ChannelTransport} from '../src/client/internal';
 /**
  * Creates a minimal mock app window. Any utilizing test should set properties and set up mock functions as needed
  */
-export function createMockAppWindow(): AppWindow {
+export function createMockAppWindow(): jest.Mocked<AppWindow> {
     return {
         id: '',
         identity: {name: '', uuid: ''},
@@ -28,7 +28,7 @@ export function createMockAppWindow(): AppWindow {
     };
 }
 
-export function createMockChannel(): ContextChannel {
+export function createMockChannel(): jest.Mocked<ContextChannel> {
     return {
         id: '',
         type: '',

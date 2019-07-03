@@ -61,13 +61,12 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
     return ofBrowser
         .executeOnWindow(
             executionTarget,
-            async function(this: TestWindowContext, context: Context):
-                Promise<void> {
+            function(this: TestWindowContext, context: Context): void {
                 return this.fdc3.broadcast(context);
             },
             context
         )
-        .then(() => new Promise<void>(res => setTimeout(res, 100)));  // Broadcast is fire-and-forget. Slight delay to allow for service to handle
+        .then(() => new Promise<void>(res => setTimeout(res, 100))); // Broadcast is fire-and-forget. Slight delay to allow for service to handle
 }
 
 export async function raiseIntent(executionTarget: Identity, intent: IntentType, context: Context, target?: string): Promise<void> {

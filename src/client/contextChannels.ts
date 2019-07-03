@@ -17,7 +17,7 @@ import {getEventRouter} from './EventRouter';
 
 /**
  * Type used to identify specific Channels. Though simply an alias of `string`, use of this type indicates usage of the string
- * as a channel indentifier, and that the user should avoid assuming any internal structure and instead treat as a fully opaque object
+ * as a channel identifier, and that the user should avoid assuming any internal structure and instead treat as a fully opaque object
  */
 export type ChannelId = string;
 
@@ -27,7 +27,7 @@ export type ChannelId = string;
 export type Channel = DesktopChannel | DefaultChannel;
 
 export type FDC3ChannelEvent = ChannelWindowAddedEvent | ChannelWindowRemovedEvent;
-export type FDC3ChannelEventType = 'window-added' | 'window-removed';
+export type FDC3ChannelEventType = FDC3ChannelEvent['type'];
 
 /**
  * Event fired when a window is added to a channel. See {@link Channel.addEventListener}.
@@ -218,8 +218,8 @@ export abstract class ChannelBase {
      * @param context The context to broadcast to all windows on this channel
      * @throws `TypeError`: If `context` is not a valid {@link Context}
      */
-    public async broadcast(context: Context): Promise<void> {
-        return tryServiceDispatch(APIFromClientTopic.CHANNEL_BROADCAST, {id: this.id, context: parseContext(context)});
+    public broadcast(context: Context): void {
+        tryServiceDispatch(APIFromClientTopic.CHANNEL_BROADCAST, {id: this.id, context: parseContext(context)});
     }
 
     /**
@@ -444,43 +444,11 @@ export function getChannelObject<T extends Channel = Channel>(channelTransport: 
     return channel as T;
 }
 
-/**
- * @hidden
- */
-export function dispatchChannelEvents(event: ChannelChangedEvent): void {
-    const channel = event.channel;
-    const previousChannel = event.previousChannel;
-
-    if (previousChannel) {
-        const previousChannelEmitter = channelEventEmitters[previousChannel.id];
-        const windowRemovedEvent: ChannelWindowRemovedEvent = {
-            type: 'window-removed',
-            identity: event.identity,
-            channel: channel,
-            previousChannel: previousChannel
-        };
-
-        previousChannelEmitter.emit('window-removed', windowRemovedEvent);
-    }
-
-    if (channel) {
-        const channelEmitter = channelEventEmitters[channel.id];
-        const windowAddedEvent: ChannelWindowAddedEvent = {
-            type: 'window-added',
-            identity: event.identity,
-            channel: channel,
-            previousChannel: previousChannel
-        };
-
-        channelEmitter.emit('window-added', windowAddedEvent);
-    }
-}
-
 function hasChannelContextListener(id: ChannelId) {
     return channelContextListeners.some(listener => listener.channel.id === id);
 }
 
-function onWindowAdded(eventTransport: EventTransport<FDC3Event>): FDC3ChannelEvent {
+function deserializeWindowAddedEvent(eventTransport: EventTransport<FDC3Event>): FDC3ChannelEvent {
     const channelWindowAddedEventTransport = eventTransport as EventTransport<ChannelWindowAddedEvent>;
 
     const identity = channelWindowAddedEventTransport.identity;
@@ -490,7 +458,7 @@ function onWindowAdded(eventTransport: EventTransport<FDC3Event>): FDC3ChannelEv
     return {type: 'window-added', identity, channel, previousChannel};
 }
 
-function onWindowRemoved(eventTransport: EventTransport<FDC3Event>): FDC3ChannelEvent {
+function deserializeWindowRemovedEvent(eventTransport: EventTransport<FDC3Event>): FDC3ChannelEvent {
     const channelWindowRemovedEventTransport = eventTransport as EventTransport<ChannelWindowRemovedEvent>;
 
     const identity = channelWindowRemovedEventTransport.identity;
@@ -516,8 +484,8 @@ if (typeof fin !== 'undefined') {
             return channelEventEmitters[channelId];
         });
 
-        eventHandler.registerDeserializer('window-added', onWindowAdded);
-        eventHandler.registerDeserializer('window-removed', onWindowRemoved);
+        eventHandler.registerDeserializer('window-added', deserializeWindowAddedEvent);
+        eventHandler.registerDeserializer('window-removed', deserializeWindowRemovedEvent);
     }, reason => {
         console.warn('Unable to register client channel context handlers. getServicePromise() rejected with reason:', reason);
     });
