@@ -13,7 +13,7 @@
 import {Identity} from 'openfin/_v2/main';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 
-import {Application, Context, IntentType, AppIntent, ChannelId, FDC3Event, FDC3EventType} from '../../../src/client/main';
+import {Context, IntentType, AppIntent, ChannelId, FDC3Event, FDC3EventType} from '../../../src/client/main';
 import {RaiseIntentPayload, deserializeError} from '../../../src/client/internal';
 
 import {OFPuppeteerBrowser, TestWindowContext, TestChannelTransport} from './ofPuppeteer';
@@ -51,10 +51,10 @@ export async function open(executionTarget: Identity, name: string, context?: Co
     }, name, context).catch(handlePuppeteerError);
 }
 
-export async function findIntent(executionTarget: Identity, intent: IntentType, context?: Context): Promise<Application[]> {
-    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, intent: IntentType, context?: Context): Promise<Application[]> {
-        return this.fdc3.findIntent(intent, context).then(appIntent => appIntent.apps);
-    }, intent, context);
+export async function findIntent(executionTarget: Identity, intent: IntentType, context?: Context): Promise<AppIntent> {
+    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, intent: IntentType, context?: Context): Promise<AppIntent> {
+        return this.fdc3.findIntent(intent, context).catch(this.errorHandler);
+    }, intent, context).catch(handlePuppeteerError);
 }
 
 export async function broadcast(executionTarget: Identity, context: Context): Promise<void> {
@@ -204,6 +204,17 @@ export async function findIntentsByContext(executionTarget: Identity, context: C
     return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, context: Context): Promise<AppIntent[]> {
         return this.fdc3.findIntentsByContext(context).catch(this.errorHandler);
     }, context).catch(handlePuppeteerError);
+}
+
+export async function clickHTMLElement(executionTarget: Identity, elementSelector: string): Promise<boolean> {
+    return ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext, elementSelector: string): Promise<boolean> {
+        const element = this.document.querySelector(elementSelector) as HTMLElement;
+        if (!element) {
+            return false;
+        }
+        element.click();
+        return true;
+    }, elementSelector);
 }
 
 export async function getDesktopChannels(executionTarget: Identity): Promise<RemoteChannel[]> {
