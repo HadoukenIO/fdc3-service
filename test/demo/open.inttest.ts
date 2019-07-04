@@ -84,12 +84,10 @@ describe('Opening applications with the FDC3 client', () => {
                 // Check that the app is now running
                 await expect(fin.Application.wrapSync(testAppWithPreregisteredListeners1).isRunning()).resolves.toBe(true);
 
-                // Retrieve the list of contexts the app received
                 const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
-                const receivedContexts = await preregisteredListener.getReceivedContexts();
 
                 // Check that the app received the context passed in open and nothing else
-                expect(receivedContexts).toEqual([validContext]);
+                await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
             });
 
             test('When passing a known app name but invalid context, the service returns an FDC3Error', async () => {
@@ -124,12 +122,10 @@ describe('Opening applications with the FDC3 client', () => {
                 // And that the app is focused
                 await expect(fin.System.getFocusedWindow().then(w => w.uuid)).resolves.toBe(testAppWithPreregisteredListeners1.uuid);
 
-                // Retrieve the list of contexts the app received
                 const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
-                const receivedContexts = await preregisteredListener.getReceivedContexts();
 
                 // Check that the app received the context passed in open and nothing else
-                expect(receivedContexts).toEqual([validContext]);
+                await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
             });
 
             test('When an app is already running, opening a second app with context works as expected \

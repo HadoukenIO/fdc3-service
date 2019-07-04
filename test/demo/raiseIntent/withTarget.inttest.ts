@@ -65,9 +65,8 @@ describe('Intent listeners and raising intents with a target', () => {
                         await expect(fin.Application.wrapSync(testAppWithPreregisteredListeners1).isRunning()).resolves.toBe(true);
 
                         const listener = await fdc3Remote.getRemoteIntentListener(testAppWithPreregisteredListeners1, preregisteredIntent.type);
-                        const receivedContexts = await listener.getReceivedContexts();
 
-                        expect(receivedContexts).toEqual([preregisteredIntent.context]);
+                        await expect(listener).toHaveReceivedContexts([preregisteredIntent.context]);
                     });
                 });
 
@@ -81,8 +80,7 @@ describe('Intent listeners and raising intents with a target', () => {
 
                             // Since the time is under the listener handshake timeout, intent should be triggered correctly
                             const listener = await fdc3Remote.getRemoteIntentListener(testAppInDirectory1, validIntent.type);
-                            const receivedContexts = await listener.getReceivedContexts();
-                            expect(receivedContexts).toEqual([validIntent.context]);
+                            await expect(listener).toHaveReceivedContexts([validIntent.context]);
                         }, appStartupTime + 1500);
                     });
 
@@ -122,8 +120,7 @@ describe('Intent listeners and raising intents with a target', () => {
                 test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
                     await raiseIntent(validIntent, testAppInDirectory1);
 
-                    const receivedContexts = await listener.getReceivedContexts();
-                    expect(receivedContexts).toEqual([validIntent.context]);
+                    await expect(listener).toHaveReceivedContexts([validIntent.context]);
                 });
 
                 test('When adding a duplicate intent listener, then calling raiseIntent from another app, \
@@ -132,11 +129,9 @@ both listeners are triggered exactly once with the correct context', async () =>
 
                     await raiseIntent(validIntent, testAppInDirectory1);
 
-                    const receivedContexts = await listener.getReceivedContexts();
-                    expect(receivedContexts).toEqual([validIntent.context]);
+                    await expect(listener).toHaveReceivedContexts([validIntent.context]);
 
-                    const duplicateReceivedContexts = await duplicateListener.getReceivedContexts();
-                    expect(duplicateReceivedContexts).toEqual([validIntent.context]);
+                    await expect(duplicateListener).toHaveReceivedContexts([validIntent.context]);
                 });
 
                 test('When adding a distinct intent listener, then calling raiseIntent from another app, \
@@ -145,11 +140,9 @@ only the first listener is triggered', async () => {
 
                     await raiseIntent(validIntent, testAppInDirectory1);
 
-                    const receivedContexts = await listener.getReceivedContexts();
-                    expect(receivedContexts).toEqual([validIntent.context]);
+                    await expect(listener).toHaveReceivedContexts([validIntent.context]);
 
-                    const distinctReceivedContexts = await distinctListener.getReceivedContexts();
-                    expect(distinctReceivedContexts).toEqual([]);
+                    await expect(distinctListener).toHaveReceivedContexts([]);
                 });
 
                 test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it errors', async () => {
@@ -168,11 +161,9 @@ the first listener is triggered exactly once with the correct context, and the s
 
                     await raiseIntent(validIntent, testAppInDirectory1);
 
-                    const receivedContexts = await listener.getReceivedContexts();
-                    expect(receivedContexts).toEqual([validIntent.context]);
+                    await expect(listener).toHaveReceivedContexts([validIntent.context]);
 
-                    const shortLivedReceivedContexts = await shortLivedListener.getReceivedContexts();
-                    expect(shortLivedReceivedContexts).toEqual([]);
+                    await expect(shortLivedListener).toHaveReceivedContexts([]);
                 });
             });
 
@@ -235,8 +226,7 @@ the first listener is triggered exactly once with the correct context, and the s
                     test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
                         await raiseIntent(validIntent, testAppNotInDirectory1);
 
-                        const receivedContexts = await listener.getReceivedContexts();
-                        expect(receivedContexts).toEqual([validIntent.context]);
+                        await expect(listener).toHaveReceivedContexts([validIntent.context]);
                     });
 
                     test('When registering a duplicate intent listener, then calling raiseIntent from another app, \
@@ -245,11 +235,9 @@ both listeners are triggered exactly once with the correct context', async () =>
 
                         await raiseIntent(validIntent, testAppNotInDirectory1);
 
-                        const receivedContexts = await listener.getReceivedContexts();
-                        expect(receivedContexts).toEqual([validIntent.context]);
+                        await expect(listener).toHaveReceivedContexts([validIntent.context]);
 
-                        const duplicateReceivedContexts = await duplicateListener.getReceivedContexts();
-                        expect(duplicateReceivedContexts).toEqual([validIntent.context]);
+                        await expect(duplicateListener).toHaveReceivedContexts([validIntent.context]);
                     });
 
                     test('When adding a distinct intent listener, then calling raiseIntent from another app, \
@@ -258,11 +246,9 @@ only the first listener is triggered', async () => {
 
                         await raiseIntent(validIntent, testAppNotInDirectory1);
 
-                        const receivedContexts = await listener.getReceivedContexts();
-                        expect(receivedContexts).toEqual([validIntent.context]);
+                        await expect(listener).toHaveReceivedContexts([validIntent.context]);
 
-                        const distinctReceivedContexts = await distinctListener.getReceivedContexts();
-                        expect(distinctReceivedContexts).toEqual([]);
+                        await expect(distinctListener).toHaveReceivedContexts([]);
                     });
 
                     test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it errors', async () => {
@@ -280,11 +266,9 @@ the first listener is triggered exactly once with the correct context, and the s
 
                         await raiseIntent(validIntent, testAppNotInDirectory1);
 
-                        const receivedContexts = await listener.getReceivedContexts();
-                        expect(receivedContexts).toEqual([validIntent.context]);
+                        await expect(listener).toHaveReceivedContexts([validIntent.context]);
 
-                        const shortLivedReceivedContexts = await shortLivedListener.getReceivedContexts();
-                        expect(shortLivedReceivedContexts).toEqual([]);
+                        await expect(shortLivedListener).toHaveReceivedContexts([]);
                     });
                 });
             });

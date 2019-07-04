@@ -65,8 +65,7 @@ describe('Intent listeners and raising intents without a target', () => {
                     test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
                         await raiseIntent(uniqueIntent);
 
-                        const receivedContexts = await directoryAppListener.getReceivedContexts();
-                        expect(receivedContexts).toEqual([uniqueIntent.context]);
+                        await expect(directoryAppListener).toHaveReceivedContexts([uniqueIntent.context]);
                     });
                 });
 
@@ -118,9 +117,8 @@ describe('Intent listeners and raising intents without a target', () => {
                         await raiseIntentPromise;
 
                         const listener = await fdc3Remote.getRemoteIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
-                        const receivedContexts = await listener.getReceivedContexts();
 
-                        expect(receivedContexts).toEqual([uniqueIntent.context]);
+                        await expect(listener).toHaveReceivedContexts([uniqueIntent.context]);
                     });
                 });
             });
@@ -147,9 +145,8 @@ describe('Intent listeners and raising intents without a target', () => {
                             await raiseIntentPromise;
 
                             const listener = await fdc3Remote.getRemoteIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
-                            const receivedContexts = await listener.getReceivedContexts();
 
-                            expect(receivedContexts).toEqual([uniqueIntent.context]);
+                            await expect(listener).toHaveReceivedContexts([uniqueIntent.context]);
                         });
                     });
 
@@ -269,8 +266,7 @@ async function raiseIntentExpectResolverSelectApp(intent: Intent, app: TestAppDa
     // If no intent listener provided, try to fetch it "live"
     const remoteListener = listener || await fdc3Remote.getRemoteIntentListener(app, intent.type);
 
-    const receivedContexts = await remoteListener.getReceivedContexts();
-    expect(receivedContexts).toEqual([intent.context]);
+    await expect(remoteListener).toHaveReceivedContexts([intent.context]);
 }
 
 /**

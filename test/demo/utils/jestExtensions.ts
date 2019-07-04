@@ -1,7 +1,15 @@
 import 'jest';
-import {ChannelId} from '../../../src/client/main';
+import * as diff from 'jest-diff';
+
+import {ChannelId, Context as FDC3Context} from '../../../src/client/main';
 
 import {RemoteChannel} from './RemoteChannel';
+import {RemoteContextListener} from './fdc3RemoteExecution';
+
+interface CustomMatcherResult {
+    pass: boolean;
+    message: string | (() => string);
+}
 
 declare global {
     namespace jest {
@@ -11,7 +19,7 @@ declare global {
              * @param code Assert that the FDC3Error is thrown with a given `code`
              * @param message Optionally, assert that a given error message is returned
              */
-            toThrowFDC3Error<R>(code: string, message?: string | RegExp): R;
+            toThrowFDC3Error(code: string, message?: string | RegExp): R;
 
             /**
              * Used to test that a RemoteChannel represents the expected client-side Channel
@@ -19,17 +27,23 @@ declare global {
              * @param classType The class we expect the channel to be an instance of
              */
             toBeChannel(channel: {id?: ChannelId, type?: string} | ChannelId, classType?: Function): R;
+
+            /**
+             * Used to test that a remote listener has received the provided contexts
+             * @param contexts The expected contexts
+             */
+            toHaveReceivedContexts(contexts: FDC3Context[]): R;
         }
     }
 }
 
 expect.extend({
-    async toThrowFDC3Error<T = any>(received: Promise<T> | (() => T), code: string, message?: string | RegExp) {
+    async toThrowFDC3Error<T = any>(promiseOrFunction: Promise<T> | (() => T), code: string, message?: string | RegExp): Promise<CustomMatcherResult> {
         try {
-            if (received instanceof Promise) {
-                await received;
+            if (promiseOrFunction instanceof Promise) {
+                await promiseOrFunction;
             } else {
-                received();
+                promiseOrFunction();
             }
             return {
                 pass: false,
@@ -53,35 +67,35 @@ expect.extend({
         }
     },
 
-    toBeChannel(receivedChannel: RemoteChannel, expectedChannel: {id?: ChannelId, type?: string} | ChannelId, channelType?: Function) {
+    toBeChannel(channel: RemoteChannel, expectedChannel: {id?: ChannelId, type?: string} | ChannelId, channelType?: Function): CustomMatcherResult {
         const inflatedExpectedChannel = typeof expectedChannel === 'string' ? {id: expectedChannel} : expectedChannel;
 
         let pass = true;
         if (inflatedExpectedChannel.id) {
-            pass = pass && (receivedChannel.channel.id === inflatedExpectedChannel.id);
+            pass = pass && (channel.channel.id === inflatedExpectedChannel.id);
         }
 
         if (inflatedExpectedChannel.type) {
-            pass = pass && (receivedChannel.channel.type === inflatedExpectedChannel.type);
+            pass = pass && (channel.channel.type === inflatedExpectedChannel.type);
         }
 
         let receivedPrototype: Function;
         if (channelType) {
-            receivedPrototype = Object.getPrototypeOf(receivedChannel.channel);
+            receivedPrototype = Object.getPrototypeOf(channel.channel);
             pass = pass && (receivedPrototype === channelType);
         }
 
         return {
             pass,
             message: () => {
-                const errorLines = [];
+                const errorLines: string[] = [];
 
-                if (inflatedExpectedChannel.id && receivedChannel.channel.id !== inflatedExpectedChannel.id) {
-                    errorLines.push(`Expected channel with ID: ${inflatedExpectedChannel.id}\nBut got: ${receivedChannel.channel.id}`);
+                if (inflatedExpectedChannel.id && channel.channel.id !== inflatedExpectedChannel.id) {
+                    errorLines.push(`Expected channel with ID: ${inflatedExpectedChannel.id}\nBut got: ${channel.channel.id}`);
                 }
 
-                if (inflatedExpectedChannel.type && receivedChannel.channel.type !== inflatedExpectedChannel.type) {
-                    errorLines.push(`Expected channel with type: ${inflatedExpectedChannel.type}\nBut got: ${receivedChannel.channel.type}`);
+                if (inflatedExpectedChannel.type && channel.channel.type !== inflatedExpectedChannel.type) {
+                    errorLines.push(`Expected channel with type: ${inflatedExpectedChannel.type}\nBut got: ${channel.channel.type}`);
                 }
 
                 if (channelType && receivedPrototype !== channelType) {
@@ -99,5 +113,23 @@ expect.extend({
                 }
             }
         };
+    },
+
+    async toHaveReceivedContexts(listener: RemoteContextListener, expectedContexts: FDC3Context[]): Promise<CustomMatcherResult> {
+        const receivedContexts = await listener.getReceivedContexts();
+
+        const pass = this.equals(receivedContexts, expectedContexts);
+
+        const message = () => {
+            if (pass) {
+                return `Expected not to receive contexts ${this.utils.printReceived(expectedContexts)}`;
+            } else {
+                return `Expected to receive contexts: ${this.utils.printExpected(expectedContexts)}\n\
+But received contexts: ${this.utils.printReceived(receivedContexts)}\n\
+Difference:\n${diff(expectedContexts, receivedContexts)}`;
+            }
+        };
+
+        return {message, pass};
     }
 });
