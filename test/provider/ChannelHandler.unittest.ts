@@ -7,7 +7,7 @@ import {AppWindow} from '../../src/provider/model/AppWindow';
 import {DesktopContextChannel, ContextChannel} from '../../src/provider/model/ContextChannel';
 import {ChannelError} from '../../src/client/main';
 import {createMockChannel, createMockAppWindow} from '../mocks';
-import {Writable} from '../types';
+import {PartiallyWritable} from '../types';
 
 jest.mock('../../src/provider/model/Model');
 
@@ -22,8 +22,8 @@ beforeEach(() => {
 
     mockModel = new Model(null!, null!, null!) as jest.Mocked<Model>;
 
-    (mockModel as Writable<typeof mockModel>).onWindowAdded = new Signal1<AppWindow>();
-    (mockModel as Writable<typeof mockModel>).onWindowRemoved = new Signal1<AppWindow>();
+    (mockModel as PartiallyWritable<typeof mockModel, 'onWindowAdded'>).onWindowAdded = new Signal1<AppWindow>();
+    (mockModel as PartiallyWritable<typeof mockModel, 'onWindowRemoved'>).onWindowRemoved = new Signal1<AppWindow>();
 
     channelHandler = new ChannelHandler(mockModel);
     channelHandler.onChannelChanged.add((appWindow: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null) => {
