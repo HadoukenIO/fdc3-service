@@ -8,7 +8,7 @@ import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {delay} from '../utils/delay';
 import {TestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppWithIntentListenerBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning, Boxed} from '../utils/common';
-import {testManagerIdentity, testAppInDirectory4, testAppNotInDirectory1, testAppNotInDirectory2, testAppWithPreregisteredListeners1} from '../constants';
+import {testManagerIdentity, testAppInDirectory4, testAppNotInDirectory1, testAppNotInDirectory2, testAppWithPreregisteredListeners1, testAppUrl} from '../constants';
 
 /**
  * Alias for `testAppInDirectory4`, which is only in the directory registering the intent `test.IntentOnlyOnApp4`
@@ -55,39 +55,56 @@ describe('Intent listeners and raising intents without a target', () => {
                 setupNoDirectoryAppCanHandleIntentTests(uniqueIntent);
             });
 
-            describe('And the app has registered a listener for the intent', () => {
-                let directoryAppListener: fdc3Remote.RemoteIntentListener;
+            type TestParam = [string, () => Promise<fdc3Remote.RemoteIntentListener>];
+            const testParams: TestParam[] = [
+                ['the app\'s main window', async () => {
+                    return fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
+                }],
+                ['the app\'s child window', async () => {
+                    const childIdentity = {uuid: testAppWithUniqueIntent.uuid, name: testAppWithUniqueIntent.name + '-child-window'};
 
-                beforeEach(async () => {
-                    directoryAppListener = await fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
-                });
-                describe('And no running ad-hoc apps with listeners registered for the raised intent', () => {
-                    test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
-                        await raiseIntent(uniqueIntent);
+                    await fdc3Remote.createFinWindow(testAppWithUniqueIntent, {name: childIdentity.name, url: testAppUrl});
 
-                        await expect(directoryAppListener).toHaveReceivedContexts([uniqueIntent.context]);
+                    return fdc3Remote.addIntentListener(childIdentity, uniqueIntent.type);
+                }]
+            ];
+
+            describe.each(testParams)(
+                'And %s has registered a listener for the intent',
+                (titleParam: string, listenerCreator: (() => Promise<fdc3Remote.RemoteIntentListener>)) => {
+                    let directoryAppListener: fdc3Remote.RemoteIntentListener;
+
+                    beforeEach(async () => {
+                        directoryAppListener = await listenerCreator();
                     });
-                });
+                    describe('And no running ad-hoc apps with listeners registered for the raised intent', () => {
+                        test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
+                            await raiseIntent(uniqueIntent);
 
-                describe('But there is a running ad-hoc app with a listener registered for the same intent', () => {
-                    const adHocAppListener = setupStartNonDirectoryAppWithIntentListenerBookends(uniqueIntent, testAppNotInDirectory1);
-
-                    describe('When calling raiseIntent from another app, the resolver is displayed with both apps.', () => {
-                        test('When closing the resolver, an error is thrown', async () => {
-                            await expect(raiseIntentExpectResolverAndClose(uniqueIntent)).toThrowFDC3Error(
-                                ResolveError.ResolverClosedOrCancelled,
-                                'Resolver closed or cancelled'
-                            );
-                        });
-                        test('When choosing the directory app on the resolver, it receives intent', async () => {
-                            await raiseIntentExpectResolverSelectApp(uniqueIntent, testAppWithUniqueIntent, directoryAppListener);
-                        });
-                        test('When choosing the ad-hoc app on the resolver, it receives intent', async () => {
-                            await raiseIntentExpectResolverSelectApp(uniqueIntent, testAppNotInDirectory1, adHocAppListener.value);
+                            await expect(directoryAppListener).toHaveReceivedContexts([uniqueIntent.context]);
                         });
                     });
-                });
-            });
+
+                    describe('But there is a running ad-hoc app with a listener registered for the same intent', () => {
+                        const adHocAppListener = setupStartNonDirectoryAppWithIntentListenerBookends(uniqueIntent, testAppNotInDirectory1);
+
+                        describe('When calling raiseIntent from another app, the resolver is displayed with both apps.', () => {
+                            test('When closing the resolver, an error is thrown', async () => {
+                                await expect(raiseIntentExpectResolverAndClose(uniqueIntent)).toThrowFDC3Error(
+                                    ResolveError.ResolverClosedOrCancelled,
+                                    'Resolver closed or cancelled'
+                                );
+                            });
+                            test('When choosing the directory app on the resolver, it receives intent', async () => {
+                                await raiseIntentExpectResolverSelectApp(uniqueIntent, testAppWithUniqueIntent, directoryAppListener);
+                            });
+                            test('When choosing the ad-hoc app on the resolver, it receives intent', async () => {
+                                await raiseIntentExpectResolverSelectApp(uniqueIntent, testAppNotInDirectory1, adHocAppListener.value);
+                            });
+                        });
+                    });
+                }
+            );
         });
 
         describe('With the registered app not running', () => {
@@ -112,11 +129,27 @@ describe('Intent listeners and raising intents without a target', () => {
                 });
 
                 describe('When the directory app registers the intent listener after opening', () => {
-                    test('When calling raiseIntent from another app, the app opens and receives the intent with the correct context', async () => {
+                    test('When the listener is registered on the main window, when calling raiseIntent from another app \
+the app opens and receives the intent with the correct context', async () => {
                         await fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
                         await raiseIntentPromise;
 
                         const listener = await fdc3Remote.getRemoteIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
+
+                        await expect(listener).toHaveReceivedContexts([uniqueIntent.context]);
+                    });
+
+                    // Todo: Skipped pending SERVICE-544
+                    test.skip('When the listener is registered on the child window, when calling raiseIntent from another app \
+the app opens and receives the intent with the correct context', async () => {
+                        const childIdentity = {uuid: testAppWithUniqueIntent.uuid, name: testAppWithUniqueIntent.name + '-child-window'};
+
+                        await fdc3Remote.createFinWindow(testAppWithUniqueIntent, {name: childIdentity.name, url: testAppUrl});
+                        await fdc3Remote.addIntentListener(childIdentity, uniqueIntent.type);
+
+                        await raiseIntentPromise;
+
+                        const listener = await fdc3Remote.getRemoteIntentListener(childIdentity, uniqueIntent.type);
 
                         await expect(listener).toHaveReceivedContexts([uniqueIntent.context]);
                     });
