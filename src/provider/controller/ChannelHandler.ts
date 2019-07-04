@@ -9,7 +9,11 @@ import {Signal3} from '../common/Signal';
 
 @injectable()
 export class ChannelHandler {
-    // Arguments: (window: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null)
+    /**
+     * Channel is adding or removing a window
+     *
+     * Arguments: (window: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null)
+     */
     public readonly onChannelChanged: Signal3<AppWindow, ContextChannel | null, ContextChannel | null>;
 
     private readonly _model: Model;
