@@ -1,6 +1,8 @@
 import 'jest';
 import 'reflect-metadata';
 
+import {Identity} from 'hadouken-js-adapter';
+
 import {ResolveError} from '../../../src/client/errors';
 import {Intent} from '../../../src/client/intents';
 import {Timeouts} from '../../../src/provider/constants';
@@ -105,76 +107,7 @@ describe('Intent listeners and raising intents with a target', () => {
 
         describe('When the target is running', () => {
             setupOpenDirectoryAppBookends(testAppInDirectory1);
-
-            test('When calling addIntentListener for the first time, the promise resolves and there are no errors', async () => {
-                await expect(fdc3Remote.addIntentListener(testAppInDirectory1, validIntent.type)).resolves.not.toThrow();
-            });
-
-            describe('When the target is registered to accept the raised intent', () => {
-                let listener: fdc3Remote.RemoteIntentListener;
-
-                beforeEach(async () => {
-                    listener = await fdc3Remote.addIntentListener(testAppInDirectory1, validIntent.type);
-                });
-
-                test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
-                    await raiseIntent(validIntent, testAppInDirectory1);
-
-                    await expect(listener).toHaveReceivedContexts([validIntent.context]);
-                });
-
-                test('When adding a duplicate intent listener, then calling raiseIntent from another app, \
-both listeners are triggered exactly once with the correct context', async () => {
-                    const duplicateListener = await fdc3Remote.addIntentListener(testAppInDirectory1, validIntent.type);
-
-                    await raiseIntent(validIntent, testAppInDirectory1);
-
-                    await expect(listener).toHaveReceivedContexts([validIntent.context]);
-
-                    await expect(duplicateListener).toHaveReceivedContexts([validIntent.context]);
-                });
-
-                test('When adding a distinct intent listener, then calling raiseIntent from another app, \
-only the first listener is triggered', async () => {
-                    const distinctListener = await fdc3Remote.addIntentListener(testAppInDirectory1, validIntent.type + 'distinguisher');
-
-                    await raiseIntent(validIntent, testAppInDirectory1);
-
-                    await expect(listener).toHaveReceivedContexts([validIntent.context]);
-
-                    await expect(distinctListener).toHaveReceivedContexts([]);
-                });
-
-                test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it errors', async () => {
-                    await listener.unsubscribe();
-
-                    await expect(raiseIntent(validIntent, testAppInDirectory1)).toThrowFDC3Error(
-                        ResolveError.IntentTimeout,
-                        `Timeout waiting for intent listener to be added. intent = ${validIntent.type}`
-                    );
-                });
-
-                test('When calling unsubscribe from a second intent listener, then calling raiseIntent from another app, \
-the first listener is triggered exactly once with the correct context, and the second is not triggered', async () => {
-                    const shortLivedListener = await fdc3Remote.addIntentListener(testAppInDirectory1, validIntent.type);
-                    await shortLivedListener.unsubscribe();
-
-                    await raiseIntent(validIntent, testAppInDirectory1);
-
-                    await expect(listener).toHaveReceivedContexts([validIntent.context]);
-
-                    await expect(shortLivedListener).toHaveReceivedContexts([]);
-                });
-            });
-
-            describe('When the target is *not* registered to accept the raised intent', () => {
-                test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
-                    await expect(raiseIntent(nonExistentIntent, testAppInDirectory1)).toThrowFDC3Error(
-                        ResolveError.IntentTimeout,
-                        `Timeout waiting for intent listener to be added. intent = ${nonExistentIntent.type}`
-                    );
-                });
-            });
+            setupCommonTests(testAppInDirectory1);
         });
     });
 
@@ -201,80 +134,83 @@ the first listener is triggered exactly once with the correct context, and the s
 
         describe('When the target (which is an ad-hoc app) is running', () => {
             setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
-
-            test('When calling addIntentListener for the first time, the promise resolves and there are no errors', async () => {
-                await expect(fdc3Remote.addIntentListener(testAppNotInDirectory1, validIntent.type)).resolves.not.toThrow();
-            });
-
-            describe('When the target has registered any listeners (so the FDC3 service has the window in the model)', () => {
-                let listener: fdc3Remote.RemoteIntentListener;
-
-                beforeEach(async () => {
-                    listener = await fdc3Remote.addIntentListener(testAppNotInDirectory1, validIntent.type);
-                });
-
-                describe('When the target has *not* registered listeners for the raised intent', () => {
-                    test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
-                        await expect(raiseIntent(nonExistentIntent, testAppNotInDirectory1)).toThrowFDC3Error(
-                            ResolveError.IntentTimeout,
-                            `Timeout waiting for intent listener to be added. intent = ${nonExistentIntent.type}`
-                        );
-                    });
-                });
-
-                describe('When the target has registered listeners for the raised intent', () => {
-                    test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
-                        await raiseIntent(validIntent, testAppNotInDirectory1);
-
-                        await expect(listener).toHaveReceivedContexts([validIntent.context]);
-                    });
-
-                    test('When registering a duplicate intent listener, then calling raiseIntent from another app, \
-both listeners are triggered exactly once with the correct context', async () => {
-                        const duplicateListener = await fdc3Remote.addIntentListener(testAppNotInDirectory1, validIntent.type);
-
-                        await raiseIntent(validIntent, testAppNotInDirectory1);
-
-                        await expect(listener).toHaveReceivedContexts([validIntent.context]);
-
-                        await expect(duplicateListener).toHaveReceivedContexts([validIntent.context]);
-                    });
-
-                    test('When adding a distinct intent listener, then calling raiseIntent from another app, \
-only the first listener is triggered', async () => {
-                        const distinctListener = await fdc3Remote.addIntentListener(testAppNotInDirectory1, validIntent.type + 'distinguisher');
-
-                        await raiseIntent(validIntent, testAppNotInDirectory1);
-
-                        await expect(listener).toHaveReceivedContexts([validIntent.context]);
-
-                        await expect(distinctListener).toHaveReceivedContexts([]);
-                    });
-
-                    test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it errors', async () => {
-                        await listener.unsubscribe();
-                        await expect(raiseIntent(validIntent, testAppNotInDirectory1)).toThrowFDC3Error(
-                            ResolveError.IntentTimeout,
-                            `Timeout waiting for intent listener to be added. intent = ${validIntent.type}`
-                        );
-                    });
-
-                    test('When calling unsubscribe from a second intent listener, then calling raiseIntent from another app, \
-the first listener is triggered exactly once with the correct context, and the second is not triggered', async () => {
-                        const shortLivedListener = await fdc3Remote.addIntentListener(testAppNotInDirectory1, validIntent.type);
-                        await shortLivedListener.unsubscribe();
-
-                        await raiseIntent(validIntent, testAppNotInDirectory1);
-
-                        await expect(listener).toHaveReceivedContexts([validIntent.context]);
-
-                        await expect(shortLivedListener).toHaveReceivedContexts([]);
-                    });
-                });
-            });
+            setupCommonTests(testAppNotInDirectory1);
         });
     });
 });
+
+function setupCommonTests(testAppData: TestAppData): void {
+    describe('When the target has *not* registered listeners for the raised intent', () => {
+        test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
+            await expect(raiseIntent(nonExistentIntent, testAppData)).toThrowFDC3Error(
+                ResolveError.IntentTimeout,
+                `Timeout waiting for intent listener to be added. intent = ${nonExistentIntent.type}`
+            );
+        });
+    });
+
+    test('When calling addIntentListener for the first time, the promise resolves and there are no errors', async () => {
+        await expect(fdc3Remote.addIntentListener(testAppData, validIntent.type)).resolves.not.toThrow();
+    });
+
+    describe('When the target has registered listeners for the raised intent', () => {
+        let listener: fdc3Remote.RemoteIntentListener;
+
+        beforeEach(async () => {
+            listener = await fdc3Remote.addIntentListener(testAppData, validIntent.type);
+        });
+
+        test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
+            await raiseIntent(validIntent, testAppData);
+
+            await expect(listener).toHaveReceivedContexts([validIntent.context]);
+        });
+
+        test('When registering a duplicate intent listener, then calling raiseIntent from another app, \
+both listeners are triggered exactly once with the correct context', async () => {
+            const duplicateListener = await fdc3Remote.addIntentListener(testAppData, validIntent.type);
+
+            await raiseIntent(validIntent, testAppData);
+
+            await expect(listener).toHaveReceivedContexts([validIntent.context]);
+
+            await expect(duplicateListener).toHaveReceivedContexts([validIntent.context]);
+        });
+
+        test('When adding a distinct intent listener, then calling raiseIntent from another app, \
+only the first listener is triggered', async () => {
+            const distinctListener = await fdc3Remote.addIntentListener(testAppData, validIntent.type + 'distinguisher');
+
+            await raiseIntent(validIntent, testAppData);
+
+            await expect(listener).toHaveReceivedContexts([validIntent.context]);
+
+            await expect(distinctListener).toHaveReceivedContexts([]);
+        });
+
+
+        test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it errors', async () => {
+            await listener.unsubscribe();
+
+            await expect(raiseIntent(validIntent, testAppData)).toThrowFDC3Error(
+                ResolveError.IntentTimeout,
+                `Timeout waiting for intent listener to be added. intent = ${validIntent.type}`
+            );
+        });
+
+        test('When calling unsubscribe from a second intent listener, then calling raiseIntent from another app, \
+the first listener is triggered exactly once with the correct context, and the second is not triggered', async () => {
+            const shortLivedListener = await fdc3Remote.addIntentListener(testAppData, validIntent.type);
+            await shortLivedListener.unsubscribe();
+
+            await raiseIntent(validIntent, testAppData);
+
+            await expect(listener).toHaveReceivedContexts([validIntent.context]);
+
+            await expect(shortLivedListener).toHaveReceivedContexts([]);
+        });
+    });
+}
 
 /**
  * Raise an intent against a target app (waiting for it to start if not already), and add an intent listener after some delay.
