@@ -448,22 +448,18 @@ function hasChannelContextListener(id: ChannelId): boolean {
     return channelContextListeners.some(listener => listener.channel.id === id);
 }
 
-function deserializeWindowAddedEvent(eventTransport: EventTransport<FDC3Event>): FDC3ChannelEvent {
-    const channelWindowAddedEventTransport = eventTransport as EventTransport<ChannelWindowAddedEvent>;
-
-    const identity = channelWindowAddedEventTransport.identity;
-    const channel = getChannelObject(channelWindowAddedEventTransport.channel!);
-    const previousChannel = channelWindowAddedEventTransport.previousChannel ? getChannelObject(channelWindowAddedEventTransport.previousChannel) : null;
+function deserializeWindowAddedEvent(eventTransport: EventTransport<ChannelWindowAddedEvent>): ChannelWindowAddedEvent {
+    const identity = eventTransport.identity;
+    const channel = getChannelObject(eventTransport.channel!);
+    const previousChannel = eventTransport.previousChannel ? getChannelObject(eventTransport.previousChannel) : null;
 
     return {type: 'window-added', identity, channel, previousChannel};
 }
 
-function deserializeWindowRemovedEvent(eventTransport: EventTransport<FDC3Event>): FDC3ChannelEvent {
-    const channelWindowRemovedEventTransport = eventTransport as EventTransport<ChannelWindowRemovedEvent>;
-
-    const identity = channelWindowRemovedEventTransport.identity;
-    const channel = channelWindowRemovedEventTransport.channel ? getChannelObject(channelWindowRemovedEventTransport.channel) : null;
-    const previousChannel = getChannelObject(channelWindowRemovedEventTransport.previousChannel!);
+function deserializeWindowRemovedEvent(eventTransport: EventTransport<ChannelWindowRemovedEvent>): ChannelWindowRemovedEvent {
+    const identity = eventTransport.identity;
+    const channel = eventTransport.channel ? getChannelObject(eventTransport.channel) : null;
+    const previousChannel = getChannelObject(eventTransport.previousChannel!);
 
     return {type: 'window-removed', identity, channel, previousChannel};
 }

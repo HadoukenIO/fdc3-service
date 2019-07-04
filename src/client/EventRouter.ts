@@ -7,10 +7,12 @@
   */
 import {EventEmitter} from 'events';
 
-import {FDC3Event, FDC3EventType} from './main';
+import {FDC3Event} from './main';
 import {EventTransport} from './internal';
 
 let eventHandler: EventRouter | null;
+
+type EventDeserializer<E extends FDC3Event> = (event: EventTransport<E>) => E;
 
 export function getEventRouter(): EventRouter {
     if (!eventHandler) {
@@ -22,7 +24,7 @@ export function getEventRouter(): EventRouter {
 
 export class EventRouter {
     private readonly _emitterProviders: {[targetType: string]: (targetId: string) => EventEmitter};
-    private readonly _deserializers: {[eventType: string]: (event: EventTransport<FDC3Event>) => FDC3Event};
+    private readonly _deserializers: {[eventType: string]: EventDeserializer<FDC3Event>};
 
     public constructor() {
         this._emitterProviders = {};
@@ -33,8 +35,8 @@ export class EventRouter {
         this._emitterProviders[targetType] = emitterProvider;
     }
 
-    public registerDeserializer(eventType: FDC3EventType, handler: (event: EventTransport<FDC3Event>) => FDC3Event): void {
-        this._deserializers[eventType] = handler;
+    public registerDeserializer<E extends FDC3Event>(eventType: E['type'], deserializer: EventDeserializer<E>): void {
+        this._deserializers[eventType] = deserializer as unknown as EventDeserializer<FDC3Event>;
     }
 
     public dispatchEvent(event: EventTransport<FDC3Event>): void {
