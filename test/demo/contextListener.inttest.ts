@@ -4,9 +4,7 @@ import {OrganizationContext} from '../../src/client/main';
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {setupTeardown} from './utils/common';
-import {testManagerIdentity, testAppInDirectory1} from './constants';
-
-const testAppUrl = 'http://localhost:3923/test/test-app.html';
+import {testManagerIdentity, testAppInDirectory1, testAppUrl} from './constants';
 
 const validContext: OrganizationContext = {type: 'fdc3.organization', name: 'OpenFin', id: {default: 'openfin'}};
 

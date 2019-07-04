@@ -10,7 +10,7 @@ import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {delay} from '../utils/delay';
 import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning} from '../utils/common';
-import {appStartupTime, testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, testAppWithPreregisteredListeners1, testAppNotFdc3} from '../constants';
+import {appStartupTime, testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, testAppWithPreregisteredListeners1, testAppNotFdc3, testAppUrl} from '../constants';
 
 /**
  * Intent registered by `testAppWithPreregisteredListeners1` right after opening
@@ -147,6 +147,18 @@ function setupCommonTests(testAppData: TestAppData): void {
                 `Timeout waiting for intent listener to be added. intent = ${nonExistentIntent.type}`
             );
         });
+
+        test('When the target has a child window with an intent listener, when calling raiseIntent from another app, \
+the child listener is triggered exactly once with the correct context', async () => {
+            const childIdentity = {uuid: testAppData.uuid, name: testAppData.name + '-child-window'};
+
+            await fdc3Remote.createFinWindow(testAppData, {name: childIdentity.name, url: testAppUrl});
+            const childListener = await fdc3Remote.addIntentListener(childIdentity, validIntent.type);
+
+            await raiseIntent(validIntent, testAppData);
+
+            await expect(childListener).toHaveReceivedContexts([validIntent.context]);
+        });
     });
 
     test('When calling addIntentListener for the first time, the promise resolves and there are no errors', async () => {
@@ -208,6 +220,36 @@ the first listener is triggered exactly once with the correct context, and the s
             await expect(listener).toHaveReceivedContexts([validIntent.context]);
 
             await expect(shortLivedListener).toHaveReceivedContexts([]);
+        });
+
+        type TestParam = [string, number];
+        const testParams: TestParam[] = [
+            [
+                'a child window',
+                1
+            ], [
+                'two child windows',
+                2
+            ]
+        ];
+
+        test.each(testParams)('When the target has %s with an intent listener, when calling raiseIntent from another app, \
+all listeners are triggered exactly once with the correct context', async (titleParam: string, childWindowCount: number) => {
+            const childListeners: fdc3Remote.RemoteContextListener[] = [];
+
+            for (let i = 0; i < childWindowCount; i++) {
+                const childIdentity = {uuid: testAppData.uuid, name: testAppData.name + `-child-window-${i}`};
+
+                await fdc3Remote.createFinWindow(testAppData, {name: childIdentity.name, url: testAppUrl});
+                childListeners.push(await fdc3Remote.addIntentListener(childIdentity, validIntent.type));
+            }
+
+            await raiseIntent(validIntent, testAppData);
+
+            for (const childListener of childListeners) {
+                await expect(childListener).toHaveReceivedContexts([validIntent.context]);
+            }
+            await expect(listener).toHaveReceivedContexts([validIntent.context]);
         });
     });
 }
