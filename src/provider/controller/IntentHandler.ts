@@ -124,12 +124,12 @@ export class IntentHandler {
             throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added. intent = ${intent.type}`);
         }
 
-        const dispatchResultData = dispatchResults.filter((dispatchResult) => dispatchResult[0]).map(dispatchResult => dispatchResult[1]);
+        const dispatchResultData = dispatchResults.filter((dispatchResult) => dispatchResult[1] !== undefined).map(dispatchResult => dispatchResult[1]);
 
         const result: IntentResolution = {
             source: appInfo.name,
             version: '1.0.0',
-            data: dispatchResultData.length === 1 ? dispatchResultData[0] : dispatchResultData
+            data: dispatchResultData.length === 0 ? undefined : dispatchResultData.length === 1 ? dispatchResultData[0] : dispatchResultData
         };
 
         // Handle next queued intent
