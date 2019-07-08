@@ -17,17 +17,17 @@ import {APIHandler} from './APIHandler';
 import {Injector} from './common/Injector';
 import {ChannelHandler} from './controller/ChannelHandler';
 import {AppWindow} from './model/AppWindow';
+import {ConfigStore} from './model/ConfigStore';
 
 @injectable()
 export class Main {
-    private _config = null;
-
     private readonly _directory: AppDirectory;
     private readonly _model: Model;
     private readonly _contextHandler: ContextHandler;
     private readonly _intentHandler: IntentHandler;
     private readonly _channelHandler: ChannelHandler;
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
+    private readonly _configStore: ConfigStore
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
@@ -36,6 +36,7 @@ export class Main {
         @inject(Inject.INTENT_HANDLER) intentHandler: IntentHandler,
         @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
+        @inject(Inject.CONFIG_STORE) configStore: ConfigStore
     ) {
         this._directory = directory;
         this._model = model;
@@ -43,17 +44,18 @@ export class Main {
         this._intentHandler = intentHandler;
         this._channelHandler = channelHandler;
         this._apiHandler = apiHandler;
+        this._configStore = configStore;
     }
 
     public async register(): Promise<void> {
         Object.assign(window, {
             main: this,
-            config: this._config,
             directory: this._directory,
             model: this._model,
             contextHandler: this._contextHandler,
             intentHandler: this._intentHandler,
-            channelHandler: this._channelHandler
+            channelHandler: this._channelHandler,
+            configStore: this._configStore
         });
 
         // Wait for creation of any injected components that require async initialization

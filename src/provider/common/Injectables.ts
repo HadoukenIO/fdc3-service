@@ -13,6 +13,7 @@ enum Injectable {
     INTENT_HANDLER,
     MODEL,
     RESOLVER,
+    CONFIG_STORE
 }
 
 type InjectableMap = {
