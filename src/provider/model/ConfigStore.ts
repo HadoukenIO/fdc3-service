@@ -1,18 +1,30 @@
 import {Store} from 'openfin-service-config';
 import {Loader} from 'openfin-service-config/Loader';
+import {injectable} from 'inversify';
 
 import {ConfigurationObject} from '../../../gen/provider/config/fdc3-config';
+import {AsyncInit} from '../controller/AsyncInit';
 
-export class ConfigStore extends Store<ConfigurationObject> {
-    private loader: Loader<ConfigurationObject>;
+@injectable()
+export class ConfigStore extends AsyncInit {
+    private _store: Store<ConfigurationObject>;
+    private _loader: Loader<ConfigurationObject>;
 
     constructor() {
-        super(require('../../../gen/provider/config/defaults.json'));
-        this.loader = new Loader(this, 'fdc3');
-        fin.Application.getCurrentSync().getManifest().then(manifest => {
-            if (manifest.config) {
-                this.add({level: 'desktop'}, manifest.config);
-            }
-        });
+        super();
+        this._store = new Store(require('../../../gen/provider/config/defaults.json'));
+        this._loader = new Loader(this._store, 'fdc3');
+    }
+
+    public get config() {
+        return this._store;
+    }
+
+    protected async init() {
+        const manifest = await fin.Application.getCurrentSync().getManifest();
+
+        if (manifest.config) {
+            this._store.add({level: 'desktop'}, manifest.config);
+        }
     }
 }
