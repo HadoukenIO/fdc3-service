@@ -296,13 +296,11 @@ function hasIntentListener(intent: string): boolean {
     return intentListeners.some(intentListener => intentListener.intent === intent);
 }
 
-function onChannelChanged(eventTransport: EventTransport<FDC3Event>): FDC3Event {
-    const channelChangedEventTransport = eventTransport as EventTransport<ChannelChangedEvent>;
-
-    const type = channelChangedEventTransport.type;
-    const identity = channelChangedEventTransport.identity;
-    const channel = channelChangedEventTransport.channel ? getChannelObject(channelChangedEventTransport.channel) : null;
-    const previousChannel = channelChangedEventTransport.previousChannel ? getChannelObject(channelChangedEventTransport.previousChannel) : null;
+function deserializeChannelChangedEvent(eventTransport: EventTransport<ChannelChangedEvent>): ChannelChangedEvent {
+    const type = eventTransport.type;
+    const identity = eventTransport.identity;
+    const channel = eventTransport.channel ? getChannelObject(eventTransport.channel) : null;
+    const previousChannel = eventTransport.previousChannel ? getChannelObject(eventTransport.previousChannel) : null;
 
     return {type, identity, channel, previousChannel};
 }
@@ -331,7 +329,7 @@ if (typeof fin !== 'undefined') {
         });
 
         eventHandler.registerEmitterProvider('main', () => eventEmitter);
-        eventHandler.registerDeserializer('channel-changed', onChannelChanged);
+        eventHandler.registerDeserializer('channel-changed', deserializeChannelChangedEvent);
     }, reason => {
         console.warn('Unable to register client Context and Intent handlers. getServicePromise() rejected with reason:', reason);
     });
