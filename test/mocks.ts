@@ -11,7 +11,7 @@ export function createMockAppWindow(): jest.Mocked<AppWindow> {
         id: '',
         identity: {name: '', uuid: ''},
         appInfo: {appId: '', name: '', manifest: '', manifestType: ''},
-        appCreationIndex: 0,
+        appWindowNumber: 0,
         channel: createMockChannel(),
         channelContextListeners: [],
         intentListeners: [],

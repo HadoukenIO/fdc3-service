@@ -77,7 +77,7 @@ export class Model {
 
         if (matchingWindows.length > 0) {
             // Sort windows into the order they were created
-            matchingWindows.sort((a: AppWindow, b: AppWindow) => a.appCreationIndex - b.appCreationIndex);
+            matchingWindows.sort((a: AppWindow, b: AppWindow) => a.appWindowNumber - b.appWindowNumber);
 
             return matchingWindows;
         } else {

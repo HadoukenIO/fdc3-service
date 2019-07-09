@@ -17,7 +17,7 @@ export interface AppWindow {
 
     appInfo: Readonly<Application>;
 
-    appCreationIndex: number;
+    appWindowNumber: number;
 
     channel: ContextChannel;
 
