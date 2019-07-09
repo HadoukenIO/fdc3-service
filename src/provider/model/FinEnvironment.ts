@@ -233,21 +233,18 @@ class FinAppWindow implements AppWindow {
         } else {
             // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
             const [waitForIntentListenerAddedPromise, resolve] = deferredPromise();
+
             const slot = this._onIntentListenerAdded.add(intentAdded => {
                 if (intentAdded === intent) {
-                    slot.remove();
                     resolve();
                 }
             });
 
             const [didTimeout] = await withTimeout(Timeouts.ADD_INTENT_LISTENER - age, waitForIntentListenerAddedPromise);
 
-            if (didTimeout) {
-                slot.remove();
-                return false;
-            } else {
-                return true;
-            }
+            slot.remove();
+
+            return !didTimeout;
         }
     }
 }
