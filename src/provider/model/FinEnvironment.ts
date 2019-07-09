@@ -1,5 +1,5 @@
-import {WindowEvent} from 'openfin/_v2/api/events/base';
-import {injectable, id} from 'inversify';
+import {WindowEvent, ApplicationEvent} from 'openfin/_v2/api/events/base';
+import {injectable} from 'inversify';
 import {Identity, Window} from 'openfin/_v2/main';
 
 import {AsyncInit} from '../controller/AsyncInit';
@@ -34,6 +34,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public readonly windowClosed: Signal1<Identity> = new Signal1();
 
     private readonly windowCreationTimes: Map<string, number> = new Map<string, number>();
+    private readonly windowAppCreationIndicies: Map<string, number> = new Map<string, number>();
+    private readonly appChildWindowCounts: Map<string, number> = new Map<string, number>();
 
     public async createApplication(appInfo: Application, channel: ContextChannel): Promise<AppWindow> {
         const [didTimeout, app] = await withTimeout(
@@ -51,29 +53,53 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
     public wrapApplication(appInfo: Application, identity: Identity, channel: ContextChannel): AppWindow {
         identity = parseIdentity(identity);
-        const creationTime = this.windowCreationTimes.get(getId(identity));
+        const id = getId(identity);
 
-        return new FinAppWindow(identity, appInfo, channel, creationTime, 0);
+        const creationTime = this.windowCreationTimes.get(id);
+        const appWindowIndex = this.windowAppCreationIndicies.get(id)!;
+
+        return new FinAppWindow(identity, appInfo, channel, creationTime, appWindowIndex);
     }
 
     protected async init(): Promise<void> {
         fin.System.addListener('window-created', (event: WindowEvent<'system', 'window-created'>) => {
             const identity = {uuid: event.uuid, name: event.name};
-            this.windowCreationTimes.set(getId(identity), Date.now());
+
+            const id = getId(identity);
+
+            this.windowCreationTimes.set(id, Date.now());
+
+            const prevAppChildWindowCount = this.appChildWindowCounts.get(identity.uuid);
+            const nextAppChildWindowCount = prevAppChildWindowCount !== undefined ? prevAppChildWindowCount + 1 : 0;
+
+            this.appChildWindowCounts.set(identity.uuid, nextAppChildWindowCount);
+            this.windowAppCreationIndicies.set(id, nextAppChildWindowCount);
 
             this.registerWindow(identity);
         });
         fin.System.addListener('window-closed', (event: WindowEvent<'system', 'window-closed'>) => {
             const identity = {uuid: event.uuid, name: event.name};
-            delete this.windowCreationTimes[getId(identity)];
+
+            const id = getId(identity);
+            this.windowCreationTimes.delete(id);
+            this.windowAppCreationIndicies.delete(id);
 
             this.windowClosed.emit(identity);
+        });
+        fin.System.addListener('closed', (event: ApplicationEvent<'system', 'closed'>) => {
+            this.appChildWindowCounts.delete(event.uuid);
         });
 
         // Register windows that were running before launching the FDC3 service
         const windowInfo = await fin.System.getAllWindows();
+
         windowInfo.forEach(info => {
             const {uuid, mainWindow, childWindows} = info;
+
+            this.windowAppCreationIndicies.set(getId({uuid, name: mainWindow.name}), 0);
+            this.appChildWindowCounts.set(uuid, childWindows.length);
+
+            childWindows.forEach((child, index) => this.windowAppCreationIndicies.set(getId({uuid, name: child.name}), index));
 
             this.registerWindow({uuid, name: mainWindow.name});
             childWindows.forEach(child => this.registerWindow({uuid, name: child.name}));
@@ -99,6 +125,7 @@ interface ChannelEventMap {
 }
 
 class FinAppWindow implements AppWindow {
+    public readonly appCreationIndex: number;
     public channel: ContextChannel;
 
     private readonly _id: string;
@@ -111,7 +138,7 @@ class FinAppWindow implements AppWindow {
     private readonly _channelContextListeners: ContextMap;
     private readonly _channelEventListeners: ChannelEventMap;
 
-    constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined) {
+    constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined, appCreationIndex: number) {
         this._id = getId(identity);
         this._window = fin.Window.wrapSync(identity);
         this._appInfo = appInfo;
@@ -123,6 +150,7 @@ class FinAppWindow implements AppWindow {
         this._channelEventListeners = {};
 
         this.channel = channel;
+        this.appCreationIndex = appCreationIndex;
     }
 
     private readonly _onIntentListenerAdded: Signal1<IntentType> = new Signal1();

@@ -17,6 +17,8 @@ export interface AppWindow {
 
     appInfo: Readonly<Application>;
 
+    appCreationIndex: number;
+
     channel: ContextChannel;
 
     intentListeners: ReadonlyArray<string>;
