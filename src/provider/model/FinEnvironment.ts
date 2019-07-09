@@ -204,7 +204,7 @@ class FinAppWindow implements AppWindow {
 
         if (age === undefined || age >= Timeouts.ADD_INTENT_LISTENER) {
             // App has been running for a while
-            return this.hasIntentListener(intent);
+            return false;
         } else {
             // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
             const [waitForIntentListenerAddedPromise, resolve] = deferredPromise();
