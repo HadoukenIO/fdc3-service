@@ -8,12 +8,14 @@ import {AsyncInit} from '../controller/AsyncInit';
 @injectable()
 export class ConfigStore extends AsyncInit {
     private _store: Store<ConfigurationObject>;
-    private _loader: Loader<ConfigurationObject>;
+    private _loader!: Loader<ConfigurationObject>;
 
     constructor() {
         super();
         this._store = new Store(require('../../../gen/provider/config/defaults.json'));
-        this._loader = new Loader(this._store, 'fdc3');
+        if (global.hasOwnProperty('fin')) {
+            this._loader = new Loader(this._store, 'fdc3');
+        }
     }
 
     public get config() {
@@ -21,10 +23,12 @@ export class ConfigStore extends AsyncInit {
     }
 
     protected async init() {
-        const manifest = await fin.Application.getCurrentSync().getManifest();
+        if (global.hasOwnProperty('fin')) {
+            const manifest = await fin.Application.getCurrentSync().getManifest();
 
-        if (manifest.config) {
-            this._store.add({level: 'desktop'}, manifest.config);
+            if (manifest.config) {
+                this._store.add({level: 'desktop'}, manifest.config);
+            }
         }
     }
 }

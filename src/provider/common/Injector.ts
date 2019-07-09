@@ -67,7 +67,7 @@ export class Injector {
             if (typeof Bindings[key] === 'function') {
                 container.bind(Inject[key]).to(Bindings[key] as any).inSingletonScope();
 
-                if ((Bindings[key] as Function).prototype.hasOwnProperty('init')) {
+                if ((Bindings[key] as Function).prototype.hasOwnProperty('init') && global.hasOwnProperty('fin')) {
                     promises.push((container.get(Inject[key]) as AsyncInit).initialized);
                 }
             } else {

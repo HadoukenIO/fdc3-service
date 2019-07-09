@@ -16,7 +16,7 @@ enum StorageKeys {
 }
 
 // Demo development app directory url
-const devUrl = 'http://localhost:3923/provider/sample-app-directory.json';
+export const devAppDirectoryUrl = 'http://localhost:3923/provider/sample-app-directory.json';
 
 @injectable()
 export class AppDirectory {
@@ -26,7 +26,7 @@ export class AppDirectory {
     public constructor(@inject(Inject.CONFIG_STORE) configStore: ConfigStore) {
         if (process.env.NODE_ENV === 'development') {
             // Set the application directory to our local copy during development.  In production it will be an empty string.
-            configStore.config.add({level: 'desktop'}, {applicationDirectory: devUrl});
+            configStore.config.add({level: 'desktop'}, {applicationDirectory: devAppDirectoryUrl});
         }
 
         this._url = configStore.config.query({level: 'desktop'}).applicationDirectory;
