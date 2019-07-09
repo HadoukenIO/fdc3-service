@@ -121,7 +121,7 @@ export class IntentHandler {
         }));
 
         if (dispatchResults.every(dispatchResult => dispatchResult[0] === false)) {
-            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added. intent = ${intent.type}`);
+            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
         }
 
         const dispatchResultData = dispatchResults.filter((dispatchResult) => dispatchResult[1] !== undefined).map(dispatchResult => dispatchResult[1]);

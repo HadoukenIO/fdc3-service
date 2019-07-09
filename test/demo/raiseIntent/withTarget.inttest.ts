@@ -97,7 +97,7 @@ describe('Intent listeners and raising intents with a target', () => {
 
                             await expect(raiseIntentPromise).toThrowFDC3Error(
                                 ResolveError.IntentTimeout,
-                                `Timeout waiting for intent listener to be added. intent = ${validIntent.type}`
+                                `Timeout waiting for intent listener to be added for intent: ${validIntent.type}`
                             );
                         }, appStartupTime + 1500);
                     });
@@ -144,7 +144,7 @@ function setupCommonTests(testAppData: TestAppData): void {
         test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
             await expect(raiseIntent(nonExistentIntent, testAppData)).toThrowFDC3Error(
                 ResolveError.IntentTimeout,
-                `Timeout waiting for intent listener to be added. intent = ${nonExistentIntent.type}`
+                `Timeout waiting for intent listener to be added for intent: ${nonExistentIntent.type}`
             );
         });
 
@@ -206,7 +206,7 @@ only the first listener is triggered', async () => {
 
             await expect(raiseIntent(validIntent, testAppData)).toThrowFDC3Error(
                 ResolveError.IntentTimeout,
-                `Timeout waiting for intent listener to be added. intent = ${validIntent.type}`
+                `Timeout waiting for intent listener to be added for intent: ${validIntent.type}`
             );
         });
 

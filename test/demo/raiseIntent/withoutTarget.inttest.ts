@@ -123,7 +123,7 @@ describe('Intent listeners and raising intents without a target', () => {
                     test('When calling raiseIntent from another app, the app opens but it times out waiting for the listener to be added', async () => {
                         await expect(raiseIntentPromise).toThrowFDC3Error(
                             ResolveError.IntentTimeout,
-                            `Timeout waiting for intent listener to be added. intent = ${uniqueIntent.type}`
+                            `Timeout waiting for intent listener to be added for intent: ${uniqueIntent.type}`
                         );
                     });
                 });
