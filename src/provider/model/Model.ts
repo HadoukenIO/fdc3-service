@@ -184,7 +184,6 @@ export class Model {
      */
     private registerWindow(appInfo: Application, identity: Identity, isInAppDirectory: boolean): AppWindow {
         const appWindow = this._environment.wrapApplication(appInfo, identity, this._channelsById[DEFAULT_CHANNEL_ID]);
-        appWindow.channel = this._channelsById[DEFAULT_CHANNEL_ID];
 
         console.info(`Registering window [${isInAppDirectory ? '' : 'NOT '}in app directory] ${appWindow.id}`);
         this._windowsById[appWindow.id] = appWindow;
