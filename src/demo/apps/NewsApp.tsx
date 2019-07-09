@@ -2,14 +2,14 @@ import * as React from 'react';
 
 import * as fdc3 from '../../client/main';
 import {NewsFeed} from '../components/news/NewsFeed';
-import {SecurityContext, Context} from '../../client/context';
+import {InstrumentContext, Context} from '../../client/context';
 import '../../../res/demo/css/w3.css';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
 
 export function NewsApp(): React.ReactElement {
     const [symbolName, setSymbolName] = React.useState('AAPL');
 
-    function handleIntent(context: SecurityContext): void {
+    function handleIntent(context: InstrumentContext): void {
         if (context && context.name) {
             setSymbolName(context.name);
         } else {
@@ -25,7 +25,7 @@ export function NewsApp(): React.ReactElement {
         const intentListener = fdc3.addIntentListener(fdc3.Intents.VIEW_NEWS, (context: Context): Promise<void> => {
             return new Promise((resolve, reject) => {
                 try {
-                    handleIntent(context as SecurityContext);
+                    handleIntent(context as InstrumentContext);
                     resolve();
                 } catch (e) {
                     reject(e);
@@ -35,7 +35,7 @@ export function NewsApp(): React.ReactElement {
 
         const contextListener = fdc3.addContextListener((context: Context): void => {
             if (context.type === 'security') {
-                handleIntent(context as SecurityContext);
+                handleIntent(context as InstrumentContext);
             }
         });
 

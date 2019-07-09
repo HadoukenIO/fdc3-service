@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import * as fdc3 from '../../client/main';
 import {Chart} from '../components/charts/Chart';
-import {SecurityContext, Context} from '../../client/context';
+import {InstrumentContext, Context} from '../../client/context';
 import '../../../res/demo/css/w3.css';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
 
@@ -13,7 +13,7 @@ interface AppProps {
 export function ChartsApp(props: AppProps): React.ReactElement {
     const [symbolName, setSymbolName] = React.useState('AAPL');
 
-    function handleIntent(context: SecurityContext): void {
+    function handleIntent(context: InstrumentContext): void {
         if (context && context.name) {
             setSymbolName(context.name);
         } else {
@@ -29,7 +29,7 @@ export function ChartsApp(props: AppProps): React.ReactElement {
         const intentListener = fdc3.addIntentListener(fdc3.Intents.VIEW_CHART, (context: Context): Promise<void> => {
             return new Promise((resolve, reject) => {
                 try {
-                    handleIntent(context as SecurityContext);
+                    handleIntent(context as InstrumentContext);
                     resolve();
                 } catch (e) {
                     reject(e);
@@ -39,7 +39,7 @@ export function ChartsApp(props: AppProps): React.ReactElement {
 
         const contextListener = fdc3.addContextListener((context: Context): void => {
             if (context.type === 'security') {
-                handleIntent(context as SecurityContext);
+                handleIntent(context as InstrumentContext);
             }
         });
 

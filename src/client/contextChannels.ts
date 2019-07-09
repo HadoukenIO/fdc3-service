@@ -209,7 +209,7 @@ export class DesktopChannel extends ChannelBase {
     public readonly color: number;
 
     /**
-     * @hidden
+     * @hideconstructor
      */
     public constructor(transport: DesktopChannelTransport) {
         super(transport.id, 'desktop');
@@ -229,7 +229,7 @@ export class DefaultChannel extends ChannelBase {
     public readonly type!: 'default';
 
     /**
-     * @hidden
+     * @hideconstructor
      */
     public constructor() {
         super(DEFAULT_CHANNEL_ID, 'default');

@@ -4,15 +4,17 @@ import {Identity, Window} from 'openfin/_v2/main';
 
 import {AsyncInit} from '../controller/AsyncInit';
 import {Signal1, Signal2} from '../common/Signal';
-import {Application, IntentType, ChannelId} from '../../client/main';
+import {Application, ChannelId} from '../../client/main';
 import {FDC3Error, OpenError, ResolveError} from '../../client/errors';
 import {deferredPromise, withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
+import {IntentType} from '../intents';
 
 import {Environment} from './Environment';
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 import {getId} from './Model';
+
 
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {

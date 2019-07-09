@@ -6,8 +6,9 @@ import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 import {Inject} from '../common/Injectables';
 import {AppDirectory} from '../model/AppDirectory';
 import {Model} from '../model/Model';
-import {Intent, Application} from '../../client/main';
+import {Application} from '../../client/main';
 import {SERVICE_IDENTITY} from '../../client/internal';
+import {Intent} from '../intents';
 
 import {AsyncInit} from './AsyncInit';
 

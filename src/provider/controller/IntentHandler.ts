@@ -1,7 +1,7 @@
 import {injectable, inject} from 'inversify';
 
 import {Inject} from '../common/Injectables';
-import {Intent} from '../../client/intents';
+import {Intent} from '../intents';
 import {IntentResolution, Application} from '../../client/main';
 import {FDC3Error, ResolveError} from '../../client/errors';
 import {FindFilter, Model} from '../model/Model';

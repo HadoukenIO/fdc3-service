@@ -10,60 +10,150 @@
  */
 
 /**
- * Type definitions that is are wherever the API expects the ID or of an application to be passed. We have both, since
- * internally appId is used to identify app, but externally we use name to repsect specification
+ * Type alias to indicate when an Application Identifier should be passed. Application Identifiers
+ * are described [here](https://fdc3.finos.org/docs/1.0/appd-discovery#application-identifier).
  *
- * It is not possible for TypeScript to verify that only valid application names/appIds are passed
- * to the FDC3 API. This type definition is more a hint to the callee, over a plain "string" argument.
+ * This type alias exists to disambiguate raw string app identity from the [[AppName]].
  */
 export type AppId = string;
+/**
+ * Type alias to indicate when an Application Name should be passed. This will be a human-readable
+ * name that will be displayed on screen.
+ *
+ * This type alias exists to disambiguate raw string app identity from the [[AppId]].
+ */
 export type AppName = string;
 
 /**
- * An application in the app directory
+ * An application in the app directory.
  */
 export interface Application {
+    /**
+     * The Application Identifier. Please see https://fdc3.finos.org/docs/1.0/appd-discovery#application-identifier.
+     */
     appId: AppId;
+    /**
+     * The human readable app name.
+     */
     name: AppName;
+    /**
+     * An application manifest, used to launch the app. This should be a URL that points to an OpenFin json manifest.
+     */
     manifest: string;
+    /**
+     * The manifest type. Always 'openfin'.
+     */
     manifestType: string;
-
+    /**
+     * The version of the app. Please use [semantic versioning](https://en.wikipedia.org/wiki/Software_versioning).
+     */
     version?: string;
+    /**
+     * The human-readable title of the app, typically used by the launcher UI. If not provided, the name is used.
+     */
     title?: string;
+    /**
+     * Tooltip used by any UIs that display app information. A short explanatory text string.
+     */
     tooltip?: string;
+    /**
+     * Longer description of the app.
+     */
     description?: string;
+    /**
+     * Images that can be displayed as part of the app directory entry. Use these for screenshots, previews or similar. These are not the
+     * application icons: use 'icons' for that.
+     */
     images?: AppImage[];
+    /**
+     * Contact email address.
+     */
     contactEmail?: string;
+    /**
+     * Support email address.
+     */
     supportEmail?: string;
+    /**
+     * Name of the publishing company, organization, or individual.
+     */
     publisher?: string;
-
-    signature?: string;
+    /**
+     * Icons used in the app directory display. A launcher may be able to use various sizes.
+     */
     icons?: Icon[];
+    /**
+     * Additional config. Currently unused by the OpenFin implementation.
+     */
     customConfig?: NameValuePair[];
-
-    intents?: Intent[];
+    /**
+     * The set of intents associated with this AppDir entry.
+     */
+    intents?: AppDirIntent[];
 }
-
-interface AppImage {
+/**
+ * An image for an app in the app directory.
+ */
+export interface AppImage {
+    /**
+     * A URL that points to an image.
+     */
     url: string;
+    /**
+     * Alt text to be displayed with the image.
+     */
     tooltip?: string;
+    /**
+     * Additional text description.
+     */
     description?: string;
 }
-interface Icon {
+
+/**
+ * An icon for an app in the app directory.
+ */
+export interface Icon {
+    /**
+     * A URL that points to an icon.
+     */
     icon: string;
 }
 
-interface NameValuePair {
+/**
+ * The application allows extra configuration to be passed in, and uses an array of NameValuePairs,
+ * where the key is the name.
+ */
+export interface NameValuePair {
+    /**
+     * Key for the extra configuration.
+     */
     name: string;
+    /**
+     * Value for the extra configuration.
+     */
     value: string;
 }
-
-interface Intent {
+/**
+ * This is a representation of an [FDC3 Intent](https://fdc3.finos.org/docs/1.0/intents-intro) supported by the app in the app directory.
+ */
+export interface AppDirIntent {
+    /**
+     * The intent name.
+     */
     name: string;
+    /**
+     * The human-readable name to display.
+     */
     displayName?: string;
+    /**
+     * The context types that this intent supports. A context type is a namespaced name;
+     * examples are given [here](https://fdc3.finos.org/docs/1.0/context-spec).
+     */
     contexts: string[];
 
     // Specification is ambiguous on type of customConfig, so leaving as 'any'
     /* tslint:disable:no-any */
+    /**
+     * Custom configuration for the intent. Currently unused, reserved for future use.
+     */
     customConfig: any;
 }

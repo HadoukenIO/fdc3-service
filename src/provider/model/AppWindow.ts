@@ -1,6 +1,7 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {Application, IntentType, ChannelId} from '../../client/main';
+import {Application, ChannelId} from '../../client/main';
+import {IntentType} from '../intents';
 
 import {ContextChannel} from './ContextChannel';
 
