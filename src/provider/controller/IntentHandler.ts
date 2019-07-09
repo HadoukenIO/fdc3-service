@@ -110,27 +110,24 @@ export class IntentHandler {
 
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
         const appWindows = await this._model.findOrCreate(appInfo);
-
-        const dispatchResults = await Promise.all(appWindows.map(async (window: AppWindow): Promise<[boolean, any]> => {
+        // to decide between focus nothing or apps with intent listener
+        const dispatchResults = await Promise.all(appWindows.map(async (window: AppWindow): Promise<boolean> => {
             if (await window.isReadyToReceiveIntent(intent.type)) {
                 // TODO: [SERVICE-544] Implement a timeout so a misbehaving intent handler can't block the intent raiser
-                const data = await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.INTENT, {context: intent.context, intent: intent.type});
-                return [true, data];
+                await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.INTENT, {context: intent.context, intent: intent.type});
+                return true;
             } else {
-                return [false, undefined];
+                return false;
             }
         }));
 
-        if (dispatchResults.every(dispatchResult => dispatchResult[0] === false)) {
+        if (!dispatchResults.some(dispatchResult => dispatchResult)) {
             throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
         }
 
-        const dispatchResultData = dispatchResults.filter((dispatchResult) => dispatchResult[1] !== undefined).map(dispatchResult => dispatchResult[1]);
-
         const result: IntentResolution = {
             source: appInfo.name,
-            version: '1.0.0',
-            data: dispatchResultData.length === 0 ? undefined : dispatchResultData.length === 1 ? dispatchResultData[0] : dispatchResultData
+            version: '1.0.0'
         };
 
         // Handle next queued intent
