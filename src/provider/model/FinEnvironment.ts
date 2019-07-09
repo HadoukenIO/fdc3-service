@@ -1,14 +1,14 @@
 import {WindowEvent, ApplicationEvent} from 'openfin/_v2/api/events/base';
 import {injectable} from 'inversify';
-import {Identity, Window} from 'openfin/_v2/main';
+import {Identity, Window, Application as OFAppliction} from 'openfin/_v2/main';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {Signal1, Signal2} from '../common/Signal';
+import {Signal1, Signal2, SignalSlot} from '../common/Signal';
 import {Application, IntentType, ChannelId, FDC3ChannelEventType} from '../../client/main';
 import {FDC3Error, OpenError} from '../../client/errors';
-import {deferredPromise, withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
 import {parseIdentity} from '../../client/validation';
+import {withTimeout} from '../../provider/utils/async';
 
 import {Environment} from './Environment';
 import {AppWindow} from './AppWindow';
@@ -38,17 +38,19 @@ export class FinEnvironment extends AsyncInit implements Environment {
     private readonly appChildWindowCounts: Map<string, number> = new Map<string, number>();
 
     public async createApplication(appInfo: Application, channel: ContextChannel): Promise<AppWindow> {
-        const [didTimeout, app] = await withTimeout(
-            Timeouts.APP_START_FROM_MANIFEST,
-            fin.Application.startFromManifest(appInfo.manifest).catch(e => {
-                throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
-            })
+        const app = await withTimeout<OFAppliction>(
+            (resolve, reject) => {
+                fin.Application.startFromManifest(appInfo.manifest).then((app) => resolve(app)).catch((e) => {
+                    reject(new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message));
+                });
+            },
+            (resolve, reject) => {
+                reject(new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`));
+            },
+            Timeouts.APP_START_FROM_MANIFEST
         );
-        if (didTimeout) {
-            throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
-        }
 
-        return this.wrapApplication(appInfo, app!.identity, channel);
+        return this.wrapApplication(appInfo, app.identity, channel);
     }
 
     public wrapApplication(appInfo: Application, identity: Identity, channel: ContextChannel): AppWindow {
@@ -235,22 +237,21 @@ class FinAppWindow implements AppWindow {
             return false;
         } else {
             // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
-            const [waitForIntentListenerAddedPromise, resolve] = deferredPromise();
-            const slot = this._onIntentListenerAdded.add(intentAdded => {
-                if (intentAdded === intent) {
-                    slot.remove();
-                    resolve();
-                }
-            });
-
-            const [didTimeout] = await withTimeout(Timeouts.ADD_INTENT_LISTENER - age, waitForIntentListenerAddedPromise);
-
-            if (didTimeout) {
-                slot.remove();
-                return false;
-            } else {
-                return true;
-            }
+            let slot: SignalSlot<(arg1: string) => void>;
+            return withTimeout<boolean>(
+                resolve => {
+                    slot = this._onIntentListenerAdded.add(intentAdded => {
+                        if (intentAdded === intent) {
+                            slot.remove();
+                            resolve(true);
+                        }
+                    });
+                },
+                resolve => {
+                    slot!.remove();
+                    resolve(false);
+                }, Timeouts.ADD_INTENT_LISTENER - age
+            );
         }
     }
 }
