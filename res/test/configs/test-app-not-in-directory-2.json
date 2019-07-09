@@ -1,0 +1,14 @@
+{
+    "devtools_port": 9090,
+    "startup_app": {
+        "name": "test-app-not-in-directory-2",
+        "url": "http://localhost:3923/test/test-app.html",
+        "uuid": "test-app-not-in-directory-2",
+        "autoShow": true,
+        "defaultHeight": 400,
+        "defaultWidth": 500
+    },
+    "runtime": {
+        "version": "10.66.39.43"
+    }
+}

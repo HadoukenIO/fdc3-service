@@ -67,5 +67,11 @@ export function Resolver(): React.ReactElement {
  * - myorg.FETCH_RFQ -> 'Open "Fetch Rfq" with'
  */
 function prettyPrintIntent(intent: string) {
-    return intent.split('.')[1].replace(/([A-Z]+)/g, ' $1').replace(/([A-Z][a-z])/g, ' $1').replace('_', ' ').replace('-', ' ').trimLeft().toLowerCase();
+    const intentWithoutNamespace = intent.includes('.') ? intent.split('.')[1] : intent;
+    return intentWithoutNamespace
+        .replace(/([A-Z]+)/g, ' $1')
+        .replace(/([A-Z][a-z])/g, ' $1')
+        .replace(/[-_]/g, ' ')
+        .trimLeft()
+        .toLowerCase();
 }

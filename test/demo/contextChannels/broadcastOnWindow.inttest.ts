@@ -3,8 +3,9 @@ import {Identity, Application} from 'hadouken-js-adapter';
 
 import {ChannelId} from '../../../src/client/contextChannels';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
-import {appStartupTime, testManagerIdentity, testAppNotInDirectory} from '../constants';
+import {appStartupTime, testManagerIdentity, testAppNotInDirectory1, testAppInDirectory1, testAppInDirectory2, testAppInDirectory3, testAppInDirectory4} from '../constants';
 import {fin} from '../utils/fin';
+import {setupTeardown} from '../utils/common';
 
 /*
  * Tests top-level broadcast(), and addContextListener() calls, and how they interact with Channel.join()
@@ -13,9 +14,7 @@ const testContext = {type: 'test-context', name: 'contextName1', id: {name: 'con
 
 const startedApps:Application[] = [];
 
-beforeAll(async () => {
-    await expect(fin.Application.wrapSync(testManagerIdentity).isRunning()).resolves.toBe(true);
-});
+setupTeardown();
 
 afterEach(async () => {
     jest.clearAllMocks();
@@ -29,12 +28,7 @@ afterEach(async () => {
 
 // Creates one window for each channel, and has that window join that channel if not undefined
 async function setupWindows(...channels: (ChannelId|undefined)[]): Promise<Identity[]> {
-    const app1 = {uuid: 'test-app-1', name: 'test-app-1'};
-    const app2 = {uuid: 'test-app-2', name: 'test-app-2'};
-    const app3 = {uuid: 'test-app-3', name: 'test-app-3'};
-    const app4 = {uuid: 'test-app-4', name: 'test-app-4'};
-
-    const appIdentities = [app1, app2, app3, app4];
+    const appIdentities = [testAppInDirectory1, testAppInDirectory2, testAppInDirectory3, testAppInDirectory4];
 
     const offset = startedApps.length;
 
@@ -233,11 +227,11 @@ describe('When adding a context listener', () => {
 
 describe('When using a non-directory app', () => {
     beforeEach(async () => {
-        await fin.Application.startFromManifest(testAppNotInDirectory.manifestUrl);
+        await fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl);
     }, appStartupTime * 2);
 
     afterEach(async () => {
-        await fin.Application.wrapSync(testAppNotInDirectory).quit(true);
+        await fin.Application.wrapSync(testAppNotInDirectory1).quit(true);
     });
 
     test('When broadcasting from the non-directory app, contexts are received as expected', async () => {
@@ -246,10 +240,10 @@ describe('When using a non-directory app', () => {
         const directoryListener = await fdc3Remote.addContextListener(orangeWindow);
 
         // Put our non-directory app in the orange channel
-        await joinChannel(testAppNotInDirectory, 'orange');
+        await joinChannel(testAppNotInDirectory1, 'orange');
 
         // Broadcast from our non-directory app
-        await fdc3Remote.broadcast(testAppNotInDirectory, testContext);
+        await fdc3Remote.broadcast(testAppNotInDirectory1, testContext);
 
         // Check listener recevied our context from the non-directory app
         await expect(directoryListener.getReceivedContexts()).resolves.toEqual([testContext]);
@@ -259,10 +253,10 @@ describe('When using a non-directory app', () => {
         const [blueWindow] = await setupWindows('blue');
 
         // Set up a listener on the non-directory app
-        const nonDirectoryListener = await fdc3Remote.addContextListener(testAppNotInDirectory);
+        const nonDirectoryListener = await fdc3Remote.addContextListener(testAppNotInDirectory1);
 
         // Put our non-directory app in the blue channel
-        await joinChannel(testAppNotInDirectory, 'blue');
+        await joinChannel(testAppNotInDirectory1, 'blue');
 
         // Broadcast from our directory app
         await fdc3Remote.broadcast(blueWindow, testContext);

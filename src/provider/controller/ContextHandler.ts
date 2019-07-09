@@ -30,7 +30,7 @@ export class ContextHandler {
      * @param context Context to be sent
      */
     public async send(window: AppWindow, context: Context): Promise<void> {
-        await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.CONTEXT, context);
+        return this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.CONTEXT, context);
     }
 
     /**
@@ -40,8 +40,8 @@ export class ContextHandler {
      * @param context Context to send
      * @param source Window sending the context. It won't receive the broadcast
      */
-    public broadcast(context: Context, source: AppWindow): void {
-        this.broadcastOnChannel(context, source, source.channel);
+    public async broadcast(context: Context, source: AppWindow): Promise<void> {
+        return this.broadcastOnChannel(context, source, source.channel);
     }
 
     /**
@@ -54,21 +54,25 @@ export class ContextHandler {
      */
     public async broadcastOnChannel(context: Context, source: AppWindow, channel: ContextChannel): Promise<void> {
         const memberWindows = this._channelHandler.getChannelMembers(channel);
-        const listeningWindows = this._channelHandler.getWindowsListeningToChannel(channel);
+        const listeningWindows = this._channelHandler.getWindowsListeningForContextsOnChannel(channel);
 
         this._channelHandler.setLastBroadcastOnChannel(channel, context);
 
         const sourceId = getId(source.identity);
 
-        memberWindows
-            // Sender window should not receive its own broadcasts
-            .filter(window => getId(window.identity) !== sourceId)
-            .forEach(window => this.send(window, context));
+        const promises: Promise<void>[] = [];
 
-        listeningWindows
+        promises.push(...memberWindows
             // Sender window should not receive its own broadcasts
             .filter(window => getId(window.identity) !== sourceId)
-            .forEach(window => this.sendOnChannel(window, context, channel));
+            .map(window => this.send(window, context)));
+
+        promises.push(...listeningWindows
+            // Sender window should not receive its own broadcasts
+            .filter(window => getId(window.identity) !== sourceId)
+            .map(window => this.sendOnChannel(window, context, channel)));
+
+        return Promise.all(promises).then(() => {});
     }
 
     /**

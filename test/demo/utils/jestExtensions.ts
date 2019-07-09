@@ -24,9 +24,13 @@ declare global {
 }
 
 expect.extend({
-    async toThrowFDC3Error<T = any>(received: Promise<T>, code: string, message?: string | RegExp) {
+    async toThrowFDC3Error<T = any>(received: Promise<T> | (() => T), code: string, message?: string | RegExp) {
         try {
-            await received;
+            if (received instanceof Promise) {
+                await received;
+            } else {
+                received();
+            }
             return {
                 pass: false,
                 message: () => 'Expected promise to be rejected'

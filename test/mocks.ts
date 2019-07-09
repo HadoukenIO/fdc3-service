@@ -1,12 +1,12 @@
 import {AppWindow} from '../src/provider/model/AppWindow';
-import {IntentType, Context, ChannelId} from '../src/client/main';
+import {IntentType, Context, FDC3ChannelEventType} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
 import {ChannelTransport} from '../src/client/internal';
 
 /**
  * Creates a minimal mock app window. Any utilizing test should set properties and set up mock functions as needed
  */
-export function createMockAppWindow(): AppWindow {
+export function createMockAppWindow(): jest.Mocked<AppWindow> {
     return {
         id: '',
         identity: {name: '', uuid: ''},
@@ -17,15 +17,18 @@ export function createMockAppWindow(): AppWindow {
         hasIntentListener: jest.fn<boolean, [string]>(),
         addIntentListener: jest.fn<void, [string]>(),
         removeIntentListener: jest.fn<void, [string]>(),
-        hasContextListener: jest.fn<boolean, [ChannelId]>(),
-        addContextListener: jest.fn<void, [ChannelId]>(),
-        removeContextListener: jest.fn<void, [ChannelId]>(),
+        hasContextListener: jest.fn<boolean, [ContextChannel]>(),
+        addContextListener: jest.fn<void, [ContextChannel]>(),
+        removeContextListener: jest.fn<void, [ContextChannel]>(),
+        hasChannelEventListener: jest.fn<boolean, [ContextChannel, FDC3ChannelEventType]>(),
+        addChannelEventListener: jest.fn<void, [ContextChannel, FDC3ChannelEventType]>(),
+        removeChannelEventListener: jest.fn<void, [ContextChannel, FDC3ChannelEventType]>(),
         focus: jest.fn<Promise<void>, []>(),
         ensureReadyToReceiveIntent: jest.fn<Promise<void>, [IntentType]>()
     };
 }
 
-function createMockChannel(): ContextChannel {
+export function createMockChannel(): jest.Mocked<ContextChannel> {
     return {
         id: '',
         type: '',

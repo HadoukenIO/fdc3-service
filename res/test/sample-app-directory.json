@@ -111,6 +111,7 @@
         }
     ],
     "intents": [
+        {"name": "test.IntentOnlyOnApp4"},
         {"name": "DialCall"},
         {"name": "StartCall"},
         {"name": "SaveContact"},
