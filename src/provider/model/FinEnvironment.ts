@@ -5,7 +5,7 @@ import {Identity, Window} from 'openfin/_v2/main';
 import {AsyncInit} from '../controller/AsyncInit';
 import {Signal1, Signal2} from '../common/Signal';
 import {Application, IntentType, ChannelId, FDC3ChannelEventType} from '../../client/main';
-import {FDC3Error, OpenError, ResolveError} from '../../client/errors';
+import {FDC3Error, OpenError} from '../../client/errors';
 import {deferredPromise, withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
 import {parseIdentity} from '../../client/validation';
@@ -33,7 +33,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
      */
     public readonly windowClosed: Signal1<Identity> = new Signal1();
 
-    private readonly windowCreationTimes: {[id: string]: number} = {};
+    private readonly windowCreationTimes: Map<string, number> = new Map<string, number>();
 
     public async createApplication(appInfo: Application, channel: ContextChannel): Promise<AppWindow> {
         const [didTimeout, app] = await withTimeout(
@@ -51,15 +51,15 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
     public wrapApplication(appInfo: Application, identity: Identity, channel: ContextChannel): AppWindow {
         identity = parseIdentity(identity);
-        const creationTime = this.windowCreationTimes.hasOwnProperty(getId(identity)) ? this.windowCreationTimes[getId(identity)] : undefined;
+        const creationTime = this.windowCreationTimes.get(getId(identity));
 
-        return new FinAppWindow(identity, appInfo, channel, creationTime);
+        return new FinAppWindow(identity, appInfo, channel, creationTime, 0);
     }
 
     protected async init(): Promise<void> {
         fin.System.addListener('window-created', (event: WindowEvent<'system', 'window-created'>) => {
             const identity = {uuid: event.uuid, name: event.name};
-            this.windowCreationTimes[getId(identity)] = Date.now();
+            this.windowCreationTimes.set(getId(identity), Date.now());
 
             this.registerWindow(identity);
         });
