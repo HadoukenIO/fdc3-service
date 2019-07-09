@@ -220,8 +220,12 @@ class FinAppWindow implements AppWindow {
         }
     }
 
+    public bringToFront(): Promise<void> {
+        return this._window.bringToFront();
+    }
+
     public focus(): Promise<void> {
-        return this._window.setAsForeground();
+        return this._window.focus();
     }
 
     public async isReadyToReceiveIntent(intent: IntentType): Promise<boolean> {

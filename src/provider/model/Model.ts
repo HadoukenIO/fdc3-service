@@ -77,13 +77,8 @@ export class Model {
 
         if (matchingWindows.length > 0) {
             // Sort windows into the order they were created
-            matchingWindows.sort((a: AppWindow, b: AppWindow) => {
-                return a.appCreationIndex < b.appCreationIndex ? -1 : a.appCreationIndex === b.appCreationIndex ? 0 : 1;
-            });
+            matchingWindows.sort((a: AppWindow, b: AppWindow) => a.appCreationIndex - b.appCreationIndex);
 
-            for (const window of matchingWindows) {
-                await window.focus();
-            }
             return matchingWindows;
         } else {
             const createPromise = this._environment.createApplication(appInfo, this._channelsById[DEFAULT_CHANNEL_ID]);

@@ -105,6 +105,11 @@ export class Main {
         // This can throw FDC3Errors if app fails to open or times out
         const appWindows = await this._model.findOrCreate(appInfo);
 
+        await Promise.all(appWindows.map(window => window.bringToFront()));
+        if (appWindows.length > 0) {
+            appWindows[appWindows.length - 1].focus();
+        }
+
         if (payload.context) {
             return Promise.all(appWindows.map(window => {
                 return this._contextHandler.send(window, parseContext(payload.context!));

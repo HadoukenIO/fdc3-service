@@ -43,6 +43,8 @@ export interface AppWindow {
 
     removeChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void;
 
+    bringToFront(): Promise<void>;
+
     focus(): Promise<void>;
 
     isReadyToReceiveIntent(intent: IntentType): Promise<boolean>;
