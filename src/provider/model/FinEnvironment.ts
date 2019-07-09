@@ -1,4 +1,4 @@
-import {WindowEvent, ApplicationEvent} from 'openfin/_v2/api/events/base';
+import {WindowEvent} from 'openfin/_v2/api/events/base';
 import {injectable} from 'inversify';
 import {Identity, Window} from 'openfin/_v2/main';
 
