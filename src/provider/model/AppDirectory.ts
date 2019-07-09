@@ -1,7 +1,14 @@
-import {injectable} from 'inversify';
+import {injectable, inject} from 'inversify';
+import {MaskWatch} from 'openfin-service-config/Watch';
+import {Scope} from 'openfin-service-config/Types';
+import {ScopedConfig} from 'openfin-service-config';
 
+import {Inject} from '../common/Injectables';
 import {Application, AppName} from '../../client/directory';
 import {AppIntent} from '../../client/main';
+import {ConfigurationObject} from '../../../gen/provider/config/fdc3-config';
+
+import {ConfigStore} from './ConfigStore';
 
 enum StorageKeys {
     URL = 'fdc3@url',
@@ -11,15 +18,28 @@ enum StorageKeys {
 // Demo development app directory url
 const devUrl = 'http://localhost:3923/provider/sample-app-directory.json';
 
-
 @injectable()
 export class AppDirectory {
     private _directory: Application[] = [];
     private _url!: string;
 
-    public constructor() {
-        // Set default values
-        this._url = devUrl;
+    public constructor(@inject(Inject.CONFIG_STORE) configStore: ConfigStore) {
+        if (process.env.NODE_ENV === 'development') {
+            // Set the application directory to our local copy during development.  In production it will be an empty string.
+            configStore.config.add({level: 'desktop'}, {applicationDirectory: devUrl});
+        }
+
+        this._url = configStore.config.query({level: 'desktop'}).applicationDirectory;
+
+        // Adding the follow watch logic as there is a race condition with the loading of the application directory.
+        // This logic will set the URL in the store as soon as it is retrieved.
+        const watch = new MaskWatch(configStore.config, {applicationDirectory: true});
+
+        watch.onAdd.add((rule: ScopedConfig<ConfigurationObject>, source: Scope) => {
+            this.updateURL(configStore.config.query({level: 'desktop'}).applicationDirectory);
+        });
+
+        configStore.config.addWatch(watch);
     }
 
     public async getAppByName(name: AppName): Promise<Application | null> {
