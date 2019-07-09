@@ -1,5 +1,5 @@
 import {WindowEvent} from 'openfin/_v2/api/events/base';
-import {injectable} from 'inversify';
+import {injectable, id} from 'inversify';
 import {Identity, Window} from 'openfin/_v2/main';
 
 import {AsyncInit} from '../controller/AsyncInit';
@@ -41,7 +41,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     private _windowsCreated: number = 0;
     private readonly _pendingWindows: {[id: string]: PendingWindow} = {};
 
-    public async createApplication(appInfo: Application, channel: ContextChannel): Promise<AppWindow> {
+    public async createApplication(appInfo: Application, channel: ContextChannel): Promise<void> {
         const [didTimeout, app] = await withTimeout(
             Timeouts.APP_START_FROM_MANIFEST,
             fin.Application.startFromManifest(appInfo.manifest).catch(e => {
@@ -51,8 +51,6 @@ export class FinEnvironment extends AsyncInit implements Environment {
         if (didTimeout) {
             throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
         }
-
-        return this.wrapApplication(appInfo, app!.identity, channel);
     }
 
     public wrapApplication(appInfo: Application, identity: Identity, channel: ContextChannel): AppWindow {
