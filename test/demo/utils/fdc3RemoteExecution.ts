@@ -13,8 +13,9 @@
 import {Identity} from 'openfin/_v2/main';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 
-import {Context, IntentType, AppIntent, ChannelId, FDC3Event, FDC3MainEventType} from '../../../src/client/main';
+import {Context, AppIntent, ChannelId, FDC3Event, FDC3MainEventType} from '../../../src/client/main';
 import {RaiseIntentPayload, deserializeError} from '../../../src/client/internal';
+import {IntentType} from '../../../src/provider/intents';
 
 import {OFPuppeteerBrowser, TestWindowContext, TestChannelTransport} from './ofPuppeteer';
 import {RemoteChannel} from './RemoteChannel';

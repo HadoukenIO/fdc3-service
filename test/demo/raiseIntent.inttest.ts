@@ -2,9 +2,9 @@ import 'jest';
 import 'reflect-metadata';
 
 import {ResolveError} from '../../src/client/errors';
-import {Intent} from '../../src/client/intents';
 import {RESOLVER_IDENTITY} from '../../src/provider/utils/constants';
 import {Timeouts} from '../../src/provider/constants';
+import {Intent} from '../../src/provider/intents';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';

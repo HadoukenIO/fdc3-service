@@ -1,7 +1,8 @@
 import {AppWindow} from '../src/provider/model/AppWindow';
-import {IntentType, Context, FDC3ChannelEventType} from '../src/client/main';
+import {Context, FDC3ChannelEventType} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
 import {ChannelTransport} from '../src/client/internal';
+import {IntentType} from '../src/provider/intents';
 
 /**
  * Creates a minimal mock app window. Any utilizing test should set properties and set up mock functions as needed
