@@ -113,6 +113,7 @@ export class IntentHandler {
 
         const dispatchResults = await Promise.all(appWindows.map(async (window: AppWindow): Promise<[boolean, any]> => {
             if (await window.isReadyToReceiveIntent(intent.type)) {
+                // TODO: [SERVICE-544] Implement a timeout so a misbehaving intent handler can't block the intent raiser
                 const data = await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.INTENT, {context: intent.context, intent: intent.type});
                 return [true, data];
             } else {
