@@ -34,20 +34,18 @@ export async function quitApps(...apps: Identity[]) {
 export async function waitForAppToBeRunning(app: Identity): Promise<void> {
     let timedOut = false;
 
-    await withTimeout(
-        async (resolve) => {
-            while (!await fin.Application.wrapSync(app).isRunning() && !timedOut) {
-                await delay(100);
-            }
+    [timedOut] = await withTimeout(appStartupTime, new Promise<void>(async (resolve) => {
+        while (!await fin.Application.wrapSync(app).isRunning() && !timedOut) {
+            await delay(100);
+        }
 
-            resolve();
-        },
-        (resolve, reject) => {
-            timedOut = true;
-            reject(new Error(`Timeout waiting for app ${JSON.stringify(app)} to start`));
-        },
-        appStartupTime
-    );
+        resolve();
+    }));
+
+    if (timedOut) {
+        throw new Error(`Timeout waiting for app ${JSON.stringify(app)} to start`);
+    }
+
     // Additional delay to ensure app window is ready for puppeteer connection
     await delay(500);
 }

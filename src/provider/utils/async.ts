@@ -12,24 +12,14 @@ export function deferredPromise<T = void>(): [Promise<T>, (value?: T) => void, (
     return [p, res!, rej!];
 }
 
-type PromiseResolution<T> = (T | PromiseLike<T> | undefined);
-type ResolveFunction<T> = (value?: PromiseResolution<T>) => void;
-type RejectFunction = (reason?: any) => void;
-type PromiseFunctionPair<T> = (resolve: ResolveFunction<T>, reject: RejectFunction) => void
-
 /**
- * Similar to creating a promise with `new Promise()`, but takes an additional fuction, taking a second
- * resolve/reject pair, that will be called when the specified timeout expires
- * @param func The function to be called immediately with the resolve/reject pair of the new Promise
- * @param timeout The function to be called after the timeout with the resolve/reject pair of the new Promise
- * @param duration The duration of the timeout
+ * Races a given promise against a timeout, and resolves to a `[didTimeout, value?]` tuple indicating
+ * whether the timeout occurred, and the value the promise resolved to (if timeout didn't occur)
+ * @param timeoutMs Timeout period in ms
+ * @param promise Promise to race against the timeout
  */
-export function withTimeout<T>(func: PromiseFunctionPair<T>, timeout: PromiseFunctionPair<T>, duration: number): Promise<T> {
-    return new Promise<T>(async (resolve, reject) => {
-        func(resolve, reject);
-
-        setTimeout(() => {
-            timeout(resolve, reject);
-        }, duration);
-    });
+export function withTimeout<T>(timeoutMs: number, promise: Promise<T>): Promise<[boolean, T | undefined]> {
+    const timeout = new Promise<[boolean, undefined]>(res => setTimeout(() => res([true, undefined]), timeoutMs));
+    const p = promise.then(value => ([false, value] as [boolean, T]));
+    return Promise.race([timeout, p]);
 }
