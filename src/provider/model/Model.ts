@@ -170,7 +170,7 @@ export class Model {
                 appInfo = appWindowsFromSameApp[0].appInfo;
             } else {
                 // There are no appWindows in the model with the same app uuid - Produce minimal appInfo from window information
-                // TODO: Think about this race condition - for a brief period a window can be connected but not in the model
+                // TODO: Think about this race condition - for a brief period a window can be connected but not in the model (SERVICE-551)
                 appInfo = await this.getApplicationInfo(identity);
             }
 

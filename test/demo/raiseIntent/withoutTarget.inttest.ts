@@ -139,7 +139,7 @@ the app opens and receives the intent with the correct context', async () => {
                         await expect(listener).toHaveReceivedContexts([uniqueIntent.context]);
                     });
 
-                    // Todo: Skipped pending SERVICE-544
+                    // TODO: Re-enable once we have at timeout to allow apps to add intent listeners on mulitple windows on startup (SERVICE-556)
                     test.skip('When the listener is registered on the child window, when calling raiseIntent from another app \
 the app opens and receives the intent with the correct context', async () => {
                         const childIdentity = {uuid: testAppWithUniqueIntent.uuid, name: testAppWithUniqueIntent.name + '-child-window'};
