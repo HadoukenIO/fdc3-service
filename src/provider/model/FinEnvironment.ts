@@ -20,6 +20,18 @@ interface PendingWindow {
     count: number;
 }
 
+interface IntentMap {
+    [key: string]: boolean;
+}
+
+interface ContextMap {
+    [key: string]: boolean;
+}
+
+interface ChannelEventMap {
+    [channelId: string]: {[eventId: string]: boolean};
+}
+
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
     /**
@@ -58,8 +70,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         const id = getId(identity);
 
         const {creationTime, count} = this._pendingWindows[id];
-
-        delete this._pendingWindows[getId(identity)];
+        delete this._pendingWindows[id];
 
         return new FinAppWindow(identity, appInfo, channel, creationTime, count);
     }
@@ -101,18 +112,6 @@ export class FinEnvironment extends AsyncInit implements Environment {
         const info = await fin.Application.wrapSync(identity).getInfo();
         this.windowCreated.emit(identity, info.manifestUrl);
     }
-}
-
-interface IntentMap {
-    [key: string]: boolean;
-}
-
-interface ContextMap {
-    [key: string]: boolean;
-}
-
-interface ChannelEventMap {
-    [channelId: string]: {[eventId: string]: boolean};
 }
 
 class FinAppWindow implements AppWindow {
