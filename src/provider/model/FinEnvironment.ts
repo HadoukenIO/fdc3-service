@@ -115,12 +115,12 @@ export class FinEnvironment extends AsyncInit implements Environment {
 }
 
 class FinAppWindow implements AppWindow {
-    public readonly appWindowNumber: number;
     public channel: ContextChannel;
 
     private readonly _id: string;
     private readonly _appInfo: Application;
     private readonly _window: Window;
+    private readonly _appWindowNumber: number;
 
     private readonly _creationTime: number | undefined;
 
@@ -128,10 +128,13 @@ class FinAppWindow implements AppWindow {
     private readonly _channelContextListeners: ContextMap;
     private readonly _channelEventListeners: ChannelEventMap;
 
+    private readonly _onIntentListenerAdded: Signal1<IntentType> = new Signal1();
+
     constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined, appWindowNumber: number) {
         this._id = getId(identity);
         this._window = fin.Window.wrapSync(identity);
         this._appInfo = appInfo;
+        this._appWindowNumber = appWindowNumber;
 
         this._creationTime = creationTime;
 
@@ -140,10 +143,7 @@ class FinAppWindow implements AppWindow {
         this._channelEventListeners = {};
 
         this.channel = channel;
-        this.appWindowNumber = appWindowNumber;
     }
-
-    private readonly _onIntentListenerAdded: Signal1<IntentType> = new Signal1();
 
     public get id(): string {
         return this._id;
@@ -155,6 +155,10 @@ class FinAppWindow implements AppWindow {
 
     public get appInfo(): Readonly<Application> {
         return this._appInfo;
+    }
+
+    public get appWindowNumber(): number {
+        return this._appWindowNumber;
     }
 
     public get channelContextListeners(): ReadonlyArray<ChannelId> {
