@@ -17,7 +17,7 @@ import {getId} from './Model';
 
 interface PendingWindow {
     creationTime: number | undefined;
-    count: number;
+    index: number;
 }
 
 interface IntentMap {
@@ -69,10 +69,10 @@ export class FinEnvironment extends AsyncInit implements Environment {
         identity = parseIdentity(identity);
         const id = getId(identity);
 
-        const {creationTime, count} = this._pendingWindows[id];
+        const {creationTime, index} = this._pendingWindows[id];
         delete this._pendingWindows[id];
 
-        return new FinAppWindow(identity, appInfo, channel, creationTime, count);
+        return new FinAppWindow(identity, appInfo, channel, creationTime, index);
     }
 
     protected async init(): Promise<void> {
@@ -103,7 +103,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     private async registerWindow(identity: Identity, creationTime: number | undefined): Promise<void> {
         const pendingWindow = {
             creationTime,
-            count: this._windowsCreated
+            index: this._windowsCreated
         };
 
         this._pendingWindows[getId(identity)] = pendingWindow;
