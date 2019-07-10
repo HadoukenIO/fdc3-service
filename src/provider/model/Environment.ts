@@ -19,7 +19,7 @@ export interface Environment {
     createApplication: (appInfo: Application, channel: ContextChannel) => Promise<void>;
 
     /**
-     * Creates an `AppWindow` object for an existing window.
+     * Creates an `AppWindow` object for an existing window. Should only be called once per window.
      */
     wrapApplication: (appInfo: Application, identity: Identity, channel: ContextChannel) => AppWindow;
 }
