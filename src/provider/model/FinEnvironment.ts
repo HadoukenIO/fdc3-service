@@ -116,12 +116,14 @@ export class FinEnvironment extends AsyncInit implements Environment {
     private async isExternalWindow(identity: Identity): Promise<boolean> {
         const extendedIdentity = identity as (Identity & {entityType: string | undefined});
 
+        const externalWindowType = 'external connection';
+
         if (extendedIdentity.entityType) {
-            return extendedIdentity.entityType === 'external window';
+            return extendedIdentity.entityType === externalWindowType;
         } else {
             const entityInfo = await fin.System.getEntityInfo(identity.uuid, identity.uuid);
 
-            return entityInfo.entityType === 'external window';
+            return entityInfo.entityType === externalWindowType;
         }
     }
 }
