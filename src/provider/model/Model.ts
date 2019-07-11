@@ -229,40 +229,11 @@ export class Model {
             } else {
                 // There are no appWindows in the model with the same app uuid - Produce minimal appInfo from window information
                 // TODO: Think about this race condition - for a brief period a window can be connected but not in the model
-                appInfo = await this.getApplicationInfo(identity);
+                appInfo = await this._environment.inferApplication(identity);
             }
 
             this.registerWindow(appInfo, identity, false);
         }
-    }
-
-    /**
-     * Retrieves application info from a window's identity
-     * @param identity `Identity` of the window to get the app info from
-     */
-    private async getApplicationInfo(identity: Identity): Promise<Application> {
-        type OFManifest = {
-            shortcut?: {name?: string, icon: string},
-            startup_app: {uuid: string, name?: string, icon?: string}
-        };
-
-        const application = fin.Application.wrapSync(identity);
-        const applicationInfo = await application.getInfo();
-        const {shortcut, startup_app} = applicationInfo.manifest as OFManifest;
-
-        const title = (shortcut && shortcut.name) || startup_app.name || startup_app.uuid;
-        const icon = (shortcut && shortcut.icon) || startup_app.icon;
-
-        const appInfo: Application = {
-            appId: application.identity.uuid,
-            name: application.identity.uuid,
-            title: title,
-            icons: icon ? [{icon}] : undefined,
-            manifestType: 'openfin',
-            manifest: applicationInfo.manifestUrl
-        };
-
-        return appInfo;
     }
 
     private static matchesFilter(window: AppWindow, filter: FindFilter): boolean {
