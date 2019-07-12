@@ -22,4 +22,9 @@ export interface Environment {
      * Creates an `AppWindow` object for an existing window. Should only be called once per window.
      */
     wrapApplication: (appInfo: Application, identity: Identity, channel: ContextChannel) => AppWindow;
+
+    /**
+     * Examines a running window, and returns a best-effort Application description
+     */
+    inferApplication: (identity: Identity) => Promise<Application>;
 }

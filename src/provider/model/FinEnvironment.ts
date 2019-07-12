@@ -1,6 +1,8 @@
 import {WindowEvent} from 'openfin/_v2/api/events/base';
-import {injectable} from 'inversify';
+import {injectable, id} from 'inversify';
 import {Identity, Window} from 'openfin/_v2/main';
+import {ExternalApplication as OFExternalApplication} from 'openfin/_v2/api/external-application/external-application';
+import {Application as OFApplication} from 'openfin/_v2/api/application/application';
 
 import {AsyncInit} from '../controller/AsyncInit';
 import {Signal1, Signal2} from '../common/Signal';
@@ -75,6 +77,41 @@ export class FinEnvironment extends AsyncInit implements Environment {
         return new FinAppWindow(identity, appInfo, channel, creationTime, index);
     }
 
+    public async inferApplication(identity: Identity): Promise<Application> {
+        if (this.isExternalWindow(identity)) {
+            const application = fin.ExternalApplication.wrapSync(identity.uuid);
+
+            return {
+                appId: application.identity.uuid,
+                name: application.identity.uuid,
+                manifestType: 'openfin',
+                manifest: ''
+            };
+        } else {
+            type OFManifest = {
+                shortcut?: {name?: string, icon: string},
+                startup_app: {uuid: string, name?: string, icon?: string}
+            };
+
+            const application = fin.Application.wrapSync(identity);
+            const applicationInfo = await application.getInfo();
+
+            const {shortcut, startup_app} = applicationInfo.manifest as OFManifest;
+
+            const title = (shortcut && shortcut.name) || startup_app.name || startup_app.uuid;
+            const icon = (shortcut && shortcut.icon) || startup_app.icon;
+
+            return {
+                appId: application.identity.uuid,
+                name: application.identity.uuid,
+                title: title,
+                icons: icon ? [{icon}] : undefined,
+                manifestType: 'openfin',
+                manifest: applicationInfo.manifestUrl
+            };
+        }
+    }
+
     protected async init(): Promise<void> {
         fin.System.addListener('window-created', (event: WindowEvent<'system', 'window-created'>) => {
             const identity = {uuid: event.uuid, name: event.name};
@@ -111,6 +148,20 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
         const info = await fin.Application.wrapSync(identity).getInfo();
         this.windowCreated.emit(identity, info.manifestUrl);
+    }
+
+    private async isExternalWindow(identity: Identity): Promise<boolean> {
+        const extendedIdentity = identity as (Identity & {entityType: string | undefined});
+
+        const externalWindowType = 'external connection';
+
+        if (extendedIdentity.entityType) {
+            return extendedIdentity.entityType === externalWindowType;
+        } else {
+            const entityInfo = await fin.System.getEntityInfo(identity.uuid, identity.uuid);
+
+            return entityInfo.entityType === externalWindowType;
+        }
     }
 }
 
