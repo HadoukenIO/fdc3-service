@@ -10,7 +10,7 @@ import {parseIdentity, parseContext, parseChannelId} from '../client/validation'
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
-import {FindFilter, Model} from './model/Model';
+import {Model} from './model/Model';
 import {ContextHandler} from './controller/ContextHandler';
 import {IntentHandler} from './controller/IntentHandler';
 import {APIHandler} from './APIHandler';
@@ -103,10 +103,17 @@ export class Main {
         }
 
         // This can throw FDC3Errors if app fails to open or times out
-        const appWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_CONTEXT_LISTENER);
+        const appWindows = await this._model.findOrCreate(appInfo);
+
+        await Promise.all(appWindows.map(window => window.bringToFront()));
+        if (appWindows.length > 0) {
+            appWindows[appWindows.length - 1].focus();
+        }
 
         if (payload.context) {
-            return this._contextHandler.send(appWindow, parseContext(payload.context));
+            await Promise.all(appWindows.map(window => {
+                return this._contextHandler.send(window, parseContext(payload.context!));
+            }));
         }
     }
 
@@ -221,7 +228,7 @@ export class Main {
         const appWindow = this.getWindow(source);
         const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
 
-        appWindow.addContextListener(channel);
+        appWindow.addChannelContextListener(channel);
     }
 
     private channelRemoveContextListener(payload: ChannelRemoveContextListenerPayload, source: ProviderIdentity): void {
@@ -229,7 +236,7 @@ export class Main {
         const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
 
         if (appWindow) {
-            appWindow.removeContextListener(channel);
+            appWindow.removeChannelContextListener(channel);
         } else {
             // If for some odd reason the window is not in the model it's still OK to return successfully,
             // as the caller's intention was to remove a listener and the listener is certainly not there.

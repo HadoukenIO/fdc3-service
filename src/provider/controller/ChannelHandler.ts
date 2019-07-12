@@ -32,7 +32,7 @@ export class ChannelHandler {
     }
 
     public getWindowsListeningToChannel(channel: ContextChannel): AppWindow[] {
-        return this._model.windows.filter(window => window.hasContextListener(channel));
+        return this._model.windows.filter(window => window.hasChannelContextListener(channel));
     }
 
     public getChannelById(channelId: ChannelId): ContextChannel {
@@ -49,7 +49,7 @@ export class ChannelHandler {
     }
 
     public getWindowsListeningForContextsOnChannel(channel: ContextChannel): AppWindow[] {
-        return this._model.windows.filter(window => window.hasContextListener(channel));
+        return this._model.windows.filter(window => window.hasChannelContextListener(channel));
     }
 
     public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: FDC3ChannelEventType): AppWindow[] {

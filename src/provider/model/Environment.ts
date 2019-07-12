@@ -16,10 +16,10 @@ export interface Environment {
      * * FDC3Error if app fails to start
      * * FDC3Error if timeout trying to start app
      */
-    createApplication: (appInfo: Application, channel: ContextChannel) => Promise<AppWindow>;
+    createApplication: (appInfo: Application, channel: ContextChannel) => Promise<void>;
 
     /**
-     * Creates an `AppWindow` object for an existing window.
+     * Creates an `AppWindow` object for an existing window. Should only be called once per window.
      */
     wrapApplication: (appInfo: Application, identity: Identity, channel: ContextChannel) => AppWindow;
 

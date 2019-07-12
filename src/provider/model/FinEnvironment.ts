@@ -7,7 +7,7 @@ import {Application as OFApplication} from 'openfin/_v2/api/application/applicat
 import {AsyncInit} from '../controller/AsyncInit';
 import {Signal1, Signal2} from '../common/Signal';
 import {Application, IntentType, ChannelId, FDC3ChannelEventType} from '../../client/main';
-import {FDC3Error, OpenError, ResolveError} from '../../client/errors';
+import {FDC3Error, OpenError} from '../../client/errors';
 import {deferredPromise, withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
 import {parseIdentity} from '../../client/validation';
@@ -16,6 +16,23 @@ import {Environment} from './Environment';
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 import {getId} from './Model';
+
+interface PendingWindow {
+    creationTime: number | undefined;
+    index: number;
+}
+
+interface IntentMap {
+    [key: string]: boolean;
+}
+
+interface ContextMap {
+    [key: string]: boolean;
+}
+
+interface ChannelEventMap {
+    [channelId: string]: {[eventId: string]: boolean};
+}
 
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
@@ -35,8 +52,11 @@ export class FinEnvironment extends AsyncInit implements Environment {
      */
     public readonly windowClosed: Signal1<Identity> = new Signal1();
 
-    public async createApplication(appInfo: Application, channel: ContextChannel): Promise<AppWindow> {
-        const [didTimeout, app] = await withTimeout(
+    private _windowsCreated: number = 0;
+    private readonly _pendingWindows: {[id: string]: PendingWindow} = {};
+
+    public async createApplication(appInfo: Application, channel: ContextChannel): Promise<void> {
+        const [didTimeout] = await withTimeout(
             Timeouts.APP_START_FROM_MANIFEST,
             fin.Application.startFromManifest(appInfo.manifest).catch(e => {
                 throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
@@ -45,12 +65,16 @@ export class FinEnvironment extends AsyncInit implements Environment {
         if (didTimeout) {
             throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
         }
-
-        return this.wrapApplication(appInfo, app!.identity, channel);
     }
 
     public wrapApplication(appInfo: Application, identity: Identity, channel: ContextChannel): AppWindow {
-        return new FinAppWindow(parseIdentity(identity), appInfo, channel);
+        identity = parseIdentity(identity);
+        const id = getId(identity);
+
+        const {creationTime, index} = this._pendingWindows[id];
+        delete this._pendingWindows[id];
+
+        return new FinAppWindow(identity, appInfo, channel, creationTime, index);
     }
 
     public async inferApplication(identity: Identity): Promise<Application> {
@@ -91,24 +115,37 @@ export class FinEnvironment extends AsyncInit implements Environment {
     protected async init(): Promise<void> {
         fin.System.addListener('window-created', (event: WindowEvent<'system', 'window-created'>) => {
             const identity = {uuid: event.uuid, name: event.name};
-            this.registerWindow(identity);
+
+            this.registerWindow(identity, Date.now());
         });
         fin.System.addListener('window-closed', (event: WindowEvent<'system', 'window-closed'>) => {
             const identity = {uuid: event.uuid, name: event.name};
+
+            delete this._pendingWindows[getId(identity)];
+
             this.windowClosed.emit(identity);
         });
 
         // Register windows that were running before launching the FDC3 service
         const windowInfo = await fin.System.getAllWindows();
+
         windowInfo.forEach(info => {
             const {uuid, mainWindow, childWindows} = info;
 
-            this.registerWindow({uuid, name: mainWindow.name});
-            childWindows.forEach(child => this.registerWindow({uuid, name: child.name}));
+            this.registerWindow({uuid, name: mainWindow.name}, undefined);
+            childWindows.forEach(child => this.registerWindow({uuid, name: child.name}, undefined));
         });
     }
 
-    private async registerWindow(identity: Identity): Promise<void> {
+    private async registerWindow(identity: Identity, creationTime: number | undefined): Promise<void> {
+        const pendingWindow = {
+            creationTime,
+            index: this._windowsCreated
+        };
+
+        this._pendingWindows[getId(identity)] = pendingWindow;
+        this._windowsCreated++;
+
         const info = await fin.Application.wrapSync(identity).getInfo();
         this.windowCreated.emit(identity, info.manifestUrl);
     }
@@ -128,42 +165,36 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 }
 
-interface IntentMap {
-    [key: string]: boolean;
-}
-
-interface ContextMap {
-    [key: string]: boolean;
-}
-
-interface ChannelEventMap {
-    [channelId: string]: {[eventId: string]: boolean};
-}
-
 class FinAppWindow implements AppWindow {
+    public channel: ContextChannel;
+
     private readonly _id: string;
     private readonly _appInfo: Application;
     private readonly _window: Window;
+    private readonly _appWindowNumber: number;
+
+    private readonly _creationTime: number | undefined;
 
     private readonly _intentListeners: IntentMap;
-    private readonly _contextListeners: ContextMap;
+    private readonly _channelContextListeners: ContextMap;
     private readonly _channelEventListeners: ChannelEventMap;
 
-    public channel: ContextChannel;
+    private readonly _onIntentListenerAdded: Signal1<IntentType> = new Signal1();
 
-    constructor(identity: Identity, appInfo: Application, channel: ContextChannel) {
+    constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined, appWindowNumber: number) {
         this._id = getId(identity);
         this._window = fin.Window.wrapSync(identity);
         this._appInfo = appInfo;
+        this._appWindowNumber = appWindowNumber;
+
+        this._creationTime = creationTime;
 
         this._intentListeners = {};
-        this._contextListeners = {};
+        this._channelContextListeners = {};
         this._channelEventListeners = {};
 
         this.channel = channel;
     }
-
-    private readonly _onIntentListenerAdded: Signal1<IntentType> = new Signal1();
 
     public get id(): string {
         return this._id;
@@ -177,8 +208,12 @@ class FinAppWindow implements AppWindow {
         return this._appInfo;
     }
 
-    public get contextListeners(): ReadonlyArray<ChannelId> {
-        return Object.keys(this._contextListeners);
+    public get appWindowNumber(): number {
+        return this._appWindowNumber;
+    }
+
+    public get channelContextListeners(): ReadonlyArray<ChannelId> {
+        return Object.keys(this._channelContextListeners);
     }
 
     public get intentListeners(): ReadonlyArray<string> {
@@ -198,16 +233,16 @@ class FinAppWindow implements AppWindow {
         delete this._intentListeners[intentName];
     }
 
-    public hasContextListener(channel: ContextChannel): boolean {
-        return this._contextListeners[channel.id] === true;
+    public hasChannelContextListener(channel: ContextChannel): boolean {
+        return this._channelContextListeners[channel.id] === true;
     }
 
-    public addContextListener(channel: ContextChannel): void {
-        this._contextListeners[channel.id] = true;
+    public addChannelContextListener(channel: ContextChannel): void {
+        this._channelContextListeners[channel.id] = true;
     }
 
-    public removeContextListener(channel: ContextChannel): void {
-        delete this._contextListeners[channel.id];
+    public removeChannelContextListener(channel: ContextChannel): void {
+        delete this._channelContextListeners[channel.id];
     }
 
     public hasChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): boolean {
@@ -228,30 +263,40 @@ class FinAppWindow implements AppWindow {
         }
     }
 
-    public focus(): Promise<void> {
-        return this._window.setAsForeground();
+    public bringToFront(): Promise<void> {
+        return this._window.bringToFront();
     }
 
-    public async ensureReadyToReceiveIntent(intent: IntentType): Promise<void> {
+    public focus(): Promise<void> {
+        return this._window.focus();
+    }
+
+    public async isReadyToReceiveIntent(intent: IntentType): Promise<boolean> {
         if (this.hasIntentListener(intent)) {
             // App has already registered the intent listener
-            return;
+            return true;
         }
 
-        // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
-        const [waitForIntentListenerAddedPromise, resolve] = deferredPromise();
-        const slot = this._onIntentListenerAdded.add(intentAdded => {
-            if (intentAdded === intent) {
-                slot.remove();
-                resolve();
-            }
-        });
+        const age = this._creationTime === undefined ? undefined : Date.now() - this._creationTime;
 
-        const [didTimeout] = await withTimeout(Timeouts.ADD_INTENT_LISTENER, waitForIntentListenerAddedPromise);
+        if (age === undefined || age >= Timeouts.ADD_INTENT_LISTENER) {
+            // App has been running for a while
+            return false;
+        } else {
+            // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
+            const [waitForIntentListenerAddedPromise, resolve] = deferredPromise();
 
-        if (didTimeout) {
+            const slot = this._onIntentListenerAdded.add(intentAdded => {
+                if (intentAdded === intent) {
+                    resolve();
+                }
+            });
+
+            const [didTimeout] = await withTimeout(Timeouts.ADD_INTENT_LISTENER - age, waitForIntentListenerAddedPromise);
+
             slot.remove();
-            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added. intent = ${intent}`);
+
+            return !didTimeout;
         }
     }
 }

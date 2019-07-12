@@ -93,8 +93,8 @@ it('When querying which windows are listening for contexts on a channel, Channel
 
     const testChannel = createMockChannel();
 
-    testWindows[0].hasContextListener.mockImplementation((channel) => true);
-    testWindows[2].hasContextListener.mockImplementation((channel) => true);
+    testWindows[0].hasChannelContextListener.mockImplementation((channel) => true);
+    testWindows[2].hasChannelContextListener.mockImplementation((channel) => true);
 
     setModelWindows(testWindows);
 
