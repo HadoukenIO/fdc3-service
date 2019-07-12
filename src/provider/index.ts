@@ -111,9 +111,9 @@ export class Main {
         }
 
         if (payload.context) {
-            return Promise.all(appWindows.map(window => {
+            await Promise.all(appWindows.map(window => {
                 return this._contextHandler.send(window, parseContext(payload.context!));
-            })).then(() => {});
+            }));
         }
     }
 
