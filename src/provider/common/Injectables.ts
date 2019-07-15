@@ -8,12 +8,13 @@ enum Injectable {
     API_HANDLER,
     APP_DIRECTORY,
     CHANNEL_HANDLER,
+    CONFIG_STORE,
     CONTEXT_HANDLER,
     ENVIRONMENT,
+    EVENT_HANDLER,
     INTENT_HANDLER,
     MODEL,
     RESOLVER,
-    CONFIG_STORE
 }
 
 type InjectableMap = {

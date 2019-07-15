@@ -33,7 +33,7 @@ describe('When attempting to broadcast on a channel object', () => {
     });
 
     test('If a valid context is provided, the broadcast() resolves successfully', async () => {
-        expect(defaultChannel.broadcast(testContext)).resolves;
+        await expect(defaultChannel.broadcast(testContext)).resolves;
     });
 });
 

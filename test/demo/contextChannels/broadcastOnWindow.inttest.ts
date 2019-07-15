@@ -70,12 +70,10 @@ describe('When broadcasting on default channel', () => {
         await fdc3Remote.broadcast(testManagerIdentity, testContext);
 
         // Check the default window received our test context
-        const defaultContexts = await defaultListener.getReceivedContexts();
-        expect(defaultContexts).toEqual([testContext]);
+        await expect(defaultListener).toHaveReceivedContexts([testContext]);
 
         // Check the blue window received no context
-        const blueContexts = await blueListener.getReceivedContexts();
-        expect(blueContexts).toHaveLength(0);
+        await expect(blueListener).toHaveReceivedContexts([]);
     }, appStartupTime * 2);
 
     test('Context is received by window that has left and rejoined default channel', async () => {
@@ -90,8 +88,7 @@ describe('When broadcasting on default channel', () => {
         await fdc3Remote.broadcast(testManagerIdentity, testContext);
 
         // Check our window received our test context
-        const receivedContexts = await channelChangingListener.getReceivedContexts();
-        expect(receivedContexts).toEqual([testContext]);
+        await expect(channelChangingListener).toHaveReceivedContexts([testContext]);
     }, appStartupTime);
 
     test('Context is not received by broadcasting window', async () => {
@@ -103,8 +100,7 @@ describe('When broadcasting on default channel', () => {
         await fdc3Remote.broadcast(defaultWindow, testContext);
 
         // Check the default window did not received our test context
-        const defaultContexts = await defaultListener.getReceivedContexts();
-        expect(defaultContexts).toEqual([]);
+        await expect(defaultListener).toHaveReceivedContexts([]);
     }, appStartupTime * 2);
 });
 
@@ -120,16 +116,13 @@ describe('When broadcasting on a desktop channel', () => {
         await fdc3Remote.broadcast(redBroadcastingWindow, testContext);
 
         // Check our red window received our test context
-        const redReceivedContexts = await redListener.getReceivedContexts();
-        expect(redReceivedContexts).toEqual([testContext]);
+        await expect(redListener).toHaveReceivedContexts([testContext]);
 
         // Check the default window received no context
-        const defaultReceivedContexts = await defaultListener.getReceivedContexts();
-        expect(defaultReceivedContexts).toHaveLength(0);
+        await expect(defaultListener).toHaveReceivedContexts([]);
 
         // Check our blue window received no context
-        const blueReceivedContexts = await blueListener.getReceivedContexts();
-        expect(blueReceivedContexts).toHaveLength(0);
+        await expect(blueListener).toHaveReceivedContexts([]);
     }, appStartupTime * 4);
 
     test('Context is received by window that has left and rejoined desktop channel', async () => {
@@ -145,8 +138,7 @@ describe('When broadcasting on a desktop channel', () => {
         await fdc3Remote.broadcast(blueWindow, testContext);
 
         // Check our blue window received our test context
-        const receivedContexts = await channelChangingWindowListener.getReceivedContexts();
-        expect(receivedContexts).toEqual([testContext]);
+        await expect(channelChangingWindowListener).toHaveReceivedContexts([testContext]);
     }, appStartupTime * 2);
 
     test('Context is not received by broadcasting window', async () => {
@@ -158,8 +150,7 @@ describe('When broadcasting on a desktop channel', () => {
         await fdc3Remote.broadcast(yellowWindow, testContext);
 
         // Check the default window did not received our test context
-        const defaultContexts = await yellowListener.getReceivedContexts();
-        expect(defaultContexts).toEqual([]);
+        await expect(yellowListener).toHaveReceivedContexts([]);
     }, appStartupTime * 2);
 });
 
@@ -177,8 +168,7 @@ describe('When adding a context listener', () => {
         await joinChannel(channelChangingWindow, 'yellow');
 
         // Check our now-yellow window received our test context
-        const receivedContexts = await channelChangingListener.getReceivedContexts();
-        expect(receivedContexts).toEqual([testContext]);
+        await expect(channelChangingListener).toHaveReceivedContexts([testContext]);
     }, appStartupTime * 2);
 
     test('No context is received when joining the default channel, which has been broadcast on and has remained occupied', async () => {
@@ -194,8 +184,7 @@ describe('When adding a context listener', () => {
         await joinChannel(channelChangingWindow, 'default');
 
         // Check our now-default window received no context
-        const receivedContexts = await channelChangingWindowListener.getReceivedContexts();
-        expect(receivedContexts).toHaveLength(0);
+        await expect(channelChangingWindowListener).toHaveReceivedContexts([]);
     });
 
     test('No context is received when joining a desktop channel that has been emptied since last being broadcast on', async () => {
@@ -208,8 +197,7 @@ describe('When adding a context listener', () => {
         const preClearingListener = await fdc3Remote.addContextListener(listeningWindow);
         await joinChannel(listeningWindow, 'green');
         // Check our cached context has been received
-        const preClearingReceivedContexts = await preClearingListener.getReceivedContexts();
-        expect(preClearingReceivedContexts).toEqual([testContext]);
+        await expect(preClearingListener).toHaveReceivedContexts([testContext]);
 
         // Have both our windows leave the green channel. This should leave the channel unoccupied, so cached context should be cleared
         await joinChannel(broadcastingWindow, 'yellow');
@@ -220,8 +208,7 @@ describe('When adding a context listener', () => {
         await joinChannel(listeningWindow, 'green');
 
         // Check no cached context has been received, given that the green channel has been emptied
-        const receivedContexts = await listener.getReceivedContexts();
-        expect(receivedContexts).toEqual([]);
+        await expect(listener).toHaveReceivedContexts([]);
     }, appStartupTime * 2);
 });
 

@@ -1,3 +1,3 @@
 {
-    
+    "setupFilesAfterEnv": ["<rootDir>/test/demo/utils/jestExtensions.ts"]
 }

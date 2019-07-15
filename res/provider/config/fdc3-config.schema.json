@@ -127,7 +127,7 @@
         },
         "configuration-object": {
             "title": "ConfigurationObject",
-            "description": "An instance of Layouts Service configuration.",
+            "description": "An instance of FDC3 Service configuration.",
             "type": "object",
             "properties": {
                 "applicationDirectory": {

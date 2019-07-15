@@ -56,10 +56,14 @@
         window.contextListeners = [];
         window.intentListeners = [];
         window.eventListeners = [];
+        window.channelEventListeners = [];
+
         window.channelTransports = {};
+
         window.receivedContexts = [];
         window.receivedIntents = [];
         window.receivedEvents = [];
+        window.receivedChannelEvents = [];
 
         const queryParams = new URLSearchParams(location.search);
         if (queryParams.get('registerListeners') === 'true') {

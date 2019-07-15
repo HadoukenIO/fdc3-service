@@ -12,7 +12,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution, FDC3Event} from './main';
-import {Channel, ChannelId, DefaultChannel, DesktopChannel} from './contextChannels';
+import {Channel, ChannelId, DefaultChannel, DesktopChannel, FDC3ChannelEventType} from './contextChannels';
 import {FDC3Error} from './errors';
 
 /**
@@ -47,7 +47,9 @@ export enum APIFromClientTopic {
     CHANNEL_BROADCAST = 'CHANNEL-BROADCAST',
     CHANNEL_GET_CURRENT_CONTEXT = 'CHANNEL-GET-CURRENT-CONTEXT',
     CHANNEL_ADD_CONTEXT_LISTENER = 'CHANNEL-ADD-CONTEXT-LISTENER',
-    CHANNEL_REMOVE_CONTEXT_LISTENER = 'CHANNEL-REMOVE-CONTEXT-LISTENER'
+    CHANNEL_REMOVE_CONTEXT_LISTENER = 'CHANNEL-REMOVE-CONTEXT-LISTENER',
+    CHANNEL_ADD_EVENT_LISTENER = 'CHANNEL-ADD-EVENT-LISTENER',
+    CHANNEL_REMOVE_EVENT_LISTENER = 'CHANNEL-REMOVE-EVENT-LISTENER'
 }
 
 /**
@@ -77,6 +79,8 @@ export type APIFromClient = {
     [APIFromClientTopic.CHANNEL_GET_CURRENT_CONTEXT]: [ChannelGetCurrentContextPayload, Context|null];
     [APIFromClientTopic.CHANNEL_ADD_CONTEXT_LISTENER]: [ChannelAddContextListenerPayload, void];
     [APIFromClientTopic.CHANNEL_REMOVE_CONTEXT_LISTENER]: [ChannelRemoveContextListenerPayload, void];
+    [APIFromClientTopic.CHANNEL_ADD_EVENT_LISTENER]: [ChannelAddEventListenerPayload, void];
+    [APIFromClientTopic.CHANNEL_REMOVE_EVENT_LISTENER]: [ChannelRemoveEventListenerPayload, void];
 }
 
 export type APIToClient = {
@@ -93,7 +97,9 @@ export type TransportMappings<T> =
 
 export type EventTransport<T extends FDC3Event> = {
     [K in keyof T]: TransportMappings<T[K]>;
-}
+} & {
+    target: {type: string, id: string}
+};
 
 export interface ChannelTransport {
     id: ChannelId;
@@ -166,6 +172,16 @@ export interface ChannelAddContextListenerPayload {
 
 export interface ChannelRemoveContextListenerPayload {
     id: ChannelId;
+}
+
+export interface ChannelAddEventListenerPayload {
+    id: ChannelId;
+    eventType: FDC3ChannelEventType;
+}
+
+export interface ChannelRemoveEventListenerPayload {
+    id: ChannelId;
+    eventType: FDC3ChannelEventType;
 }
 
 export interface IntentListenerPayload {

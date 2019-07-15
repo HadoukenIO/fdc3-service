@@ -1,6 +1,6 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {Application, IntentType, ChannelId} from '../../client/main';
+import {Application, IntentType, ChannelId, FDC3ChannelEventType} from '../../client/main';
 
 import {ContextChannel} from './ContextChannel';
 
@@ -17,11 +17,13 @@ export interface AppWindow {
 
     appInfo: Readonly<Application>;
 
+    appWindowNumber: number;
+
     channel: ContextChannel;
 
     intentListeners: ReadonlyArray<string>;
 
-    contextListeners: ReadonlyArray<ChannelId>;
+    channelContextListeners: ReadonlyArray<ChannelId>;
 
     hasIntentListener(intentName: string): boolean;
 
@@ -29,13 +31,21 @@ export interface AppWindow {
 
     removeIntentListener(intentName: string): void;
 
-    hasContextListener(channelId: ChannelId): boolean;
+    hasChannelContextListener(channel: ContextChannel): boolean;
 
-    addContextListener(channelId: ChannelId): void;
+    addChannelContextListener(channel: ContextChannel): void;
 
-    removeContextListener(channelId: ChannelId): void;
+    removeChannelContextListener(channel: ContextChannel): void;
+
+    hasChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): boolean;
+
+    addChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void;
+
+    removeChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void;
+
+    bringToFront(): Promise<void>;
 
     focus(): Promise<void>;
 
-    ensureReadyToReceiveIntent(intent: IntentType): Promise<void>;
+    isReadyToReceiveIntent(intent: IntentType): Promise<boolean>;
 }

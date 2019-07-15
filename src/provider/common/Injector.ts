@@ -13,6 +13,7 @@ import {FinEnvironment} from '../model/FinEnvironment';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {ChannelHandler} from '../controller/ChannelHandler';
+import {EventHandler} from '../controller/EventHandler';
 
 import {Inject} from './Injectables';
 
@@ -23,12 +24,13 @@ type Types = {
     [Inject.API_HANDLER]: APIHandler<APIFromClientTopic>,
     [Inject.APP_DIRECTORY]: AppDirectory,
     [Inject.CHANNEL_HANDLER]: ChannelHandler,
+    [Inject.CONFIG_STORE]: ConfigStore
     [Inject.CONTEXT_HANDLER]: ContextHandler,
     [Inject.ENVIRONMENT]: Environment,
+    [Inject.EVENT_HANDLER]: EventHandler,
     [Inject.INTENT_HANDLER]: IntentHandler,
     [Inject.MODEL]: Model,
     [Inject.RESOLVER]: ResolverHandler,
-    [Inject.CONFIG_STORE]: ConfigStore
 };
 
 /**
@@ -44,6 +46,7 @@ const Bindings = {
     [Inject.CONFIG_STORE]: ConfigStore,
     [Inject.CONTEXT_HANDLER]: ContextHandler,
     [Inject.ENVIRONMENT]: FinEnvironment,
+    [Inject.EVENT_HANDLER]: EventHandler,
     [Inject.INTENT_HANDLER]: IntentHandler,
     [Inject.MODEL]: Model,
     [Inject.RESOLVER]: ResolverHandler
