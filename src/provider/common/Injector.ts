@@ -2,6 +2,7 @@ import {Container} from 'inversify';
 import {interfaces as inversify} from 'inversify/dts/interfaces/interfaces';
 import {Environment} from 'openfin/_v2/environment/environment';
 
+import {ConfigStore} from '../model/ConfigStore';
 import {AppDirectory} from '../model/AppDirectory';
 import {IntentHandler} from '../controller/IntentHandler';
 import {ContextHandler} from '../controller/ContextHandler';
@@ -16,7 +17,6 @@ import {EventHandler} from '../controller/EventHandler';
 
 import {Inject} from './Injectables';
 
-
 /**
  * For each entry in `Inject`, defines the type that will be injected for that key.
  */
@@ -24,10 +24,11 @@ type Types = {
     [Inject.API_HANDLER]: APIHandler<APIFromClientTopic>,
     [Inject.APP_DIRECTORY]: AppDirectory,
     [Inject.CHANNEL_HANDLER]: ChannelHandler,
+    [Inject.CONFIG_STORE]: ConfigStore
     [Inject.CONTEXT_HANDLER]: ContextHandler,
     [Inject.ENVIRONMENT]: Environment,
-    [Inject.INTENT_HANDLER]: IntentHandler,
     [Inject.EVENT_HANDLER]: EventHandler,
+    [Inject.INTENT_HANDLER]: IntentHandler,
     [Inject.MODEL]: Model,
     [Inject.RESOLVER]: ResolverHandler,
 };
@@ -42,10 +43,11 @@ const Bindings = {
     [Inject.API_HANDLER]: APIHandler,
     [Inject.APP_DIRECTORY]: AppDirectory,
     [Inject.CHANNEL_HANDLER]: ChannelHandler,
+    [Inject.CONFIG_STORE]: ConfigStore,
     [Inject.CONTEXT_HANDLER]: ContextHandler,
     [Inject.ENVIRONMENT]: FinEnvironment,
-    [Inject.INTENT_HANDLER]: IntentHandler,
     [Inject.EVENT_HANDLER]: EventHandler,
+    [Inject.INTENT_HANDLER]: IntentHandler,
     [Inject.MODEL]: Model,
     [Inject.RESOLVER]: ResolverHandler
 };
@@ -62,27 +64,21 @@ export class Injector {
         const container = new Container();
         const promises: Promise<unknown>[] = [];
 
-        console.log('E');
         Object.keys(Bindings).forEach(k => {
             const key: Keys = k as any;
-            console.log('F', key);
 
             if (typeof Bindings[key] === 'function') {
-                console.log('G', key);
                 container.bind(Inject[key]).to(Bindings[key] as any).inSingletonScope();
 
                 if ((Bindings[key] as Function).prototype.hasOwnProperty('init')) {
                     promises.push((container.get(Inject[key]) as AsyncInit).initialized);
                 }
             } else {
-                console.log('H', key);
                 container.bind(Inject[key]).toConstantValue(Bindings[key]);
             }
         });
-        console.log('I');
 
         Injector._initialized = Promise.all(promises).then(() => {});
-        console.log('J');
         return container;
     })();
 
