@@ -52,6 +52,7 @@ export class Model {
         this._environment.windowClosed.add(this.onWindowClosed, this);
 
         apiHandler.onConnection.add(this.onApiHandlerConnection, this);
+        apiHandler.onDisconnection.add(this.onWindowClosed, this);
 
         this._channelsById[DEFAULT_CHANNEL_ID] = new DefaultContextChannel(DEFAULT_CHANNEL_ID);
         for (const channel of DESKTOP_CHANNELS) {
