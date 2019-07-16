@@ -62,8 +62,9 @@ export class ResolverHandler extends AsyncInit {
         const options: WindowOption = {
             url: RESOLVER_URL,
             name: RESOLVER_IDENTITY.name,
-            // alwaysOnTop: true,
+            alwaysOnTop: true,
             autoShow: false,
+            showTaskbarIcon: false,
             saveWindowState: false,
             defaultCentered: true,
             frame: false,
