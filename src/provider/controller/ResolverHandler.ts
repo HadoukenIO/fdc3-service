@@ -64,6 +64,7 @@ export class ResolverHandler extends AsyncInit {
             name: RESOLVER_IDENTITY.name,
             alwaysOnTop: true,
             autoShow: false,
+            contextMenu: !(process.env.NODE_ENV === 'production'),
             showTaskbarIcon: false,
             saveWindowState: false,
             defaultCentered: true,
