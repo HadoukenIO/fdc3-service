@@ -133,29 +133,22 @@ export class Model {
     private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
         // Registration is asynchronous and sensitive to race conditions. We use a deferred promise
         // to signal to other sensitive operations that it is safe to proceed.
-        const [pendingRegistration, clearPending] = deferredPromise();
+        const [pendingRegistration, resolvePending] = deferredPromise();
         this._pendingRegistrations.set(getId(identity), pendingRegistration);
 
         const apps = await this._directory.getAllApps();
         const appInfoFromDirectory = apps.find(app => app.manifest.startsWith(manifestUrl));
 
         const id: string = getId(identity);
-        if (!appInfoFromDirectory) {
-            // If the app is not in directory we ignore it. We'll add it to the model if and when it connects to FDC3
-            clearPending();
-            this._pendingRegistrations.delete(getId(identity));
-            return;
+        // If the app is not in directory we ignore it. We'll add it to the model if and when it connects to FDC3
+        if (appInfoFromDirectory && !this._windowsById[id]) {
+            this.registerWindow(appInfoFromDirectory, identity, true);
         } else if (this._windowsById[id]) {
             console.info(`Ignoring window created event for ${id} - window was already registered`);
-            clearPending();
-            this._pendingRegistrations.delete(getId(identity));
-            return;
-        } else {
-            this.registerWindow(appInfoFromDirectory, identity, true);
         }
 
         // Registration finished, allow any other sensitive operations to proceed
-        clearPending();
+        resolvePending();
         this._pendingRegistrations.delete(getId(identity));
     }
 
