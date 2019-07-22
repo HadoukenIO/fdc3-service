@@ -3,6 +3,12 @@ import {Identity} from 'openfin/_v2/main';
 
 import {AppWindow} from '../../src/provider/model/AppWindow';
 import {Application} from '../../src/client/directory';
+import {SERVICE_IDENTITY} from '../../src/client/internal';
+import {Model} from '../../src/provider/model/Model';
+import {ChannelHandler} from '../../src/provider/controller/ChannelHandler';
+import {EventHandler} from '../../src/provider/controller/EventHandler';
+import {IntentHandler} from '../../src/provider/controller/IntentHandler';
+import {FDC3ChannelEventType} from '../../src/client/main';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
@@ -14,11 +20,17 @@ import {delay} from './utils/delay';
 
 setupTeardown();
 
+export type ProviderWindow = Window & {
+    model: Model;
+    intentHandler: IntentHandler;
+    channelHandler: ChannelHandler;
+    eventHandler: EventHandler;
+}
+
 const ofBrowser = new OFPuppeteerBrowser();
 const TEST_INTENT = 'TestIntent';
 let redChannel: RemoteChannel;
 let blueChannel: RemoteChannel;
-type EventType = 'window-added' | 'window-removed';
 
 describe('Disconnecting windows', () => {
     describe('Directory Apps', () => {
@@ -103,8 +115,8 @@ async function testSuite(
             });
 
             it('Event listeners are removed', async () => {
-                const eventListeners = await getChannelEventListeners(blueChannel, 'window-added');
-                expect(eventListeners.length).toEqual(0);
+                const eventListeners = await hasEventListeners(application, 'window-added');
+                expect(eventListeners).toEqual(false);
             });
         });
     });
@@ -120,33 +132,36 @@ async function navigateTo(target: Identity, url: string): Promise<void>{
 }
 
 async function getWindow(identity: Identity): Promise<AppWindow | null> {
-    return ofBrowser.executeOnProvider(function (id: Identity): AppWindow | null {
+    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, id: Identity): AppWindow | null {
         return this.model.getWindow(id);
     }, identity);
 }
 
 async function getIntentListeners(intentType: string): Promise<Application[]> {
-    return ofBrowser.executeOnProvider(function (type: string): Promise<Application[]> {
+    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, type: string): Promise<Application[]> {
         return this.model.getApplicationsForIntent(type);
     }, intentType);
 }
 
 async function getChannelContextListeners(remoteChannel: RemoteChannel): Promise<AppWindow[]> {
-    return ofBrowser.executeOnProvider(function (id: string): AppWindow[] {
+    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, id: string): AppWindow[] {
         const channel = this.channelHandler.getChannelById(id);
         return this.channelHandler.getWindowsListeningForContextsOnChannel(channel);
     }, remoteChannel.channel.id);
 }
 
-async function getChannelEventListeners(remoteChannel: RemoteChannel, eventType: EventType): Promise<AppWindow[]> {
-    return ofBrowser.executeOnProvider(function (id: string, event: EventType): AppWindow[] {
-        const channel = this.channelHandler.getChannelById(id);
-        return this.channelHandler.getWindowsListeningForEventsOnChannel(channel, event);
-    }, remoteChannel.channel.id, eventType);
+async function hasEventListeners(identity: Identity, eventType: FDC3ChannelEventType): Promise<boolean> {
+    const identities = await ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, event: FDC3ChannelEventType): Identity[] {
+        // Check that the window identity is on any channel.
+        return this.model.channels.map(channel => {
+            return this.channelHandler.getWindowsListeningForEventsOnChannel(channel, event).map(appWindow => appWindow.identity);
+        }).reduce((acc, current) => [...acc, ...current], []);
+    }, eventType);
+    return identities.some(id => id.name === identity.name && id.uuid === identity.uuid);
 }
 
 async function windowIsNotInChannels(identity: Identity): Promise<boolean> {
-    return ofBrowser.executeOnProvider(function (id): boolean {
+    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, id): boolean {
         const window = this.model.getWindow(id);
         return !this.model.channels.some(channel => {
             return this.channelHandler.getChannelMembers(channel).some(member => member === window);

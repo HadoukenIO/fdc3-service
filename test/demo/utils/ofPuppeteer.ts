@@ -3,11 +3,6 @@ import {Browser, Page} from 'puppeteer';
 import {connect} from 'hadouken-js-adapter';
 
 import {Context, IntentType, ContextListener, IntentListener, Channel, FDC3Event, FDC3ChannelEvent} from '../../../src/client/main';
-import {Model} from '../../../src/provider/model/Model';
-import {SERVICE_IDENTITY} from '../../../src/client/internal';
-import {ChannelHandler} from '../../../src/provider/controller/ChannelHandler';
-import {EventHandler} from '../../../src/provider/controller/EventHandler';
-import {IntentHandler} from '../../../src/provider/controller/IntentHandler';
 
 declare const global: NodeJS.Global & {__BROWSER__: Browser};
 
@@ -19,13 +14,6 @@ export interface TestWindowEventListener {
 export interface TestWindowChannelEventListener {
     handler: (payload: any) => void;
     unsubscribe: () => void;
-}
-
-export type ProviderWindow = Window & {
-    model: Model;
-    intentHandler: IntentHandler;
-    channelHandler: ChannelHandler;
-    eventHandler: EventHandler;
 }
 
 export type TestWindowContext = Window&{
@@ -127,23 +115,7 @@ export class OFPuppeteerBrowser {
         return identity;
     }
 
-    /**
-     * Execute a function on the provider and return the result.
-     * @param fn Function to execute.
-     * @param args Arguments to provided to the function.
-     */
-    public async executeOnProvider<A extends any[], R, C extends ProviderWindow = ProviderWindow>(fn: (this: C, ...args: A) => R, ...args: A):
-        Promise<R> {
-        const page = await this.getPage(SERVICE_IDENTITY);
-        if (!page) {
-            throw new Error('could not find specified executionTarget');
-        }
-        return page.evaluate(fn as (...args: any[]) => R, ...args);
-    }
-
-    public async executeOnWindow<
-        // tslint:disable-next-line: no-any Needed for tuple types.
-        T extends any[], R, C extends TestWindowContext = TestWindowContext>(executionTarget: Identity, fn: (this: C, ...args: T) => R, ...args: T):
+    public async executeOnWindow<T extends any[], R, C = TestWindowContext>(executionTarget: Identity, fn: (this: C, ...args: T) => R, ...args: T):
         Promise<R> {
         const page = await this.getPage(executionTarget);
         if (!page) {
