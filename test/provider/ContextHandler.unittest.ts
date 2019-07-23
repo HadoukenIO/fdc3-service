@@ -52,7 +52,7 @@ describe('When sending a Context using ContextHandler', () => {
 
         await contextHandler.send(targetAppWindow, testContext);
 
-        expect(mockDispatch).toBeCalledWith(targetAppWindow.identity, APIToClientTopic.CONTEXT, testContext);
+        expect(mockDispatch).toBeCalledWith(targetAppWindow.identity, APIToClientTopic.CONTEXT, {context: testContext});
     });
 });
 
@@ -88,8 +88,8 @@ describe('When broadcasting a Context using ContextHandler', () => {
 
         expect(mockDispatch).toBeCalledTimes(2);
 
-        expect(mockDispatch.mock.calls).toContainEqual([targetAppWindow1.identity, APIToClientTopic.CONTEXT, testContext]);
-        expect(mockDispatch.mock.calls).toContainEqual([targetAppWindow2.identity, APIToClientTopic.CONTEXT, testContext]);
+        expect(mockDispatch.mock.calls).toContainEqual([targetAppWindow1.identity, APIToClientTopic.CONTEXT, {context: testContext}]);
+        expect(mockDispatch.mock.calls).toContainEqual([targetAppWindow2.identity, APIToClientTopic.CONTEXT, {context: testContext}]);
     });
 
     it('When ChannelHandler provides multiple listening windows, all windows except the source window are dispatched to', async () => {
@@ -129,8 +129,8 @@ describe('When broadcasting a Context using ContextHandler', () => {
 
         expect(mockDispatch).toBeCalledTimes(4);
 
-        expect(mockDispatch.mock.calls).toContainEqual([targetAppWindow1.identity, APIToClientTopic.CONTEXT, testContext]);
-        expect(mockDispatch.mock.calls).toContainEqual([targetAppWindow2.identity, APIToClientTopic.CONTEXT, testContext]);
+        expect(mockDispatch.mock.calls).toContainEqual([targetAppWindow1.identity, APIToClientTopic.CONTEXT, {context: testContext}]);
+        expect(mockDispatch.mock.calls).toContainEqual([targetAppWindow2.identity, APIToClientTopic.CONTEXT, {context: testContext}]);
 
         expect(mockDispatch.mock.calls).toContainEqual([
             targetAppWindow1.identity,

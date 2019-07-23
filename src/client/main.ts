@@ -9,7 +9,7 @@ import {Identity} from 'openfin/_v2/main';
 import {tryServiceDispatch, getServicePromise} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
-import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, EventTransport} from './internal';
+import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, EventTransport, ContextPayload} from './internal';
 import {ChannelChangedEvent, getChannelObject, FDC3ChannelEvent, FDC3ChannelEventType} from './contextChannels';
 import {parseContext, validateEnvironment} from './validation';
 import {getEventRouter} from './EventRouter';
@@ -317,10 +317,9 @@ if (typeof fin !== 'undefined') {
             });
         });
 
-        // TODO: When we're ready to make a breaking change, change `payload: Context` to `payload: ContextPayload` (SERVICE-533)
-        channelClient.register(APIToClientTopic.CONTEXT, (payload: Context) => {
+        channelClient.register(APIToClientTopic.CONTEXT, (payload: ContextPayload) => {
             contextListeners.forEach((listener: ContextListener) => {
-                listener.handler(payload);
+                listener.handler(payload.context);
             });
         });
 
