@@ -2,10 +2,10 @@ import {injectable} from 'inversify';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 import {ChannelProvider} from 'openfin/_v2/api/interappbus/channel/provider';
 import {Identity} from 'openfin/_v2/main';
+import {Signal} from 'openfin-service-signal';
 
 import {SERVICE_CHANNEL, serializeError} from '../client/internal';
 
-import {Signal1} from './common/Signal';
 
 /**
  * Semantic type definition.
@@ -63,8 +63,8 @@ type APIActionReturn<T> = T | Readonly<T> | Promise<T> | Promise<Readonly<T>>;
  */
 @injectable()
 export class APIHandler<T extends Enum> {
-    public readonly onConnection: Signal1<Identity> = new Signal1<Identity>();
-    public readonly onDisconnection: Signal1<Identity> = new Signal1<Identity>();
+    public readonly onConnection = new Signal<[Identity]>();
+    public readonly onDisconnection = new Signal<[Identity]>();
 
     private _providerChannel!: ChannelProvider;
 

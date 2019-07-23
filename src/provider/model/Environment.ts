@@ -1,14 +1,14 @@
 import {Identity} from 'openfin/_v2/main';
+import {Signal} from 'openfin-service-signal';
 
-import {Signal1, Signal2} from '../common/Signal';
 import {Application} from '../../client/main';
 
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 
 export interface Environment {
-    windowCreated: Signal2<Identity, string>;
-    windowClosed: Signal1<Identity>;
+    windowCreated: Signal<[Identity, string]>;
+    windowClosed: Signal<[Identity]>;
 
     /**
      * Creates a new application, given an App Directory entry.

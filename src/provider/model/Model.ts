@@ -1,9 +1,9 @@
 import {injectable, inject} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
+import {Signal} from 'openfin-service-signal';
 
 import {Application, AppName, AppId} from '../../client/directory';
 import {Inject} from '../common/Injectables';
-import {Signal0, Signal1} from '../common/Signal';
 import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
@@ -25,8 +25,8 @@ export function getId(identity: Identity): string {
 
 @injectable()
 export class Model {
-    public readonly onWindowAdded: Signal1<AppWindow> = new Signal1<AppWindow>();
-    public readonly onWindowRemoved: Signal1<AppWindow> = new Signal1<AppWindow>();
+    public readonly onWindowAdded = new Signal<[AppWindow]>();
+    public readonly onWindowRemoved = new Signal<[AppWindow]>();
 
     private readonly _directory: AppDirectory;
     private readonly _environment: Environment;
@@ -34,7 +34,7 @@ export class Model {
     private readonly _windowsById: {[id: string]: AppWindow};
     private readonly _channelsById: {[id: string]: ContextChannel};
 
-    private readonly _onWindowRegisteredInternal: Signal0 = new Signal0();
+    private readonly _onWindowRegisteredInternal = new Signal();
 
     private readonly _pendingRegistrations: Map<string, Promise<void>> = new Map();
 
