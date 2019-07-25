@@ -1,33 +1,74 @@
 .context-channel {
-  position: relative;
-  text-align: right;
-  padding: 10px;
+    position: relative;
+    text-align: right;
+    padding: 10px;
 }
 
 .context-channel .selector {
-  width: 100%;
+    width: 100%;
 }
 
 .context-channel.float {
-  position: absolute;
-  right: 0%;
-  top: 0%;
-  z-index: 100;
+    position: absolute;
+    right: 0%;
+    top: 0%;
+    z-index: 100;
 }
 
 .context-channel select {
-  display: inline-block;
-  min-width: 100px;
-  vertical-align: middle;
+    display: inline-block;
+    min-width: 100px;
+    vertical-align: middle;
 }
 
 .context-channel .color {
-  vertical-align: middle;
-  border-radius: 100px;
-  width: 15px;
-  height: 15px;
-  display: inline-block;
-  border: 1px solid #555;
-  margin: 0 5px;
-  box-shadow: 0px 0px 15px #eee;
+    vertical-align: middle;
+    border-radius: 100px;
+    width: 15px;
+    height: 15px;
+    display: inline-block;
+    border: 1px solid #555;
+    margin: 0 5px;
+    box-shadow: 0px 0px 15px #eee;
+    cursor: pointer;
+}
+
+.context-channel .details {
+    display: inline-block;
+    vertical-align: middle;
+    font-weight: bolder;
+    line-height: 5px;
+    cursor: pointer;
+}
+
+.context-channel .member-list {
+    display: block;
+    position: absolute;
+    z-index: 100;
+    background: rgba(53, 53, 58, 0.795);
+    color: white;
+    text-align: left;
+    padding: 5px;
+    border-radius: 4px;
+    right: 0%;
+    top: 40px;
+}
+
+.context-channel .member-list ul {
+    margin: 0;
+    padding: 0;
+}
+
+.context-channel .member-list li {
+    text-decoration: none;
+    list-style: none;
+    padding: 5px;
+}
+
+.hidden {
+    display: none;
+}
+
+.context-channel .member-list span {
+    display: block;
 }
