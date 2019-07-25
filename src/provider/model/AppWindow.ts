@@ -48,4 +48,6 @@ export interface AppWindow {
     focus(): Promise<void>;
 
     isReadyToReceiveIntent(intent: IntentType): Promise<boolean>;
+
+    removeAllListeners(): void;
 }

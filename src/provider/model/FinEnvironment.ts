@@ -22,17 +22,11 @@ interface PendingWindow {
     index: number;
 }
 
-interface IntentMap {
-    [key: string]: boolean;
-}
+type IntentMap = Map<string, boolean>;
 
-interface ContextMap {
-    [key: string]: boolean;
-}
+type ContextMap = Map<string, boolean>;
 
-interface ChannelEventMap {
-    [channelId: string]: {[eventId: string]: boolean};
-}
+type ChannelEventMap = Map<string, {[eventId: string]: boolean}>;
 
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
@@ -189,9 +183,9 @@ class FinAppWindow implements AppWindow {
 
         this._creationTime = creationTime;
 
-        this._intentListeners = {};
-        this._channelContextListeners = {};
-        this._channelEventListeners = {};
+        this._intentListeners = new Map();
+        this._channelContextListeners = new Map();
+        this._channelEventListeners = new Map();
 
         this.channel = channel;
     }
@@ -221,45 +215,47 @@ class FinAppWindow implements AppWindow {
     }
 
     public hasIntentListener(intentName: string): boolean {
-        return this._intentListeners[intentName] === true;
+        return this._intentListeners.get(intentName) === true;
     }
 
     public addIntentListener(intentName: string): void {
-        this._intentListeners[intentName] = true;
+        this._intentListeners.set(intentName, true);
         this._onIntentListenerAdded.emit(intentName);
     }
 
     public removeIntentListener(intentName: string): void {
-        delete this._intentListeners[intentName];
+        this._intentListeners.delete(intentName);
     }
 
     public hasChannelContextListener(channel: ContextChannel): boolean {
-        return this._channelContextListeners[channel.id] === true;
+        return this._channelContextListeners.get(channel.id) === true;
     }
 
     public addChannelContextListener(channel: ContextChannel): void {
-        this._channelContextListeners[channel.id] = true;
+        this._channelContextListeners.set(channel.id, true);
     }
 
     public removeChannelContextListener(channel: ContextChannel): void {
-        delete this._channelContextListeners[channel.id];
+        this._channelContextListeners.delete(channel.id);
     }
 
     public hasChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): boolean {
-        return this._channelEventListeners[channel.id] && (this._channelEventListeners[channel.id][eventType] === true);
+        return this._channelEventListeners.has(channel.id) && (this._channelEventListeners.get(channel.id)![eventType] === true);
     }
 
     public addChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void {
-        if (!this._channelEventListeners[channel.id]) {
-            this._channelEventListeners[channel.id] = {};
+        if (!this._channelEventListeners.has(channel.id)) {
+            this._channelEventListeners.set(channel.id, {});
         }
 
-        this._channelEventListeners[channel.id][eventType] = true;
+        this._channelEventListeners.get(channel.id)![eventType] = true;
     }
 
     public removeChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void {
-        if (this._channelEventListeners[channel.id]) {
-            delete this._channelEventListeners[channel.id][eventType];
+        if (this._channelEventListeners.has(channel.id)) {
+            const events = this._channelEventListeners.get(channel.id) || {};
+            delete events[eventType];
+            this._channelEventListeners.set(channel.id, events);
         }
     }
 
@@ -298,5 +294,11 @@ class FinAppWindow implements AppWindow {
 
             return !didTimeout;
         }
+    }
+
+    public removeAllListeners(): void {
+        this._channelContextListeners.clear();
+        this._channelEventListeners.clear();
+        this._intentListeners.clear();
     }
 }
