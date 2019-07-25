@@ -5,7 +5,7 @@ import {Application} from '../../src/client/directory';
 import {AppIntent} from '../../src/client/main';
 import {Injector} from '../../src/provider/common/Injector';
 import {Inject} from '../../src/provider/common/Injectables';
-import {devAppDirectoryUrl} from '../../src/provider/model/AppDirectory';
+import {DEV_APP_DIRECTORY_URL} from '../../src/provider/model/AppDirectory';
 
 enum StorageKeys {
     URL = 'fdc3@url',
@@ -77,7 +77,7 @@ beforeEach(() => {
                 case StorageKeys.APPLICATIONS:
                     return fakeAppsJSON;
                 case StorageKeys.URL:
-                    return devAppDirectoryUrl;
+                    return DEV_APP_DIRECTORY_URL;
                 default:
                     return null;
             }
@@ -96,14 +96,14 @@ describe('AppDirectory Unit Tests', () => {
         beforeEach(() => {
             mockJson.mockResolvedValue(fakeApps);
             const configStore = Injector.get<'CONFIG_STORE'>(Inject.CONFIG_STORE);
-            configStore.config.add({level: 'desktop'}, {applicationDirectory: devAppDirectoryUrl});
+            configStore.config.add({level: 'desktop'}, {applicationDirectory: DEV_APP_DIRECTORY_URL});
         });
 
         it('Loads directory and URL from the store', async () => {
             const appDirectory = Injector.get<'APP_DIRECTORY'>(Inject.APP_DIRECTORY);
 
             expect(appDirectory['_directory']).toEqual([]);
-            expect(appDirectory['_url']).toEqual(devAppDirectoryUrl);
+            expect(appDirectory['_url']).toEqual(DEV_APP_DIRECTORY_URL);
         });
 
         describe('Refreshing the directory', () => {
