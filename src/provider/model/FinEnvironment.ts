@@ -3,9 +3,9 @@ import {injectable, id} from 'inversify';
 import {Identity, Window} from 'openfin/_v2/main';
 import {ExternalApplication as OFExternalApplication} from 'openfin/_v2/api/external-application/external-application';
 import {Application as OFApplication} from 'openfin/_v2/api/application/application';
+import {Signal} from 'openfin-service-signal';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {Signal1, Signal2} from '../common/Signal';
 import {Application, IntentType, ChannelId, FDC3ChannelEventType} from '../../client/main';
 import {FDC3Error, OpenError} from '../../client/errors';
 import {deferredPromise, withTimeout} from '../utils/async';
@@ -43,14 +43,14 @@ export class FinEnvironment extends AsyncInit implements Environment {
      *
      * Arguments: (identity: Identity, manifestUrl: string)
      */
-    public readonly windowCreated: Signal2<Identity, string> = new Signal2();
+    public readonly windowCreated: Signal<[Identity, string]> = new Signal();
 
     /**
      * Indicates that a window has been closed.
      *
      * Arguments: (identity: Identity)
      */
-    public readonly windowClosed: Signal1<Identity> = new Signal1();
+    public readonly windowClosed: Signal<[Identity]> = new Signal();
 
     private _windowsCreated: number = 0;
     private readonly _pendingWindows: {[id: string]: PendingWindow} = {};
@@ -179,7 +179,7 @@ class FinAppWindow implements AppWindow {
     private readonly _channelContextListeners: ContextMap;
     private readonly _channelEventListeners: ChannelEventMap;
 
-    private readonly _onIntentListenerAdded: Signal1<IntentType> = new Signal1();
+    private readonly _onIntentListenerAdded: Signal<[IntentType]> = new Signal();
 
     constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined, appWindowNumber: number) {
         this._id = getId(identity);
