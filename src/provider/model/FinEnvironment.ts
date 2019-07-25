@@ -43,14 +43,14 @@ export class FinEnvironment extends AsyncInit implements Environment {
      *
      * Arguments: (identity: Identity, manifestUrl: string)
      */
-    public readonly windowCreated = new Signal<[Identity, string]>();
+    public readonly windowCreated: Signal<[Identity, string]> = new Signal();
 
     /**
      * Indicates that a window has been closed.
      *
      * Arguments: (identity: Identity)
      */
-    public readonly windowClosed = new Signal<[Identity]>();
+    public readonly windowClosed: Signal<[Identity]> = new Signal();
 
     private _windowsCreated: number = 0;
     private readonly _pendingWindows: {[id: string]: PendingWindow} = {};
@@ -179,7 +179,7 @@ class FinAppWindow implements AppWindow {
     private readonly _channelContextListeners: ContextMap;
     private readonly _channelEventListeners: ChannelEventMap;
 
-    private readonly _onIntentListenerAdded = new Signal<[IntentType]>();
+    private readonly _onIntentListenerAdded: Signal<[IntentType]> = new Signal();
 
     constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined, appWindowNumber: number) {
         this._id = getId(identity);

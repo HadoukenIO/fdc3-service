@@ -21,7 +21,7 @@ export class ChannelHandler {
     constructor(@inject(Inject.MODEL) model: Model) {
         this._model = model;
 
-        this.onChannelChanged = new Signal<[AppWindow, ContextChannel | null, ContextChannel | null]>();
+        this.onChannelChanged = new Signal();
 
         this._model.onWindowAdded.add(this.onModelWindowAdded, this);
         this._model.onWindowRemoved.add(this.onModelWindowRemoved, this);

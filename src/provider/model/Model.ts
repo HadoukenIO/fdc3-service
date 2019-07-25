@@ -25,8 +25,8 @@ export function getId(identity: Identity): string {
 
 @injectable()
 export class Model {
-    public readonly onWindowAdded = new Signal<[AppWindow]>();
-    public readonly onWindowRemoved = new Signal<[AppWindow]>();
+    public readonly onWindowAdded: Signal<[AppWindow]> = new Signal();
+    public readonly onWindowRemoved: Signal<[AppWindow]> = new Signal();
 
     private readonly _directory: AppDirectory;
     private readonly _environment: Environment;

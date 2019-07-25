@@ -63,8 +63,8 @@ type APIActionReturn<T> = T | Readonly<T> | Promise<T> | Promise<Readonly<T>>;
  */
 @injectable()
 export class APIHandler<T extends Enum> {
-    public readonly onConnection = new Signal<[Identity]>();
-    public readonly onDisconnection = new Signal<[Identity]>();
+    public readonly onConnection: Signal<[Identity]> = new Signal();
+    public readonly onDisconnection: Signal<[Identity]> = new Signal();
 
     private _providerChannel!: ChannelProvider;
 
