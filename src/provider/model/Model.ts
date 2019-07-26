@@ -52,7 +52,7 @@ export class Model {
         this._environment.windowClosed.add(this.onWindowClosed, this);
 
         apiHandler.onConnection.add(this.onApiHandlerConnection, this);
-        apiHandler.onDisconnection.add(this.onWindowClosed, this);
+        apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
 
         this._channelsById[DEFAULT_CHANNEL_ID] = new DefaultContextChannel(DEFAULT_CHANNEL_ID);
         for (const channel of DESKTOP_CHANNELS) {
@@ -177,7 +177,6 @@ export class Model {
         // Window is not in model - this should mean that the app is not in the directory, as directory apps are immediately added to model upon window creation
         if (!appWindow) {
             let appInfo: Application;
-
             // Attempt to copy appInfo from another appWindow in the model from the same app
             const appWindowsFromSameApp = this.findWindowsByAppId(identity.uuid);
             if (appWindowsFromSameApp.length > 0) {
@@ -187,8 +186,17 @@ export class Model {
                 // TODO: Think about this race condition - for a brief period a window can be connected but not in the model (SERVICE-551)
                 appInfo = await this._environment.inferApplication(identity);
             }
-
             this.registerWindow(appInfo, identity, false);
+        } else {
+            this.onWindowAdded.emit(appWindow);
+        }
+    }
+
+    private async onApiHandlerDisconnection(identity: Identity): Promise<void> {
+        const appWindow = this.getWindow(identity);
+        // Remove all listeners but keep in the model
+        if (appWindow) {
+            appWindow.removeAllListeners();
         }
     }
 
