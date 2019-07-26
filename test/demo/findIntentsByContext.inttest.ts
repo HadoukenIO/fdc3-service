@@ -40,7 +40,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
 
     describe('When calling findIntentsByContext with a context type accepted by some directory app', () => {
         const contactContext = {
-            type: 'contact',
+            type: 'fdc3.contact',
             name: 'Test Name'
         };
         test('The promise resolves to an array of all compatible AppIntents', async () => {
