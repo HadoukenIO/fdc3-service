@@ -44,8 +44,8 @@ export function ContextChannelView(props: ChannelViewProps): React.ReactElement 
 
     return (
         <React.Fragment>
-            <div className="details" onMouseEnter={handleVisible} onMouseLeave={handleVisible}>{members.length}</div>
-            <div className="color" onMouseEnter={handleVisible} onMouseLeave={handleVisible} style={{backgroundColor: numberToHex(color)}}></div>
+            <div className="details">{members.length}</div>
+            <div className="color" title="Click to show members." onClick={handleVisible} style={{backgroundColor: numberToHex(color)}}></div>
             {visible && <MemberList members={members}/>}
         </React.Fragment>
     );
