@@ -177,6 +177,7 @@ export class Model {
         // Window is not in model - this should mean that the app is not in the directory, as directory apps are immediately added to model upon window creation
         if (!appWindow) {
             let appInfo: Application;
+
             // Attempt to copy appInfo from another appWindow in the model from the same app
             const appWindowsFromSameApp = this.findWindowsByAppId(identity.uuid);
             if (appWindowsFromSameApp.length > 0) {
@@ -186,9 +187,8 @@ export class Model {
                 // TODO: Think about this race condition - for a brief period a window can be connected but not in the model (SERVICE-551)
                 appInfo = await this._environment.inferApplication(identity);
             }
+
             this.registerWindow(appInfo, identity, false);
-        } else {
-            this.onWindowAdded.emit(appWindow);
         }
     }
 
