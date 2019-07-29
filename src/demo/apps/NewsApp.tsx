@@ -5,6 +5,7 @@ import {NewsFeed} from '../components/news/NewsFeed';
 import {SecurityContext, Context} from '../../client/context';
 import '../../../res/demo/css/w3.css';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
+import {getCurrentChannel} from '../../client/main';
 
 export function NewsApp(): React.ReactElement {
     const [symbolName, setSymbolName] = React.useState('AAPL');
@@ -22,6 +23,12 @@ export function NewsApp(): React.ReactElement {
     }, [symbolName]);
 
     React.useEffect(() => {
+        getCurrentChannel().then(async channel => {
+            const context = await channel.getCurrentContext();
+            if (context && context.type === 'security')
+                handleIntent(context as SecurityContext);
+        });
+
         const intentListener = fdc3.addIntentListener(fdc3.Intents.VIEW_NEWS, (context: Context): Promise<void> => {
             return new Promise((resolve, reject) => {
                 try {
