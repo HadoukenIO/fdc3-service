@@ -38,7 +38,7 @@ export function ChartsApp(props: AppProps): React.ReactElement {
         });
 
         const contextListener = fdc3.addContextListener((context: Context): void => {
-            if (context.type === 'security') {
+            if (context.type === 'fdc3.security') {
                 handleIntent(context as SecurityContext);
             }
         });
