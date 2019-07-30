@@ -27,6 +27,11 @@ export type ProviderWindow = Window & {
     eventHandler: EventHandler;
 }
 
+enum DURATION {
+    RELOAD = 500,
+    NAVIGATE = 500
+}
+
 const ofBrowser = new OFPuppeteerBrowser();
 const TEST_INTENT = 'TestIntent';
 let redChannel: RemoteChannel;
@@ -40,14 +45,6 @@ type TestParam = [
 ];
 
 type TestCatagoryParam = [string, TestParam[]];
-
-async function openDirectoryApp(app: TestAppData) {
-    await fdc3Remote.open(testManagerIdentity, app.name);
-}
-
-async function openNonDirectoryApp() {
-    await fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl);
-}
 
 const directoryApps: TestParam[] = [
     ['closed', testAppInDirectory1, openDirectoryApp, async (app) => {
@@ -91,21 +88,24 @@ describe('Disconnecting windows', () => {
         describe.each(tests)('When an app is %s', (
             testTitle: string,
             application: TestAppData,
-            openMethod: (app: TestAppData) => Promise<void>,
-            disconnectMethod: (app: TestAppData) => Promise<void>
+            openFunction: (app: TestAppData) => Promise<void>,
+            disconnectFunction: (app: TestAppData) => Promise<void>
         ) => {
             beforeEach(async () => {
-                await openMethod(application);
-                redChannel = await fdc3Remote.getChannelById(application, 'red');
-                blueChannel = await fdc3Remote.getChannelById(application, 'blue');
+                await openFunction(application);
+
                 await fdc3Remote.addContextListener(application);
                 await fdc3Remote.addEventListener(application, 'channel-changed');
                 await fdc3Remote.addIntentListener(application, TEST_INTENT);
+
+                redChannel = await fdc3Remote.getChannelById(application, 'red');
+                blueChannel = await fdc3Remote.getChannelById(application, 'blue');
+
                 await redChannel.join(application);
                 await blueChannel.addContextListener();
                 await blueChannel.addEventListener('window-added');
 
-                await disconnectMethod(application);
+                await disconnectFunction(application);
             });
 
             afterEach(async () => {
@@ -132,13 +132,21 @@ describe('Disconnecting windows', () => {
     });
 });
 
+async function openDirectoryApp(app: TestAppData) {
+    await fdc3Remote.open(testManagerIdentity, app.name);
+}
+
+async function openNonDirectoryApp() {
+    await fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl);
+}
+
 async function reload(target: Identity): Promise<void> {
     await ofBrowser.executeOnWindow(target, async function () {
         const window = this.fin.Window.getCurrentSync();
         await window.reload();
     });
 
-    await delay(500);
+    await delay(DURATION.RELOAD);
 }
 
 async function navigateTo(target: Identity, url: string): Promise<void> {
@@ -147,7 +155,7 @@ async function navigateTo(target: Identity, url: string): Promise<void> {
         await window.navigate(location);
     }, url);
 
-    await delay(500); // wait for page reload
+    await delay(DURATION.NAVIGATE); // wait for page reload
 }
 
 async function getIntentListeners(intentType: string): Promise<Application[]> {
