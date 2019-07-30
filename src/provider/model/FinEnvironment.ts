@@ -1,12 +1,10 @@
 import {WindowEvent} from 'openfin/_v2/api/events/base';
 import {injectable, id} from 'inversify';
 import {Identity, Window} from 'openfin/_v2/main';
-import {ExternalApplication as OFExternalApplication} from 'openfin/_v2/api/external-application/external-application';
-import {Application as OFApplication} from 'openfin/_v2/api/application/application';
 
 import {AsyncInit} from '../controller/AsyncInit';
 import {Signal1, Signal2} from '../common/Signal';
-import {Application, IntentType, ChannelId, FDC3ChannelEventType} from '../../client/main';
+import {Application, IntentType, ChannelId, FDC3ChannelEventType, FDC3EventType} from '../../client/main';
 import {FDC3Error, OpenError} from '../../client/errors';
 import {deferredPromise, withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
@@ -22,11 +20,11 @@ interface PendingWindow {
     index: number;
 }
 
-type IntentMap = Map<string, boolean>;
+type IntentMap = Set<string>;
 
-type ContextMap = Map<string, boolean>;
+type ContextMap = Set<string>;
 
-type ChannelEventMap = Map<string, {[eventId: string]: boolean}>;
+type ChannelEventMap = Map<string, Set<FDC3EventType>>;
 
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
@@ -183,8 +181,8 @@ class FinAppWindow implements AppWindow {
 
         this._creationTime = creationTime;
 
-        this._intentListeners = new Map();
-        this._channelContextListeners = new Map();
+        this._intentListeners = new Set();
+        this._channelContextListeners = new Set();
         this._channelEventListeners = new Map();
 
         this.channel = channel;
@@ -215,11 +213,11 @@ class FinAppWindow implements AppWindow {
     }
 
     public hasIntentListener(intentName: string): boolean {
-        return this._intentListeners.get(intentName) === true;
+        return this._intentListeners.has(intentName);
     }
 
     public addIntentListener(intentName: string): void {
-        this._intentListeners.set(intentName, true);
+        this._intentListeners.add(intentName);
         this._onIntentListenerAdded.emit(intentName);
     }
 
@@ -228,11 +226,11 @@ class FinAppWindow implements AppWindow {
     }
 
     public hasChannelContextListener(channel: ContextChannel): boolean {
-        return this._channelContextListeners.get(channel.id) === true;
+        return this._channelContextListeners.has(channel.id);
     }
 
     public addChannelContextListener(channel: ContextChannel): void {
-        this._channelContextListeners.set(channel.id, true);
+        this._channelContextListeners.add(channel.id);
     }
 
     public removeChannelContextListener(channel: ContextChannel): void {
@@ -240,22 +238,21 @@ class FinAppWindow implements AppWindow {
     }
 
     public hasChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): boolean {
-        return this._channelEventListeners.has(channel.id) && (this._channelEventListeners.get(channel.id)![eventType] === true);
+        return this._channelEventListeners.has(channel.id) && (this._channelEventListeners.get(channel.id)!.has(eventType));
     }
 
     public addChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void {
         if (!this._channelEventListeners.has(channel.id)) {
-            this._channelEventListeners.set(channel.id, {});
+            this._channelEventListeners.set(channel.id, new Set());
         }
 
-        this._channelEventListeners.get(channel.id)![eventType] = true;
+        this._channelEventListeners.get(channel.id)!.add(eventType);
     }
 
     public removeChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void {
         if (this._channelEventListeners.has(channel.id)) {
-            const events = this._channelEventListeners.get(channel.id) || {};
-            delete events[eventType];
-            this._channelEventListeners.set(channel.id, events);
+            const events = this._channelEventListeners.get(channel.id)!;
+            events.delete(eventType);
         }
     }
 
