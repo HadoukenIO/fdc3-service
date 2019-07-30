@@ -50,7 +50,6 @@ export function ContextChannelView(props: ChannelViewProps): React.ReactElement 
         </React.Fragment>
     );
 }
-
 interface MemberList {
     members: Identity[];
 }
@@ -73,12 +72,6 @@ function MemberList(props: MemberList): React.ReactElement {
     );
 }
 
-/**
- *
- * @param num
- */
 function numberToHex(num: number) {
     return num.toString(16).padStart(6, '0');
 }
-
-

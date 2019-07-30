@@ -71,8 +71,9 @@ export function ContactsApp(): React.ReactElement {
     React.useEffect(() => {
         getCurrentChannel().then(async channel => {
             const context = await channel.getCurrentContext();
-            if (context && context.type === 'fdc3.contact')
+            if (context && context.type === 'fdc3.contact') {
                 handleIntent(context as ContactContext);
+            }
         });
         const intentListener = fdc3.addIntentListener(fdc3.Intents.SAVE_CONTACT, (context: Context): Promise<void> => {
             return new Promise((resolve: () => void, reject: (reason?: Error) => void) => {

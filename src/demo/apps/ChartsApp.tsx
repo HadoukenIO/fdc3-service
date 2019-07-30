@@ -29,8 +29,9 @@ export function ChartsApp(props: AppProps): React.ReactElement {
     React.useEffect(() => {
         getCurrentChannel().then(async channel => {
             const context = await channel.getCurrentContext();
-            if (context && context.type === 'security')
+            if (context && context.type === 'security') {
                 handleIntent(context as SecurityContext);
+            }
         });
         const intentListener = fdc3.addIntentListener(fdc3.Intents.VIEW_CHART, (context: Context): Promise<void> => {
             return new Promise((resolve, reject) => {
