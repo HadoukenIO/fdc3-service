@@ -23,7 +23,7 @@
         {
             "name": "DialCall",
             "displayName": "Dial",
-            "contexts": ["contact"],
+            "contexts": ["fdc3.contact"],
             "customConfig": {
                 "icon": "fa-tty"
             }

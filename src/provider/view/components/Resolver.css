@@ -74,6 +74,7 @@ li {
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
 }
 
 #header #exit img {
@@ -93,6 +94,7 @@ li {
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
 }
 
 #cancel:hover {
