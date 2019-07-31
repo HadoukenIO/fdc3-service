@@ -14,9 +14,9 @@ import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
 import {OFPuppeteerBrowser} from './utils/ofPuppeteer';
 import {setupTeardown, quitApps, TestAppData} from './utils/common';
-import {testManagerIdentity, testAppInDirectory1, testAppWithPreregisteredListeners1, testAppNotInDirectory1, testAppNotFdc3} from './constants';
+import {testManagerIdentity, testAppInDirectory1, testAppWithPreregisteredListeners1, testAppNotInDirectory1} from './constants';
 import {RemoteChannel} from './utils/RemoteChannel';
-import {delay} from './utils/delay';
+import {delay, Duration} from './utils/delay';
 
 setupTeardown();
 
@@ -25,11 +25,6 @@ export type ProviderWindow = Window & {
     intentHandler: IntentHandler;
     channelHandler: ChannelHandler;
     eventHandler: EventHandler;
-}
-
-enum DURATION {
-    RELOAD = 500,
-    NAVIGATE = 500
 }
 
 const ofBrowser = new OFPuppeteerBrowser();
@@ -146,7 +141,7 @@ async function reload(target: Identity): Promise<void> {
         await window.reload();
     });
 
-    await delay(DURATION.RELOAD);
+    await delay(Duration.PAGE_RELOAD);
 }
 
 async function navigateTo(target: Identity, url: string): Promise<void> {
@@ -155,7 +150,7 @@ async function navigateTo(target: Identity, url: string): Promise<void> {
         await window.navigate(location);
     }, url);
 
-    await delay(DURATION.NAVIGATE); // wait for page reload
+    await delay(Duration.PAGE_NAVIGATE);
 }
 
 async function getIntentListeners(intentType: string): Promise<Application[]> {
