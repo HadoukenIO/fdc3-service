@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {Identity} from 'openfin/_v2/main';
 
-import {Channel, defaultChannel, getCurrentChannel, getDesktopChannels, DesktopChannel} from '../../../client/contextChannels';
+import {Channel} from '../../../client/contextChannels';
 import {addEventListener} from '../../../client/main';
 
 interface ChannelViewProps {
@@ -17,7 +17,6 @@ export function ContextChannelView(props: ChannelViewProps): React.ReactElement 
     const handleVisible = (event: React.MouseEvent) => {
         setVisible(!visible);
     };
-
 
     const setInfo = async (channel: Channel) => {
         setMembers(await channel.getMembers());
@@ -50,6 +49,7 @@ export function ContextChannelView(props: ChannelViewProps): React.ReactElement 
         </React.Fragment>
     );
 }
+
 interface MemberList {
     members: Identity[];
 }
