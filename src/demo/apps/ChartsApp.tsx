@@ -29,7 +29,7 @@ export function ChartsApp(props: AppProps): React.ReactElement {
     React.useEffect(() => {
         getCurrentChannel().then(async channel => {
             const context = await channel.getCurrentContext();
-            if (context && context.type === 'security') {
+            if (context && context.type === 'fdc3.security') {
                 handleIntent(context as SecurityContext);
             }
         });
