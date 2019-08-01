@@ -7,3 +7,8 @@ export async function delay(duration: number) {
         setTimeout(res, duration);
     });
 }
+
+export enum Duration {
+    PAGE_RELOAD = 500,
+    PAGE_NAVIGATE = 500
+}

@@ -1,12 +1,10 @@
 import {WindowEvent} from 'openfin/_v2/api/events/base';
-import {injectable, id} from 'inversify';
+import {injectable} from 'inversify';
 import {Identity, Window} from 'openfin/_v2/main';
-import {ExternalApplication as OFExternalApplication} from 'openfin/_v2/api/external-application/external-application';
-import {Application as OFApplication} from 'openfin/_v2/api/application/application';
 import {Signal} from 'openfin-service-signal';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {Application, IntentType, ChannelId, FDC3ChannelEventType} from '../../client/main';
+import {Application, IntentType, ChannelId, FDC3ChannelEventType, FDC3EventType} from '../../client/main';
 import {FDC3Error, OpenError} from '../../client/errors';
 import {deferredPromise, withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
@@ -22,17 +20,11 @@ interface PendingWindow {
     index: number;
 }
 
-interface IntentMap {
-    [key: string]: boolean;
-}
+type IntentMap = Set<string>;
 
-interface ContextMap {
-    [key: string]: boolean;
-}
+type ContextMap = Set<string>;
 
-interface ChannelEventMap {
-    [channelId: string]: {[eventId: string]: boolean};
-}
+type ChannelEventMap = Map<string, Set<FDC3EventType>>;
 
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
@@ -189,9 +181,9 @@ class FinAppWindow implements AppWindow {
 
         this._creationTime = creationTime;
 
-        this._intentListeners = {};
-        this._channelContextListeners = {};
-        this._channelEventListeners = {};
+        this._intentListeners = new Set();
+        this._channelContextListeners = new Set();
+        this._channelEventListeners = new Map();
 
         this.channel = channel;
     }
@@ -221,45 +213,46 @@ class FinAppWindow implements AppWindow {
     }
 
     public hasIntentListener(intentName: string): boolean {
-        return this._intentListeners[intentName] === true;
+        return this._intentListeners.has(intentName);
     }
 
     public addIntentListener(intentName: string): void {
-        this._intentListeners[intentName] = true;
+        this._intentListeners.add(intentName);
         this._onIntentListenerAdded.emit(intentName);
     }
 
     public removeIntentListener(intentName: string): void {
-        delete this._intentListeners[intentName];
+        this._intentListeners.delete(intentName);
     }
 
     public hasChannelContextListener(channel: ContextChannel): boolean {
-        return this._channelContextListeners[channel.id] === true;
+        return this._channelContextListeners.has(channel.id);
     }
 
     public addChannelContextListener(channel: ContextChannel): void {
-        this._channelContextListeners[channel.id] = true;
+        this._channelContextListeners.add(channel.id);
     }
 
     public removeChannelContextListener(channel: ContextChannel): void {
-        delete this._channelContextListeners[channel.id];
+        this._channelContextListeners.delete(channel.id);
     }
 
     public hasChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): boolean {
-        return this._channelEventListeners[channel.id] && (this._channelEventListeners[channel.id][eventType] === true);
+        return this._channelEventListeners.has(channel.id) && (this._channelEventListeners.get(channel.id)!.has(eventType));
     }
 
     public addChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void {
-        if (!this._channelEventListeners[channel.id]) {
-            this._channelEventListeners[channel.id] = {};
+        if (!this._channelEventListeners.has(channel.id)) {
+            this._channelEventListeners.set(channel.id, new Set());
         }
 
-        this._channelEventListeners[channel.id][eventType] = true;
+        this._channelEventListeners.get(channel.id)!.add(eventType);
     }
 
     public removeChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void {
-        if (this._channelEventListeners[channel.id]) {
-            delete this._channelEventListeners[channel.id][eventType];
+        if (this._channelEventListeners.has(channel.id)) {
+            const events = this._channelEventListeners.get(channel.id)!;
+            events.delete(eventType);
         }
     }
 
@@ -298,5 +291,11 @@ class FinAppWindow implements AppWindow {
 
             return !didTimeout;
         }
+    }
+
+    public removeAllListeners(): void {
+        this._channelContextListeners.clear();
+        this._channelEventListeners.clear();
+        this._intentListeners.clear();
     }
 }

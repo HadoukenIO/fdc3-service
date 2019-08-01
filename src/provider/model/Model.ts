@@ -52,6 +52,7 @@ export class Model {
         this._environment.windowClosed.add(this.onWindowClosed, this);
 
         apiHandler.onConnection.add(this.onApiHandlerConnection, this);
+        apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
 
         this._channelsById[DEFAULT_CHANNEL_ID] = new DefaultContextChannel(DEFAULT_CHANNEL_ID);
         for (const channel of DESKTOP_CHANNELS) {
@@ -188,6 +189,14 @@ export class Model {
             }
 
             this.registerWindow(appInfo, identity, false);
+        }
+    }
+
+    private async onApiHandlerDisconnection(identity: Identity): Promise<void> {
+        const appWindow = this.getWindow(identity);
+        // Remove all listeners but keep in the model
+        if (appWindow) {
+            appWindow.removeAllListeners();
         }
     }
 
