@@ -5,9 +5,7 @@
 /**
  * TypeScript definitions for envelope and context objects.
  *
- * These structures are defined by the Contexts FDC3 working group. he definitions here are based on current
- * proposals and are not final. There may be minor differences between the current spec and the definitions here,
- * in order to support this demo.
+ * These structures are defined by the Contexts FDC3 working group.
  */
 
 /**
@@ -37,7 +35,7 @@ export interface Context {
 
     /**
      * @hidden
-     * A context object is open for extension with any custom properties/metadata.
+     * Custom properties and metadata. This can be extended in specific context object.
      */
     [key: string]: unknown;
 }
@@ -51,11 +49,11 @@ export interface ContactContext extends Context {
      */
     type: 'fdc3.contact';
     /**
-     * Name of the contact.
+     * Free text name of the contact.
      */
     name: string;
     /**
-     * The contact data. Currently has optional fields for email address, Twitter handle, and phone number.
+     * The contact data. Can contain email address, Twitter handle, and phone number.
      */
     id: {[key: string]: string}&{email?: string; twitter?: string; phone?: string};
 }
@@ -69,11 +67,19 @@ export interface InstrumentContext extends Context {
      */
     type: 'fdc3.instrument';
     /**
-     * Can contain some of a ticker, an [ISIN](https://www.isin.org/isin/), a [CUSIP](https://www.cusip.com/cusip/index.htm),
-     * a [SEDOL](https://www.londonstockexchange.com/products-and-services/reference-data/sedol-master-file/sedol-master-file.htm),
-     * a [Reuters Instrument Code (RIC)](https://en.wikipedia.org/wiki/Reuters_Instrument_Code),
-     * a [Bloomberg Ticker](https://www.bloomberg.com/professional/product/market-data/),
-     * a [PERMID](https://permid.org/), and a [FIGI](https://www.openfigi.com/about/figi).
+     * Optional free text name of the instrument.
+     */
+    name?: string;
+    /**
+     * Can contain some or all of
+     * * a ticker,
+     * * an [ISIN](https://www.isin.org/isin/),
+     * * a [CUSIP](https://www.cusip.com/cusip/index.htm),
+     * * a [SEDOL](https://www.londonstockexchange.com/products-and-services/reference-data/sedol-master-file/sedol-master-file.htm),
+     * * a [Reuters Instrument Code (RIC)](https://en.wikipedia.org/wiki/Reuters_Instrument_Code),
+     * * a [Bloomberg Ticker](https://www.bloomberg.com/professional/product/market-data/),
+     * * a [PERMID](https://permid.org/),
+     * * and a [FIGI](https://www.openfigi.com/about/figi).
      */
     id: {[key: string]: string}&{ticker?: string; ISIN?: string; CUSIP?: string; SEDOL?: string;
         RIC?: string; BBG?: string; PERMID?: string; FIGI?: string;};
@@ -87,6 +93,10 @@ export interface OrganizationContext extends Context {
      * The context type is always fdc3.organization.
      */
     type: 'fdc3.organization';
+    /**
+     * Optional free text name of the organization.
+     */
+    name?: string;
     /**
      * Can contain either or both an [LEI](https://www.gleif.org/en/about-lei/introducing-the-legal-entity-identifier-lei)
      * and a [PERMID](https://permid.org/).

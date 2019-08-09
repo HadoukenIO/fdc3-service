@@ -30,7 +30,7 @@ export * from './intents';
 export * from './errors';
 
 /**
- * Contains the data you need to describe an intent.
+ * Describes an intent.
  */
 export interface IntentMetadata {
     /**
@@ -93,11 +93,11 @@ export type Listener = ContextListener | IntentListener;
  */
 export interface ContextListener {
     /**
-     * The callback for when this listener receives a context broadcast.
+     * The handler for when this listener receives a context broadcast.
      */
     handler: (context: Context) => void;
     /**
-     * Unsubscribe the listener object.
+     * Unsubscribe the listener object. We will no longer receive context messages on this handler.
      */
     unsubscribe: () => void;
 }
@@ -125,11 +125,16 @@ export interface IntentListener {
  */
 export type FDC3Event = FDC3MainEvent | FDC3ChannelEvent;
 /**
- * Type to define the type of events fired by the service.
+ * Events types fired by the service.
  */
 export type FDC3EventType = FDC3MainEventType | FDC3ChannelEventType;
-
+/**
+ * Events that are dispatched from the top-level event listener, via [[addEventListener]].
+ */
 export type FDC3MainEvent = ChannelChangedEvent;
+/**
+ * Event types fired from the top-level event listener.
+ */
 export type FDC3MainEventType = FDC3MainEvent['type'];
 
 /**
@@ -141,11 +146,11 @@ const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
 
 /**
- * A Desktop Agent is a desktop component (or aggregate of components) that serves as a
+ * A desktop agent is a desktop component (or aggregate of components) that serves as a
  * launcher and message router (broker) for applications in its domain.
  *
- * A Desktop Agent can be connected to one or more App Directories and will use directories for application
- * identity and discovery. Typically, a Desktop Agent will contain the proprietary logic of
+ * A desktop agent can be connected to one or more App Directories and will use directories for application
+ * identity and discovery. Typically, a desktop agent will contain the proprietary logic of
  * a given platform, handling functionality like explicit application interop workflows where
  * security, consistency, and implementation requirements are proprietary.
  */
@@ -167,7 +172,7 @@ const contextListeners: ContextListener[] = [];
  *     agent.open('myApp', context);
  * ```
  * @param name The app name to launch.
- * @param context A context to pass to the app post-'launch.
+ * @param context A context to pass to the app post-launch.
  */
 export async function open(name: string, context?: Context): Promise<void> {
     return tryServiceDispatch(APIFromClientTopic.OPEN, {name, context: context && parseContext(context)});
@@ -176,7 +181,7 @@ export async function open(name: string, context?: Context): Promise<void> {
 /**
  * Find out more information about a particular intent by passing its name, and optionally its context.
  *
- * findIntent is effectively granting programmatic access to the Desktop Agent's resolver.
+ * findIntent is effectively granting programmatic access to the desktop agent's resolver.
  * A promise resolving to the intent, its metadata and metadata about the apps that registered it is returned.
  * This can be used to raise the intent against a specific app.
  *
@@ -205,7 +210,7 @@ export async function findIntent(intent: string, context?: Context): Promise<App
 /**
  * Find all the available intents for a particular context.
  *
- * findIntentsByContext is effectively granting programmatic access to the Desktop Agent's resolver.
+ * findIntentsByContext is effectively granting programmatic access to the desktop agent's resolver.
  * A promise resolving to all the intents, their metadata and metadata about the apps that registered it is returned,
  * based on the context export types the intents have registered.
  *
@@ -214,8 +219,20 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  * ```javascript
  * // I have a context object, and I want to know what I can do with it, hence, I look for intents...
  * const appIntents = await agent.findIntentsByContext(context);
- *
- * // returns for example:
+ * ```
+ * might return:
+ * ```ts
+* [
+*    {
+*       intent: { name: "StartCall", displayName: "Call" },
+*       apps: [{ name: "Skype" }]
+*   },
+*   {
+*       intent: { name: "StartChat", displayName: "Chat" },
+*       apps: [{ name: "Skype" }, { name: "Symphony" }, { name: "Slack" }]
+*   }
+* ]
+* ```
  * // [{
  * //     intent: { name: "StartCall", displayName: "Call" },
  * //     apps: [{ name: "Skype" }]
@@ -225,6 +242,7 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  * //     apps: [{ name: "Skype" }, { name: "Symphony" }, { name: "Slack" }]
  * // }];
  *
+ *```javascript
  * // select a particular intent to raise
  * const startChat = appIntents[1];
  *
@@ -234,7 +252,7 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  * // raise the intent, passing the given context, targeting the app
  * await agent.raiseIntent(startChat.intent.name, context, selectedApp.name);
  * ```
- * @param context The context to send to find the intents that support it.
+ * @param context Returned intents must support this context.
  */
 export async function findIntentsByContext(context: Context): Promise<AppIntent[]> {
     return tryServiceDispatch(APIFromClientTopic.FIND_INTENTS_BY_CONTEXT, {context: parseContext(context)});
@@ -264,6 +282,7 @@ export function broadcast(context: Context): void {
  * @param intent The intent name to raise.
  * @param context The context that will be sent with this intent.
  * @param target An optional [[AppName]] to send the intent to.
+ * @throws [[FDC3Error]]`
  */
 export async function raiseIntent(intent: string, context: Context, target?: AppName): Promise<IntentResolution> {
     return tryServiceDispatch(APIFromClientTopic.RAISE_INTENT, {intent, context: parseContext(context), target});
@@ -273,7 +292,7 @@ export async function raiseIntent(intent: string, context: Context, target?: App
  * Adds a listener for incoming Intents from the Agent.
  *
  * To unsubscribe, use the returned [[IntentListener]].
- * @param intent The name of the intent to listen to.
+ * @param intent The name of the intent to listen for.
  * @param handler The handler to call when we get sent an intent.
  */
 export function addIntentListener(intent: string, handler: (context: Context) => void): IntentListener {
@@ -307,7 +326,7 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
 }
 
 /**
- * Adds a listener for incoming context broadcast from the Desktop Agent.
+ * Adds a listener for incoming context broadcast from the desktop agent.
  *
  * To unsubscribe, use the returned [[ContextListener]].
  * @param handler The callback function to call when we receive a broadcast context.
@@ -332,17 +351,16 @@ export function addContextListener(handler: (context: Context) => void): Context
 }
 
 /**
- * Event that is fired whenever a window changes from one channel to another.
- *
- * This includes switching to/from the global channel. The `channel` and
- * `previousChannel` fields use the same conventions for denoting the global channel as `getChannel`.
+ * Event that is fired whenever a window changes from one channel to another. This captures events from all channels (including the global channel).
  */
 export function addEventListener(eventType: 'channel-changed', handler: (event: ChannelChangedEvent) => void): void;
 
 /**
- * Generic event listener. This is not for intent or context subscription: use [[addIntentListener]] and [[addContextListener]], respectively.
+ * Top-level event listener. This is not for intent or context subscription: use [[addIntentListener]] and [[addContextListener]], respectively.
+ * This is used for events that are global to the service, rather than limited to an intent or a context. Currently only takes the
+ * channel change event.
  * @param eventType The event type.
- * @param handler The callback when the event is fired.
+ * @param handler The handler to call when the event is fired.
  * @param identity The OF window identity. Currently unused.
  */
 export function addEventListener(eventType: FDC3MainEventType, handler: (event: FDC3MainEvent) => void, identity?: Identity): void {
@@ -352,9 +370,9 @@ export function addEventListener(eventType: FDC3MainEventType, handler: (event: 
 }
 
 /**
- * Remove any events you are subscribed to.
+ * Unsubscribe from a particular event type.
  * @param eventType The type of the event to remove.
- * @param handler The listener you had previously used to subscribe with.
+ * @param handler The handler you had previously passed into [[addEventListener]].
  */
 export function removeEventListener(eventType: FDC3MainEventType, handler: (event: FDC3MainEvent) => void): void {
     validateEnvironment();

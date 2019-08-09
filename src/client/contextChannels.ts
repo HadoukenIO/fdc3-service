@@ -30,7 +30,7 @@ export type FDC3ChannelEvent = ChannelWindowAddedEvent | ChannelWindowRemovedEve
 export type FDC3ChannelEventType = FDC3ChannelEvent['type'];
 
 /**
- * Event fired when a window is added to a channel. See {@link Channel.addEventListener}.
+ * Event fired when a window is added to a channel. See {@link ChannelBase.addEventListener}.
  *
  * Note that this event will typically fire as part of a pair - since windows must always belong to a channel, a window
  * can only join a channel by leaving it's previous channel. The exceptions to this rule are when the window is created
@@ -47,7 +47,7 @@ export interface ChannelWindowAddedEvent {
     identity: Identity;
 
     /**
-     * The channel that window now belongs to. Will always be the channel object that {@link Channel.addEventListener} was
+     * The channel that window now belongs to. Will always be the channel object that {@link ChannelBase.addEventListener} was
      * called on.
      */
     channel: Channel;
@@ -61,7 +61,7 @@ export interface ChannelWindowAddedEvent {
 }
 
 /**
- * Event fired when a window is removed from a channel. See {@link Channel.addEventListener}.
+ * Event fired when a window is removed from a channel. See {@link ChannelBase.addEventListener}.
  *
  * Note that this event will typically fire as part of a pair - since windows must always belong to a channel, a window
  * can only join a channel by leaving it's previous channel. The exceptions to this rule are when the window is created
@@ -87,7 +87,7 @@ export interface ChannelWindowRemovedEvent {
     channel: Channel | null;
 
     /**
-     * The channel that the window belonged to previously. Will always be the channel object that {@link Channel.addEventListener} was
+     * The channel that the window belonged to previously. Will always be the channel object that {@link ChannelBase.addEventListener} was
      * called on.
      */
     previousChannel: Channel;

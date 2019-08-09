@@ -4,9 +4,7 @@ import {Intents} from '../client/intents';
 /**
  * TypeScript definitions for FDC3-defined intents.
  *
- * These structures are defined by the Intents FDC3 working group. The definitions here are based on current
- * proposals and are not final. There may be minor differences between the current spec and the definitions here,
- * in order to support this demo.
+ * These structures are defined by the Intents FDC3 working group.
  */
 
 /**

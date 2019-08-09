@@ -16,7 +16,6 @@ import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 import {getId} from './Model';
 
-
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
     /**

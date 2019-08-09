@@ -7,7 +7,7 @@
   */
 export enum OpenError {
     /**
-     * Indicates that an application is unable to be found in the AppDir.
+     * Indicates that an application cannot be found in the application directory.
      */
     AppNotFound = 'AppNotFound',
     /**
@@ -25,7 +25,7 @@ export enum OpenError {
 }
 
 /**
- * Error codes returned by attempts firing intents to applications.
+ * Error codes returned after failure to fire intents to applications.
  */
 export enum ResolveError {
     /**
@@ -33,7 +33,8 @@ export enum ResolveError {
      */
     NoAppsFound = 'NoAppsFound',
     /**
-     * Indicates that, in the case when a 'target' argument is passed to [[raiseIntent]], no such app either exists in the AppDir or is currently running.
+     * Indicates that, in the case when a 'target' argument is passed to [[raiseIntent]], no
+     * such app either exists in the application directory or is currently running.
      */
     TargetAppNotAvailable = 'TargetAppNotAvailable',
     /**
@@ -79,7 +80,8 @@ export enum IdentityError {
 }
 
 /**
- * Class used to hold errors returned by the FDC3 provider.
+ * Class used to hold errors returned by the FDC3 provider. Inherits from the
+ * (Error type)[https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error].
  */
 export class FDC3Error extends Error {
     /**

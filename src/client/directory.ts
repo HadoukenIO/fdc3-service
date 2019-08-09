@@ -13,14 +13,17 @@
  * Type alias to indicate when an Application Identifier should be passed. Application Identifiers
  * are described [here](https://fdc3.finos.org/docs/1.0/appd-discovery#application-identifier).
  *
- * This type alias exists to disambiguate raw string app identity from the [[AppName]].
+ * In the OpenFin implementation of FDC3, we expect this to be the same as the UUID in
+ * the manifest, but please see [[Application]].
+ *
+ * This type alias exists to disambiguate the raw string app identity from the [[AppName]].
  */
 export type AppId = string;
 /**
- * Type alias to indicate when an Application Name should be passed. This will be a human-readable
- * name that will be displayed on screen.
+ * App Name is the machine-readable name of the app, but it may well be sufficiently
+ * human-readable that it can be used in user interfaces. If it's not, please use the title.
  *
- * This type alias exists to disambiguate raw string app identity from the [[AppId]].
+ * This type alias exists to disambiguate raw string app name from the [[AppId]].
  */
 export type AppName = string;
 
@@ -30,10 +33,12 @@ export type AppName = string;
 export interface Application {
     /**
      * The Application Identifier. Please see https://fdc3.finos.org/docs/1.0/appd-discovery#application-identifier.
+     * By convention this should be the same as your OpenFin UUID. If you can't do that, then add a field into the
+     * [[customConfig]] member to indicate your UUID.
      */
     appId: AppId;
     /**
-     * The human readable app name.
+     * The machine-readable app name. This may well be human-readable, too. If it's not, use title.
      */
     name: AppName;
     /**
@@ -53,7 +58,7 @@ export interface Application {
      */
     title?: string;
     /**
-     * Tooltip used by any UIs that display app information. A short explanatory text string.
+     * A short explanatory text string. For use in tooltips used by any UIs that display app information.
      */
     tooltip?: string;
     /**
@@ -70,7 +75,7 @@ export interface Application {
      */
     contactEmail?: string;
     /**
-     * Support email address.
+     * The email address to send your support requests to.
      */
     supportEmail?: string;
     /**
@@ -86,7 +91,7 @@ export interface Application {
      */
     customConfig?: NameValuePair[];
     /**
-     * The set of intents associated with this AppDir entry.
+     * The set of intents associated with this application directory entry.
      */
     intents?: AppDirIntent[];
 }
@@ -119,21 +124,14 @@ export interface Icon {
 }
 
 /**
- * The application allows extra configuration to be passed in, and uses an array of NameValuePairs,
- * where the key is the name.
+ * A pair of name and values, that allows extra configuration to be passed in to an application.
  */
 export interface NameValuePair {
-    /**
-     * Key for the extra configuration.
-     */
     name: string;
-    /**
-     * Value for the extra configuration.
-     */
     value: string;
 }
 /**
- * This is a representation of an [FDC3 Intent](https://fdc3.finos.org/docs/1.0/intents-intro) supported by the app in the app directory.
+ * A representation of an [FDC3 Intent](https://fdc3.finos.org/docs/1.0/intents-intro) supported by the app in the app directory.
  */
 export interface AppDirIntent {
     /**
