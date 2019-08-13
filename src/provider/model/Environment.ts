@@ -10,6 +10,8 @@ export interface Environment {
     windowCreated: Signal<[Identity, string]>;
     windowClosed: Signal<[Identity]>;
 
+    windowPending: Signal<[Identity]>;
+
     /**
      * Creates a new application, given an App Directory entry.
      * @throws:
@@ -19,7 +21,8 @@ export interface Environment {
     createApplication: (appInfo: Application, channel: ContextChannel) => Promise<void>;
 
     /**
-     * Creates an `AppWindow` object for an existing window. Should only be called once per window.
+     * Creates an `AppWindow` object for an existing window. Should only be called once per window, after the `windowCreated` signal has
+     * been fired for that window
      */
     wrapApplication: (appInfo: Application, identity: Identity, channel: ContextChannel) => AppWindow;
 
@@ -27,4 +30,9 @@ export interface Environment {
      * Examines a running window, and returns a best-effort Application description
      */
     inferApplication: (identity: Identity) => Promise<Application>;
+
+    /**
+     * Returns true if the provided window has been created, but no `wrapApplication` call has been made for this window
+     */
+    hasPendingWindow: (identity: Identity) => boolean;
 }

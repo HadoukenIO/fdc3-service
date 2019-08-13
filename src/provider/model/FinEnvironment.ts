@@ -44,6 +44,17 @@ export class FinEnvironment extends AsyncInit implements Environment {
      */
     public readonly windowClosed: Signal<[Identity]> = new Signal();
 
+    /**
+     * Indicates that a window has been created.
+     *
+     * Unlike the `windowCreated` signal, this will be fired synchronously from the lister for the runtime window-created event,
+     * but does not provide all information provided by the `windowCreated` signal. For a given window, this will always be fired
+     * before the `windowCreated` signal.
+     *
+     * Arguments: (identity: Identity)
+     */
+    public readonly windowPending: Signal<[Identity]> = new Signal();
+
     private _windowsCreated: number = 0;
     private readonly _pendingWindows: {[id: string]: PendingWindow} = {};
 
@@ -104,6 +115,10 @@ export class FinEnvironment extends AsyncInit implements Environment {
         }
     }
 
+    public hasPendingWindow(identity: Identity): boolean {
+        return this._pendingWindows.hasOwnProperty(getId(identity));
+    }
+
     protected async init(): Promise<void> {
         fin.System.addListener('window-created', (event: WindowEvent<'system', 'window-created'>) => {
             const identity = {uuid: event.uuid, name: event.name};
@@ -137,6 +152,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
         this._pendingWindows[getId(identity)] = pendingWindow;
         this._windowsCreated++;
+
+        this.windowPending.emit(identity);
 
         const info = await fin.Application.wrapSync(identity).getInfo();
         this.windowCreated.emit(identity, info.manifestUrl);
