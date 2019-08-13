@@ -8,7 +8,7 @@ import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {DESKTOP_CHANNELS} from '../constants';
-import {deferredPromise} from '../utils/async';
+import {DeferredPromise, withTimeout} from '../utils/async';
 
 import {AppWindow} from './AppWindow';
 import {ContextChannel, DefaultContextChannel, DesktopContextChannel} from './ContextChannel';
@@ -21,6 +21,14 @@ import {AppDirectory} from './AppDirectory';
  */
 export function getId(identity: Identity): string {
     return `${identity.uuid}/${identity.name || identity.uuid}`;
+}
+
+interface ExpectedWindow {
+    pendingDeferredPromise: DeferredPromise<void> | null;
+    createdDeferredPromise: DeferredPromise<void>;
+    registerDeferredPromise: DeferredPromise<void>;
+    windowDeferredPromise: DeferredPromise<AppWindow>;
+    status: 'pending' | 'resolved' | 'rejected';
 }
 
 @injectable()
@@ -36,7 +44,7 @@ export class Model {
 
     private readonly _onWindowRegisteredInternal = new Signal();
 
-    private readonly _pendingRegistrations: Map<string, Promise<void>> = new Map();
+    private readonly _expectedWindows: Map<string, ExpectedWindow> = new Map();
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
@@ -70,6 +78,24 @@ export class Model {
 
     public getWindow(identity: Identity): AppWindow|null {
         return this._windowsById[getId(identity)] || null;
+    }
+
+    public async expectWindow(identity: Identity): Promise<AppWindow> {
+        const id = getId(identity);
+
+        if (this._windowsById[id]) {
+            return this._windowsById[id];
+        } else {
+            let expectedWindow: ExpectedWindow;
+
+            if (this._expectedWindows.has(id)) {
+                expectedWindow = this._expectedWindows.get(id)!;
+            } else {
+                expectedWindow = this.createExpectedWindow('unseen', identity);
+            }
+
+            return expectedWindow.windowDeferredPromise.promise;
+        }
     }
 
     public getChannel(id: ChannelId): ContextChannel|null {
@@ -131,16 +157,33 @@ export class Model {
         return this.findWindows(appWindow => appWindow.appInfo.name === name);
     }
 
+    private onWindowPending(identity: Identity): void {
+        const id = getId(identity);
+
+        let expectedWindow: ExpectedWindow;
+        if (this._expectedWindows.has(id)) {
+            expectedWindow = this._expectedWindows.get(id)!;
+
+            if (expectedWindow.status !== 'rejected') {
+                expectedWindow.pendingDeferredPromise!.resolve();
+            } else {
+                this.createExpectedWindow('pending', identity);
+            }
+        } else {
+            this.createExpectedWindow('pending', identity);
+        }
+    }
+
     private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
+        const id = getId(identity);
+
         // Registration is asynchronous and sensitive to race conditions. We use a deferred promise
         // to signal to other sensitive operations that it is safe to proceed.
-        const [pendingRegistration, resolvePending] = deferredPromise();
-        this._pendingRegistrations.set(getId(identity), pendingRegistration);
+        const expectedWindow = this._expectedWindows.get(id)!;
 
         const apps = await this._directory.getAllApps();
         const appInfoFromDirectory = apps.find(app => app.manifest.startsWith(manifestUrl));
 
-        const id: string = getId(identity);
         // If the app is not in directory we ignore it. We'll add it to the model if and when it connects to FDC3
         if (appInfoFromDirectory && !this._windowsById[id]) {
             this.registerWindow(appInfoFromDirectory, identity, true);
@@ -149,8 +192,7 @@ export class Model {
         }
 
         // Registration finished, allow any other sensitive operations to proceed
-        resolvePending();
-        this._pendingRegistrations.delete(getId(identity));
+        expectedWindow.createdDeferredPromise.resolve();
     }
 
     private onWindowClosed(identity: Identity): void {
@@ -162,15 +204,21 @@ export class Model {
             delete this._windowsById[id];
 
             this.onWindowRemoved.emit(window);
+        } else if (this._expectedWindows.has(id)) {
+            this._expectedWindows.get(id)!.windowDeferredPromise.reject();
+            this._expectedWindows.delete(id);
         }
     }
 
     private async onApiHandlerConnection(identity: Identity): Promise<void> {
+        // TODO: What happens if this gets called before pending?
+
+        const id = getId(identity);
+
         // Wait for windowCreated handler to finish to avoid race conditions that
         // can occur when these two run "concurrently"
-        if (this._pendingRegistrations.has(getId(identity))) {
-            await this._pendingRegistrations.get(getId(identity));
-        }
+        this.expectWindow(identity);
+        await this._expectedWindows.get(id)!.createdDeferredPromise;
 
         const appWindow = this.getWindow(identity);
 
@@ -207,13 +255,20 @@ export class Model {
      * @param isInAppDirectory boolean indicating whether the app is registered in the app directory
      */
     private registerWindow(appInfo: Application, identity: Identity, isInAppDirectory: boolean): AppWindow {
+        const id = getId(identity);
+
+        const expectedWindow = this._expectedWindows.get(id)!;
+
         const appWindow = this._environment.wrapApplication(appInfo, identity, this._channelsById[DEFAULT_CHANNEL_ID]);
 
         console.info(`Registering window [${isInAppDirectory ? '' : 'NOT '}in app directory] ${appWindow.id}`);
         this._windowsById[appWindow.id] = appWindow;
-        this._onWindowRegisteredInternal.emit();
+        this._expectedWindows.delete(id);
 
         this.onWindowAdded.emit(appWindow);
+        this._onWindowRegisteredInternal.emit();
+
+        expectedWindow.registerDeferredPromise.resolve();
 
         return appWindow;
     }
@@ -224,5 +279,40 @@ export class Model {
 
     private findWindows(predicate: (appWindow: AppWindow) => boolean): AppWindow[] {
         return this.windows.filter(predicate);
+    }
+
+    private createExpectedWindow(state: 'pending' | 'unseen', identity: Identity): ExpectedWindow {
+        const id = getId(identity);
+
+        const pendingDeferredPromise = state === 'pending' ? null : new DeferredPromise();
+        const createdDeferredPromise = new DeferredPromise<void>();
+        const registerDeferredPromise = new DeferredPromise<void>();
+        const windowDeferredPromise = new DeferredPromise<AppWindow>();
+
+        const expectedWindow: ExpectedWindow = {
+            pendingDeferredPromise,
+            createdDeferredPromise,
+            registerDeferredPromise,
+            windowDeferredPromise,
+            status: 'pending'
+        };
+
+        (async () => {
+            if (pendingDeferredPromise) {
+                await withTimeout(100, pendingDeferredPromise.promise);
+            }
+
+            await withTimeout(5000, registerDeferredPromise.promise);
+
+            expectedWindow.status = 'resolved';
+            windowDeferredPromise.resolve(this._windowsById[getId(identity)]);
+        })().catch(() => {
+            expectedWindow.status = 'rejected';
+            windowDeferredPromise.reject();
+        });
+
+        this._expectedWindows.set(id, expectedWindow);
+
+        return expectedWindow;
     }
 }

@@ -1,16 +1,32 @@
 /**
- * Creates a deferred promise and returns it along with handlers to resolve/reject it imperatively
- * @returns a tuple with the promise and its resolve/reject handlers
+ * A deferred promise with methods to resolve or reject it imperatively
  */
-export function deferredPromise<T = void>(): [Promise<T>, (value?: T) => void, (reason?: any) => void] {
-    let res: (value?: T) => void;
-    let rej: (reason?: any) => void;
-    const p = new Promise<T>((r, rj) => {
-        res = r;
-        rej = rj;
-    });
-    return [p, res!, rej!];
+export class DeferredPromise<T = void> {
+    private readonly _promise: Promise<T>;
+    private _resolve!: (value?: T) => void;
+    private _reject!: (reason?: any) => void;
+
+    public get promise() {
+        return this._promise;
+    }
+
+    public get resolve() {
+        return this._resolve;
+    }
+
+    public get reject() {
+        return this._reject;
+    }
+
+    constructor() {
+        const promise = new Promise<T>((res, rej) => {
+            this._resolve = res;
+            this._reject = rej;
+        });
+        this._promise = promise;
+    }
 }
+
 
 /**
  * Races a given promise against a timeout, and resolves to a `[didTimeout, value?]` tuple indicating
