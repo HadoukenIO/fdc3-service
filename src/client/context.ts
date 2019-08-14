@@ -53,7 +53,10 @@ export interface ContactContext extends Context {
      */
     name: string;
     /**
-     * The contact data. Can contain email address, Twitter handle, and phone number.
+     * The contact data. Can contain some or all of:
+     * * email address,
+     * * Twitter handle,
+     * * and phone number.
      */
     id: {[key: string]: string}&{email?: string; twitter?: string; phone?: string};
 }
@@ -71,7 +74,7 @@ export interface InstrumentContext extends Context {
      */
     name?: string;
     /**
-     * Can contain some or all of
+     * The instrument data. Can contain some or all of:
      * * a ticker,
      * * an [ISIN](https://www.isin.org/isin/),
      * * a [CUSIP](https://www.cusip.com/cusip/index.htm),
@@ -98,8 +101,9 @@ export interface OrganizationContext extends Context {
      */
     name?: string;
     /**
-     * Can contain either or both an [LEI](https://www.gleif.org/en/about-lei/introducing-the-legal-entity-identifier-lei)
-     * and a [PERMID](https://permid.org/).
+     * The organization data. Can contain either or both
+     * * an [LEI](https://www.gleif.org/en/about-lei/introducing-the-legal-entity-identifier-lei)
+     * * and a [PERMID](https://permid.org/).
      */
     id: {[key: string]: string}&{LEI?: string; PERMID?: string};
 }

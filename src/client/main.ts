@@ -70,7 +70,7 @@ export interface AppIntent {
  */
 export interface IntentResolution {
     /**
-     * The human-readable name of the app that resolved this intent.
+     * The machine-readable name of the app that resolved this intent.
      */
     source: AppName;
     /**
@@ -171,10 +171,10 @@ const contextListeners: ContextListener[] = [];
  *     //with context
  *     agent.open('myApp', context);
  * ```
- * @param name The app name to launch.
+ * @param name The [[AppName]] to launch.
  * @param context A context to pass to the app post-launch.
  */
-export async function open(name: string, context?: Context): Promise<void> {
+export async function open(name: AppName, context?: Context): Promise<void> {
     return tryServiceDispatch(APIFromClientTopic.OPEN, {name, context: context && parseContext(context)});
 }
 
@@ -382,9 +382,18 @@ export function removeEventListener(eventType: FDC3MainEventType, handler: (even
     eventEmitter.removeListener(eventType, handler);
 }
 
+/**
+ * Whether we are listening to a particular intent.
+ * @param intent The intent.
+ */
 function hasIntentListener(intent: string): boolean {
     return intentListeners.some(intentListener => intentListener.intent === intent);
 }
+
+/**
+ * @hidden
+ */
+
 
 function deserializeChannelChangedEvent(eventTransport: EventTransport<ChannelChangedEvent>): ChannelChangedEvent {
     const type = eventTransport.type;

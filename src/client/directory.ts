@@ -13,8 +13,8 @@
  * Type alias to indicate when an Application Identifier should be passed. Application Identifiers
  * are described [here](https://fdc3.finos.org/docs/1.0/appd-discovery#application-identifier).
  *
- * In the OpenFin implementation of FDC3, we expect this to be the same as the UUID in
- * the manifest, but please see [[Application]].
+ * In the OpenFin implementation of FDC3, we expect this to be the same as the
+ * [UUID in the manifest]((https://developers.openfin.co/docs/application-configuration)), but please see [[Application]].
  *
  * This type alias exists to disambiguate the raw string app identity from the [[AppName]].
  */
@@ -33,12 +33,14 @@ export type AppName = string;
 export interface Application {
     /**
      * The Application Identifier. Please see https://fdc3.finos.org/docs/1.0/appd-discovery#application-identifier.
-     * By convention this should be the same as your OpenFin UUID. If you can't do that, then add a field into the
-     * [[customConfig]] member to indicate your UUID.
+     * By convention this should be the same as your [OpenFin UUID](https://developers.openfin.co/docs/application-configuration).
+     * If you can't do that, then add a field into the [[customConfig]] member to indicate your UUID.
      */
     appId: AppId;
     /**
-     * The machine-readable app name. This may well be human-readable, too. If it's not, use title.
+     * The machine-readable app name, used to identify the application in various API calls to the application directory.
+     * This may well be human-readable, too. If it's not, you can provide a title, and that will be used everywhere
+     * a name needs to be rendered to a user.
      */
     name: AppName;
     /**
