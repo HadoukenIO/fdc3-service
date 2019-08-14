@@ -1,11 +1,9 @@
 /**
- * @module Contexts
- */
-
-/**
  * TypeScript definitions for envelope and context objects.
  *
- * These structures are defined by the Contexts FDC3 working group.
+ * These structures are defined by the Contexts FDC3 working group. This contains the Context interface for you to create your own
+ * contexts, as well as a set of standard contexts agreed by the WG.
+ * @module Contexts
  */
 
 /**

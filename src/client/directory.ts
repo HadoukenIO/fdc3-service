@@ -1,12 +1,10 @@
 /**
- * @module Directory
- */
-
-/**
  * TypeScript definitions for objects returned by the Application Directory.
  *
  * These structures are defined by the App-Directory FDC3 working group. The definitions here are based on the 1.0.0
- * specification which can be found at https://fdc3.finos.org/appd-spec
+ * specification which can be found [here](https://fdc3.finos.org/appd-spec).
+ *
+ * @module Directory
  */
 
 /**

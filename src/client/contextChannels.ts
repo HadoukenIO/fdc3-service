@@ -16,7 +16,7 @@ import {ContextListener, FDC3Event} from './main';
 import {getEventRouter} from './EventRouter';
 
 /**
- * Type used to identify specific Channels. Though simply an alias of `string`, use of this type indicates usage of the string
+ * Type used to identify specific Channels. Though simply an alias of `string`, use of this type indicates use of the string
  * as a channel identifier, and that the user should avoid assuming any internal structure and instead treat as a fully opaque object
  */
 export type ChannelId = string;
