@@ -188,7 +188,12 @@ export class Model {
 
             this.onWindowRemoved.emit(window);
         } else if (this._expectedWindows.has(id)) {
-            this._expectedWindows.get(id)!.registerDeferredPromise.reject();
+            const expectWindow = this._expectedWindows.get(id)!;
+
+            expectWindow.pendingDeferredPromise.reject();
+            expectWindow.registerDeferredPromise.reject();
+            expectWindow.createdDeferredPromise.reject();
+
             this._expectedWindows.delete(id);
         }
     }
