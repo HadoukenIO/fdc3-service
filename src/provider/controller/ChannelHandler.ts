@@ -1,11 +1,11 @@
 import {injectable, inject} from 'inversify';
+import {Signal} from 'openfin-service-signal';
 
 import {Model} from '../model/Model';
 import {Inject} from '../common/Injectables';
 import {ChannelId, FDC3Error, ChannelError, Context, FDC3ChannelEventType} from '../../client/main';
 import {DesktopContextChannel, ContextChannel} from '../model/ContextChannel';
 import {AppWindow} from '../model/AppWindow';
-import {Signal3} from '../common/Signal';
 
 @injectable()
 export class ChannelHandler {
@@ -14,14 +14,14 @@ export class ChannelHandler {
      *
      * Arguments: (window: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null)
      */
-    public readonly onChannelChanged: Signal3<AppWindow, ContextChannel | null, ContextChannel | null>;
+    public readonly onChannelChanged: Signal<[AppWindow, ContextChannel | null, ContextChannel | null]>;
 
     private readonly _model: Model;
 
     constructor(@inject(Inject.MODEL) model: Model) {
         this._model = model;
 
-        this.onChannelChanged = new Signal3<AppWindow, ContextChannel | null, ContextChannel | null>();
+        this.onChannelChanged = new Signal();
 
         this._model.onWindowAdded.add(this.onModelWindowAdded, this);
         this._model.onWindowRemoved.add(this.onModelWindowRemoved, this);
@@ -32,7 +32,7 @@ export class ChannelHandler {
     }
 
     public getWindowsListeningToChannel(channel: ContextChannel): AppWindow[] {
-        return this._model.windows.filter(window => window.hasContextListener(channel));
+        return this._model.windows.filter(window => window.hasChannelContextListener(channel));
     }
 
     public getChannelById(channelId: ChannelId): ContextChannel {
@@ -49,7 +49,7 @@ export class ChannelHandler {
     }
 
     public getWindowsListeningForContextsOnChannel(channel: ContextChannel): AppWindow[] {
-        return this._model.windows.filter(window => window.hasContextListener(channel));
+        return this._model.windows.filter(window => window.hasChannelContextListener(channel));
     }
 
     public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: FDC3ChannelEventType): AppWindow[] {

@@ -2,6 +2,8 @@ import {TestAppData, NonDirectoryTestAppData, DirectoryTestAppData} from './util
 
 export const appStartupTime = 30 * 1000;
 
+export const testAppUrl = 'http://localhost:3923/test/test-app.html';
+
 export const testManagerIdentity: TestAppData = {uuid: 'test-app', name: 'test-app'};
 
 export const testAppInDirectory1: DirectoryTestAppData = {

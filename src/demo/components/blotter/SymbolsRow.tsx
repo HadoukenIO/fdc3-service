@@ -81,7 +81,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
 
     const getContext = () => {
         return {
-            type: 'security',
+            type: 'fdc3.security',
             name: item.name,
             id: {
                 default: item.name

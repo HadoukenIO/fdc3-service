@@ -346,6 +346,8 @@ export function addContextListener(handler: (context: Context) => void): Context
             return index >= 0;
         }
     };
+
+    // TODO: Add a handshake with the provider, similar to for intents, so provider is aware we are listening for contexts here (SERVICE-553)
     contextListeners.push(listener);
     return listener;
 }

@@ -1,6 +1,9 @@
 import * as React from 'react';
+import {Identity} from 'openfin/_v2/main';
 
 import {Channel, defaultChannel, getCurrentChannel, getDesktopChannels, DesktopChannel} from '../../../client/contextChannels';
+
+import {ContextChannelView} from './ChannelMemberView';
 
 import './ContextChannelSelector.css';
 
@@ -17,18 +20,11 @@ ContextChannelSelector.defaultProps = {
 */
 export function ContextChannelSelector(props: ContextChannelSelectorProps): React.ReactElement {
     const {float} = props;
-    const [currentChannelId, setCurrentChannelId] = React.useState<Channel>(defaultChannel);
-    const [color, setColor] = React.useState<number>(0xFFFFFF);
+    const [currentChannel, setCurrentChannel] = React.useState<Channel>(defaultChannel);
     const [channels, setChannels] = React.useState<Channel[]>([]);
     React.useEffect(() => {
         getCurrentChannel().then(channel => {
-            if (channel.type === 'desktop') {
-                setColor(channel.color);
-            } else {
-                // Use white for default channel
-                setColor(0xFFFFFF);
-            }
-            setCurrentChannelId(channel);
+            setCurrentChannel(channel);
         });
         getDesktopChannels().then(channels => {
             setChannels([defaultChannel, ...channels]);
@@ -43,16 +39,7 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
             selectedChannel
                 .join()
                 .then(() => {
-                    setCurrentChannelId(selectedChannel);
-                    if (selectedChannel) {
-                        if (selectedChannel.type === 'desktop') {
-                            setColor(selectedChannel.color);
-                        } else {
-                            setColor(0xFFFFFF);
-                        }
-                    } else {
-                        setColor(0xFFFFFF);
-                    }
+                    setCurrentChannel(selectedChannel);
                 })
                 .catch((error: Error) => {
                     console.error(`Unable to join channel ${id}! ${error.message}`);
@@ -63,8 +50,8 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
     return (
         <div className={`context-channel ${float ? 'float' : ''}`}>
             <div className='selector'>
-                <div className="color" style={{backgroundColor: numberToHex(color)}}></div>
-                <select value={currentChannelId.id} onChange={handleChange}>
+                <ContextChannelView channel={currentChannel} />
+                <select value={currentChannel.id} onChange={handleChange}>
                     {
                         channels.map((channel, index) => {
                             return (
@@ -81,12 +68,4 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
             </div>
         </div>
     );
-}
-
-/**
- *
- * @param num
- */
-function numberToHex(num: number) {
-    return num.toString(16).padStart(6, '0');
 }

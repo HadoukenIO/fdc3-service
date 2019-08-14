@@ -12,20 +12,23 @@ export function createMockAppWindow(): jest.Mocked<AppWindow> {
         id: '',
         identity: {name: '', uuid: ''},
         appInfo: {appId: '', name: '', manifest: '', manifestType: ''},
+        appWindowNumber: 0,
         channel: createMockChannel(),
-        contextListeners: [],
+        channelContextListeners: [],
         intentListeners: [],
         hasIntentListener: jest.fn<boolean, [string]>(),
         addIntentListener: jest.fn<void, [string]>(),
         removeIntentListener: jest.fn<void, [string]>(),
-        hasContextListener: jest.fn<boolean, [ContextChannel]>(),
-        addContextListener: jest.fn<void, [ContextChannel]>(),
-        removeContextListener: jest.fn<void, [ContextChannel]>(),
+        hasChannelContextListener: jest.fn<boolean, [ContextChannel]>(),
+        addChannelContextListener: jest.fn<void, [ContextChannel]>(),
+        removeChannelContextListener: jest.fn<void, [ContextChannel]>(),
         hasChannelEventListener: jest.fn<boolean, [ContextChannel, FDC3ChannelEventType]>(),
         addChannelEventListener: jest.fn<void, [ContextChannel, FDC3ChannelEventType]>(),
         removeChannelEventListener: jest.fn<void, [ContextChannel, FDC3ChannelEventType]>(),
+        bringToFront: jest.fn<Promise<void>, []>(),
         focus: jest.fn<Promise<void>, []>(),
-        ensureReadyToReceiveIntent: jest.fn<Promise<void>, [IntentType]>()
+        isReadyToReceiveIntent: jest.fn<Promise<boolean>, [IntentType]>(),
+        removeAllListeners: jest.fn<void, []>()
     };
 }
 

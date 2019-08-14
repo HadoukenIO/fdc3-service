@@ -9,6 +9,7 @@ import {ContactContext, Context} from '../../client/context';
 import {Dialog} from '../components/common/Dialog';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
 import '../../../res/demo/css/w3.css';
+import {getCurrentChannel} from '../../client/main';
 
 interface AppProps {
     phoneNumber?: string;
@@ -49,6 +50,12 @@ export function DialerApp(props: AppProps): React.ReactElement {
 
     // Setup listeners
     React.useEffect(() => {
+        getCurrentChannel().then(async channel => {
+            const context = await channel.getCurrentContext();
+            if (context && context.type === 'fdc3.contact') {
+                handleIntent(context as ContactContext, false);
+            }
+        });
         let dialListener: any;
         setTimeout(() => {
             dialListener = fdc3.addIntentListener(fdc3.Intents.DIAL_CALL, (context: Context) => {

@@ -116,9 +116,7 @@ export class OFPuppeteerBrowser {
         return identity;
     }
 
-    public async executeOnWindow<
-        // tslint:disable-next-line: no-any Needed for tuple types.
-        T extends any[], R, C extends TestWindowContext = TestWindowContext>(executionTarget: Identity, fn: (this: C, ...args: T) => R, ...args: T):
+    public async executeOnWindow<T extends any[], R, C = TestWindowContext>(executionTarget: Identity, fn: (this: C, ...args: T) => R, ...args: T):
         Promise<R> {
         const page = await this.getPage(executionTarget);
         if (!page) {

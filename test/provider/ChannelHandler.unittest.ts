@@ -1,8 +1,8 @@
 import 'reflect-metadata';
+import {Signal} from 'openfin-service-signal';
 
 import {ChannelHandler} from '../../src/provider/controller/ChannelHandler';
 import {Model} from '../../src/provider/model/Model';
-import {Signal1} from '../../src/provider/common/Signal';
 import {AppWindow} from '../../src/provider/model/AppWindow';
 import {DesktopContextChannel, ContextChannel} from '../../src/provider/model/ContextChannel';
 import {ChannelError} from '../../src/client/main';
@@ -22,8 +22,8 @@ beforeEach(() => {
 
     mockModel = new Model(null!, null!, null!) as jest.Mocked<Model>;
 
-    (mockModel as PartiallyWritable<typeof mockModel, 'onWindowAdded'>).onWindowAdded = new Signal1<AppWindow>();
-    (mockModel as PartiallyWritable<typeof mockModel, 'onWindowRemoved'>).onWindowRemoved = new Signal1<AppWindow>();
+    (mockModel as PartiallyWritable<typeof mockModel, 'onWindowAdded'>).onWindowAdded = new Signal<[AppWindow]>();
+    (mockModel as PartiallyWritable<typeof mockModel, 'onWindowRemoved'>).onWindowRemoved = new Signal<[AppWindow]>();
 
     channelHandler = new ChannelHandler(mockModel);
     channelHandler.onChannelChanged.add((appWindow: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null) => {
@@ -93,8 +93,8 @@ it('When querying which windows are listening for contexts on a channel, Channel
 
     const testChannel = createMockChannel();
 
-    testWindows[0].hasContextListener.mockImplementation((channel) => true);
-    testWindows[2].hasContextListener.mockImplementation((channel) => true);
+    testWindows[0].hasChannelContextListener.mockImplementation((channel) => true);
+    testWindows[2].hasChannelContextListener.mockImplementation((channel) => true);
 
     setModelWindows(testWindows);
 

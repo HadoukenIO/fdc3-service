@@ -4,13 +4,12 @@ import {Inject} from '../common/Injectables';
 import {Intent} from '../intents';
 import {IntentResolution, Application} from '../../client/main';
 import {FDC3Error, ResolveError} from '../../client/errors';
-import {FindFilter, Model} from '../model/Model';
+import {Model} from '../model/Model';
 import {AppDirectory} from '../model/AppDirectory';
 import {AppWindow} from '../model/AppWindow';
 import {APIToClientTopic} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
 
-import {ContextHandler} from './ContextHandler';
 import {ResolverHandler, ResolverResult} from './ResolverHandler';
 
 @injectable()
@@ -20,7 +19,7 @@ export class IntentHandler {
     private readonly _resolver: ResolverHandler;
     private readonly _apiHandler: APIHandler<APIToClientTopic>;
 
-    private _promise: Promise<IntentResolution>|null;
+    private _resolvePromise: Promise<IntentResolution>|null;
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
@@ -33,7 +32,7 @@ export class IntentHandler {
         this._resolver = resolver;
         this._apiHandler = apiHandler;
 
-        this._promise = null;
+        this._resolvePromise = null;
     }
 
     public async raise(intent: Intent): Promise<IntentResolution> {
@@ -50,18 +49,18 @@ export class IntentHandler {
             return this.fireIntent(intent, apps[0]);
         } else {
             // Prompt the user to select an application to use
-            return this.resolve(intent);
+            return this.queueResolve(intent);
         }
     }
 
     private async raiseWithTarget(intent: IntentWithTarget): Promise<IntentResolution> {
         let appInfo: Application|null;
 
-        const appWindow = this._model.findWindowByAppName(intent.target);
+        const appWindows = this._model.findWindowsByAppName(intent.target);
 
-        if (appWindow) {
+        if (appWindows.length > 0) {
             // Target app is running -> fire intent at it
-            appInfo = appWindow.appInfo;
+            appInfo = appWindows[0].appInfo;
         } else {
             // Target app not running -> Try to find in directory
             appInfo = await this._directory.getAppByName(intent.target);
@@ -78,18 +77,18 @@ export class IntentHandler {
             }
         }
 
-        // At this point we are certain that the target app -whether already running or not- can handle the intent
+        // At this point we are certain that the target app - whether already running or not - can handle the intent
         return this.fireIntent(intent, appInfo);
     }
 
-    private async resolve(intent: Intent): Promise<IntentResolution> {
-        if (this._promise) {
-            this._promise = this._promise!.catch(() => {}).then(() => this.startResolve(intent));
+    private async queueResolve(intent: Intent): Promise<IntentResolution> {
+        if (this._resolvePromise) {
+            this._resolvePromise = this._resolvePromise.catch(() => {}).then(() => this.startResolve(intent));
         } else {
-            this._promise = this.startResolve(intent);
+            this._resolvePromise = this.startResolve(intent);
         }
 
-        return this._promise;
+        return this._resolvePromise;
     }
 
     private async startResolve(intent: Intent): Promise<IntentResolution> {
@@ -110,13 +109,25 @@ export class IntentHandler {
     }
 
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
-        const appWindow = await this._model.findOrCreate(appInfo, FindFilter.WITH_INTENT_LISTENER);
-        await appWindow.ensureReadyToReceiveIntent(intent.type);
-        const data = await this._apiHandler.channel.dispatch(appWindow.identity, APIToClientTopic.INTENT, {context: intent.context, intent: intent.type});
+        const appWindows = await this._model.findOrCreate(appInfo);
+        // to decide between focus nothing or apps with intent listener
+        const dispatchResults = await Promise.all(appWindows.map(async (window: AppWindow): Promise<boolean> => {
+            if (await window.isReadyToReceiveIntent(intent.type)) {
+                // TODO: Implement a timeout so a misbehaving intent handler can't block the intent raiser (SERVICE-555)
+                await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.INTENT, {context: intent.context, intent: intent.type});
+                return true;
+            } else {
+                return false;
+            }
+        }));
+
+        if (!dispatchResults.some(dispatchResult => dispatchResult)) {
+            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
+        }
+
         const result: IntentResolution = {
             source: appInfo.name,
-            version: '1.0.0',
-            data
+            version: '1.0.0'
         };
 
         // Handle next queued intent
@@ -133,5 +144,5 @@ interface IntentWithTarget extends Intent {
 
 // Guard to help narrow down Intent into IntentWithTarget
 function hasTarget(intent: Intent): intent is IntentWithTarget {
-    return intent && !!intent.target;
+    return !!intent.target;
 }
