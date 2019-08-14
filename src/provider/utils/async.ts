@@ -39,3 +39,15 @@ export function withTimeout<T>(timeoutMs: number, promise: Promise<T>): Promise<
     const p = promise.then(value => ([false, value] as [boolean, T]));
     return Promise.race([timeout, p]);
 }
+
+/**
+ * Races a given promise against a timeout, and either resolves to the value the the promise resolved it, if it resolved before the
+ * timeout, or rejects
+ * @param timeoutMs Timeout period in ms
+ * @param promise Promise to race against the timeout
+ */
+export function withStrictTimeout<T>(timeoutMs: number, promise: Promise<T>): Promise<T> {
+    const timeout = new Promise<T>((res, rej) => setTimeout(() => rej(new Error('Timeout on promise exceeded')), timeoutMs));
+    return Promise.race([timeout, promise]);
+}
+

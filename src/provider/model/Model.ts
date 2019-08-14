@@ -7,8 +7,8 @@ import {Inject} from '../common/Injectables';
 import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
-import {DESKTOP_CHANNELS} from '../constants';
-import {DeferredPromise, withTimeout} from '../utils/async';
+import {DESKTOP_CHANNELS, Timeouts} from '../constants';
+import {DeferredPromise, withTimeout, withStrictTimeout} from '../utils/async';
 
 import {AppWindow} from './AppWindow';
 import {ContextChannel, DefaultContextChannel, DesktopContextChannel} from './ContextChannel';
@@ -24,11 +24,9 @@ export function getId(identity: Identity): string {
 }
 
 interface ExpectedWindow {
-    pendingDeferredPromise: DeferredPromise<void> | null;
+    pendingDeferredPromise: DeferredPromise<Promise<AppWindow>>;
     createdDeferredPromise: DeferredPromise<void>;
-    registerDeferredPromise: DeferredPromise<void>;
-    windowDeferredPromise: DeferredPromise<AppWindow>;
-    status: 'pending' | 'resolved' | 'rejected';
+    registerDeferredPromise: DeferredPromise<AppWindow>;
 }
 
 @injectable()
@@ -56,6 +54,8 @@ export class Model {
 
         this._directory = directory;
         this._environment = environment;
+
+        this._environment.windowPending.add(this.onWindowPending, this);
         this._environment.windowCreated.add(this.onWindowCreated, this);
         this._environment.windowClosed.add(this.onWindowClosed, this);
 
@@ -86,15 +86,8 @@ export class Model {
         if (this._windowsById[id]) {
             return this._windowsById[id];
         } else {
-            let expectedWindow: ExpectedWindow;
-
-            if (this._expectedWindows.has(id)) {
-                expectedWindow = this._expectedWindows.get(id)!;
-            } else {
-                expectedWindow = this.createExpectedWindow('unseen', identity);
-            }
-
-            return expectedWindow.windowDeferredPromise.promise;
+            const expectedWindow = this.getOrCreateExpectedWindow(identity);
+            return withStrictTimeout(Timeouts.WINDOW_EXPECT_TO_PENDING, expectedWindow.pendingDeferredPromise.promise);
         }
     }
 
@@ -158,20 +151,10 @@ export class Model {
     }
 
     private onWindowPending(identity: Identity): void {
-        const id = getId(identity);
+        const expectedWindow = this.getOrCreateExpectedWindow(identity);
+        const registerTimeoutPromise = withStrictTimeout(Timeouts.WINDOW_PENDING_TO_REGISTERED, expectedWindow.registerDeferredPromise.promise);
 
-        let expectedWindow: ExpectedWindow;
-        if (this._expectedWindows.has(id)) {
-            expectedWindow = this._expectedWindows.get(id)!;
-
-            if (expectedWindow.status !== 'rejected') {
-                expectedWindow.pendingDeferredPromise!.resolve();
-            } else {
-                this.createExpectedWindow('pending', identity);
-            }
-        } else {
-            this.createExpectedWindow('pending', identity);
-        }
+        expectedWindow.pendingDeferredPromise.resolve(registerTimeoutPromise);
     }
 
     private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
@@ -205,20 +188,15 @@ export class Model {
 
             this.onWindowRemoved.emit(window);
         } else if (this._expectedWindows.has(id)) {
-            this._expectedWindows.get(id)!.windowDeferredPromise.reject();
+            this._expectedWindows.get(id)!.registerDeferredPromise.reject();
             this._expectedWindows.delete(id);
         }
     }
 
     private async onApiHandlerConnection(identity: Identity): Promise<void> {
-        // TODO: What happens if this gets called before pending?
-
-        const id = getId(identity);
-
         // Wait for windowCreated handler to finish to avoid race conditions that
         // can occur when these two run "concurrently"
-        this.expectWindow(identity);
-        await this._expectedWindows.get(id)!.createdDeferredPromise;
+        await this.getOrCreateExpectedWindow(identity).createdDeferredPromise;
 
         const appWindow = this.getWindow(identity);
 
@@ -268,7 +246,7 @@ export class Model {
         this.onWindowAdded.emit(appWindow);
         this._onWindowRegisteredInternal.emit();
 
-        expectedWindow.registerDeferredPromise.resolve();
+        expectedWindow.registerDeferredPromise.resolve(appWindow);
 
         return appWindow;
     }
@@ -281,38 +259,21 @@ export class Model {
         return this.windows.filter(predicate);
     }
 
-    private createExpectedWindow(state: 'pending' | 'unseen', identity: Identity): ExpectedWindow {
+    private getOrCreateExpectedWindow(identity: Identity): ExpectedWindow {
         const id = getId(identity);
 
-        const pendingDeferredPromise = state === 'pending' ? null : new DeferredPromise();
-        const createdDeferredPromise = new DeferredPromise<void>();
-        const registerDeferredPromise = new DeferredPromise<void>();
-        const windowDeferredPromise = new DeferredPromise<AppWindow>();
+        if (this._expectedWindows.has(id)) {
+            return this._expectedWindows.get(id)!;
+        } else {
+            const expectedWindow: ExpectedWindow = {
+                pendingDeferredPromise: new DeferredPromise<Promise<AppWindow>>(),
+                createdDeferredPromise: new DeferredPromise<void>(),
+                registerDeferredPromise: new DeferredPromise<AppWindow>()
+            };
 
-        const expectedWindow: ExpectedWindow = {
-            pendingDeferredPromise,
-            createdDeferredPromise,
-            registerDeferredPromise,
-            windowDeferredPromise,
-            status: 'pending'
-        };
+            this._expectedWindows.set(id, expectedWindow);
 
-        (async () => {
-            if (pendingDeferredPromise) {
-                await withTimeout(100, pendingDeferredPromise.promise);
-            }
-
-            await withTimeout(5000, registerDeferredPromise.promise);
-
-            expectedWindow.status = 'resolved';
-            windowDeferredPromise.resolve(this._windowsById[getId(identity)]);
-        })().catch(() => {
-            expectedWindow.status = 'rejected';
-            windowDeferredPromise.reject();
-        });
-
-        this._expectedWindows.set(id, expectedWindow);
-
-        return expectedWindow;
+            return expectedWindow;
+        }
     }
 }
