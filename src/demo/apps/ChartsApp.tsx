@@ -5,6 +5,7 @@ import {Chart} from '../components/charts/Chart';
 import {SecurityContext, Context} from '../../client/context';
 import '../../../res/demo/css/w3.css';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
+import {getCurrentChannel} from '../../client/main';
 
 interface AppProps {
     symbolName?: string;
@@ -26,6 +27,12 @@ export function ChartsApp(props: AppProps): React.ReactElement {
     }, []);
 
     React.useEffect(() => {
+        getCurrentChannel().then(async channel => {
+            const context = await channel.getCurrentContext();
+            if (context && context.type === 'fdc3.security') {
+                handleIntent(context as SecurityContext);
+            }
+        });
         const intentListener = fdc3.addIntentListener(fdc3.Intents.VIEW_CHART, (context: Context): Promise<void> => {
             return new Promise((resolve, reject) => {
                 try {
@@ -38,7 +45,7 @@ export function ChartsApp(props: AppProps): React.ReactElement {
         });
 
         const contextListener = fdc3.addContextListener((context: Context): void => {
-            if (context.type === 'security') {
+            if (context.type === 'fdc3.security') {
                 handleIntent(context as SecurityContext);
             }
         });

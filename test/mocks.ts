@@ -26,7 +26,8 @@ export function createMockAppWindow(): jest.Mocked<AppWindow> {
         removeChannelEventListener: jest.fn<void, [ContextChannel, FDC3ChannelEventType]>(),
         bringToFront: jest.fn<Promise<void>, []>(),
         focus: jest.fn<Promise<void>, []>(),
-        isReadyToReceiveIntent: jest.fn<Promise<boolean>, [IntentType]>()
+        isReadyToReceiveIntent: jest.fn<Promise<boolean>, [IntentType]>(),
+        removeAllListeners: jest.fn<void, []>()
     };
 }
 

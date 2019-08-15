@@ -1,13 +1,14 @@
 import {injectable, inject} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
+import {Signal} from 'openfin-service-signal';
 
 import {Application, AppName, AppId} from '../../client/directory';
 import {Inject} from '../common/Injectables';
-import {Signal0, Signal1} from '../common/Signal';
 import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {DESKTOP_CHANNELS} from '../constants';
+import {deferredPromise} from '../utils/async';
 
 import {AppWindow} from './AppWindow';
 import {ContextChannel, DefaultContextChannel, DesktopContextChannel} from './ContextChannel';
@@ -24,8 +25,8 @@ export function getId(identity: Identity): string {
 
 @injectable()
 export class Model {
-    public readonly onWindowAdded: Signal1<AppWindow> = new Signal1<AppWindow>();
-    public readonly onWindowRemoved: Signal1<AppWindow> = new Signal1<AppWindow>();
+    public readonly onWindowAdded: Signal<[AppWindow]> = new Signal();
+    public readonly onWindowRemoved: Signal<[AppWindow]> = new Signal();
 
     private readonly _directory: AppDirectory;
     private readonly _environment: Environment;
@@ -33,7 +34,9 @@ export class Model {
     private readonly _windowsById: {[id: string]: AppWindow};
     private readonly _channelsById: {[id: string]: ContextChannel};
 
-    private readonly _onWindowRegisteredInternal: Signal0 = new Signal0();
+    private readonly _onWindowRegisteredInternal = new Signal();
+
+    private readonly _pendingRegistrations: Map<string, Promise<void>> = new Map();
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
@@ -49,6 +52,7 @@ export class Model {
         this._environment.windowClosed.add(this.onWindowClosed, this);
 
         apiHandler.onConnection.add(this.onApiHandlerConnection, this);
+        apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
 
         this._channelsById[DEFAULT_CHANNEL_ID] = new DefaultContextChannel(DEFAULT_CHANNEL_ID);
         for (const channel of DESKTOP_CHANNELS) {
@@ -128,21 +132,25 @@ export class Model {
     }
 
     private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
+        // Registration is asynchronous and sensitive to race conditions. We use a deferred promise
+        // to signal to other sensitive operations that it is safe to proceed.
+        const [pendingRegistration, resolvePending] = deferredPromise();
+        this._pendingRegistrations.set(getId(identity), pendingRegistration);
+
         const apps = await this._directory.getAllApps();
         const appInfoFromDirectory = apps.find(app => app.manifest.startsWith(manifestUrl));
 
-        if (!appInfoFromDirectory) {
-            // If the app is not in directory we ignore it. We'll add it to the model if and when it connects to FDC3
-            return;
-        }
-
         const id: string = getId(identity);
-        if (this._windowsById[id]) {
+        // If the app is not in directory we ignore it. We'll add it to the model if and when it connects to FDC3
+        if (appInfoFromDirectory && !this._windowsById[id]) {
+            this.registerWindow(appInfoFromDirectory, identity, true);
+        } else if (this._windowsById[id]) {
             console.info(`Ignoring window created event for ${id} - window was already registered`);
-            return;
         }
 
-        this.registerWindow(appInfoFromDirectory, identity, true);
+        // Registration finished, allow any other sensitive operations to proceed
+        resolvePending();
+        this._pendingRegistrations.delete(getId(identity));
     }
 
     private onWindowClosed(identity: Identity): void {
@@ -158,6 +166,12 @@ export class Model {
     }
 
     private async onApiHandlerConnection(identity: Identity): Promise<void> {
+        // Wait for windowCreated handler to finish to avoid race conditions that
+        // can occur when these two run "concurrently"
+        if (this._pendingRegistrations.has(getId(identity))) {
+            await this._pendingRegistrations.get(getId(identity));
+        }
+
         const appWindow = this.getWindow(identity);
 
         // Window is not in model - this should mean that the app is not in the directory, as directory apps are immediately added to model upon window creation
@@ -175,6 +189,14 @@ export class Model {
             }
 
             this.registerWindow(appInfo, identity, false);
+        }
+    }
+
+    private async onApiHandlerDisconnection(identity: Identity): Promise<void> {
+        const appWindow = this.getWindow(identity);
+        // Remove all listeners but keep in the model
+        if (appWindow) {
+            appWindow.removeAllListeners();
         }
     }
 
