@@ -5,30 +5,29 @@ import {injectable} from 'inversify';
 import {ConfigurationObject} from '../../../gen/provider/config/fdc3-config';
 import {AsyncInit} from '../controller/AsyncInit';
 
+export interface ConfigStoreBinding {
+    config: Store<ConfigurationObject>;
+}
+
 @injectable()
-export class ConfigStore extends AsyncInit {
+export class ConfigStore extends AsyncInit implements ConfigStoreBinding {
     private _store: Store<ConfigurationObject>;
-    private _loader!: Loader<ConfigurationObject>;
 
     constructor() {
         super();
         this._store = new Store(require('../../../gen/provider/config/defaults.json'));
-        if (global.hasOwnProperty('fin')) {
-            this._loader = new Loader(this._store, 'fdc3');
-        }
+        new Loader<ConfigurationObject>(this._store, 'fdc3');
     }
 
-    public get config() {
+    public get config(): Store<ConfigurationObject> {
         return this._store;
     }
 
     protected async init() {
-        if (global.hasOwnProperty('fin')) {
-            const manifest = await fin.Application.getCurrentSync().getManifest();
+        const manifest = await fin.Application.getCurrentSync().getManifest();
 
-            if (manifest.config) {
-                this._store.add({level: 'desktop'}, manifest.config);
-            }
+        if (manifest.config) {
+            this._store.add({level: 'desktop'}, manifest.config);
         }
     }
 }

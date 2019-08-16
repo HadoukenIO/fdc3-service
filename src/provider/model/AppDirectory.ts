@@ -6,6 +6,7 @@ import {ScopedConfig} from 'openfin-service-config';
 import {Inject} from '../common/Injectables';
 import {Application, AppName} from '../../client/directory';
 import {AppIntent} from '../../client/main';
+import {AsyncInit} from '../controller/AsyncInit';
 import {ConfigurationObject} from '../../../gen/provider/config/fdc3-config';
 
 import {ConfigStore} from './ConfigStore';
@@ -19,27 +20,34 @@ enum StorageKeys {
 export const DEV_APP_DIRECTORY_URL = 'http://localhost:3923/provider/sample-app-directory.json';
 
 @injectable()
-export class AppDirectory {
+export class AppDirectory extends AsyncInit {
+    private readonly _configStore: ConfigStore;
     private _directory: Application[] = [];
     private _url!: string;
 
     public constructor(@inject(Inject.CONFIG_STORE) configStore: ConfigStore) {
+        super();
+
+        this._configStore = configStore;
+    }
+
+    protected async init(): Promise<void> {
+        await this._configStore.initialized;
+
         if (process.env.NODE_ENV === 'development') {
             // Set the application directory to our local copy during development.  In production it will be an empty string.
-            configStore.config.add({level: 'desktop'}, {applicationDirectory: DEV_APP_DIRECTORY_URL});
+            this._configStore.config.add({level: 'desktop'}, {applicationDirectory: DEV_APP_DIRECTORY_URL});
         }
 
-        this.updateURL(configStore.config.query({level: 'desktop'}).applicationDirectory);
+        this.updateURL(this._configStore.config.query({level: 'desktop'}).applicationDirectory);
 
-        // Adding the follow watch logic as there is a race condition with the loading of the application directory.
-        // This logic will set the URL in the store as soon as it is retrieved.
-        const watch = new MaskWatch(configStore.config, {applicationDirectory: true});
+        const watch = new MaskWatch(this._configStore.config, {applicationDirectory: true});
 
         watch.onAdd.add((rule: ScopedConfig<ConfigurationObject>, source: Scope) => {
-            this.updateURL(configStore.config.query({level: 'desktop'}).applicationDirectory);
+            this.updateURL(this._configStore.config.query({level: 'desktop'}).applicationDirectory);
         });
 
-        configStore.config.addWatch(watch);
+        this._configStore.config.addWatch(watch);
     }
 
     public async getAppByName(name: AppName): Promise<Application | null> {
@@ -81,14 +89,17 @@ export class AppDirectory {
                 }
             });
         });
+
         Object.values(appIntentsByName).forEach(appIntent => {
             appIntent.apps.sort((a, b) => a.appId.localeCompare(b.appId, 'en'));
         });
+
         return Object.values(appIntentsByName).sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));
     }
 
     public async getAllApps(): Promise<Application[]> {
         await this.refreshDirectory();
+
         return this._directory;
     }
 

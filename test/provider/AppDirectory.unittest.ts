@@ -1,11 +1,17 @@
 import 'jest';
 import 'reflect-metadata';
 
+import {Store} from 'openfin-service-config';
+
 import {Application} from '../../src/client/directory';
-import {AppIntent} from '../../src/client/main';
+import {AppIntent, Intent} from '../../src/client/main';
 import {Injector} from '../../src/provider/common/Injector';
 import {Inject} from '../../src/provider/common/Injectables';
-import {DEV_APP_DIRECTORY_URL} from '../../src/provider/model/AppDirectory';
+import {DEV_APP_DIRECTORY_URL, AppDirectory} from '../../src/provider/model/AppDirectory';
+import {ConfigurationObject} from '../../gen/provider/config/fdc3-config';
+import {createMockEnvironmnent} from '../mocks';
+import {Environment} from '../../src/provider/model/Environment';
+import {ResolverResult} from '../../src/provider/controller/ResolverHandler';
 
 enum StorageKeys {
     URL = 'fdc3@url',
@@ -47,9 +53,9 @@ const fakeApp2 = {
     intents: [intentC, intentD]
 };
 
-declare const global: NodeJS.Global & {localStorage: Store} & {fetch: (url: string) => Promise<Response>};
+declare const global: NodeJS.Global & {localStorage: LocalStore} & {fetch: (url: string) => Promise<Response>};
 
-type Store = jest.Mocked<Pick<typeof localStorage, 'getItem' | 'setItem'>>;
+type LocalStore = jest.Mocked<Pick<typeof localStorage, 'getItem' | 'setItem'>>;
 
 const fakeApps: Application[] = [fakeApp1, fakeApp2];
 const fakeAppsJSON = JSON.stringify(fakeApps);
@@ -89,6 +95,22 @@ beforeEach(() => {
         ok: true,
         json: mockJson
     });
+});
+
+beforeAll(async () => {
+    const store = new Store<ConfigurationObject>(require('../../gen/provider/config/defaults.json'));
+    Injector.rebind<'ENVIRONMENT'>(Inject.ENVIRONMENT).toConstantValue(createMockEnvironmnent() as Environment);
+    Injector.rebind<'CONFIG_STORE'>(Inject.CONFIG_STORE).toConstantValue({
+        config: store
+    });
+    Injector.rebind<'RESOLVER'>(Inject.RESOLVER).toConstantValue({
+        handleIntent: async (intent: Intent): Promise<ResolverResult> => {
+            return {app: null!};
+        },
+        cancel: async (): Promise<void> => {}
+    });
+
+    await Injector.init();
 });
 
 describe('AppDirectory Unit Tests', () => {
@@ -171,10 +193,11 @@ describe('AppDirectory Unit Tests', () => {
 });
 
 describe('Given an App Directory with apps', () => {
-    const appDirectory = Injector.get<'APP_DIRECTORY'>(Inject.APP_DIRECTORY);
+    let appDirectory: AppDirectory;
 
     describe('When finding app intents by context with a context implemented by 2 intents in both apps', () => {
         beforeEach(() => {
+            appDirectory = Injector.get<'APP_DIRECTORY'>(Inject.APP_DIRECTORY);
             mockJson.mockResolvedValue(fakeApps);
         });
         it('Should return 2 intents', async () => {

@@ -38,6 +38,11 @@ export interface ResolverResult {
     app: Application;
 }
 
+export interface ResolverHandlerBinding {
+    handleIntent(intent: Intent): Promise<ResolverResult>;
+    cancel(): Promise<void>;
+}
+
 @injectable()
 export class ResolverHandler extends AsyncInit {
     private readonly _directory: AppDirectory;
