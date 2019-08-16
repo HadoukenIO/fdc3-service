@@ -73,7 +73,6 @@ const mockJson = jest.fn().mockImplementation(() => {
     return fakeApps;
 });
 
-
 beforeEach(() => {
     jest.restoreAllMocks();
 

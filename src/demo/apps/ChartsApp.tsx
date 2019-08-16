@@ -56,7 +56,6 @@ export function ChartsApp(props: AppProps): React.ReactElement {
         };
     }, []);
 
-
     return (
         <React.Fragment>
             <ContextChannelSelector float={true} />

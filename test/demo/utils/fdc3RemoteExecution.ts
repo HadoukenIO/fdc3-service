@@ -290,7 +290,6 @@ export function createRemoteContextListener(executionTarget: Identity, id: numbe
     };
 }
 
-
 function deserializeChannel(executionTarget: Identity, transport: TestChannelTransport): RemoteChannel {
     let remoteChannel = remoteChannels[transport.id];
 

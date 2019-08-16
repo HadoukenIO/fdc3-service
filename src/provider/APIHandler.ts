@@ -6,7 +6,6 @@ import {Signal} from 'openfin-service-signal';
 
 import {SERVICE_CHANNEL, serializeError} from '../client/internal';
 
-
 /**
  * Semantic type definition.
  *

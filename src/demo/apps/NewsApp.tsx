@@ -53,7 +53,6 @@ export function NewsApp(): React.ReactElement {
         };
     }, []);
 
-
     return (
         <React.Fragment>
             <ContextChannelSelector float={true} />

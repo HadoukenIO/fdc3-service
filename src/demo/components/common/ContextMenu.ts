@@ -90,7 +90,6 @@ class ContextMenu {
         return height;
     }
 
-
     // Promise based v1 window creation
     private static async createWindow(options: WindowOption): Promise<fin.OpenFinWindow> {
         return new Promise<fin.OpenFinWindow>((resolve, reject) => {
@@ -229,7 +228,6 @@ class ContextMenu {
         this._isShowing = false;
         this._window.animate(this.transitionOut, animateOptions);
     }
-
 
     /**
      * Show the window at the given [point].
