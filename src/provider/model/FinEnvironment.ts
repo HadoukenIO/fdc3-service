@@ -47,7 +47,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     /**
      * Indicates that a window has been created.
      *
-     * Unlike the `windowCreated` signal, this will be fired synchronously from the lister for the runtime window-created event,
+     * Unlike the `windowCreated` signal, this will be fired synchronously from the listener for the runtime window-created event,
      * but does not provide all information provided by the `windowCreated` signal. For a given window, this will always be fired
      * before the `windowCreated` signal.
      *
