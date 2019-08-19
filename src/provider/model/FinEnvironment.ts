@@ -115,10 +115,6 @@ export class FinEnvironment extends AsyncInit implements Environment {
         }
     }
 
-    public hasPendingWindow(identity: Identity): boolean {
-        return this._pendingWindows.hasOwnProperty(getId(identity));
-    }
-
     protected async init(): Promise<void> {
         fin.System.addListener('window-created', (event: WindowEvent<'system', 'window-created'>) => {
             const identity = {uuid: event.uuid, name: event.name};

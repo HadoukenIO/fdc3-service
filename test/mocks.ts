@@ -1,11 +1,14 @@
 import {Signal} from 'openfin-service-signal';
 import {Identity} from 'openfin/_v2/main';
+import {ChannelProvider} from 'hadouken-js-adapter/out/types/src/api/interappbus/channel/provider';
+import {findNodeModule} from 'jest-resolve';
 
 import {AppWindow} from '../src/provider/model/AppWindow';
 import {IntentType, Context, FDC3ChannelEventType, Application} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
-import {ChannelTransport} from '../src/client/internal';
+import {ChannelTransport, APIFromClientTopic} from '../src/client/internal';
 import {Environment} from '../src/provider/model/Environment';
+import {APIHandler, APISpecification, APIImplementation} from '../src/provider/APIHandler';
 
 /**
  * Creates a minimal mock app window. Any utilizing test should set properties and set up mock functions as needed
@@ -53,7 +56,6 @@ export function createMockEnvironmnent(): jest.Mocked<Environment> {
         windowPending: new Signal<[Identity]>(),
         createApplication: jest.fn<Promise<void>, [Application, ContextChannel]>(),
         wrapApplication: jest.fn<AppWindow, [Application, Identity, ContextChannel]>(),
-        inferApplication: jest.fn<Promise<Application>, [Identity]>(),
-        hasPendingWindow: jest.fn<boolean, [Identity]>()
+        inferApplication: jest.fn<Promise<Application>, [Identity]>()
     };
 }

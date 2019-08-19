@@ -30,9 +30,4 @@ export interface Environment {
      * Examines a running window, and returns a best-effort Application description
      */
     inferApplication: (identity: Identity) => Promise<Application>;
-
-    /**
-     * Returns true if the provided window has been created, but no `wrapApplication` call has been made for this window
-     */
-    hasPendingWindow: (identity: Identity) => boolean;
 }

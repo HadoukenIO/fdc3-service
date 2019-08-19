@@ -8,7 +8,8 @@ import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {DESKTOP_CHANNELS, Timeouts} from '../constants';
-import {DeferredPromise, withTimeout, withStrictTimeout} from '../utils/async';
+import {DeferredPromise, withStrictTimeout} from '../utils/async';
+import {Boxed} from '../utils/types';
 
 import {AppWindow} from './AppWindow';
 import {ContextChannel, DefaultContextChannel, DesktopContextChannel} from './ContextChannel';
@@ -24,7 +25,7 @@ export function getId(identity: Identity): string {
 }
 
 interface ExpectedWindow {
-    pendingDeferredPromise: DeferredPromise<Promise<AppWindow>>;
+    pendingDeferredPromise: DeferredPromise<Boxed<Promise<AppWindow>>>;
     createdDeferredPromise: DeferredPromise<void>;
     registerDeferredPromise: DeferredPromise<AppWindow>;
 }
@@ -87,7 +88,12 @@ export class Model {
             return this._windowsById[id];
         } else {
             const expectedWindow = this.getOrCreateExpectedWindow(identity);
-            return withStrictTimeout(Timeouts.WINDOW_EXPECT_TO_PENDING, expectedWindow.pendingDeferredPromise.promise);
+
+            const pendingPromise = withStrictTimeout(Timeouts.WINDOW_EXPECT_TO_PENDING, expectedWindow.pendingDeferredPromise.promise);
+            const registeredPromise = (await pendingPromise).value;
+            const appWindow = await registeredPromise;
+
+            return appWindow;
         }
     }
 
@@ -154,7 +160,7 @@ export class Model {
         const expectedWindow = this.getOrCreateExpectedWindow(identity);
         const registerTimeoutPromise = withStrictTimeout(Timeouts.WINDOW_PENDING_TO_REGISTERED, expectedWindow.registerDeferredPromise.promise);
 
-        expectedWindow.pendingDeferredPromise.resolve(registerTimeoutPromise);
+        expectedWindow.pendingDeferredPromise.resolve({value: registerTimeoutPromise});
     }
 
     private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
@@ -201,7 +207,7 @@ export class Model {
     private async onApiHandlerConnection(identity: Identity): Promise<void> {
         // Wait for windowCreated handler to finish to avoid race conditions that
         // can occur when these two run "concurrently"
-        await this.getOrCreateExpectedWindow(identity).createdDeferredPromise;
+        await this.getOrCreateExpectedWindow(identity).createdDeferredPromise.promise;
 
         const appWindow = this.getWindow(identity);
 
@@ -271,7 +277,7 @@ export class Model {
             return this._expectedWindows.get(id)!;
         } else {
             const expectedWindow: ExpectedWindow = {
-                pendingDeferredPromise: new DeferredPromise<Promise<AppWindow>>(),
+                pendingDeferredPromise: new DeferredPromise<Boxed<Promise<AppWindow>>>(),
                 createdDeferredPromise: new DeferredPromise<void>(),
                 registerDeferredPromise: new DeferredPromise<AppWindow>()
             };
