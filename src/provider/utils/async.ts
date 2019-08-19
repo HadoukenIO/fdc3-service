@@ -46,8 +46,8 @@ export function withTimeout<T>(timeoutMs: number, promise: Promise<T>): Promise<
  * @param timeoutMs Timeout period in ms
  * @param promise Promise to race against the timeout
  */
-export function withStrictTimeout<T>(timeoutMs: number, promise: Promise<T>): Promise<T> {
-    const timeout = new Promise<T>((res, rej) => setTimeout(() => rej(new Error('Timeout on promise exceeded')), timeoutMs));
+export function withStrictTimeout<T>(timeoutMs: number, promise: Promise<T>, rejectMessage: string): Promise<T> {
+    const timeout = new Promise<T>((res, rej) => setTimeout(() => rej(new Error(rejectMessage)), timeoutMs));
     return Promise.race([timeout, promise]);
 }
 

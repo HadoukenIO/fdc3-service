@@ -16,18 +16,21 @@ import {ContextChannel, DefaultContextChannel, DesktopContextChannel} from './Co
 import {Environment} from './Environment';
 import {AppDirectory} from './AppDirectory';
 
+interface ExpectedWindow {
+    pendingDeferredPromise: DeferredPromise<Boxed<Promise<AppWindow>>>;
+    createdDeferredPromise: DeferredPromise<void>;
+    registerDeferredPromise: DeferredPromise<AppWindow>;
+}
+
+const EXPECT_TIMEOUT_MESSAGE = 'Timeout on window registration exceeded';
+const EXPECT_CLOSED_MESSAGE = 'Window closed before registration completed';
+
 /**
  * Generates a unique `string` id for a window based on its application's uuid and window name
  * @param identity
  */
 export function getId(identity: Identity): string {
     return `${identity.uuid}/${identity.name || identity.uuid}`;
-}
-
-interface ExpectedWindow {
-    pendingDeferredPromise: DeferredPromise<Boxed<Promise<AppWindow>>>;
-    createdDeferredPromise: DeferredPromise<void>;
-    registerDeferredPromise: DeferredPromise<AppWindow>;
 }
 
 @injectable()
@@ -89,7 +92,7 @@ export class Model {
         } else {
             const expectedWindow = this.getOrCreateExpectedWindow(identity);
 
-            const pendingPromise = withStrictTimeout(Timeouts.WINDOW_EXPECT_TO_PENDING, expectedWindow.pendingDeferredPromise.promise);
+            const pendingPromise = withStrictTimeout(Timeouts.WINDOW_EXPECT_TO_PENDING, expectedWindow.pendingDeferredPromise.promise, EXPECT_TIMEOUT_MESSAGE);
             const registeredPromise = (await pendingPromise).value;
             const appWindow = await registeredPromise;
 
@@ -158,7 +161,11 @@ export class Model {
 
     private onWindowPending(identity: Identity): void {
         const expectedWindow = this.getOrCreateExpectedWindow(identity);
-        const registerTimeoutPromise = withStrictTimeout(Timeouts.WINDOW_PENDING_TO_REGISTERED, expectedWindow.registerDeferredPromise.promise);
+        const registerTimeoutPromise = withStrictTimeout(
+            Timeouts.WINDOW_PENDING_TO_REGISTERED,
+            expectedWindow.registerDeferredPromise.promise,
+            EXPECT_TIMEOUT_MESSAGE
+        );
 
         expectedWindow.pendingDeferredPromise.resolve({value: registerTimeoutPromise});
     }
@@ -196,9 +203,9 @@ export class Model {
         } else if (this._expectedWindows.has(id)) {
             const expectWindow = this._expectedWindows.get(id)!;
 
-            expectWindow.pendingDeferredPromise.reject();
-            expectWindow.registerDeferredPromise.reject();
-            expectWindow.createdDeferredPromise.reject();
+            expectWindow.pendingDeferredPromise.reject(new Error(EXPECT_CLOSED_MESSAGE));
+            expectWindow.registerDeferredPromise.reject(new Error(EXPECT_CLOSED_MESSAGE));
+            expectWindow.createdDeferredPromise.reject(new Error(EXPECT_CLOSED_MESSAGE));
 
             this._expectedWindows.delete(id);
         }
