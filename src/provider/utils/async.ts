@@ -6,15 +6,15 @@ export class DeferredPromise<T = void> {
     private _resolve!: (value?: T) => void;
     private _reject!: (reason?: any) => void;
 
-    public get promise() {
+    public get promise(): Promise<T> {
         return this._promise;
     }
 
-    public get resolve() {
+    public get resolve(): (value?: T) => void {
         return this._resolve;
     }
 
-    public get reject() {
+    public get reject(): (reason?: any) => void {
         return this._reject;
     }
 
