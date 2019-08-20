@@ -73,6 +73,11 @@ const mockJson = jest.fn().mockImplementation(() => {
     return fakeApps;
 });
 
+function setAppDirectoryUrl(url: string): void {
+    const configStore = Injector.get<'CONFIG_STORE'>(Inject.CONFIG_STORE);
+    configStore.config.add({level: 'desktop'}, {applicationDirectory: url});
+}
+
 beforeEach(() => {
     jest.restoreAllMocks();
 
@@ -94,19 +99,23 @@ beforeEach(() => {
         ok: true,
         json: mockJson
     });
+
+    mockJson.mockResolvedValue(fakeApps);
 });
 
 beforeAll(async () => {
     const store = new Store<ConfigurationObject>(require('../../gen/provider/config/defaults.json'));
     Injector.rebind<'ENVIRONMENT'>(Inject.ENVIRONMENT).toConstantValue(createMockEnvironmnent() as Environment);
     Injector.rebind<'CONFIG_STORE'>(Inject.CONFIG_STORE).toConstantValue({
-        config: store
+        config: store,
+        initialized: Promise.resolve()
     });
     Injector.rebind<'RESOLVER'>(Inject.RESOLVER).toConstantValue({
         handleIntent: async (intent: Intent): Promise<ResolverResult> => {
             return {app: null!};
         },
-        cancel: async (): Promise<void> => {}
+        cancel: async (): Promise<void> => {},
+        initialized: Promise.resolve()
     });
 
     await Injector.init();
@@ -115,9 +124,7 @@ beforeAll(async () => {
 describe('AppDirectory Unit Tests', () => {
     describe('When querying the Directory', () => {
         beforeEach(() => {
-            mockJson.mockResolvedValue(fakeApps);
-            const configStore = Injector.get<'CONFIG_STORE'>(Inject.CONFIG_STORE);
-            configStore.config.add({level: 'desktop'}, {applicationDirectory: DEV_APP_DIRECTORY_URL});
+            setAppDirectoryUrl(DEV_APP_DIRECTORY_URL);
         });
 
         it('Loads directory and URL from the store', async () => {
@@ -128,24 +135,18 @@ describe('AppDirectory Unit Tests', () => {
         });
 
         describe('Refreshing the directory', () => {
-            beforeEach(() => {
-                mockJson.mockResolvedValue(fakeApps);
-            });
-
             it('Fetches & updates the directory when URLs do not match', async () => {
                 const appDirectory = Injector.get<'APP_DIRECTORY'>(Inject.APP_DIRECTORY);
                 mockJson.mockResolvedValue([fakeApp1]);
                 const spyGetItem = jest.spyOn(global.localStorage, 'getItem');
-                const spyFetch = jest.spyOn(global, 'fetch');
                 spyGetItem.mockImplementation(() => '__test_url__');
-                appDirectory['_url'] = '*different_url*';
+                setAppDirectoryUrl('*different_url*');
 
                 const apps = await appDirectory.getAllApps();
                 expect(apps).toEqual([fakeApp1]);
             });
 
             it('Use cached applications when the URLs are the same', async () => {
-                const spyFetch = jest.spyOn(global, 'fetch').mockImplementation(() => Promise.reject(new Error('')));
                 const appDirectory = Injector.get<'APP_DIRECTORY'>(Inject.APP_DIRECTORY);
                 const apps = await appDirectory.getAllApps();
                 expect(apps).toEqual(fakeApps);
@@ -164,7 +165,9 @@ describe('AppDirectory Unit Tests', () => {
                 const spyFetch = jest.spyOn(global, 'fetch')
                     .mockImplementation(() => Promise.reject(new Error('')));
                 const appDirectory = Injector.get<'APP_DIRECTORY'>(Inject.APP_DIRECTORY);
-                appDirectory['_url'] = '**different_url**';
+
+                setAppDirectoryUrl('**DIFFERENT URL**');
+
                 const apps = await appDirectory.getAllApps();
                 expect(apps).toEqual([]);
                 expect(spyFetch).toBeCalled();
@@ -197,8 +200,8 @@ describe('Given an App Directory with apps', () => {
     describe('When finding app intents by context with a context implemented by 2 intents in both apps', () => {
         beforeEach(() => {
             appDirectory = Injector.get<'APP_DIRECTORY'>(Inject.APP_DIRECTORY);
-            mockJson.mockResolvedValue(fakeApps);
         });
+
         it('Should return 2 intents', async () => {
             const intents = await appDirectory.getAppIntentsByContext('testContext.User');
 
@@ -216,9 +219,6 @@ describe('Given an App Directory with apps', () => {
     });
 
     describe('When finding app intents by context with a context not implemented by any intent', () => {
-        beforeEach(() => {
-            mockJson.mockResolvedValue(fakeApps);
-        });
         it('Should return an empty array', async () => {
             const intents = await appDirectory.getAppIntentsByContext('testContext.NonExistent');
 
@@ -227,9 +227,6 @@ describe('Given an App Directory with apps', () => {
     });
 
     describe('When finding app intents by context with a context implemented by only 1 intent in 1 app', () => {
-        beforeEach(() => {
-            mockJson.mockResolvedValue(fakeApps);
-        });
         it('Should return 1 intent in 1 app', async () => {
             const intents = await appDirectory.getAppIntentsByContext('testContext.Instrument');
 

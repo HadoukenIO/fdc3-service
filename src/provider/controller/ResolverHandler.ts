@@ -39,12 +39,14 @@ export interface ResolverResult {
 }
 
 export interface ResolverHandlerBinding {
+    initialized: Promise<void>;
+
     handleIntent(intent: Intent): Promise<ResolverResult>;
     cancel(): Promise<void>;
 }
 
 @injectable()
-export class ResolverHandler extends AsyncInit {
+export class ResolverHandler extends AsyncInit implements ResolverHandlerBinding {
     private readonly _directory: AppDirectory;
     private readonly _model: Model;
 

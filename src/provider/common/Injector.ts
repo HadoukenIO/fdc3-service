@@ -59,6 +59,7 @@ type Keys = (keyof typeof Inject & keyof typeof Bindings & keyof Types);
  */
 export class Injector {
     private static _initialized: Promise<void>;
+    private static _ready: boolean = false;
 
     private static _container: Container = (() => {
         const container = new Container();
@@ -96,13 +97,15 @@ export class Injector {
             }
         });
 
-        Injector._initialized = Promise.all(promises).then(() => {});
+        Injector._initialized = Promise.all(promises).then(() => {
+            Injector._ready = true;
+        });
 
         return Injector._initialized;
     }
 
     public static rebind<K extends Keys>(type: typeof Inject[K]): inversify.BindingToSyntax<Types[K]> {
-        return Injector._container.rebind<Types[K]>(type as unknown as inversify.Newable<Types[K]>);
+        return Injector._container.rebind<Types[K]>(type);
     }
 
     /**
@@ -113,7 +116,7 @@ export class Injector {
      * @param type Identifier of the type/value to extract from the injector
      */
     public static get<K extends Keys>(type: typeof Inject[K]): Types[K] {
-        if (!Injector._container) {
+        if (!Injector._ready) {
             throw new Error('Injector not initialised');
         }
         return Injector._container.get<Types[K]>(type);

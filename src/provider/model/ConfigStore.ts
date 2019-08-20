@@ -6,6 +6,7 @@ import {ConfigurationObject} from '../../../gen/provider/config/fdc3-config';
 import {AsyncInit} from '../controller/AsyncInit';
 
 export interface ConfigStoreBinding {
+    initialized: Promise<void>;
     config: Store<ConfigurationObject>;
 }
 

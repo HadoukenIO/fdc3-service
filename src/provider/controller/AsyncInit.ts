@@ -12,13 +12,13 @@ import {DeferredPromise} from '../common/DeferredPromise';
  */
 @injectable()
 export abstract class AsyncInit {
-    private readonly _initialized!: DeferredPromise<this>;
+    private readonly _initialized!: DeferredPromise<void>;
 
     constructor() {
-        this._initialized = new DeferredPromise<this>();
+        this._initialized = new DeferredPromise<void>();
     }
 
-    public get initialized(): Promise<this> {
+    public get initialized(): Promise<void> {
         return this._initialized.promise;
     }
 
@@ -27,9 +27,9 @@ export abstract class AsyncInit {
      *
      * This is automatically invoked from within the Injector.
      */
-    public delayedInit(): Promise<this> {
+    public delayedInit(): Promise<void> {
         this.init().then(() => {
-            this._initialized.resolve(this);
+            this._initialized.resolve();
         });
 
         return this._initialized.promise;

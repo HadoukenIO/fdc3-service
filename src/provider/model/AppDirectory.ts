@@ -9,7 +9,7 @@ import {AppIntent} from '../../client/main';
 import {AsyncInit} from '../controller/AsyncInit';
 import {ConfigurationObject} from '../../../gen/provider/config/fdc3-config';
 
-import {ConfigStore} from './ConfigStore';
+import {ConfigStore, ConfigStoreBinding} from './ConfigStore';
 
 enum StorageKeys {
     URL = 'fdc3@url',
@@ -21,11 +21,11 @@ export const DEV_APP_DIRECTORY_URL = 'http://localhost:3923/provider/sample-app-
 
 @injectable()
 export class AppDirectory extends AsyncInit {
-    private readonly _configStore: ConfigStore;
+    private readonly _configStore: ConfigStoreBinding;
     private _directory: Application[] = [];
     private _url!: string;
 
-    public constructor(@inject(Inject.CONFIG_STORE) configStore: ConfigStore) {
+    public constructor(@inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding) {
         super();
 
         this._configStore = configStore;
@@ -39,12 +39,12 @@ export class AppDirectory extends AsyncInit {
             this._configStore.config.add({level: 'desktop'}, {applicationDirectory: DEV_APP_DIRECTORY_URL});
         }
 
-        this.updateURL(this._configStore.config.query({level: 'desktop'}).applicationDirectory);
+        this.updateUrl(this._configStore.config.query({level: 'desktop'}).applicationDirectory);
 
         const watch = new MaskWatch(this._configStore.config, {applicationDirectory: true});
 
         watch.onAdd.add((rule: ScopedConfig<ConfigurationObject>, source: Scope) => {
-            this.updateURL(this._configStore.config.query({level: 'desktop'}).applicationDirectory);
+            this.updateUrl(this._configStore.config.query({level: 'desktop'}).applicationDirectory);
         });
 
         this._configStore.config.addWatch(watch);
@@ -116,7 +116,7 @@ export class AppDirectory extends AsyncInit {
         const currentUrl = this._url;
         const applications = await this.fetchData(currentUrl, storedUrl);
         await this.updateDirectory(applications);
-        await this.updateURL(currentUrl);
+        await this.updateUrl(currentUrl);
     }
 
     /**
@@ -125,8 +125,7 @@ export class AppDirectory extends AsyncInit {
      * @param storedUrl Cache url
      */
     private async fetchData(url: string, storedUrl: string | null): Promise<Application[]> {
-        // @ts-ignore
-        const response = await global.fetch(url).catch(() => {
+        const response = await fetch(url).catch(() => {
             console.warn(`Failed to fetch app directory @ ${url}`);
         });
 
@@ -154,7 +153,7 @@ export class AppDirectory extends AsyncInit {
      * Update the application directory URL in memory and storage.
      * @param url Directory URL.
      */
-    private async updateURL(url: string) {
+    private async updateUrl(url: string) {
         localStorage.setItem(StorageKeys.URL, url);
         this._url = url;
     }
