@@ -256,7 +256,7 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
             return mockApplication;
         });
 
-        maybeSetTimeout(() => mockEnvironment.windowPending.emit(identity), testWindow.pendingTime);
+        maybeSetTimeout(() => mockEnvironment.windowSeen.emit(identity), testWindow.pendingTime);
         maybeSetTimeout(() => mockEnvironment.windowCreated.emit(identity, manifestUrl), testWindow.createdTime);
         maybeSetTimeout(() => mockApiHandler.onConnection.emit(identity), testWindow.connectionTime);
         maybeSetTimeout(() => mockEnvironment.windowClosed.emit(identity), testWindow.closeTime);

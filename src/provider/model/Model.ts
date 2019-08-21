@@ -17,9 +17,9 @@ import {Environment} from './Environment';
 import {AppDirectory} from './AppDirectory';
 
 interface ExpectedWindow {
-    pendingDeferredPromise: DeferredPromise<Boxed<Promise<AppWindow>>>;
-    createdDeferredPromise: DeferredPromise<void>;
-    registerDeferredPromise: DeferredPromise<AppWindow>;
+    seen: DeferredPromise<Boxed<Promise<AppWindow>>>;
+    created: DeferredPromise<void>;
+    registered: DeferredPromise<AppWindow>;
 }
 
 const EXPECT_TIMEOUT_MESSAGE = 'Timeout on window registration exceeded';
@@ -59,7 +59,7 @@ export class Model {
         this._directory = directory;
         this._environment = environment;
 
-        this._environment.windowPending.add(this.onWindowPending, this);
+        this._environment.windowSeen.add(this.onWindowSeen, this);
         this._environment.windowCreated.add(this.onWindowCreated, this);
         this._environment.windowClosed.add(this.onWindowClosed, this);
 
@@ -92,9 +92,9 @@ export class Model {
         } else {
             const expectedWindow = this.getOrCreateExpectedWindow(identity);
 
-            const pendingPromise = withStrictTimeout(Timeouts.WINDOW_EXPECT_TO_PENDING, expectedWindow.pendingDeferredPromise.promise, EXPECT_TIMEOUT_MESSAGE);
-            const registeredPromise = (await pendingPromise).value;
-            const appWindow = await registeredPromise;
+            const seenWithinTimeout = withStrictTimeout(Timeouts.WINDOW_EXPECT_TO_PENDING, expectedWindow.seen.promise, EXPECT_TIMEOUT_MESSAGE);
+            const registeredWithinTimeout = (await seenWithinTimeout).value;
+            const appWindow = await registeredWithinTimeout;
 
             return appWindow;
         }
@@ -159,15 +159,15 @@ export class Model {
         return this.findWindows(appWindow => appWindow.appInfo.name === name);
     }
 
-    private onWindowPending(identity: Identity): void {
+    private onWindowSeen(identity: Identity): void {
         const expectedWindow = this.getOrCreateExpectedWindow(identity);
         const registerTimeoutPromise = withStrictTimeout(
             Timeouts.WINDOW_PENDING_TO_REGISTERED,
-            expectedWindow.registerDeferredPromise.promise,
+            expectedWindow.registered.promise,
             EXPECT_TIMEOUT_MESSAGE
         );
 
-        expectedWindow.pendingDeferredPromise.resolve({value: registerTimeoutPromise});
+        expectedWindow.seen.resolve({value: registerTimeoutPromise});
     }
 
     private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
@@ -188,7 +188,7 @@ export class Model {
         }
 
         // Registration finished, allow any other sensitive operations to proceed
-        expectedWindow.createdDeferredPromise.resolve();
+        expectedWindow.created.resolve();
     }
 
     private onWindowClosed(identity: Identity): void {
@@ -203,9 +203,9 @@ export class Model {
         } else if (this._expectedWindows.has(id)) {
             const expectWindow = this._expectedWindows.get(id)!;
 
-            expectWindow.pendingDeferredPromise.reject(new Error(EXPECT_CLOSED_MESSAGE));
-            expectWindow.registerDeferredPromise.reject(new Error(EXPECT_CLOSED_MESSAGE));
-            expectWindow.createdDeferredPromise.reject(new Error(EXPECT_CLOSED_MESSAGE));
+            expectWindow.seen.reject(new Error(EXPECT_CLOSED_MESSAGE));
+            expectWindow.registered.reject(new Error(EXPECT_CLOSED_MESSAGE));
+            expectWindow.created.reject(new Error(EXPECT_CLOSED_MESSAGE));
 
             this._expectedWindows.delete(id);
         }
@@ -214,7 +214,7 @@ export class Model {
     private async onApiHandlerConnection(identity: Identity): Promise<void> {
         // Wait for windowCreated handler to finish to avoid race conditions that
         // can occur when these two run "concurrently"
-        await this.getOrCreateExpectedWindow(identity).createdDeferredPromise.promise;
+        await this.getOrCreateExpectedWindow(identity).created.promise;
 
         const appWindow = this.getWindow(identity);
 
@@ -264,7 +264,7 @@ export class Model {
         this.onWindowAdded.emit(appWindow);
         this._onWindowRegisteredInternal.emit();
 
-        expectedWindow.registerDeferredPromise.resolve(appWindow);
+        expectedWindow.registered.resolve(appWindow);
 
         return appWindow;
     }
@@ -284,9 +284,9 @@ export class Model {
             return this._expectedWindows.get(id)!;
         } else {
             const expectedWindow: ExpectedWindow = {
-                pendingDeferredPromise: new DeferredPromise<Boxed<Promise<AppWindow>>>(),
-                createdDeferredPromise: new DeferredPromise<void>(),
-                registerDeferredPromise: new DeferredPromise<AppWindow>()
+                seen: new DeferredPromise<Boxed<Promise<AppWindow>>>(),
+                created: new DeferredPromise<void>(),
+                registered: new DeferredPromise<AppWindow>()
             };
 
             this._expectedWindows.set(id, expectedWindow);

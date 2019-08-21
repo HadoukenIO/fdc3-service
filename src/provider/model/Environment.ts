@@ -10,7 +10,7 @@ export interface Environment {
     windowCreated: Signal<[Identity, string]>;
     windowClosed: Signal<[Identity]>;
 
-    windowPending: Signal<[Identity]>;
+    windowSeen: Signal<[Identity]>;
 
     /**
      * Creates a new application, given an App Directory entry.
