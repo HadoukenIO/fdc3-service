@@ -12,7 +12,7 @@ import {Application} from '../../src/client/main';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
 import {AppWindow} from '../../src/provider/model/AppWindow';
 import {DeferredPromise} from '../../src/provider/utils/async';
-import {Boxed} from '../../src/provider/utils/types';
+import {advanceTime, time, useFakeTime} from '../demo/utils/time';
 
 jest.mock('../../src/provider/model/AppDirectory');
 
@@ -46,7 +46,6 @@ type TestParam = [
 ];
 
 const FAKE_TEST_DURATION = 10000;
-const MAX_PROMISE_CHAIN_LENGTH = 100;
 
 const REGISTRATION_TIMEOUT = 5000;
 const PENDING_TIMEOUT = 100;
@@ -65,7 +64,7 @@ beforeEach(async () => {
     model = new Model(mockAppDirectory, mockEnvironment, mockApiHandler);
 
     jest.resetAllMocks();
-    jest.useFakeTimers();
+    useFakeTime();
 });
 
 describe('When creating a directory FDC3 app', () => {
@@ -262,10 +261,8 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
         maybeSetTimeout(() => mockEnvironment.windowClosed.emit(identity), testWindow.closeTime);
         maybeSetTimeout(() => appDirectoryResultPromise.resolve(), appDirectoryResultTime);
 
-        const time: Boxed<number> = {value: 0};
-
-        const resultAccumulator = setupExpectCalls(identity, expectCalls, time);
-        await advanceTime(time);
+        const resultAccumulator = setupExpectCalls(identity, expectCalls);
+        await advanceTime(FAKE_TEST_DURATION);
 
         expect(resultAccumulator.length).toEqual(expectCalls.length);
         await checkExpectResults(identity, mockApplication, resultAccumulator);
@@ -300,26 +297,17 @@ function maybeSetTimeout(fn: (() => void), time: number | undefined): void {
     }
 }
 
-function setupExpectCalls(identity: Identity, expectCalls: ExpectCall[], time: Boxed<number>): ExpectCallResult[] {
+function setupExpectCalls(identity: Identity, expectCalls: ExpectCall[]): ExpectCallResult[] {
     const results: ExpectCallResult[] = [];
     for (const call of expectCalls) {
         setTimeout(async () => {
             const promise = model.expectWindow(identity);
             await promise.catch(() => {});
-            results.push({promise, time: time.value, call});
+            results.push({promise, time: time(), call});
         }, call.callTime);
     }
 
     return results;
-}
-
-async function advanceTime(currentTime: {value: number}): Promise<void> {
-    for (currentTime.value = 0; currentTime.value < FAKE_TEST_DURATION; currentTime.value += 1) {
-        for (let j = 0; j < MAX_PROMISE_CHAIN_LENGTH; j++) {
-            await Promise.resolve();
-        }
-        jest.advanceTimersByTime(1);
-    }
 }
 
 async function checkExpectResults(identity: Identity, mockApplication: Application, results: ExpectCallResult[]): Promise<void> {
