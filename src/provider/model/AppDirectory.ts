@@ -9,7 +9,7 @@ import {AppIntent} from '../../client/main';
 import {AsyncInit} from '../controller/AsyncInit';
 import {ConfigurationObject} from '../../../gen/provider/config/fdc3-config';
 
-import {ConfigStore, ConfigStoreBinding} from './ConfigStore';
+import {ConfigStoreBinding} from './ConfigStore';
 
 enum StorageKeys {
     URL = 'fdc3@url',
