@@ -78,6 +78,24 @@ function setAppDirectoryUrl(url: string): void {
     configStore.config.add({level: 'desktop'}, {applicationDirectory: url});
 }
 
+beforeAll(async () => {
+    const store = new Store<ConfigurationObject>(require('../../gen/provider/config/defaults.json'));
+    Injector.rebind<'ENVIRONMENT'>(Inject.ENVIRONMENT).toConstantValue(createMockEnvironmnent() as Environment);
+    Injector.rebind<'CONFIG_STORE'>(Inject.CONFIG_STORE).toConstantValue({
+        config: store,
+        initialized: Promise.resolve()
+    });
+    Injector.rebind<'RESOLVER'>(Inject.RESOLVER).toConstantValue({
+        handleIntent: async (intent: Intent): Promise<ResolverResult> => {
+            return {app: null!};
+        },
+        cancel: async (): Promise<void> => {},
+        initialized: Promise.resolve()
+    });
+
+    await Injector.init();
+});
+
 beforeEach(() => {
     jest.restoreAllMocks();
 
@@ -101,24 +119,6 @@ beforeEach(() => {
     });
 
     mockJson.mockResolvedValue(fakeApps);
-});
-
-beforeAll(async () => {
-    const store = new Store<ConfigurationObject>(require('../../gen/provider/config/defaults.json'));
-    Injector.rebind<'ENVIRONMENT'>(Inject.ENVIRONMENT).toConstantValue(createMockEnvironmnent() as Environment);
-    Injector.rebind<'CONFIG_STORE'>(Inject.CONFIG_STORE).toConstantValue({
-        config: store,
-        initialized: Promise.resolve()
-    });
-    Injector.rebind<'RESOLVER'>(Inject.RESOLVER).toConstantValue({
-        handleIntent: async (intent: Intent): Promise<ResolverResult> => {
-            return {app: null!};
-        },
-        cancel: async (): Promise<void> => {},
-        initialized: Promise.resolve()
-    });
-
-    await Injector.init();
 });
 
 describe('AppDirectory Unit Tests', () => {
