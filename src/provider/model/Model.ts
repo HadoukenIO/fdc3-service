@@ -17,7 +17,7 @@ import {Environment} from './Environment';
 import {AppDirectory} from './AppDirectory';
 
 interface ExpectedWindow {
-    // Resolves when the window has been seen by the environment. Resolves to the `regsitered` promise wrapped in a timeout
+    // Resolves when the window has been seen by the environment. Resolves to the `registered` promise wrapped in a timeout
     seen: Promise<Boxed<Promise<AppWindow>>>;
 
     // Resolves when the window has connected to FDC3
