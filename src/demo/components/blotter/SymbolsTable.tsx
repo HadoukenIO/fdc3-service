@@ -10,8 +10,6 @@ interface SymbolsTableProps {
     items?: Symbol[];
 }
 
-
-
 async function loadCharts() {
     return fdc3.findIntent(fdc3.Intents.VIEW_CHART);
 }

@@ -8,7 +8,7 @@ import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {DESKTOP_CHANNELS} from '../constants';
-import {deferredPromise} from '../utils/async';
+import {DeferredPromise} from '../common/DeferredPromise';
 
 import {AppWindow} from './AppWindow';
 import {ContextChannel, DefaultContextChannel, DesktopContextChannel} from './ContextChannel';
@@ -134,7 +134,10 @@ export class Model {
     private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
         // Registration is asynchronous and sensitive to race conditions. We use a deferred promise
         // to signal to other sensitive operations that it is safe to proceed.
-        const [pendingRegistration, resolvePending] = deferredPromise();
+        const deferredPromise = new DeferredPromise();
+        const pendingRegistration = deferredPromise.promise;
+        const resolvePending = deferredPromise.resolve;
+
         this._pendingRegistrations.set(getId(identity), pendingRegistration);
 
         const apps = await this._directory.getAllApps();

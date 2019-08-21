@@ -6,9 +6,10 @@ import {Signal} from 'openfin-service-signal';
 import {AsyncInit} from '../controller/AsyncInit';
 import {Application, IntentType, ChannelId, FDC3ChannelEventType, FDC3EventType} from '../../client/main';
 import {FDC3Error, OpenError} from '../../client/errors';
-import {deferredPromise, withTimeout} from '../utils/async';
+import {withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
 import {parseIdentity} from '../../client/validation';
+import {DeferredPromise} from '../common/DeferredPromise';
 
 import {Environment} from './Environment';
 import {AppWindow} from './AppWindow';
@@ -277,7 +278,9 @@ class FinAppWindow implements AppWindow {
             return false;
         } else {
             // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
-            const [waitForIntentListenerAddedPromise, resolve] = deferredPromise();
+            const deferredPromise = new DeferredPromise();
+            const waitForIntentListenerAddedPromise = deferredPromise.promise;
+            const resolve = deferredPromise.resolve;
 
             const slot = this._onIntentListenerAdded.add(intentAdded => {
                 if (intentAdded === intent) {
