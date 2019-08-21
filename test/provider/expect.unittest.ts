@@ -12,7 +12,7 @@ import {Application} from '../../src/client/main';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
 import {AppWindow} from '../../src/provider/model/AppWindow';
 import {advanceTime, time, useFakeTime} from '../demo/utils/time';
-import { DeferredPromise } from '../../src/provider/common/DeferredPromise';
+import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
 
 jest.mock('../../src/provider/model/AppDirectory');
 
