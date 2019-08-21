@@ -11,8 +11,8 @@ import {createMockEnvironmnent, createMockAppWindow} from '../mocks';
 import {Application} from '../../src/client/main';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
 import {AppWindow} from '../../src/provider/model/AppWindow';
-import {DeferredPromise} from '../../src/provider/utils/async';
 import {advanceTime, time, useFakeTime} from '../demo/utils/time';
+import { DeferredPromise } from '../../src/provider/common/DeferredPromise';
 
 jest.mock('../../src/provider/model/AppDirectory');
 
@@ -57,7 +57,7 @@ let mockEnvironment: jest.Mocked<Environment>;
 let mockApiHandler: APIHandler<APIFromClientTopic>;
 
 beforeEach(async () => {
-    mockAppDirectory = new AppDirectory() as jest.Mocked<AppDirectory>;
+    mockAppDirectory = new AppDirectory(null!) as jest.Mocked<AppDirectory>;
     mockEnvironment = createMockEnvironmnent();
     mockApiHandler = new APIHandler<APIFromClientTopic>();
 
