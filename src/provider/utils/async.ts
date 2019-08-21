@@ -1,3 +1,5 @@
+import {Signal} from 'openfin-service-signal';
+
 /**
  * A deferred promise with methods to resolve or reject it imperatively
  */
@@ -49,5 +51,27 @@ export function withTimeout<T>(timeoutMs: number, promise: Promise<T>): Promise<
 export function withStrictTimeout<T>(timeoutMs: number, promise: Promise<T>, rejectMessage: string): Promise<T> {
     const timeout = new Promise<T>((res, rej) => setTimeout(() => rej(new Error(rejectMessage)), timeoutMs));
     return Promise.race([timeout, promise]);
+}
+
+/**
+ * Returns a promise that resolves when the give predicate is true, evaluated immediately and each time the provided signal is fired
+ *
+ * @param predicate The predicate to evaluate. Provided either zero parameters, or an array of the parameters emitted by the signal
+ * @param signal When this signal is fired, the predicate is revaluated
+ */
+export function untilTrue<A extends any[], T extends Signal<A>>(predicate: (args?: A) => boolean, signal: T): Promise<void> {
+    if (predicate()) {
+        return Promise.resolve();
+    }
+
+    const promise = new DeferredPromise();
+    const slot = signal.add((...args: A) => {
+        if (predicate(args)) {
+            slot.remove();
+            promise.resolve();
+        }
+    });
+
+    return promise.promise;
 }
 

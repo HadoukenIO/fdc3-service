@@ -20,7 +20,7 @@ export const Timeouts = {
     /**
      * Time service allows for a window to go from 'pending' to being fully registered with the model
      */
-    WINDOW_PENDING_TO_REGISTERED: 5000
+    WINDOW_SEEN_TO_REGISTERED: 5000
 };
 
 export const DESKTOP_CHANNELS = [
