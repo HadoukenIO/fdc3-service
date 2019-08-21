@@ -107,7 +107,6 @@ const contextListeners: ContextListener[] = [];
  * security, consistency, and implementation requirements are proprietary.
  */
 
-
 /**
  * Launches/links to an app by name.
  *

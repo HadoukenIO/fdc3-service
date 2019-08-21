@@ -18,7 +18,7 @@ import {EventHandler} from './controller/EventHandler';
 import {Injector} from './common/Injector';
 import {ChannelHandler} from './controller/ChannelHandler';
 import {AppWindow} from './model/AppWindow';
-import {ConfigStore} from './model/ConfigStore';
+import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
 
 @injectable()
@@ -30,7 +30,7 @@ export class Main {
     private readonly _channelHandler: ChannelHandler;
     private readonly _eventHandler: EventHandler;
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
-    private readonly _configStore: ConfigStore
+    private readonly _configStore: ConfigStoreBinding
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
@@ -40,7 +40,7 @@ export class Main {
         @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
         @inject(Inject.EVENT_HANDLER) eventHandler: EventHandler,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
-        @inject(Inject.CONFIG_STORE) configStore: ConfigStore
+        @inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding
     ) {
         this._directory = directory;
         this._model = model;
@@ -64,7 +64,7 @@ export class Main {
         });
 
         // Wait for creation of any injected components that require async initialization
-        await Injector.initialized;
+        await Injector.init();
 
         // Current API
         this._apiHandler.registerListeners<APIFromClient>({

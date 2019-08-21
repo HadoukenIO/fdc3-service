@@ -39,7 +39,6 @@ export function Chart(): React.ReactElement {
     );
 }
 
-
 function createData(): ChartItem[] {
     const data: ChartItem[] = [];
     let y: number = (Math.random() * 0.3) + 0.3;

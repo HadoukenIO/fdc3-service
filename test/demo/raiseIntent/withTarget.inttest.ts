@@ -200,7 +200,6 @@ only the first listener is triggered', async () => {
             await expect(distinctListener).toHaveReceivedContexts([]);
         });
 
-
         test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it errors', async () => {
             await listener.unsubscribe();
 

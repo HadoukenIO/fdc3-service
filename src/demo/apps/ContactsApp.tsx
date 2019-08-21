@@ -91,7 +91,6 @@ export function ContactsApp(): React.ReactElement {
         };
     }, []);
 
-
     return (
         <React.Fragment>
             <ContextChannelSelector />
