@@ -10,6 +10,7 @@ import {delay} from '../utils/delay';
 import {TestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppWithIntentListenerBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning} from '../utils/common';
 import {testManagerIdentity, testAppInDirectory4, testAppNotInDirectory1, testAppNotInDirectory2, testAppWithPreregisteredListeners1, testAppUrl} from '../constants';
 import {Boxed} from '../../../src/provider/utils/types';
+import {allowReject} from '../../../src/provider/utils/async';
 
 /**
  * Alias for `testAppInDirectory4`, which is only in the directory registering the intent `test.IntentOnlyOnApp4`
@@ -283,9 +284,7 @@ then the second listener is triggered exactly once with the correct context', as
 async function raiseIntentExpectResolverAndClose(intent: Intent): Promise<void> {
     const raiseIntentPromise = (await raiseIntentAndExpectResolverToShow(intent)).value;
 
-    // This prevents jest registering a test failure in the case where this rejects before the promise is returned, but does not intefere
-    // with any later processing
-    raiseIntentPromise.catch(() => {});
+    allowReject(raiseIntentPromise);
 
     await closeResolver();
 

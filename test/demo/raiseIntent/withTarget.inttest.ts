@@ -11,6 +11,7 @@ import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {delay} from '../utils/delay';
 import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning} from '../utils/common';
 import {appStartupTime, testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, testAppWithPreregisteredListeners1, testAppNotFdc3, testAppUrl} from '../constants';
+import {allowReject} from '../../../src/provider/utils/async';
 
 /**
  * Intent registered by `testAppWithPreregisteredListeners1` right after opening
@@ -265,9 +266,7 @@ async function raiseDelayedIntentWithTarget(intent: Intent, targetApp: Directory
     // It's going to resolve only after we add the listener to the test app
     const raiseIntentPromise = raiseIntent(intent, targetApp);
 
-    // This prevents jest registering a test failure in the case where this rejects before the promise is returned, but does not intefere
-    // with any later processing
-    raiseIntentPromise.catch(() => {});
+    allowReject(raiseIntentPromise);
 
     await waitForAppToBeRunning(targetApp);
 
