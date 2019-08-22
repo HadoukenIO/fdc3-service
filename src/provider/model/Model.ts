@@ -49,10 +49,9 @@ export class Model {
 
     private readonly _windowsById: {[id: string]: AppWindow};
     private readonly _channelsById: {[id: string]: ContextChannel};
+    private readonly _expectedWindowsById: {[id: string]: ExpectedWindow};
 
     private readonly _onWindowRegisteredInternal = new Signal<[]>();
-
-    private readonly _expectedWindows: Map<string, ExpectedWindow> = new Map();
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
@@ -61,6 +60,7 @@ export class Model {
     ) {
         this._windowsById = {};
         this._channelsById = {};
+        this._expectedWindowsById = {};
 
         this._directory = directory;
         this._environment = environment;
@@ -203,16 +203,24 @@ export class Model {
         if (window) {
             delete this._windowsById[id];
             this.onWindowRemoved.emit(window);
-        } else if (this._expectedWindows.has(id)) {
-            this._expectedWindows.delete(id);
+        } else if (this._expectedWindowsById[id]) {
+            delete this._expectedWindowsById[id];
         }
     }
 
     private async onApiHandlerDisconnection(identity: Identity): Promise<void> {
-        allowReject(this.getOrCreateExpectedWindow(identity).registered.then((appWindow) => {
-            // Remove all listeners but keep in the model
+        const id = getId(identity);
+
+        let appWindow: AppWindow | undefined;
+        if (this._windowsById[id]) {
+            appWindow = this._windowsById[id];
+        } else if (this._expectedWindowsById[id]) {
+            appWindow = await this._expectedWindowsById[id].registered.catch(() => undefined);
+        }
+
+        if (appWindow) {
             appWindow.removeAllListeners();
-        }));
+        }
     }
 
     /**
@@ -228,7 +236,7 @@ export class Model {
 
         console.info(`Registering window [${isInAppDirectory ? '' : 'NOT '}in app directory] ${appWindow.id}`);
         this._windowsById[appWindow.id] = appWindow;
-        this._expectedWindows.delete(id);
+        delete this._expectedWindowsById[id];
 
         this.onWindowAdded.emit(appWindow);
         this._onWindowRegisteredInternal.emit();
@@ -247,12 +255,12 @@ export class Model {
     private getOrCreateExpectedWindow(identity: Identity, windowSeen?: 'seen'): ExpectedWindow {
         const id = getId(identity);
 
-        if (this._expectedWindows.has(id)) {
-            return this._expectedWindows.get(id)!;
+        if (this._expectedWindowsById[id]) {
+            return this._expectedWindowsById[id];
         } else {
             // Create a promise that resovles once the window has been seen
             const seen = untilTrue(this._environment.windowSeen, (args) => {
-                return (!!args && getId(args[0]) === id) || !!this._windowsById[id] || (windowSeen === 'seen');
+                return (!!args && getId(args[0]) === id) || (windowSeen === 'seen');
             });
 
             // Create a promise that resolves when the window has connected
@@ -287,9 +295,7 @@ export class Model {
                 registered: registeredOrClosed
             };
 
-            if (!this._windowsById[id]) {
-                this._expectedWindows.set(id, expectedWindow);
-            }
+            this._expectedWindowsById[id] = expectedWindow;
 
             return expectedWindow;
         }
