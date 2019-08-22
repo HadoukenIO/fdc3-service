@@ -8,7 +8,7 @@ import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {DESKTOP_CHANNELS, Timeouts} from '../constants';
-import {withStrictTimeout, untilTrue} from '../utils/async';
+import {withStrictTimeout, untilTrue, allowReject} from '../utils/async';
 import {Boxed} from '../utils/types';
 
 import {AppWindow} from './AppWindow';
@@ -98,7 +98,9 @@ export class Model {
         } else {
             const expectedWindow = this.getOrCreateExpectedWindow(identity);
 
-            const seenWithinTimeout = withStrictTimeout(Timeouts.WINDOW_EXPECT_TO_PENDING, expectedWindow.seen, EXPECT_TIMEOUT_MESSAGE + '2');
+            // Allow a short time between the `expectWindow` call and the window being 'seen'
+            const seenWithinTimeout = withStrictTimeout(Timeouts.WINDOW_EXPECT_TO_PENDING, expectedWindow.seen, EXPECT_TIMEOUT_MESSAGE);
+
             const registeredWithinTimeout = (await seenWithinTimeout).value;
             const appWindow = await registeredWithinTimeout;
 
@@ -178,7 +180,7 @@ export class Model {
             this.registerWindow(appInfoFromDirectory, identity, true);
         } else {
             // If the app is not in directory, we'll add it to the model if and when it connects to FDC3
-            this.getOrCreateExpectedWindow(identity).connected.then(async () => {
+            allowReject(this.getOrCreateExpectedWindow(identity).connected.then(async () => {
                 let appInfo: Application;
 
                 // Attempt to copy appInfo from another appWindow in the model from the same app
@@ -190,7 +192,7 @@ export class Model {
                 }
 
                 this.registerWindow(appInfo, identity, false);
-            }).catch(() => {});
+            }));
         }
     }
 
@@ -199,9 +201,7 @@ export class Model {
         const window = this._windowsById[id];
 
         if (window) {
-            console.info(`Removing window ${id}`);
             delete this._windowsById[id];
-
             this.onWindowRemoved.emit(window);
         } else if (this._expectedWindows.has(id)) {
             this._expectedWindows.delete(id);
@@ -209,10 +209,10 @@ export class Model {
     }
 
     private async onApiHandlerDisconnection(identity: Identity): Promise<void> {
-        this.getOrCreateExpectedWindow(identity).registered.then((appWindow) => {
+        allowReject(this.getOrCreateExpectedWindow(identity).registered.then((appWindow) => {
             // Remove all listeners but keep in the model
             appWindow.removeAllListeners();
-        }).catch(() => {});
+        }));
     }
 
     /**
@@ -250,55 +250,46 @@ export class Model {
         if (this._expectedWindows.has(id)) {
             return this._expectedWindows.get(id)!;
         } else {
-            // Create a promise that resolves when the window has registered, or rejects if it is closed
-            const registered = Promise.race([
-                untilTrue<[], Signal<[]>>((args) => {
-                    return !!this._windowsById[id];
-                }, this._onWindowRegisteredInternal).then(() => {
-                    return this._windowsById[id];
-                }),
-                untilTrue<[Identity], Signal<[Identity]>>((args) => {
-                    return !!args && getId(args[0]) === id;
-                }, this._environment.windowClosed).then(() => {
-                    throw new Error(EXPECT_CLOSED_MESSAGE);
-                })
-            ]);
-
-            // Create a promise that resolves when the window has connected, or rejects if it is closed
-            const connected = Promise.race([
-                untilTrue<[Identity], Signal<[Identity]>>((args) => {
-                    return this._apiHandler.isClientConnection(identity);
-                }, this._apiHandler.onConnection),
-                untilTrue<[Identity], Signal<[Identity]>>((args) => {
-                    return !!args && getId(args[0]) === id;
-                }, this._environment.windowClosed).then(() => {
-                    throw new Error(EXPECT_CLOSED_MESSAGE);
-                })
-            ]);
-
-            // Create a promise that resovles once the window has been seen, to a promise representing successful registration within our timeout
-            const seen = (windowSeen === 'seen' ? Promise.resolve() : untilTrue<[Identity], Signal<[Identity]>>((args) => {
-                return args !== undefined && getId(args[0]) === id;
-            }, this._environment.windowSeen)).then(() => {
-                const registeredWithinTimeout = withStrictTimeout(Timeouts.WINDOW_SEEN_TO_REGISTERED, registered, EXPECT_TIMEOUT_MESSAGE + '1');
-
-                registeredWithinTimeout.catch(() => {});
-                const windowWithinTimeout = registeredWithinTimeout.then(() => {
-                    return this._windowsById[id];
-                });
-
-                windowWithinTimeout.catch(() => {});
-
-                return {value: windowWithinTimeout};
+            // Create a promise that resovles once the window has been seen
+            const seen = untilTrue(this._environment.windowSeen, (args) => {
+                return (args && getId(args[0]) === id) || !!this._windowsById[id] || (windowSeen === 'seen');
             });
 
-            registered.catch(() => {});
-            connected.catch(() => {});
-            seen.catch(() => {});
+            // Create a promise that resolves when the window has connected
+            const connected = untilTrue(this._apiHandler.onConnection, (args) => {
+                return (!!args && getId(args[0]) === id) || (this._apiHandler.channel && this._apiHandler.isClientConnection(identity));
+            });
 
-            const expectedWindow: ExpectedWindow = {seen, connected, registered};
+            // Create a promise that resolves when the window has registered
+            const registered = untilTrue(this._onWindowRegisteredInternal, (args) => {
+                return !!this._windowsById[id];
+            }).then(() => {
+                return this._windowsById[id];
+            });
 
-            this._expectedWindows.set(id, expectedWindow);
+            // A promise that never resolves but rejects when the window has closed
+            const closed = allowReject(untilTrue(this._environment.windowClosed, (args) => {
+                return !!args && getId(args[0]) === id;
+            }).then(() => {
+                throw new Error(EXPECT_CLOSED_MESSAGE);
+            }));
+
+            const connectedOrClosed = allowReject(Promise.race([connected, closed]));
+            const registeredOrClosed = allowReject(Promise.race([registered, closed]));
+
+            const seenThenRegisteredWithinTimeout = seen.then(() => {
+                return {value: allowReject(withStrictTimeout(Timeouts.WINDOW_SEEN_TO_REGISTERED, registeredOrClosed, EXPECT_TIMEOUT_MESSAGE))};
+            });
+
+            const expectedWindow: ExpectedWindow = {
+                seen: seenThenRegisteredWithinTimeout,
+                connected: connectedOrClosed,
+                registered: registeredOrClosed
+            };
+
+            if (!this._windowsById[id]) {
+                this._expectedWindows.set(id, expectedWindow);
+            }
 
             return expectedWindow;
         }

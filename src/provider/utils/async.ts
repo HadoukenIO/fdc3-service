@@ -28,10 +28,10 @@ export function withStrictTimeout<T>(timeoutMs: number, promise: Promise<T>, rej
 /**
  * Returns a promise that resolves when the give predicate is true, evaluated immediately and each time the provided signal is fired
  *
- * @param predicate The predicate to evaluate. Provided either zero parameters, or an array of the parameters emitted by the signal
  * @param signal When this signal is fired, the predicate is revaluated
+ * @param predicate The predicate to evaluate. Provided either zero parameters, or an array of the parameters emitted by the signal
  */
-export function untilTrue<A extends any[], T extends Signal<A>>(predicate: (args?: A) => boolean, signal: T): Promise<void> {
+export function untilTrue<A extends any[]>(signal: Signal<A>, predicate: (args?: A) => boolean): Promise<void> {
     if (predicate()) {
         return Promise.resolve();
     }
@@ -47,3 +47,14 @@ export function untilTrue<A extends any[], T extends Signal<A>>(predicate: (args
     return promise.promise;
 }
 
+/**
+ * Attaches an empty `catch` block to a promise, then returns the original promise. This prevents rejection of the promise being logged as
+ * a warning during tests, but does not otherwise change behaviour should the promise reject. This should be called for promises we expect
+ * to reject under normal circumstances, but would not otherwise have a `catch` block attached
+ *
+ * @param promise The promise to attach the catch block to
+ */
+export function allowReject<T>(promise: Promise<T>): Promise<T> {
+    promise.catch(() => {});
+    return promise;
+}
