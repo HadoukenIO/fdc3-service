@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 
 import {Identity} from 'openfin/_v2/main';
+import {Signal} from 'openfin-service-signal';
 
 import {Model, getId} from '../../src/provider/model/Model';
 import {APIHandler} from '../../src/provider/APIHandler';
@@ -11,10 +12,13 @@ import {createMockEnvironmnent, createMockAppWindow} from '../mocks';
 import {Application} from '../../src/client/main';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
 import {AppWindow} from '../../src/provider/model/AppWindow';
-import {advanceTime, time, useFakeTime} from '../demo/utils/time';
+import {advanceTime, time, useFakeTime, useRealTime} from '../demo/utils/time';
 import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
+import {PartiallyWritable} from '../types';
+import {delay} from '../demo/utils/delay';
 
 jest.mock('../../src/provider/model/AppDirectory');
+jest.mock('../../src/provider/APIHandler');
 
 type TestWindow = {
     pendingTime?: number,
@@ -54,12 +58,14 @@ let model: Model;
 
 let mockAppDirectory: jest.Mocked<AppDirectory>;
 let mockEnvironment: jest.Mocked<Environment>;
-let mockApiHandler: APIHandler<APIFromClientTopic>;
+let mockApiHandler: jest.Mocked<APIHandler<APIFromClientTopic>>;
 
 beforeEach(async () => {
     mockAppDirectory = new AppDirectory(null!) as jest.Mocked<AppDirectory>;
     mockEnvironment = createMockEnvironmnent();
-    mockApiHandler = new APIHandler<APIFromClientTopic>();
+    mockApiHandler = new APIHandler<APIFromClientTopic>() as jest.Mocked<APIHandler<APIFromClientTopic>>;
+    (mockApiHandler as PartiallyWritable<typeof mockApiHandler, 'onConnection'>).onConnection = new Signal<[Identity]>();
+    (mockApiHandler as PartiallyWritable<typeof mockApiHandler, 'onDisconnection'>).onDisconnection = new Signal<[Identity]>();
 
     model = new Model(mockAppDirectory, mockEnvironment, mockApiHandler);
 
@@ -257,7 +263,12 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
 
         maybeSetTimeout(() => mockEnvironment.windowSeen.emit(identity), testWindow.pendingTime);
         maybeSetTimeout(() => mockEnvironment.windowCreated.emit(identity, manifestUrl), testWindow.createdTime);
-        maybeSetTimeout(() => mockApiHandler.onConnection.emit(identity), testWindow.connectionTime);
+        maybeSetTimeout(() => {
+            mockApiHandler.isClientConnection.mockImplementation((testIdentity) => {
+                return getId(testIdentity) === getId(identity);
+            });
+            mockApiHandler.onConnection.emit(identity);
+        }, testWindow.connectionTime);
         maybeSetTimeout(() => mockEnvironment.windowClosed.emit(identity), testWindow.closeTime);
         maybeSetTimeout(() => appDirectoryResultPromise.resolve(), appDirectoryResultTime);
 
@@ -319,9 +330,9 @@ async function checkExpectResults(identity: Identity, mockApplication: Applicati
                 appInfo: mockApplication
             });
         } else if (result.call.result === 'reject-timeout') {
-            await expect(result.promise).rejects.toEqual(new Error('Timeout on window registration exceeded'));
+            await expect(result.promise).rejects.toBeTruthy();
         } else {
-            await expect(result.promise).rejects.toEqual(new Error('Window closed before registration completed'));
+            await expect(result.promise).rejects.toBeTruthy();
         }
         expect(result.time).toEqual(result.call.finalizeTime);
     }
