@@ -231,7 +231,6 @@ describe('When creating a non-directory FDC3 app', () => {
     });
 });
 
-
 function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resultParams: ResultParam[]): void {
     const testParams = buildTestParams(testWindow, appDirectoryResultTime, resultParams);
 
