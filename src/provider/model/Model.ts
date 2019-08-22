@@ -252,7 +252,7 @@ export class Model {
         } else {
             // Create a promise that resovles once the window has been seen
             const seen = untilTrue(this._environment.windowSeen, (args) => {
-                return (args && getId(args[0]) === id) || !!this._windowsById[id] || (windowSeen === 'seen');
+                return (!!args && getId(args[0]) === id) || !!this._windowsById[id] || (windowSeen === 'seen');
             });
 
             // Create a promise that resolves when the window has connected
