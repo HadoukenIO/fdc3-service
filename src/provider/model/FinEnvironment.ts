@@ -16,7 +16,7 @@ import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 import {getId} from './Model';
 
-interface PendingWindow {
+interface SeenWindow {
     creationTime: number | undefined;
     index: number;
 }
@@ -57,7 +57,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public readonly windowSeen: Signal<[Identity]> = new Signal();
 
     private _windowsCreated: number = 0;
-    private readonly _pendingWindows: {[id: string]: PendingWindow} = {};
+    private readonly _seenWindows: {[id: string]: SeenWindow} = {};
 
     public async createApplication(appInfo: Application, channel: ContextChannel): Promise<void> {
         const [didTimeout] = await withTimeout(
@@ -75,8 +75,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         identity = parseIdentity(identity);
         const id = getId(identity);
 
-        const {creationTime, index} = this._pendingWindows[id];
-        delete this._pendingWindows[id];
+        const {creationTime, index} = this._seenWindows[id];
 
         return new FinAppWindow(identity, appInfo, channel, creationTime, index);
     }
@@ -116,6 +115,10 @@ export class FinEnvironment extends AsyncInit implements Environment {
         }
     }
 
+    public isWindowSeen(identity: Identity): boolean {
+        return !!this._seenWindows[getId(identity)];
+    }
+
     protected async init(): Promise<void> {
         fin.System.addListener('window-created', (event: WindowEvent<'system', 'window-created'>) => {
             const identity = {uuid: event.uuid, name: event.name};
@@ -125,7 +128,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         fin.System.addListener('window-closed', (event: WindowEvent<'system', 'window-closed'>) => {
             const identity = {uuid: event.uuid, name: event.name};
 
-            delete this._pendingWindows[getId(identity)];
+            delete this._seenWindows[getId(identity)];
 
             this.windowClosed.emit(identity);
         });
@@ -142,12 +145,12 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     private async registerWindow(identity: Identity, creationTime: number | undefined): Promise<void> {
-        const pendingWindow = {
+        const seenWindow = {
             creationTime,
             index: this._windowsCreated
         };
 
-        this._pendingWindows[getId(identity)] = pendingWindow;
+        this._seenWindows[getId(identity)] = seenWindow;
         this._windowsCreated++;
 
         this.windowSeen.emit(identity);

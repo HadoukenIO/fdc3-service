@@ -25,20 +25,32 @@ export function withStrictTimeout<T>(timeoutMs: number, promise: Promise<T>, rej
     return Promise.race([timeout, promise]);
 }
 
+
 /**
- * Returns a promise that resolves when the give predicate is true, evaluated immediately and each time the provided signal is fired
+ * Returns a promise that resolves when the given predicate is true, evaluated immediately and each time the provided signal is fired
  *
  * @param signal When this signal is fired, the predicate is revaluated
- * @param predicate The predicate to evaluate. Provided either zero parameters, or an array of the parameters emitted by the signal
+ * @param predicate The predicate to evaluate
  */
-export function untilTrue<A extends any[]>(signal: Signal<A>, predicate: (args?: A) => boolean): Promise<void> {
+export function untilTrue<A extends any[]>(signal: Signal<A>, predicate: () => boolean): Promise<void> {
     if (predicate()) {
         return Promise.resolve();
     }
 
+    return untilSignal(signal, predicate);
+}
+
+/**
+ * Returns a promise that resolves when the given signal is fired, and the given predicate evaluates to true when passed the arguments
+ * recevied from the signal
+ *
+ * @param signal The signal to listen to
+ * @param predicate The predicate to evaluate against arguments received from the signal
+ */
+export function untilSignal<A extends any[]>(signal: Signal<A>, predicate: (...args: A) => boolean): Promise<void> {
     const promise = new DeferredPromise();
     const slot = signal.add((...args: A) => {
-        if (predicate(args)) {
+        if (predicate(...args)) {
             slot.remove();
             promise.resolve();
         }

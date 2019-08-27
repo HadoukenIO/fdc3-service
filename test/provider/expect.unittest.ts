@@ -240,17 +240,45 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
             return testWindow.appType === 'directory' ? [mockApplication] : [];
         });
 
-        mockEnvironment.wrapApplication.mockImplementationOnce((appInfo: Application, identity: Identity, channel: ContextChannel): AppWindow => {
+        mockEnvironment.wrapApplication.mockImplementationOnce((appInfo: Application, testIdentity: Identity, channel: ContextChannel): AppWindow => {
             return {
                 ...createMockAppWindow(),
-                id: getId(identity),
-                identity,
+                id: getId(testIdentity),
+                identity: testIdentity,
                 appInfo
             };
         });
 
         mockEnvironment.inferApplication.mockImplementationOnce(async (indentity: Identity): Promise<Application> => {
             return mockApplication;
+        });
+
+        mockEnvironment.isWindowSeen.mockImplementation((testIdentity: Identity): boolean => {
+            if (getId(testIdentity) === getId(identity)) {
+                const time = Date.now();
+
+                if (testWindow.seenTime !== undefined && time >= testWindow.seenTime) {
+                    if (testWindow.closeTime === undefined || time < testWindow.closeTime) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        });
+
+        mockApiHandler.isClientConnection.mockImplementation((testIdentity: Identity): boolean => {
+            if (getId(testIdentity) === getId(identity)) {
+                const time = Date.now();
+
+                if (testWindow.connectionTime !== undefined && time >= testWindow.connectionTime) {
+                    if (testWindow.closeTime === undefined || time < testWindow.closeTime) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         });
 
         maybeSetTimeout(() => mockEnvironment.windowSeen.emit(identity), testWindow.seenTime);

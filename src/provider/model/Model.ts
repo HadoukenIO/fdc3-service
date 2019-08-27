@@ -8,7 +8,7 @@ import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {DESKTOP_CHANNELS, Timeouts} from '../constants';
-import {withStrictTimeout, untilTrue, allowReject} from '../utils/async';
+import {withStrictTimeout, untilTrue, allowReject, untilSignal} from '../utils/async';
 import {Boxed} from '../utils/types';
 
 import {AppWindow} from './AppWindow';
@@ -168,7 +168,7 @@ export class Model {
     }
 
     private onWindowSeen(identity: Identity): void {
-        this.getOrCreateExpectedWindow(identity, 'seen');
+        this.getOrCreateExpectedWindow(identity);
     }
 
     private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
@@ -252,32 +252,32 @@ export class Model {
         return this.windows.filter(predicate);
     }
 
-    private getOrCreateExpectedWindow(identity: Identity, windowSeen?: 'seen'): ExpectedWindow {
+    private getOrCreateExpectedWindow(identity: Identity): ExpectedWindow {
         const id = getId(identity);
 
         if (this._expectedWindowsById[id]) {
             return this._expectedWindowsById[id];
         } else {
-            // Create a promise that resovles once the window has been seen
-            const seen = untilTrue(this._environment.windowSeen, (args) => {
-                return (!!args && getId(args[0]) === id) || (windowSeen === 'seen');
+            // Create a promise that resolves once the window has been seen
+            const seen = untilTrue(this._environment.windowSeen, () => {
+                return this._environment.isWindowSeen(identity);
             });
 
             // Create a promise that resolves when the window has connected
-            const connected = untilTrue(this._apiHandler.onConnection, (args) => {
-                return (!!args && getId(args[0]) === id) || (this._apiHandler.channel && this._apiHandler.isClientConnection(identity));
+            const connected = untilTrue(this._apiHandler.onConnection, () => {
+                return this._apiHandler.isClientConnection(identity);
             });
 
             // Create a promise that resolves when the window has registered
-            const registered = untilTrue(this._onWindowRegisteredInternal, (args) => {
+            const registered = untilTrue(this._onWindowRegisteredInternal, () => {
                 return !!this._windowsById[id];
             }).then(() => {
                 return this._windowsById[id];
             });
 
             // A promise that never resolves but rejects when the window has closed
-            const closed = allowReject(untilTrue(this._environment.windowClosed, (args) => {
-                return !!args && getId(args[0]) === id;
+            const closed = allowReject(untilSignal(this._environment.windowClosed, (testIdentity) => {
+                return getId(testIdentity) === id;
             }).then(() => {
                 throw new Error(EXPECT_CLOSED_MESSAGE);
             }));
