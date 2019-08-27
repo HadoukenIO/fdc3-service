@@ -25,13 +25,13 @@ type TestWindow = {
     connectionTime?: number;
     closeTime?: number;
     appType: 'directory' | 'non-directory';
-}
+};
 
 type ExpectCall = {
     callTime: number;
     finalizeTime: number;
     result: 'resolve' | 'reject-timeout' | 'reject-closed';
-}
+};
 
 type ExpectCallResult = {
     promise: Promise<AppWindow>;
