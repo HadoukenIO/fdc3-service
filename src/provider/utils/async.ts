@@ -25,7 +25,6 @@ export function withStrictTimeout<T>(timeoutMs: number, promise: Promise<T>, rej
     return Promise.race([timeout, promise]);
 }
 
-
 /**
  * Returns a promise that resolves when the given predicate is true, evaluated immediately and each time the provided signal is fired
  *
