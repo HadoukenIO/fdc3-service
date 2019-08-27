@@ -20,23 +20,23 @@ jest.mock('../../src/provider/model/AppDirectory');
 jest.mock('../../src/provider/APIHandler');
 
 type TestWindow = {
-    seenTime?: number,
-    createdTime?: number,
-    connectionTime?: number,
-    closeTime?: number
-    appType: 'directory' | 'non-directory',
+    seenTime?: number;
+    createdTime?: number;
+    connectionTime?: number;
+    closeTime?: number;
+    appType: 'directory' | 'non-directory';
 }
 
 type ExpectCall = {
-    callTime: number,
-    finalizeTime: number,
-    result: 'resolve' | 'reject-timeout' | 'reject-closed'
+    callTime: number;
+    finalizeTime: number;
+    result: 'resolve' | 'reject-timeout' | 'reject-closed';
 }
 
 type ExpectCallResult = {
-    promise: Promise<AppWindow>,
-    time: number,
-    call: ExpectCall
+    promise: Promise<AppWindow>;
+    time: number;
+    call: ExpectCall;
 };
 
 type ResultParam = [string, ExpectCall];
