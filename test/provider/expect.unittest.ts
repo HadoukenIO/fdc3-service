@@ -12,10 +12,9 @@ import {createMockEnvironmnent, createMockAppWindow} from '../mocks';
 import {Application} from '../../src/client/main';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
 import {AppWindow} from '../../src/provider/model/AppWindow';
-import {advanceTime, time, useFakeTime, useRealTime} from '../demo/utils/time';
+import {advanceTime, time, useFakeTime} from '../demo/utils/time';
 import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
 import {PartiallyWritable} from '../types';
-import {delay} from '../demo/utils/delay';
 
 jest.mock('../../src/provider/model/AppDirectory');
 jest.mock('../../src/provider/APIHandler');
