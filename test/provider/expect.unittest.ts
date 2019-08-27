@@ -110,56 +110,50 @@ describe('When creating a directory FDC3 app', () => {
     });
 
     describe('When a window is closed while pending', () => {
-        expectTest(
-            {
-                seenTime: 990,
-                closeTime: 1000,
-                appType: 'directory'
-            },
-            3000,
+        const neverCreatedWindow: TestWindow = {
+            seenTime: 990,
+            closeTime: 1000,
+            appType: 'directory'
+        };
+
+        expectTest(neverCreatedWindow, 3000, [
             [
-                [
-                    'When a window is expected shortly before it is created, the promise rejects',
-                    {callTime: 950, finalizeTime: 1000, result: 'reject-closed'}
-                ]
+                'When a window is expected shortly before it is created, the promise rejects',
+                {callTime: 950, finalizeTime: 1000, result: 'reject-closed'}
             ]
-        );
+        ]);
     });
 
     describe('When a window is closed after being created', () => {
-        expectTest(
-            {
-                seenTime: 990,
-                createdTime: 1000,
-                closeTime: 2000,
-                appType: 'directory'
-            },
-            3000,
+        const fastCloseWindow: TestWindow = {
+            seenTime: 990,
+            createdTime: 1000,
+            closeTime: 2000,
+            appType: 'directory'
+        };
+
+        expectTest(fastCloseWindow, 3000, [
             [
-                [
-                    'When a window is expected shortly after it is created, the promise rejects',
-                    {callTime: 1500, finalizeTime: 2000, result: 'reject-closed'}
-                ]
+                'When a window is expected shortly after it is created, the promise rejects',
+                {callTime: 1500, finalizeTime: 2000, result: 'reject-closed'}
             ]
-        );
+        ]);
     });
 
     describe('When a window is closed after being registered', () => {
-        expectTest(
-            {
-                seenTime: 990,
-                createdTime: 1000,
-                closeTime: 4000,
-                appType: 'directory'
-            },
-            3000,
+        const slowCloseWindow: TestWindow = {
+            seenTime: 990,
+            createdTime: 1000,
+            closeTime: 4000,
+            appType: 'directory'
+        };
+
+        expectTest(slowCloseWindow, 3000, [
             [
-                [
-                    'When a window is expected after being closed, the promise rejects',
-                    {callTime: 5000, finalizeTime: 5000 + PENDING_TIMEOUT, result: 'reject-timeout'}
-                ]
+                'When a window is expected after being closed, the promise rejects',
+                {callTime: 5000, finalizeTime: 5000 + PENDING_TIMEOUT, result: 'reject-timeout'}
             ]
-        );
+        ]);
     });
 });
 
