@@ -99,7 +99,7 @@ export class Model {
             const expectedWindow = this.getOrCreateExpectedWindow(identity);
 
             // Allow a short time between the `expectWindow` call and the window being 'seen'
-            const seenWithinTimeout = withStrictTimeout(Timeouts.WINDOW_EXPECT_TO_PENDING, expectedWindow.seen, EXPECT_TIMEOUT_MESSAGE);
+            const seenWithinTimeout = withStrictTimeout(Timeouts.WINDOW_EXPECT_TO_SEEN, expectedWindow.seen, EXPECT_TIMEOUT_MESSAGE);
 
             const registeredWithinTimeout = (await seenWithinTimeout).value;
             const appWindow = await registeredWithinTimeout;

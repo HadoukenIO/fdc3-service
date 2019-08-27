@@ -21,7 +21,7 @@ jest.mock('../../src/provider/model/AppDirectory');
 jest.mock('../../src/provider/APIHandler');
 
 type TestWindow = {
-    pendingTime?: number,
+    seenTime?: number,
     createdTime?: number,
     connectionTime?: number,
     closeTime?: number
@@ -75,7 +75,7 @@ beforeEach(async () => {
 
 describe('When creating a directory FDC3 app', () => {
     const testWindow: TestWindow = {
-        pendingTime: 990,
+        seenTime: 990,
         createdTime: 1000,
         appType: 'directory'
     };
@@ -113,7 +113,7 @@ describe('When creating a directory FDC3 app', () => {
     describe('When a window is closed while pending', () => {
         expectTest(
             {
-                pendingTime: 990,
+                seenTime: 990,
                 closeTime: 1000,
                 appType: 'directory'
             },
@@ -130,7 +130,7 @@ describe('When creating a directory FDC3 app', () => {
     describe('When a window is closed after being created', () => {
         expectTest(
             {
-                pendingTime: 990,
+                seenTime: 990,
                 createdTime: 1000,
                 closeTime: 2000,
                 appType: 'directory'
@@ -148,7 +148,7 @@ describe('When creating a directory FDC3 app', () => {
     describe('When a window is closed after being registered', () => {
         expectTest(
             {
-                pendingTime: 990,
+                seenTime: 990,
                 createdTime: 1000,
                 closeTime: 4000,
                 appType: 'directory'
@@ -166,14 +166,14 @@ describe('When creating a directory FDC3 app', () => {
 
 describe('When creating a non-directory FDC3 app', () => {
     const fastConnectWindow: TestWindow = {
-        pendingTime: 990,
+        seenTime: 990,
         createdTime: 1000,
         connectionTime: 4000,
         appType: 'non-directory'
     };
 
     const slowConnectWindow: TestWindow = {
-        pendingTime: 990,
+        seenTime: 990,
         createdTime: 1000,
         connectionTime: 7000,
         appType: 'non-directory'
@@ -260,7 +260,7 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
             return mockApplication;
         });
 
-        maybeSetTimeout(() => mockEnvironment.windowSeen.emit(identity), testWindow.pendingTime);
+        maybeSetTimeout(() => mockEnvironment.windowSeen.emit(identity), testWindow.seenTime);
         maybeSetTimeout(() => mockEnvironment.windowCreated.emit(identity, manifestUrl), testWindow.createdTime);
         maybeSetTimeout(() => mockApiHandler.onConnection.emit(identity), testWindow.connectionTime);
         maybeSetTimeout(() => mockEnvironment.windowClosed.emit(identity), testWindow.closeTime);
