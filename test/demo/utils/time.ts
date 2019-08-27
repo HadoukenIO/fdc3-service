@@ -1,33 +1,39 @@
+import {delay} from './delay';
+
 const MAX_PROMISE_CHAIN_LENGTH = 100;
 
 const realDateNow = Date.now;
-const boxedTime = {value: 0};
+let fakeTime = 0;
+let usingFakeTime = false;
 
 export function useFakeTime(): void {
     jest.useFakeTimers();
-    boxedTime.value = 0;
 
     Date.now = () => {
-        return boxedTime.value;
+        return fakeTime;
     };
+
+    fakeTime = 0;
+    usingFakeTime = true;
 }
 
 export function useRealTime(): void {
     jest.useRealTimers();
-
     Date.now = realDateNow;
-}
 
-export function time(): number {
-    return boxedTime.value;
+    usingFakeTime = false;
 }
 
 export async function advanceTime(duration: number): Promise<void> {
-    for (let i = 0; i < duration; i++) {
-        for (let j = 0; j < MAX_PROMISE_CHAIN_LENGTH; j++) {
-            await Promise.resolve();
+    if (usingFakeTime) {
+        for (let i = 0; i < duration; i++) {
+            for (let j = 0; j < MAX_PROMISE_CHAIN_LENGTH; j++) {
+                await Promise.resolve();
+            }
+            fakeTime++;
+            jest.advanceTimersByTime(1);
         }
-        boxedTime.value++;
-        jest.advanceTimersByTime(1);
+    } else {
+        delay(duration);
     }
 }

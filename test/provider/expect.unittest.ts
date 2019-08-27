@@ -12,7 +12,7 @@ import {createMockEnvironmnent, createMockAppWindow} from '../mocks';
 import {Application} from '../../src/client/main';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
 import {AppWindow} from '../../src/provider/model/AppWindow';
-import {advanceTime, time, useFakeTime} from '../demo/utils/time';
+import {advanceTime, useFakeTime} from '../demo/utils/time';
 import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
 import {PartiallyWritable} from '../types';
 
@@ -307,7 +307,7 @@ function setupExpectCalls(identity: Identity, expectCalls: ExpectCall[]): Expect
         setTimeout(async () => {
             const promise = model.expectWindow(identity);
             await promise.catch(() => {});
-            results.push({promise, time: time(), call});
+            results.push({promise, time: Date.now(), call});
         }, call.callTime);
     }
 
