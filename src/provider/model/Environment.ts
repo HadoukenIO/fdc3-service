@@ -7,10 +7,9 @@ import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 
 export interface Environment {
+    windowSeen: Signal<[Identity]>;
     windowCreated: Signal<[Identity, string]>;
     windowClosed: Signal<[Identity]>;
-
-    windowSeen: Signal<[Identity]>;
 
     /**
      * Creates a new application, given an App Directory entry.
@@ -30,7 +29,6 @@ export interface Environment {
      * Examines a running window, and returns a best-effort Application description
      */
     inferApplication: (identity: Identity) => Promise<Application>;
-
 
     /**
      * Returns whether the window has been seen by the service and is still open
