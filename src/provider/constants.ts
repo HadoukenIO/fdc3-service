@@ -6,10 +6,21 @@ export const Timeouts = {
      * Time for an app to register a listener after opening
      */
     ADD_INTENT_LISTENER: 5000,
+
     /**
      * Time for an OpenFin app to start by calling `fin.Application.startFromManifest`
      */
-    APP_START_FROM_MANIFEST: 30000
+    APP_START_FROM_MANIFEST: 30000,
+
+    /**
+     * Time service allows for a `window-created` event after a client expects the window to exist
+     */
+    WINDOW_EXPECT_TO_SEEN: 100,
+
+    /**
+     * Time service allows for a window to go from first seen to being fully registered with the model
+     */
+    WINDOW_SEEN_TO_REGISTERED: 5000
 };
 
 export const DESKTOP_CHANNELS = [

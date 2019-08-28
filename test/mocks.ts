@@ -2,7 +2,7 @@ import {Signal} from 'openfin-service-signal';
 import {Identity} from 'openfin/_v2/main';
 
 import {AppWindow} from '../src/provider/model/AppWindow';
-import {IntentType, Context, FDC3ChannelEventType, Application} from '../src/client/main';
+import {IntentType, Context, FDC3ChannelEventType, Application, IdentityError} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
 import {ChannelTransport} from '../src/client/internal';
 import {Environment} from '../src/provider/model/Environment';
@@ -48,10 +48,12 @@ export function createMockChannel(): jest.Mocked<ContextChannel> {
 
 export function createMockEnvironmnent(): jest.Mocked<Environment> {
     return {
+        windowSeen: new Signal<[Identity]>(),
         windowCreated: new Signal<[Identity, string]>(),
         windowClosed: new Signal<[Identity]>(),
         createApplication: jest.fn<Promise<void>, [Application, ContextChannel]>(),
         wrapApplication: jest.fn<AppWindow, [Application, Identity, ContextChannel]>(),
-        inferApplication: jest.fn<Promise<Application>, [Identity]>()
+        inferApplication: jest.fn<Promise<Application>, [Identity]>(),
+        isWindowSeen: jest.fn<boolean, [Identity]>()
     };
 }
