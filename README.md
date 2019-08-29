@@ -95,12 +95,24 @@ The service provider is a standard OpenFin application, only its lifecycle is co
 ## Known Issues
 A list of known issues can be found on our [versions page](https://developer.openfin.co/versions/?product=Services).
 
+## Contributing
+
+1. Fork it (<https://github.com/HadoukenIO/fdc3-service/fork>)
+2. Create your feature branch (`git checkout -b feature/fooBar`)
+3. Read our [contribution guidelines](.github/CONTRIBUTING.md) and [Community Code of Conduct](https://www.finos.org/code-of-conduct)
+4. Commit your changes (`git commit -am 'Add some fooBar'`)
+5. Push to the branch (`git push origin feature/fooBar`)
+6. Create a new Pull Request
+
 ## License
-This project uses the [Apache2 license](https://www.apache.org/licenses/LICENSE-2.0).
+The code in this repository is distributed under the Apache License, Version 2.0
 
 However, if you run this code, it may call on the OpenFin RVM or OpenFin Runtime, which are covered by OpenFin's Developer, Community, and Enterprise licenses. You can learn more about OpenFin licensing at the links listed below or just email us at support@openfin.co with questions.
 
+Copyright 2018-2019 OpenFin
+
 https://openfin.co/developer-agreement/  
+
 https://openfin.co/licensing/
 
 ## Support
