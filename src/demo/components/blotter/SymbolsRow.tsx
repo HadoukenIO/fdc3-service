@@ -46,7 +46,6 @@ const viewChartsSubMenu: ContextMenuItem = {
     }
 };
 
-
 export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     const {item, chartApps, selected, handleSelect} = props;
 
@@ -94,7 +93,6 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
             fdc3.raiseIntent(payload.intent, getContext(), payload.appName);
         }
     };
-
 
     const handleContextClick = (event: React.MouseEvent<HTMLElement>) => {
         event.preventDefault();

@@ -1,8 +1,12 @@
+import {Signal} from 'openfin-service-signal';
+import {Identity} from 'openfin/_v2/main';
+
 import {AppWindow} from '../src/provider/model/AppWindow';
-import {Context, FDC3ChannelEventType} from '../src/client/main';
+import {IntentType} from '../src/provider/intents';
+import {Context, FDC3ChannelEventType, Application} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
 import {ChannelTransport} from '../src/client/internal';
-import {IntentType} from '../src/provider/intents';
+import {Environment} from '../src/provider/model/Environment';
 
 /**
  * Creates a minimal mock app window. Any utilizing test should set properties and set up mock functions as needed
@@ -40,5 +44,17 @@ export function createMockChannel(): jest.Mocked<ContextChannel> {
         setLastBroadcastContext: jest.fn<void, [Context]>(),
         clearStoredContext: jest.fn<void, []>(),
         serialize: jest.fn<ChannelTransport, []>()
+    };
+}
+
+export function createMockEnvironmnent(): jest.Mocked<Environment> {
+    return {
+        windowSeen: new Signal<[Identity]>(),
+        windowCreated: new Signal<[Identity, string]>(),
+        windowClosed: new Signal<[Identity]>(),
+        createApplication: jest.fn<Promise<void>, [Application, ContextChannel]>(),
+        wrapApplication: jest.fn<AppWindow, [Application, Identity, ContextChannel]>(),
+        inferApplication: jest.fn<Promise<Application>, [Identity]>(),
+        isWindowSeen: jest.fn<boolean, [Identity]>()
     };
 }

@@ -19,7 +19,7 @@ import {Injector} from './common/Injector';
 import {ChannelHandler} from './controller/ChannelHandler';
 import {AppWindow} from './model/AppWindow';
 import {Intent} from './intents';
-import {ConfigStore} from './model/ConfigStore';
+import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
 
 @injectable()
@@ -31,7 +31,7 @@ export class Main {
     private readonly _channelHandler: ChannelHandler;
     private readonly _eventHandler: EventHandler;
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
-    private readonly _configStore: ConfigStore
+    private readonly _configStore: ConfigStoreBinding
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
@@ -41,7 +41,7 @@ export class Main {
         @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
         @inject(Inject.EVENT_HANDLER) eventHandler: EventHandler,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
-        @inject(Inject.CONFIG_STORE) configStore: ConfigStore
+        @inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding
     ) {
         this._directory = directory;
         this._model = model;
@@ -65,7 +65,7 @@ export class Main {
         });
 
         // Wait for creation of any injected components that require async initialization
-        await Injector.initialized;
+        await Injector.init();
 
         // Current API
         this._apiHandler.registerListeners<APIFromClient>({
@@ -150,7 +150,7 @@ export class Main {
     }
 
     private async broadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = this.getWindow(source);
+        const appWindow = await this.expectWindow(source);
 
         return this._contextHandler.broadcast(parseContext(payload.context), appWindow);
     }
@@ -166,7 +166,7 @@ export class Main {
     }
 
     private async addIntentListener(payload: IntentListenerPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = this.getWindow(source);
+        const appWindow = await this.expectWindow(source);
 
         appWindow.addIntentListener(payload.intent);
     }
@@ -189,10 +189,11 @@ export class Main {
         return this._channelHandler.getChannelById(parseChannelId(payload.id));
     }
 
-    private getCurrentChannel(payload: GetCurrentChannelPayload, source: ProviderIdentity): ChannelTransport {
+    private async getCurrentChannel(payload: GetCurrentChannelPayload, source: ProviderIdentity): Promise<ChannelTransport> {
         const identity = payload.identity || source;
+        const appWindow = await this.expectWindow(identity);
 
-        return this.getWindow(identity).channel.serialize();
+        return appWindow.channel.serialize();
     }
 
     private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): ReadonlyArray<Identity> {
@@ -202,7 +203,7 @@ export class Main {
     }
 
     private async channelJoin(payload: ChannelJoinPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = this.getWindow(payload.identity || source);
+        const appWindow = await this.expectWindow(payload.identity || source);
 
         const channel = this._channelHandler.getChannelById(payload.id);
 
@@ -215,7 +216,7 @@ export class Main {
     }
 
     private async channelBroadcast(payload: ChannelBroadcastPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = this.getWindow(source);
+        const appWindow = await this.expectWindow(source);
         const channel = this._channelHandler.getChannelById(payload.id);
 
         return this._contextHandler.broadcastOnChannel(parseContext(payload.context), appWindow, channel);
@@ -227,8 +228,8 @@ export class Main {
         return this._channelHandler.getChannelContext(channel);
     }
 
-    private channelAddContextListener(payload: ChannelAddContextListenerPayload, source: ProviderIdentity): void {
-        const appWindow = this.getWindow(source);
+    private async channelAddContextListener(payload: ChannelAddContextListenerPayload, source: ProviderIdentity): Promise<void> {
+        const appWindow = await this.expectWindow(source);
         const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
 
         appWindow.addChannelContextListener(channel);
@@ -246,8 +247,8 @@ export class Main {
         }
     }
 
-    private channelAddEventListener(payload: ChannelAddEventListenerPayload, source: ProviderIdentity): void {
-        const appWindow = this.getWindow(source);
+    private async channelAddEventListener(payload: ChannelAddEventListenerPayload, source: ProviderIdentity): Promise<void> {
+        const appWindow = await this.expectWindow(source);
         const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
 
         appWindow.addChannelEventListener(channel, payload.eventType);
@@ -265,17 +266,17 @@ export class Main {
         }
     }
 
-    private getWindow(identity: Identity): AppWindow {
+    private async expectWindow(identity: Identity): Promise<AppWindow> {
         identity = parseIdentity(identity);
-        const window = this._model.getWindow(identity);
+        const windowPromise = this._model.expectWindow(identity);
 
-        if (!window) {
+        try {
+            return await windowPromise;
+        } catch {
             throw new FDC3Error(
                 IdentityError.WindowWithIdentityNotFound,
                 `No connection to FDC3 service found from window with identity: ${JSON.stringify(identity)}`
             );
-        } else {
-            return window;
         }
     }
 

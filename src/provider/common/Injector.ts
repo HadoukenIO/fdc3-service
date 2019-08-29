@@ -1,19 +1,19 @@
 import {Container} from 'inversify';
 import {interfaces as inversify} from 'inversify/dts/interfaces/interfaces';
-import {Environment} from 'openfin/_v2/environment/environment';
 
-import {ConfigStore} from '../model/ConfigStore';
+import {ConfigStore, ConfigStoreBinding} from '../model/ConfigStore';
 import {AppDirectory} from '../model/AppDirectory';
 import {IntentHandler} from '../controller/IntentHandler';
 import {ContextHandler} from '../controller/ContextHandler';
 import {Model} from '../model/Model';
-import {ResolverHandler} from '../controller/ResolverHandler';
+import {ResolverHandler, ResolverHandlerBinding} from '../controller/ResolverHandler';
 import {AsyncInit} from '../controller/AsyncInit';
 import {FinEnvironment} from '../model/FinEnvironment';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {ChannelHandler} from '../controller/ChannelHandler';
 import {EventHandler} from '../controller/EventHandler';
+import {Environment} from '../model/Environment';
 
 import {Inject} from './Injectables';
 
@@ -24,13 +24,13 @@ type Types = {
     [Inject.API_HANDLER]: APIHandler<APIFromClientTopic>,
     [Inject.APP_DIRECTORY]: AppDirectory,
     [Inject.CHANNEL_HANDLER]: ChannelHandler,
-    [Inject.CONFIG_STORE]: ConfigStore
+    [Inject.CONFIG_STORE]: ConfigStoreBinding,
     [Inject.CONTEXT_HANDLER]: ContextHandler,
     [Inject.ENVIRONMENT]: Environment,
     [Inject.EVENT_HANDLER]: EventHandler,
     [Inject.INTENT_HANDLER]: IntentHandler,
     [Inject.MODEL]: Model,
-    [Inject.RESOLVER]: ResolverHandler,
+    [Inject.RESOLVER]: ResolverHandlerBinding
 };
 
 /**
@@ -59,35 +59,53 @@ type Keys = (keyof typeof Inject & keyof typeof Bindings & keyof Types);
  */
 export class Injector {
     private static _initialized: Promise<void>;
+    private static _ready: boolean = false;
 
     private static _container: Container = (() => {
         const container = new Container();
-        const promises: Promise<unknown>[] = [];
 
         Object.keys(Bindings).forEach(k => {
             const key: Keys = k as any;
 
             if (typeof Bindings[key] === 'function') {
                 container.bind(Inject[key]).to(Bindings[key] as any).inSingletonScope();
-
-                if ((Bindings[key] as Function).prototype.hasOwnProperty('init')) {
-                    promises.push((container.get(Inject[key]) as AsyncInit).initialized);
-                }
             } else {
                 container.bind(Inject[key]).toConstantValue(Bindings[key]);
             }
         });
 
-        Injector._initialized = Promise.all(promises).then(() => {});
         return container;
     })();
 
     public static get initialized(): Promise<void> {
-        return this._initialized;
+        return Injector._initialized;
+    }
+
+    public static async init(): Promise<void> {
+        const container: Container = Injector._container;
+        const promises: Promise<unknown>[] = [];
+
+        Object.keys(Bindings).forEach(k => {
+            const key: Keys = k as any;
+            const proto = (Bindings[key] as Function).prototype;
+
+            if (proto && proto.hasOwnProperty('init')) {
+                const instance = (container.get(Inject[key]) as AsyncInit);
+                if (instance.delayedInit) {
+                    promises.push(instance.delayedInit());
+                }
+            }
+        });
+
+        Injector._initialized = Promise.all(promises).then(() => {
+            Injector._ready = true;
+        });
+
+        return Injector._initialized;
     }
 
     public static rebind<K extends Keys>(type: typeof Inject[K]): inversify.BindingToSyntax<Types[K]> {
-        return Injector._container.rebind<Types[K]>(Bindings[type] as inversify.Newable<Types[K]>);
+        return Injector._container.rebind<Types[K]>(type);
     }
 
     /**
@@ -98,6 +116,9 @@ export class Injector {
      * @param type Identifier of the type/value to extract from the injector
      */
     public static get<K extends Keys>(type: typeof Inject[K]): Types[K] {
+        if (!Injector._ready) {
+            throw new Error('Injector not initialised');
+        }
         return Injector._container.get<Types[K]>(type);
     }
 

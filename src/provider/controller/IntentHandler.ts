@@ -10,13 +10,13 @@ import {AppWindow} from '../model/AppWindow';
 import {APIToClientTopic} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
 
-import {ResolverHandler, ResolverResult} from './ResolverHandler';
+import {ResolverHandler, ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
 @injectable()
 export class IntentHandler {
     private readonly _directory: AppDirectory;
     private readonly _model: Model;
-    private readonly _resolver: ResolverHandler;
+    private readonly _resolver: ResolverHandlerBinding;
     private readonly _apiHandler: APIHandler<APIToClientTopic>;
 
     private _resolvePromise: Promise<IntentResolution>|null;
@@ -24,7 +24,7 @@ export class IntentHandler {
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
         @inject(Inject.MODEL) model: Model,
-        @inject(Inject.RESOLVER) resolver: ResolverHandler,
+        @inject(Inject.RESOLVER) resolver: ResolverHandlerBinding,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIToClientTopic>,
     ) {
         this._directory = directory;
