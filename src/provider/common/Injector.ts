@@ -16,6 +16,7 @@ import {EventHandler} from '../controller/EventHandler';
 import {Environment} from '../model/Environment';
 
 import {Inject} from './Injectables';
+import {DeferredPromise} from './DeferredPromise';
 
 /**
  * For each entry in `Inject`, defines the type that will be injected for that key.
@@ -58,7 +59,7 @@ type Keys = (keyof typeof Inject & keyof typeof Bindings & keyof Types);
  * Wrapper around inversify that allows more concise injection
  */
 export class Injector {
-    private static _initialized: Promise<void>;
+    private static _initialized: DeferredPromise = new DeferredPromise();
     private static _ready: boolean = false;
 
     private static _container: Container = (() => {
@@ -78,7 +79,7 @@ export class Injector {
     })();
 
     public static get initialized(): Promise<void> {
-        return Injector._initialized;
+        return Injector._initialized.promise;
     }
 
     public static async init(): Promise<void> {
@@ -97,11 +98,12 @@ export class Injector {
             }
         });
 
-        Injector._initialized = Promise.all(promises).then(() => {
+        Promise.all(promises).then(() => {
             Injector._ready = true;
+            Injector._initialized.resolve();
         });
 
-        return Injector._initialized;
+        return Injector._initialized.promise;
     }
 
     public static rebind<K extends Keys>(type: typeof Inject[K]): inversify.BindingToSyntax<Types[K]> {
