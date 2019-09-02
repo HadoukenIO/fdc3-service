@@ -1,13 +1,9 @@
 import {injectable, inject} from 'inversify';
-import {MaskWatch} from 'openfin-service-config/Watch';
-import {Scope} from 'openfin-service-config/Types';
-import {ScopedConfig} from 'openfin-service-config';
 
 import {Inject} from '../common/Injectables';
 import {Application, AppName} from '../../client/directory';
 import {AppIntent} from '../../client/main';
 import {AsyncInit} from '../controller/AsyncInit';
-import {ConfigurationObject} from '../../../gen/provider/config/fdc3-config';
 
 import {ConfigStoreBinding} from './ConfigStore';
 
@@ -34,20 +30,7 @@ export class AppDirectory extends AsyncInit {
     protected async init(): Promise<void> {
         await this._configStore.initialized;
 
-        if (process.env.NODE_ENV === 'development') {
-            // Set the application directory to our local copy during development.  In production it will be an empty string.
-            this._configStore.config.add({level: 'desktop'}, {applicationDirectory: DEV_APP_DIRECTORY_URL});
-        }
-
         this.updateUrl(this._configStore.config.query({level: 'desktop'}).applicationDirectory);
-
-        const watch = new MaskWatch(this._configStore.config, {applicationDirectory: true});
-
-        watch.onAdd.add((rule: ScopedConfig<ConfigurationObject>, source: Scope) => {
-            this.updateUrl(this._configStore.config.query({level: 'desktop'}).applicationDirectory);
-        });
-
-        this._configStore.config.addWatch(watch);
     }
 
     public async getAppByName(name: AppName): Promise<Application | null> {
@@ -130,12 +113,20 @@ export class AppDirectory extends AsyncInit {
         });
 
         if (response && response.ok) {
-            return response.json();
+            try {
+                // validate the response is actually JSON
+                const validate = await response.json();
+                return validate;
+            } catch (error) {
+                console.log(`Received invalid JSON data from ${url}`);
+            }
         }
+
         // Use cached apps if urls match
         if (url === storedUrl) {
             return JSON.parse(localStorage.getItem(StorageKeys.APPLICATIONS) || '[]');
         }
+
         // Use empty array if urls dont match
         return [];
     }
