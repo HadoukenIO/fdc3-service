@@ -21,7 +21,6 @@ import {NewsApp} from './apps/NewsApp';
  * applications, likely made by different vendors, that are both capable of providing the same funcionality.
  */
 
-
 function App(): React.ReactElement {
     // Note that we require demo app UUIDs to follow a 'fdc3-$NAME[-$COLOUR][-nodir]' convention
     const {uuid} = fin.Window.me;

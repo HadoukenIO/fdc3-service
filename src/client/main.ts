@@ -156,7 +156,6 @@ const contextListeners: ContextListener[] = [];
  * security, consistency, and implementation requirements are proprietary.
  */
 
-
 /**
  * Launches/links to an app by name.
  *
@@ -389,7 +388,6 @@ function hasIntentListener(intent: string): boolean {
 /**
  * @hidden
  */
-
 
 function deserializeChannelChangedEvent(eventTransport: EventTransport<ChannelChangedEvent>): ChannelChangedEvent {
     const type = eventTransport.type;

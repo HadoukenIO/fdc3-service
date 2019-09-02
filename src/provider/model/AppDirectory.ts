@@ -1,7 +1,15 @@
-import {injectable} from 'inversify';
+import {injectable, inject} from 'inversify';
+import {MaskWatch} from 'openfin-service-config/Watch';
+import {Scope} from 'openfin-service-config/Types';
+import {ScopedConfig} from 'openfin-service-config';
 
+import {Inject} from '../common/Injectables';
 import {Application, AppName} from '../../client/directory';
 import {AppIntent} from '../../client/main';
+import {AsyncInit} from '../controller/AsyncInit';
+import {ConfigurationObject} from '../../../gen/provider/config/fdc3-config';
+
+import {ConfigStoreBinding} from './ConfigStore';
 
 enum StorageKeys {
     URL = 'fdc3@url',
@@ -9,17 +17,37 @@ enum StorageKeys {
 }
 
 // Demo development app directory url
-const devUrl = 'http://localhost:3923/provider/sample-app-directory.json';
-
+export const DEV_APP_DIRECTORY_URL = 'http://localhost:3923/provider/sample-app-directory.json';
 
 @injectable()
-export class AppDirectory {
+export class AppDirectory extends AsyncInit {
+    private readonly _configStore: ConfigStoreBinding;
     private _directory: Application[] = [];
     private _url!: string;
 
-    public constructor() {
-        // Set default values
-        this._url = devUrl;
+    public constructor(@inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding) {
+        super();
+
+        this._configStore = configStore;
+    }
+
+    protected async init(): Promise<void> {
+        await this._configStore.initialized;
+
+        if (process.env.NODE_ENV === 'development') {
+            // Set the application directory to our local copy during development.  In production it will be an empty string.
+            this._configStore.config.add({level: 'desktop'}, {applicationDirectory: DEV_APP_DIRECTORY_URL});
+        }
+
+        this.updateUrl(this._configStore.config.query({level: 'desktop'}).applicationDirectory);
+
+        const watch = new MaskWatch(this._configStore.config, {applicationDirectory: true});
+
+        watch.onAdd.add((rule: ScopedConfig<ConfigurationObject>, source: Scope) => {
+            this.updateUrl(this._configStore.config.query({level: 'desktop'}).applicationDirectory);
+        });
+
+        this._configStore.config.addWatch(watch);
     }
 
     public async getAppByName(name: AppName): Promise<Application | null> {
@@ -61,14 +89,17 @@ export class AppDirectory {
                 }
             });
         });
+
         Object.values(appIntentsByName).forEach(appIntent => {
             appIntent.apps.sort((a, b) => a.appId.localeCompare(b.appId, 'en'));
         });
+
         return Object.values(appIntentsByName).sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));
     }
 
     public async getAllApps(): Promise<Application[]> {
         await this.refreshDirectory();
+
         return this._directory;
     }
 
@@ -85,7 +116,7 @@ export class AppDirectory {
         const currentUrl = this._url;
         const applications = await this.fetchData(currentUrl, storedUrl);
         await this.updateDirectory(applications);
-        await this.updateURL(currentUrl);
+        await this.updateUrl(currentUrl);
     }
 
     /**
@@ -94,8 +125,7 @@ export class AppDirectory {
      * @param storedUrl Cache url
      */
     private async fetchData(url: string, storedUrl: string | null): Promise<Application[]> {
-        // @ts-ignore
-        const response = await global.fetch(url).catch(() => {
+        const response = await fetch(url).catch(() => {
             console.warn(`Failed to fetch app directory @ ${url}`);
         });
 
@@ -123,7 +153,7 @@ export class AppDirectory {
      * Update the application directory URL in memory and storage.
      * @param url Directory URL.
      */
-    private async updateURL(url: string) {
+    private async updateUrl(url: string) {
         localStorage.setItem(StorageKeys.URL, url);
         this._url = url;
     }

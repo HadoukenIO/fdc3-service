@@ -3,12 +3,11 @@ import {Identity} from 'openfin/_v2/main';
 import {Intent} from '../../../src/provider/intents';
 import {withTimeout} from '../../../src/provider/utils/async';
 import {testManagerIdentity, appStartupTime} from '../constants';
+import {Boxed} from '../../../src/provider/utils/types';
 
 import {fin} from './fin';
 import * as fdc3Remote from './fdc3RemoteExecution';
 import {delay} from './delay';
-
-export type Boxed<T> = {value: T}
 
 export interface TestAppData {
     name: string; // Note that this may be treated as a 'name' in the FDC3 app directory sense, or a 'name' in the OpenFin window Identity sense
