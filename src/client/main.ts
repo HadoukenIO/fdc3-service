@@ -61,9 +61,10 @@ export interface AppIntent {
 /**
  * IntentResolution provides a standard format for data returned upon resolving an intent.
  * ```javascript
- * //resolve a "Chain" export type intent
+ * //You might fire and forget an intent
  * var intentR = await agent.raiseIntent("intentName", context);
- * //resolve a "Client-Service" export type intent with data response
+ *
+ * //Or you might want some data to come back
  * var intentR = await agent.raiseIntent("intentName", context);
  * var dataR = intentR.data;
  * ```
@@ -121,19 +122,19 @@ export interface IntentListener {
 }
 
 /**
- * Defines all events that are fired by the service.
+ * @hidden
  */
 export type FDC3Event = FDC3MainEvent | FDC3ChannelEvent;
 /**
- * Events types fired by the service.
+ * @hidden
  */
 export type FDC3EventType = FDC3MainEventType | FDC3ChannelEventType;
 /**
- * Events that are dispatched from the top-level event listener, via [[addEventListener]].
+ * @hidden
  */
 export type FDC3MainEvent = ChannelChangedEvent;
 /**
- * Event types fired from the top-level event listener.
+ * @hidden
  */
 export type FDC3MainEventType = FDC3MainEvent['type'];
 
@@ -159,11 +160,9 @@ const contextListeners: ContextListener[] = [];
 /**
  * Launches/links to an app by name.
  *
- * If a Context object is passed in, this object will be provided to the opened application via a contextListener.
- * The Context argument is functionally equivalent to opening the target app with no context and broadcasting the
- * context directly to it.
+ * If a [[Context]] object is passed in, this object will be provided to the opened application via a [[ContextListener]].
  *
- * If opening errors, it returns an `Error` with a string from the `OpenError` export enumeration.
+ * If opening errors, it returns an [[FDC3Error]] with a string from the [[OpenError]] export enumeration.
  *
  *  ```javascript
  *     //no context
@@ -181,23 +180,27 @@ export async function open(name: AppName, context?: Context): Promise<void> {
 /**
  * Find out more information about a particular intent by passing its name, and optionally its context.
  *
- * findIntent is effectively granting programmatic access to the desktop agent's resolver.
+ * `findIntent` is effectively granting programmatic access to the desktop agent's resolver.
  * A promise resolving to the intent, its metadata and metadata about the apps that registered it is returned.
  * This can be used to raise the intent against a specific app.
  *
- * If the resolution fails, the promise will return an `Error` with a string from the `ResolveError` export enumeration.
+ * If the resolution fails, the promise will return an [[FDC3Error]] with a string from the [[ResolveError]] export enumeration.
  *
+ * For example, I know 'StartChat' exists as a concept, and want to know more about it.
  * ```javascript
- * // I know 'StartChat' exists as a concept, and want to know more about it ...
- * const appIntent = await agent.findIntent("StartChat");
+ * const appIntent = await agent.findIntent("fdc3.StartChat");
+ * ```
  *
- * // returns a single AppIntent:
- * // {
- * //     intent: { name: "StartChat", displayName: "Chat" },
- * //     apps: [{ name: "Skype" }, { name: "Symphony" }, { name: "Slack" }]
- * // }
+ * This returns a single [[AppIntent]]:
+ * ```ts
+ * {
+ *      intent: { name: "StartChat", displayName: "Chat" },
+ *      apps: [{ name: "Skype" }, { name: "Symphony" }, { name: "Slack" }]
+ * }
+ * ```
  *
- * // raise the intent against a particular app
+ * We can then raise the intent against a particular app
+ * ```javascript
  * await agent.raiseIntent(appIntent.intent.name, context, appIntent.apps[0].name);
  * ```
  * @param intent The intent name to find.
@@ -216,11 +219,11 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  *
  * If the resolution fails, the promise will return an `Error` with a string from the `ResolveError` export enumeration.
  *
+ * For example, I have a context object, and I want to know what I can do with it, hence, I look for intents...
  * ```javascript
- * // I have a context object, and I want to know what I can do with it, hence, I look for intents...
  * const appIntents = await agent.findIntentsByContext(context);
  * ```
- * might return:
+ * This might return:
  * ```ts
 * [
 *    {
@@ -233,15 +236,8 @@ export async function findIntent(intent: string, context?: Context): Promise<App
 *   }
 * ]
 * ```
- * // [{
- * //     intent: { name: "StartCall", displayName: "Call" },
- * //     apps: [{ name: "Skype" }]
- * // },
- * // {
- * //     intent: { name: "StartChat", displayName: "Chat" },
- * //     apps: [{ name: "Skype" }, { name: "Symphony" }, { name: "Slack" }]
- * // }];
  *
+ * We could now use this by taking one of the intents, and raising it.
  *```javascript
  * // select a particular intent to raise
  * const startChat = appIntents[1];
@@ -264,7 +260,7 @@ export async function findIntentsByContext(context: Context): Promise<AppIntent[
  *  agent.broadcast(context);
  * ```
  *
- * @throws `TypeError`: If `context` is not a valid Context
+ * @throws `TypeError` if `context` is not a valid [[Context]]
  * @param context The context to broadcast.
  */
 export function broadcast(context: Context): void {
@@ -282,7 +278,7 @@ export function broadcast(context: Context): void {
  * @param intent The intent name to raise.
  * @param context The context that will be sent with this intent.
  * @param target An optional [[AppName]] to send the intent to.
- * @throws [[FDC3Error]]`
+ * @throws [[FDC3Error]]. Also see [[ResolveError]].
  */
 export async function raiseIntent(intent: string, context: Context, target?: AppName): Promise<IntentResolution> {
     return tryServiceDispatch(APIFromClientTopic.RAISE_INTENT, {intent, context: parseContext(context), target});

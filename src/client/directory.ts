@@ -12,7 +12,7 @@
  * are described [here](https://fdc3.finos.org/docs/1.0/appd-discovery#application-identifier).
  *
  * In the OpenFin implementation of FDC3, we expect this to be the same as the
- * [UUID in the manifest]((https://developers.openfin.co/docs/application-configuration)), but please see [[Application]].
+ * [UUID in the manifest](https://developers.openfin.co/docs/application-configuration), but please see [[Application]].
  *
  * This type alias exists to disambiguate the raw string app identity from the [[AppName]].
  */
@@ -50,7 +50,7 @@ export interface Application {
      */
     manifestType: string;
     /**
-     * The version of the app. Please use [semantic versioning](https://en.wikipedia.org/wiki/Software_versioning).
+     * The version of the app. Please use [semantic versioning](https://semver.org/).
      */
     version?: string;
     /**

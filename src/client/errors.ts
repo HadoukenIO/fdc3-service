@@ -81,7 +81,7 @@ export enum IdentityError {
 
 /**
  * Class used to hold errors returned by the FDC3 provider. Inherits from the
- * (Error type)[https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error].
+ * Error type, here: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error.
  */
 export class FDC3Error extends Error {
     /**
