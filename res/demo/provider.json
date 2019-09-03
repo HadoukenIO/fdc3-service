@@ -1,5 +1,6 @@
 {
     "devtools_port": 9090,
+    "licenseKey": "64605fac-add3-48a0-8710-64b38e96a2dd",
     "startup_app": {
         "name": "FDC3-Service",
         "description": "OpenFin FDC3 Desktop Service",
@@ -10,7 +11,6 @@
         "defaultWidth": 500
     },
     "runtime": {
-        "arguments": "--remote-debugging-port=9222",
         "version": "13.76.43.31"
     },
     "serviceConfiguration": {
