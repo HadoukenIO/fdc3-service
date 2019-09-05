@@ -3,7 +3,7 @@
 
 ## Overview
 
-OpenFin FDC3 provides an implementation of the [FINOS FDC3](https://fdc3.finos.org/) standards for OpenFin-based applications.
+The OpenFin FDC3 Service provides an implementation of the [FINOS FDC3](https://fdc3.finos.org/) standards for OpenFin-based applications.
 
 This project consist of 3 parts:
 1. The FDC3 Provider, taking care of intents, context and resolving them (UI)
@@ -12,7 +12,7 @@ This project consist of 3 parts:
 
 ### Dependencies
 - OpenFin version for applications using FDC3 >= 9.61.38.41
-- OpenFin version used in the FDC3 service = 10.66.41.18
+- OpenFin version used in the FDC3 Service = 10.66.41.18
 - RVM >= 4.7
 
 ### Features
@@ -24,7 +24,7 @@ This project consist of 3 parts:
 
 ## Getting Started
 
-Integrating the FDC3 service within an application is done in two steps - adding the service to the application manifest, and importing the API:
+Integrating the FDC3 Service within an application is done in two steps - adding the service to the application manifest, and importing the API:
 
 ### Manifest declaration
 To ensure the service is running, you must declare it in your application config.
