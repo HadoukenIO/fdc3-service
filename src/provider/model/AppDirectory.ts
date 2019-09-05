@@ -90,11 +90,6 @@ export class AppDirectory extends AsyncInit {
      * Refresh the AppDirectory.
      */
     private async refreshDirectory(): Promise<void> {
-        // If using the demo app directory in production, set an empty array.
-        if (process.env.NODE_ENV === 'production') {
-            await this.updateDirectory([]);
-            return;
-        }
         const storedUrl = localStorage.getItem(StorageKeys.URL);
         const currentUrl = this._url;
         const applications = await this.fetchData(currentUrl, storedUrl);
