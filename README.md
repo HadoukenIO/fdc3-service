@@ -3,7 +3,7 @@
 
 ## Overview
 
-OpenFin FDC3 Service provides an implementation of the [FINOS FDC3](https://fdc3.finos.org/) standards for OpenFin-based applications.
+OpenFin FDC3 provides an implementation of the [FINOS FDC3](https://fdc3.finos.org/) standards for OpenFin-based applications.
 
 This project consist of 3 parts:
 1. The FDC3 Provider, taking care of intents, context and resolving them (UI)
@@ -12,7 +12,7 @@ This project consist of 3 parts:
 
 ### Dependencies
 - OpenFin version for applications using FDC3 >= 9.61.38.41
-- OpenFin version used in the FDC3 Service = 10.66.41.18
+- OpenFin version used in the FDC3 service = 10.66.41.18
 - RVM >= 4.7
 
 ### Features
@@ -24,7 +24,7 @@ This project consist of 3 parts:
 
 ## Getting Started
 
-Integrating the FDC3 Service within an application is done in two steps - adding the service to the application manifest, and importing the API:
+Integrating the FDC3 service within an application is done in two steps - adding the service to the application manifest, and importing the API:
 
 ### Manifest declaration
 To ensure the service is running, you must declare it in your application config.
@@ -92,10 +92,10 @@ npm install
 npm test
 ```
 
-This will run unit tests followed by the integration tests. These steps can also be ran individually via `npm run test:unit` and `npm run test:int`. When running the tests separately in this way, both test runners support some optional arguments. Append `--help` to either of the above `npm run` commands to see the available options.
+This will run unit tests followed by the integration tests. These steps can also be run individually via `npm run test:unit` and `npm run test:int`. When running the tests separately in this way, both test runners support some optional arguments. Append `--help` to either of the above `npm run` commands to see the available options.
 
 ### Deployment
-Staging and production builds are managed via the Jenkinsfile build script. This will build the project as usual (except with the `--mode production` argument) and then deploy the client and provider to their respective locations. The demo application exists only within this repo and is not deployed.
+Staging and production builds are managed via the Jenkinsfile build script. This will build the project as usual (except with the `--mode production` argument) and then deploy the client and provider to their respective locations. The demo application exists only within this repository and is not deployed.
 
 The service client is deployed as an NPM module, so that it can be included as a dependency in any application that wishes to integrate the service.
 
@@ -117,4 +117,4 @@ https://openfin.co/licensing/
 ## Support
 
 This is an open source project and all are encouraged to contribute.
-Please enter an issue in the repo for any questions or problems. Alternatively, please contact us at support@openfin.co.
+Please enter an issue in the repository for any questions or problems. Alternatively, please contact us at support@openfin.co.
