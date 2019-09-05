@@ -11,8 +11,8 @@ This project consist of 3 parts:
 3. The FDC3 Demo App, demonstrating the different features of OpenFin FDC3
 
 ### Dependencies
-- OpenFin version for applications using FDC3 >= 9.61.38.41
-- OpenFin version used in the FDC3 Service = 10.66.41.18
+- OpenFin version for applications using the FDC3 Service >= 9.61.38.41
+- OpenFin version used by the FDC3 Provider = 10.66.41.18
 - RVM >= 4.7
 
 ### Features
