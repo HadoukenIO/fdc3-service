@@ -24,7 +24,7 @@ This project consist of 3 parts:
 
 ## Getting Started
 
-Integrating the FDC3 Service within an application is done in two steps - adding the service to the application manifest, and importing the API:
+Integrating the Notifications Service within an application is done by declaring the service in the application manifest, and importing the Client API.
 
 ### Manifest Declaration
 To ensure the service is running, you must declare it in your application config.
