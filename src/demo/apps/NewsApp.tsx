@@ -25,7 +25,7 @@ export function NewsApp(): React.ReactElement {
     React.useEffect(() => {
         getCurrentChannel().then(async channel => {
             const context = await channel.getCurrentContext();
-            if (context && context.type === 'security') {
+            if (context && context.type === 'fdc3.instrument') {
                 handleIntent(context as InstrumentContext);
             }
         });
