@@ -6,7 +6,7 @@
 The OpenFin FDC3 Service provides an implementation of the [FINOS FDC3](https://fdc3.finos.org/) standards for OpenFin-based applications.
 
 This project consist of 3 parts:
-1. The FDC3 Provider, taking care of intents, context and resolving them (UI)
+1. The FDC3 Provider, taking care of contexts and intents, including the intent resolution UI
 2. The FDC3 Client, exposing APIs for applications to handle and raise intents with contexts
 3. The FDC3 Demo App, demonstrating the different features of OpenFin FDC3
 
