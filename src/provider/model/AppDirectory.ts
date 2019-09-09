@@ -29,19 +29,16 @@ export class AppDirectory extends AsyncInit {
 
     protected async init(): Promise<void> {
         await this._configStore.initialized;
-
-        this.updateUrl(this._configStore.config.query({level: 'desktop'}).applicationDirectory);
+        await this.initializeDirectoryData();
     }
 
     public async getAppByName(name: AppName): Promise<Application | null> {
-        await this.refreshDirectory();
         return this._directory.find((app: Application) => {
             return app.name === name;
         }) || null;
     }
 
     public async getAppsByIntent(intentType: string): Promise<Application[]> {
-        await this.refreshDirectory();
         return this._directory.filter((app: Application) => {
             return app.intents && app.intents.some(intent => intent.name === intentType);
         });
@@ -54,7 +51,6 @@ export class AppDirectory extends AsyncInit {
      * @param contextType type of context to find intents for
      */
     public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
-        await this.refreshDirectory();
         const appIntentsByName: {[intentName: string]: AppIntent} = {};
         this._directory.forEach((app: Application) => {
             (app.intents || []).forEach(intent => {
@@ -80,29 +76,29 @@ export class AppDirectory extends AsyncInit {
         return Object.values(appIntentsByName).sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));
     }
 
-    public async getAllApps(): Promise<Application[]> {
-        await this.refreshDirectory();
-
+    /**
+     * Retrieves all of the applications in the Application Directory.
+     */
+    public getAllApps(): Application[] {
         return this._directory;
     }
 
-    /**
-     * Refresh the AppDirectory.
-     */
-    private async refreshDirectory(): Promise<void> {
-        const storedUrl = localStorage.getItem(StorageKeys.URL);
-        const currentUrl = this._url;
-        const applications = await this.fetchData(currentUrl, storedUrl);
-        await this.updateDirectory(applications);
-        await this.updateUrl(currentUrl);
+    private async initializeDirectoryData(): Promise<void> {
+        this._url = this._configStore.config.query({level: 'desktop'}).applicationDirectory;
+        const fetchedData = await this.fetchOnline(this._url);
+        const cachedData = this.fetchCacheData();
+
+        if (fetchedData) {
+            this.updateUrl(this._url);
+            this.updateDirectory(fetchedData);
+        } else if (cachedData) {
+            this.updateDirectory(cachedData);
+        } else {
+            this.updateDirectory([]);
+        }
     }
 
-    /**
-     * Fetch the AppDirectory.
-     * @param url Location of the AppDirectory.
-     * @param storedUrl Cache url
-     */
-    private async fetchData(url: string, storedUrl: string | null): Promise<Application[]> {
+    private async fetchOnline(url: string): Promise<Application[]|null> {
         const response = await fetch(url).catch(() => {
             console.warn(`Failed to fetch app directory @ ${url}`);
         });
@@ -113,24 +109,36 @@ export class AppDirectory extends AsyncInit {
                 const validate = await response.json();
                 return validate;
             } catch (error) {
-                console.log(`Received invalid JSON data from ${url}`);
+                console.warn(`Received invalid JSON data from ${url}. Ignoring fetch result`);
             }
         }
 
-        // Use cached apps if urls match
-        if (url === storedUrl) {
-            return JSON.parse(localStorage.getItem(StorageKeys.APPLICATIONS) || '[]');
+        return null;
+    }
+
+    private fetchCacheData(): Application[]|null {
+        if (localStorage.getItem(StorageKeys.URL) === this._url) {
+            const cache = localStorage.getItem(StorageKeys.APPLICATIONS);
+
+            if (cache) {
+                try {
+                    const validate = JSON.parse(cache);
+                    return validate;
+                } catch (error) {
+                    // Not likely to get here but figured it's better to safely to handle it.
+                    console.warn('Invalid JSON retrieved from cache');
+                }
+            }
         }
 
-        // Use empty array if urls dont match
-        return [];
+        return null;
     }
 
     /**
      * Update the application directory in memory and storage.
      * @param applications To place into the directory.
      */
-    private async updateDirectory(applications: Application[]): Promise<void> {
+    private updateDirectory(applications: Application[]): void {
         localStorage.setItem(StorageKeys.APPLICATIONS, JSON.stringify(applications));
         this._directory = applications;
     }
@@ -139,7 +147,7 @@ export class AppDirectory extends AsyncInit {
      * Update the application directory URL in memory and storage.
      * @param url Directory URL.
      */
-    private async updateUrl(url: string) {
+    private updateUrl(url: string): void {
         localStorage.setItem(StorageKeys.URL, url);
         this._url = url;
     }
