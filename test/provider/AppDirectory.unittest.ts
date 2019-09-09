@@ -4,61 +4,17 @@ import 'reflect-metadata';
 import {Store} from 'openfin-service-config';
 
 import {Application} from '../../src/client/directory';
-import {AppIntent, Intent} from '../../src/client/main';
-import {Injector} from '../../src/provider/common/Injector';
-import {Inject} from '../../src/provider/common/Injectables';
-import {DEV_APP_DIRECTORY_URL, AppDirectory} from '../../src/provider/model/AppDirectory';
+import {AppIntent} from '../../src/client/main';
+import {AppDirectory} from '../../src/provider/model/AppDirectory';
 import {ConfigurationObject} from '../../gen/provider/config/fdc3-config';
-import {createMockEnvironmnent} from '../mocks';
-import {Environment} from '../../src/provider/model/Environment';
-import {ResolverResult} from '../../src/provider/controller/ResolverHandler';
+import {ConfigStoreBinding} from '../../src/provider/model/ConfigStore';
 
 enum StorageKeys {
     URL = 'fdc3@url',
     APPLICATIONS = 'fdc3@applications'
 }
 
-const intentA = {
-    name: 'testIntent.StartChat',
-    contexts: ['testContext.User'],
-    customConfig: {}
-};
-const intentB = {
-    name: 'testIntent.SendEmail',
-    contexts: ['testContext.User'],
-    customConfig: {}
-};
-const intentC = {
-    name: 'testIntent.StartChat',
-    contexts: ['testContext.User', 'testContext.Bot'],
-    customConfig: {}
-};
-const intentD = {
-    name: 'testIntent.ShowChart',
-    contexts: ['testContext.Instrument'],
-    customConfig: {}
-};
-const fakeApp1 = {
-    appId: '1',
-    name: 'App 1',
-    manifestType: '',
-    manifest: '',
-    intents: [intentA, intentB]
-};
-const fakeApp2 = {
-    appId: '2',
-    name: 'App 2',
-    manifestType: '',
-    manifest: '',
-    intents: [intentC, intentD]
-};
-
-declare const global: NodeJS.Global & {localStorage: LocalStore} & {fetch: (url: string) => Promise<Response>};
-
 type LocalStore = jest.Mocked<Pick<typeof localStorage, 'getItem' | 'setItem'>>;
-
-const fakeApps: Application[] = [fakeApp1, fakeApp2];
-const fakeAppsJSON = JSON.stringify(fakeApps);
 
 // Define localStorage global/window
 Object.defineProperty(global, 'localStorage', {
@@ -69,41 +25,71 @@ Object.defineProperty(global, 'localStorage', {
     writable: true
 });
 
-const mockJson = jest.fn().mockImplementation(() => {
-    return fakeApps;
-});
+declare const global: NodeJS.Global & {localStorage: LocalStore} & {fetch: (url: string) => Promise<Response>};
 
-function setAppDirectoryUrl(url: string): void {
-    const configStore = Injector.get<'CONFIG_STORE'>(Inject.CONFIG_STORE);
+const DEV_APP_DIRECTORY_URL = 'http://openfin.co';
+let appDirectory: AppDirectory;
+
+const fakeApp1: Application = {
+    appId: '1',
+    name: 'App 1',
+    manifestType: '',
+    manifest: '',
+    intents: [
+        {
+            name: 'testIntent.StartChat',
+            contexts: ['testContext.User'],
+            customConfig: {}
+        }, {
+            name: 'testIntent.SendEmail',
+            contexts: ['testContext.User'],
+            customConfig: {}
+        }
+    ]
+};
+
+const fakeApp2: Application = {
+    appId: '2',
+    name: 'App 2',
+    manifestType: '',
+    manifest: '',
+    intents: [{
+        name: 'testIntent.StartChat',
+        contexts: ['testContext.User', 'testContext.Bot'],
+        customConfig: {}
+    }, {
+        name: 'testIntent.ShowChart',
+        contexts: ['testContext.Instrument'],
+        customConfig: {}
+    }]
+};
+
+const fakeApps: Application[] = [fakeApp1, fakeApp2];
+const cachedFakeApps: Application[] = [fakeApp1, fakeApp1, fakeApp2, fakeApp2];
+const mockFetchReturnJson = jest.fn().mockResolvedValue(fakeApps);
+
+/**
+ * Creates a new Application Directory with the specified URL
+ */
+async function createAppDirectory(url: string): Promise<void> {
+    const configStore: ConfigStoreBinding = {
+        config: new Store<ConfigurationObject>(require('../../gen/provider/config/defaults.json')),
+        initialized: Promise.resolve()
+    };
+
     configStore.config.add({level: 'desktop'}, {applicationDirectory: url});
+    appDirectory = new AppDirectory(configStore);
+    await appDirectory.delayedInit();
 }
 
-beforeAll(async () => {
-    const store = new Store<ConfigurationObject>(require('../../gen/provider/config/defaults.json'));
-    Injector.rebind<'ENVIRONMENT'>(Inject.ENVIRONMENT).toConstantValue(createMockEnvironmnent() as Environment);
-    Injector.rebind<'CONFIG_STORE'>(Inject.CONFIG_STORE).toConstantValue({
-        config: store,
-        initialized: Promise.resolve()
-    });
-    Injector.rebind<'RESOLVER'>(Inject.RESOLVER).toConstantValue({
-        handleIntent: async (intent: Intent): Promise<ResolverResult> => {
-            return {app: null!};
-        },
-        cancel: async (): Promise<void> => {},
-        initialized: Promise.resolve()
-    });
-
-    await Injector.init();
-});
-
-beforeEach(() => {
+beforeEach(async () => {
     jest.restoreAllMocks();
 
     global.localStorage = {
         getItem: jest.fn().mockImplementation((key: string) => {
             switch (key) {
                 case StorageKeys.APPLICATIONS:
-                    return fakeAppsJSON;
+                    return JSON.stringify(cachedFakeApps);
                 case StorageKeys.URL:
                     return DEV_APP_DIRECTORY_URL;
                 default:
@@ -113,81 +99,101 @@ beforeEach(() => {
         setItem: jest.fn((key: string, value: string) => {})
     };
 
+    // Replace the fetch result with our mocked directory
     (global as any).fetch = jest.fn().mockResolvedValue({
         ok: true,
-        json: mockJson
+        json: mockFetchReturnJson
     });
-
-    mockJson.mockResolvedValue(fakeApps);
+    mockFetchReturnJson.mockResolvedValue(fakeApps);
 });
 
 describe('AppDirectory Unit Tests', () => {
+    describe('When Fetching Initial Data', () => {
+        describe('And we\'re online', () => {
+            beforeEach(async () => {
+                await createAppDirectory(DEV_APP_DIRECTORY_URL);
+            });
+
+            test('We fetch data from the application directory JSON', () => {
+                expect(appDirectory.getAllApps()).toEqual(fakeApps);
+            });
+
+            test('Data is not retrieved from cache', () => {
+                expect(appDirectory).not.toEqual([...fakeApps, ...fakeApps]);
+            });
+        });
+
+        describe('And we\'re offline', () => {
+            beforeEach(async () => {
+                global.fetch = jest.fn().mockRejectedValue('');
+                await createAppDirectory(DEV_APP_DIRECTORY_URL);
+            });
+
+            describe('With cache', () => {
+                test('We fetch data from the cache', async () => {
+                    expect(appDirectory.getAllApps()).toEqual(cachedFakeApps);
+                });
+
+                test('Data is not fetched from live app directory', () => {
+                    expect(appDirectory.getAllApps()).not.toEqual(fakeApps);
+                });
+
+                test('We receive an empty array if the URLs do not match', async () => {
+                    const spyGetItem = jest.spyOn(global.localStorage, 'getItem');
+                    spyGetItem.mockImplementation(() => '__test_url__');
+
+                    await createAppDirectory(DEV_APP_DIRECTORY_URL);
+
+                    expect(appDirectory.getAllApps()).toEqual([]);
+                });
+            });
+
+            describe('With no cache', () => {
+                beforeEach(async () => {
+                    global.localStorage = {
+                        getItem: jest.fn().mockImplementation((key: string) => {
+                            switch (key) {
+                                case StorageKeys.APPLICATIONS:
+                                    return null;
+                                case StorageKeys.URL:
+                                    return DEV_APP_DIRECTORY_URL;
+                                default:
+                                    return null;
+                            }
+                        }),
+                        setItem: jest.fn((key: string, value: string) => {})
+                    };
+
+                    await createAppDirectory(DEV_APP_DIRECTORY_URL);
+                });
+
+                test('We receive an empty array', (() => {
+                    expect(appDirectory.getAllApps()).toEqual([]);
+                }));
+
+                test('Data is not fetched from live app directory', () => {
+                    expect(appDirectory.getAllApps()).not.toEqual(fakeApps);
+                });
+            });
+        });
+    });
+
     describe('When querying the Directory', () => {
-        beforeEach(() => {
-            setAppDirectoryUrl(DEV_APP_DIRECTORY_URL);
+        beforeEach(async () => {
+            await createAppDirectory(DEV_APP_DIRECTORY_URL);
         });
 
-        it('Loads directory and URL from the store', async () => {
-            const appDirectory = Injector.get<'APP_DIRECTORY'>(Inject.APP_DIRECTORY);
-
-            expect(appDirectory['_directory']).toEqual([]);
-            expect(appDirectory['_url']).toEqual(DEV_APP_DIRECTORY_URL);
-        });
-
-        describe('Refreshing the directory', () => {
-            it('Fetches & updates the directory when URLs do not match', async () => {
-                const appDirectory = Injector.get<'APP_DIRECTORY'>(Inject.APP_DIRECTORY);
-                mockJson.mockResolvedValue([fakeApp1]);
-                const spyGetItem = jest.spyOn(global.localStorage, 'getItem');
-                spyGetItem.mockImplementation(() => '__test_url__');
-                setAppDirectoryUrl('*different_url*');
-
-                const apps = await appDirectory.getAllApps();
-                expect(apps).toEqual([fakeApp1]);
-            });
-
-            it('Use cached applications when the URLs are the same', async () => {
-                const appDirectory = Injector.get<'APP_DIRECTORY'>(Inject.APP_DIRECTORY);
-                const apps = await appDirectory.getAllApps();
-                expect(apps).toEqual(fakeApps);
-            });
-
-            it('Use cached applications when fetching fails & URLs are the same', async () => {
-                const spyFetch = jest.spyOn(global, 'fetch')
-                    .mockImplementation(() => Promise.reject(new Error('')));
-                const appDirectory = Injector.get<'APP_DIRECTORY'>(Inject.APP_DIRECTORY);
-                const apps = await appDirectory.getAllApps();
-                expect(apps).toEqual(fakeApps);
-                expect(spyFetch).toBeCalled();
-            });
-
-            it('Return [] when fetching directory fails & URLs do not match', async () => {
-                const spyFetch = jest.spyOn(global, 'fetch')
-                    .mockImplementation(() => Promise.reject(new Error('')));
-                const appDirectory = Injector.get<'APP_DIRECTORY'>(Inject.APP_DIRECTORY);
-
-                setAppDirectoryUrl('**DIFFERENT URL**');
-
-                const apps = await appDirectory.getAllApps();
-                expect(apps).toEqual([]);
-                expect(spyFetch).toBeCalled();
-            });
-        });
-
-        it('getAllApps() returns all apps', async () => {
-            const appDirectory = Injector.get<'APP_DIRECTORY'>(Inject.APP_DIRECTORY);
-            const apps = await appDirectory.getAllApps();
+        it('Can get all apps', () => {
+            const apps = appDirectory.getAllApps();
             expect(apps).toEqual(fakeApps);
         });
 
-        it('getAppByName() returns an application with the given name when it exists', async () => {
-            const appDirectory = Injector.get<'APP_DIRECTORY'>(Inject.APP_DIRECTORY);
+        it('Can get applicaiton by name', async () => {
             const app = await appDirectory.getAppByName('App 1');
             expect(app).not.toBeNull();
         });
 
-        it('getAppsByIntent() returns applications with the given intent when they exist', async () => {
-            const appDirectory = Injector.get<'APP_DIRECTORY'>(Inject.APP_DIRECTORY);
+        it('Can get application by intent', async () => {
             const apps = await appDirectory.getAppsByIntent('testIntent.SendEmail');
             expect(apps).toHaveLength(1);
         });
@@ -195,13 +201,11 @@ describe('AppDirectory Unit Tests', () => {
 });
 
 describe('Given an App Directory with apps', () => {
-    let appDirectory: AppDirectory;
+    beforeEach(async () => {
+        await createAppDirectory(DEV_APP_DIRECTORY_URL);
+    });
 
     describe('When finding app intents by context with a context implemented by 2 intents in both apps', () => {
-        beforeEach(() => {
-            appDirectory = Injector.get<'APP_DIRECTORY'>(Inject.APP_DIRECTORY);
-        });
-
         it('Should return 2 intents', async () => {
             const intents = await appDirectory.getAppIntentsByContext('testContext.User');
 
