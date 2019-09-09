@@ -21,7 +21,7 @@ describe('When getting members of a channel', () => {
         await expect(defaultChannel.getMembers()).resolves.toEqual([testManagerIdentity]);
     });
 
-    test('When the channel is a desktop channel, an empty result is returned', async () => {
+    test('When the channel is a system channel, an empty result is returned', async () => {
         const defaultChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'blue');
 
         await expect(defaultChannel.getMembers()).resolves.toEqual([]);
@@ -278,27 +278,27 @@ describe('When joining a channel', () => {
         await fin.Application.wrapSync(joiningApp).quit(true);
     });
 
-    describe('When the channel is a desktop channel', () => {
-        let desktopChannel: RemoteChannel;
+    describe('When the channel is a system channel', () => {
+        let SystemChannel: RemoteChannel;
 
         beforeEach(async () => {
-            desktopChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'orange');
+            SystemChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'orange');
         });
 
         test('The expected channel is returned when querying the current channel', async () => {
-            // Join our desktop channel
-            await desktopChannel.join(joiningApp);
+            // Join our system channel
+            await SystemChannel.join(joiningApp);
 
             // Check the joining window has the expected current channel
-            await expect(fdc3Remote.getCurrentChannel(joiningApp)).resolves.toHaveProperty('channel', desktopChannel.channel);
+            await expect(fdc3Remote.getCurrentChannel(joiningApp)).resolves.toHaveProperty('channel', SystemChannel.channel);
         });
 
-        test('The window is present when querying the members of the desktop channel and not the default channel', async () => {
-            // Join our desktop channel
-            await desktopChannel.join(joiningApp);
+        test('The window is present when querying the members of the system channel and not the default channel', async () => {
+            // Join our system channel
+            await SystemChannel.join(joiningApp);
 
-            // Check our desktop channel contains our joining app
-            await expect(desktopChannel.getMembers()).resolves.toEqual([{
+            // Check our system channel contains our joining app
+            await expect(SystemChannel.getMembers()).resolves.toEqual([{
                 uuid: joiningApp.uuid, name: joiningApp.name
             }]);
 
@@ -311,16 +311,16 @@ describe('When joining a channel', () => {
         });
 
         test('The expected events are received', async () => {
-            // Set up listeners on our desktop channel
-            const desktopChannelWindowAddedListener = await desktopChannel.addEventListener('window-added');
-            const desktopChannelWindowRemovedListener = await desktopChannel.addEventListener('window-removed');
+            // Set up listeners on our system channel
+            const desktopChannelWindowAddedListener = await SystemChannel.addEventListener('window-added');
+            const desktopChannelWindowRemovedListener = await SystemChannel.addEventListener('window-removed');
 
-            // Join our desktop channel
-            await desktopChannel.join(joiningApp);
+            // Join our system channel
+            await SystemChannel.join(joiningApp);
 
             const expectedEvent = {
                 identity: {uuid: joiningApp.uuid, name: joiningApp.name},
-                channel: desktopChannel.channel,
+                channel: SystemChannel.channel,
                 previousChannel: {id: 'default', type: 'default'}
             };
 
@@ -330,7 +330,7 @@ describe('When joining a channel', () => {
                 type: 'window-removed', ...expectedEvent
             }]);
 
-            // Check we received the expected events on the desktop channel
+            // Check we received the expected events on the system channel
             await expect(desktopChannelWindowAddedListener.getReceivedEvents()).resolves.toEqual([{
                 type: 'window-added', ...expectedEvent
             }]);
@@ -383,7 +383,7 @@ describe('When joining a channel', () => {
         });
     });
 
-    describe('When the channel is a desktop channel, and we then re-join the default channel', () => {
+    describe('When the channel is a system channel, and we then re-join the default channel', () => {
         let purpleChannel: RemoteChannel;
 
         beforeEach(async () => {
@@ -463,7 +463,7 @@ describe('When joining a channel', () => {
     });
 
     test('When joining a channel and no target window is specified, the current window is used', async () => {
-        // Get a desktop channel from our joining window
+        // Get a system channel from our joining window
         const blueChannel = await fdc3Remote.getChannelById(joiningApp, 'blue');
 
         // Set up listeners for our blue channel
@@ -473,7 +473,7 @@ describe('When joining a channel', () => {
         // Join the channel
         await blueChannel.join();
 
-        // Check that the joining window is now a member of the desktop channel
+        // Check that the joining window is now a member of the system channel
         await expect(fdc3Remote.getCurrentChannel(joiningApp)).resolves.toHaveProperty('channel', blueChannel.channel);
         await expect(blueChannel.getMembers()).resolves.toEqual([{uuid: joiningApp.uuid, name: joiningApp.name}]);
 
@@ -512,7 +512,7 @@ describe('When using a non-directory app', () => {
     });
 
     test('The app can join a channel as expected', async () => {
-        // Get a desktop channel and the default channel from our non-directory window
+        // Get a system channel and the default channel from our non-directory window
         const defaultChannel = await fdc3Remote.getChannelById(testAppNotInDirectory1, 'default');
         const greenChannel = await fdc3Remote.getChannelById(testAppNotInDirectory1, 'green');
 
@@ -528,7 +528,7 @@ describe('When using a non-directory app', () => {
         // Join the channel
         await greenChannel.join();
 
-        // Check that the joining window is now a member of the desktop channel
+        // Check that the joining window is now a member of the system channel
         await expect(fdc3Remote.getCurrentChannel(testAppNotInDirectory1)).resolves.toHaveProperty('channel', greenChannel.channel);
         await expect(greenChannel.getMembers()).resolves.toEqual([{uuid: testAppNotInDirectory1.uuid, name: testAppNotInDirectory1.name}]);
 

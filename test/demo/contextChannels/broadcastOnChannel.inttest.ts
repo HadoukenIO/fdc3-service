@@ -188,7 +188,7 @@ describe('When adding a context listener to a channel', () => {
         const broadcastingChannel = await fdc3Remote.getChannelById(broadcastingApp, 'orange');
         const listeningChannel = await fdc3Remote.getChannelById(listeningApp, 'orange');
 
-        // Set up a cached context in our desktop channel
+        // Set up a cached context in our system channel
         await broadcastingChannel.join();
         await broadcastingChannel.broadcast(testContext);
         // Check the context had been cached
@@ -198,7 +198,7 @@ describe('When adding a context listener to a channel', () => {
         // Set up our listener
         const listener = await listeningChannel.addContextListener();
 
-        // Have our listening window join our desktop channel
+        // Have our listening window join our system channel
         await listeningChannel.join();
 
         // Check no context is received, contrary to 'flat' API behaviour
@@ -220,7 +220,7 @@ describe('When querying the current context', () => {
         await fin.Application.wrapSync(listeningApp).quit(true);
     });
 
-    test('The last-broadcast context will be returned for a desktop channel when the channel is occupied', async () => {
+    test('The last-broadcast context will be returned for a system channel when the channel is occupied', async () => {
         // Set up our broadcasting and listening channels
         const broadcastingChannel = await fdc3Remote.getChannelById(broadcastingApp, 'purple');
         const listeningChannel = await fdc3Remote.getChannelById(listeningApp, 'purple');
@@ -234,7 +234,7 @@ describe('When querying the current context', () => {
         await expect(listeningChannel.getCurrentContext()).resolves.toEqual(testContext);
     });
 
-    test('The last-broadcast context will not be returned for a desktop channel when the channel has been emptied', async () => {
+    test('The last-broadcast context will not be returned for a system channel when the channel has been emptied', async () => {
         // Set up our broadcasting and listening channels
         const broadcastingChannel = await fdc3Remote.getChannelById(broadcastingApp, 'yellow');
         const listeningChannel = await fdc3Remote.getChannelById(listeningApp, 'yellow');
@@ -252,7 +252,7 @@ describe('When querying the current context', () => {
         await expect(listeningChannel.getCurrentContext()).resolves.toEqual(null);
     });
 
-    test('The last-broadcast context will not be returned for the a desktop channel when the channel has never been occupied', async () => {
+    test('The last-broadcast context will not be returned for the a system channel when the channel has never been occupied', async () => {
         // Set up our broadcasting and listening channels
         const broadcastingChannel = await fdc3Remote.getChannelById(broadcastingApp, 'blue');
         const listeningChannel = await fdc3Remote.getChannelById(listeningApp, 'blue');

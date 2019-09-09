@@ -1,6 +1,6 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {DesktopChannel, DefaultChannel, ChannelError, IdentityError, ChannelId} from '../../../src/client/main';
+import {SystemChannel, DefaultChannel, ChannelError, IdentityError, ChannelId} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, appStartupTime, testAppNotFdc3} from '../constants';
 import {fin} from '../utils/fin';
@@ -20,11 +20,11 @@ describe('When getting a channel by ID', () => {
     const desktopChannelIdParams = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
 
     test.each(desktopChannelIdParams)(
-        'When the ID provided is \'%s\', the expected desktop channel is returned',
+        'When the ID provided is \'%s\', the expected system channel is returned',
         async (channelId: ChannelId) => {
             const channel = await fdc3Remote.getChannelById(testManagerIdentity, channelId);
 
-            await expect(channel).toBeChannel({id: channelId, type: 'desktop'}, DesktopChannel);
+            await expect(channel).toBeChannel({id: channelId, type: 'desktop'}, SystemChannel);
         }
     );
 

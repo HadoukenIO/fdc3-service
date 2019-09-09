@@ -12,7 +12,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution, FDC3Event} from './main';
-import {Channel, ChannelId, DefaultChannel, DesktopChannel, FDC3ChannelEventType} from './contextChannels';
+import {Channel, ChannelId, DefaultChannel, SystemChannel, FDC3ChannelEventType} from './contextChannels';
 import {FDC3Error} from './errors';
 
 /**
@@ -90,7 +90,7 @@ export type APIToClient = {
 }
 
 export type TransportMappings<T> =
-    T extends DesktopChannel ? DesktopChannelTransport :
+    T extends SystemChannel ? DesktopChannelTransport :
     T extends DefaultChannel ? ChannelTransport :
     T extends Channel ? ChannelTransport :
     T;
