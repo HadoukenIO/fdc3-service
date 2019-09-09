@@ -7,12 +7,12 @@ import {Inject} from '../common/Injectables';
 import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
-import {DESKTOP_CHANNELS, Timeouts} from '../constants';
+import {SYSTEM_CHANNELS, Timeouts} from '../constants';
 import {withStrictTimeout, untilTrue, allowReject, untilSignal} from '../utils/async';
 import {Boxed} from '../utils/types';
 
 import {AppWindow} from './AppWindow';
-import {ContextChannel, DefaultContextChannel, DesktopContextChannel} from './ContextChannel';
+import {ContextChannel, DefaultContextChannel, SystemContextChannel} from './ContextChannel';
 import {Environment} from './Environment';
 import {AppDirectory} from './AppDirectory';
 
@@ -73,8 +73,8 @@ export class Model {
         this._apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
 
         this._channelsById[DEFAULT_CHANNEL_ID] = new DefaultContextChannel(DEFAULT_CHANNEL_ID);
-        for (const channel of DESKTOP_CHANNELS) {
-            this._channelsById[channel.id] = new DesktopContextChannel(channel.id, channel.name, channel.color);
+        for (const channel of SYSTEM_CHANNELS) {
+            this._channelsById[channel.id] = new SystemContextChannel(channel.id, channel.name, channel.color);
         }
     }
 

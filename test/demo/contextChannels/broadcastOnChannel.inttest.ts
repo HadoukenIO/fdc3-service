@@ -51,7 +51,7 @@ describe('When broadcasting on a channel', () => {
         await fin.Application.wrapSync(listeningApp).quit(true);
     });
 
-    const receiveTestParams = [['the default', 'default'], ['a desktop', 'blue']];
+    const receiveTestParams = [['the default', 'default'], ['a system', 'blue']];
 
     describe.each(receiveTestParams)('When the channel is %s channel', (titleParam: string, channelId: ChannelId) => {
         test('Context is not received by the same channel in the broadcasting window', async() => {
@@ -83,9 +83,9 @@ describe('When broadcasting on a channel', () => {
     });
 
     const channelIndependenceTestParams = [
-        ['the default', 'a desktop', 'default', 'green'],
-        ['a desktop', 'the default', 'yellow', 'default'],
-        ['a desktop', 'different desktop', 'red', 'blue']
+        ['the default', 'a system', 'default', 'green'],
+        ['a system', 'the default', 'yellow', 'default'],
+        ['a system', 'different system', 'red', 'blue']
     ];
 
     describe.each(channelIndependenceTestParams)(
@@ -141,7 +141,7 @@ describe('When adding a context listener to a channel', () => {
         await fin.Application.wrapSync(listeningApp).quit(true);
     });
 
-    describe.each([['the default', 'default'], ['a desktop', 'red']])(
+    describe.each([['the default', 'default'], ['a system', 'red']])(
         'When the channel is %s channel',
         (titleParam: string, channelId: ChannelId) => {
             let broadcastingChannel: RemoteChannel;

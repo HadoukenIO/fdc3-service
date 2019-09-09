@@ -7,7 +7,7 @@ import {fin} from '../utils/fin';
 import {setupTeardown} from '../utils/common';
 
 /**
- * Tests getDesktopChannels(), getChannelById(), and getCurrentChannel()
+ * Tests getSystemChannels(), getChannelById(), and getCurrentChannel()
  */
 
 setupTeardown();
@@ -17,14 +17,14 @@ describe('When getting a channel by ID', () => {
         await expect(fdc3Remote.getChannelById(testManagerIdentity, 'default')).resolves.toBeChannel({id: 'default', type: 'default'}, DefaultChannel);
     });
 
-    const desktopChannelIdParams = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
+    const systemChannelIdParams = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
 
-    test.each(desktopChannelIdParams)(
+    test.each(systemChannelIdParams)(
         'When the ID provided is \'%s\', the expected system channel is returned',
         async (channelId: ChannelId) => {
             const channel = await fdc3Remote.getChannelById(testManagerIdentity, channelId);
 
-            await expect(channel).toBeChannel({id: channelId, type: 'desktop'}, SystemChannel);
+            await expect(channel).toBeChannel({id: channelId, type: 'system'}, SystemChannel);
         }
     );
 
@@ -58,9 +58,9 @@ describe('When getting a channel by ID', () => {
     });
 });
 
-describe('When getting the list of desktop channels', () => {
+describe('When getting the list of system channels', () => {
     test('All expected channels are returned', async () => {
-        const channels = await fdc3Remote.getDesktopChannels(testManagerIdentity);
+        const channels = await fdc3Remote.getSystemChannels(testManagerIdentity);
 
         for (const channelId of ['red', 'orange', 'yellow', 'green', 'blue', 'purple']) {
             // Get channel by ID, to compare with our returned channels

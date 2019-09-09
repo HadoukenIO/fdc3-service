@@ -312,8 +312,8 @@ describe('When joining a channel', () => {
 
         test('The expected events are received', async () => {
             // Set up listeners on our system channel
-            const desktopChannelWindowAddedListener = await SystemChannel.addEventListener('window-added');
-            const desktopChannelWindowRemovedListener = await SystemChannel.addEventListener('window-removed');
+            const systemChannelWindowAddedListener = await SystemChannel.addEventListener('window-added');
+            const systemChannelWindowRemovedListener = await SystemChannel.addEventListener('window-removed');
 
             // Join our system channel
             await SystemChannel.join(joiningApp);
@@ -331,10 +331,10 @@ describe('When joining a channel', () => {
             }]);
 
             // Check we received the expected events on the system channel
-            await expect(desktopChannelWindowAddedListener.getReceivedEvents()).resolves.toEqual([{
+            await expect(systemChannelWindowAddedListener.getReceivedEvents()).resolves.toEqual([{
                 type: 'window-added', ...expectedEvent
             }]);
-            await expect(desktopChannelWindowRemovedListener.getReceivedEvents()).resolves.toEqual([]);
+            await expect(systemChannelWindowRemovedListener.getReceivedEvents()).resolves.toEqual([]);
 
             // Check we a channel-changed event
             await expect(channelChangedListener.getReceivedEvents()).resolves.toEqual([{

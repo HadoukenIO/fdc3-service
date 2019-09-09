@@ -4,7 +4,7 @@ import {Signal} from 'openfin-service-signal';
 import {Model} from '../model/Model';
 import {Inject} from '../common/Injectables';
 import {ChannelId, FDC3Error, ChannelError, Context, FDC3ChannelEventType} from '../../client/main';
-import {DesktopContextChannel, ContextChannel} from '../model/ContextChannel';
+import {SystemContextChannel, ContextChannel} from '../model/ContextChannel';
 import {AppWindow} from '../model/AppWindow';
 
 @injectable()
@@ -27,8 +27,8 @@ export class ChannelHandler {
         this._model.onWindowRemoved.add(this.onModelWindowRemoved, this);
     }
 
-    public getDesktopChannels(): DesktopContextChannel[] {
-        return this._model.channels.filter(channel => channel.type === 'desktop') as DesktopContextChannel[];
+    public getSystemChannels(): SystemContextChannel[] {
+        return this._model.channels.filter(channel => channel.type === 'system') as SystemContextChannel[];
     }
 
     public getWindowsListeningToChannel(channel: ContextChannel): AppWindow[] {

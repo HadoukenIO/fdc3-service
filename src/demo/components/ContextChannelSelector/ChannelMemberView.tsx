@@ -20,7 +20,7 @@ export function ContextChannelView(props: ChannelViewProps): React.ReactElement 
 
     const setInfo = async (channel: Channel) => {
         setMembers(await channel.getMembers());
-        if (channel.type === 'desktop') {
+        if (channel.type === 'system') {
             setColor(channel.color);
         } else {
             // Use white for default channel

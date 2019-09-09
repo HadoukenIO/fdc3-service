@@ -23,7 +23,7 @@ export const Timeouts = {
     WINDOW_SEEN_TO_REGISTERED: 5000
 };
 
-export const DESKTOP_CHANNELS = [
+export const SYSTEM_CHANNELS = [
     {
         id: 'red',
         name: 'Red',
