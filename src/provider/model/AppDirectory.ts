@@ -12,9 +12,6 @@ enum StorageKeys {
     APPLICATIONS = 'fdc3@applications'
 }
 
-// Demo development app directory url
-export const DEV_APP_DIRECTORY_URL = 'http://localhost:3923/provider/sample-app-directory.json';
-
 @injectable()
 export class AppDirectory extends AsyncInit {
     private readonly _configStore: ConfigStoreBinding;

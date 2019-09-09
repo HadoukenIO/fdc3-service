@@ -59,10 +59,7 @@ type Keys = (keyof typeof Inject & keyof typeof Bindings & keyof Types);
  * Wrapper around inversify that allows more concise injection
  */
 export class Injector {
-    private static _initialized: DeferredPromise = new DeferredPromise();
-    private static _ready: boolean = false;
-
-    private static _container: Container = (() => {
+    private static createContainer(): Container {
         const container = new Container();
 
         Object.keys(Bindings).forEach(k => {
@@ -76,10 +73,28 @@ export class Injector {
         });
 
         return container;
-    })();
+    }
+
+    private static _initialized: DeferredPromise = new DeferredPromise();
+    private static _ready: boolean = false;
+
+    private static _container: Container;
 
     public static get initialized(): Promise<void> {
         return Injector._initialized.promise;
+    }
+
+    public static async reset(): Promise<void> {
+        if (Injector._ready) {
+            Injector._container.unbindAll();
+
+            Injector._ready = false;
+            Injector._initialized = new DeferredPromise();
+
+            Injector._container = Injector.createContainer();
+        }
+
+        return Injector.init();
     }
 
     public static async init(): Promise<void> {
