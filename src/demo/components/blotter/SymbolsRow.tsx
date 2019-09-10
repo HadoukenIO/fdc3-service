@@ -80,7 +80,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
 
     const getContext = () => {
         return {
-            type: 'fdc3.security',
+            type: 'fdc3.instrument',
             name: item.name,
             id: {
                 default: item.name
