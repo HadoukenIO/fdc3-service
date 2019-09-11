@@ -46,9 +46,14 @@ export interface ContactContext extends Context {
     name: string;
     id: {[key: string]: string}&{email?: string; twitter?: string; phone?: string};
 }
-export interface SecurityContext extends Context {
-    type: 'fdc3.security';
-    id: {[key: string]: string}&{default: string};
+export interface InstrumentContext extends Context {
+    type: 'fdc3.instrument';
+    name: string;
+    id: {
+        ticker?: string;
+        ISIN?: string;
+        CUSIP?: string;
+    }
 }
 export interface OrganizationContext extends Context {
     type: 'fdc3.organization';
