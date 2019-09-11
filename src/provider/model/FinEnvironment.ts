@@ -121,11 +121,16 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     protected async init(): Promise<void> {
-        fin.System.addListener('window-created', (event: WindowEvent<'system', 'window-created'>) => {
+        // Register windows that were running before launching the FDC3 service
+        const windowInfo = await fin.System.getAllWindows();
+
+        fin.System.addListener('window-created', async (event: WindowEvent<'system', 'window-created'>) => {
+            await Injector.initialized;
             const identity = {uuid: event.uuid, name: event.name};
             this.registerWindow(identity, Date.now());
         });
-        fin.System.addListener('window-closed', (event: WindowEvent<'system', 'window-closed'>) => {
+        fin.System.addListener('window-closed', async (event: WindowEvent<'system', 'window-closed'>) => {
+            await Injector.initialized;
             const identity = {uuid: event.uuid, name: event.name};
 
             delete this._seenWindows[getId(identity)];
@@ -135,9 +140,6 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
         // No await here otherwise the injector will never properly initialize - The injector awaits this init before completion!
         Injector.initialized.then(async () => {
-            // Register windows that were running before launching the FDC3 service
-            const windowInfo = await fin.System.getAllWindows();
-
             windowInfo.forEach(info => {
                 const {uuid, mainWindow, childWindows} = info;
 
