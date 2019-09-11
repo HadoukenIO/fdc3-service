@@ -63,7 +63,7 @@ export class IntentHandler {
             appInfo = appWindows[0].appInfo;
         } else {
             // Target app not running -> Try to find in directory
-            appInfo = await this._directory.getAppByName(intent.target);
+            appInfo = this._directory.getAppByName(intent.target);
             if (!appInfo) {
                 throw new FDC3Error(
                     ResolveError.TargetAppNotAvailable,

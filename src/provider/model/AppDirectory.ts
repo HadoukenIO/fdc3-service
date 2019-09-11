@@ -29,13 +29,13 @@ export class AppDirectory extends AsyncInit {
         await this.initializeDirectoryData();
     }
 
-    public async getAppByName(name: AppName): Promise<Application | null> {
+    public getAppByName(name: AppName): Application | null {
         return this._directory.find((app: Application) => {
             return app.name === name;
         }) || null;
     }
 
-    public async getAppsByIntent(intentType: string): Promise<Application[]> {
+    public getAppsByIntent(intentType: string): Application[] {
         return this._directory.filter((app: Application) => {
             return app.intents && app.intents.some(intent => intent.name === intentType);
         });
