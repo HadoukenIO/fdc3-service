@@ -99,7 +99,7 @@ export class AppDirectory extends AsyncInit {
 
         if (response && response.ok) {
             try {
-                // validate the response is actually JSON
+                // TODO SERVICE-620 validate JSON we receive is valid against spec
                 const validate = await response.json();
                 return validate;
             } catch (error) {
