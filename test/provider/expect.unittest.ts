@@ -79,8 +79,12 @@ describe('When creating a directory FDC3 app', () => {
         appType: 'directory'
     };
 
-    describe.skip('When the window is registered quickly', () => {
+    describe('When the window is registered quickly', () => {
         expectTest(testWindow, 3000, [
+            [
+                'When a window is expected long before it is created, the window promise rejects',
+                {callTime: 500, finalizeTime: 500 + PENDING_TIMEOUT, result: 'reject-timeout'}
+            ],
             [
                 'When a window is expected shortly before it is created, the window promise resolves',
                 {callTime: 950, finalizeTime: 3000, result: 'resolve'}
@@ -92,16 +96,7 @@ describe('When creating a directory FDC3 app', () => {
         ]);
     });
 
-    describe('When the window is registered quickly', () => {
-        expectTest(testWindow, 3000, [
-            [
-                'When a window is expected long before it is created, the window promise rejects',
-                {callTime: 500, finalizeTime: 500 + PENDING_TIMEOUT, result: 'reject-timeout'}
-            ]
-        ]);
-    });
-
-    describe.skip('When the window registration is delayed due to a slow app directory', () => {
+    describe('When the window registration is delayed due to a slow app directory', () => {
         expectTest(testWindow, 8000, [
             [
                 'When a window is expected while the window is being registered, the window promise rejects',
@@ -129,7 +124,7 @@ describe('When creating a directory FDC3 app', () => {
         ]);
     });
 
-    describe.skip('When a window is closed after being created', () => {
+    describe('When a window is closed after being created', () => {
         const fastCloseWindow: TestWindow = {
             seenTime: 990,
             createdTime: 1000,
@@ -177,7 +172,7 @@ describe('When creating a non-directory FDC3 app', () => {
         appType: 'non-directory'
     };
 
-    describe.skip('When the window is registered quickly, and connection occurs before the app directory returns', () => {
+    describe('When the window is registered quickly, and connection occurs before the app directory returns', () => {
         expectTest(fastConnectWindow, 5000, [
             [
                 'When a window is expected shortly before it is created, the window promise resolves',
@@ -240,8 +235,8 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
 
         const appDirectoryResultPromise = new DeferredPromise();
 
-        // TODO: This call changes from asynchronous to synchronous. Come back and fix this properly, and remove tests around a slow app directory
-        mockAppDirectory.getAllApps.mockImplementationOnce((): Application[] => {
+        mockAppDirectory.getAllApps.mockImplementationOnce(async (): Promise<Application[]> => {
+            await appDirectoryResultPromise.promise;
             return testWindow.appType === 'directory' ? [mockApplication] : [];
         });
 

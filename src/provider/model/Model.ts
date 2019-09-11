@@ -156,7 +156,7 @@ export class Model {
             }, []);
 
         // Include only directory apps without appWindows in the model, as these take precedence
-        const directoryAppsWithIntent = this._directory.getAppsByIntent(intentType);
+        const directoryAppsWithIntent = await this._directory.getAppsByIntent(intentType);
         const directoryAppsNotInModel = directoryAppsWithIntent
             .filter(directoryApp => !allAppWindows.some(appWindow => appWindow.appInfo.appId === directoryApp.appId));
 
@@ -172,7 +172,7 @@ export class Model {
     }
 
     private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
-        const apps = this._directory.getAllApps();
+        const apps = await this._directory.getAllApps();
         const appInfoFromDirectory = apps.find(app => app.manifest.startsWith(manifestUrl));
 
         if (appInfoFromDirectory) {
