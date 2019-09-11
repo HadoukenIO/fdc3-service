@@ -188,7 +188,7 @@ describe('When querying the Directory', () => {
     });
 
     it('Can get applicaiton by name', async () => {
-        const app = await appDirectory.getAppByName('App 1');
+        const app = appDirectory.getAppByName('App 1');
         expect(app).not.toBeNull();
     });
 

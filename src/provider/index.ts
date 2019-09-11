@@ -98,7 +98,7 @@ export class Main {
     }
 
     private async open(payload: OpenPayload): Promise<void> {
-        const appInfo: Application|null = await this._directory.getAppByName(payload.name);
+        const appInfo: Application|null = this._directory.getAppByName(payload.name);
 
         if (!appInfo) {
             throw new FDC3Error(OpenError.AppNotFound, `No app in directory with name: ${payload.name}`);
