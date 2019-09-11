@@ -61,7 +61,7 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
     return ofBrowser
         .executeOnWindow(
             executionTarget,
-            function(this: TestWindowContext, context: Context): void {
+            async function(this: TestWindowContext, context: Context): Promise<void> {
                 return this.fdc3.broadcast(context);
             },
             context
