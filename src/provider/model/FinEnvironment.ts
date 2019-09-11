@@ -10,6 +10,7 @@ import {withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
 import {parseIdentity} from '../../client/validation';
 import {DeferredPromise} from '../common/DeferredPromise';
+import {Injector} from '../common/Injector';
 
 import {Environment} from './Environment';
 import {AppWindow} from './AppWindow';
@@ -120,12 +121,16 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     protected async init(): Promise<void> {
-        fin.System.addListener('window-created', (event: WindowEvent<'system', 'window-created'>) => {
-            const identity = {uuid: event.uuid, name: event.name};
+        // Register windows that were running before launching the FDC3 service
+        const windowInfo = await fin.System.getAllWindows();
 
+        fin.System.addListener('window-created', async (event: WindowEvent<'system', 'window-created'>) => {
+            await Injector.initialized;
+            const identity = {uuid: event.uuid, name: event.name};
             this.registerWindow(identity, Date.now());
         });
-        fin.System.addListener('window-closed', (event: WindowEvent<'system', 'window-closed'>) => {
+        fin.System.addListener('window-closed', async (event: WindowEvent<'system', 'window-closed'>) => {
+            await Injector.initialized;
             const identity = {uuid: event.uuid, name: event.name};
 
             delete this._seenWindows[getId(identity)];
@@ -133,14 +138,14 @@ export class FinEnvironment extends AsyncInit implements Environment {
             this.windowClosed.emit(identity);
         });
 
-        // Register windows that were running before launching the FDC3 service
-        const windowInfo = await fin.System.getAllWindows();
+        // No await here otherwise the injector will never properly initialize - The injector awaits this init before completion!
+        Injector.initialized.then(async () => {
+            windowInfo.forEach(info => {
+                const {uuid, mainWindow, childWindows} = info;
 
-        windowInfo.forEach(info => {
-            const {uuid, mainWindow, childWindows} = info;
-
-            this.registerWindow({uuid, name: mainWindow.name}, undefined);
-            childWindows.forEach(child => this.registerWindow({uuid, name: child.name}, undefined));
+                this.registerWindow({uuid, name: mainWindow.name}, undefined);
+                childWindows.forEach(child => this.registerWindow({uuid, name: child.name}, undefined));
+            });
         });
     }
 
