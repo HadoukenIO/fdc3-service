@@ -107,96 +107,94 @@ beforeEach(async () => {
     mockFetchReturnJson.mockResolvedValue(fakeApps);
 });
 
-describe('AppDirectory Unit Tests', () => {
-    describe('When Fetching Initial Data', () => {
-        describe('And we\'re online', () => {
-            beforeEach(async () => {
-                await createAppDirectory(DEV_APP_DIRECTORY_URL);
-            });
-
-            test('We fetch data from the application directory JSON', () => {
-                expect(appDirectory.getAllApps()).toEqual(fakeApps);
-            });
-
-            test('Data is not retrieved from cache', () => {
-                expect(appDirectory).not.toEqual([...fakeApps, ...fakeApps]);
-            });
-        });
-
-        describe('And we\'re offline', () => {
-            beforeEach(async () => {
-                global.fetch = jest.fn().mockRejectedValue('');
-                await createAppDirectory(DEV_APP_DIRECTORY_URL);
-            });
-
-            describe('With cache', () => {
-                test('We fetch data from the cache', async () => {
-                    expect(appDirectory.getAllApps()).toEqual(cachedFakeApps);
-                });
-
-                test('Data is not fetched from live app directory', () => {
-                    expect(appDirectory.getAllApps()).not.toEqual(fakeApps);
-                });
-
-                test('We receive an empty array if the URLs do not match', async () => {
-                    const spyGetItem = jest.spyOn(global.localStorage, 'getItem');
-                    spyGetItem.mockImplementation(() => '__test_url__');
-
-                    await createAppDirectory(DEV_APP_DIRECTORY_URL);
-
-                    expect(appDirectory.getAllApps()).toEqual([]);
-                });
-            });
-
-            describe('With no cache', () => {
-                beforeEach(async () => {
-                    global.localStorage = {
-                        getItem: jest.fn().mockImplementation((key: string) => {
-                            switch (key) {
-                                case StorageKeys.APPLICATIONS:
-                                    return null;
-                                case StorageKeys.URL:
-                                    return DEV_APP_DIRECTORY_URL;
-                                default:
-                                    return null;
-                            }
-                        }),
-                        setItem: jest.fn((key: string, value: string) => {})
-                    };
-
-                    await createAppDirectory(DEV_APP_DIRECTORY_URL);
-                });
-
-                test('We receive an empty array', (() => {
-                    expect(appDirectory.getAllApps()).toEqual([]);
-                }));
-
-                test('Data is not fetched from live app directory', () => {
-                    expect(appDirectory.getAllApps()).not.toEqual(fakeApps);
-                });
-            });
-        });
-    });
-
-    describe('When querying the Directory', () => {
+describe('When Fetching Initial Data', () => {
+    describe('And we\'re online', () => {
         beforeEach(async () => {
             await createAppDirectory(DEV_APP_DIRECTORY_URL);
         });
 
-        it('Can get all apps', () => {
-            const apps = appDirectory.getAllApps();
-            expect(apps).toEqual(fakeApps);
+        test('We fetch data from the application directory JSON', () => {
+            expect(appDirectory.getAllApps()).toEqual(fakeApps);
         });
 
-        it('Can get applicaiton by name', async () => {
-            const app = await appDirectory.getAppByName('App 1');
-            expect(app).not.toBeNull();
+        test('Data is not retrieved from cache', () => {
+            expect(appDirectory).not.toEqual([...fakeApps, ...fakeApps]);
+        });
+    });
+
+    describe('And we\'re offline', () => {
+        beforeEach(async () => {
+            global.fetch = jest.fn().mockRejectedValue('');
+            await createAppDirectory(DEV_APP_DIRECTORY_URL);
         });
 
-        it('Can get application by intent', async () => {
-            const apps = await appDirectory.getAppsByIntent('testIntent.SendEmail');
-            expect(apps).toHaveLength(1);
+        describe('With cache', () => {
+            test('We fetch data from the cache', async () => {
+                expect(appDirectory.getAllApps()).toEqual(cachedFakeApps);
+            });
+
+            test('Data is not fetched from live app directory', () => {
+                expect(appDirectory.getAllApps()).not.toEqual(fakeApps);
+            });
+
+            test('We receive an empty array if the URLs do not match', async () => {
+                const spyGetItem = jest.spyOn(global.localStorage, 'getItem');
+                spyGetItem.mockImplementation(() => '__test_url__');
+
+                await createAppDirectory(DEV_APP_DIRECTORY_URL);
+
+                expect(appDirectory.getAllApps()).toEqual([]);
+            });
         });
+
+        describe('With no cache', () => {
+            beforeEach(async () => {
+                global.localStorage = {
+                    getItem: jest.fn().mockImplementation((key: string) => {
+                        switch (key) {
+                            case StorageKeys.APPLICATIONS:
+                                return null;
+                            case StorageKeys.URL:
+                                return DEV_APP_DIRECTORY_URL;
+                            default:
+                                return null;
+                        }
+                    }),
+                    setItem: jest.fn((key: string, value: string) => {})
+                };
+
+                await createAppDirectory(DEV_APP_DIRECTORY_URL);
+            });
+
+            test('We receive an empty array', (() => {
+                expect(appDirectory.getAllApps()).toEqual([]);
+            }));
+
+            test('Data is not fetched from live app directory', () => {
+                expect(appDirectory.getAllApps()).not.toEqual(fakeApps);
+            });
+        });
+    });
+});
+
+describe('When querying the Directory', () => {
+    beforeEach(async () => {
+        await createAppDirectory(DEV_APP_DIRECTORY_URL);
+    });
+
+    it('Can get all apps', () => {
+        const apps = appDirectory.getAllApps();
+        expect(apps).toEqual(fakeApps);
+    });
+
+    it('Can get applicaiton by name', async () => {
+        const app = await appDirectory.getAppByName('App 1');
+        expect(app).not.toBeNull();
+    });
+
+    it('Can get application by intent', async () => {
+        const apps = await appDirectory.getAppsByIntent('testIntent.SendEmail');
+        expect(apps).toHaveLength(1);
     });
 });
 
