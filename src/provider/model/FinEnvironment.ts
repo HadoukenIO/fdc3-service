@@ -133,6 +133,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             this.windowClosed.emit(identity);
         });
 
+        // No await here otherwise the injector will never properly initialize - The injector awaits this init before completion!
         Injector.initialized.then(async () => {
             // Register windows that were running before launching the FDC3 service
             const windowInfo = await fin.System.getAllWindows();

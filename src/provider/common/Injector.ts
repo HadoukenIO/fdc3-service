@@ -59,43 +59,9 @@ type Keys = (keyof typeof Inject & keyof typeof Bindings & keyof Types);
  * Wrapper around inversify that allows more concise injection
  */
 export class Injector {
-    private static createContainer(): Container {
-        const container = new Container();
-
-        Object.keys(Bindings).forEach(k => {
-            const key: Keys = k as any;
-
-            if (typeof Bindings[key] === 'function') {
-                container.bind(Inject[key]).to(Bindings[key] as any).inSingletonScope();
-            } else {
-                container.bind(Inject[key]).toConstantValue(Bindings[key]);
-            }
-        });
-
-        return container;
-    }
-
     private static _initialized: DeferredPromise = new DeferredPromise();
     private static _ready: boolean = false;
-
-    private static _container: Container;
-
-    public static get initialized(): Promise<void> {
-        return Injector._initialized.promise;
-    }
-
-    public static async reset(): Promise<void> {
-        if (Injector._ready) {
-            Injector._container.unbindAll();
-
-            Injector._ready = false;
-            Injector._initialized = new DeferredPromise();
-
-            Injector._container = Injector.createContainer();
-        }
-
-        return Injector.init();
-    }
+    private static _container: Container = Injector.createContainer();
 
     public static async init(): Promise<void> {
         const container: Container = Injector._container;
@@ -113,11 +79,14 @@ export class Injector {
             }
         });
 
-        Promise.all(promises).then(() => {
-            Injector._ready = true;
-            Injector._initialized.resolve();
-        });
+        await Promise.all(promises);
+        Injector._ready = true;
+        Injector._initialized.resolve();
 
+        return Injector._initialized.promise;
+    }
+
+    public static get initialized(): Promise<void> {
         return Injector._initialized.promise;
     }
 
@@ -150,5 +119,21 @@ export class Injector {
         const value = Injector._container.resolve<T>(type);
 
         return value;
+    }
+
+    private static createContainer(): Container {
+        const container = new Container();
+
+        Object.keys(Bindings).forEach(k => {
+            const key: Keys = k as any;
+
+            if (typeof Bindings[key] === 'function') {
+                container.bind(Inject[key]).to(Bindings[key] as any).inSingletonScope();
+            } else {
+                container.bind(Inject[key]).toConstantValue(Bindings[key]);
+            }
+        });
+
+        return container;
     }
 }

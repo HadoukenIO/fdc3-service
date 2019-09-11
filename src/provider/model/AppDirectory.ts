@@ -82,20 +82,17 @@ export class AppDirectory extends AsyncInit {
 
     private async initializeDirectoryData(): Promise<void> {
         this._url = this._configStore.config.query({level: 'desktop'}).applicationDirectory;
-        const fetchedData = await this.fetchOnline(this._url);
+        const fetchedData = await this.fetchOnlineData(this._url);
         const cachedData = this.fetchCacheData();
 
         if (fetchedData) {
-            this.updateUrl(this._url);
-            this.updateDirectory(fetchedData);
-        } else if (cachedData) {
-            this.updateDirectory(cachedData);
-        } else {
-            this.updateDirectory([]);
+            this.updateCache(this._url, fetchedData);
         }
+
+        this._directory = fetchedData || cachedData || [];
     }
 
-    private async fetchOnline(url: string): Promise<Application[]|null> {
+    private async fetchOnlineData(url: string): Promise<Application[]|null> {
         const response = await fetch(url).catch(() => {
             console.warn(`Failed to fetch app directory @ ${url}`);
         });
@@ -132,20 +129,12 @@ export class AppDirectory extends AsyncInit {
     }
 
     /**
-     * Update the application directory in memory and storage.
-     * @param applications To place into the directory.
-     */
-    private updateDirectory(applications: Application[]): void {
-        localStorage.setItem(StorageKeys.APPLICATIONS, JSON.stringify(applications));
-        this._directory = applications;
-    }
-
-    /**
-     * Update the application directory URL in memory and storage.
+     * Updates the URL and Applications in the local storage cache.
      * @param url Directory URL.
+     * @param applications Directory Applications.
      */
-    private updateUrl(url: string): void {
+    private updateCache(url: string, applications: Application[]) {
         localStorage.setItem(StorageKeys.URL, url);
-        this._url = url;
+        localStorage.setItem(StorageKeys.APPLICATIONS, JSON.stringify(applications));
     }
 }
