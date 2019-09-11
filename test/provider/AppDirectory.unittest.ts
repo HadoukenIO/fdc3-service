@@ -113,8 +113,8 @@ describe('When Fetching Initial Data', () => {
             await createAppDirectory(DEV_APP_DIRECTORY_URL);
         });
 
-        test('We fetch data from the application directory JSON', () => {
-            expect(appDirectory.getAllApps()).toEqual(fakeApps);
+        test('We fetch data from the application directory JSON', async () => {
+            await expect(appDirectory.getAllApps()).resolves.toEqual(fakeApps);
         });
 
         test('Data is not retrieved from cache', () => {
@@ -130,11 +130,11 @@ describe('When Fetching Initial Data', () => {
 
         describe('With cache', () => {
             test('We fetch data from the cache', async () => {
-                expect(appDirectory.getAllApps()).toEqual(cachedFakeApps);
+                await expect(appDirectory.getAllApps()).resolves.toEqual(cachedFakeApps);
             });
 
-            test('Data is not fetched from live app directory', () => {
-                expect(appDirectory.getAllApps()).not.toEqual(fakeApps);
+            test('Data is not fetched from live app directory', async () => {
+                await expect(appDirectory.getAllApps()).resolves.not.toEqual(fakeApps);
             });
 
             test('We receive an empty array if the URLs do not match', async () => {
@@ -143,7 +143,7 @@ describe('When Fetching Initial Data', () => {
 
                 await createAppDirectory(DEV_APP_DIRECTORY_URL);
 
-                expect(appDirectory.getAllApps()).toEqual([]);
+                await expect(appDirectory.getAllApps()).resolves.toEqual([]);
             });
         });
 
@@ -166,12 +166,12 @@ describe('When Fetching Initial Data', () => {
                 await createAppDirectory(DEV_APP_DIRECTORY_URL);
             });
 
-            test('We receive an empty array', (() => {
-                expect(appDirectory.getAllApps()).toEqual([]);
+            test('We receive an empty array', (async () => {
+                await expect(appDirectory.getAllApps()).resolves.toEqual([]);
             }));
 
-            test('Data is not fetched from live app directory', () => {
-                expect(appDirectory.getAllApps()).not.toEqual(fakeApps);
+            test('Data is not fetched from live app directory', async () => {
+                await expect(appDirectory.getAllApps()).resolves.not.toEqual(fakeApps);
             });
         });
     });
@@ -182,8 +182,8 @@ describe('When querying the Directory', () => {
         await createAppDirectory(DEV_APP_DIRECTORY_URL);
     });
 
-    it('Can get all apps', () => {
-        const apps = appDirectory.getAllApps();
+    it('Can get all apps', async () => {
+        const apps = await appDirectory.getAllApps();
         expect(apps).toEqual(fakeApps);
     });
 

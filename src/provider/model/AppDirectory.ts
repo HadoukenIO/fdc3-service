@@ -76,7 +76,7 @@ export class AppDirectory extends AsyncInit {
     /**
      * Retrieves all of the applications in the Application Directory.
      */
-    public getAllApps(): Application[] {
+    public async getAllApps(): Promise<Application[]> {
         return this._directory;
     }
 
