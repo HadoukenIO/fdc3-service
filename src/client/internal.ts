@@ -56,9 +56,8 @@ export enum APIFromClientTopic {
  * Enum containing all and only actions that the client can accept.
  */
 export enum APIToClientTopic {
-    // TODO: When we're ready to make a breaking change, rename `INTENT` and `CONTEXT` to something more descriptive (SERVICE-533)
-    INTENT = 'INTENT',
-    CONTEXT = 'CONTEXT',
+    RECEIVE_INTENT = 'INTENT',
+    RECEIVE_CONTEXT = 'CONTEXT',
     HANDLE_CHANNEL_CONTEXT = 'HANDLE-CHANNEL-CONTEXT'
 }
 
@@ -84,8 +83,8 @@ export type APIFromClient = {
 }
 
 export type APIToClient = {
-    [APIToClientTopic.CONTEXT]: [ContextPayload, void];
-    [APIToClientTopic.INTENT]: [IntentPayload, void];
+    [APIToClientTopic.RECEIVE_CONTEXT]: [ContextPayload, void];
+    [APIToClientTopic.RECEIVE_INTENT]: [IntentPayload, void];
     [APIToClientTopic.HANDLE_CHANNEL_CONTEXT]: [HandleChannelContextPayload, void];
 }
 
