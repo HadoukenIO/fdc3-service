@@ -74,7 +74,7 @@ export class Model {
 
         this._channelsById[DEFAULT_CHANNEL_ID] = new DefaultContextChannel(DEFAULT_CHANNEL_ID);
         for (const channel of SYSTEM_CHANNELS) {
-            this._channelsById[channel.id] = new SystemContextChannel(channel.id, channel.name, channel.color);
+            this._channelsById[channel.id] = new SystemContextChannel(channel.id, channel.visualIdentity);
         }
     }
 

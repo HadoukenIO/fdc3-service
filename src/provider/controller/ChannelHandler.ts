@@ -28,7 +28,7 @@ export class ChannelHandler {
     }
 
     public getSystemChannels(): SystemContextChannel[] {
-        return this._model.channels.filter(channel => channel.type === 'system') as SystemContextChannel[];
+        return this._model.channels.filter<SystemContextChannel>(this.isSystemChannel);
     }
 
     public getWindowsListeningToChannel(channel: ContextChannel): AppWindow[] {
@@ -98,5 +98,9 @@ export class ChannelHandler {
         if (!channel) {
             throw new FDC3Error(ChannelError.ChannelDoesNotExist, `No channel with channelId: ${channelId}`);
         }
+    }
+
+    private isSystemChannel(channel: ContextChannel): channel is SystemContextChannel {
+        return channel.type === 'system';
     }
 }

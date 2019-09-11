@@ -1,5 +1,5 @@
 import {ChannelTransport, SystemChannelTransport} from '../../client/internal';
-import {ChannelId, Context} from '../../client/main';
+import {ChannelId, Context, DisplayMetadata} from '../../client/main';
 
 export interface ContextChannel {
     readonly id: ChannelId;
@@ -55,16 +55,15 @@ export class DefaultContextChannel extends ContextChannelBase {
 
 export class SystemContextChannel extends ContextChannelBase {
     public readonly type!: 'system';
-    public readonly name: string;
-    public readonly color: number;
+
+    public readonly visualIdentity: DisplayMetadata;
 
     private _context: Context | null;
 
-    public constructor(id: ChannelId, name: string, color: number) {
+    public constructor(id: ChannelId, visualIdentity: DisplayMetadata) {
         super(id, 'system');
 
-        this.name = name;
-        this.color = color;
+        this.visualIdentity = visualIdentity;
 
         this._context = null;
     }
@@ -82,6 +81,6 @@ export class SystemContextChannel extends ContextChannelBase {
     }
 
     public serialize(): SystemChannelTransport {
-        return {name: this.name, color: this.color, ...super.serialize() as {id: string, type: 'system'}};
+        return {visualIdentity: this.visualIdentity, ...super.serialize() as {id: string, type: 'system'}};
     }
 }

@@ -1,5 +1,4 @@
 import * as React from 'react';
-import {Identity} from 'openfin/_v2/main';
 
 import {Channel, defaultChannel, getCurrentChannel, getSystemChannels, SystemChannel} from '../../../client/contextChannels';
 
@@ -59,7 +58,7 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
                                     key={channel.id + index}
                                     value={channel.id}
                                 >
-                                    {(channel as SystemChannel).name || 'Default'}
+                                    {channel.type === 'system' ? channel.visualIdentity.name : 'Default'}
                                 </option>
                             );
                         })

@@ -11,7 +11,7 @@ interface ChannelViewProps {
 export function ContextChannelView(props: ChannelViewProps): React.ReactElement {
     const channel = props.channel;
     const [members, setMembers] = React.useState<Identity[]>([]);
-    const [color, setColor] = React.useState<number>(0xFFFFFF);
+    const [color, setColor] = React.useState<string>('#FFFFFF');
     const [visible, setVisible] = React.useState(false);
 
     const handleVisible = (event: React.MouseEvent) => {
@@ -21,10 +21,10 @@ export function ContextChannelView(props: ChannelViewProps): React.ReactElement 
     const setInfo = async (channel: Channel) => {
         setMembers(await channel.getMembers());
         if (channel.type === 'system') {
-            setColor(channel.color);
+            setColor(channel.visualIdentity.color);
         } else {
             // Use white for default channel
-            setColor(0xFFFFFF);
+            setColor('#FFFFFF');
         }
     };
 
@@ -44,7 +44,7 @@ export function ContextChannelView(props: ChannelViewProps): React.ReactElement 
     return (
         <React.Fragment>
             <div className="details">{members.length}</div>
-            <div className="color" title="Click to show members." onClick={handleVisible} style={{backgroundColor: numberToHex(color)}}></div>
+            <div className="color" title="Click to show members." onClick={handleVisible} style={{backgroundColor: color}}></div>
             {visible && <MemberList members={members}/>}
         </React.Fragment>
     );

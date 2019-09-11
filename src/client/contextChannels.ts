@@ -22,6 +22,28 @@ import {getEventRouter} from './EventRouter';
 export type ChannelId = string;
 
 /**
+ * A system channel will be global enough to have a presence across many apps. This gives us some hints
+ * to render them in a standard way. It is assumed it may have other properties too, but if it has these,
+ * this is their meaning.
+ */
+export interface DisplayMetadata {
+    /**
+     * A user-readable name for this channel, e.g: `"Red"`
+     */
+    name: string;
+
+    /**
+     * The color that should be associated within this channel when displaying this channel in a UI, e.g: `0xFF0000`.
+     */
+    color: string;
+
+    /**
+     * A URL of an image that can be used to display this channel
+     */
+    glyph: string;
+}
+
+/**
  * Union of all possible concrete channel classes that may be returned by the service.
  */
 export type Channel = SystemChannel | DefaultChannel;
@@ -325,14 +347,9 @@ export class SystemChannel extends ChannelBase {
     public readonly type!: 'system';
 
     /**
-     * A user-readable name for this channel, e.g: `"Red"`
+     * SystemChannels may well be selectable by users. Here are the hints on how to see them.
      */
-    public readonly name: string;
-
-    /**
-     * The color that should be associated within this channel when displaying this channel in a UI, e.g: `0xFF0000`.
-     */
-    public readonly color: number;
+    public readonly visualIdentity: DisplayMetadata;
 
     /**
      * @hidden
@@ -340,8 +357,7 @@ export class SystemChannel extends ChannelBase {
     public constructor(transport: SystemChannelTransport) {
         super(transport.id, 'system');
 
-        this.name = transport.name;
-        this.color = transport.color;
+        this.visualIdentity = transport.visualIdentity;
     }
 }
 

@@ -12,7 +12,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution, FDC3Event} from './main';
-import {Channel, ChannelId, DefaultChannel, SystemChannel, FDC3ChannelEventType} from './contextChannels';
+import {Channel, ChannelId, DefaultChannel, SystemChannel, FDC3ChannelEventType, DisplayMetadata} from './contextChannels';
 import {FDC3Error} from './errors';
 
 /**
@@ -108,8 +108,7 @@ export interface ChannelTransport {
 
 export interface SystemChannelTransport extends ChannelTransport {
     type: 'system';
-    name: string;
-    color: number;
+    visualIdentity: DisplayMetadata;
 }
 
 export interface OpenPayload {
