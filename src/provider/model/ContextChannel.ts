@@ -81,6 +81,6 @@ export class SystemContextChannel extends ContextChannelBase {
     }
 
     public serialize(): SystemChannelTransport {
-        return {visualIdentity: this.visualIdentity, ...super.serialize() as {id: string, type: 'system'}};
+        return {visualIdentity: {...this.visualIdentity}, ...super.serialize() as {id: string, type: 'system'}};
     }
 }

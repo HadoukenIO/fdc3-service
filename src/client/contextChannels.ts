@@ -22,9 +22,7 @@ import {getEventRouter} from './EventRouter';
 export type ChannelId = string;
 
 /**
- * A system channel will be global enough to have a presence across many apps. This gives us some hints
- * to render them in a standard way. It is assumed it may have other properties too, but if it has these,
- * this is their meaning.
+ * Defines the suggested visual appearance of a system channel when presented in an app, for example, as part of a channel selector.
  */
 export interface DisplayMetadata {
     /**
@@ -33,7 +31,7 @@ export interface DisplayMetadata {
     name: string;
 
     /**
-     * The color that should be associated within this channel when displaying this channel in a UI, e.g: `0xFF0000`.
+     * The color that should be associated within this channel when displaying this channel in a UI, e.g: `#FF0000`.
      */
     color: string;
 
