@@ -145,10 +145,7 @@ async function reload(target: Identity): Promise<void> {
 }
 
 async function navigateTo(target: Identity, url: string): Promise<void> {
-    await ofBrowser.executeOnWindow(target, async function (location) {
-        const window = this.fin.Window.getCurrentSync();
-        await window.navigate(location);
-    }, url);
+    await fin.Window.wrapSync(target).navigate(url);
 
     await delay(Duration.PAGE_NAVIGATE);
 }
