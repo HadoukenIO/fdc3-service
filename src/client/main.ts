@@ -4,12 +4,10 @@
 
 import {EventEmitter} from 'events';
 
-import {Identity} from 'openfin/_v2/main';
-
 import {tryServiceDispatch, getServicePromise} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
-import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, EventTransport, ContextPayload} from './internal';
+import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, EventTransport, ReceiveContextPayload} from './internal';
 import {ChannelChangedEvent, getChannelObject, FDC3ChannelEvent, FDC3ChannelEventType} from './contextChannels';
 import {parseContext, validateEnvironment} from './validation';
 import {getEventRouter} from './EventRouter';
@@ -281,7 +279,7 @@ export function addContextListener(handler: (context: Context) => void): Context
  */
 export function addEventListener(eventType: 'channel-changed', handler: (event: ChannelChangedEvent) => void): void;
 
-export function addEventListener(eventType: FDC3MainEventType, handler: (event: FDC3MainEvent) => void, identity?: Identity): void {
+export function addEventListener(eventType: FDC3MainEventType, handler: (event: FDC3MainEvent) => void): void {
     validateEnvironment();
 
     eventEmitter.addListener(eventType, handler);
@@ -316,7 +314,7 @@ if (typeof fin !== 'undefined') {
             });
         });
 
-        channelClient.register(APIToClientTopic.RECEIVE_CONTEXT, (payload: ContextPayload) => {
+        channelClient.register(APIToClientTopic.RECEIVE_CONTEXT, (payload: ReceiveContextPayload) => {
             contextListeners.forEach((listener: ContextListener) => {
                 listener.handler(payload.context);
             });

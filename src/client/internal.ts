@@ -56,9 +56,9 @@ export enum APIFromClientTopic {
  * Enum containing all and only actions that the client can accept.
  */
 export enum APIToClientTopic {
-    RECEIVE_INTENT = 'INTENT',
-    RECEIVE_CONTEXT = 'CONTEXT',
-    HANDLE_CHANNEL_CONTEXT = 'HANDLE-CHANNEL-CONTEXT'
+    RECEIVE_INTENT = 'RECEIVE-INTENT',
+    RECEIVE_CONTEXT = 'RECEIVE-CONTEXT',
+    CHANNEL_RECEIVE_CONTEXT = 'CHANNEL-RECEIVE-CONTEXT'
 }
 
 export type APIFromClient = {
@@ -67,8 +67,8 @@ export type APIFromClient = {
     [APIFromClientTopic.FIND_INTENTS_BY_CONTEXT]: [FindIntentsByContextPayload, AppIntent[]];
     [APIFromClientTopic.BROADCAST]: [BroadcastPayload, void];
     [APIFromClientTopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
-    [APIFromClientTopic.ADD_INTENT_LISTENER]: [IntentListenerPayload, void];
-    [APIFromClientTopic.REMOVE_INTENT_LISTENER]: [IntentListenerPayload, void];
+    [APIFromClientTopic.ADD_INTENT_LISTENER]: [AddIntentListenerPayload, void];
+    [APIFromClientTopic.REMOVE_INTENT_LISTENER]: [RemoveIntentListenerPayload, void];
     [APIFromClientTopic.GET_DESKTOP_CHANNELS]: [GetDesktopChannelsPayload, DesktopChannelTransport[]];
     [APIFromClientTopic.GET_CHANNEL_BY_ID]: [GetChannelByIdPayload, ChannelTransport];
     [APIFromClientTopic.GET_CURRENT_CHANNEL]: [GetCurrentChannelPayload, ChannelTransport];
@@ -83,9 +83,9 @@ export type APIFromClient = {
 }
 
 export type APIToClient = {
-    [APIToClientTopic.RECEIVE_CONTEXT]: [ContextPayload, void];
-    [APIToClientTopic.RECEIVE_INTENT]: [IntentPayload, void];
-    [APIToClientTopic.HANDLE_CHANNEL_CONTEXT]: [HandleChannelContextPayload, void];
+    [APIToClientTopic.RECEIVE_CONTEXT]: [ReceiveContextPayload, void];
+    [APIToClientTopic.RECEIVE_INTENT]: [ReceiveIntentPayload, void];
+    [APIToClientTopic.CHANNEL_RECEIVE_CONTEXT]: [ChannelReceiveContextPayload, void];
 }
 
 export type TransportMappings<T> =
@@ -183,20 +183,24 @@ export interface ChannelRemoveEventListenerPayload {
     eventType: FDC3ChannelEventType;
 }
 
-export interface IntentListenerPayload {
+export interface AddIntentListenerPayload {
     intent: string;
 }
 
-export interface ContextPayload {
+export interface RemoveIntentListenerPayload {
+    intent: string;
+}
+
+export interface ReceiveContextPayload {
     context: Context;
 }
 
-export interface IntentPayload {
+export interface ReceiveIntentPayload {
     intent: string;
     context: Context;
 }
 
-export interface HandleChannelContextPayload {
+export interface ChannelReceiveContextPayload {
     channel: ChannelId,
     context: Context
 }

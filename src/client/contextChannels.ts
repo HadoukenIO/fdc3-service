@@ -10,9 +10,9 @@ import {Identity} from 'openfin/_v2/main';
 
 import {parseIdentity, parseContext, validateEnvironment, parseChannelId} from './validation';
 import {tryServiceDispatch, getServicePromise} from './connection';
-import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, APIToClientTopic, HandleChannelContextPayload, EventTransport} from './internal';
+import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, EventTransport} from './internal';
 import {Context} from './context';
-import {ContextListener, FDC3Event} from './main';
+import {ContextListener} from './main';
 import {getEventRouter} from './EventRouter';
 
 /**
@@ -126,7 +126,7 @@ export interface ChannelChangedEvent {
     previousChannel: Channel|null;
 }
 
-interface ChannelContextListener extends ContextListener {
+export interface ChannelContextListener extends ContextListener {
     channel: Channel;
 }
 
@@ -230,7 +230,7 @@ export abstract class ChannelBase {
      *
      * @param handler Function that should be called whenever a context is broadcast on this channel
      */
-    public async addContextListener(handler: (context: Context) => void): Promise<ContextListener> {
+    public async addContextListener(handler: (context: Context) => void): Promise<ChannelContextListener> {
         validateEnvironment();
 
         const listener: ChannelContextListener = {
@@ -466,7 +466,7 @@ function deserializeWindowRemovedEvent(eventTransport: EventTransport<ChannelWin
 
 if (typeof fin !== 'undefined') {
     getServicePromise().then(channelClient => {
-        channelClient.register(APIToClientTopic.HANDLE_CHANNEL_CONTEXT, (payload: HandleChannelContextPayload) => {
+        channelClient.register(APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, (payload: ChannelReceiveContextPayload) => {
             channelContextListeners.forEach((listener: ChannelContextListener) => {
                 if (listener.channel.id === payload.channel) {
                     listener.handler(payload.context);
