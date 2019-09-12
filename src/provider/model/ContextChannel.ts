@@ -9,7 +9,7 @@ export interface ContextChannel {
     getStoredContext(): Context | null;
     clearStoredContext(): void;
 
-    serialize(): ChannelTransport;
+    serialize(): Readonly<ChannelTransport>;
 }
 
 abstract class ContextChannelBase implements ContextChannel {
