@@ -23,35 +23,53 @@ export const Timeouts = {
     WINDOW_SEEN_TO_REGISTERED: 5000
 };
 
-export const DESKTOP_CHANNELS = [
+export const SYSTEM_CHANNELS = [
     {
         id: 'red',
-        name: 'Red',
-        color: 0xFF0000
+        visualIdentity: {
+            name: 'Red',
+            color: '#FF0000',
+            glyph: 'https://openfin.co/favicon.ico'
+        }
     },
     {
         id: 'orange',
-        name: 'Orange',
-        color: 0xFF8000
+        visualIdentity: {
+            name: 'Orange',
+            color: '#FF8000',
+            glyph: 'https://openfin.co/favicon.ico'
+        }
     },
     {
         id: 'yellow',
-        name: 'Yellow',
-        color: 0xFFFF00
+        visualIdentity: {
+            name: 'Yellow',
+            color: '#FFFF00',
+            glyph: 'https://openfin.co/favicon.ico'
+        }
     },
     {
         id: 'green',
-        name: 'Green',
-        color: 0x00FF00
+        visualIdentity: {
+            name: 'Green',
+            color: '#00FF00',
+            glyph: 'https://openfin.co/favicon.ico'
+        }
     },
     {
         id: 'blue',
-        name: 'Blue',
-        color: 0x0000FF
+        visualIdentity: {
+            name: 'Blue',
+            color: '#0000FF',
+            glyph: 'https://openfin.co/favicon.ico'
+        }
     },
     {
         id: 'purple',
-        name: 'Purple',
-        color: 0xFF00FF
+        visualIdentity: {
+            name: 'Purple',
+            color: '#FF00FF',
+            glyph: 'https://openfin.co/favicon.ico'
+        }
     }
 ];

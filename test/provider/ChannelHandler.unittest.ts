@@ -4,7 +4,7 @@ import {Signal} from 'openfin-service-signal';
 import {ChannelHandler} from '../../src/provider/controller/ChannelHandler';
 import {Model} from '../../src/provider/model/Model';
 import {AppWindow} from '../../src/provider/model/AppWindow';
-import {DesktopContextChannel, ContextChannel} from '../../src/provider/model/ContextChannel';
+import {SystemContextChannel, ContextChannel} from '../../src/provider/model/ContextChannel';
 import {ChannelError} from '../../src/client/main';
 import {createMockChannel, createMockAppWindow} from '../mocks';
 import {PartiallyWritable} from '../types';
@@ -31,21 +31,21 @@ beforeEach(() => {
     });
 });
 
-it('When getting desktop channels, ChannelHandler only returns desktop channels', () => {
+it('When getting system channels, ChannelHandler only returns system channels', () => {
     const testChannels = [
-        {...createMockChannel(), id: 'test-1', type: 'desktop'},
+        {...createMockChannel(), id: 'test-1', type: 'system'},
         {...createMockChannel(), id: 'test-2'},
-        {...createMockChannel(), id: 'test-3', type: 'desktop'}
+        {...createMockChannel(), id: 'test-3', type: 'system'}
     ];
 
     setModelChannels(testChannels);
 
-    expect(channelHandler.getDesktopChannels()).toEqual([testChannels[0], testChannels[2]]);
+    expect(channelHandler.getSystemChannels()).toEqual([testChannels[0], testChannels[2]]);
 });
 
 describe('When geting channel by ID', () => {
     it('If Model returns a channel, ChannelHandler returns the channel', () => {
-        const testChannel = new DesktopContextChannel('test', 'test', 0);
+        const testChannel = new SystemContextChannel('test', {name: 'test', color: '#000000', glyph: ''});
 
         mockModel.getChannel.mockReturnValue(testChannel);
 

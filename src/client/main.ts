@@ -183,8 +183,8 @@ export async function findIntentsByContext(context: Context): Promise<AppIntent[
  *
  * @throws `TypeError`: If `context` is not a valid Context
  */
-export function broadcast(context: Context): void {
-    tryServiceDispatch(APIFromClientTopic.BROADCAST, {context: parseContext(context)});
+export async function broadcast(context: Context): Promise<void> {
+    await tryServiceDispatch(APIFromClientTopic.BROADCAST, {context: parseContext(context)});
 }
 
 /**

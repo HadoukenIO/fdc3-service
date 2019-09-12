@@ -13,11 +13,12 @@ export interface ConfigStoreBinding {
 @injectable()
 export class ConfigStore extends AsyncInit implements ConfigStoreBinding {
     private _store: Store<ConfigurationObject>;
+    private _loader: Loader<ConfigStoreBinding>;
 
     constructor() {
         super();
         this._store = new Store(require('../../../gen/provider/config/defaults.json'));
-        new Loader<ConfigurationObject>(this._store, 'fdc3');
+        this._loader = new Loader<ConfigurationObject>(this._store, 'fdc3');
     }
 
     public get config(): Store<ConfigurationObject> {
@@ -25,10 +26,6 @@ export class ConfigStore extends AsyncInit implements ConfigStoreBinding {
     }
 
     protected async init() {
-        const manifest = await fin.Application.getCurrentSync().getManifest();
-
-        if (manifest.config) {
-            this._store.add({level: 'desktop'}, manifest.config);
-        }
+        await this._loader.initialized;
     }
 }

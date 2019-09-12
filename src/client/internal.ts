@@ -12,7 +12,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution} from './main';
-import {Channel, ChannelId, DefaultChannel, DesktopChannel, FDC3ChannelEventType, ChannelChangedEvent, FDC3ChannelEvent, ChannelBase} from './contextChannels';
+import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase} from './contextChannels';
 import {FDC3Error} from './errors';
 
 /**
@@ -39,7 +39,7 @@ export enum APIFromClientTopic {
     RAISE_INTENT = 'RAISE-INTENT',
     ADD_INTENT_LISTENER = 'ADD-INTENT-LISTENER',
     REMOVE_INTENT_LISTENER = 'REMOVE-INTENT-LISTENER',
-    GET_DESKTOP_CHANNELS = 'GET-DESKTOP-CHANNELS',
+    GET_SYSTEM_CHANNELS = 'GET-SYSTEM-CHANNELS',
     GET_CHANNEL_BY_ID = 'GET-CHANNEL-BY-ID',
     GET_CURRENT_CHANNEL = 'GET-CURRENT-CHANNEL',
     CHANNEL_GET_MEMBERS = 'CHANNEL-GET-MEMBERS',
@@ -69,7 +69,7 @@ export type APIFromClient = {
     [APIFromClientTopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
     [APIFromClientTopic.ADD_INTENT_LISTENER]: [AddIntentListenerPayload, void];
     [APIFromClientTopic.REMOVE_INTENT_LISTENER]: [RemoveIntentListenerPayload, void];
-    [APIFromClientTopic.GET_DESKTOP_CHANNELS]: [GetDesktopChannelsPayload, DesktopChannelTransport[]];
+    [APIFromClientTopic.GET_SYSTEM_CHANNELS]: [GetSystemChannelsPayload, SystemChannelTransport[]];
     [APIFromClientTopic.GET_CHANNEL_BY_ID]: [GetChannelByIdPayload, ChannelTransport];
     [APIFromClientTopic.GET_CURRENT_CHANNEL]: [GetCurrentChannelPayload, ChannelTransport];
     [APIFromClientTopic.CHANNEL_GET_MEMBERS]: [ChannelGetMembersPayload, Identity[]];
@@ -91,20 +91,25 @@ export type APIToClient = {
 /**
  * Defines all events that are fired by the service
  */
-export type Events = MainEvents | FDC3ChannelEvent;
+export type Events = MainEvents | ChannelEvents;
 
 /**
- * Events that can be listened to with the top-level `addEventListener`
+ * Events that can be received through the top-level `addEventListener`
  */
 export type MainEvents = ChannelChangedEvent;
 
+/**
+ * Events that can be received through a channel object
+ */
+export type ChannelEvents = ChannelWindowAddedEvent | ChannelWindowRemovedEvent;
+
 export type TransportMappings<T> =
-    T extends DesktopChannel ? DesktopChannelTransport :
+    T extends SystemChannel ? SystemChannelTransport :
     T extends DefaultChannel ? ChannelTransport :
     T extends ChannelBase ? ChannelTransport :
     never;
 export type TransportMemberMappings<T> =
-    T extends DesktopChannel ? DesktopChannelTransport :
+    T extends SystemChannel ? SystemChannelTransport :
     T extends DefaultChannel ? ChannelTransport :
     T extends ChannelBase ? ChannelTransport :
     T;
@@ -114,10 +119,9 @@ export interface ChannelTransport {
     type: string;
 }
 
-export interface DesktopChannelTransport extends ChannelTransport {
-    type: 'desktop';
-    name: string;
-    color: number;
+export interface SystemChannelTransport extends ChannelTransport {
+    type: 'system';
+    visualIdentity: DisplayMetadata;
 }
 
 export interface OpenPayload {
@@ -144,7 +148,7 @@ export interface RaiseIntentPayload {
     target?: string;
 }
 
-export interface GetDesktopChannelsPayload {
+export interface GetSystemChannelsPayload {
 
 }
 
@@ -184,12 +188,12 @@ export interface ChannelRemoveContextListenerPayload {
 
 export interface ChannelAddEventListenerPayload {
     id: ChannelId;
-    eventType: FDC3ChannelEventType;
+    eventType: ChannelEvents['type'];
 }
 
 export interface ChannelRemoveEventListenerPayload {
     id: ChannelId;
-    eventType: FDC3ChannelEventType;
+    eventType: ChannelEvents['type'];
 }
 
 export interface AddIntentListenerPayload {

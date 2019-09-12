@@ -4,13 +4,14 @@ import {Identity, Window} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {Application, IntentType, ChannelId, FDC3ChannelEventType} from '../../client/main';
+import {Application, IntentType, ChannelId} from '../../client/main';
 import {FDC3Error, OpenError} from '../../client/errors';
 import {withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
 import {parseIdentity} from '../../client/validation';
 import {DeferredPromise} from '../common/DeferredPromise';
-import {Events} from '../../client/internal';
+import {Events, ChannelEvents} from '../../client/internal';
+import {Injector} from '../common/Injector';
 
 import {Environment} from './Environment';
 import {AppWindow} from './AppWindow';
@@ -121,12 +122,16 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     protected async init(): Promise<void> {
-        fin.System.addListener('window-created', (event: WindowEvent<'system', 'window-created'>) => {
-            const identity = {uuid: event.uuid, name: event.name};
+        // Register windows that were running before launching the FDC3 service
+        const windowInfo = await fin.System.getAllWindows();
 
+        fin.System.addListener('window-created', async (event: WindowEvent<'system', 'window-created'>) => {
+            await Injector.initialized;
+            const identity = {uuid: event.uuid, name: event.name};
             this.registerWindow(identity, Date.now());
         });
-        fin.System.addListener('window-closed', (event: WindowEvent<'system', 'window-closed'>) => {
+        fin.System.addListener('window-closed', async (event: WindowEvent<'system', 'window-closed'>) => {
+            await Injector.initialized;
             const identity = {uuid: event.uuid, name: event.name};
 
             delete this._seenWindows[getId(identity)];
@@ -134,14 +139,14 @@ export class FinEnvironment extends AsyncInit implements Environment {
             this.windowClosed.emit(identity);
         });
 
-        // Register windows that were running before launching the FDC3 service
-        const windowInfo = await fin.System.getAllWindows();
+        // No await here otherwise the injector will never properly initialize - The injector awaits this init before completion!
+        Injector.initialized.then(async () => {
+            windowInfo.forEach(info => {
+                const {uuid, mainWindow, childWindows} = info;
 
-        windowInfo.forEach(info => {
-            const {uuid, mainWindow, childWindows} = info;
-
-            this.registerWindow({uuid, name: mainWindow.name}, undefined);
-            childWindows.forEach(child => this.registerWindow({uuid, name: child.name}, undefined));
+                this.registerWindow({uuid, name: mainWindow.name}, undefined);
+                childWindows.forEach(child => this.registerWindow({uuid, name: child.name}, undefined));
+            });
         });
     }
 
@@ -255,11 +260,11 @@ class FinAppWindow implements AppWindow {
         this._channelContextListeners.delete(channel.id);
     }
 
-    public hasChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): boolean {
+    public hasChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): boolean {
         return this._channelEventListeners.has(channel.id) && (this._channelEventListeners.get(channel.id)!.has(eventType));
     }
 
-    public addChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void {
+    public addChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): void {
         if (!this._channelEventListeners.has(channel.id)) {
             this._channelEventListeners.set(channel.id, new Set());
         }
@@ -267,7 +272,7 @@ class FinAppWindow implements AppWindow {
         this._channelEventListeners.get(channel.id)!.add(eventType);
     }
 
-    public removeChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void {
+    public removeChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): void {
         if (this._channelEventListeners.has(channel.id)) {
             const events = this._channelEventListeners.get(channel.id)!;
             events.delete(eventType);

@@ -259,7 +259,7 @@ class ContextMenu {
 
 let contextMenu: ContextMenu;
 
-window.onunload = async (event) => {
+window.onunload = async (event: Event) => {
     await contextMenu.destroy();
 };
 
