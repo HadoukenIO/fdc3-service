@@ -9,11 +9,11 @@ import {EventEmitter} from 'events';
 import {Identity} from 'openfin/_v2/main';
 
 import {parseIdentity, parseContext, validateEnvironment, parseChannelId} from './validation';
-import {tryServiceDispatch, getServicePromise} from './connection';
-import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, EventTransport} from './internal';
+import {tryServiceDispatch, getEventRouter, getServicePromise} from './connection';
+import {APIFromClientTopic, DesktopChannelTransport, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload} from './internal';
 import {Context} from './context';
 import {ContextListener} from './main';
-import {getEventRouter} from './EventRouter';
+import {Transport} from './EventRouter';
 
 /**
  * Type used to identify specific Channels. Though simply an alias of `string`, use of this type indicates usage of the string
@@ -448,7 +448,7 @@ function hasChannelContextListener(id: ChannelId): boolean {
     return channelContextListeners.some(listener => listener.channel.id === id);
 }
 
-function deserializeWindowAddedEvent(eventTransport: EventTransport<ChannelWindowAddedEvent>): ChannelWindowAddedEvent {
+function deserializeWindowAddedEvent(eventTransport: Transport<ChannelWindowAddedEvent>): ChannelWindowAddedEvent {
     const identity = eventTransport.identity;
     const channel = getChannelObject(eventTransport.channel!);
     const previousChannel = eventTransport.previousChannel ? getChannelObject(eventTransport.previousChannel) : null;
@@ -456,7 +456,7 @@ function deserializeWindowAddedEvent(eventTransport: EventTransport<ChannelWindo
     return {type: 'window-added', identity, channel, previousChannel};
 }
 
-function deserializeWindowRemovedEvent(eventTransport: EventTransport<ChannelWindowRemovedEvent>): ChannelWindowRemovedEvent {
+function deserializeWindowRemovedEvent(eventTransport: Transport<ChannelWindowRemovedEvent>): ChannelWindowRemovedEvent {
     const identity = eventTransport.identity;
     const channel = eventTransport.channel ? getChannelObject(eventTransport.channel) : null;
     const previousChannel = getChannelObject(eventTransport.previousChannel!);

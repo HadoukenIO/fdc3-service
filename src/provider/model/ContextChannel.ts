@@ -1,5 +1,6 @@
 import {ChannelTransport, DesktopChannelTransport} from '../../client/internal';
-import {ChannelId, Context} from '../../client/main';
+import {ChannelId, Context, Channel, DesktopChannel, DefaultChannel, ChannelBase} from '../../client/main';
+import {Transport} from '../../client/EventRouter';
 
 export interface ContextChannel {
     readonly id: ChannelId;
@@ -9,7 +10,7 @@ export interface ContextChannel {
     getStoredContext(): Context | null;
     clearStoredContext(): void;
 
-    serialize(): ChannelTransport;
+    serialize(): Transport<Channel>;
 }
 
 abstract class ContextChannelBase implements ContextChannel {
@@ -25,7 +26,7 @@ abstract class ContextChannelBase implements ContextChannel {
     public abstract setLastBroadcastContext(context: Context): void;
     public abstract clearStoredContext(): void;
 
-    public serialize(): ChannelTransport {
+    public serialize(): Transport<ChannelBase> {
         return {
             id: this.id,
             type: this.type
@@ -51,6 +52,13 @@ export class DefaultContextChannel extends ContextChannelBase {
     public clearStoredContext(): void {
 
     }
+
+    // public serialize(): Transport<DefaultChannel> {
+    //     return {
+    //         id: this.id,
+    //         type: this.type
+    //     };
+    // }
 }
 
 export class DesktopContextChannel extends ContextChannelBase {
@@ -81,7 +89,8 @@ export class DesktopContextChannel extends ContextChannelBase {
         this._context = null;
     }
 
-    public serialize(): DesktopChannelTransport {
-        return {name: this.name, color: this.color, ...super.serialize() as {id: string, type: 'desktop'}};
+    public serialize(): Transport<DesktopChannel> {
+        const base: ChannelTransport = super.serialize();
+        return {...base, type: this.type, name: this.name, color: this.color};
     }
 }

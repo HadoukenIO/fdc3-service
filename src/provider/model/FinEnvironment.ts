@@ -4,12 +4,13 @@ import {Identity, Window} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {Application, IntentType, ChannelId, FDC3ChannelEventType, FDC3EventType} from '../../client/main';
+import {Application, IntentType, ChannelId, FDC3ChannelEventType} from '../../client/main';
 import {FDC3Error, OpenError} from '../../client/errors';
 import {withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
 import {parseIdentity} from '../../client/validation';
 import {DeferredPromise} from '../common/DeferredPromise';
+import {Events} from '../../client/internal';
 
 import {Environment} from './Environment';
 import {AppWindow} from './AppWindow';
@@ -25,7 +26,7 @@ type IntentMap = Set<string>;
 
 type ContextMap = Set<string>;
 
-type ChannelEventMap = Map<string, Set<FDC3EventType>>;
+type ChannelEventMap = Map<string, Set<Events['type']>>;
 
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {

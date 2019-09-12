@@ -11,8 +11,8 @@
 import {Identity} from 'openfin/_v2/main';
 
 import {AppName} from './directory';
-import {AppIntent, Context, IntentResolution, FDC3Event} from './main';
-import {Channel, ChannelId, DefaultChannel, DesktopChannel, FDC3ChannelEventType} from './contextChannels';
+import {AppIntent, Context, IntentResolution} from './main';
+import {Channel, ChannelId, DefaultChannel, DesktopChannel, FDC3ChannelEventType, ChannelChangedEvent, FDC3ChannelEvent, ChannelBase} from './contextChannels';
 import {FDC3Error} from './errors';
 
 /**
@@ -88,17 +88,26 @@ export type APIToClient = {
     [APIToClientTopic.CHANNEL_RECEIVE_CONTEXT]: [ChannelReceiveContextPayload, void];
 }
 
+/**
+ * Defines all events that are fired by the service
+ */
+export type Events = MainEvents | FDC3ChannelEvent;
+
+/**
+ * Events that can be listened to with the top-level `addEventListener`
+ */
+export type MainEvents = ChannelChangedEvent;
+
 export type TransportMappings<T> =
     T extends DesktopChannel ? DesktopChannelTransport :
     T extends DefaultChannel ? ChannelTransport :
-    T extends Channel ? ChannelTransport :
+    T extends ChannelBase ? ChannelTransport :
+    never;
+export type TransportMemberMappings<T> =
+    T extends DesktopChannel ? DesktopChannelTransport :
+    T extends DefaultChannel ? ChannelTransport :
+    T extends ChannelBase ? ChannelTransport :
     T;
-
-export type EventTransport<T extends FDC3Event> = {
-    [K in keyof T]: TransportMappings<T[K]>;
-} & {
-    target: {type: string, id: string}
-};
 
 export interface ChannelTransport {
     id: ChannelId;
