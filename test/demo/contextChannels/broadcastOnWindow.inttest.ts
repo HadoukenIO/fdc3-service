@@ -104,8 +104,8 @@ describe('When broadcasting on default channel', () => {
     }, appStartupTime * 2);
 });
 
-describe('When broadcasting on a desktop channel', () => {
-    test('Context is received by windows on that desktop channel only', async () => {
+describe('When broadcasting on a system channel', () => {
+    test('Context is received by windows on that system channel only', async () => {
         const [redBroadcastingWindow, redListeningWindow, defaultWindow, blueWindow] = await setupWindows('red', 'red', 'default', 'blue');
 
         const redListener = await fdc3Remote.addContextListener(redListeningWindow);
@@ -125,7 +125,7 @@ describe('When broadcasting on a desktop channel', () => {
         await expect(blueListener).toHaveReceivedContexts([]);
     }, appStartupTime * 4);
 
-    test('Context is received by window that has left and rejoined desktop channel', async () => {
+    test('Context is received by window that has left and rejoined system channel', async () => {
         const [blueWindow, channelChangingWindow] = await setupWindows('blue', undefined);
 
         // Change the channel of our window
@@ -155,7 +155,7 @@ describe('When broadcasting on a desktop channel', () => {
 });
 
 describe('When adding a context listener', () => {
-    test('A context is received when joining a desktop channel that has been broadcast on and has remained occupied', async () => {
+    test('A context is received when joining a system channel that has been broadcast on and has remained occupied', async () => {
         const [yellowWindow, channelChangingWindow] = await setupWindows('yellow', 'red');
 
         // Broadcast our test context on the yellow channel to give the channel a cached context
@@ -187,7 +187,7 @@ describe('When adding a context listener', () => {
         await expect(channelChangingWindowListener).toHaveReceivedContexts([]);
     });
 
-    test('No context is received when joining a desktop channel that has been emptied since last being broadcast on', async () => {
+    test('No context is received when joining a system channel that has been emptied since last being broadcast on', async () => {
         const [broadcastingWindow, listeningWindow] = await setupWindows('green', 'yellow');
 
         // Broadcast to the currently occupied green channel, setting a cached context

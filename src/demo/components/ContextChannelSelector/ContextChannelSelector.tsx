@@ -1,7 +1,6 @@
 import * as React from 'react';
-import {Identity} from 'openfin/_v2/main';
 
-import {Channel, defaultChannel, getCurrentChannel, getDesktopChannels, DesktopChannel} from '../../../client/contextChannels';
+import {Channel, defaultChannel, getCurrentChannel, getSystemChannels, SystemChannel} from '../../../client/contextChannels';
 
 import {ContextChannelView} from './ChannelMemberView';
 
@@ -26,7 +25,7 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
         getCurrentChannel().then(channel => {
             setCurrentChannel(channel);
         });
-        getDesktopChannels().then(channels => {
+        getSystemChannels().then(channels => {
             setChannels([defaultChannel, ...channels]);
         });
     }, []);
@@ -59,7 +58,7 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
                                     key={channel.id + index}
                                     value={channel.id}
                                 >
-                                    {(channel as DesktopChannel).name || 'Default'}
+                                    {channel.type === 'system' ? channel.visualIdentity.name : 'Default'}
                                 </option>
                             );
                         })

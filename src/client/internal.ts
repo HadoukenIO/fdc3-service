@@ -12,7 +12,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution, FDC3Event} from './main';
-import {Channel, ChannelId, DefaultChannel, DesktopChannel, FDC3ChannelEventType} from './contextChannels';
+import {Channel, ChannelId, DefaultChannel, SystemChannel, FDC3ChannelEventType, DisplayMetadata} from './contextChannels';
 import {FDC3Error} from './errors';
 
 /**
@@ -39,7 +39,7 @@ export enum APIFromClientTopic {
     RAISE_INTENT = 'RAISE-INTENT',
     ADD_INTENT_LISTENER = 'ADD-INTENT-LISTENER',
     REMOVE_INTENT_LISTENER = 'REMOVE-INTENT-LISTENER',
-    GET_DESKTOP_CHANNELS = 'GET-DESKTOP-CHANNELS',
+    GET_SYSTEM_CHANNELS = 'GET-SYSTEM-CHANNELS',
     GET_CHANNEL_BY_ID = 'GET-CHANNEL-BY-ID',
     GET_CURRENT_CHANNEL = 'GET-CURRENT-CHANNEL',
     CHANNEL_GET_MEMBERS = 'CHANNEL-GET-MEMBERS',
@@ -70,7 +70,7 @@ export type APIFromClient = {
     [APIFromClientTopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
     [APIFromClientTopic.ADD_INTENT_LISTENER]: [IntentListenerPayload, void];
     [APIFromClientTopic.REMOVE_INTENT_LISTENER]: [IntentListenerPayload, void];
-    [APIFromClientTopic.GET_DESKTOP_CHANNELS]: [GetDesktopChannelsPayload, DesktopChannelTransport[]];
+    [APIFromClientTopic.GET_SYSTEM_CHANNELS]: [GetSystemChannelsPayload, SystemChannelTransport[]];
     [APIFromClientTopic.GET_CHANNEL_BY_ID]: [GetChannelByIdPayload, ChannelTransport];
     [APIFromClientTopic.GET_CURRENT_CHANNEL]: [GetCurrentChannelPayload, ChannelTransport];
     [APIFromClientTopic.CHANNEL_GET_MEMBERS]: [ChannelGetMembersPayload, Identity[]];
@@ -90,7 +90,7 @@ export type APIToClient = {
 }
 
 export type TransportMappings<T> =
-    T extends DesktopChannel ? DesktopChannelTransport :
+    T extends SystemChannel ? SystemChannelTransport :
     T extends DefaultChannel ? ChannelTransport :
     T extends Channel ? ChannelTransport :
     T;
@@ -106,10 +106,9 @@ export interface ChannelTransport {
     type: string;
 }
 
-export interface DesktopChannelTransport extends ChannelTransport {
-    type: 'desktop';
-    name: string;
-    color: number;
+export interface SystemChannelTransport extends ChannelTransport {
+    type: 'system';
+    visualIdentity: DisplayMetadata;
 }
 
 export interface OpenPayload {
@@ -136,7 +135,7 @@ export interface RaiseIntentPayload {
     target?: string;
 }
 
-export interface GetDesktopChannelsPayload {
+export interface GetSystemChannelsPayload {
 
 }
 

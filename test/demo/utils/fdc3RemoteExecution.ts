@@ -61,7 +61,7 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
     return ofBrowser
         .executeOnWindow(
             executionTarget,
-            function(this: TestWindowContext, context: Context): void {
+            async function(this: TestWindowContext, context: Context): Promise<void> {
                 return this.fdc3.broadcast(context);
             },
             context
@@ -216,9 +216,9 @@ export async function clickHTMLElement(executionTarget: Identity, elementSelecto
     }, elementSelector);
 }
 
-export async function getDesktopChannels(executionTarget: Identity): Promise<RemoteChannel[]> {
+export async function getSystemChannels(executionTarget: Identity): Promise<RemoteChannel[]> {
     const channels = await ofBrowser.executeOnWindow(executionTarget, async function(this: TestWindowContext): Promise<TestChannelTransport[]> {
-        const channels = await this.fdc3.getDesktopChannels().catch(this.errorHandler);
+        const channels = await this.fdc3.getSystemChannels().catch(this.errorHandler);
 
         return channels.map(this.serializeChannel);
     }).catch(handlePuppeteerError);

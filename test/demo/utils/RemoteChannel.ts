@@ -1,6 +1,6 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {Channel, DefaultChannel, DesktopChannel, Context, FDC3ChannelEvent, FDC3ChannelEventType} from '../../../src/client/main';
+import {Channel, DefaultChannel, SystemChannel, Context, FDC3ChannelEvent, FDC3ChannelEventType} from '../../../src/client/main';
 
 import {RemoteContextListener, ofBrowser, handlePuppeteerError, createRemoteContextListener} from './fdc3RemoteExecution';
 import {TestChannelTransport, TestWindowContext} from './ofPuppeteer';
@@ -28,8 +28,8 @@ export class RemoteChannel {
             case 'DefaultChannel':
                 Object.setPrototypeOf(this.channel, DefaultChannel);
                 break;
-            case 'DesktopChannel':
-                Object.setPrototypeOf(this.channel, DesktopChannel);
+            case 'SystemChannel':
+                Object.setPrototypeOf(this.channel, SystemChannel);
                 break;
             default:
                 throw new Error(`Unexpected channel constructor received: ${transport.constructor}`);
