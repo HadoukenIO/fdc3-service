@@ -345,7 +345,7 @@ export class SystemChannel extends ChannelBase {
     public readonly type!: 'system';
 
     /**
-     * SystemChannels may well be selectable by users. Here are the hints on how to see them.
+     * How a client application should present this channel in any UI
      */
     public readonly visualIdentity: DisplayMetadata;
 

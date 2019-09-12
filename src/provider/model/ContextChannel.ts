@@ -25,7 +25,7 @@ abstract class ContextChannelBase implements ContextChannel {
     public abstract setLastBroadcastContext(context: Context): void;
     public abstract clearStoredContext(): void;
 
-    public serialize(): ChannelTransport {
+    public serialize(): Readonly<ChannelTransport> {
         return {
             id: this.id,
             type: this.type
@@ -80,7 +80,7 @@ export class SystemContextChannel extends ContextChannelBase {
         this._context = null;
     }
 
-    public serialize(): SystemChannelTransport {
-        return {visualIdentity: {...this.visualIdentity}, ...super.serialize() as {id: string, type: 'system'}};
+    public serialize(): Readonly<SystemChannelTransport> {
+        return {visualIdentity: this.visualIdentity, ...super.serialize() as {id: string, type: 'system'}};
     }
 }
