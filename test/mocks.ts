@@ -2,9 +2,9 @@ import {Signal} from 'openfin-service-signal';
 import {Identity} from 'openfin/_v2/main';
 
 import {AppWindow} from '../src/provider/model/AppWindow';
-import {IntentType, Context, FDC3ChannelEventType, Application, IdentityError} from '../src/client/main';
+import {IntentType, Context, Application} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
-import {ChannelTransport} from '../src/client/internal';
+import {ChannelTransport, ChannelEvents} from '../src/client/internal';
 import {Environment} from '../src/provider/model/Environment';
 
 /**
@@ -25,9 +25,9 @@ export function createMockAppWindow(): jest.Mocked<AppWindow> {
         hasChannelContextListener: jest.fn<boolean, [ContextChannel]>(),
         addChannelContextListener: jest.fn<void, [ContextChannel]>(),
         removeChannelContextListener: jest.fn<void, [ContextChannel]>(),
-        hasChannelEventListener: jest.fn<boolean, [ContextChannel, FDC3ChannelEventType]>(),
-        addChannelEventListener: jest.fn<void, [ContextChannel, FDC3ChannelEventType]>(),
-        removeChannelEventListener: jest.fn<void, [ContextChannel, FDC3ChannelEventType]>(),
+        hasChannelEventListener: jest.fn<boolean, [ContextChannel, ChannelEvents['type']]>(),
+        addChannelEventListener: jest.fn<void, [ContextChannel, ChannelEvents['type']]>(),
+        removeChannelEventListener: jest.fn<void, [ContextChannel, ChannelEvents['type']]>(),
         bringToFront: jest.fn<Promise<void>, []>(),
         focus: jest.fn<Promise<void>, []>(),
         isReadyToReceiveIntent: jest.fn<Promise<boolean>, [IntentType]>(),

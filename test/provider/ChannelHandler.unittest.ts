@@ -45,7 +45,7 @@ it('When getting system channels, ChannelHandler only returns system channels', 
 
 describe('When geting channel by ID', () => {
     it('If Model returns a channel, ChannelHandler returns the channel', () => {
-        const testChannel = new SystemContextChannel('test', 'test', 0);
+        const testChannel = new SystemContextChannel('test', {name: 'test', color: '#000000', glyph: ''});
 
         mockModel.getChannel.mockReturnValue(testChannel);
 

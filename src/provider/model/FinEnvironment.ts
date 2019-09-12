@@ -4,12 +4,13 @@ import {Identity, Window} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {Application, IntentType, ChannelId, FDC3ChannelEventType, FDC3EventType} from '../../client/main';
+import {Application, IntentType, ChannelId} from '../../client/main';
 import {FDC3Error, OpenError} from '../../client/errors';
 import {withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
 import {parseIdentity} from '../../client/validation';
 import {DeferredPromise} from '../common/DeferredPromise';
+import {Events, ChannelEvents} from '../../client/internal';
 import {Injector} from '../common/Injector';
 
 import {Environment} from './Environment';
@@ -26,7 +27,7 @@ type IntentMap = Set<string>;
 
 type ContextMap = Set<string>;
 
-type ChannelEventMap = Map<string, Set<FDC3EventType>>;
+type ChannelEventMap = Map<string, Set<Events['type']>>;
 
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
@@ -259,11 +260,11 @@ class FinAppWindow implements AppWindow {
         this._channelContextListeners.delete(channel.id);
     }
 
-    public hasChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): boolean {
+    public hasChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): boolean {
         return this._channelEventListeners.has(channel.id) && (this._channelEventListeners.get(channel.id)!.has(eventType));
     }
 
-    public addChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void {
+    public addChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): void {
         if (!this._channelEventListeners.has(channel.id)) {
             this._channelEventListeners.set(channel.id, new Set());
         }
@@ -271,7 +272,7 @@ class FinAppWindow implements AppWindow {
         this._channelEventListeners.get(channel.id)!.add(eventType);
     }
 
-    public removeChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void {
+    public removeChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): void {
         if (this._channelEventListeners.has(channel.id)) {
             const events = this._channelEventListeners.get(channel.id)!;
             events.delete(eventType);

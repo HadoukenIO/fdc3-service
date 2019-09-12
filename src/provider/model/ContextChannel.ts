@@ -1,5 +1,5 @@
-import {ChannelTransport, SystemChannelTransport} from '../../client/internal';
-import {ChannelId, Context, DisplayMetadata} from '../../client/main';
+import {ChannelId, Context, DisplayMetadata, Channel, ChannelBase, SystemChannel} from '../../client/main';
+import {Transport} from '../../client/EventRouter';
 
 export interface ContextChannel {
     readonly id: ChannelId;
@@ -9,7 +9,7 @@ export interface ContextChannel {
     getStoredContext(): Context | null;
     clearStoredContext(): void;
 
-    serialize(): Readonly<ChannelTransport>;
+    serialize(): Readonly<Transport<Channel>>;
 }
 
 abstract class ContextChannelBase implements ContextChannel {
@@ -25,7 +25,7 @@ abstract class ContextChannelBase implements ContextChannel {
     public abstract setLastBroadcastContext(context: Context): void;
     public abstract clearStoredContext(): void;
 
-    public serialize(): Readonly<ChannelTransport> {
+    public serialize(): Readonly<Transport<ChannelBase>> {
         return {
             id: this.id,
             type: this.type
@@ -45,11 +45,9 @@ export class DefaultContextChannel extends ContextChannelBase {
     }
 
     public setLastBroadcastContext(context: Context) {
-
     }
 
     public clearStoredContext(): void {
-
     }
 }
 
@@ -80,7 +78,11 @@ export class SystemContextChannel extends ContextChannelBase {
         this._context = null;
     }
 
-    public serialize(): Readonly<SystemChannelTransport> {
-        return {visualIdentity: this.visualIdentity, ...super.serialize() as {id: string, type: 'system'}};
+    public serialize(): Readonly<Transport<SystemChannel>> {
+        return {
+            ...super.serialize(),
+            type: this.type,
+            visualIdentity: this.visualIdentity
+        };
     }
 }

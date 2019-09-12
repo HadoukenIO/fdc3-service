@@ -3,7 +3,7 @@ import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload} from '../client/internal';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Intent, Context} from '../client/main';
 import {FDC3Error, OpenError, IdentityError} from '../client/errors';
 import {parseIdentity, parseContext, parseChannelId} from '../client/validation';
@@ -164,13 +164,13 @@ export class Main {
         return this._intentHandler.raise(intent);
     }
 
-    private async addIntentListener(payload: IntentListenerPayload, source: ProviderIdentity): Promise<void> {
+    private async addIntentListener(payload: AddIntentListenerPayload, source: ProviderIdentity): Promise<void> {
         const appWindow = await this.expectWindow(source);
 
         appWindow.addIntentListener(payload.intent);
     }
 
-    private removeIntentListener(payload: IntentListenerPayload, source: ProviderIdentity): void {
+    private removeIntentListener(payload: RemoveIntentListenerPayload, source: ProviderIdentity): void {
         const appWindow = this.attemptGetWindow(source);
         if (appWindow) {
             appWindow.removeIntentListener(payload.intent);

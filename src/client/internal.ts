@@ -11,8 +11,8 @@
 import {Identity} from 'openfin/_v2/main';
 
 import {AppName} from './directory';
-import {AppIntent, Context, IntentResolution, FDC3Event} from './main';
-import {Channel, ChannelId, DefaultChannel, SystemChannel, FDC3ChannelEventType, DisplayMetadata} from './contextChannels';
+import {AppIntent, Context, IntentResolution} from './main';
+import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase} from './contextChannels';
 import {FDC3Error} from './errors';
 
 /**
@@ -56,10 +56,9 @@ export enum APIFromClientTopic {
  * Enum containing all and only actions that the client can accept.
  */
 export enum APIToClientTopic {
-    // TODO: When we're ready to make a breaking change, rename `INTENT` and `CONTEXT` to something more descriptive (SERVICE-533)
-    INTENT = 'INTENT',
-    CONTEXT = 'CONTEXT',
-    HANDLE_CHANNEL_CONTEXT = 'HANDLE-CHANNEL-CONTEXT'
+    RECEIVE_INTENT = 'RECEIVE-INTENT',
+    RECEIVE_CONTEXT = 'RECEIVE-CONTEXT',
+    CHANNEL_RECEIVE_CONTEXT = 'CHANNEL-RECEIVE-CONTEXT'
 }
 
 export type APIFromClient = {
@@ -68,8 +67,8 @@ export type APIFromClient = {
     [APIFromClientTopic.FIND_INTENTS_BY_CONTEXT]: [FindIntentsByContextPayload, AppIntent[]];
     [APIFromClientTopic.BROADCAST]: [BroadcastPayload, void];
     [APIFromClientTopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
-    [APIFromClientTopic.ADD_INTENT_LISTENER]: [IntentListenerPayload, void];
-    [APIFromClientTopic.REMOVE_INTENT_LISTENER]: [IntentListenerPayload, void];
+    [APIFromClientTopic.ADD_INTENT_LISTENER]: [AddIntentListenerPayload, void];
+    [APIFromClientTopic.REMOVE_INTENT_LISTENER]: [RemoveIntentListenerPayload, void];
     [APIFromClientTopic.GET_SYSTEM_CHANNELS]: [GetSystemChannelsPayload, SystemChannelTransport[]];
     [APIFromClientTopic.GET_CHANNEL_BY_ID]: [GetChannelByIdPayload, ChannelTransport];
     [APIFromClientTopic.GET_CURRENT_CHANNEL]: [GetCurrentChannelPayload, ChannelTransport];
@@ -84,22 +83,36 @@ export type APIFromClient = {
 }
 
 export type APIToClient = {
-    [APIToClientTopic.CONTEXT]: [ContextPayload, void];
-    [APIToClientTopic.INTENT]: [IntentPayload, void];
-    [APIToClientTopic.HANDLE_CHANNEL_CONTEXT]: [HandleChannelContextPayload, void];
+    [APIToClientTopic.RECEIVE_CONTEXT]: [ReceiveContextPayload, void];
+    [APIToClientTopic.RECEIVE_INTENT]: [ReceiveIntentPayload, void];
+    [APIToClientTopic.CHANNEL_RECEIVE_CONTEXT]: [ChannelReceiveContextPayload, void];
 }
+
+/**
+ * Defines all events that are fired by the service
+ */
+export type Events = MainEvents | ChannelEvents;
+
+/**
+ * Events that can be received through the top-level `addEventListener`
+ */
+export type MainEvents = ChannelChangedEvent;
+
+/**
+ * Events that can be received through a channel object
+ */
+export type ChannelEvents = ChannelWindowAddedEvent | ChannelWindowRemovedEvent;
 
 export type TransportMappings<T> =
     T extends SystemChannel ? SystemChannelTransport :
     T extends DefaultChannel ? ChannelTransport :
-    T extends Channel ? ChannelTransport :
+    T extends ChannelBase ? ChannelTransport :
+    never;
+export type TransportMemberMappings<T> =
+    T extends SystemChannel ? SystemChannelTransport :
+    T extends DefaultChannel ? ChannelTransport :
+    T extends ChannelBase ? ChannelTransport :
     T;
-
-export type EventTransport<T extends FDC3Event> = {
-    [K in keyof T]: TransportMappings<T[K]>;
-} & {
-    target: {type: string, id: string}
-};
 
 export interface ChannelTransport {
     id: ChannelId;
@@ -175,28 +188,32 @@ export interface ChannelRemoveContextListenerPayload {
 
 export interface ChannelAddEventListenerPayload {
     id: ChannelId;
-    eventType: FDC3ChannelEventType;
+    eventType: ChannelEvents['type'];
 }
 
 export interface ChannelRemoveEventListenerPayload {
     id: ChannelId;
-    eventType: FDC3ChannelEventType;
+    eventType: ChannelEvents['type'];
 }
 
-export interface IntentListenerPayload {
+export interface AddIntentListenerPayload {
     intent: string;
 }
 
-export interface ContextPayload {
+export interface RemoveIntentListenerPayload {
+    intent: string;
+}
+
+export interface ReceiveContextPayload {
     context: Context;
 }
 
-export interface IntentPayload {
+export interface ReceiveIntentPayload {
     intent: string;
     context: Context;
 }
 
-export interface HandleChannelContextPayload {
+export interface ChannelReceiveContextPayload {
     channel: ChannelId,
     context: Context
 }

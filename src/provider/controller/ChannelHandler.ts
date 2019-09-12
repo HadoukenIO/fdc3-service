@@ -3,9 +3,10 @@ import {Signal} from 'openfin-service-signal';
 
 import {Model} from '../model/Model';
 import {Inject} from '../common/Injectables';
-import {ChannelId, FDC3Error, ChannelError, Context, FDC3ChannelEventType} from '../../client/main';
+import {ChannelId, FDC3Error, ChannelError, Context} from '../../client/main';
 import {SystemContextChannel, ContextChannel} from '../model/ContextChannel';
 import {AppWindow} from '../model/AppWindow';
+import {ChannelEvents} from '../../client/internal';
 
 @injectable()
 export class ChannelHandler {
@@ -52,7 +53,7 @@ export class ChannelHandler {
         return this._model.windows.filter(window => window.hasChannelContextListener(channel));
     }
 
-    public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: FDC3ChannelEventType): AppWindow[] {
+    public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: ChannelEvents['type']): AppWindow[] {
         return this._model.windows.filter(window => window.hasChannelEventListener(channel, eventType));
     }
 

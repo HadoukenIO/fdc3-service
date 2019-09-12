@@ -11,9 +11,12 @@
  * These types are a part of the client, but are not required by applications wishing to interact with the service.
  * This file is excluded from the public-facing TypeScript documentation.
  */
+import {EventEmitter} from 'events';
+
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
-import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient, deserializeError} from './internal';
+import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient, deserializeError, Events} from './internal';
+import {EventRouter} from './EventRouter';
 
 /**
  * The version of the NPM package.
@@ -21,6 +24,20 @@ import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient, de
  * Webpack replaces any instances of this constant with a hard-coded string at build time.
  */
 declare const PACKAGE_VERSION: string;
+
+/**
+ * The event emitter to emit events received from the service.  All addEventListeners will tap into this.
+ */
+export const eventEmitter = new EventEmitter();
+let eventRouter: EventRouter<Events>|null;
+
+export function getEventRouter(): EventRouter<Events> {
+    if (!eventRouter) {
+        eventRouter = new EventRouter(eventEmitter);
+    }
+
+    return eventRouter;
+}
 
 /**
  * Promise to the channel object that allows us to connect to the client
