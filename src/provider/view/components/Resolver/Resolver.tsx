@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-import {Application} from '../../../client/directory';
-import {ResolverArgs, ResolverResult} from '../../controller/ResolverHandler';
+import {Application} from '../../../../client/directory';
+import {ResolverArgs, ResolverResult} from '../../../controller/ResolverHandler';
+import {AppList} from '../AppList/AppList';
 
-import {AppList} from './AppList';
-
-import './Resolver.css';
+import '../../styles/_main.scss';
+import './Resolver.scss';
 
 let sendSuccess: (result: {app: Application}) => void;
 let sendError: (result: string) => void;
@@ -37,15 +37,15 @@ export function Resolver(): React.ReactElement {
     }, []);
 
     return (
-        <div id="container">
-            <div id="header">
+        <div className="container">
+            <div className="header">
                 <h1>{intent}</h1>
-                <div id="exit" onClick={handleCancel}>
+                <div className="exit" onClick={handleCancel}>
                     <img src="assets/exit.png" />
                 </div>
             </div>
-            <AppList applications={applications} onAppOpen={handleAppOpen}/>
-            <div id="cancel" onClick={handleCancel}>
+            <AppList applications={applications} onAppOpen={handleAppOpen} />
+            <div className="cancel" onClick={handleCancel}>
                 <h1>Cancel</h1>
             </div>
         </div>
