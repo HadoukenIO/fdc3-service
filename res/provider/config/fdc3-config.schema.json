@@ -132,7 +132,7 @@
             "properties": {
                 "applicationDirectory": {
                     "type": "string",
-                    "default": "https://app-directory.openfin.co/api/v1/apps/",
+                    "default": "",
                     "description": "The default location of the application directory"
                 }
             },
