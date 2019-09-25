@@ -15,7 +15,7 @@ export const Timeouts = {
     /**
      * Time service allows for a `window-created` event after a client expects the window to exist
      */
-    WINDOW_EXPECT_TO_SEEN: 100,
+    WINDOW_EXPECT_TO_SEEN: 250,
 
     /**
      * Time service allows for a window to go from first seen to being fully registered with the model
