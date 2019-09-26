@@ -34,9 +34,7 @@
     "url": "https://github.com/HadoukenIO/fdc3-service/issues"
   },
   "homepage": "https://github.com/HadoukenIO/fdc3-service#readme",
-  "dependencies": {
-    "eslint": "^6.4.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/mkdirp": "^0.5.2",
     "@types/node-fetch": "^2.1.6",
