@@ -13,7 +13,7 @@ import {DeferredPromise} from '../common/DeferredPromise';
 import {Events, ChannelEvents} from '../../client/internal';
 import {Injector} from '../common/Injector';
 
-import {Environment} from './Environment';
+import {Environment, EntityType} from './Environment';
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 import {getId} from './Model';
@@ -77,7 +77,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
         identity = parseIdentity(identity);
         const id = getId(identity);
 
-        const {creationTime, index} = this._seenWindows[id];
+        const seenWindow = this._seenWindows[id] || {creationTime: 0, index: this._windowsCreated++};
+        const {creationTime, index} = seenWindow;
 
         return new FinAppWindow(identity, appInfo, channel, creationTime, index);
     }
@@ -115,6 +116,12 @@ export class FinEnvironment extends AsyncInit implements Environment {
                 manifest: applicationInfo.manifestUrl
             };
         }
+    }
+
+    public async getEntityType(identity: Identity): Promise<EntityType> {
+        const entityInfo = await fin.System.getEntityInfo(identity.uuid, identity.uuid);
+
+        return entityInfo.entityType as EntityType;
     }
 
     public isWindowSeen(identity: Identity): boolean {

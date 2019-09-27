@@ -13,7 +13,7 @@ import {Boxed} from '../utils/types';
 
 import {AppWindow} from './AppWindow';
 import {ContextChannel, DefaultContextChannel, SystemContextChannel} from './ContextChannel';
-import {Environment} from './Environment';
+import {Environment, EntityType} from './Environment';
 import {AppDirectory} from './AppDirectory';
 
 interface ExpectedWindow {
@@ -70,6 +70,7 @@ export class Model {
         this._environment.windowCreated.add(this.onWindowCreated, this);
         this._environment.windowClosed.add(this.onWindowClosed, this);
 
+        this._apiHandler.onConnection.add(this.onApiHandlerConnection, this);
         this._apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
 
         this._channelsById[DEFAULT_CHANNEL_ID] = new DefaultContextChannel(DEFAULT_CHANNEL_ID);
@@ -91,6 +92,12 @@ export class Model {
     }
 
     public async expectWindow(identity: Identity): Promise<AppWindow> {
+        // Temporary work-around until .NET channel aliases are also applied to 'dispatch' calls, same as they are on channel connection events.
+        // Note that 'secondWindow' in .NET demo will not fully work whilst this workaround is in place.
+        if (identity.name && identity.name.split('-').length === 5) {
+            identity.name = 'mainwin';
+        }
+
         const id = getId(identity);
 
         if (this._windowsById[id]) {
@@ -205,6 +212,13 @@ export class Model {
             this.onWindowRemoved.emit(window);
         } else if (this._expectedWindowsById[id]) {
             delete this._expectedWindowsById[id];
+        }
+    }
+
+    private async onApiHandlerConnection(identity: Identity): Promise<void> {
+        if (await this._environment.getEntityType(identity) === EntityType.EXTERNAL_CONNECTION) {
+            // Any connections to the service from adapters should be immediately registered
+            this.registerWindow(await this._environment.inferApplication(identity), identity, false);
         }
     }
 
