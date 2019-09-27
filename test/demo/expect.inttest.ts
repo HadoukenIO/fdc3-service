@@ -44,7 +44,7 @@ afterEach(async () => {
     await fin.Application.wrapSync(testAppNotInDirectory1).quit(true);
 });
 
-test('When starting an app from a manifest, the app can be interacted with as soon as a `window-create` event is received', async () => {
+test('When starting an app, the app can be interacted with as soon as a `window-created` event is received', async () => {
     const startPromise = fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl);
 
     await channelJoinedPromise.promise;
