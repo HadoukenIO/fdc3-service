@@ -110,10 +110,31 @@ the returned object lists all and only those apps which accept the intent', asyn
                 });
             });
         });
+
+        describe('When calling findIntent with a intent type accepted by some directory app', () => {
+            const intent = {
+                type: 'ContextTestIntent'
+            };
+            test('The promise resolves to an array of all AppIntents which has the specified intent regardless of context specifications', async () => {
+                const receivedAppIntents = await findIntent(intent.type);
+                expect(receivedAppIntents.apps).toHaveLength(3);
+            });
+        });
     });
 
     describe('With context', () => {
-        test.todo('TBD what resolving intent with context means as the spec is unclear');
+        describe('When calling findIntent with an intent type and context type accepted by some directory app', () => {
+            const intent = {
+                type: 'ContextTestIntent'
+            };
+            const context = {
+                type: 'MatchingContext'
+            };
+            test('The promise resolves to an array of all AppIntents which has the specified intent with the specified context or no context', async () => {
+                const receivedAppIntents = await findIntent(intent.type, context);
+                expect(receivedAppIntents.apps).toHaveLength(2);
+            });
+        });
     });
 });
 

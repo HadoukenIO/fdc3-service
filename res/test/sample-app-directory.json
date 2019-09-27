@@ -63,13 +63,14 @@
         }
     ],
     "intents": [
-        {
-            "name": "DialCall",
-            "contexts": ["fdc3.instrument"]
-        },
+        {"name": "DialCall"},
         {"name": "StartCall"},
         {"name": "SaveContact"},
-        {"name": "ViewChart"}
+        {"name": "ViewChart"},
+        {
+            "name": "ContextTestIntent",
+            "contexts": ["MatchingContext"]
+        }
     ]
 },
 {
@@ -90,13 +91,14 @@
         }
     ],
     "intents": [
-        {
-            "name": "DialCall",
-            "contexts": ["fdc3.organization"]
-        },
+        {"name": "DialCall"},
         {"name": "StartCall"},
         {"name": "SaveContact"},
-        {"name": "ViewChart"}
+        {"name": "ViewChart"},
+        {
+            "name": "ContextTestIntent",
+            "contexts": ["UnmatchingContext"]
+        }
     ]
 },
 {
@@ -121,7 +123,8 @@
         {"name": "DialCall"},
         {"name": "StartCall"},
         {"name": "SaveContact"},
-        {"name": "ViewChart"}
+        {"name": "ViewChart"},
+        {"name": "ContextTestIntent"}
     ]
 },
 {
@@ -210,4 +213,5 @@
         }
     ],
     "intents": []
-}]
+}
+]

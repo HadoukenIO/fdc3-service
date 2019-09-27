@@ -138,7 +138,7 @@ export class Model {
     /**
      * Gets apps that can handle an intent
      *
-     * Includes windows that are not in the app directory but have registered a listener for it
+     * Includes windows that are not in the app directory but have registered a listener for it if contextType is not specified
      * @param intentType intent type
      * @param contextType context type
      */
@@ -149,7 +149,9 @@ export class Model {
 
         // If context is specified don't use apps in model as there's no way to know about the context of non-directory
         // app intents at the moment.
-        if (!contextType) {
+        if (contextType) {
+            return directoryAppsWithIntent;
+        } else {
             // Include appInfos for any appWindows in model that have registered a listener for the intent
             const appsInModelWithIntent = allAppWindows
                 .filter(appWindow => appWindow.hasIntentListener(intentType))
@@ -166,8 +168,6 @@ export class Model {
 
             return [...appsInModelWithIntent, ...directoryAppsNotInModel];
         }
-
-        return directoryAppsWithIntent;
     }
 
     public findWindowsByAppName(name: AppName): AppWindow[] {
