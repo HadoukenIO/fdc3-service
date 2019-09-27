@@ -38,9 +38,8 @@ export class AppDirectory extends AsyncInit {
     public async getAppsByIntent(intentType: string, contextType?: string): Promise<Application[]> {
         return this._directory.filter((app: Application) => {
             return app.intents && app.intents.some(intent => {
-                return intent.name === intentType && (contextType && intent.contexts.length > 0) ? intent.contexts.some(context => {
-                    return context === contextType;
-                }) : true;
+                const isContextRelevant = contextType && intent.contexts && intent.contexts.length > 0;
+                return (intent.name === intentType) && (!isContextRelevant || intent.contexts.some(context => context === contextType));
             });
         });
     }

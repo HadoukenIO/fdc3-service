@@ -63,7 +63,10 @@
         }
     ],
     "intents": [
-        {"name": "DialCall"},
+        {
+            "name": "DialCall",
+            "contexts": ["fdc3.instrument"]
+        },
         {"name": "StartCall"},
         {"name": "SaveContact"},
         {"name": "ViewChart"}
@@ -87,7 +90,10 @@
         }
     ],
     "intents": [
-        {"name": "DialCall"},
+        {
+            "name": "DialCall",
+            "contexts": ["fdc3.organization"]
+        },
         {"name": "StartCall"},
         {"name": "SaveContact"},
         {"name": "ViewChart"}
