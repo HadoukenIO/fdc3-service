@@ -10,7 +10,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {parseIdentity, parseContext, validateEnvironment, parseChannelId} from './validation';
 import {tryServiceDispatch, getEventRouter, getServicePromise} from './connection';
-import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents} from './internal';
+import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport} from './internal';
 import {Context} from './context';
 import {ContextListener} from './main';
 import {Transport} from './EventRouter';
@@ -44,7 +44,7 @@ export interface DisplayMetadata {
 /**
  * Union of all possible concrete channel classes that may be returned by the service.
  */
-export type Channel = SystemChannel | DefaultChannel;
+export type Channel = SystemChannel | DefaultChannel | AppChannel;
 
 /**
  * Event fired when a window is added to a channel. See {@link Channel.addEventListener}.
@@ -365,6 +365,23 @@ export class SystemChannel extends ChannelBase {
 }
 
 /**
+ * Applications can create custom channels for specialised use-cases. Note that these channels would only be known
+ * about to the app that created them. They can be joined by any window, but there would be no way to discover them
+ * from the service's API - it would be up to applications to decide how to share the channel ID with other
+ * windows/applications.
+ */
+export class AppChannel extends ChannelBase {
+    public readonly type!: 'app';
+
+    /**
+     * @hidden
+     */
+    public constructor(transport: AppChannelTransport) {
+        super(transport.id, 'app');
+    }
+}
+
+/**
  * All windows will start off in this channel.
  *
  * Unlike system channels, the default channel has no pre-defined name or visual style. It is up to apps to display
@@ -444,6 +461,20 @@ export async function getCurrentChannel(identity?: Identity): Promise<Channel> {
 }
 
 /**
+ * Returns an app channel with the given identity. Either stands up a new channel or returns an existing channel.
+ *
+ * It is up to applications to manage how to share knowledge of these custom channels across windows and to manage
+ * channel ownership and lifecycle.
+ * @param channelId the identity of this channel
+ */
+
+export async function getOrCreateAppChannel(channelId: ChannelId): Promise<AppChannel> {
+    const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_OR_CREATE_APP_CHANNEL, {id: parseChannelId(channelId)});
+
+    return getChannelObject<AppChannel>(channelTransport);
+}
+
+/**
  * @hidden
  */
 export function getChannelObject<T extends Channel = Channel>(channelTransport: ChannelTransport): T {
@@ -451,12 +482,17 @@ export function getChannelObject<T extends Channel = Channel>(channelTransport: 
 
     if (!channel) {
         switch (channelTransport.type) {
-            case 'default':
-                channel = defaultChannel;
-                break;
             case 'system':
                 channel = new SystemChannel(channelTransport as SystemChannelTransport);
                 channelLookup[channelTransport.id] = channel;
+                break;
+            case 'default':
+                channel = defaultChannel;
+                break;
+            case 'app':
+                channel = new AppChannel(channelTransport as AppChannelTransport);
+                channelLookup[channelTransport.id] = channel;
+                break;
         }
     }
 

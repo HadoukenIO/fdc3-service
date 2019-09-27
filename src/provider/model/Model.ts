@@ -4,7 +4,7 @@ import {Signal} from 'openfin-service-signal';
 
 import {Application, AppName, AppId} from '../../client/directory';
 import {Inject} from '../common/Injectables';
-import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
+import {ChannelId, DEFAULT_CHANNEL_ID, ChannelError} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {SYSTEM_CHANNELS, Timeouts} from '../constants';
@@ -110,6 +110,10 @@ export class Model {
 
     public getChannel(id: ChannelId): ContextChannel|null {
         return this._channelsById[id] || null;
+    }
+
+    public setChannel(id: ChannelId, channel: ContextChannel): void {
+        this._channelsById[id] = channel;
     }
 
     public async findOrCreate(appInfo: Application): Promise<AppWindow[]> {

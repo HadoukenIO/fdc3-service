@@ -1,4 +1,4 @@
-import {ChannelId, Context, DisplayMetadata, Channel, ChannelBase, SystemChannel} from '../../client/main';
+import {ChannelId, Context, DisplayMetadata, Channel, ChannelBase, SystemChannel, AppChannel} from '../../client/main';
 import {Transport} from '../../client/EventRouter';
 
 export interface ContextChannel {
@@ -30,24 +30,6 @@ abstract class ContextChannelBase implements ContextChannel {
             id: this.id,
             type: this.type
         };
-    }
-}
-
-export class DefaultContextChannel extends ContextChannelBase {
-    public readonly type!: 'default';
-
-    public constructor(id: ChannelId) {
-        super(id, 'default');
-    }
-
-    public getStoredContext(): Context | null {
-        return null;
-    }
-
-    public setLastBroadcastContext(context: Context) {
-    }
-
-    public clearStoredContext(): void {
     }
 }
 
@@ -83,6 +65,55 @@ export class SystemContextChannel extends ContextChannelBase {
             ...super.serialize(),
             type: this.type,
             visualIdentity: this.visualIdentity
+        };
+    }
+}
+
+export class DefaultContextChannel extends ContextChannelBase {
+    public readonly type!: 'default';
+
+    public constructor(id: ChannelId) {
+        super(id, 'default');
+    }
+
+    public getStoredContext(): Context | null {
+        return null;
+    }
+
+    public setLastBroadcastContext(context: Context) {
+    }
+
+    public clearStoredContext(): void {
+    }
+}
+
+export class AppContextChannel extends ContextChannelBase {
+    public readonly type!: 'app';
+
+    private _context: Context | null;
+
+    public constructor(id: ChannelId) {
+        super(id, 'app');
+
+        this._context = null;
+    }
+
+    public getStoredContext(): Context | null {
+        return this._context;
+    }
+
+    public setLastBroadcastContext(context: Context) {
+        this._context = context;
+    }
+
+    public clearStoredContext(): void {
+        this._context = null;
+    }
+
+    public serialize(): Readonly<Transport<AppChannel>> {
+        return {
+            ...super.serialize(),
+            type: this.type
         };
     }
 }

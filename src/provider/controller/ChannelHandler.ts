@@ -3,8 +3,8 @@ import {Signal} from 'openfin-service-signal';
 
 import {Model} from '../model/Model';
 import {Inject} from '../common/Injectables';
-import {ChannelId, FDC3Error, ChannelError, Context} from '../../client/main';
-import {SystemContextChannel, ContextChannel} from '../model/ContextChannel';
+import {ChannelId, FDC3Error, ChannelError, Context, AppChannel} from '../../client/main';
+import {SystemContextChannel, ContextChannel, AppContextChannel} from '../model/ContextChannel';
 import {AppWindow} from '../model/AppWindow';
 import {ChannelEvents} from '../../client/internal';
 
@@ -30,6 +30,14 @@ export class ChannelHandler {
 
     public getSystemChannels(): SystemContextChannel[] {
         return this._model.channels.filter<SystemContextChannel>(this.isSystemChannel);
+    }
+
+    public createAppChannel(channelId: ChannelId): AppContextChannel {
+        const appChannel = new AppContextChannel(channelId);
+
+        this._model.setChannel(channelId, appChannel);
+
+        return appChannel;
     }
 
     public getWindowsListeningToChannel(channel: ContextChannel): AppWindow[] {
