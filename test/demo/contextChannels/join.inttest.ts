@@ -5,7 +5,7 @@ import {testManagerIdentity, appStartupTime, testAppNotInDirectory1, testAppNotF
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel, RemoteChannelEventListener} from '../utils/RemoteChannel';
 import {fin} from '../utils/fin';
-import {setupTeardown} from '../utils/common';
+import {setupTeardown, fakeAppChannelId} from '../utils/common';
 
 /*
  * Tests simple behaviour of Channel.getMembers() and the channel-changed and Channel events, before testing how they and getCurrentChannel()
@@ -22,12 +22,19 @@ describe('When getting members of a channel', () => {
     });
 
     test('When the channel is a system channel, an empty result is returned', async () => {
-        const defaultChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'blue');
+        const blueChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'blue');
 
-        await expect(defaultChannel.getMembers()).resolves.toEqual([]);
+        await expect(blueChannel.getMembers()).resolves.toEqual([]);
     });
 
-    type TestParam = [string, Identity, () => Promise<any>];
+    test('When the channel is a newly-created app channel, an empty result is returned', async () => {
+        const appChannelId = fakeAppChannelId();
+        const appChannel = await fdc3Remote.getOrCreateAppChannel(testManagerIdentity, appChannelId);
+
+        await expect(appChannel.getMembers()).resolves.toEqual([]);
+    });
+
+    type TestParam = [string, Identity, () => Promise<void>];
     const testParams: TestParam[] = [
         [
             'an FDC3 app',
@@ -40,7 +47,7 @@ describe('When getting members of a channel', () => {
         ]
     ];
 
-    describe.each(testParams)('When %s has been started', (titleParam: string, appIdentity: Identity, openFunction: () => Promise<any>) => {
+    describe.each(testParams)('When %s has been started', (titleParam: string, appIdentity: Identity, openFunction: () => Promise<void>) => {
         beforeEach(async () => {
             await openFunction();
         }, appStartupTime);
@@ -278,27 +285,39 @@ describe('When joining a channel', () => {
         await fin.Application.wrapSync(joiningApp).quit(true);
     });
 
-    describe('When the channel is a system channel', () => {
-        let SystemChannel: RemoteChannel;
+    type TestParam = [string, () => Promise<RemoteChannel>];
+    const testParams: TestParam[] = [
+        [
+            'system',
+            async () => fdc3Remote.getChannelById(testManagerIdentity, 'orange')
+        ],
+        [
+            'app',
+            async () => fdc3Remote.getOrCreateAppChannel(testManagerIdentity, fakeAppChannelId())
+        ]
+    ];
+
+    describe.each(testParams)('When the channel is a %s channel', (titleParam: string, getChannel: () => Promise<RemoteChannel>) => {
+        let channel: RemoteChannel;
 
         beforeEach(async () => {
-            SystemChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'orange');
+            channel = await getChannel();
         });
 
         test('The expected channel is returned when querying the current channel', async () => {
-            // Join our system channel
-            await SystemChannel.join(joiningApp);
+            // Join our channel
+            await channel.join(joiningApp);
 
             // Check the joining window has the expected current channel
-            await expect(fdc3Remote.getCurrentChannel(joiningApp)).resolves.toHaveProperty('channel', SystemChannel.channel);
+            await expect(fdc3Remote.getCurrentChannel(joiningApp)).resolves.toHaveProperty('channel', channel.channel);
         });
 
         test('The window is present when querying the members of the system channel and not the default channel', async () => {
             // Join our system channel
-            await SystemChannel.join(joiningApp);
+            await channel.join(joiningApp);
 
-            // Check our system channel contains our joining app
-            await expect(SystemChannel.getMembers()).resolves.toEqual([{
+            // Check our channel contains our joining app
+            await expect(channel.getMembers()).resolves.toEqual([{
                 uuid: joiningApp.uuid, name: joiningApp.name
             }]);
 
@@ -311,16 +330,16 @@ describe('When joining a channel', () => {
         });
 
         test('The expected events are received', async () => {
-            // Set up listeners on our system channel
-            const systemChannelWindowAddedListener = await SystemChannel.addEventListener('window-added');
-            const systemChannelWindowRemovedListener = await SystemChannel.addEventListener('window-removed');
+            // Set up listeners on our channel
+            const systemChannelWindowAddedListener = await channel.addEventListener('window-added');
+            const systemChannelWindowRemovedListener = await channel.addEventListener('window-removed');
 
-            // Join our system channel
-            await SystemChannel.join(joiningApp);
+            // Join our channel
+            await channel.join(joiningApp);
 
             const expectedEvent = {
                 identity: {uuid: joiningApp.uuid, name: joiningApp.name},
-                channel: SystemChannel.channel,
+                channel: channel.channel,
                 previousChannel: {id: 'default', type: 'default'}
             };
 
@@ -330,7 +349,7 @@ describe('When joining a channel', () => {
                 type: 'window-removed', ...expectedEvent
             }]);
 
-            // Check we received the expected events on the system channel
+            // Check we received the expected events on our channel
             await expect(systemChannelWindowAddedListener.getReceivedEvents()).resolves.toEqual([{
                 type: 'window-added', ...expectedEvent
             }]);

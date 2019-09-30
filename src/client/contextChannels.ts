@@ -461,7 +461,7 @@ export async function getCurrentChannel(identity?: Identity): Promise<Channel> {
 }
 
 /**
- * Returns an app channel with the given identity. Either stands up a new channel or returns an existing channel.
+ * Returns an app channel with the given ID. Either creates a new channel or returns an existing channel.
  *
  * It is up to applications to manage how to share knowledge of these custom channels across windows and to manage
  * channel ownership and lifecycle.
