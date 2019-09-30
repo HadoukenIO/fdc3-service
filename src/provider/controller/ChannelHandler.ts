@@ -3,7 +3,7 @@ import {Signal} from 'openfin-service-signal';
 
 import {Model} from '../model/Model';
 import {Inject} from '../common/Injectables';
-import {ChannelId, FDC3Error, ChannelError, Context, AppChannel} from '../../client/main';
+import {ChannelId, FDC3Error, ChannelError, Context} from '../../client/main';
 import {SystemContextChannel, ContextChannel, AppContextChannel} from '../model/ContextChannel';
 import {AppWindow} from '../model/AppWindow';
 import {ChannelEvents} from '../../client/internal';
