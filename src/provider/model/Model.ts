@@ -136,7 +136,7 @@ export class Model {
     }
 
     /**
-     * Gets apps that can handle an intent
+     * Get apps that can handle an intent and optionally with specified context type
      *
      * Includes windows that are not in the app directory but have registered a listener for it if contextType is not specified
      * @param intentType intent type

@@ -68,8 +68,8 @@
         {"name": "SaveContact"},
         {"name": "ViewChart"},
         {
-            "name": "ContextTestIntent",
-            "contexts": ["MatchingContext"]
+            "name": "test.ContextTestIntent",
+            "contexts": ["test.MatchingContext"]
         }
     ]
 },
@@ -96,8 +96,8 @@
         {"name": "SaveContact"},
         {"name": "ViewChart"},
         {
-            "name": "ContextTestIntent",
-            "contexts": ["UnmatchingContext"]
+            "name": "test.ContextTestIntent",
+            "contexts": ["test.UnmatchingContext"]
         }
     ]
 },
@@ -124,7 +124,7 @@
         {"name": "StartCall"},
         {"name": "SaveContact"},
         {"name": "ViewChart"},
-        {"name": "ContextTestIntent"}
+        {"name": "test.ContextTestIntent"}
     ]
 },
 {

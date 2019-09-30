@@ -113,11 +113,13 @@ the returned object lists all and only those apps which accept the intent', asyn
 
         describe('When calling findIntent with a intent type accepted by some directory app', () => {
             const intent = {
-                type: 'ContextTestIntent'
+                type: 'test.ContextTestIntent'
             };
             test('The promise resolves to an array of all AppIntents which has the specified intent regardless of context specifications', async () => {
                 const receivedAppIntents = await findIntent(intent.type);
-                expect(receivedAppIntents.apps).toHaveLength(3);
+                const expectedAppNames = ['test-app-2', 'test-app-3', 'test-app-4'];
+
+                expect(extractSortedAppNames(receivedAppIntents)).toEqual(expectedAppNames);
             });
         });
     });
@@ -125,14 +127,16 @@ the returned object lists all and only those apps which accept the intent', asyn
     describe('With context', () => {
         describe('When calling findIntent with an intent type and context type accepted by some directory app', () => {
             const intent = {
-                type: 'ContextTestIntent'
+                type: 'test.ContextTestIntent'
             };
             const context = {
-                type: 'MatchingContext'
+                type: 'test.MatchingContext'
             };
             test('The promise resolves to an array of all AppIntents which has the specified intent with the specified context or no context', async () => {
                 const receivedAppIntents = await findIntent(intent.type, context);
-                expect(receivedAppIntents.apps).toHaveLength(2);
+                const expectedAppNames = ['test-app-2', 'test-app-4'];
+
+                expect(extractSortedAppNames(receivedAppIntents)).toEqual(expectedAppNames);
             });
         });
     });
