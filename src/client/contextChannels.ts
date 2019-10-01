@@ -8,7 +8,7 @@ import {EventEmitter} from 'events';
 
 import {Identity} from 'openfin/_v2/main';
 
-import {parseIdentity, parseContext, validateEnvironment, parseChannelId} from './validation';
+import {parseIdentity, parseContext, validateEnvironment, parseChannelId, parseAppChannelName} from './validation';
 import {tryServiceDispatch, getEventRouter, getServicePromise} from './connection';
 import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport} from './internal';
 import {Context} from './context';
@@ -473,7 +473,7 @@ export async function getCurrentChannel(identity?: Identity): Promise<Channel> {
  */
 
 export async function getOrCreateAppChannel(name: string): Promise<AppChannel> {
-    const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_OR_CREATE_APP_CHANNEL, {name});
+    const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_OR_CREATE_APP_CHANNEL, {name: parseAppChannelName(name)});
 
     return getChannelObject<AppChannel>(channelTransport);
 }

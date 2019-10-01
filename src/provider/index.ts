@@ -6,7 +6,7 @@ import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, GetOrCreateAppChannelPayload, AppChannelTransport} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Intent, Context, AppChannel} from '../client/main';
 import {FDC3Error, OpenError, IdentityError, ChannelError} from '../client/errors';
-import {parseIdentity, parseContext, parseChannelId} from '../client/validation';
+import {parseIdentity, parseContext, parseChannelId, parseAppChannelName} from '../client/validation';
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
@@ -197,7 +197,7 @@ export class Main {
     }
 
     private async getOrCreateAppChannel(payload: GetOrCreateAppChannelPayload, source: ProviderIdentity): Promise<AppChannelTransport> {
-        const name = payload.name;
+        const name = parseAppChannelName(payload.name);
 
         return this._channelHandler.getAppChannelByName(name).serialize();
     }

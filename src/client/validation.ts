@@ -71,6 +71,17 @@ export function parseChannelId(channelId: ChannelId): ChannelId {
 }
 
 /**
+ * Validates the provided app channel name
+ */
+export function parseAppChannelName(name: string): ChannelId {
+    if (typeof name !== 'string') {
+        throw new TypeError(`${safeStringify(name, 'Provided app channel name')} is not a valid app channel name`);
+    }
+
+    return name;
+}
+
+/**
  * Validates we're running inside an OpenFin environment
  */
 export function validateEnvironment(): void {
