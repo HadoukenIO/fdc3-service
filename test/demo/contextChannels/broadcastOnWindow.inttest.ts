@@ -185,7 +185,7 @@ describe('When adding a context listener', () => {
 
         // Check our now-default window received no context
         await expect(channelChangingWindowListener).toHaveReceivedContexts([]);
-    });
+    }, appStartupTime * 2);
 
     test('No context is received when joining a system channel that has been emptied since last being broadcast on', async () => {
         const [broadcastingWindow, listeningWindow] = await setupWindows('green', 'yellow');

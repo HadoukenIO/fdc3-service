@@ -5,7 +5,7 @@ import {ChannelId, Context} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel} from '../utils/RemoteChannel';
 import {fin} from '../utils/fin';
-import {setupTeardown} from '../utils/common';
+import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends} from '../utils/common';
 
 /**
  * Tests Channel.broadcast(), its interaction with Channel.getCurrentContext(), and Channel.addContextListener
@@ -16,24 +16,24 @@ const testContext = {type: 'test-context', name: 'contextName1', id: {name: 'con
 setupTeardown();
 
 describe('When attempting to broadcast on a channel object', () => {
-    let defaultChannel: RemoteChannel;
+    let channel: RemoteChannel;
 
     beforeEach(async () => {
-        defaultChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'blue');
+        channel = await fdc3Remote.getChannelById(testManagerIdentity, 'blue');
     });
 
     test('If an invalid context is provided, a TypeError is thrown', async () => {
         const invalidContext = {irrelevantProperty: 'irrelevantValue'} as unknown as Context;
 
-        await expect(defaultChannel.broadcast(invalidContext)).rejects.toThrowError(new TypeError(`${JSON.stringify(invalidContext)} is not a valid Context`));
+        await expect(channel.broadcast(invalidContext)).rejects.toThrowError(new TypeError(`${JSON.stringify(invalidContext)} is not a valid Context`));
     });
 
     test('If a null context is provided, a TypeError is thrown', async () => {
-        await expect(defaultChannel.broadcast(null!)).rejects.toThrowError(new TypeError(`${JSON.stringify(null)} is not a valid Context`));
+        await expect(channel.broadcast(null!)).rejects.toThrowError(new TypeError(`${JSON.stringify(null)} is not a valid Context`));
     });
 
     test('If a valid context is provided, the broadcast() resolves successfully', async () => {
-        await expect(defaultChannel.broadcast(testContext)).resolves;
+        await expect(channel.broadcast(testContext)).resolves;
     });
 });
 
@@ -41,15 +41,8 @@ describe('When broadcasting on a channel', () => {
     const broadcastingApp = testAppInDirectory1;
     const listeningApp = testAppInDirectory2;
 
-    beforeEach(async () => {
-        await fdc3Remote.open(testManagerIdentity, broadcastingApp.name);
-        await fdc3Remote.open(testManagerIdentity, listeningApp.name);
-    }, appStartupTime * 2);
-
-    afterEach(async () => {
-        await fin.Application.wrapSync(broadcastingApp).quit(true);
-        await fin.Application.wrapSync(listeningApp).quit(true);
-    });
+    setupOpenDirectoryAppBookends(broadcastingApp);
+    setupOpenDirectoryAppBookends(listeningApp);
 
     const receiveTestParams = [['the default', 'default'], ['a system', 'blue']];
 
@@ -131,15 +124,8 @@ describe('When adding a context listener to a channel', () => {
     const broadcastingApp = testAppInDirectory1;
     const listeningApp = testAppInDirectory2;
 
-    beforeEach(async () => {
-        await fdc3Remote.open(testManagerIdentity, broadcastingApp.name);
-        await fdc3Remote.open(testManagerIdentity, listeningApp.name);
-    }, appStartupTime * 2);
-
-    afterEach(async () => {
-        await fin.Application.wrapSync(broadcastingApp).quit(true);
-        await fin.Application.wrapSync(listeningApp).quit(true);
-    });
+    setupOpenDirectoryAppBookends(broadcastingApp);
+    setupOpenDirectoryAppBookends(listeningApp);
 
     describe.each([['the default', 'default'], ['a system', 'red']])(
         'When the channel is %s channel',
@@ -210,15 +196,8 @@ describe('When querying the current context', () => {
     const broadcastingApp = testAppInDirectory1;
     const listeningApp = testAppInDirectory2;
 
-    beforeEach(async () => {
-        await fdc3Remote.open(testManagerIdentity, broadcastingApp.name);
-        await fdc3Remote.open(testManagerIdentity, listeningApp.name);
-    }, appStartupTime * 2);
-
-    afterEach(async () => {
-        await fin.Application.wrapSync(broadcastingApp).quit(true);
-        await fin.Application.wrapSync(listeningApp).quit(true);
-    });
+    setupOpenDirectoryAppBookends(broadcastingApp);
+    setupOpenDirectoryAppBookends(listeningApp);
 
     test('The last-broadcast context will be returned for a system channel when the channel is occupied', async () => {
         // Set up our broadcasting and listening channels
@@ -281,15 +260,8 @@ describe('When querying the current context', () => {
 });
 
 describe('When using a non-directory app', () => {
-    beforeEach(async () => {
-        await fdc3Remote.open(testManagerIdentity, testAppInDirectory1.name);
-        await fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl);
-    }, appStartupTime * 2);
-
-    afterEach(async () => {
-        await fin.Application.wrapSync(testAppInDirectory1).quit(true);
-        await fin.Application.wrapSync(testAppNotInDirectory1).quit(true);
-    });
+    setupOpenDirectoryAppBookends(testAppInDirectory1);
+    setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
 
     type TestParam = [string, string, Identity, Identity];
     const params: TestParam[] = [
