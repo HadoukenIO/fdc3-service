@@ -2,7 +2,7 @@ import 'jest';
 import {Identity, Application} from 'hadouken-js-adapter';
 
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
-import {appStartupTime, testManagerIdentity, testAppNotInDirectory1, testAppInDirectory1, testAppInDirectory2, testAppInDirectory3, testAppInDirectory4} from '../constants';
+import {appStartupTime, testManagerIdentity, testAppNotInDirectory1, testAppInDirectory1, testAppInDirectory2, testAppInDirectory3, testAppInDirectory4, testAppWithPreregisteredListeners1} from '../constants';
 import {fin} from '../utils/fin';
 import {setupTeardown, quitApps} from '../utils/common';
 import {ChannelDescriptor, getChannel, fakeAppChannelDescriptor} from '../utils/channels';
@@ -49,7 +49,7 @@ describe.each(broadcastTestParams)(
             for (const otherListener of otherListeners) {
                 await expect(otherListener).toHaveReceivedContexts([]);
             }
-        }, appStartupTime * 5);
+        }, appStartupTime * 4);
 
         test('Context is received by window that has left and rejoined system channel', async () => {
             const [broadcastingWindow, channelChangingWindow] = await setupWindows(broadcastChannel, broadcastChannel);
@@ -183,7 +183,8 @@ describe('When using a non-directory app', () => {
 
 // Creates one window for each channel, and has that window join that channel if not undefined
 async function setupWindows(...channels: (ChannelDescriptor|undefined)[]): Promise<Identity[]> {
-    const appIdentities = [testAppInDirectory1, testAppInDirectory2, testAppInDirectory3, testAppInDirectory4];
+    // Pre-registered listeners do not affect this test. `testAppWithPreregisteredListeners1` is just another app directory entry for our purposes
+    const appIdentities = [testAppInDirectory1, testAppInDirectory2, testAppInDirectory3, testAppInDirectory4, testAppWithPreregisteredListeners1];
 
     const offset = startedApps.length;
 
