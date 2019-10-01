@@ -21,7 +21,6 @@ export enum ResolveError {
 
 export enum ChannelError {
     ChannelDoesNotExist = 'ChannelDoesNotExist',
-    ChannelIsNotAppChannel = 'ChannelIsNotAppChannel'
 }
 
 export enum IdentityError {
