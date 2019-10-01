@@ -17,7 +17,7 @@ export type ChannelDescriptor = {
      name: string
  } | SystemChannelId | 'default';
 
- type SystemChannelId = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple';
+type SystemChannelId = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple';
 
 export async function getChannel(executionTarget: Identity, descriptor: ChannelDescriptor): Promise<RemoteChannel> {
     if (typeof descriptor === 'string') {
