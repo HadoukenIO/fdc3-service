@@ -4,12 +4,21 @@ import {testAppInDirectory1, testManagerIdentity, appStartupTime, testAppInDirec
 import {ChannelId, Context} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel} from '../utils/RemoteChannel';
-import {fin} from '../utils/fin';
-import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends} from '../utils/common';
+import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, fakeAppChannelName} from '../utils/common';
 
 /**
  * Tests Channel.broadcast(), its interaction with Channel.getCurrentContext(), and Channel.addContextListener
  */
+
+ type ChannelDescriptor = {
+    type: 'default'
+ } | {
+     type: 'system',
+     id: 'red' | 'yellow' | 'blue' | 'orange' | 'yellow' | 'purple'
+ } | {
+     type: 'app',
+     name: string
+ }
 
 const testContext = {type: 'test-context', name: 'contextName1', id: {name: 'contextID1'}};
 
@@ -44,12 +53,17 @@ describe('When broadcasting on a channel', () => {
     setupOpenDirectoryAppBookends(broadcastingApp);
     setupOpenDirectoryAppBookends(listeningApp);
 
-    const receiveTestParams = [['the default', 'default'], ['a system', 'blue']];
+    type ReceieveTestParam = [string, ChannelDescriptor];
+    const receiveTestParams = [
+        ['the default', {type: 'default'}],
+        ['a system', {type: 'system', id: 'blue'}],
+        ['an app', {type: 'app', name: fakeAppChannelName()}]
+    ] as ReceieveTestParam[];
 
-    describe.each(receiveTestParams)('When the channel is %s channel', (titleParam: string, channelId: ChannelId) => {
+    describe.each(receiveTestParams)('When the channel is %s channel', (titleParam: string, channelDescriptor: ChannelDescriptor) => {
         test('Context is not received by the same channel in the broadcasting window', async() => {
             // Get our channel and set up a listener in the same window
-            const channel = await fdc3Remote.getChannelById(broadcastingApp, channelId);
+            const channel = await getChannel(broadcastingApp, channelDescriptor);
             const listener = await channel.addContextListener();
 
             // Broadcast
@@ -61,8 +75,8 @@ describe('When broadcasting on a channel', () => {
 
         test('Context is received by the same channel in a different window', async () => {
             // Get two distinct instances of our channel - one from the broadcasting window, one from the listening window
-            const channelInBroadcastingWindow = await fdc3Remote.getChannelById(broadcastingApp, channelId);
-            const channelInListeningWindow = await fdc3Remote.getChannelById(listeningApp, channelId);
+            const channelInBroadcastingWindow = await getChannel(broadcastingApp, channelDescriptor);
+            const channelInListeningWindow = await getChannel(listeningApp, channelDescriptor);
 
             // Set up our listener in the listening window
             const listener = await channelInListeningWindow.addContextListener();
@@ -75,15 +89,20 @@ describe('When broadcasting on a channel', () => {
         });
     });
 
+    type ChannelIndependenceTestParam = [string, string, ChannelDescriptor, ChannelDescriptor];
     const channelIndependenceTestParams = [
-        ['the default', 'a system', 'default', 'green'],
-        ['a system', 'the default', 'yellow', 'default'],
-        ['a system', 'different system', 'red', 'blue']
-    ];
+        ['the default', 'a system', {type: 'default'}, {type: 'system', id: 'green'}],
+        ['the default', 'an app', {type: 'default'}, {type: 'app', name: fakeAppChannelName()}],
+        ['a system', 'the default', {type: 'system', id: 'yellow'}, {type: 'default'}],
+        ['a system', 'a different system', {type: 'system', id: 'red'}, {type: 'system', id: 'blue'}],
+        ['an app', 'a system', {type: 'app', name: fakeAppChannelName()}, {type: 'system', id: 'blue'}],
+        ['an app', 'a system', {type: 'app', name: fakeAppChannelName()}, {type: 'system', id: 'blue'}],
+        ['an app', 'a different app', {type: 'app', name: fakeAppChannelName()}, {type: 'app', name: fakeAppChannelName()}]
+    ] as ChannelIndependenceTestParam[];
 
     describe.each(channelIndependenceTestParams)(
         'When the channel is %s channel',
-        (titleParam1: string, titleParam2: string, broadcastChannelId: ChannelId, listenChannelId: ChannelId) => {
+        (titleParam1: string, titleParam2: string, broadcastChannelDescriptor: ChannelDescriptor, listenChannelDescriptor: ChannelDescriptor) => {
             let broadcastingChannel: RemoteChannel;
             let listeningChannel: RemoteChannel;
 
@@ -91,8 +110,8 @@ describe('When broadcasting on a channel', () => {
 
             beforeEach(async () => {
                 // Set up our broadcasting and listening channels
-                broadcastingChannel = await fdc3Remote.getChannelById(broadcastingApp, broadcastChannelId);
-                listeningChannel = await fdc3Remote.getChannelById(listeningApp, listenChannelId);
+                broadcastingChannel = await getChannel(broadcastingApp, broadcastChannelDescriptor);
+                listeningChannel = await getChannel(listeningApp, listenChannelDescriptor);
 
                 // Setup our listener
                 listener = await listeningChannel.addContextListener();
@@ -127,9 +146,16 @@ describe('When adding a context listener to a channel', () => {
     setupOpenDirectoryAppBookends(broadcastingApp);
     setupOpenDirectoryAppBookends(listeningApp);
 
-    describe.each([['the default', 'default'], ['a system', 'red']])(
+    type ContextListenerTestParam = [string, ChannelDescriptor];
+    const contextListenerTestParams = [
+        ['the default', {type: 'default'}],
+        ['a system', {type: 'system', id: 'red'}],
+        ['an app', {type: 'default', name: fakeAppChannelName()}]
+    ] as ContextListenerTestParam[];
+
+    describe.each(contextListenerTestParams)(
         'When the channel is %s channel',
-        (titleParam: string, channelId: ChannelId) => {
+        (titleParam: string, channelDescriptor: ChannelDescriptor) => {
             let broadcastingChannel: RemoteChannel;
             let listeningChannel: RemoteChannel;
 
@@ -138,8 +164,8 @@ describe('When adding a context listener to a channel', () => {
 
             beforeEach(async () => {
                 // Set up our broadcasting and listening channels
-                broadcastingChannel = await fdc3Remote.getChannelById(broadcastingApp, channelId);
-                listeningChannel = await fdc3Remote.getChannelById(listeningApp, channelId);
+                broadcastingChannel = await getChannel(broadcastingApp, channelDescriptor);
+                listeningChannel = await getChannel(listeningApp, channelDescriptor);
 
                 // Set up two listeners
                 listener1 = await listeningChannel.addContextListener();
@@ -192,59 +218,14 @@ describe('When adding a context listener to a channel', () => {
     });
 });
 
-describe('When querying the current context', () => {
+describe('When querying the current context of the default channel', () => {
     const broadcastingApp = testAppInDirectory1;
     const listeningApp = testAppInDirectory2;
 
     setupOpenDirectoryAppBookends(broadcastingApp);
     setupOpenDirectoryAppBookends(listeningApp);
 
-    test('The last-broadcast context will be returned for a system channel when the channel is occupied', async () => {
-        // Set up our broadcasting and listening channels
-        const broadcastingChannel = await fdc3Remote.getChannelById(broadcastingApp, 'purple');
-        const listeningChannel = await fdc3Remote.getChannelById(listeningApp, 'purple');
-
-        // Ensure the channel is occupied, then broadcast
-        await broadcastingChannel.join();
-        await broadcastingChannel.broadcast(testContext);
-
-        // Check our context is present
-        await expect(broadcastingChannel.getCurrentContext()).resolves.toEqual(testContext);
-        await expect(listeningChannel.getCurrentContext()).resolves.toEqual(testContext);
-    });
-
-    test('The last-broadcast context will not be returned for a system channel when the channel has been emptied', async () => {
-        // Set up our broadcasting and listening channels
-        const broadcastingChannel = await fdc3Remote.getChannelById(broadcastingApp, 'yellow');
-        const listeningChannel = await fdc3Remote.getChannelById(listeningApp, 'yellow');
-
-        // Ensure the channel is occupied, then broadcast
-        await broadcastingChannel.join();
-        await broadcastingChannel.broadcast(testContext);
-
-        // Empty the channel
-        const defaultChannel = await fdc3Remote.getChannelById(broadcastingApp, 'default');
-        await defaultChannel.join();
-
-        // Check our context has been cleared
-        await expect(broadcastingChannel.getCurrentContext()).resolves.toEqual(null);
-        await expect(listeningChannel.getCurrentContext()).resolves.toEqual(null);
-    });
-
-    test('The last-broadcast context will not be returned for the a system channel when the channel has never been occupied', async () => {
-        // Set up our broadcasting and listening channels
-        const broadcastingChannel = await fdc3Remote.getChannelById(broadcastingApp, 'blue');
-        const listeningChannel = await fdc3Remote.getChannelById(listeningApp, 'blue');
-
-        // Broadcast on our empty channel
-        await broadcastingChannel.broadcast(testContext);
-
-        // Check our context has not been cached
-        await expect(broadcastingChannel.getCurrentContext()).resolves.toEqual(null);
-        await expect(listeningChannel.getCurrentContext()).resolves.toEqual(null);
-    });
-
-    test('The last-broadcast context will not be returned for the default channel, even when the channel is occupied', async () => {
+    test('The last-broadcast context will not be returned, even when the channel is occupied', async () => {
         // Set up our broadcasting and listening channels
         const broadcastingChannel = await fdc3Remote.getChannelById(broadcastingApp, 'default');
         const listeningChannel = await fdc3Remote.getChannelById(listeningApp, 'default');
@@ -259,17 +240,76 @@ describe('When querying the current context', () => {
     });
 });
 
+type QueryContextTestParam = [string, ChannelDescriptor];
+const queryContextTestParams = [
+    ['a system', {type: 'system', id: 'yellow'}],
+    ['an app', {type: 'default', name: fakeAppChannelName()}]
+] as QueryContextTestParam[];
+
+describe.each(queryContextTestParams)('When querying the current context of %s channel', (titleParam: string, channelDescriptor: ChannelDescriptor) => {
+    const broadcastingApp = testAppInDirectory1;
+    const listeningApp = testAppInDirectory2;
+
+    setupOpenDirectoryAppBookends(broadcastingApp);
+    setupOpenDirectoryAppBookends(listeningApp);
+
+    test('The last-broadcast context will be returned when the channel is occupied', async () => {
+        // Set up our broadcasting and listening channels
+        const broadcastingChannel = await getChannel(broadcastingApp, channelDescriptor);
+        const listeningChannel = await getChannel(listeningApp, channelDescriptor);
+
+        // Ensure the channel is occupied, then broadcast
+        await broadcastingChannel.join();
+        await broadcastingChannel.broadcast(testContext);
+
+        // Check our context is present
+        await expect(broadcastingChannel.getCurrentContext()).resolves.toEqual(testContext);
+        await expect(listeningChannel.getCurrentContext()).resolves.toEqual(testContext);
+    });
+
+    test('The last-broadcast context will not be returned when the channel has been emptied', async () => {
+        // Set up our broadcasting and listening channels
+        const broadcastingChannel = await getChannel(broadcastingApp, channelDescriptor);
+        const listeningChannel = await getChannel(listeningApp, channelDescriptor);
+
+        // Ensure the channel is occupied, then broadcast
+        await broadcastingChannel.join();
+        await broadcastingChannel.broadcast(testContext);
+
+        // Empty the channel
+        const defaultChannel = await fdc3Remote.getChannelById(broadcastingApp, 'default');
+        await defaultChannel.join();
+
+        // Check our context has been cleared
+        await expect(broadcastingChannel.getCurrentContext()).resolves.toEqual(null);
+        await expect(listeningChannel.getCurrentContext()).resolves.toEqual(null);
+    });
+
+    test('The last-broadcast context will not be returned when the channel has never been occupied', async () => {
+        // Set up our broadcasting and listening channels
+        const broadcastingChannel = await getChannel(broadcastingApp, channelDescriptor);
+        const listeningChannel = await getChannel(listeningApp, channelDescriptor);
+
+        // Broadcast on our empty channel
+        await broadcastingChannel.broadcast(testContext);
+
+        // Check our context has not been cached
+        await expect(broadcastingChannel.getCurrentContext()).resolves.toEqual(null);
+        await expect(listeningChannel.getCurrentContext()).resolves.toEqual(null);
+    });
+});
+
 describe('When using a non-directory app', () => {
     setupOpenDirectoryAppBookends(testAppInDirectory1);
     setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
 
-    type TestParam = [string, string, Identity, Identity];
-    const params: TestParam[] = [
+    type BroadcastTestParam = [string, string, Identity, Identity];
+    const broadcastParams: BroadcastTestParam[] = [
         ['the app', 'a directory app', testAppNotInDirectory1, testAppInDirectory1],
         ['a directory app', 'the app', testAppInDirectory1, testAppNotInDirectory1]
     ];
 
-    test.each(params)(
+    test.each(broadcastParams)(
         'When broadcasting from %s, context can be received by %s',
         async (titleParam1: string, titleParam2: string, broadcastingApp: Identity, listeningApp: Identity) => {
             // Set up our broadcasting and listening channels
@@ -287,3 +327,13 @@ describe('When using a non-directory app', () => {
         }
     );
 });
+
+async function getChannel(executionTarget: Identity, descriptor: ChannelDescriptor): Promise<RemoteChannel> {
+    if (descriptor.type === 'default') {
+        return fdc3Remote.getChannelById(executionTarget, 'default');
+    } else if (descriptor.type === 'system') {
+        return fdc3Remote.getChannelById(executionTarget, descriptor.id);
+    } else {
+        return fdc3Remote.getOrCreateAppChannel(executionTarget, descriptor.name);
+    }
+}
