@@ -36,10 +36,10 @@ describe('When getting a channel by ID', () => {
         await expect(fdc3Remote.getChannelById(testManagerIdentity, 'red')).resolves.toBe(redChannel);
     });
 
-    test('When the ID corresponds to an app channel, the expect app channel is returned', async () => {
+    test('When the ID corresponds to an app channel, the expected app channel is returned', async () => {
         const appChannel = await fdc3Remote.getOrCreateAppChannel(testManagerIdentity, fakeAppChannelName());
 
-        const id = appChannel.id;
+        const id = appChannel.channel.id;
 
         await expect(fdc3Remote.getChannelById(testManagerIdentity, id)).resolves.toBe(appChannel);
     });
