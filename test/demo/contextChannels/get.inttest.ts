@@ -124,7 +124,7 @@ const testParams: TestParam[] = [
         testAppInDirectory1,
         () => setupOpenDirectoryAppBookends(testAppInDirectory1)
     ], [
-        'a non directory app',
+        'a non-directory app',
         testAppNotInDirectory1,
         () => setupStartNonDirectoryAppBookends(testAppNotInDirectory1)
     ]
