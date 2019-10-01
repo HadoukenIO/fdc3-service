@@ -106,14 +106,14 @@ export type MainEvents = ChannelChangedEvent;
 export type ChannelEvents = ChannelWindowAddedEvent | ChannelWindowRemovedEvent;
 
 export type TransportMappings<T> =
-    T extends SystemChannel ? SystemChannelTransport :
     T extends DefaultChannel ? ChannelTransport :
+    T extends SystemChannel ? SystemChannelTransport :
     T extends AppChannel ? AppChannelTransport :
     T extends ChannelBase ? ChannelTransport :
     never;
 export type TransportMemberMappings<T> =
-    T extends SystemChannel ? SystemChannelTransport :
     T extends DefaultChannel ? ChannelTransport :
+    T extends SystemChannel ? SystemChannelTransport :
     T extends AppChannel ? AppChannelTransport :
     T extends ChannelBase ? ChannelTransport :
     T;
