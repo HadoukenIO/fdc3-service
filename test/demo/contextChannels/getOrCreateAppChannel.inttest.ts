@@ -1,6 +1,7 @@
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {testManagerIdentity, testAppInDirectory1, testAppInDirectory2} from '../constants';
 import {fakeAppChannelName, setupOpenDirectoryAppBookends} from '../utils/common';
+import {AppChannel} from '../../../src/client/main';
 
 test('If an invalid name is provided, a TypeError is thrown', async () => {
     const invalidName = {irrelevantProperty: 'irrelevantValue'} as unknown as string;
@@ -15,9 +16,11 @@ test('If a null name is provided, a TypeError is thrown', async () => {
 });
 
 test('When creating an app channel, a channel object is returned successfully', async () => {
-    const appChannel = await fdc3Remote.getOrCreateAppChannel(testManagerIdentity, fakeAppChannelName());
+    const appChannelName = fakeAppChannelName();
+    const appChannel = await fdc3Remote.getOrCreateAppChannel(testManagerIdentity, appChannelName);
 
-    expect(appChannel).toBeChannel({type: 'app'});
+    expect(appChannel).toBeChannel({type: 'app'}, AppChannel);
+    expect(appChannel.channel).toHaveProperty('name', appChannelName);
 });
 
 test('When getting an already created app channel within the same app, the same app channel is returned', async () => {

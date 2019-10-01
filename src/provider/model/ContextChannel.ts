@@ -89,11 +89,14 @@ export class DefaultContextChannel extends ContextChannelBase {
 
 export class AppContextChannel extends ContextChannelBase {
     public readonly type!: 'app';
+    public readonly name: string;
 
     private _context: Context | null;
 
-    public constructor(id: ChannelId) {
+    public constructor(id: ChannelId, name: string) {
         super(id, 'app');
+
+        this.name = name;
 
         this._context = null;
     }
@@ -113,7 +116,8 @@ export class AppContextChannel extends ContextChannelBase {
     public serialize(): Readonly<Transport<AppChannel>> {
         return {
             ...super.serialize(),
-            type: this.type
+            type: this.type,
+            name: this.name
         };
     }
 }

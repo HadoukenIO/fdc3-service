@@ -130,6 +130,7 @@ export interface SystemChannelTransport extends ChannelTransport {
 
 export interface AppChannelTransport extends ChannelTransport {
     type: 'app';
+    name: string;
 }
 
 export interface OpenPayload {

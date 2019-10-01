@@ -373,11 +373,15 @@ export class SystemChannel extends ChannelBase {
 export class AppChannel extends ChannelBase {
     public readonly type!: 'app';
 
+    public readonly name: string;
+
     /**
      * @hidden
      */
     public constructor(transport: AppChannelTransport) {
         super(transport.id, 'app');
+
+        this.name = transport.name;
     }
 }
 
