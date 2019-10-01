@@ -25,11 +25,11 @@ describe('When attempting to broadcast on a channel object', () => {
     test('If an invalid context is provided, a TypeError is thrown', async () => {
         const invalidContext = {irrelevantProperty: 'irrelevantValue'} as unknown as Context;
 
-        expect(defaultChannel.broadcast(invalidContext)).rejects.toThrowError(new TypeError(`${JSON.stringify(invalidContext)} is not a valid Context`));
+        await expect(defaultChannel.broadcast(invalidContext)).rejects.toThrowError(new TypeError(`${JSON.stringify(invalidContext)} is not a valid Context`));
     });
 
     test('If a null context is provided, a TypeError is thrown', async () => {
-        expect(defaultChannel.broadcast(null!)).rejects.toThrowError(new TypeError(`${JSON.stringify(null)} is not a valid Context`));
+        await expect(defaultChannel.broadcast(null!)).rejects.toThrowError(new TypeError(`${JSON.stringify(null)} is not a valid Context`));
     });
 
     test('If a valid context is provided, the broadcast() resolves successfully', async () => {
