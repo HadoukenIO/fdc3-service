@@ -1,6 +1,6 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {SystemChannel, DefaultChannel, ChannelError, IdentityError, ChannelId, getChannelById} from '../../../src/client/main';
+import {SystemChannel, DefaultChannel, ChannelError, IdentityError, ChannelId} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, appStartupTime, testAppNotFdc3} from '../constants';
 import {fin} from '../utils/fin';

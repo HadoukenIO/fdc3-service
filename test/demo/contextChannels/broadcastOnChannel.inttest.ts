@@ -1,7 +1,7 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {testAppInDirectory1, testManagerIdentity, appStartupTime, testAppInDirectory2, testAppNotInDirectory1} from '../constants';
-import {ChannelId, Context} from '../../../src/client/main';
+import {testAppInDirectory1, testManagerIdentity, testAppInDirectory2, testAppNotInDirectory1} from '../constants';
+import {Context} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel} from '../utils/RemoteChannel';
 import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, fakeAppChannelName} from '../utils/common';
