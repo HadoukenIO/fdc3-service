@@ -1,7 +1,7 @@
 import {Identity} from 'openfin/_v2/main';
 
-import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {ChannelId} from '../../../src/client/main';
+import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 
 import {RemoteChannel} from './RemoteChannel';
 
@@ -11,11 +11,13 @@ export type ChannelDescriptor = {
     type: 'default'
  } | {
      type: 'system',
-     id: 'red' | 'yellow' | 'blue' | 'orange' | 'green' | 'purple'
+     id: SystemChannelId
  } | {
      type: 'app',
      name: string
- } | 'red' | 'yellow' | 'blue' | 'orange' | 'yellow' | 'green' | 'default';
+ } | SystemChannelId | 'default';
+
+ type SystemChannelId = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple';
 
 export async function getChannel(executionTarget: Identity, descriptor: ChannelDescriptor): Promise<RemoteChannel> {
     if (typeof descriptor === 'string') {
