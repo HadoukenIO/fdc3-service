@@ -4,7 +4,8 @@ import {SystemChannel, DefaultChannel, ChannelError, IdentityError, ChannelId} f
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, appStartupTime, testAppNotFdc3} from '../constants';
 import {fin} from '../utils/fin';
-import {setupTeardown, fakeAppChannelName, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends} from '../utils/common';
+import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends} from '../utils/common';
+import {fakeAppChannelName} from '../utils/channels';
 
 type AppSource = 'directory' | 'non-directory';
 

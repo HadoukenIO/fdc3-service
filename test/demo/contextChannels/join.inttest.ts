@@ -5,7 +5,8 @@ import {testManagerIdentity, appStartupTime, testAppNotInDirectory1, testAppNotF
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel, RemoteChannelEventListener} from '../utils/RemoteChannel';
 import {fin} from '../utils/fin';
-import {setupTeardown, fakeAppChannelName, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, quitApps} from '../utils/common';
+import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, quitApps} from '../utils/common';
+import {fakeAppChannelName} from '../utils/channels';
 
 /*
  * Tests simple behaviour of Channel.getMembers() and the channel-changed and Channel events, before testing how they and getCurrentChannel()
@@ -87,7 +88,7 @@ describe('When listening for channel-changed and Channel events', () => {
     }, appStartupTime);
 
     afterEach(async () => {
-        quitApps(listeningApp, testAppInDirectory2, testAppNotInDirectory1, testAppNotFdc3);
+        await quitApps(listeningApp, testAppInDirectory2, testAppNotInDirectory1, testAppNotFdc3);
     });
 
     type TestParam = [string, Identity, () => Promise<any>];

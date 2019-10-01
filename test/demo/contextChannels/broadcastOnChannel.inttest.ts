@@ -4,21 +4,12 @@ import {testAppInDirectory1, testManagerIdentity, testAppInDirectory2, testAppNo
 import {Context} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel} from '../utils/RemoteChannel';
-import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, fakeAppChannelName} from '../utils/common';
+import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends} from '../utils/common';
+import {getChannel, fakeAppChannelDescriptor, ChannelDescriptor, fakeAppChannelName} from '../utils/channels';
 
 /**
  * Tests Channel.broadcast(), its interaction with Channel.getCurrentContext(), and Channel.addContextListener
  */
-
- type ChannelDescriptor = {
-    type: 'default'
- } | {
-     type: 'system',
-     id: 'red' | 'yellow' | 'blue' | 'orange' | 'yellow' | 'purple'
- } | {
-     type: 'app',
-     name: string
- } | 'red' | 'yellow' | 'blue' | 'orange' | 'yellow' | 'purple' | 'default';
 
 const testContext = {type: 'test-context', name: 'contextName1', id: {name: 'contextID1'}};
 
@@ -150,7 +141,7 @@ describe('When adding a context listener to a channel', () => {
     const contextListenerTestParams = [
         ['the default', 'default'],
         ['a system', 'red'],
-        ['an app', {type: 'default', name: fakeAppChannelName()}]
+        ['an app', fakeAppChannelDescriptor()]
     ] as ContextListenerTestParam[];
 
     describe.each(contextListenerTestParams)(
@@ -327,19 +318,3 @@ describe('When using a non-directory app', () => {
         }
     );
 });
-
-async function getChannel(executionTarget: Identity, descriptor: ChannelDescriptor): Promise<RemoteChannel> {
-    if (typeof descriptor === 'string') {
-        return fdc3Remote.getChannelById(executionTarget, descriptor);
-    } else if (descriptor.type === 'default') {
-        return fdc3Remote.getChannelById(executionTarget, 'default');
-    } else if (descriptor.type === 'system') {
-        return fdc3Remote.getChannelById(executionTarget, descriptor.id);
-    } else {
-        return fdc3Remote.getOrCreateAppChannel(executionTarget, descriptor.name);
-    }
-}
-
-function fakeAppChannelDescriptor(): ChannelDescriptor {
-    return {type: 'app', name: fakeAppChannelName()};
-}

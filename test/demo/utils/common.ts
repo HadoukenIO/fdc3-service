@@ -4,7 +4,6 @@ import {Intent} from '../../../src/client/intents';
 import {withTimeout} from '../../../src/provider/utils/async';
 import {testManagerIdentity, appStartupTime} from '../constants';
 import {Boxed} from '../../../src/provider/utils/types';
-import {ChannelId} from '../../../src/client/main';
 
 import {fin} from './fin';
 import * as fdc3Remote from './fdc3RemoteExecution';
@@ -22,8 +21,6 @@ export interface DirectoryTestAppData extends TestAppData {
 export interface NonDirectoryTestAppData extends TestAppData {
     manifestUrl: string;
 }
-
-let fakeCount = 0;
 
 /**
  * Quits an OpenFin app (or multiple in parallel) using `force=true` and swallowing errors
@@ -118,12 +115,4 @@ export function setupTeardown(): void {
 
         expect(runningAppIdentities).toEqual(expectedRunningAppIdentities);
     });
-}
-
-export function fakeAppChannelName(): ChannelId {
-    return `app-channel-name-${idString()}`;
-}
-
-function idString(): string {
-    return `[${(fakeCount++).toString(16).toUpperCase()}]`;
 }

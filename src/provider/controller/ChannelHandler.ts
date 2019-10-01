@@ -38,7 +38,7 @@ export class ChannelHandler {
         let channel = this._model.getChannel(channelId) as AppContextChannel | null;
 
         if (!channel) {
-            channel = new AppContextChannel(channelId);
+            channel = new AppContextChannel(channelId, name);
             this._model.setChannel(channelId, channel);
         }
 
