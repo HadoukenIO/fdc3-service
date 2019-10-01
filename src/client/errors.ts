@@ -20,7 +20,7 @@ export enum ResolveError {
 }
 
 export enum ChannelError {
-    ChannelDoesNotExist = 'ChannelDoesNotExist',
+    ChannelDoesNotExist = 'ChannelDoesNotExist'
 }
 
 export enum IdentityError {
