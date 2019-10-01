@@ -120,8 +120,8 @@ export function setupTeardown(): void {
     });
 }
 
-export function fakeAppChannelId(): ChannelId {
-    return `app-channel-${idString()}`;
+export function fakeAppChannelName(): ChannelId {
+    return `app-channel-name-${idString()}`;
 }
 
 function idString(): string {

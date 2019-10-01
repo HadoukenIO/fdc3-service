@@ -1,10 +1,10 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {SystemChannel, DefaultChannel, ChannelError, IdentityError, ChannelId} from '../../../src/client/main';
+import {SystemChannel, DefaultChannel, ChannelError, IdentityError, ChannelId, getChannelById} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, appStartupTime, testAppNotFdc3} from '../constants';
 import {fin} from '../utils/fin';
-import {setupTeardown, fakeAppChannelId, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends} from '../utils/common';
+import {setupTeardown, fakeAppChannelName, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends} from '../utils/common';
 
 type AppSource = 'directory' | 'non-directory';
 
@@ -33,6 +33,14 @@ describe('When getting a channel by ID', () => {
     test('Subsequent calls return the same channel instance', async () => {
         const redChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'red');
         await expect(fdc3Remote.getChannelById(testManagerIdentity, 'red')).resolves.toBe(redChannel);
+    });
+
+    test('When the ID corresponds to an app channel, the expect app channel is returned', async () => {
+        const appChannel = await fdc3Remote.getOrCreateAppChannel(testManagerIdentity, fakeAppChannelName());
+
+        const id = appChannel.id;
+
+        await expect(fdc3Remote.getChannelById(testManagerIdentity, id)).resolves.toBe(appChannel);
     });
 
     test('When the ID does not correspond to a channel, an FDC3Error is thrown', async () => {
@@ -73,6 +81,15 @@ describe('When getting the list of system channels', () => {
         }
 
         // Check all expected channels have been returned
+        expect(channels).toHaveLength(6);
+    });
+
+    test('App channels are not included in the list of system channels', async () => {
+        const appChannel = await fdc3Remote.getOrCreateAppChannel(testManagerIdentity, fakeAppChannelName());
+
+        const channels = await fdc3Remote.getSystemChannels(testManagerIdentity);
+
+        expect(channels).not.toContain(appChannel);
         expect(channels).toHaveLength(6);
     });
 });
@@ -150,7 +167,7 @@ describe.each(testParams)('When getting the current channel of a window of %s', 
 
     test('When the window has joined an app channel, the app channel is returned', async () => {
         // Join a new app channel
-        const appChannel = await fdc3Remote.getOrCreateAppChannel(testManagerIdentity, fakeAppChannelId());
+        const appChannel = await fdc3Remote.getOrCreateAppChannel(testManagerIdentity, fakeAppChannelName());
         appChannel.join(testApp);
 
         // Check the app channel is returned

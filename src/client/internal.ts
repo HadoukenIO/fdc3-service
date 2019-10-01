@@ -169,7 +169,7 @@ export interface GetCurrentChannelPayload {
 }
 
 export interface GetOrCreateAppChannelPayload {
-    id: ChannelId;
+    name: string;
 }
 
 export interface ChannelGetMembersPayload {

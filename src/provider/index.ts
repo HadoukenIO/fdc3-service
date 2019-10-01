@@ -197,18 +197,9 @@ export class Main {
     }
 
     private async getOrCreateAppChannel(payload: GetOrCreateAppChannelPayload, source: ProviderIdentity): Promise<AppChannelTransport> {
-        const channelId = payload.id;
-        const channel = this._model.getChannel(channelId);
+        const name = payload.name;
 
-        if (channel) {
-            if (channel.id === 'app') {
-                return (channel as AppContextChannel).serialize();
-            } else {
-                throw new FDC3Error(ChannelError.ChannelIsNotAppChannel, `Channel with ID '${channelId}' already exists and is not an app channel`);
-            }
-        } else {
-            return this._channelHandler.createAppChannel(channelId).serialize();
-        }
+        return this._channelHandler.getAppChannelByName(name).serialize();
     }
 
     private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): ReadonlyArray<Identity> {

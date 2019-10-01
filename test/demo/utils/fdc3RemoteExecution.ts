@@ -254,15 +254,15 @@ export async function getCurrentChannel(executionTarget: Identity, identity?: Id
     return deserializeChannel(executionTarget, testChannelTransport);
 }
 
-export async function getOrCreateAppChannel(executionTarget: Identity, id: ChannelId): Promise<RemoteChannel> {
+export async function getOrCreateAppChannel(executionTarget: Identity, name: string): Promise<RemoteChannel> {
     const testChannelTransport = await ofBrowser.executeOnWindow(
         executionTarget,
-        async function(this: TestWindowContext, id: ChannelId): Promise<TestChannelTransport> {
-            const channel = await this.fdc3.getOrCreateAppChannel(id).catch(this.errorHandler);
+        async function(this: TestWindowContext, name: string): Promise<TestChannelTransport> {
+            const channel = await this.fdc3.getOrCreateAppChannel(name).catch(this.errorHandler);
 
             return this.serializeChannel(channel);
         },
-        id
+        name
     ).catch(handlePuppeteerError);
 
     return deserializeChannel(executionTarget, testChannelTransport);

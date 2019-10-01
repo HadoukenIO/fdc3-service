@@ -32,12 +32,17 @@ export class ChannelHandler {
         return this._model.channels.filter<SystemContextChannel>(this.isSystemChannel);
     }
 
-    public createAppChannel(channelId: ChannelId): AppContextChannel {
-        const appChannel = new AppContextChannel(channelId);
+    public getAppChannelByName(name: string): AppContextChannel {
+        const channelId = `app-channel-${name}`;
 
-        this._model.setChannel(channelId, appChannel);
+        let channel = this._model.getChannel(channelId) as AppContextChannel | null;
 
-        return appChannel;
+        if (!channel) {
+            channel = new AppContextChannel(channelId);
+            this._model.setChannel(channelId, channel);
+        }
+
+        return channel;
     }
 
     public getWindowsListeningToChannel(channel: ContextChannel): AppWindow[] {

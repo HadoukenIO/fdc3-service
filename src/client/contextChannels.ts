@@ -465,11 +465,11 @@ export async function getCurrentChannel(identity?: Identity): Promise<Channel> {
  *
  * It is up to applications to manage how to share knowledge of these custom channels across windows and to manage
  * channel ownership and lifecycle.
- * @param channelId the identity of this channel
+ * @param name the name of the channel
  */
 
-export async function getOrCreateAppChannel(channelId: ChannelId): Promise<AppChannel> {
-    const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_OR_CREATE_APP_CHANNEL, {id: parseChannelId(channelId)});
+export async function getOrCreateAppChannel(name: string): Promise<AppChannel> {
+    const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_OR_CREATE_APP_CHANNEL, {name});
 
     return getChannelObject<AppChannel>(channelTransport);
 }

@@ -5,7 +5,7 @@ import {testManagerIdentity, appStartupTime, testAppNotInDirectory1, testAppNotF
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel, RemoteChannelEventListener} from '../utils/RemoteChannel';
 import {fin} from '../utils/fin';
-import {setupTeardown, fakeAppChannelId, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, quitApps} from '../utils/common';
+import {setupTeardown, fakeAppChannelName, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, quitApps} from '../utils/common';
 
 /*
  * Tests simple behaviour of Channel.getMembers() and the channel-changed and Channel events, before testing how they and getCurrentChannel()
@@ -28,7 +28,7 @@ describe('When getting members of a channel', () => {
     });
 
     test('When the channel is a newly-created app channel, an empty result is returned', async () => {
-        const appChannelId = fakeAppChannelId();
+        const appChannelId = fakeAppChannelName();
         const appChannel = await fdc3Remote.getOrCreateAppChannel(testManagerIdentity, appChannelId);
 
         await expect(appChannel.getMembers()).resolves.toEqual([]);
@@ -246,7 +246,7 @@ describe('When joining a non-default channel', () => {
         ],
         [
             'app',
-            async () => fdc3Remote.getOrCreateAppChannel(testManagerIdentity, fakeAppChannelId())
+            async () => fdc3Remote.getOrCreateAppChannel(testManagerIdentity, fakeAppChannelName())
         ]
     ];
 
