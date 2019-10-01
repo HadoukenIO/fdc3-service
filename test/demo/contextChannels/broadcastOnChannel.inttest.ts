@@ -18,7 +18,7 @@ import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppB
  } | {
      type: 'app',
      name: string
- }
+ } | 'red' | 'yellow' | 'blue' | 'orange' | 'yellow' | 'purple' | 'default';
 
 const testContext = {type: 'test-context', name: 'contextName1', id: {name: 'contextID1'}};
 
@@ -55,9 +55,9 @@ describe('When broadcasting on a channel', () => {
 
     type ReceieveTestParam = [string, ChannelDescriptor];
     const receiveTestParams = [
-        ['the default', {type: 'default'}],
-        ['a system', {type: 'system', id: 'blue'}],
-        ['an app', {type: 'app', name: fakeAppChannelName()}]
+        ['the default', 'default'],
+        ['a system', 'blue'],
+        ['an app', fakeAppChannelDescriptor()]
     ] as ReceieveTestParam[];
 
     describe.each(receiveTestParams)('When the channel is %s channel', (titleParam: string, channelDescriptor: ChannelDescriptor) => {
@@ -91,13 +91,13 @@ describe('When broadcasting on a channel', () => {
 
     type ChannelIndependenceTestParam = [string, string, ChannelDescriptor, ChannelDescriptor];
     const channelIndependenceTestParams = [
-        ['the default', 'a system', {type: 'default'}, {type: 'system', id: 'green'}],
-        ['the default', 'an app', {type: 'default'}, {type: 'app', name: fakeAppChannelName()}],
-        ['a system', 'the default', {type: 'system', id: 'yellow'}, {type: 'default'}],
-        ['a system', 'a different system', {type: 'system', id: 'red'}, {type: 'system', id: 'blue'}],
-        ['an app', 'a system', {type: 'app', name: fakeAppChannelName()}, {type: 'system', id: 'blue'}],
-        ['an app', 'a system', {type: 'app', name: fakeAppChannelName()}, {type: 'system', id: 'blue'}],
-        ['an app', 'a different app', {type: 'app', name: fakeAppChannelName()}, {type: 'app', name: fakeAppChannelName()}]
+        ['the default', 'a system', 'default', 'green'],
+        ['the default', 'an app', 'default', fakeAppChannelDescriptor()],
+        ['a system', 'the default', 'yellow', 'default'],
+        ['a system', 'a different system', 'red', 'blue'],
+        ['an app', 'a system', fakeAppChannelDescriptor(), 'blue'],
+        ['an app', 'a system', fakeAppChannelDescriptor(), 'blue'],
+        ['an app', 'a different app', fakeAppChannelDescriptor(), fakeAppChannelDescriptor()]
     ] as ChannelIndependenceTestParam[];
 
     describe.each(channelIndependenceTestParams)(
@@ -148,8 +148,8 @@ describe('When adding a context listener to a channel', () => {
 
     type ContextListenerTestParam = [string, ChannelDescriptor];
     const contextListenerTestParams = [
-        ['the default', {type: 'default'}],
-        ['a system', {type: 'system', id: 'red'}],
+        ['the default', 'default'],
+        ['a system', 'red'],
         ['an app', {type: 'default', name: fakeAppChannelName()}]
     ] as ContextListenerTestParam[];
 
@@ -242,8 +242,8 @@ describe('When querying the current context of the default channel', () => {
 
 type QueryContextTestParam = [string, ChannelDescriptor];
 const queryContextTestParams = [
-    ['a system', {type: 'system', id: 'yellow'}],
-    ['an app', {type: 'default', name: fakeAppChannelName()}]
+    ['a system', 'yellow'],
+    ['an app', fakeAppChannelDescriptor()]
 ] as QueryContextTestParam[];
 
 describe.each(queryContextTestParams)('When querying the current context of %s channel', (titleParam: string, channelDescriptor: ChannelDescriptor) => {
@@ -329,11 +329,17 @@ describe('When using a non-directory app', () => {
 });
 
 async function getChannel(executionTarget: Identity, descriptor: ChannelDescriptor): Promise<RemoteChannel> {
-    if (descriptor.type === 'default') {
+    if (typeof descriptor === 'string') {
+        return fdc3Remote.getChannelById(executionTarget, descriptor);
+    } else if (descriptor.type === 'default') {
         return fdc3Remote.getChannelById(executionTarget, 'default');
     } else if (descriptor.type === 'system') {
         return fdc3Remote.getChannelById(executionTarget, descriptor.id);
     } else {
         return fdc3Remote.getOrCreateAppChannel(executionTarget, descriptor.name);
     }
+}
+
+function fakeAppChannelDescriptor(): ChannelDescriptor {
+    return {type: 'app', name: fakeAppChannelName()};
 }
