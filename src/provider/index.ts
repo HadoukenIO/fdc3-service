@@ -3,7 +3,7 @@ import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload} from '../client/internal';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Intent, Context} from '../client/main';
 import {FDC3Error, OpenError, IdentityError} from '../client/errors';
 import {parseIdentity, parseContext, parseChannelId} from '../client/validation';
@@ -77,7 +77,7 @@ export class Main {
             [APIFromClientTopic.REMOVE_INTENT_LISTENER]: this.removeIntentListener.bind(this),
             [APIFromClientTopic.ADD_CONTEXT_LISTENER]: this.addContextListener.bind(this),
             [APIFromClientTopic.REMOVE_CONTEXT_LISTENER]: this.removeContextListener.bind(this),
-            [APIFromClientTopic.GET_DESKTOP_CHANNELS]: this.getDesktopChannels.bind(this),
+            [APIFromClientTopic.GET_SYSTEM_CHANNELS]: this.getSystemChannels.bind(this),
             [APIFromClientTopic.GET_CHANNEL_BY_ID]: this.getChannelById.bind(this),
             [APIFromClientTopic.GET_CURRENT_CHANNEL]: this.getCurrentChannel.bind(this),
             [APIFromClientTopic.CHANNEL_GET_MEMBERS]: this.channelGetMembers.bind(this),
@@ -166,13 +166,13 @@ export class Main {
         return this._intentHandler.raise(intent);
     }
 
-    private async addIntentListener(payload: IntentListenerPayload, source: ProviderIdentity): Promise<void> {
+    private async addIntentListener(payload: AddIntentListenerPayload, source: ProviderIdentity): Promise<void> {
         const appWindow = await this.expectWindow(source);
 
         appWindow.addIntentListener(payload.intent);
     }
 
-    private removeIntentListener(payload: IntentListenerPayload, source: ProviderIdentity): void {
+    private removeIntentListener(payload: RemoveIntentListenerPayload, source: ProviderIdentity): void {
         const appWindow = this.attemptGetWindow(source);
         if (appWindow) {
             appWindow.removeIntentListener(payload.intent);
@@ -199,8 +199,8 @@ export class Main {
         }
     }
 
-    private getDesktopChannels(payload: GetDesktopChannelsPayload, source: ProviderIdentity): ReadonlyArray<DesktopChannelTransport> {
-        return this._channelHandler.getDesktopChannels().map(channel => channel.serialize());
+    private getSystemChannels(payload: GetSystemChannelsPayload, source: ProviderIdentity): ReadonlyArray<SystemChannelTransport> {
+        return this._channelHandler.getSystemChannels().map(channel => channel.serialize());
     }
 
     private getChannelById(payload: GetChannelByIdPayload, source: ProviderIdentity): ChannelTransport {

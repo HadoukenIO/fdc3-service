@@ -37,7 +37,6 @@ export interface Application {
     supportEmail?: string;
     publisher?: string;
 
-    signature?: string;
     icons?: Icon[];
     customConfig?: NameValuePair[];
 

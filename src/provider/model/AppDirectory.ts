@@ -1,13 +1,9 @@
 import {injectable, inject} from 'inversify';
-import {MaskWatch} from 'openfin-service-config/Watch';
-import {Scope} from 'openfin-service-config/Types';
-import {ScopedConfig} from 'openfin-service-config';
 
 import {Inject} from '../common/Injectables';
 import {Application, AppName} from '../../client/directory';
 import {AppIntent} from '../../client/main';
 import {AsyncInit} from '../controller/AsyncInit';
-import {ConfigurationObject} from '../../../gen/provider/config/fdc3-config';
 
 import {ConfigStoreBinding} from './ConfigStore';
 
@@ -15,9 +11,6 @@ enum StorageKeys {
     URL = 'fdc3@url',
     APPLICATIONS = 'fdc3@applications'
 }
-
-// Demo development app directory url
-export const DEV_APP_DIRECTORY_URL = 'http://localhost:3923/provider/sample-app-directory.json';
 
 @injectable()
 export class AppDirectory extends AsyncInit {
@@ -33,32 +26,16 @@ export class AppDirectory extends AsyncInit {
 
     protected async init(): Promise<void> {
         await this._configStore.initialized;
-
-        if (process.env.NODE_ENV === 'development') {
-            // Set the application directory to our local copy during development.  In production it will be an empty string.
-            this._configStore.config.add({level: 'desktop'}, {applicationDirectory: DEV_APP_DIRECTORY_URL});
-        }
-
-        this.updateUrl(this._configStore.config.query({level: 'desktop'}).applicationDirectory);
-
-        const watch = new MaskWatch(this._configStore.config, {applicationDirectory: true});
-
-        watch.onAdd.add((rule: ScopedConfig<ConfigurationObject>, source: Scope) => {
-            this.updateUrl(this._configStore.config.query({level: 'desktop'}).applicationDirectory);
-        });
-
-        this._configStore.config.addWatch(watch);
+        await this.initializeDirectoryData();
     }
 
     public async getAppByName(name: AppName): Promise<Application | null> {
-        await this.refreshDirectory();
         return this._directory.find((app: Application) => {
             return app.name === name;
         }) || null;
     }
 
     public async getAppsByIntent(intentType: string): Promise<Application[]> {
-        await this.refreshDirectory();
         return this._directory.filter((app: Application) => {
             return app.intents && app.intents.some(intent => intent.name === intentType);
         });
@@ -71,7 +48,6 @@ export class AppDirectory extends AsyncInit {
      * @param contextType type of context to find intents for
      */
     public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
-        await this.refreshDirectory();
         const appIntentsByName: {[intentName: string]: AppIntent} = {};
         this._directory.forEach((app: Application) => {
             (app.intents || []).forEach(intent => {
@@ -97,64 +73,68 @@ export class AppDirectory extends AsyncInit {
         return Object.values(appIntentsByName).sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));
     }
 
+    /**
+     * Retrieves all of the applications in the Application Directory.
+     */
     public async getAllApps(): Promise<Application[]> {
-        await this.refreshDirectory();
-
         return this._directory;
     }
 
-    /**
-     * Refresh the AppDirectory.
-     */
-    private async refreshDirectory(): Promise<void> {
-        // If using the demo app directory in production, set an empty array.
-        if (process.env.NODE_ENV === 'production') {
-            await this.updateDirectory([]);
-            return;
+    private async initializeDirectoryData(): Promise<void> {
+        this._url = this._configStore.config.query({level: 'desktop'}).applicationDirectory;
+        const fetchedData = await this.fetchOnlineData(this._url);
+        const cachedData = this.fetchCacheData();
+
+        if (fetchedData) {
+            this.updateCache(this._url, fetchedData);
         }
-        const storedUrl = localStorage.getItem(StorageKeys.URL);
-        const currentUrl = this._url;
-        const applications = await this.fetchData(currentUrl, storedUrl);
-        await this.updateDirectory(applications);
-        await this.updateUrl(currentUrl);
+
+        this._directory = fetchedData || cachedData || [];
     }
 
-    /**
-     * Fetch the AppDirectory.
-     * @param url Location of the AppDirectory.
-     * @param storedUrl Cache url
-     */
-    private async fetchData(url: string, storedUrl: string | null): Promise<Application[]> {
+    private async fetchOnlineData(url: string): Promise<Application[]|null> {
         const response = await fetch(url).catch(() => {
             console.warn(`Failed to fetch app directory @ ${url}`);
         });
 
         if (response && response.ok) {
-            return response.json();
+            try {
+                // TODO SERVICE-620 validate JSON we receive is valid against spec
+                const validate = await response.json();
+                return validate;
+            } catch (error) {
+                console.warn(`Received invalid JSON data from ${url}. Ignoring fetch result`);
+            }
         }
-        // Use cached apps if urls match
-        if (url === storedUrl) {
-            return JSON.parse(localStorage.getItem(StorageKeys.APPLICATIONS) || '[]');
+
+        return null;
+    }
+
+    private fetchCacheData(): Application[]|null {
+        if (localStorage.getItem(StorageKeys.URL) === this._url) {
+            const cache = localStorage.getItem(StorageKeys.APPLICATIONS);
+
+            if (cache) {
+                try {
+                    const validate = JSON.parse(cache);
+                    return validate;
+                } catch (error) {
+                    // Not likely to get here but figured it's better to safely to handle it.
+                    console.warn('Invalid JSON retrieved from cache');
+                }
+            }
         }
-        // Use empty array if urls dont match
-        return [];
+
+        return null;
     }
 
     /**
-     * Update the application directory in memory and storage.
-     * @param applications To place into the directory.
-     */
-    private async updateDirectory(applications: Application[]): Promise<void> {
-        localStorage.setItem(StorageKeys.APPLICATIONS, JSON.stringify(applications));
-        this._directory = applications;
-    }
-
-    /**
-     * Update the application directory URL in memory and storage.
+     * Updates the URL and Applications in the local storage cache.
      * @param url Directory URL.
+     * @param applications Directory Applications.
      */
-    private async updateUrl(url: string) {
+    private updateCache(url: string, applications: Application[]) {
         localStorage.setItem(StorageKeys.URL, url);
-        this._url = url;
+        localStorage.setItem(StorageKeys.APPLICATIONS, JSON.stringify(applications));
     }
 }

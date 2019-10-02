@@ -3,10 +3,11 @@ import _WindowModule from 'openfin/_v2/api/window/window';
 
 import {AppWindow} from '../model/AppWindow';
 import {APIHandler} from '../APIHandler';
-import {APIFromClientTopic, EventTransport} from '../../client/internal';
+import {APIFromClientTopic, Events} from '../../client/internal';
 import {Inject} from '../common/Injectables';
 import {ContextChannel} from '../model/ContextChannel';
-import {FDC3Event, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent} from '../../client/main';
+import {ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent} from '../../client/main';
+import {Transport, Targeted} from '../../client/EventRouter';
 
 import {ChannelHandler} from './ChannelHandler';
 
@@ -33,7 +34,7 @@ export class EventHandler {
         const promises: Promise<void>[] = [];
 
         if (channel) {
-            const windowAddedEvent: EventTransport<ChannelWindowAddedEvent> = {
+            const windowAddedEvent: Targeted<Transport<ChannelWindowAddedEvent>> = {
                 target: {type: 'channel', id: channel.id},
                 type: 'window-added',
                 ...partialEvent,
@@ -46,7 +47,7 @@ export class EventHandler {
         }
 
         if (previousChannel) {
-            const windowRemovedEvent: EventTransport<ChannelWindowRemovedEvent> = {
+            const windowRemovedEvent: Targeted<Transport<ChannelWindowRemovedEvent>> = {
                 target: {type: 'channel', id: previousChannel.id},
                 type: 'window-removed',
                 ...partialEvent,
@@ -58,8 +59,8 @@ export class EventHandler {
             promises.push(...removedListeningWindows.map(window => this.dispatchEvent(window, windowRemovedEvent)));
         }
 
-        const channelChangedEvent: EventTransport<ChannelChangedEvent> = {
-            target: {type: 'main', id: 'main'},
+        const channelChangedEvent: Targeted<Transport<ChannelChangedEvent>> = {
+            target: 'default',
             type: 'channel-changed',
             ...partialEvent
         };
@@ -69,11 +70,11 @@ export class EventHandler {
         return Promise.all(promises).then(() => {});
     }
 
-    private dispatchEvent<T extends FDC3Event>(targetWindow: AppWindow, eventTransport: EventTransport<T>): Promise<void> {
+    private dispatchEvent<T extends Events>(targetWindow: AppWindow, eventTransport: Targeted<Transport<T>>): Promise<void> {
         return this._apiHandler.channel.dispatch(targetWindow.identity, 'event', eventTransport);
     }
 
-    private publishEvent<T extends FDC3Event>(eventTransport: EventTransport<T>): Promise<void> {
+    private publishEvent<T extends Events>(eventTransport: Targeted<Transport<T>>): Promise<void> {
         return Promise.all(this._apiHandler.channel.publish('event', eventTransport)).then(() => {});
     }
 }

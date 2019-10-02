@@ -1,5 +1,5 @@
-import {ChannelTransport, DesktopChannelTransport} from '../../client/internal';
-import {ChannelId, Context} from '../../client/main';
+import {ChannelId, Context, DisplayMetadata, Channel, ChannelBase, SystemChannel} from '../../client/main';
+import {Transport} from '../../client/EventRouter';
 
 export interface ContextChannel {
     readonly id: ChannelId;
@@ -9,7 +9,7 @@ export interface ContextChannel {
     getStoredContext(): Context | null;
     clearStoredContext(): void;
 
-    serialize(): ChannelTransport;
+    serialize(): Readonly<Transport<Channel>>;
 }
 
 abstract class ContextChannelBase implements ContextChannel {
@@ -25,7 +25,7 @@ abstract class ContextChannelBase implements ContextChannel {
     public abstract setLastBroadcastContext(context: Context): void;
     public abstract clearStoredContext(): void;
 
-    public serialize(): ChannelTransport {
+    public serialize(): Readonly<Transport<ChannelBase>> {
         return {
             id: this.id,
             type: this.type
@@ -45,26 +45,23 @@ export class DefaultContextChannel extends ContextChannelBase {
     }
 
     public setLastBroadcastContext(context: Context) {
-
     }
 
     public clearStoredContext(): void {
-
     }
 }
 
-export class DesktopContextChannel extends ContextChannelBase {
-    public readonly type!: 'desktop';
-    public readonly name: string;
-    public readonly color: number;
+export class SystemContextChannel extends ContextChannelBase {
+    public readonly type!: 'system';
+
+    public readonly visualIdentity: DisplayMetadata;
 
     private _context: Context | null;
 
-    public constructor(id: ChannelId, name: string, color: number) {
-        super(id, 'desktop');
+    public constructor(id: ChannelId, visualIdentity: DisplayMetadata) {
+        super(id, 'system');
 
-        this.name = name;
-        this.color = color;
+        this.visualIdentity = visualIdentity;
 
         this._context = null;
     }
@@ -81,7 +78,11 @@ export class DesktopContextChannel extends ContextChannelBase {
         this._context = null;
     }
 
-    public serialize(): DesktopChannelTransport {
-        return {name: this.name, color: this.color, ...super.serialize() as {id: string, type: 'desktop'}};
+    public serialize(): Readonly<Transport<SystemChannel>> {
+        return {
+            ...super.serialize(),
+            type: this.type,
+            visualIdentity: this.visualIdentity
+        };
     }
 }

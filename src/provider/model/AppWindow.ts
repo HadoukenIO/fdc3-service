@@ -1,6 +1,7 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {Application, IntentType, ChannelId, FDC3ChannelEventType} from '../../client/main';
+import {Application, IntentType, ChannelId} from '../../client/main';
+import {ChannelEvents} from '../../client/internal';
 
 import {ContextChannel} from './ContextChannel';
 
@@ -43,11 +44,11 @@ export interface AppWindow {
 
     removeChannelContextListener(channel: ContextChannel): void;
 
-    hasChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): boolean;
+    hasChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): boolean;
 
-    addChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void;
+    addChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): void;
 
-    removeChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void;
+    removeChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): void;
 
     bringToFront(): Promise<void>;
 

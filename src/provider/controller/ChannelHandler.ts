@@ -3,9 +3,10 @@ import {Signal} from 'openfin-service-signal';
 
 import {Model} from '../model/Model';
 import {Inject} from '../common/Injectables';
-import {ChannelId, FDC3Error, ChannelError, Context, FDC3ChannelEventType} from '../../client/main';
-import {DesktopContextChannel, ContextChannel} from '../model/ContextChannel';
+import {ChannelId, FDC3Error, ChannelError, Context} from '../../client/main';
+import {SystemContextChannel, ContextChannel} from '../model/ContextChannel';
 import {AppWindow} from '../model/AppWindow';
+import {ChannelEvents} from '../../client/internal';
 
 @injectable()
 export class ChannelHandler {
@@ -27,8 +28,8 @@ export class ChannelHandler {
         this._model.onWindowRemoved.add(this.onModelWindowRemoved, this);
     }
 
-    public getDesktopChannels(): DesktopContextChannel[] {
-        return this._model.channels.filter(channel => channel.type === 'desktop') as DesktopContextChannel[];
+    public getSystemChannels(): SystemContextChannel[] {
+        return this._model.channels.filter<SystemContextChannel>(this.isSystemChannel);
     }
 
     public getWindowsListeningToChannel(channel: ContextChannel): AppWindow[] {
@@ -52,7 +53,7 @@ export class ChannelHandler {
         return this._model.windows.filter(window => window.hasChannelContextListener(channel));
     }
 
-    public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: FDC3ChannelEventType): AppWindow[] {
+    public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: ChannelEvents['type']): AppWindow[] {
         return this._model.windows.filter(window => window.hasChannelEventListener(channel, eventType));
     }
 
@@ -98,5 +99,9 @@ export class ChannelHandler {
         if (!channel) {
             throw new FDC3Error(ChannelError.ChannelDoesNotExist, `No channel with channelId: ${channelId}`);
         }
+    }
+
+    private isSystemChannel(channel: ContextChannel): channel is SystemContextChannel {
+        return channel.type === 'system';
     }
 }

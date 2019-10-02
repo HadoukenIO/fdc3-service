@@ -7,7 +7,7 @@ import {FDC3Error, ResolveError} from '../../client/errors';
 import {Model} from '../model/Model';
 import {AppDirectory} from '../model/AppDirectory';
 import {AppWindow} from '../model/AppWindow';
-import {APIToClientTopic} from '../../client/internal';
+import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
 
 import {ResolverHandler, ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
@@ -113,8 +113,10 @@ export class IntentHandler {
         // to decide between focus nothing or apps with intent listener
         const dispatchResults = await Promise.all(appWindows.map(async (window: AppWindow): Promise<boolean> => {
             if (await window.isReadyToReceiveIntent(intent.type)) {
+                const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
+
                 // TODO: Implement a timeout so a misbehaving intent handler can't block the intent raiser (SERVICE-555)
-                await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.INTENT, {context: intent.context, intent: intent.type});
+                await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
                 return true;
             } else {
                 return false;

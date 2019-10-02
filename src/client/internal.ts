@@ -11,8 +11,8 @@
 import {Identity} from 'openfin/_v2/main';
 
 import {AppName} from './directory';
-import {AppIntent, Context, IntentResolution, FDC3Event} from './main';
-import {Channel, ChannelId, DefaultChannel, DesktopChannel, FDC3ChannelEventType} from './contextChannels';
+import {AppIntent, Context, IntentResolution} from './main';
+import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase} from './contextChannels';
 import {FDC3Error} from './errors';
 
 /**
@@ -41,7 +41,7 @@ export enum APIFromClientTopic {
     REMOVE_INTENT_LISTENER = 'REMOVE-INTENT-LISTENER',
     ADD_CONTEXT_LISTENER = 'ADD-CONTEXT-LISTENER',
     REMOVE_CONTEXT_LISTENER = 'REMOVE-CONTEXT-LISTENER',
-    GET_DESKTOP_CHANNELS = 'GET-DESKTOP-CHANNELS',
+    GET_SYSTEM_CHANNELS = 'GET-SYSTEM-CHANNELS',
     GET_CHANNEL_BY_ID = 'GET-CHANNEL-BY-ID',
     GET_CURRENT_CHANNEL = 'GET-CURRENT-CHANNEL',
     CHANNEL_GET_MEMBERS = 'CHANNEL-GET-MEMBERS',
@@ -58,10 +58,9 @@ export enum APIFromClientTopic {
  * Enum containing all and only actions that the client can accept.
  */
 export enum APIToClientTopic {
-    // TODO: When we're ready to make a breaking change, rename `INTENT` and `CONTEXT` to something more descriptive (SERVICE-533)
-    INTENT = 'INTENT',
-    CONTEXT = 'CONTEXT',
-    HANDLE_CHANNEL_CONTEXT = 'HANDLE-CHANNEL-CONTEXT'
+    RECEIVE_INTENT = 'RECEIVE-INTENT',
+    RECEIVE_CONTEXT = 'RECEIVE-CONTEXT',
+    CHANNEL_RECEIVE_CONTEXT = 'CHANNEL-RECEIVE-CONTEXT'
 }
 
 export type APIFromClient = {
@@ -70,11 +69,11 @@ export type APIFromClient = {
     [APIFromClientTopic.FIND_INTENTS_BY_CONTEXT]: [FindIntentsByContextPayload, AppIntent[]];
     [APIFromClientTopic.BROADCAST]: [BroadcastPayload, void];
     [APIFromClientTopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
-    [APIFromClientTopic.ADD_INTENT_LISTENER]: [IntentListenerPayload, void];
-    [APIFromClientTopic.REMOVE_INTENT_LISTENER]: [IntentListenerPayload, void];
-    [APIFromClientTopic.ADD_CONTEXT_LISTENER]: [ContextListenerPayload, void];
-    [APIFromClientTopic.REMOVE_CONTEXT_LISTENER]: [ContextListenerPayload, void];
-    [APIFromClientTopic.GET_DESKTOP_CHANNELS]: [GetDesktopChannelsPayload, DesktopChannelTransport[]];
+    [APIFromClientTopic.ADD_INTENT_LISTENER]: [AddIntentListenerPayload, void];
+    [APIFromClientTopic.REMOVE_INTENT_LISTENER]: [RemoveIntentListenerPayload, void];
+    [APIFromClientTopic.ADD_CONTEXT_LISTENER]: [addContextListenerPayload, void];
+    [APIFromClientTopic.REMOVE_CONTEXT_LISTENER]: [addContextListenerPayload, void];
+    [APIFromClientTopic.GET_SYSTEM_CHANNELS]: [GetSystemChannelsPayload, SystemChannelTransport[]];
     [APIFromClientTopic.GET_CHANNEL_BY_ID]: [GetChannelByIdPayload, ChannelTransport];
     [APIFromClientTopic.GET_CURRENT_CHANNEL]: [GetCurrentChannelPayload, ChannelTransport];
     [APIFromClientTopic.CHANNEL_GET_MEMBERS]: [ChannelGetMembersPayload, Identity[]];
@@ -88,32 +87,45 @@ export type APIFromClient = {
 }
 
 export type APIToClient = {
-    [APIToClientTopic.CONTEXT]: [ContextPayload, void];
-    [APIToClientTopic.INTENT]: [IntentPayload, void];
-    [APIToClientTopic.HANDLE_CHANNEL_CONTEXT]: [HandleChannelContextPayload, void];
+    [APIToClientTopic.RECEIVE_CONTEXT]: [ReceiveContextPayload, void];
+    [APIToClientTopic.RECEIVE_INTENT]: [ReceiveIntentPayload, void];
+    [APIToClientTopic.CHANNEL_RECEIVE_CONTEXT]: [ChannelReceiveContextPayload, void];
 }
 
-export type TransportMappings<T> =
-    T extends DesktopChannel ? DesktopChannelTransport :
-    T extends DefaultChannel ? ChannelTransport :
-    T extends Channel ? ChannelTransport :
-    T;
+/**
+ * Defines all events that are fired by the service
+ */
+export type Events = MainEvents | ChannelEvents;
 
-export type EventTransport<T extends FDC3Event> = {
-    [K in keyof T]: TransportMappings<T[K]>;
-} & {
-    target: {type: string, id: string}
-};
+/**
+ * Events that can be received through the top-level `addEventListener`
+ */
+export type MainEvents = ChannelChangedEvent;
+
+/**
+ * Events that can be received through a channel object
+ */
+export type ChannelEvents = ChannelWindowAddedEvent | ChannelWindowRemovedEvent;
+
+export type TransportMappings<T> =
+    T extends SystemChannel ? SystemChannelTransport :
+    T extends DefaultChannel ? ChannelTransport :
+    T extends ChannelBase ? ChannelTransport :
+    never;
+export type TransportMemberMappings<T> =
+    T extends SystemChannel ? SystemChannelTransport :
+    T extends DefaultChannel ? ChannelTransport :
+    T extends ChannelBase ? ChannelTransport :
+    T;
 
 export interface ChannelTransport {
     id: ChannelId;
     type: string;
 }
 
-export interface DesktopChannelTransport extends ChannelTransport {
-    type: 'desktop';
-    name: string;
-    color: number;
+export interface SystemChannelTransport extends ChannelTransport {
+    type: 'system';
+    visualIdentity: DisplayMetadata;
 }
 
 export interface OpenPayload {
@@ -140,7 +152,7 @@ export interface RaiseIntentPayload {
     target?: string;
 }
 
-export interface GetDesktopChannelsPayload {
+export interface GetSystemChannelsPayload {
 
 }
 
@@ -180,32 +192,40 @@ export interface ChannelRemoveContextListenerPayload {
 
 export interface ChannelAddEventListenerPayload {
     id: ChannelId;
-    eventType: FDC3ChannelEventType;
+    eventType: ChannelEvents['type'];
 }
 
 export interface ChannelRemoveEventListenerPayload {
     id: ChannelId;
-    eventType: FDC3ChannelEventType;
+    eventType: ChannelEvents['type'];
 }
 
-export interface IntentListenerPayload {
+export interface AddIntentListenerPayload {
     intent: string;
 }
 
-export interface ContextListenerPayload {
+export interface RemoveIntentListenerPayload {
+    intent: string;
+}
+
+export interface addContextListenerPayload {
 
 }
 
-export interface ContextPayload {
+export interface removeContextListenerPayload {
+
+}
+
+export interface ReceiveContextPayload {
     context: Context;
 }
 
-export interface IntentPayload {
+export interface ReceiveIntentPayload {
     intent: string;
     context: Context;
 }
 
-export interface HandleChannelContextPayload {
+export interface ChannelReceiveContextPayload {
     channel: ChannelId,
     context: Context
 }
