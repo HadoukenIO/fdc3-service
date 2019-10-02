@@ -5,7 +5,7 @@ import {Context} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel} from '../utils/RemoteChannel';
 import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends} from '../utils/common';
-import {getChannel, fakeAppChannelDescriptor, ChannelDescriptor, fakeAppChannelName} from '../utils/channels';
+import {getChannel, fakeAppChannelDescriptor, ChannelDescriptor} from '../utils/channels';
 
 /**
  * Tests Channel.broadcast(), its interaction with Channel.getCurrentContext(), and Channel.addContextListener
@@ -295,12 +295,12 @@ describe('When using a non-directory app', () => {
     setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
 
     type BroadcastTestParam = [string, string, Identity, Identity];
-    const broadcastParams: BroadcastTestParam[] = [
+    const broadcastTestParams: BroadcastTestParam[] = [
         ['the app', 'a directory app', testAppNotInDirectory1, testAppInDirectory1],
         ['a directory app', 'the app', testAppInDirectory1, testAppNotInDirectory1]
     ];
 
-    test.each(broadcastParams)(
+    test.each(broadcastTestParams)(
         'When broadcasting from %s, context can be received by %s',
         async (titleParam1: string, titleParam2: string, broadcastingApp: Identity, listeningApp: Identity) => {
             // Set up our broadcasting and listening channels
