@@ -33,6 +33,24 @@ abstract class ContextChannelBase implements ContextChannel {
     }
 }
 
+export class DefaultContextChannel extends ContextChannelBase {
+    public readonly type!: 'default';
+
+    public constructor(id: ChannelId) {
+        super(id, 'default');
+    }
+
+    public getStoredContext(): Context | null {
+        return null;
+    }
+
+    public setLastBroadcastContext(context: Context) {
+    }
+
+    public clearStoredContext(): void {
+    }
+}
+
 export class SystemContextChannel extends ContextChannelBase {
     public readonly type!: 'system';
 
@@ -66,24 +84,6 @@ export class SystemContextChannel extends ContextChannelBase {
             type: this.type,
             visualIdentity: this.visualIdentity
         };
-    }
-}
-
-export class DefaultContextChannel extends ContextChannelBase {
-    public readonly type!: 'default';
-
-    public constructor(id: ChannelId) {
-        super(id, 'default');
-    }
-
-    public getStoredContext(): Context | null {
-        return null;
-    }
-
-    public setLastBroadcastContext(context: Context) {
-    }
-
-    public clearStoredContext(): void {
     }
 }
 
