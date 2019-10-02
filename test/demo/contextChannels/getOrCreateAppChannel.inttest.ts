@@ -24,7 +24,7 @@ test('When creating an app channel, a channel object is returned successfully', 
     expect(appChannel.channel).toHaveProperty('name', appChannelName);
 });
 
-test('When getting an already created app channel within the same app, the same app channel is returned', async () => {
+test('When getting an already created app channel within the same app, the same app channel instance is returned', async () => {
     const appChannelName = fakeAppChannelName();
 
     const appChannel1 = await fdc3Remote.getOrCreateAppChannel(testManagerIdentity, appChannelName);
