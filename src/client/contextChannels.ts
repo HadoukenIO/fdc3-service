@@ -385,8 +385,9 @@ export class SystemChannel extends ChannelBase {
  * {@link getOrCreateAppChannel} and it is up to your organization to decide how applications are aware of this name.
  * It is recommended that channel names are prefixed with your organization's domain name to avoid name collisions.
  *
- * App channels can be joined by any window, but applications should not directly join or broadcast on any app channel
- * object that it has obtained other than by calling {@link getOrCreateAppChannel}.
+ * App channels can be joined by any window, but are only indirectly discoverable. Applications should not directly
+ * join or broadcast on any app channel object that it has obtained other than by calling
+ * {@link getOrCreateAppChannel}.
  */
 export class AppChannel extends ChannelBase {
     public readonly type!: 'app';
