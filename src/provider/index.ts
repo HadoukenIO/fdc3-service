@@ -4,8 +4,8 @@ import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, GetOrCreateAppChannelPayload, AppChannelTransport} from '../client/internal';
-import {AppIntent, IntentResolution, Application, Intent, Context, AppChannel} from '../client/main';
-import {FDC3Error, OpenError, IdentityError, ChannelError} from '../client/errors';
+import {AppIntent, IntentResolution, Application, Intent, Context} from '../client/main';
+import {FDC3Error, OpenError, IdentityError} from '../client/errors';
 import {parseIdentity, parseContext, parseChannelId, parseAppChannelName} from '../client/validation';
 
 import {Inject} from './common/Injectables';
@@ -19,7 +19,7 @@ import {Injector} from './common/Injector';
 import {ChannelHandler} from './controller/ChannelHandler';
 import {AppWindow} from './model/AppWindow';
 import {ConfigStoreBinding} from './model/ConfigStore';
-import {ContextChannel, AppContextChannel} from './model/ContextChannel';
+import {ContextChannel} from './model/ContextChannel';
 
 @injectable()
 export class Main {
