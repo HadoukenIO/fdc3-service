@@ -147,22 +147,19 @@ export class Model {
 
         const directoryAppsWithIntent = await this._directory.getAppsByIntent(intentType, contextType);
 
+        // Include appInfos for any appWindows in model that have registered a listener for the intent
+        const appsInModelWithIntent = this.extractApplicationsFromWindows(allAppWindows.filter(appWindow => appWindow.hasIntentListener(intentType)));
+
         // If context is specified don't use apps in model as there's no way to know about the context of non-directory
         // app intents at the moment.
         if (contextType) {
-            return directoryAppsWithIntent;
+            const appsInModelWithoutIntent = this.extractApplicationsFromWindows(allAppWindows).filter((app) => {
+                return !appsInModelWithIntent.some(activeApp => app.appId === activeApp.appId);
+            });
+            return directoryAppsWithIntent.filter((directoryApp) => {
+                return !appsInModelWithoutIntent.some(inactiveApp => directoryApp.appId === inactiveApp.appId);
+            });
         } else {
-            // Include appInfos for any appWindows in model that have registered a listener for the intent
-            const appsInModelWithIntent = allAppWindows
-                .filter(appWindow => appWindow.hasIntentListener(intentType))
-                .reduce<Application[]>((apps, appWindow) => {
-                    if (apps.some(app => app.appId === appWindow.appInfo.appId)) {
-                        // AppInfo has already been added by another window on the same app also listening for the same intent
-                        return apps;
-                    }
-                    return apps.concat([appWindow.appInfo]);
-                }, []);
-
             const directoryAppsNotInModel = directoryAppsWithIntent
                 .filter(directoryApp => !allAppWindows.some(appWindow => appWindow.appInfo.appId === directoryApp.appId));
 
@@ -172,6 +169,16 @@ export class Model {
 
     public findWindowsByAppName(name: AppName): AppWindow[] {
         return this.findWindows(appWindow => appWindow.appInfo.name === name);
+    }
+
+    private extractApplicationsFromWindows(windows: AppWindow[]): Application[] {
+        return windows.reduce<Application[]>((apps, appWindow) => {
+            if (apps.some(app => app.appId === appWindow.appInfo.appId)) {
+                // AppInfo has already been added by another window on the same app also listening for the same intent
+                return apps;
+            }
+            return apps.concat([appWindow.appInfo]);
+        }, []);
     }
 
     private onWindowSeen(identity: Identity): void {

@@ -126,7 +126,14 @@ export class Main {
      * @param payload Contains the intent type to find information for
      */
     private async findIntent(payload: FindIntentPayload): Promise<AppIntent> {
-        let apps: Application[] = await this._model.getApplicationsForIntent(payload.intent, payload.context && parseContext(payload.context).type);
+        let apps: Application[];
+        if (payload.intent) {
+            apps = await this._model.getApplicationsForIntent(payload.intent, payload.context && parseContext(payload.context).type);
+        } else {
+            // This is a non-FDC3 workaround to get all directory apps by calling `findIntent` with a falsy intent.
+            // Ideally the FDC3 spec would expose an API to access the directory in a more meaningful way
+            apps = await this._directory.getAllApps();
+        }
 
         return {
             intent: {
