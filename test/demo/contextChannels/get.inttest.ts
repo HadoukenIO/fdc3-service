@@ -180,7 +180,7 @@ describe.each(testParams)('When getting the current channel of a window of %s', 
         const redChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'red');
         await redChannel.join(testApp);
 
-        // Perform to calls to getCurrentChannel()
+        // Perform calls to getCurrentChannel()
         const returnedRedChannel1 = await fdc3Remote.getCurrentChannel(testManagerIdentity, testApp);
         const returnedRedChannel2 = await fdc3Remote.getCurrentChannel(testManagerIdentity, testApp);
 
