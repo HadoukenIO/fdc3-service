@@ -382,12 +382,11 @@ export class SystemChannel extends ChannelBase {
  * Custom application-created channels.
  *
  * Applications can create these for specialised use-cases.  These channels should be obtained by name by calling
- * {@link getOrCreateAppChannel} and it is up to each application to decide how to share this name with other
- * applications. It is recommended that channel names are prefixed with your organization's domain name to avoid name
- * collisions.
+ * {@link getOrCreateAppChannel} and it is up to your organization to decide how applications are aware of this name.
+ * It is recommended that channel names are prefixed with your organization's domain name to avoid name collisions.
  *
  * App channels can be joined by any window, but applications should not directly join or broadcast on any app channel
- * object that it hasn't obtained by calling {@link getOrCreateAppChannel}.
+ * object that it has obtained other than by calling {@link getOrCreateAppChannel}.
  */
 export class AppChannel extends ChannelBase {
     public readonly type!: 'app';
@@ -414,10 +413,10 @@ export const DEFAULT_CHANNEL_ID: ChannelId = 'default';
 /**
  * The channel in which all windows will initially be placed.
  *
- * All windows will belong to exactly one channel at all times. If they have not explicitly
- * been placed into a channel via a {@link ChannelBase.join} call, they will be in this channel.
+ * All windows will belong to exactly one channel at all times. If they have not explicitly been placed into a channel
+ * via a {@link ChannelBase.join} call, they will be in this channel.
  *
- * If an app wishes to leave a system channel it can do so by (re-)joining this channel.
+ * If an app wishes to leave a system/app channel it can do so by (re-)joining this channel.
  */
 export const defaultChannel: DefaultChannel = new DefaultChannel();
 
@@ -428,7 +427,7 @@ const channelLookup: {[id: string]: Channel} = {
 const channelContextListeners: ChannelContextListener[] = [];
 
 /**
- * Gets all user-visible channels.
+ * Gets all service-defined system channels.
  *
  * This is the list of channels that should be used to populate a channel selector. All channels returned will have
  * additional metadata that can be used to populate a selector UI with a consistent cross-app channel list.
@@ -467,11 +466,15 @@ export async function getCurrentChannel(identity?: Identity): Promise<Channel> {
 }
 
 /**
- * Returns an app channel with the given ID. Either creates a new channel or returns an existing channel.
+ * Returns an app channel with the given name. Either creates a new channel or returns an existing channel.
  *
- * It is up to applications to manage how to share knowledge of these custom channels across windows and to manage
- * channel ownership and lifecycle.
- * @param name the name of the channel
+ * It is up to your organization to decide how to share knowledge of these custom channels. It is recommended that
+ * channel names are prefixed with your organization's domain name to avoid name collisions.
+ *
+ * The service will assign a unique ID when creating a new app channel, but no particular mapping of name to ID should
+ * be assumed.
+ *
+ * @param name The name of the channel
  */
 
 export async function getOrCreateAppChannel(name: string): Promise<AppChannel> {
@@ -488,12 +491,12 @@ export function getChannelObject<T extends Channel = Channel>(channelTransport: 
 
     if (!channel) {
         switch (channelTransport.type) {
+            case 'default':
+                channel = defaultChannel;
+                break;
             case 'system':
                 channel = new SystemChannel(channelTransport as SystemChannelTransport);
                 channelLookup[channelTransport.id] = channel;
-                break;
-            case 'default':
-                channel = defaultChannel;
                 break;
             case 'app':
                 channel = new AppChannel(channelTransport as AppChannelTransport);
