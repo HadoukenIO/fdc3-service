@@ -43,6 +43,28 @@ it('When getting system channels, ChannelHandler only returns system channels', 
     expect(channelHandler.getSystemChannels()).toEqual([testChannels[0], testChannels[2]]);
 });
 
+describe('When getting an app channel by name', () => {
+    it('When getting a channel by name for the first time, a new channel is created and added to the Model', () => {
+        mockModel.getChannel.mockReturnValue(null);
+
+        const appChannel = channelHandler.getAppChannelByName('test');
+
+        expect(mockModel.setChannel).toBeCalledTimes(1);
+        expect(mockModel.setChannel).toBeCalledWith(appChannel);
+    });
+
+    it('When getting a channel by name that is already in the model, that app channel is returned', () => {
+        const appChannel1 = createMockChannel();
+
+        mockModel.getChannel.mockReturnValue(appChannel1);
+
+        const appChannel2 = channelHandler.getAppChannelByName('test');
+
+        expect(appChannel2).toBe(appChannel1);
+        expect(mockModel.setChannel).toBeCalledTimes(0);
+    });
+});
+
 describe('When geting channel by ID', () => {
     it('If Model returns a channel, ChannelHandler returns the channel', () => {
         const testChannel = new SystemContextChannel('test', {name: 'test', color: '#000000', glyph: ''});

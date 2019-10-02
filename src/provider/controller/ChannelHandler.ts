@@ -39,19 +39,19 @@ export class ChannelHandler {
 
         if (!channel) {
             channel = new AppContextChannel(channelId, name);
-            this._model.setChannel(channelId, channel);
+            this._model.setChannel(channel);
         }
 
         return channel;
     }
 
-    public getWindowsListeningToChannel(channel: ContextChannel): AppWindow[] {
-        return this._model.windows.filter(window => window.hasChannelContextListener(channel));
-    }
-
     public getChannelById(channelId: ChannelId): ContextChannel {
         this.validateChannelId(channelId);
         return this._model.getChannel(channelId)!;
+    }
+
+    public getWindowsListeningToChannel(channel: ContextChannel): AppWindow[] {
+        return this._model.windows.filter(window => window.hasChannelContextListener(channel));
     }
 
     public getChannelContext(channel: ContextChannel): Context | null {

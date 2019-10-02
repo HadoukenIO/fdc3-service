@@ -112,8 +112,8 @@ export class Model {
         return this._channelsById[id] || null;
     }
 
-    public setChannel(id: ChannelId, channel: ContextChannel): void {
-        this._channelsById[id] = channel;
+    public setChannel(channel: ContextChannel): void {
+        this._channelsById[channel.id] = channel;
     }
 
     public async findOrCreate(appInfo: Application): Promise<AppWindow[]> {
