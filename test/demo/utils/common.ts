@@ -113,6 +113,6 @@ export function setupTeardown(): void {
             }
         }
 
-        expect(runningAppIdentities).toEqual(expectedRunningAppIdentities);
+        expect(runningAppIdentities.sort()).toEqual(expectedRunningAppIdentities.sort());
     });
 }
