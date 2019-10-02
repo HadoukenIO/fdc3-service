@@ -44,7 +44,7 @@ export interface DisplayMetadata {
 /**
  * Union of all possible concrete channel classes that may be returned by the service.
  */
-export type Channel = SystemChannel | DefaultChannel | AppChannel;
+export type Channel =  DefaultChannel | SystemChannel | AppChannel;
 
 /**
  * Event fired when a window is added to a channel. See {@link Channel.addEventListener}.
@@ -337,14 +337,28 @@ export abstract class ChannelBase {
 }
 
 /**
+ * The channel all windows start in.
+ *
+ * Unlike system channels, the default channel has no pre-defined name or visual style. It is up to apps to display
+ * this in the channel selector as they see fit - it could be as "default", or "none", or by "leaving" a user channel.
+ */
+export class DefaultChannel extends ChannelBase {
+    public readonly type!: 'default';
+
+    /**
+     * @hidden
+     */
+    public constructor() {
+        super(DEFAULT_CHANNEL_ID, 'default');
+    }
+}
+
+/**
  * User-facing channels, to display within a color picker or channel selector component.
  *
  * This list of channels should be considered fixed by applications - the service will own the list of user channels,
  * making the same list of channels available to all applications, and this list will not change over the lifecycle of
  * the service.
- *
- * We do not intend to support creation of 'user' channels at runtime, as this would add considerable complexity when
- * implementing a channel selector component, as it would need to support a dynamic channel list
  */
 export class SystemChannel extends ChannelBase {
     public readonly type!: 'system';
@@ -365,10 +379,15 @@ export class SystemChannel extends ChannelBase {
 }
 
 /**
- * Applications can create custom channels for specialised use-cases. Note that these channels would only be known
- * about to the app that created them. They can be joined by any window, but there would be no way to discover them
- * from the service's API - it would be up to applications to decide how to share the channel ID with other
- * windows/applications.
+ * Custom application-created channels. 
+ * 
+ * Applications can create these for specialised use-cases.  These channels should be obtained by name by calling
+ * {@link getOrCreateAppChannel} and it is up to each application to decide how to share this name with other
+ * applications. It is recommended that channel names are prefixed with your organization's domain name to avoid name
+ * collisions.
+ * 
+ * App channels can be joined by any window, but applications should not directly join or broadcast on any app channel
+ * object that it hasn't obtained by calling {@link getOrCreateAppChannel}.
  */
 export class AppChannel extends ChannelBase {
     public readonly type!: 'app';
@@ -382,23 +401,6 @@ export class AppChannel extends ChannelBase {
         super(transport.id, 'app');
 
         this.name = transport.name;
-    }
-}
-
-/**
- * All windows will start off in this channel.
- *
- * Unlike system channels, the default channel has no pre-defined name or visual style. It is up to apps to display
- * this in the channel selector as they see fit - it could be as "default", or "none", or by "leaving" a user channel.
- */
-export class DefaultChannel extends ChannelBase {
-    public readonly type!: 'default';
-
-    /**
-     * @hidden
-     */
-    public constructor() {
-        super(DEFAULT_CHANNEL_ID, 'default');
     }
 }
 
