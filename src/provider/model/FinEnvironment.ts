@@ -49,7 +49,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
      *
      * Arguments: (identity: Identity, manifestUrl: string)
      */
-    public readonly windowCreated: Signal<[Identity, string]> = new Signal();
+    public readonly windowCreated: Signal<[Identity]> = new Signal();
 
     /**
      * Indicates that a window has been closed.
@@ -162,7 +162,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         this.windowSeen.emit(identity);
 
         const info = await fin.Application.wrapSync(identity).getInfo();
-        this.windowCreated.emit(identity, info.manifestUrl);
+        this.windowCreated.emit(identity);
     }
 
     private async isExternalWindow(identity: Identity): Promise<boolean> {

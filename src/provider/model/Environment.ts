@@ -8,7 +8,7 @@ import {ContextChannel} from './ContextChannel';
 
 export interface Environment {
     windowSeen: Signal<[Identity]>;
-    windowCreated: Signal<[Identity, string]>;
+    windowCreated: Signal<[Identity]>;
     windowClosed: Signal<[Identity]>;
 
     /**

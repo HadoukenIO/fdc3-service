@@ -50,6 +50,12 @@
     "icons": [
         {"icon": "http://localhost:3923/demo/img/app-icons/dialer.svg"}
     ],
+    "customConfig": [
+        {
+            "name": "appUuid",
+            "value": "fdc3-dialer"
+        }
+    ],
     "intents": [
         {
             "name": "fdc3.StartCall",

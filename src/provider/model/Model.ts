@@ -171,9 +171,11 @@ export class Model {
         this.getOrCreateExpectedWindow(identity);
     }
 
-    private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
+    private async onWindowCreated(identity: Identity): Promise<void> {
         const apps = await this._directory.getAllApps();
-        const appInfoFromDirectory = apps.find(app => app.manifest.startsWith(manifestUrl));
+        const appInfoFromDirectory = apps.find((app) => {
+            return app.appId === identity.uuid || this.checkCustomUuidField(app) === identity.uuid;
+        });
 
         if (appInfoFromDirectory) {
             // If the app is in directory, we register it immediately
@@ -194,6 +196,16 @@ export class Model {
                 this.registerWindow(appInfo, identity, false);
             }));
         }
+    }
+
+    private checkCustomUuidField(app: Application): string | undefined {
+        if (app.customConfig) {
+            const customUuidField = app.customConfig.find(field => field.name === 'appUuid');
+            if (customUuidField) {
+                return customUuidField.value;
+            }
+        }
+        return undefined;
     }
 
     private onWindowClosed(identity: Identity): void {
