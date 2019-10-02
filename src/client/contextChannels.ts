@@ -44,7 +44,7 @@ export interface DisplayMetadata {
 /**
  * Union of all possible concrete channel classes that may be returned by the service.
  */
-export type Channel =  DefaultChannel | SystemChannel | AppChannel;
+export type Channel = DefaultChannel | SystemChannel | AppChannel;
 
 /**
  * Event fired when a window is added to a channel. See {@link Channel.addEventListener}.
@@ -379,13 +379,13 @@ export class SystemChannel extends ChannelBase {
 }
 
 /**
- * Custom application-created channels. 
- * 
+ * Custom application-created channels.
+ *
  * Applications can create these for specialised use-cases.  These channels should be obtained by name by calling
  * {@link getOrCreateAppChannel} and it is up to each application to decide how to share this name with other
  * applications. It is recommended that channel names are prefixed with your organization's domain name to avoid name
  * collisions.
- * 
+ *
  * App channels can be joined by any window, but applications should not directly join or broadcast on any app channel
  * object that it hasn't obtained by calling {@link getOrCreateAppChannel}.
  */
