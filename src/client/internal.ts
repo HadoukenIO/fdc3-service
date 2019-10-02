@@ -39,6 +39,8 @@ export enum APIFromClientTopic {
     RAISE_INTENT = 'RAISE-INTENT',
     ADD_INTENT_LISTENER = 'ADD-INTENT-LISTENER',
     REMOVE_INTENT_LISTENER = 'REMOVE-INTENT-LISTENER',
+    ADD_CONTEXT_LISTENER = 'ADD-CONTEXT-LISTENER',
+    REMOVE_CONTEXT_LISTENER = 'REMOVE-CONTEXT-LISTENER',
     GET_DESKTOP_CHANNELS = 'GET-DESKTOP-CHANNELS',
     GET_CHANNEL_BY_ID = 'GET-CHANNEL-BY-ID',
     GET_CURRENT_CHANNEL = 'GET-CURRENT-CHANNEL',
@@ -70,6 +72,8 @@ export type APIFromClient = {
     [APIFromClientTopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
     [APIFromClientTopic.ADD_INTENT_LISTENER]: [IntentListenerPayload, void];
     [APIFromClientTopic.REMOVE_INTENT_LISTENER]: [IntentListenerPayload, void];
+    [APIFromClientTopic.ADD_CONTEXT_LISTENER]: [ContextListenerPayload, void];
+    [APIFromClientTopic.REMOVE_CONTEXT_LISTENER]: [ContextListenerPayload, void];
     [APIFromClientTopic.GET_DESKTOP_CHANNELS]: [GetDesktopChannelsPayload, DesktopChannelTransport[]];
     [APIFromClientTopic.GET_CHANNEL_BY_ID]: [GetChannelByIdPayload, ChannelTransport];
     [APIFromClientTopic.GET_CURRENT_CHANNEL]: [GetCurrentChannelPayload, ChannelTransport];
@@ -186,6 +190,10 @@ export interface ChannelRemoveEventListenerPayload {
 
 export interface IntentListenerPayload {
     intent: string;
+}
+
+export interface ContextListenerPayload {
+
 }
 
 export interface ContextPayload {

@@ -8,6 +8,11 @@ export const Timeouts = {
     ADD_INTENT_LISTENER: 5000,
 
     /**
+     * Time for an app to register a listener after opening
+     */
+    ADD_CONTEXT_LISTENER: 5000,
+
+    /**
      * Time for an OpenFin app to start by calling `fin.Application.startFromManifest`
      */
     APP_START_FROM_MANIFEST: 30000,

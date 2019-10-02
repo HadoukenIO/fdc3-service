@@ -30,7 +30,11 @@ export class ContextHandler {
      * @param context Context to be sent
      */
     public async send(window: AppWindow, context: Context): Promise<void> {
-        return this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.CONTEXT, context);
+        if (await window.isReadyToReceiveContext()) {
+            return this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.CONTEXT, context);
+        } else {
+            return;
+        }
     }
 
     /**

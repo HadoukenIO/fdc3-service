@@ -75,6 +75,8 @@ export class Main {
             [APIFromClientTopic.RAISE_INTENT]: this.raiseIntent.bind(this),
             [APIFromClientTopic.ADD_INTENT_LISTENER]: this.addIntentListener.bind(this),
             [APIFromClientTopic.REMOVE_INTENT_LISTENER]: this.removeIntentListener.bind(this),
+            [APIFromClientTopic.ADD_CONTEXT_LISTENER]: this.addContextListener.bind(this),
+            [APIFromClientTopic.REMOVE_CONTEXT_LISTENER]: this.removeContextListener.bind(this),
             [APIFromClientTopic.GET_DESKTOP_CHANNELS]: this.getDesktopChannels.bind(this),
             [APIFromClientTopic.GET_CHANNEL_BY_ID]: this.getChannelById.bind(this),
             [APIFromClientTopic.GET_CURRENT_CHANNEL]: this.getCurrentChannel.bind(this),
@@ -174,6 +176,23 @@ export class Main {
         const appWindow = this.attemptGetWindow(source);
         if (appWindow) {
             appWindow.removeIntentListener(payload.intent);
+        } else {
+            // If for some odd reason the window is not in the model it's still OK to return successfully,
+            // as the caller's intention was to remove a listener and the listener is certainly not there.
+        }
+    }
+
+    private async addContextListener(payload: {}, source: ProviderIdentity): Promise<void> {
+        console.log('Received ADD_CONTEXT_LISTENER from: ', source);
+        const appWindow = await this.expectWindow(source);
+
+        appWindow.addContextListener();
+    }
+
+    private removeContextListener(payload: {}, source: ProviderIdentity): void {
+        const appWindow = this.attemptGetWindow(source);
+        if (appWindow) {
+            appWindow.removeContextListener();
         } else {
             // If for some odd reason the window is not in the model it's still OK to return successfully,
             // as the caller's intention was to remove a listener and the listener is certainly not there.

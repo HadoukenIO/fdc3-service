@@ -31,6 +31,12 @@ export interface AppWindow {
 
     removeIntentListener(intentName: string): void;
 
+    hasContextListener(): boolean;
+
+    addContextListener(): void;
+
+    removeContextListener(): void;
+
     hasChannelContextListener(channel: ContextChannel): boolean;
 
     addChannelContextListener(channel: ContextChannel): void;
@@ -48,6 +54,8 @@ export interface AppWindow {
     focus(): Promise<void>;
 
     isReadyToReceiveIntent(intent: IntentType): Promise<boolean>;
+
+    isReadyToReceiveContext(): Promise<boolean>;
 
     removeAllListeners(): void;
 }

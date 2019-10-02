@@ -188,7 +188,10 @@ class FinAppWindow implements AppWindow {
     private readonly _channelContextListeners: ContextMap;
     private readonly _channelEventListeners: ChannelEventMap;
 
+    private _contextListener: boolean;
+
     private readonly _onIntentListenerAdded: Signal<[IntentType]> = new Signal();
+    private readonly _onContextListenerAdded: Signal<[]> = new Signal();
 
     constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined, appWindowNumber: number) {
         this._id = getId(identity);
@@ -201,6 +204,8 @@ class FinAppWindow implements AppWindow {
         this._intentListeners = new Set();
         this._channelContextListeners = new Set();
         this._channelEventListeners = new Map();
+
+        this._contextListener = false;
 
         this.channel = channel;
     }
@@ -240,6 +245,19 @@ class FinAppWindow implements AppWindow {
 
     public removeIntentListener(intentName: string): void {
         this._intentListeners.delete(intentName);
+    }
+
+    public hasContextListener(): boolean {
+        return this._contextListener;
+    }
+
+    public addContextListener(): void {
+        this._contextListener = true;
+        this._onContextListenerAdded.emit();
+    }
+
+    public removeContextListener(): void {
+        this._contextListener = false;
     }
 
     public hasChannelContextListener(channel: ContextChannel): boolean {
@@ -303,6 +321,33 @@ class FinAppWindow implements AppWindow {
             });
 
             const [didTimeout] = await withTimeout(Timeouts.ADD_INTENT_LISTENER - age, deferredPromise.promise);
+
+            slot.remove();
+
+            return !didTimeout;
+        }
+    }
+
+    public async isReadyToReceiveContext(): Promise<boolean> {
+        if (this.hasContextListener()) {
+            // App has already registered the context listener
+            return true;
+        }
+
+        const age = this._creationTime === undefined ? undefined : Date.now() - this._creationTime;
+
+        if (age === undefined || age >= Timeouts.ADD_CONTEXT_LISTENER) {
+            // App has been running for a while
+            return false;
+        } else {
+            // App may be starting - Give it some time to initialize and call `addContextListener()`, otherwise timeout
+            const deferredPromise = new DeferredPromise();
+
+            const slot = this._onContextListenerAdded.add(() => {
+                deferredPromise.resolve();
+            });
+
+            const [didTimeout] = await withTimeout(Timeouts.ADD_CONTEXT_LISTENER - age, deferredPromise.promise);
 
             slot.remove();
 

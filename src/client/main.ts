@@ -262,14 +262,23 @@ export function addContextListener(handler: (context: Context) => void): Context
 
             if (index >= 0) {
                 contextListeners.splice(index, 1);
+
+                if (contextListeners.length === 0) {
+                    tryServiceDispatch(APIFromClientTopic.REMOVE_CONTEXT_LISTENER, {});
+                }
             }
 
             return index >= 0;
         }
     };
 
-    // TODO: Add a handshake with the provider, similar to for intents, so provider is aware we are listening for contexts here (SERVICE-553)
+    const hasContextListenerBefore = contextListeners.length > 0;
     contextListeners.push(listener);
+
+    if (!hasContextListenerBefore) {
+        console.log('Sending ADD_CONTEXT_LISTENER');
+        tryServiceDispatch(APIFromClientTopic.ADD_CONTEXT_LISTENER, {});
+    }
     return listener;
 }
 
