@@ -51,7 +51,7 @@ describe.each(broadcastTestParams)(
             }
         }, appStartupTime * 4);
 
-        test('Context is received by window that has left and rejoined system channel', async () => {
+        test('Context is received by window that has left and rejoined our channel', async () => {
             const [broadcastingWindow, channelChangingWindow] = await setupWindows(broadcastChannel, broadcastChannel);
 
             // Change the channel of our window
