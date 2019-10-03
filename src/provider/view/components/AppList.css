@@ -5,7 +5,8 @@
     border-right:1px solid #494848;
     display: flex;
     flex: 1;
-	flex-direction: column;
+    flex-direction: column;
+    overflow-y: auto;
 }
 
 #app-list p {
