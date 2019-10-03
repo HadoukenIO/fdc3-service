@@ -8,11 +8,15 @@ import {ContextChannelSelector} from '../components/ContextChannelSelector/Conte
 import {getCurrentChannel} from '../../client/main';
 
 export function NewsApp(): React.ReactElement {
-    const [symbolName, setSymbolName] = React.useState('AAPL');
+    const [symbolName, setSymbolName] = React.useState('Apple Inc (AAPL)');
 
     function handleIntent(context: InstrumentContext): void {
         if (context && context.name) {
-            setSymbolName(context.name);
+            if (context.id.ticker && context.id.ticker !== context.name) {
+                setSymbolName(`${context.name} (${context.id.ticker})`);
+            } else {
+                setSymbolName(context.name);
+            }
         } else {
             throw new Error('Invalid context received');
         }
