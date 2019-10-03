@@ -1,5 +1,5 @@
 [{
-    "appId": "100",
+    "appId": "test-app-1",
     "name": "test-app-1",
     "manifest": "http://localhost:3923/test/configs/test-app-1.json",
     "manifestType": "openfin",
@@ -46,7 +46,7 @@
     ]
 },
 {
-    "appId": "200",
+    "appId": "test-app-2",
     "name": "test-app-2",
     "manifest": "http://localhost:3923/test/configs/test-app-2.json",
     "manifestType": "openfin",
@@ -70,7 +70,7 @@
     ]
 },
 {
-    "appId": "300",
+    "appId": "test-app-3",
     "name": "test-app-3",
     "manifest": "http://localhost:3923/test/configs/test-app-3.json",
     "manifestType": "openfin",
@@ -94,7 +94,7 @@
     ]
 },
 {
-    "appId": "400",
+    "appId": "test-app-4",
     "name": "test-app-4",
     "manifest": "http://localhost:3923/test/configs/test-app-4.json",
     "manifestType": "openfin",
@@ -119,7 +119,7 @@
     ]
 },
 {
-    "appId": "500",
+    "appId": "test-app-preregistered-1",
     "name": "test-app-preregistered-1",
     "manifest": "http://localhost:3923/test/configs/test-app-preregistered-1.json",
     "manifestType": "openfin",
@@ -144,7 +144,7 @@
     ]
 },
 {
-    "appId": "600",
+    "appId": "test-app-preregistered-2",
     "name": "test-app-preregistered-2",
     "manifest": "http://localhost:3923/test/configs/test-app-preregistered-2.json",
     "manifestType": "openfin",

@@ -1,5 +1,5 @@
 [{
-    "appId": "blotter",
+    "appId": "fdc3-blotter",
     "name": "blotter",
     "manifest": "http://localhost:3923/demo/configs/app-blotter.json",
     "manifestType": "openfin",
@@ -15,7 +15,7 @@
     "intents": []
 },
 {
-    "appId": "contacts",
+    "appId": "fdc3-contacts",
     "name": "contacts",
     "manifest": "http://localhost:3923/demo/configs/app-contacts.json",
     "manifestType": "openfin",
@@ -76,7 +76,7 @@
     ]
 },
 {
-    "appId": "charts-red",
+    "appId": "fdc3-charts-red",
     "name": "charts-red",
     "manifest": "http://localhost:3923/demo/configs/app-charts-red.json",
     "manifestType": "openfin",
@@ -98,7 +98,7 @@
     ]
 },
 {
-    "appId": "charts-green",
+    "appId": "fdc3-charts-green",
     "name": "charts-green",
     "manifest": "http://localhost:3923/demo/configs/app-charts-green.json",
     "manifestType": "openfin",
@@ -120,7 +120,7 @@
     ]
 },
 {
-    "appId": "charts-blue",
+    "appId": "fdc3-charts-blue",
     "name": "charts-blue",
     "manifest": "http://localhost:3923/demo/configs/app-charts-blue.json",
     "manifestType": "openfin",
