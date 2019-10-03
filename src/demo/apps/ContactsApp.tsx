@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import * as fdc3 from '../../client/main';
 import {ContactsTable} from '../components/contacts/ContactsTable';
-import {Context, ContactContext} from '../../client/main';
+import {Context, ContactContext, AppIntent, ResolveError, getCurrentChannel} from '../../client/main';
 import '../../../res/demo/css/w3.css';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
 
@@ -48,11 +48,33 @@ export function ContactsApp(): React.ReactElement {
         }
     }
 
+    const [appIntents, setAppIntents] = React.useState([] as AppIntent[]);
+    React.useEffect(() => {
+        const context = {
+            type: 'fdc3.contact',
+            name: '',
+            id: {}
+        };
+        fdc3.findIntentsByContext(context).then(appIntents => {
+            console.log('setAppIntents', appIntents);
+            setAppIntents(appIntents);
+        })
+            .catch(error => {
+                console.warn('Error from fdc3.findIntentsByContext', error);
+            });
+    }, []);
+
     React.useEffect(() => {
         document.title = 'Contacts';
     }, []);
 
     React.useEffect(() => {
+        getCurrentChannel().then(async channel => {
+            const context = await channel.getCurrentContext();
+            if (context && context.type === 'fdc3.contact') {
+                handleIntent(context as ContactContext);
+            }
+        });
         const intentListener = fdc3.addIntentListener(fdc3.Intents.SAVE_CONTACT, (context: Context): Promise<void> => {
             return new Promise((resolve: () => void, reject: (reason?: Error) => void) => {
                 try {
@@ -69,11 +91,10 @@ export function ContactsApp(): React.ReactElement {
         };
     }, []);
 
-
     return (
         <React.Fragment>
             <ContextChannelSelector />
-            <ContactsTable items={contacts} />
+            <ContactsTable items={contacts} appIntents={appIntents} />
         </React.Fragment>
     );
 }

@@ -7,16 +7,68 @@
         document.title = title;
     </script>
     <script>
+
+        /*
+         * Mirror of serializeError(), makes sure puppeteer serializes all the relevant error information back to the test host
+         */
+         function errorHandler(error) {
+            if (error.name === 'FDC3Error') {
+                throw new Error(JSON.stringify({
+                    name: 'FDC3Error',
+                    code: error.code,
+                    message: error.message
+                }));
+            } else if (error.name === 'TypeError') {
+                throw new Error(JSON.stringify({
+                    name: 'TypeError',
+                    message: error.message
+                }));
+            }
+        }
+
+        function serializeChannel(channel) {
+            let transport;
+            for (const id in window.channelTransports) {
+                if (window.channelTransports[id].channel === channel) {
+                    transport = window.channelTransports[id];
+                    break;
+                }
+            }
+
+            if (!transport) {
+                transport = {
+                    id: uuidv4(),
+                    channel,
+                    constructor: channel.constructor.name,
+                }
+                window.channelTransports[transport.id] = transport;
+            }
+
+            return transport;
+        }
+
+        function uuidv4() {
+            return (Math.random()
+                    .toString(36)
+                    .substring(2) + new Date().getTime().toString(36));
+        }
+
         window.contextListeners = [];
         window.intentListeners = [];
         window.eventListeners = [];
+        window.channelEventListeners = [];
+
+        window.channelTransports = {};
+
         window.receivedContexts = [];
         window.receivedIntents = [];
         window.receivedEvents = [];
+        window.receivedChannelEvents = [];
 
         const queryParams = new URLSearchParams(location.search);
         if (queryParams.get('registerListeners') === 'true') {
             const intents = [
+                'test.IntentNamePreregistered',
                 'DialCall',
                 'SaveContact',
                 'SaveInstrument',

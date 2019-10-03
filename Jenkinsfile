@@ -23,7 +23,7 @@ pipeline {
                     agent { label 'linux-slave' }
                     steps {
                         sh "npm install"
-                        sh "npm run test:unit -- --color=false --no-cache --verbose"
+                        sh "npm run test:unit -- --noColor -x \"--no-cache --verbose\""
                         sh "npm run check"
                     }
                     post {
@@ -37,7 +37,7 @@ pipeline {
                     agent { label 'win10-dservices' }
                     steps {
                         bat "npm install"
-                        bat "npm run test:int -- --color=false --no-cache --verbose"
+                        bat "npm run test:int -- --noColor -x \"--no-cache --verbose\""
                     }
                     post {
                         always {
@@ -121,7 +121,7 @@ def deployToS3() {
     sh "aws s3 cp ./dist/docs ${DIR_DOCS_VERSION} --recursive"
 
     sh "aws s3 cp ./dist/provider/app.json ${DIR_BUILD_ROOT}${MANIFEST_NAME}"
-    sh "aws s3 cp ./dist/provider/ ${DIR_BUILD_ROOT} --exclude \"*\" --include \"app.runtime-*.json\""
+    sh "aws s3 cp ./dist/provider/ ${DIR_BUILD_ROOT} --recursive --exclude \"*\" --include \"app.runtime-*.json\""
 }
 
 def deployToNPM() {

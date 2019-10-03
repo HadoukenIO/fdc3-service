@@ -9,8 +9,12 @@
         "uuid": "fdc3-charts-red",
         "autoShow": true
     },
+    "services": [{
+        "name": "fdc3",
+        "manifestUrl": "http://localhost:3923/provider/app.json"
+    }],
     "runtime": {
         "arguments": "",
-        "version": "10.66.39.43"
+        "version": "13.76.44.21"
     }
 }

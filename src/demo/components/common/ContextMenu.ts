@@ -1,8 +1,7 @@
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 import {_Window} from 'openfin/_v2/api/window/window';
 import {Point} from 'openfin/_v2/api/system/point';
-import {Transition} from 'openfin/_v2/api/window/transition';
-import Bounds from 'openfin/_v2/api/window/bounds';
+import {Transition, Bounds} from 'openfin/_v2/shapes';
 
 const defaultWindowOptions: WindowOption = {
     url: 'about:blank',
@@ -90,10 +89,9 @@ class ContextMenu {
         return height;
     }
 
-
     // Promise based v1 window creation
     private static async createWindow(options: WindowOption): Promise<fin.OpenFinWindow> {
-        return new Promise((resolve, reject) => {
+        return new Promise<fin.OpenFinWindow>((resolve, reject) => {
             const win = new fin.desktop.Window(options, () => {
                 resolve(win);
             }, (err) => {
@@ -230,7 +228,6 @@ class ContextMenu {
         this._window.animate(this.transitionOut, animateOptions);
     }
 
-
     /**
      * Show the window at the given [point].
      *
@@ -256,13 +253,13 @@ class ContextMenu {
         const style = this._nativeWindow.document.createElement('link');
         style.rel = 'stylesheet';
         style.href = location.origin + '/demo/css/context-menu.css';
-        this._nativeWindow.document.head.appendChild(style);
+        this._nativeWindow.document.head!.appendChild(style);
     }
 }
 
 let contextMenu: ContextMenu;
 
-window.onunload = async (event) => {
+window.onunload = async (event: Event) => {
     await contextMenu.destroy();
 };
 

@@ -15,8 +15,8 @@ import {EventEmitter} from 'events';
 
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
-import {APITopic, SERVICE_CHANNEL, SERVICE_IDENTITY, TopicPayloadMap, TopicResponseMap} from './internal';
-import {ChannelChangedEvent} from './contextChannels';
+import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient, deserializeError, Events} from './internal';
+import {EventRouter} from './EventRouter';
 
 /**
  * The version of the NPM package.
@@ -26,36 +26,50 @@ import {ChannelChangedEvent} from './contextChannels';
 declare const PACKAGE_VERSION: string;
 
 /**
- * Defines all events that are fired by the service
- */
-export type FDC3Event = ChannelChangedEvent;
-export type FDC3EventType = 'channel-changed';
-
-/**
  * The event emitter to emit events received from the service.  All addEventListeners will tap into this.
  */
 export const eventEmitter = new EventEmitter();
+let eventRouter: EventRouter<Events>|null;
+
+export function getEventRouter(): EventRouter<Events> {
+    if (!eventRouter) {
+        eventRouter = new EventRouter(eventEmitter);
+    }
+
+    return eventRouter;
+}
 
 /**
  * Promise to the channel object that allows us to connect to the client
  */
-export let channelPromise: Promise<ChannelClient>;
-// Currently a runtime bug when provider connects to itself. Ideally the provider would never import a file
-// that includes this, but for now it is easier to put a guard in place.
-if (fin.Window.me.uuid !== SERVICE_IDENTITY.uuid || fin.Window.me.name !== SERVICE_IDENTITY.name) {
-    channelPromise = typeof fin === 'undefined' ?
-        Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.')) :
-        fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}}).then((channel: ChannelClient) => {
-            // Register service listeners
-            channel.register('WARN', (payload: any) => console.warn(payload));  // tslint:disable-line:no-any
-            channel.register('event', (event: FDC3Event) => {
-                eventEmitter.emit(event.type, event);
-            });
-            // Any unregistered action will simply return false
-            channel.setDefaultAction(() => false);
+let channelPromise: Promise<ChannelClient>|null = null;
 
-            return channel;
-        });
+if (typeof fin !== 'undefined') {
+    getServicePromise();
+}
+
+export function getServicePromise(): Promise<ChannelClient> {
+    if (!channelPromise) {
+        if (typeof fin === 'undefined') {
+            channelPromise = Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.'));
+        } else if (fin.Window.me.uuid === SERVICE_IDENTITY.uuid && fin.Window.me.name === SERVICE_IDENTITY.name) {
+            // Currently a runtime bug when provider connects to itself. Ideally the provider would never import a file
+            // that includes this, but for now it is easier to put a guard in place.
+            channelPromise = Promise.reject<ChannelClient>(new Error('Trying to connect to provider from provider'));
+        } else {
+            channelPromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}}).then((channel: ChannelClient) => {
+                // Register service listeners
+                channel.register('WARN', (payload: any) => console.warn(payload));  // tslint:disable-line:no-any
+
+                // Any unregistered action will simply return false
+                channel.setDefaultAction(() => false);
+
+                return channel;
+            });
+        }
+    }
+
+    return channelPromise;
 }
 
 /**
@@ -64,7 +78,10 @@ if (fin.Window.me.uuid !== SERVICE_IDENTITY.uuid || fin.Window.me.name !== SERVI
  * @param action String identifying the call being made to the provider
  * @param payload Object containing additional arguments
  */
-export async function tryServiceDispatch<T extends APITopic>(action: T, payload: TopicPayloadMap[T]): Promise<TopicResponseMap[T]> {
-    const channel: ChannelClient = await channelPromise;
-    return channel.dispatch(action, payload) as Promise<TopicResponseMap[T]>;
+export async function tryServiceDispatch<T extends APIFromClientTopic>(action: T, payload: APIFromClient[T][0]): Promise<APIFromClient[T][1]> {
+    const channel: ChannelClient = await getServicePromise();
+    return (channel.dispatch(action, payload) as Promise<APIFromClient[T][1]>)
+        .catch(error => {
+            throw deserializeError(error);
+        });
 }

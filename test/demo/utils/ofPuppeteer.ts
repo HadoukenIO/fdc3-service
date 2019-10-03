@@ -2,8 +2,8 @@ import {Fin, Identity} from 'openfin/_v2/main';
 import {Browser, Page} from 'puppeteer';
 import {connect} from 'hadouken-js-adapter';
 
-import {Context, IntentType, ContextListener, IntentListener} from '../../../src/client/main';
-import {FDC3Event} from '../../../src/client/connection';
+import {Context, IntentType, ContextListener, IntentListener, Channel} from '../../../src/client/main';
+import {Events, ChannelEvents} from '../../../src/client/internal';
 
 declare const global: NodeJS.Global & {__BROWSER__: Browser};
 
@@ -12,16 +12,35 @@ export interface TestWindowEventListener {
     unsubscribe: () => void;
 }
 
+export interface TestWindowChannelEventListener {
+    handler: (payload: any) => void;
+    unsubscribe: () => void;
+}
+
 export type TestWindowContext = Window&{
     fin: Fin;
     fdc3: typeof import('../../../src/client/main');
+    errorHandler(error: Error): never;
+    serializeChannel(channel: Channel): TestChannelTransport;
+
     contextListeners: ContextListener[];
     intentListeners: {[intent: string]: IntentListener[]};
     eventListeners: TestWindowEventListener[];
+    channelEventListeners: TestWindowChannelEventListener[];
+
+    channelTransports: {[id: string]: TestChannelTransport};
+
     receivedContexts: {listenerID: number, context: Context}[];
-    receivedEvents: {listenerID: number, payload: FDC3Event}[];
+    receivedEvents: {listenerID: number, payload: Events}[];
     receivedIntents: {listenerID: number, intent: IntentType, context: Context}[];
+    receivedChannelEvents: {listenerID: number, payload: ChannelEvents}[];
 };
+
+export interface TestChannelTransport {
+    id: string;
+    channel: Channel;
+    constructor: string;
+}
 
 export class OFPuppeteerBrowser {
     private _pageIdentityCache: Map<Page, Identity>;
@@ -97,9 +116,7 @@ export class OFPuppeteerBrowser {
         return identity;
     }
 
-    public async executeOnWindow<
-        // tslint:disable-next-line: no-any Needed for tuple types.
-        T extends any[], R, C extends TestWindowContext = TestWindowContext>(executionTarget: Identity, fn: (this: C, ...args: T) => R, ...args: T):
+    public async executeOnWindow<T extends any[], R, C = TestWindowContext>(executionTarget: Identity, fn: (this: C, ...args: T) => R, ...args: T):
         Promise<R> {
         const page = await this.getPage(executionTarget);
         if (!page) {
