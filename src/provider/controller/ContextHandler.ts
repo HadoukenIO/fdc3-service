@@ -30,8 +30,9 @@ export class ContextHandler {
      * @param context Context to be sent
      */
     public async send(window: AppWindow, context: Context): Promise<void> {
+        const payload: ReceiveContextPayload = {context};
         if (await window.isReadyToReceiveContext()) {
-            return this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, context);
+            return this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload);
         } else {
             return;
         }
@@ -45,6 +46,7 @@ export class ContextHandler {
      * @param source Window sending the context. It won't receive the broadcast
      */
     public async broadcast(context: Context, source: AppWindow): Promise<void> {
+        console.log('Recived BROADCAST from ', source, 'with payload ', context);
         return this.broadcastOnChannel(context, source, source.channel);
     }
 
