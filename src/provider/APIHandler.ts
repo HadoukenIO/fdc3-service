@@ -71,10 +71,8 @@ export class APIHandler<T extends Enum> {
         return this._providerChannel;
     }
 
-    public isClientConnection(identity: Identity): boolean {
-        return !!this._providerChannel && this._providerChannel.connections.some((conn: Identity) => {
-            return identity.uuid === conn.uuid && identity.name === conn.name;
-        });
+    public isAppConnected(uuid: string): boolean {
+        return this._providerChannel && this._providerChannel.connections.some(identity => identity.uuid === uuid);
     }
 
     public getClientConnections(): Identity[] {
