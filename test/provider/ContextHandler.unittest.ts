@@ -25,7 +25,9 @@ let mockGetChannelMembers: jest.Mock<AppWindow[], [ContextChannel]>;
 let mockGetWindowsListeningToChannel: jest.Mock<AppWindow[], [ContextChannel]>;
 
 function createMockAppWindowWithName(name: string): AppWindow {
-    return {...createMockAppWindow(), identity: {uuid: 'test', name}};
+    const mockedWindow = createMockAppWindow();
+    mockedWindow.isReadyToReceiveContext.mockResolvedValue(true);
+    return {...mockedWindow, identity: {uuid: 'test', name}};
 }
 
 beforeEach(() => {
@@ -49,6 +51,8 @@ beforeEach(() => {
 describe('When sending a Context using ContextHandler', () => {
     it('The provided Context is dispatched to the expected target', async () => {
         const targetAppWindow = createMockAppWindowWithName('target');
+        // Mocked window should act as if it is ready to receive a context (i.e. has a listener registered)
+        (targetAppWindow.isReadyToReceiveContext as jest.Mock<Promise<boolean>, []>).mockResolvedValue(true);
         const expectedPayload: ReceiveContextPayload = {context: testContext};
 
         await contextHandler.send(targetAppWindow, testContext);

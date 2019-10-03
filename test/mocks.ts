@@ -22,6 +22,9 @@ export function createMockAppWindow(): jest.Mocked<AppWindow> {
         hasIntentListener: jest.fn<boolean, [string]>(),
         addIntentListener: jest.fn<void, [string]>(),
         removeIntentListener: jest.fn<void, [string]>(),
+        hasContextListener: jest.fn<boolean, []>(),
+        addContextListener: jest.fn<void, []>(),
+        removeContextListener: jest.fn<void, []>(),
         hasChannelContextListener: jest.fn<boolean, [ContextChannel]>(),
         addChannelContextListener: jest.fn<void, [ContextChannel]>(),
         removeChannelContextListener: jest.fn<void, [ContextChannel]>(),
@@ -31,6 +34,7 @@ export function createMockAppWindow(): jest.Mocked<AppWindow> {
         bringToFront: jest.fn<Promise<void>, []>(),
         focus: jest.fn<Promise<void>, []>(),
         isReadyToReceiveIntent: jest.fn<Promise<boolean>, [IntentType]>(),
+        isReadyToReceiveContext: jest.fn<Promise<boolean>, []>(),
         removeAllListeners: jest.fn<void, []>()
     };
 }
