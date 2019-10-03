@@ -46,7 +46,6 @@ export class ContextHandler {
      * @param source Window sending the context. It won't receive the broadcast
      */
     public async broadcast(context: Context, source: AppWindow): Promise<void> {
-        console.log('Recived BROADCAST from ', source, 'with payload ', context);
         return this.broadcastOnChannel(context, source, source.channel);
     }
 
