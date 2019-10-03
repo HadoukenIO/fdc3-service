@@ -258,6 +258,13 @@ export class Model {
         if (this._expectedWindowsById[id]) {
             return this._expectedWindowsById[id];
         } else {
+            // A promise that never resolves but rejects when the window has closed
+            const closed = allowReject(untilSignal(this._environment.windowClosed, (testIdentity) => {
+                return getId(testIdentity) === id;
+            }).then(() => {
+                throw new Error(EXPECT_CLOSED_MESSAGE);
+            }));
+
             // Create a promise that resolves once the window has been seen
             const seen = untilTrue(this._environment.windowSeen, () => {
                 return this._environment.isWindowSeen(identity);
@@ -266,33 +273,23 @@ export class Model {
             // Create a promise that resolves when the window has connected
             const connected = untilTrue(this._apiHandler.onConnection, () => {
                 return this._apiHandler.isClientConnection(identity);
-            });
+            }, closed);
 
             // Create a promise that resolves when the window has registered
-            const registered = untilTrue(this._onWindowRegisteredInternal, () => {
+            const registered = allowReject(untilTrue(this._onWindowRegisteredInternal, () => {
                 return !!this._windowsById[id];
-            }).then(() => {
+            }, closed).then(() => {
                 return this._windowsById[id];
-            });
-
-            // A promise that never resolves but rejects when the window has closed
-            const closed = allowReject(untilSignal(this._environment.windowClosed, (testIdentity) => {
-                return getId(testIdentity) === id;
-            }).then(() => {
-                throw new Error(EXPECT_CLOSED_MESSAGE);
             }));
 
-            const connectedOrClosed = allowReject(Promise.race([connected, closed]));
-            const registeredOrClosed = allowReject(Promise.race([registered, closed]));
-
             const seenThenRegisteredWithinTimeout = seen.then(() => {
-                return {value: allowReject(withStrictTimeout(Timeouts.WINDOW_SEEN_TO_REGISTERED, registeredOrClosed, EXPECT_TIMEOUT_MESSAGE))};
+                return {value: withStrictTimeout(Timeouts.WINDOW_SEEN_TO_REGISTERED, registered, EXPECT_TIMEOUT_MESSAGE)};
             });
 
             const expectedWindow: ExpectedWindow = {
                 seen: seenThenRegisteredWithinTimeout,
-                connected: connectedOrClosed,
-                registered: registeredOrClosed
+                connected,
+                registered
             };
 
             this._expectedWindowsById[id] = expectedWindow;
