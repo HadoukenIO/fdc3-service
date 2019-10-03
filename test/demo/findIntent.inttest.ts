@@ -38,24 +38,24 @@ the returned object lists all and only those apps which accept the intent', asyn
         });
 
         test('When resolving an intent without a specific context, the returned object lists all \
-directory applications accepts the intent regardless of their context specifications.', async () => {
+directory applications accept the intent regardless of their context specifications.', async () => {
             const receivedAppIntents = await findIntent('test.ContextTestIntent');
-            const expectedAppNames = ['test-app-2', 'test-app-3', 'test-app-4'];
+            const expectedAppNames = ['test-app-1', 'test-app-3', 'test-app-4'];
             expect(extractSortedAppNames(receivedAppIntents)).toEqual(expectedAppNames);
         });
 
         test('When resolving an intent with a specific context, the returned object lists all \
-directory applications accepts the intent with specifies the given context or no context at all.', async () => {
+directory applications accept the intent with specifies the given context or no context at all.', async () => {
             const context = {
                 type: 'test.MatchingContext'
             };
             const receivedAppIntents = await findIntent('test.ContextTestIntent', context);
-            const expectedAppNames = ['test-app-2', 'test-app-4'];
+            const expectedAppNames = ['test-app-1', 'test-app-4'];
 
             expect(extractSortedAppNames(receivedAppIntents)).toEqual(expectedAppNames);
         });
 
-        test('When calling resolve with an intent which no directory applications accept, the promise resolves to an empty array', async () => {
+        test('When calling resolve with an intent which no directory application accepts, the promise resolves to an empty array', async () => {
             // Resolve the invalid intent
             const appIntent = await findIntent(invalidIntent);
 
@@ -74,6 +74,16 @@ directory applications accepts the intent with specifies the given context or no
                     const appIntent = await findIntent(validIntent);
 
                     expect(extractSortedAppNames(appIntent)).toEqual(expectedAppNames);
+                });
+
+                test('When resolving an intent with a context that the app is supposed to handle \
+the list of applications accept the intent does NOT include the app.', async () => {
+                    const context = {
+                        type: 'test.MatchingContext'
+                    };
+                    const receivedAppIntents = await findIntent('test.ContextTestIntent', context);
+
+                    expect(extractSortedAppNames(receivedAppIntents)).toEqual(['test-app-4']);
                 });
             });
 

@@ -42,6 +42,10 @@
         {
             "name": "ViewChart",
             "displayName": "View Chart"
+        },
+        {
+            "name": "test.ContextTestIntent",
+            "contexts": ["test.MatchingContext"]
         }
     ]
 },
@@ -66,11 +70,7 @@
         {"name": "DialCall"},
         {"name": "StartCall"},
         {"name": "SaveContact"},
-        {"name": "ViewChart"},
-        {
-            "name": "test.ContextTestIntent",
-            "contexts": ["test.MatchingContext"]
-        }
+        {"name": "ViewChart"}
     ]
 },
 {
