@@ -206,7 +206,7 @@ export class Model {
             }
         } else {
             // If the app is not in directory, we'll add it to the model if and when any window from the same app connects to FDC3
-            allowReject(this.getOrCreateExpectedWindow(identity).appConnected.then(async () => {
+            allowReject(expectedWindow.appConnected.then(async () => {
                 const appInfo = await this._environment.inferApplication(identity);
 
                 if (!registered) {
