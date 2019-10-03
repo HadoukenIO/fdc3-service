@@ -270,12 +270,12 @@ export class Model {
                 return this._environment.isWindowSeen(identity);
             });
 
-            // Create a promise that resolves when the window has connected
+            // Create a promise that resolves when the window has connected, or rejects when the window closes
             const connected = untilTrue(this._apiHandler.onConnection, () => {
                 return this._apiHandler.isClientConnection(identity);
             }, closed);
 
-            // Create a promise that resolves when the window has registered
+            // Create a promise that resolves when the window has registered, or rejects when the window closes
             const registered = allowReject(untilTrue(this._onWindowRegisteredInternal, () => {
                 return !!this._windowsById[id];
             }, closed).then(() => {

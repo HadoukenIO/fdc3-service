@@ -30,7 +30,7 @@ export function withStrictTimeout<T>(timeoutMs: number, promise: Promise<T>, rej
  *
  * @param signal When this signal is fired, the predicate is revaluated
  * @param predicate The predicate to evaluate
- * @param guard A promise. If this rejects, give up listening and reject
+ * @param guard A promise. If this rejects, give up listening to the signal and reject
  */
 export function untilTrue<A extends any[]>(signal: Signal<A>, predicate: () => boolean, guard?: Promise<void>): Promise<void> {
     if (predicate()) {
@@ -45,7 +45,7 @@ export function untilTrue<A extends any[]>(signal: Signal<A>, predicate: () => b
  *
  * @param signal The signal to listen to
  * @param predicate The predicate to evaluate against arguments received from the signal
- * @param guard A promise. If this rejects, give up listening and reject
+ * @param guard A promise. If this rejects, give up listening to the signal and reject
  */
 export function untilSignal<A extends any[]>(signal: Signal<A>, predicate: (...args: A) => boolean, guard?: Promise<void>): Promise<void> {
     const promise = new DeferredPromise();
