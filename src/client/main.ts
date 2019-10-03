@@ -260,7 +260,6 @@ export function addContextListener(handler: (context: Context) => void): Context
     contextListeners.push(listener);
 
     if (!hasContextListenerBefore) {
-        console.log('Sending ADD_CONTEXT_LISTENER');
         tryServiceDispatch(APIFromClientTopic.ADD_CONTEXT_LISTENER, {});
     }
     return listener;
