@@ -77,7 +77,9 @@ export class FinEnvironment extends AsyncInit implements Environment {
         identity = parseIdentity(identity);
         const id = getId(identity);
 
-        const seenWindow = this._seenWindows[id] || {creationTime: 0, index: this._windowsCreated++};
+        // If `identity` is an adapter connection, there will not be any seenWindow entry for this identity
+        // We will instead take the time at which the identity was wrapped as this "window's" creation time
+        const seenWindow = this._seenWindows[id] || {creationTime: Date.now(), index: this._windowsCreated++};
         const {creationTime, index} = seenWindow;
 
         return new FinAppWindow(identity, appInfo, channel, creationTime, index);
@@ -119,7 +121,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     public async getEntityType(identity: Identity): Promise<EntityType> {
-        const entityInfo = await fin.System.getEntityInfo(identity.uuid, identity.uuid);
+        const entityInfo = await fin.System.getEntityInfo(identity.uuid, identity.name!);
 
         return entityInfo.entityType as EntityType;
     }

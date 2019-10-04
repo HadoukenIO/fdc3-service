@@ -88,9 +88,11 @@ export class APIHandler<T extends Enum> {
     public publish(action: string, payload: any): Promise<any>[] {
         const connections = this._providerChannel.connections.slice();
         return this._providerChannel.publish(action, payload).map((promise, index) => promise.catch(error => {
-            // Log and re-throw
             // We don't know which connection had the error, but assume that the indices of the promises match the indices of the channel connections.
-            console.error(`Error when publishing '${action}' (probably from connection ${index + 1}/${connections.length}: ${connections[index].uuid} / ${connections[index].name})\n`, payload);
+            const connectionInfo = `probably from connection ${index + 1}/${connections.length}: ${connections[index].uuid} / ${connections[index].name}`;
+
+            // Log and re-throw
+            console.error(`Error when publishing '${action}' (${connectionInfo})\n`, payload);
             throw error;
         }));
     }
