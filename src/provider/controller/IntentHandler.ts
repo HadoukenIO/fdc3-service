@@ -109,8 +109,12 @@ export class IntentHandler {
     }
 
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
-        const appWindows = await this._model.findOrCreate(appInfo);
-        // to decide between focus nothing or apps with intent listener
+        await this._model.ensureRunning(appInfo);
+
+        // TODO: This will never resolve if no app windows connect to FDC3 [SERVICE-556]
+        const appWindows = await this._model.expectWindowsForApp(appInfo);
+
+        // Wait for windows to add intent listener, then dispatch payload
         const dispatchResults = await Promise.all(appWindows.map(async (window: AppWindow): Promise<boolean> => {
             if (await window.isReadyToReceiveIntent(intent.type)) {
                 const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};

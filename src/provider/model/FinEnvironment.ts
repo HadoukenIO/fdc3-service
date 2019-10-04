@@ -61,6 +61,15 @@ export class FinEnvironment extends AsyncInit implements Environment {
     private _windowsCreated: number = 0;
     private readonly _seenWindows: {[id: string]: SeenWindow} = {};
 
+    public async isRunning(appInfo: Application): Promise<boolean> {
+        // TODO: This can be simplified once we change how we map between OpenFin apps and directory entries [SERVICE-617]
+        const runningApplications = await Promise.all((await fin.System.getAllApplications())
+            .filter(info => info.isRunning)
+            .map(info => fin.Application.wrapSync({uuid: info.uuid})));
+
+        return (await Promise.all(runningApplications.map(app => app.getInfo()))).some(info => info.manifestUrl === appInfo.manifest);
+    }
+
     public async createApplication(appInfo: Application, channel: ContextChannel): Promise<void> {
         const [didTimeout] = await withTimeout(
             Timeouts.APP_START_FROM_MANIFEST,

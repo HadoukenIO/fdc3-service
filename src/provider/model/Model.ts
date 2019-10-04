@@ -111,20 +111,14 @@ export class Model {
         }
     }
 
-    public getChannel(id: ChannelId): ContextChannel|null {
-        return this._channelsById[id] || null;
-    }
+    /**
+     * Returns all registered windows for an app, waiting for at least one window
+     */
+    public async expectWindowsForApp(appInfo: Application): Promise<AppWindow[]> {
+        // TODO: This dangerous method doesn't give proper timeouts. Will likely be changed extensively/removed when we revisit timeouts [SERVICE-556]
+        let matchingWindows = this.findWindowsByAppId(appInfo.appId);
 
-    public async findOrCreate(appInfo: Application): Promise<AppWindow[]> {
-        const matchingWindows = this.findWindowsByAppId(appInfo.appId);
-
-        if (matchingWindows.length > 0) {
-            // Sort windows into the order they were created
-            matchingWindows.sort((a: AppWindow, b: AppWindow) => a.appWindowNumber - b.appWindowNumber);
-
-            return matchingWindows;
-        } else {
-            const createPromise = this._environment.createApplication(appInfo, this._channelsById[DEFAULT_CHANNEL_ID]);
+        if (matchingWindows.length === 0) {
             const signalPromise = new Promise<AppWindow[]>(resolve => {
                 const slot = this._onWindowRegisteredInternal.add(() => {
                     const matchingWindows = this.findWindowsByAppId(appInfo.appId);
@@ -134,7 +128,18 @@ export class Model {
                     }
                 });
             });
-            return Promise.all([signalPromise, createPromise]).then(([windows]) => windows);
+            matchingWindows = await signalPromise;
+        }
+        return matchingWindows;
+    }
+
+    public getChannel(id: ChannelId): ContextChannel|null {
+        return this._channelsById[id] || null;
+    }
+
+    public async ensureRunning(appInfo: Application): Promise<void> {
+        if (this.findWindowsByAppId(appInfo.appId).length === 0 && !(await this._environment.isRunning(appInfo))) {
+            await this._environment.createApplication(appInfo, this._channelsById[DEFAULT_CHANNEL_ID]);
         }
     }
 

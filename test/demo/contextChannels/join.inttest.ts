@@ -1,7 +1,7 @@
 import {Identity} from 'openfin/_v2/main';
 
 import {IdentityError, DEFAULT_CHANNEL_ID} from '../../../src/client/main';
-import {testManagerIdentity, appStartupTime, testAppNotInDirectory1, testAppNotFdc3, testAppInDirectory1, testAppInDirectory2} from '../constants';
+import {testManagerIdentity, appStartupTime, testAppNotInDirectory1, testAppNotInDirectoryNotFdc3, testAppInDirectory1, testAppInDirectory2} from '../constants';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel, RemoteChannelEventListener} from '../utils/RemoteChannel';
 import {fin} from '../utils/fin';
@@ -69,11 +69,11 @@ describe('When getting members of a channel', () => {
 
     describe('When a non-FDC3 app has been started', () => {
         beforeEach(async () => {
-            await fin.Application.startFromManifest(testAppNotFdc3.manifestUrl);
+            await fin.Application.startFromManifest(testAppNotInDirectoryNotFdc3.manifestUrl);
         }, appStartupTime);
 
         afterEach(async () => {
-            await fin.Application.wrapSync(testAppNotFdc3).quit(true);
+            await fin.Application.wrapSync(testAppNotInDirectoryNotFdc3).quit(true);
         });
 
         test('Result does not contain the non-FDC3 app', async () => {
@@ -107,7 +107,7 @@ describe('When listening for channel-changed and Channel events', () => {
             await notInDirectoryApp.quit(true);
         }
 
-        const notFdc3App = fin.Application.wrapSync(testAppNotFdc3);
+        const notFdc3App = fin.Application.wrapSync(testAppNotInDirectoryNotFdc3);
         if (await notFdc3App.isRunning()) {
             await notFdc3App.quit(true);
         }
@@ -158,7 +158,7 @@ describe('When listening for channel-changed and Channel events', () => {
         const windowAddedListener = await defaultChannel.addEventListener('window-added');
 
         // Start our non-FDC3 app
-        await fin.Application.startFromManifest(testAppNotFdc3.manifestUrl);
+        await fin.Application.startFromManifest(testAppNotInDirectoryNotFdc3.manifestUrl);
 
         // Check no event is received
         await expect(channelChangedListener.getReceivedEvents()).resolves.toEqual([]);
@@ -219,19 +219,19 @@ describe('When attempting to join a channel', () => {
 
     describe('When a non-FDC3 app has been started', () => {
         beforeEach(async () => {
-            await fin.Application.startFromManifest(testAppNotFdc3.manifestUrl);
+            await fin.Application.startFromManifest(testAppNotInDirectoryNotFdc3.manifestUrl);
         }, appStartupTime);
 
         afterEach(async () => {
-            await fin.Application.wrapSync(testAppNotFdc3).quit(true);
+            await fin.Application.wrapSync(testAppNotInDirectoryNotFdc3).quit(true);
         });
 
         test('If the non-FDC3 app identity is provided, an FDC3 error is thrown', async () => {
-            await expect(blueChannel.join(testAppNotFdc3)).
+            await expect(blueChannel.join(testAppNotInDirectoryNotFdc3)).
                 toThrowFDC3Error(
                     IdentityError.WindowWithIdentityNotFound,
                     `No connection to FDC3 service found from window with identity: \
-${JSON.stringify({uuid: testAppNotFdc3.uuid, name: testAppNotFdc3.name})}`
+${JSON.stringify({uuid: testAppNotInDirectoryNotFdc3.uuid, name: testAppNotInDirectoryNotFdc3.name})}`
                 );
         });
     });

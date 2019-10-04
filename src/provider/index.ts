@@ -105,14 +105,20 @@ export class Main {
         }
 
         // This can throw FDC3Errors if app fails to open or times out
-        const appWindows = await this._model.findOrCreate(appInfo);
+        await this._model.ensureRunning(appInfo);
 
-        await Promise.all(appWindows.map(window => window.bringToFront()));
-        if (appWindows.length > 0) {
-            appWindows[appWindows.length - 1].focus();
+        // Bring-to-front all currently open windows in creation order
+        const windowsToFocus = this._model.findWindowsByAppName(appInfo.name).sort((a: AppWindow, b: AppWindow) => a.appWindowNumber - b.appWindowNumber);
+        await Promise.all(windowsToFocus.map(window => window.bringToFront()));
+        if (windowsToFocus.length > 0) {
+            windowsToFocus[windowsToFocus.length - 1].focus();
         }
 
+        // If the user has supplied a context, we expect the window to connect and hence have registered windows
         if (payload.context) {
+            // TODO: This will never resolve if no app windows connect to FDC3 [SERVICE-556]
+            const appWindows = await this._model.expectWindowsForApp(appInfo);
+
             await Promise.all(appWindows.map(window => {
                 return this._contextHandler.send(window, parseContext(payload.context!));
             }));
