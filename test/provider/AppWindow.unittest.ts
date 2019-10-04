@@ -2,7 +2,6 @@ import 'reflect-metadata';
 
 import {Identity} from 'openfin/_v2/main';
 
-import {FinAppWindow} from '../../src/provider/model/FinAppWindow';
 import {createMockChannel} from '../mocks';
 import {Application} from '../../src/client/main';
 import {AbstractAppWindow} from '../../src/provider/model/AppWindow';
