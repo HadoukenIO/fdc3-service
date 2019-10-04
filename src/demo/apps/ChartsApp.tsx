@@ -12,11 +12,15 @@ interface AppProps {
 }
 
 export function ChartsApp(props: AppProps): React.ReactElement {
-    const [symbolName, setSymbolName] = React.useState('AAPL');
+    const [title, setTitle] = React.useState('Apple (AAPL)');
 
     function handleIntent(context: InstrumentContext): void {
         if (context && context.name) {
-            setSymbolName(context.name);
+            if (context.id.ticker && context.id.ticker !== context.name) {
+                setTitle(`${context.name} (${context.id.ticker})`);
+            } else {
+                setTitle(context.name);
+            }
         } else {
             throw new Error('Invalid context received');
         }
@@ -60,7 +64,7 @@ export function ChartsApp(props: AppProps): React.ReactElement {
         <React.Fragment>
             <ContextChannelSelector float={true} />
             <div className="chart-app w3-theme">
-                <h1 className="w3-margin-left">{symbolName}</h1>
+                <h1 className="w3-margin-left">{title}</h1>
                 <Chart />
             </div>
         </React.Fragment>
