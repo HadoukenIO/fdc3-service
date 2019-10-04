@@ -83,8 +83,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
             type: 'fdc3.instrument',
             name: item.name,
             id: {
-                ticker: item.ticker,
-                default: item.ticker
+                ticker: item.ticker
             }
         };
     };

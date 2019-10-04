@@ -8,14 +8,14 @@ import {ContextChannelSelector} from '../components/ContextChannelSelector/Conte
 import {getCurrentChannel} from '../../client/main';
 
 export function NewsApp(): React.ReactElement {
-    const [symbolName, setSymbolName] = React.useState('Apple Inc (AAPL)');
+    const [title, setTitle] = React.useState('Apple (AAPL)');
 
     function handleIntent(context: InstrumentContext): void {
         if (context && context.name) {
             if (context.id.ticker && context.id.ticker !== context.name) {
-                setSymbolName(`${context.name} (${context.id.ticker})`);
+                setTitle(`${context.name} (${context.id.ticker})`);
             } else {
-                setSymbolName(context.name);
+                setTitle(context.name);
             }
         } else {
             throw new Error('Invalid context received');
@@ -23,8 +23,8 @@ export function NewsApp(): React.ReactElement {
     }
 
     React.useEffect(() => {
-        document.title = `News for: ${symbolName}`;
-    }, [symbolName]);
+        document.title = `News for: ${title}`;
+    }, [title]);
 
     React.useEffect(() => {
         getCurrentChannel().then(async channel => {
@@ -61,7 +61,7 @@ export function NewsApp(): React.ReactElement {
         <React.Fragment>
             <ContextChannelSelector float={true} />
             <div className="news-app">
-                <NewsFeed symbol={symbolName} />
+                <NewsFeed symbol={title} />
             </div>
         </React.Fragment>
     );
