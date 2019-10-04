@@ -92,12 +92,6 @@ export class Model {
     }
 
     public async expectWindow(identity: Identity): Promise<AppWindow> {
-        // Temporary work-around until .NET channel aliases are also applied to 'dispatch' calls, same as they are on channel connection events.
-        // Note that 'secondWindow' in .NET demo will not fully work whilst this workaround is in place.
-        if (identity.name && identity.name.split('-').length === 5) {
-            identity.name = 'mainwin';
-        }
-
         const id = getId(identity);
 
         if (this._windowsById[id]) {
