@@ -41,7 +41,8 @@ export function untilTrue<A extends any[]>(signal: Signal<A>, predicate: () => b
 }
 
 /**
-@@ -45,8 +46,9 @@ export function untilTrue<A extends any[]>(signal: Signal<A>, predicate: () => b
+ * Returns a promise that resolves when the given signal is fired, and the given predicate evaluates to true when passed the arguments
+ * recevied from the signal
  *
  * @param signal The signal to listen to
  * @param predicate The predicate to evaluate against arguments received from the signal
