@@ -111,7 +111,7 @@ export class IntentHandler {
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
         await this._model.ensureRunning(appInfo);
 
-        // TODO: This will never resolve if no app windows connect to FDC3 [SERVICE-556]
+        // TODO: This will never resolve if no windows of this app connect to FDC3 [SERVICE-556]
         const appWindows = await this._model.expectWindowsForApp(appInfo);
 
         // Wait for windows to add intent listener, then dispatch payload
