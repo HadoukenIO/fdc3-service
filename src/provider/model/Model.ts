@@ -284,7 +284,7 @@ export class Model {
             }, closed);
 
             // Create a promise that resolves when the window has connected, or rejects when the window closes
-            const appConnected = untilTrue(this._apiHandler.onConnection, () => {
+            const connected = untilTrue(this._apiHandler.onConnection, () => {
                 return this._apiHandler.isClientConntection(identity);
             }, closed);
 
@@ -301,7 +301,7 @@ export class Model {
 
             const expectedWindow: ExpectedWindow = {
                 seen: seenThenRegisteredWithinTimeout,
-                connected: appConnected,
+                connected,
                 registered,
                 closed
             };
