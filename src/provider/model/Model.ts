@@ -232,11 +232,13 @@ export class Model {
     private async onApiHandlerConnection(identity: Identity): Promise<void> {
         if (await this._environment.getEntityType(identity) === EntityType.EXTERNAL_CONNECTION) {
             // Any connections to the service from adapters should be immediately registered
+            // TODO [SERVICE-737] Store the entity type as part of the registration process, so we can correctly handle disconnects
             this.registerWindow(await this._environment.inferApplication(identity), identity, false);
         }
     }
 
     private async onApiHandlerDisconnection(identity: Identity): Promise<void> {
+        // TODO [SERVICE-737] Handle differences in disconnect behaviour between windows and external connections
         const id = getId(identity);
 
         let appWindow: AppWindow | undefined;
