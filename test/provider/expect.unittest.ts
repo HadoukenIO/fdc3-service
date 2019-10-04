@@ -267,8 +267,8 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
             return false;
         });
 
-        mockApiHandler.isAppConnected.mockImplementation((testUuid: string): boolean => {
-            if (testUuid === identity.uuid) {
+        mockApiHandler.isClientConntection.mockImplementation((testIdentity: Identity): boolean => {
+            if (getId(testIdentity) === getId(identity)) {
                 const time = Date.now();
 
                 if (testWindow.connectionTime !== undefined && time >= testWindow.connectionTime) {

@@ -20,8 +20,8 @@ interface ExpectedWindow {
     // Resolves when the window has been seen by the environment. Resolves to the `registered` promise wrapped in a timeout
     seen: Promise<Boxed<Promise<AppWindow>>>;
 
-    // Resolves when the app has connected to FDC3
-    appConnected: Promise<void>;
+    // Resolves when the window has connected to FDC3
+    connected: Promise<void>;
 
     // Resolves to the AppWindow when the window has been fully registered and is ready for use outside the Model
     registered: Promise<AppWindow>;
@@ -175,46 +175,33 @@ export class Model {
     }
 
     private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
-        const id = getId(identity);
-
-        // Attempt to copy appInfo from another appWindow in the model from the same app
-        let registered = false;
-        let appWindowsFromSameApp: AppWindow[];
-
         const expectedWindow = this.getOrCreateExpectedWindow(identity);
 
-        allowReject(untilTrue(this._onWindowRegisteredInternal, () => {
-            appWindowsFromSameApp = this.findWindowsByAppId(identity.uuid);
-            return appWindowsFromSameApp.length > 0;
-        }, expectedWindow.closed).then(() => {
-            if (!registered) {
-                this.registerWindow(appWindowsFromSameApp[0].appInfo, identity);
-                registered = true;
-            }
-        }));
+        // Only register windows once they are connected to the service
+        allowReject(expectedWindow.connected.then(async () => {
+            // Attempt to copy appInfo from another appWindow in the model from the same app
+            let registered = false;
+            let appWindowsFromSameApp: AppWindow[];
 
-        const apps = await this._directory.getAllApps();
-        const appInfoFromDirectory = apps.find(app => app.manifest.startsWith(manifestUrl));
-
-        if (appInfoFromDirectory) {
-            console.info(`Window ${id} created, using app info from directory`);
-
-            // If the app is in directory, we register it immediately
-            if (!registered) {
-                this.registerWindow(appInfoFromDirectory, identity);
-                registered = true;
-            }
-        } else {
-            // If the app is not in directory, we'll add it to the model if and when any window from the same app connects to FDC3
-            allowReject(expectedWindow.appConnected.then(async () => {
-                const appInfo = await this._environment.inferApplication(identity);
-
+            allowReject(untilTrue(this._onWindowRegisteredInternal, () => {
+                appWindowsFromSameApp = this.findWindowsByAppId(identity.uuid);
+                return appWindowsFromSameApp.length > 0;
+            }, expectedWindow.closed).then(() => {
                 if (!registered) {
-                    this.registerWindow(appInfo, identity);
+                    this.registerWindow(appWindowsFromSameApp[0].appInfo, identity);
                     registered = true;
                 }
             }));
-        }
+
+            // If we're unable to copy appInfo from another window, attempt to use the app dirctory, or infer from environment
+            const appInfoFromDirectory = (await this._directory.getAllApps()).find(app => app.manifest.startsWith(manifestUrl));
+            const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
+
+            if (!registered) {
+                this.registerWindow(appInfo, identity);
+                registered = true;
+            }
+        }));
     }
 
     private onWindowClosed(identity: Identity): void {
@@ -230,6 +217,7 @@ export class Model {
     }
 
     private async onApiHandlerDisconnection(identity: Identity): Promise<void> {
+        // Although windows are only registered on connection, we do not unregister on disconnect, so channel membership is preserved on navigation
         const id = getId(identity);
 
         let appWindow: AppWindow | undefined;
@@ -290,9 +278,9 @@ export class Model {
                 return this._environment.isWindowSeen(identity);
             }, closed);
 
-            // Create a promise that resolves when the app has connected, or rejects when the window closes
+            // Create a promise that resolves when the window has connected, or rejects when the window closes
             const appConnected = untilTrue(this._apiHandler.onConnection, () => {
-                return this._apiHandler.isAppConnected(identity.uuid);
+                return this._apiHandler.isClientConntection(identity);
             }, closed);
 
             // Create a promise that resolves when the window has registered, or rejects when the window closes
@@ -308,7 +296,7 @@ export class Model {
 
             const expectedWindow: ExpectedWindow = {
                 seen: seenThenRegisteredWithinTimeout,
-                appConnected,
+                connected: appConnected,
                 registered,
                 closed
             };

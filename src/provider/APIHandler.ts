@@ -6,6 +6,8 @@ import {Signal} from 'openfin-service-signal';
 
 import {SERVICE_CHANNEL, serializeError} from '../client/internal';
 
+import {getId} from './model/Model';
+
 /**
  * Semantic type definition.
  *
@@ -71,8 +73,10 @@ export class APIHandler<T extends Enum> {
         return this._providerChannel;
     }
 
-    public isAppConnected(uuid: string): boolean {
-        return this._providerChannel && this._providerChannel.connections.some(identity => identity.uuid === uuid);
+    public isClientConntection(identity: Identity): boolean {
+        const id = getId(identity);
+
+        return this._providerChannel && this._providerChannel.connections.some(connectionIdentity => getId(connectionIdentity) === id);
     }
 
     public getClientConnections(): Identity[] {
