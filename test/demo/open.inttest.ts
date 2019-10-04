@@ -27,6 +27,17 @@ describe('Opening applications with the FDC3 client', () => {
                 await quitApps(testAppInDirectory1);
             });
 
+            test('When passing an unmatching app name the app opens and the promise resolves if the matching app name \
+is specified as a custom config field', async () => {
+                // From the launcher app, call fdc3.open with a valid name
+                await open(testAppInDirectory1.name);
+
+                // Check that the app is now running
+                await expect(fin.Application.wrapSync(testAppInDirectory1).isRunning()).resolves.toBe(true);
+
+                await quitApps(testAppInDirectory1);
+            });
+
             test('When passing an unknown app name the service returns an FDC3Error', async () => {
                 // From the launcher app, call fdc3.open with an unregistered name
                 const openPromise = open('invalid-app-name');

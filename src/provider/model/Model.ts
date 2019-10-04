@@ -7,9 +7,10 @@ import {Inject} from '../common/Injectables';
 import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
-import {SYSTEM_CHANNELS, Timeouts} from '../constants';
+import {SYSTEM_CHANNELS, Timeouts, CustomConfigFields} from '../constants';
 import {withStrictTimeout, untilTrue, allowReject, untilSignal} from '../utils/async';
 import {Boxed} from '../utils/types';
+import {checkCustomConfigField} from '../utils/helpers';
 
 import {AppWindow} from './AppWindow';
 import {ContextChannel, DefaultContextChannel, SystemContextChannel} from './ContextChannel';
@@ -174,7 +175,7 @@ export class Model {
     private async onWindowCreated(identity: Identity): Promise<void> {
         const apps = await this._directory.getAllApps();
         const appInfoFromDirectory = apps.find((app) => {
-            return app.appId === identity.uuid || this.checkCustomUuidField(app) === identity.uuid;
+            return app.appId === identity.uuid || checkCustomConfigField(app, CustomConfigFields.OPENFIN_APP_UUID) === identity.uuid;
         });
 
         if (appInfoFromDirectory) {
@@ -196,16 +197,6 @@ export class Model {
                 this.registerWindow(appInfo, identity, false);
             }));
         }
-    }
-
-    private checkCustomUuidField(app: Application): string | undefined {
-        if (app.customConfig) {
-            const customUuidField = app.customConfig.find(field => field.name === 'appUuid');
-            if (customUuidField) {
-                return customUuidField.value;
-            }
-        }
-        return undefined;
     }
 
     private onWindowClosed(identity: Identity): void {

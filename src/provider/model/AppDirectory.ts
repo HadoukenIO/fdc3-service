@@ -4,6 +4,8 @@ import {Inject} from '../common/Injectables';
 import {Application, AppName} from '../../client/directory';
 import {AppIntent} from '../../client/main';
 import {AsyncInit} from '../controller/AsyncInit';
+import {CustomConfigFields} from '../constants';
+import {checkCustomConfigField} from '../utils/helpers';
 
 import {ConfigStoreBinding} from './ConfigStore';
 
@@ -31,7 +33,7 @@ export class AppDirectory extends AsyncInit {
 
     public async getAppByName(name: AppName): Promise<Application | null> {
         return this._directory.find((app: Application) => {
-            return app.name === name;
+            return (app.name === name || checkCustomConfigField(app, CustomConfigFields.OPENFIN_APP_NAME) === name);
         }) || null;
     }
 

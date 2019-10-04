@@ -23,6 +23,11 @@ export const Timeouts = {
     WINDOW_SEEN_TO_REGISTERED: 5000
 };
 
+export const CustomConfigFields = {
+    OPENFIN_APP_UUID: 'appUuid',
+    OPENFIN_APP_NAME: 'appName'
+};
+
 export const SYSTEM_CHANNELS = [
     {
         id: 'red',

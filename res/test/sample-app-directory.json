@@ -46,8 +46,8 @@
     ]
 },
 {
-    "appId": "test-app-2",
-    "name": "test-app-2",
+    "appId": "unmatchingAppId",
+    "name": "unmatchingAppName",
     "manifest": "http://localhost:3923/test/configs/test-app-2.json",
     "manifestType": "openfin",
     "title": "Test App 2",
@@ -67,6 +67,16 @@
         {"name": "StartCall"},
         {"name": "SaveContact"},
         {"name": "ViewChart"}
+    ],
+    "customConfig": [
+        {
+            "name": "appUuid",
+            "value": "test-app-2"
+        },
+        {
+            "name": "appName",
+            "value": "test-app-2"
+        }
     ]
 },
 {
