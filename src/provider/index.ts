@@ -114,7 +114,6 @@ export class Main {
             windowsToFocus[windowsToFocus.length - 1].focus();
         }
 
-        // If the user has supplied a context, we expect the window to connect and hence have registered windows
         if (payload.context) {
             // TODO: This will never resolve if no app windows connect to FDC3 [SERVICE-556]
             const appWindows = await this._model.expectWindowsForApp(appInfo);
