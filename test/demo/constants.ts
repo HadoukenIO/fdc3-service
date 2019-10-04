@@ -48,6 +48,9 @@ export const testAppWithPreregisteredListeners2: DirectoryTestAppData = {
     appId: '600'
 };
 
+/**
+ * Directory app that doesn't import the FDC3 library
+ */
 export const testAppNotFdc3: DirectoryTestAppData = {
     uuid: 'test-app-not-fdc3',
     name: 'test-app-not-fdc3',
@@ -73,7 +76,7 @@ export const testAppNotInDirectory2: NonDirectoryTestAppData = {
 };
 
 /**
- * App that doesn't import the FDC3 library
+ * App not registered in directory that doesn't import the FDC3 library
  */
 export const testAppNotInDirectoryNotFdc3: NonDirectoryTestAppData = {
     uuid: 'test-app-not-in-directory-not-fdc3',
