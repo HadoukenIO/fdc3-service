@@ -295,7 +295,7 @@ export class Model {
             // Create a promise that resolves once the window has been seen
             const seen = untilTrue(this._environment.windowSeen, () => {
                 return this._environment.isWindowSeen(identity);
-            }, closed);
+            });
 
             // Create a promise that resolves when the window has connected, or rejects when the window closes
             const connected = untilTrue(this._apiHandler.onConnection, () => {
