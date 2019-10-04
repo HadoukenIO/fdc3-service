@@ -71,10 +71,10 @@ export class EventHandler {
     }
 
     private dispatchEvent<T extends Events>(targetWindow: AppWindow, eventTransport: Targeted<Transport<T>>): Promise<void> {
-        return this._apiHandler.channel.dispatch(targetWindow.identity, 'event', eventTransport);
+        return this._apiHandler.dispatch(targetWindow.identity, 'event', eventTransport);
     }
 
     private publishEvent<T extends Events>(eventTransport: Targeted<Transport<T>>): Promise<void> {
-        return Promise.all(this._apiHandler.channel.publish('event', eventTransport)).then(() => {});
+        return Promise.all(this._apiHandler.publish('event', eventTransport)).then(() => {});
     }
 }

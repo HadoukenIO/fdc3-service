@@ -13,7 +13,7 @@ import {Boxed} from '../utils/types';
 
 import {AppWindow} from './AppWindow';
 import {ContextChannel, DefaultContextChannel, SystemContextChannel} from './ContextChannel';
-import {Environment} from './Environment';
+import {Environment, EntityType} from './Environment';
 import {AppDirectory} from './AppDirectory';
 
 interface ExpectedWindow {
@@ -70,6 +70,7 @@ export class Model {
         this._environment.windowCreated.add(this.onWindowCreated, this);
         this._environment.windowClosed.add(this.onWindowClosed, this);
 
+        this._apiHandler.onConnection.add(this.onApiHandlerConnection, this);
         this._apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
 
         this._channelsById[DEFAULT_CHANNEL_ID] = new DefaultContextChannel(DEFAULT_CHANNEL_ID);
@@ -222,7 +223,16 @@ export class Model {
         }
     }
 
+    private async onApiHandlerConnection(identity: Identity): Promise<void> {
+        if (await this._environment.getEntityType(identity) === EntityType.EXTERNAL_CONNECTION) {
+            // Any connections to the service from adapters should be immediately registered
+            // TODO [SERVICE-737] Store the entity type as part of the registration process, so we can correctly handle disconnects
+            this.registerWindow(await this._environment.inferApplication(identity), identity, false);
+        }
+    }
+
     private async onApiHandlerDisconnection(identity: Identity): Promise<void> {
+        // TODO [SERVICE-737] Handle differences in disconnect behaviour between windows and external connections
         const id = getId(identity);
 
         let appWindow: AppWindow | undefined;
