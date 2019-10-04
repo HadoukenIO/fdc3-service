@@ -212,7 +212,7 @@ export class Model {
                 }
             }));
 
-            // If we're unable to copy appInfo from another window, attempt to use the app dirctory, or infer from environment
+            // If we're unable to copy appInfo from another window, attempt to use the app directory, or infer from environment
             const appInfoFromDirectory = (await this._directory.getAllApps()).find(app => app.manifest.startsWith(manifestUrl));
             const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
 
