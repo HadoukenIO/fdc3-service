@@ -55,7 +55,7 @@ export class ResolverHandler extends AsyncInit implements ResolverHandlerBinding
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
-        @inject(Inject.MODEL) model: Model,
+        @inject(Inject.MODEL) model: Model
     ) {
         super();
         this._directory = directory;

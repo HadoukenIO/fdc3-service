@@ -289,7 +289,7 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
             return false;
         });
 
-        mockApiHandler.isClientConntection.mockImplementation((testIdentity: Identity): boolean => {
+        mockApiHandler.isClientConnection.mockImplementation((testIdentity: Identity): boolean => {
             if (getId(testIdentity) === getId(identity)) {
                 const time = Date.now();
 

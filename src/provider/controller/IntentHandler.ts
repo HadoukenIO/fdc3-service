@@ -10,7 +10,7 @@ import {AppWindow} from '../model/AppWindow';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
 
-import {ResolverHandler, ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
+import {ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
 @injectable()
 export class IntentHandler {
@@ -25,7 +25,7 @@ export class IntentHandler {
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
         @inject(Inject.MODEL) model: Model,
         @inject(Inject.RESOLVER) resolver: ResolverHandlerBinding,
-        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIToClientTopic>,
+        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIToClientTopic>
     ) {
         this._directory = directory;
         this._model = model;

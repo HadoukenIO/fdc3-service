@@ -60,7 +60,7 @@ interface NameValuePair {
 interface Intent {
     name: string;
     displayName?: string;
-    contexts: string[];
+    contexts?: string[];
 
     // Specification is ambiguous on type of customConfig, so leaving as 'any'
     /* tslint:disable:no-any */

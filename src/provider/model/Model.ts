@@ -144,35 +144,49 @@ export class Model {
     }
 
     /**
-     * Gets apps that can handle an intent
+     * Get apps that can handle an intent and optionally with specified context type
      *
-     * Includes windows that are not in the app directory but have registered a listener for it
+     * Includes windows that are not in the app directory but have registered a listener for it if contextType is not specified
      * @param intentType intent type
+     * @param contextType context type
      */
-    public async getApplicationsForIntent(intentType: string): Promise<Application[]> {
+    public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
         const allAppWindows = this.windows;
 
+        const directoryAppsWithIntent = await this._directory.getAppsByIntent(intentType, contextType);
+
         // Include appInfos for any appWindows in model that have registered a listener for the intent
-        const appsInModelWithIntent = allAppWindows
-            .filter(appWindow => appWindow.hasIntentListener(intentType))
-            .reduce<Application[]>((apps, appWindow) => {
-                if (apps.some(app => app.appId === appWindow.appInfo.appId)) {
-                    // AppInfo has already been added by another window on the same app also listening for the same intent
-                    return apps;
-                }
-                return apps.concat([appWindow.appInfo]);
-            }, []);
+        const appsInModelWithIntent = this.extractApplicationsFromWindows(allAppWindows.filter(appWindow => appWindow.hasIntentListener(intentType)));
 
-        // Include only directory apps without appWindows in the model, as these take precedence
-        const directoryAppsWithIntent = await this._directory.getAppsByIntent(intentType);
-        const directoryAppsNotInModel = directoryAppsWithIntent
-            .filter(directoryApp => !allAppWindows.some(appWindow => appWindow.appInfo.appId === directoryApp.appId));
+        // If context is specified don't use apps in model as there's no way to know about the context of non-directory
+        // app intents at the moment.
+        if (contextType) {
+            const appsInModelWithoutIntent = this.extractApplicationsFromWindows(allAppWindows).filter((app) => {
+                return !appsInModelWithIntent.some(activeApp => app.appId === activeApp.appId);
+            });
+            return directoryAppsWithIntent.filter((directoryApp) => {
+                return !appsInModelWithoutIntent.some(inactiveApp => directoryApp.appId === inactiveApp.appId);
+            });
+        } else {
+            const directoryAppsNotInModel = directoryAppsWithIntent
+                .filter(directoryApp => !allAppWindows.some(appWindow => appWindow.appInfo.appId === directoryApp.appId));
 
-        return [...appsInModelWithIntent, ...directoryAppsNotInModel];
+            return [...appsInModelWithIntent, ...directoryAppsNotInModel];
+        }
     }
 
     public findWindowsByAppName(name: AppName): AppWindow[] {
         return this.findWindows(appWindow => appWindow.appInfo.name === name);
+    }
+
+    private extractApplicationsFromWindows(windows: AppWindow[]): Application[] {
+        return windows.reduce<Application[]>((apps, appWindow) => {
+            if (apps.some(app => app.appId === appWindow.appInfo.appId)) {
+                // AppInfo has already been added by another window on the same app also listening for the same intent
+                return apps;
+            }
+            return apps.concat([appWindow.appInfo]);
+        }, []);
     }
 
     private onWindowSeen(identity: Identity): void {
@@ -285,7 +299,7 @@ export class Model {
 
             // Create a promise that resolves when the window has connected, or rejects when the window closes
             const connected = untilTrue(this._apiHandler.onConnection, () => {
-                return this._apiHandler.isClientConntection(identity);
+                return this._apiHandler.isClientConnection(identity);
             }, closed);
 
             // Create a promise that resolves when the window has registered, or rejects when the window closes

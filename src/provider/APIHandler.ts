@@ -73,7 +73,7 @@ export class APIHandler<T extends Enum> {
         return this._providerChannel;
     }
 
-    public isClientConntection(identity: Identity): boolean {
+    public isClientConnection(identity: Identity): boolean {
         const id = getId(identity);
 
         return this._providerChannel && this._providerChannel.connections.some(connectionIdentity => getId(connectionIdentity) === id);
