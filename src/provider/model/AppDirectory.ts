@@ -23,7 +23,7 @@ export class AppDirectory extends AsyncInit {
             return true;
         } else {
             const intents = app.intents.filter(intent => intent.name === intentType);
-            return intents.length === 0 || intents.some(intent => intent.contexts && intent.contexts.includes(contextType));
+            return intents.length === 0 || intents.some(intent => !!intent.contexts && intent.contexts.includes(contextType));
         }
     }
 
@@ -36,7 +36,7 @@ export class AppDirectory extends AsyncInit {
             return false;
         } else {
             const intents = app.intents.filter(intent => intent.name === intentType);
-            return intents.length > 0 && (contextType === undefined || intents.some(intent => intent.contexts && intent.contexts.includes(contextType)));
+            return intents.length > 0 && (contextType === undefined || intents.some(intent => !!intent.contexts && intent.contexts.includes(contextType)));
         }
     }
 

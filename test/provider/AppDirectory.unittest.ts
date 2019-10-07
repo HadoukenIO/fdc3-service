@@ -193,7 +193,7 @@ describe('When querying the Directory', () => {
     });
 
     it('Can get application by intent', async () => {
-        const apps = await appDirectory.getAppsByIntent('testIntent.SendEmail');
+        const apps = await appDirectory.getAllAppsThatShouldSupportIntent('testIntent.SendEmail');
         expect(apps).toHaveLength(1);
     });
 });
