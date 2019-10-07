@@ -6,9 +6,9 @@ import {withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
 import {DeferredPromise} from '../common/DeferredPromise';
 import {Events, ChannelEvents} from '../../client/internal';
+import {getId} from '../utils/getId';
 
 import {ContextChannel} from './ContextChannel';
-import {getId} from './Model';
 
 /**
  * Model interface, representing a window that has connected to the service.
