@@ -250,5 +250,6 @@ export abstract class AbstractAppWindow implements AppWindow {
         this._channelContextListeners.clear();
         this._channelEventListeners.clear();
         this._intentListeners.clear();
+        this._contextListener = false;
     }
 }
