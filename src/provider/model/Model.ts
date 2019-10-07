@@ -13,7 +13,7 @@ import {Boxed} from '../utils/types';
 
 import {AppWindow} from './AppWindow';
 import {ContextChannel, DefaultContextChannel, SystemContextChannel} from './ContextChannel';
-import {Environment} from './Environment';
+import {Environment, EntityType} from './Environment';
 import {AppDirectory} from './AppDirectory';
 
 interface ExpectedWindow {
@@ -70,6 +70,7 @@ export class Model {
         this._environment.windowCreated.add(this.onWindowCreated, this);
         this._environment.windowClosed.add(this.onWindowClosed, this);
 
+        this._apiHandler.onConnection.add(this.onApiHandlerConnection, this);
         this._apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
 
         this._channelsById[DEFAULT_CHANNEL_ID] = new DefaultContextChannel(DEFAULT_CHANNEL_ID);
@@ -136,35 +137,49 @@ export class Model {
     }
 
     /**
-     * Gets apps that can handle an intent
+     * Get apps that can handle an intent and optionally with specified context type
      *
-     * Includes windows that are not in the app directory but have registered a listener for it
+     * Includes windows that are not in the app directory but have registered a listener for it if contextType is not specified
      * @param intentType intent type
+     * @param contextType context type
      */
-    public async getApplicationsForIntent(intentType: string): Promise<Application[]> {
+    public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
         const allAppWindows = this.windows;
 
+        const directoryAppsWithIntent = await this._directory.getAppsByIntent(intentType, contextType);
+
         // Include appInfos for any appWindows in model that have registered a listener for the intent
-        const appsInModelWithIntent = allAppWindows
-            .filter(appWindow => appWindow.hasIntentListener(intentType))
-            .reduce<Application[]>((apps, appWindow) => {
-                if (apps.some(app => app.appId === appWindow.appInfo.appId)) {
-                    // AppInfo has already been added by another window on the same app also listening for the same intent
-                    return apps;
-                }
-                return apps.concat([appWindow.appInfo]);
-            }, []);
+        const appsInModelWithIntent = this.extractApplicationsFromWindows(allAppWindows.filter(appWindow => appWindow.hasIntentListener(intentType)));
 
-        // Include only directory apps without appWindows in the model, as these take precedence
-        const directoryAppsWithIntent = await this._directory.getAppsByIntent(intentType);
-        const directoryAppsNotInModel = directoryAppsWithIntent
-            .filter(directoryApp => !allAppWindows.some(appWindow => appWindow.appInfo.appId === directoryApp.appId));
+        // If context is specified don't use apps in model as there's no way to know about the context of non-directory
+        // app intents at the moment.
+        if (contextType) {
+            const appsInModelWithoutIntent = this.extractApplicationsFromWindows(allAppWindows).filter((app) => {
+                return !appsInModelWithIntent.some(activeApp => app.appId === activeApp.appId);
+            });
+            return directoryAppsWithIntent.filter((directoryApp) => {
+                return !appsInModelWithoutIntent.some(inactiveApp => directoryApp.appId === inactiveApp.appId);
+            });
+        } else {
+            const directoryAppsNotInModel = directoryAppsWithIntent
+                .filter(directoryApp => !allAppWindows.some(appWindow => appWindow.appInfo.appId === directoryApp.appId));
 
-        return [...appsInModelWithIntent, ...directoryAppsNotInModel];
+            return [...appsInModelWithIntent, ...directoryAppsNotInModel];
+        }
     }
 
     public findWindowsByAppName(name: AppName): AppWindow[] {
         return this.findWindows(appWindow => appWindow.appInfo.name === name);
+    }
+
+    private extractApplicationsFromWindows(windows: AppWindow[]): Application[] {
+        return windows.reduce<Application[]>((apps, appWindow) => {
+            if (apps.some(app => app.appId === appWindow.appInfo.appId)) {
+                // AppInfo has already been added by another window on the same app also listening for the same intent
+                return apps;
+            }
+            return apps.concat([appWindow.appInfo]);
+        }, []);
     }
 
     private onWindowSeen(identity: Identity): void {
@@ -208,7 +223,16 @@ export class Model {
         }
     }
 
+    private async onApiHandlerConnection(identity: Identity): Promise<void> {
+        if (await this._environment.getEntityType(identity) === EntityType.EXTERNAL_CONNECTION) {
+            // Any connections to the service from adapters should be immediately registered
+            // TODO [SERVICE-737] Store the entity type as part of the registration process, so we can correctly handle disconnects
+            this.registerWindow(await this._environment.inferApplication(identity), identity, false);
+        }
+    }
+
     private async onApiHandlerDisconnection(identity: Identity): Promise<void> {
+        // TODO [SERVICE-737] Handle differences in disconnect behaviour between windows and external connections
         const id = getId(identity);
 
         let appWindow: AppWindow | undefined;
@@ -258,23 +282,6 @@ export class Model {
         if (this._expectedWindowsById[id]) {
             return this._expectedWindowsById[id];
         } else {
-            // Create a promise that resolves once the window has been seen
-            const seen = untilTrue(this._environment.windowSeen, () => {
-                return this._environment.isWindowSeen(identity);
-            });
-
-            // Create a promise that resolves when the window has connected
-            const connected = untilTrue(this._apiHandler.onConnection, () => {
-                return this._apiHandler.isClientConnection(identity);
-            });
-
-            // Create a promise that resolves when the window has registered
-            const registered = untilTrue(this._onWindowRegisteredInternal, () => {
-                return !!this._windowsById[id];
-            }).then(() => {
-                return this._windowsById[id];
-            });
-
             // A promise that never resolves but rejects when the window has closed
             const closed = allowReject(untilSignal(this._environment.windowClosed, (testIdentity) => {
                 return getId(testIdentity) === id;
@@ -282,17 +289,31 @@ export class Model {
                 throw new Error(EXPECT_CLOSED_MESSAGE);
             }));
 
-            const connectedOrClosed = allowReject(Promise.race([connected, closed]));
-            const registeredOrClosed = allowReject(Promise.race([registered, closed]));
+            // Create a promise that resolves once the window has been seen
+            const seen = untilTrue(this._environment.windowSeen, () => {
+                return this._environment.isWindowSeen(identity);
+            });
+
+            // Create a promise that resolves when the window has connected, or rejects when the window closes
+            const connected = untilTrue(this._apiHandler.onConnection, () => {
+                return this._apiHandler.isClientConnection(identity);
+            }, closed);
+
+            // Create a promise that resolves when the window has registered, or rejects when the window closes
+            const registered = allowReject(untilTrue(this._onWindowRegisteredInternal, () => {
+                return !!this._windowsById[id];
+            }, closed).then(() => {
+                return this._windowsById[id];
+            }));
 
             const seenThenRegisteredWithinTimeout = seen.then(() => {
-                return {value: allowReject(withStrictTimeout(Timeouts.WINDOW_SEEN_TO_REGISTERED, registeredOrClosed, EXPECT_TIMEOUT_MESSAGE))};
+                return {value: withStrictTimeout(Timeouts.WINDOW_SEEN_TO_REGISTERED, registered, EXPECT_TIMEOUT_MESSAGE)};
             });
 
             const expectedWindow: ExpectedWindow = {
                 seen: seenThenRegisteredWithinTimeout,
-                connected: connectedOrClosed,
-                registered: registeredOrClosed
+                connected,
+                registered
             };
 
             this._expectedWindowsById[id] = expectedWindow;

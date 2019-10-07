@@ -6,6 +6,7 @@
     display: flex;
     flex: 1;
     flex-direction: column;
+    overflow-y: auto;
 
     p {
         background: #1B1C1C;

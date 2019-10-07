@@ -13,11 +13,8 @@
         "name": "fdc3",
         "manifestUrl": "http://localhost:3923/provider/app.json"
     }],
-    "shortcut": {
-        "icon": "http://localhost:3923/demo/img/app-icons/charts.svg"
-    },
     "runtime": {
         "arguments": "",
-        "version": "13.76.43.31"
+        "version": "13.76.44.21"
     }
 }
