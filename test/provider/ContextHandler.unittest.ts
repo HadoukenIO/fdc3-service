@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 
 import {Identity} from 'openfin/_v2/main';
+import {ChannelProvider} from 'openfin/_v2/api/interappbus/channel/provider';
 
 import {ContextHandler} from '../../src/provider/controller/ContextHandler';
 import {APIHandler} from '../../src/provider/APIHandler';
@@ -11,7 +12,6 @@ import {ChannelHandler} from '../../src/provider/controller/ChannelHandler';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
 
 jest.mock('../../src/provider/controller/ChannelHandler');
-jest.mock('../../src/provider/APIHandler');
 
 const testContext = {type: 'test-context-payload'};
 const mockDispatch = jest.fn<Promise<any>, [Identity, string, any]>();
@@ -40,8 +40,9 @@ beforeEach(() => {
     mockGetWindowsListeningToChannel.mockReturnValue([]);
 
     mockApiHandler = new APIHandler<APIFromClientTopic>();
-    // Set up channel.dispatch on our mock APIHandler so we can spy on it
-    (mockApiHandler as any)['channel'] = {dispatch: mockDispatch};
+    // Set up _providerChannel on our mock APIHandler so we can spy on it
+    mockDispatch.mockResolvedValue(undefined);
+    mockApiHandler['_providerChannel'] = {dispatch: mockDispatch} as unknown as ChannelProvider;
 
     contextHandler = new ContextHandler(mockChannelHandler, mockApiHandler);
 });

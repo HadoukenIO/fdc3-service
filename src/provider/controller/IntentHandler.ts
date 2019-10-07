@@ -120,7 +120,7 @@ export class IntentHandler {
                 const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
 
                 // TODO: Implement a timeout so a misbehaving intent handler can't block the intent raiser (SERVICE-555)
-                await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
+                await this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
                 return true;
             } else {
                 return false;

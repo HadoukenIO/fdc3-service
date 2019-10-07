@@ -5,7 +5,7 @@ import {AppWindow} from '../src/provider/model/AppWindow';
 import {IntentType, Context, Application} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
 import {ChannelTransport, ChannelEvents} from '../src/client/internal';
-import {Environment} from '../src/provider/model/Environment';
+import {Environment, EntityType} from '../src/provider/model/Environment';
 
 /**
  * Creates a minimal mock app window. Any utilizing test should set properties and set up mock functions as needed
@@ -51,9 +51,11 @@ export function createMockEnvironmnent(): jest.Mocked<Environment> {
         windowSeen: new Signal<[Identity]>(),
         windowCreated: new Signal<[Identity, string]>(),
         windowClosed: new Signal<[Identity]>(),
+        isRunning: jest.fn<Promise<boolean>, [Application]>(),
         createApplication: jest.fn<Promise<void>, [Application, ContextChannel]>(),
         wrapApplication: jest.fn<AppWindow, [Application, Identity, ContextChannel]>(),
         inferApplication: jest.fn<Promise<Application>, [Identity]>(),
+        getEntityType: jest.fn<Promise<EntityType>, [Identity]>(),
         isWindowSeen: jest.fn<boolean, [Identity]>()
     };
 }
