@@ -51,7 +51,7 @@ type TestParam = [
 const FAKE_TEST_DURATION = 10000;
 
 const REGISTRATION_TIMEOUT = 5000;
-const PENDING_TIMEOUT = 100;
+const PENDING_TIMEOUT = 250;
 
 let model: Model;
 
