@@ -80,7 +80,7 @@ export class Model {
         return Object.values(this._channelsById);
     }
 
-    public getWindow(identity: Identity): AppWindow | null {
+    public getWindow(identity: Identity): AppWindow|null {
         return this._windowsById[getId(identity)] || null;
     }
 
@@ -102,7 +102,7 @@ export class Model {
         }
     }
 
-    public getChannel(id: ChannelId): ContextChannel | null {
+    public getChannel(id: ChannelId): ContextChannel|null {
         return this._channelsById[id] || null;
     }
 
