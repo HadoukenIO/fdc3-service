@@ -87,7 +87,7 @@ it('When getting the context of a channel, ChannelHandler returns the provided c
     const testContext = {type: 'test'};
 
     const testChannel = createMockChannel();
-    testChannel.getStoredContext.mockReturnValue(testContext);
+    (testChannel as PartiallyWritable<ContextChannel, 'storedContext'>).storedContext = testContext;
 
     expect(channelHandler.getChannelContext(testChannel)).toEqual(testContext);
 });

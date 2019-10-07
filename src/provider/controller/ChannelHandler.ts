@@ -55,7 +55,7 @@ export class ChannelHandler {
     }
 
     public getChannelContext(channel: ContextChannel): Context | null {
-        return channel.getStoredContext();
+        return channel.storedContext;
     }
 
     public getChannelMembers(channel: ContextChannel): AppWindow[] {

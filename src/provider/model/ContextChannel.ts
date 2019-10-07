@@ -5,8 +5,9 @@ export interface ContextChannel {
     readonly id: ChannelId;
     readonly type: string;
 
+    readonly storedContext: Context | null;
+
     setLastBroadcastContext(context: Context): void;
-    getStoredContext(): Context | null;
     clearStoredContext(): void;
 
     serialize(): Readonly<Transport<Channel>>;
@@ -21,7 +22,8 @@ abstract class ContextChannelBase implements ContextChannel {
         this.type = type;
     }
 
-    public abstract getStoredContext(): Context | null;
+    public abstract get storedContext(): Context | null;
+
     public abstract setLastBroadcastContext(context: Context): void;
     public abstract clearStoredContext(): void;
 
@@ -33,40 +35,16 @@ abstract class ContextChannelBase implements ContextChannel {
     }
 }
 
-export class DefaultContextChannel extends ContextChannelBase {
-    public readonly type!: 'default';
-
-    public constructor(id: ChannelId) {
-        super(id, 'default');
-    }
-
-    public getStoredContext(): Context | null {
-        return null;
-    }
-
-    public setLastBroadcastContext(context: Context) {
-    }
-
-    public clearStoredContext(): void {
-    }
-}
-
-export class SystemContextChannel extends ContextChannelBase {
-    public readonly type!: 'system';
-
-    public readonly visualIdentity: DisplayMetadata;
-
+abstract class ContextStoringContextChannel extends ContextChannelBase {
     private _context: Context | null;
 
-    public constructor(id: ChannelId, visualIdentity: DisplayMetadata) {
-        super(id, 'system');
-
-        this.visualIdentity = visualIdentity;
+    public constructor(id: ChannelId, type: string) {
+        super(id, type);
 
         this._context = null;
     }
 
-    public getStoredContext(): Context | null {
+    public get storedContext(): Context | null {
         return this._context;
     }
 
@@ -76,6 +54,34 @@ export class SystemContextChannel extends ContextChannelBase {
 
     public clearStoredContext(): void {
         this._context = null;
+    }
+}
+
+export class DefaultContextChannel extends ContextChannelBase {
+    public readonly type!: 'default';
+
+    public constructor(id: ChannelId) {
+        super(id, 'default');
+    }
+
+    public get storedContext(): Context | null {
+        return null;
+    }
+
+    public setLastBroadcastContext(context: Context) {}
+
+    public clearStoredContext(): void {}
+}
+
+export class SystemContextChannel extends ContextStoringContextChannel {
+    public readonly type!: 'system';
+
+    public readonly visualIdentity: DisplayMetadata;
+
+    public constructor(id: ChannelId, visualIdentity: DisplayMetadata) {
+        super(id, 'system');
+
+        this.visualIdentity = visualIdentity;
     }
 
     public serialize(): Readonly<Transport<SystemChannel>> {
@@ -87,30 +93,14 @@ export class SystemContextChannel extends ContextChannelBase {
     }
 }
 
-export class AppContextChannel extends ContextChannelBase {
+export class AppContextChannel extends ContextStoringContextChannel {
     public readonly type!: 'app';
     public readonly name: string;
-
-    private _context: Context | null;
 
     public constructor(id: ChannelId, name: string) {
         super(id, 'app');
 
         this.name = name;
-
-        this._context = null;
-    }
-
-    public getStoredContext(): Context | null {
-        return this._context;
-    }
-
-    public setLastBroadcastContext(context: Context) {
-        this._context = context;
-    }
-
-    public clearStoredContext(): void {
-        this._context = null;
     }
 
     public serialize(): Readonly<Transport<AppChannel>> {
