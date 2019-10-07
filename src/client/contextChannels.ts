@@ -416,7 +416,7 @@ export const DEFAULT_CHANNEL_ID: ChannelId = 'default';
  * All windows will belong to exactly one channel at all times. If they have not explicitly been placed into a channel
  * via a {@link ChannelBase.join} call, they will be in this channel.
  *
- * If an app wishes to leave a system/app channel it can do so by re-joining this channel.
+ * If an app wishes to leave any other channel, it can do so by (re-)joining this channel.
  */
 export const defaultChannel: DefaultChannel = new DefaultChannel();
 
