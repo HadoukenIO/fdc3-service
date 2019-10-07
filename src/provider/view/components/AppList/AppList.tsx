@@ -1,10 +1,9 @@
 import * as React from 'react';
 
-import {Application} from '../../../client/directory';
+import {Application} from '../../../../client/directory';
+import {AppCard} from '../AppCard/AppCard';
 
-import {AppCard} from './AppCard';
-
-import './AppList.css';
+import './AppList.scss';
 
 interface AppListProps {
     applications: Application[];
@@ -13,7 +12,7 @@ interface AppListProps {
 
 export function AppList(props: AppListProps): React.ReactElement {
     return (
-        <div id="app-list">
+        <div className="app-list">
             <p>Available Applications</p>
             <ul>
                 {props.applications.map((app: Application) => (

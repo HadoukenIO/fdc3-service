@@ -11,7 +11,7 @@ import {Timeouts} from '../constants';
 import {parseIdentity} from '../../client/validation';
 import {Injector} from '../common/Injector';
 
-import {Environment} from './Environment';
+import {Environment, EntityType} from './Environment';
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 import {getId} from './Model';
@@ -70,7 +70,10 @@ export class FinEnvironment extends AsyncInit implements Environment {
         identity = parseIdentity(identity);
         const id = getId(identity);
 
-        const {creationTime, index} = this._seenWindows[id];
+        // If `identity` is an adapter connection, there will not be any seenWindow entry for this identity
+        // We will instead take the time at which the identity was wrapped as this "window's" creation time
+        const seenWindow = this._seenWindows[id] || {creationTime: Date.now(), index: this._windowsCreated++};
+        const {creationTime, index} = seenWindow;
 
         return new FinAppWindow(identity, appInfo, channel, creationTime, index);
     }
@@ -108,6 +111,12 @@ export class FinEnvironment extends AsyncInit implements Environment {
                 manifest: applicationInfo.manifestUrl
             };
         }
+    }
+
+    public async getEntityType(identity: Identity): Promise<EntityType> {
+        const entityInfo = await fin.System.getEntityInfo(identity.uuid, identity.name!);
+
+        return entityInfo.entityType as EntityType;
     }
 
     public isWindowSeen(identity: Identity): boolean {

@@ -15,6 +15,9 @@ import {getId} from './Model';
  *
  * Only windows that have created intent or context listeners will be represented in this model. If any non-registered
  * window.
+ *
+ * TODO [SERVICE-737] Review naming of this interface, due to these objects now representing (potentially window-less)
+ * external connections. Likewise for "downstream" types/functions/etc.
  */
 export interface AppWindow {
     id: string;

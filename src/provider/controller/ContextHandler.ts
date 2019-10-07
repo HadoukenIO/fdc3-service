@@ -32,7 +32,7 @@ export class ContextHandler {
     public async send(window: AppWindow, context: Context): Promise<void> {
         const payload: ReceiveContextPayload = {context};
         if (await window.isReadyToReceiveContext()) {
-            return this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload);
+            return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload);
         } else {
             return;
         }
@@ -89,6 +89,6 @@ export class ContextHandler {
     private async sendOnChannel(window: AppWindow, context: Context, channel: ContextChannel): Promise<void> {
         const payload: ChannelReceiveContextPayload = {channel: channel.id, context};
 
-        await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, payload);
+        await this._apiHandler.dispatch(window.identity, APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, payload);
     }
 }
