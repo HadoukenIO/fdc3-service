@@ -14,6 +14,28 @@ enum StorageKeys {
 
 @injectable()
 export class AppDirectory extends AsyncInit {
+    /**
+     * Test if an app *might* support an intent - i.e., were the app is running and had the appropriate listener added,
+     * should we regard it as supporting this intent (and optionally context)
+     */
+    public static mightAppSupportIntent(app: Application, intentType: string, contextType?: string): boolean {
+        if (contextType === undefined) {
+            return true;
+        } else {
+            const intents = app.intents && app.intents.filter(intent => intent.name === intentType);
+            return intents === undefined || intents.length === 0 || intents.some(intent => intent.contexts && intent.contexts.includes(contextType));
+        }
+    }
+
+    /**
+     * Test if an app *should* support an intent - i.e., were the app running, would we expect it to add a listener for
+     * the given intent, and would we then regard it as supporting this intent (and optionally context)
+     */
+    public static shouldAppSupportIntent(app: Application, intentType: string, contextType?: string): boolean {
+        const intents = app.intents && app.intents.filter(intent => intent.name === intentType);
+        return intents !== undefined && (contextType === undefined || intents.some(intent => intent.contexts && intent.contexts.includes(contextType)));
+    }
+
     private readonly _configStore: ConfigStoreBinding;
     private _directory: Application[] = [];
     private _url!: string;
@@ -35,13 +57,8 @@ export class AppDirectory extends AsyncInit {
         }) || null;
     }
 
-    public async getAppsByIntent(intentType: string, contextType?: string): Promise<Application[]> {
-        return this._directory.filter((app: Application) => {
-            return app.intents && app.intents.some(intent => {
-                const isContextRelevant = contextType && intent.contexts && intent.contexts.length > 0;
-                return (intent.name === intentType) && (!isContextRelevant || intent.contexts!.includes(contextType!));
-            });
-        });
+    public async getAllAppsThatShouldSupportIntent(intentType: string, contextType?: string): Promise<Application[]> {
+        return this._directory.filter(app => AppDirectory.shouldAppSupportIntent(app, intentType, contextType));
     }
 
     /**

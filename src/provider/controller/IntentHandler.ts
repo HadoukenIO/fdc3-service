@@ -40,7 +40,7 @@ export class IntentHandler {
             return this.raiseWithTarget(intent);
         }
 
-        const apps: Application[] = await this._model.getApplicationsForIntent(intent.type);
+        const apps: Application[] = await this._model.getApplicationsForIntent(intent.type, intent.context.type);
 
         if (apps.length === 0) {
             throw new FDC3Error(ResolveError.NoAppsFound, 'No applications available to handle this intent');
