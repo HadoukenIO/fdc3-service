@@ -10,6 +10,7 @@ import {APIFromClientTopic} from '../../client/internal';
 import {SYSTEM_CHANNELS, Timeouts} from '../constants';
 import {withStrictTimeout, untilTrue, allowReject, untilSignal} from '../utils/async';
 import {Boxed} from '../utils/types';
+import {getId} from '../utils/getId';
 
 import {AppWindow} from './AppWindow';
 import {ContextChannel, DefaultContextChannel, SystemContextChannel} from './ContextChannel';
@@ -29,14 +30,6 @@ interface ExpectedWindow {
 
 const EXPECT_TIMEOUT_MESSAGE = 'Timeout on window registration exceeded';
 const EXPECT_CLOSED_MESSAGE = 'Window closed before registration completed';
-
-/**
- * Generates a unique `string` id for a window based on its application's uuid and window name
- * @param identity
- */
-export function getId(identity: Identity): string {
-    return `${identity.uuid}/${identity.name || identity.uuid}`;
-}
 
 @injectable()
 export class Model {
@@ -87,7 +80,7 @@ export class Model {
         return Object.values(this._channelsById);
     }
 
-    public getWindow(identity: Identity): AppWindow|null {
+    public getWindow(identity: Identity): AppWindow | null {
         return this._windowsById[getId(identity)] || null;
     }
 
@@ -109,7 +102,7 @@ export class Model {
         }
     }
 
-    public getChannel(id: ChannelId): ContextChannel|null {
+    public getChannel(id: ChannelId): ContextChannel | null {
         return this._channelsById[id] || null;
     }
 
