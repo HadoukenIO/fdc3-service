@@ -19,11 +19,11 @@ export class AppDirectory extends AsyncInit {
      * should we regard it as supporting this intent (and optionally context)
      */
     public static mightAppSupportIntent(app: Application, intentType: string, contextType?: string): boolean {
-        if (contextType === undefined) {
+        if (contextType === undefined || app.intents === undefined) {
             return true;
         } else {
-            const intents = app.intents && app.intents.filter(intent => intent.name === intentType);
-            return intents === undefined || intents.length === 0 || intents.some(intent => intent.contexts && intent.contexts.includes(contextType));
+            const intents = app.intents.filter(intent => intent.name === intentType);
+            return intents.length === 0 || intents.some(intent => intent.contexts && intent.contexts.includes(contextType));
         }
     }
 
@@ -32,8 +32,12 @@ export class AppDirectory extends AsyncInit {
      * the given intent, and would we then regard it as supporting this intent (and optionally context)
      */
     public static shouldAppSupportIntent(app: Application, intentType: string, contextType?: string): boolean {
-        const intents = app.intents && app.intents.filter(intent => intent.name === intentType);
-        return intents !== undefined && (contextType === undefined || intents.some(intent => intent.contexts && intent.contexts.includes(contextType)));
+        if (app.intents === undefined) {
+            return false;
+        } else {
+            const intents = app.intents.filter(intent => intent.name === intentType);
+            return intents.length > 0 && (contextType === undefined || intents.some(intent => intent.contexts && intent.contexts.includes(contextType)));
+        }
     }
 
     private readonly _configStore: ConfigStoreBinding;

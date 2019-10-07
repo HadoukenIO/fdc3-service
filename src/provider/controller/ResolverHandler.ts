@@ -41,7 +41,7 @@ export interface ResolverResult {
 export interface ResolverHandlerBinding {
     initialized: Promise<void>;
 
-    handleIntent(intent: Intent): Promise<ResolverResult>;
+    handleIntent(intent: Intent, apps: Application[]): Promise<ResolverResult>;
     cancel(): Promise<void>;
 }
 
@@ -97,11 +97,8 @@ export class ResolverHandler extends AsyncInit implements ResolverHandlerBinding
      *
      * @param intent Intent that is about to be resolved
      */
-    public async handleIntent(intent: Intent): Promise<ResolverResult> {
-        const msg: ResolverArgs = {
-            intent,
-            applications: await this._model.getApplicationsForIntent(intent.type)
-        };
+    public async handleIntent(intent: Intent, applications: Application[]): Promise<ResolverResult> {
+        const msg: ResolverArgs = {intent, applications};
 
         await this._window.show();
         await this._window.setAsForeground();
