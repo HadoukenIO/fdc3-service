@@ -6,7 +6,7 @@ import {Context} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic, APIToClientTopic, ChannelReceiveContextPayload, ReceiveContextPayload} from '../../client/internal';
 import {Inject} from '../common/Injectables';
-import {getId} from '../model/Model';
+import {getId} from '../utils/getId';
 import {ContextChannel} from '../model/ContextChannel';
 
 import {ChannelHandler} from './ChannelHandler';

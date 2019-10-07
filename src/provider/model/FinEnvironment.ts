@@ -10,11 +10,11 @@ import {withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
 import {parseIdentity} from '../../client/validation';
 import {Injector} from '../common/Injector';
+import {getId} from '../utils/getId';
 
 import {Environment, EntityType} from './Environment';
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
-import {getId} from './Model';
 import {FinAppWindow} from './FinAppWindow';
 
 interface SeenWindow {
