@@ -75,7 +75,6 @@ export class DefaultContextChannel extends ContextChannelBase {
 
 export class SystemContextChannel extends ContextStoringContextChannel {
     public readonly type!: 'system';
-
     public readonly visualIdentity: DisplayMetadata;
 
     public constructor(id: ChannelId, visualIdentity: DisplayMetadata) {
