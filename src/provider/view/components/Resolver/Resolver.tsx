@@ -40,12 +40,12 @@ export function Resolver(): React.ReactElement {
         <div className="container">
             <div className="header">
                 <h1>{intent}</h1>
-                <div className="exit" onClick={handleCancel}>
+                <div id="exit" onClick={handleCancel}>
                     <img src="assets/exit.png" />
                 </div>
             </div>
             <AppList applications={applications} onAppOpen={handleAppOpen} />
-            <div className="cancel" onClick={handleCancel}>
+            <div id="cancel" onClick={handleCancel}>
                 <h1>Cancel</h1>
             </div>
         </div>
