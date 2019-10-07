@@ -39,7 +39,7 @@ export class IntentHandler {
         if (hasTarget(intent)) {
             return this.raiseWithTarget(intent);
         } else {
-            return this.queueResolve(intent);
+            return this.startResolve(intent);
         }
     }
 
