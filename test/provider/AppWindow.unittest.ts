@@ -61,6 +61,11 @@ describe('When querying if a window has a context listener', () => {
         expect(testAppWindow.hasContextListener()).toBe(true);
     });
 
+    test('Calling removeContextListener on a fresh window has no effect', () => {
+        testAppWindow.removeContextListener();
+        expect(testAppWindow.hasContextListener()).toBe(false);
+    });
+
     test('Calling addContextListener then removeContextListener makes the query return true then false', () => {
         testAppWindow.addContextListener();
         expect(testAppWindow.hasContextListener()).toBe(true);
