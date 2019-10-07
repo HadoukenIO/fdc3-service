@@ -383,7 +383,8 @@ export class SystemChannel extends ChannelBase {
  *
  * Applications can create these for specialised use-cases.  These channels should be obtained by name by calling
  * {@link getOrCreateAppChannel} and it is up to your organization to decide how applications are aware of this name.
- * It is recommended that channel names are prefixed with your organization's domain name to avoid name collisions.
+ * It is recommended that channel names are prefixed with your organization's reverse domain name to avoid name
+ * collisions, e.g., 'com.company-name.channel-name'.
  *
  * App channels can be joined by any window, but are only indirectly discoverable if the name is not know.
  */
@@ -415,7 +416,7 @@ export const DEFAULT_CHANNEL_ID: ChannelId = 'default';
  * All windows will belong to exactly one channel at all times. If they have not explicitly been placed into a channel
  * via a {@link ChannelBase.join} call, they will be in this channel.
  *
- * If an app wishes to leave a system/app channel it can do so by (re-)joining this channel.
+ * If an app wishes to leave a system/app channel it can do so by re-joining this channel.
  */
 export const defaultChannel: DefaultChannel = new DefaultChannel();
 
@@ -468,12 +469,13 @@ export async function getCurrentChannel(identity?: Identity): Promise<Channel> {
  * Returns an app channel with the given name. Either creates a new channel or returns an existing channel.
  *
  * It is up to your organization to decide how to share knowledge of these custom channels. It is recommended that
- * channel names are prefixed with your organization's domain name to avoid name collisions.
+ * channel names are prefixed with your organization's reverse domain name to avoid name collisions, e.g.,
+ * 'com.company-name.channel-name'.
  *
  * The service will assign a unique ID when creating a new app channel, but no particular mapping of name to ID should
  * be assumed.
  *
- * @param name The name of the channel
+ * @param name The name of the channel. May not be an empty string
  */
 
 export async function getOrCreateAppChannel(name: string): Promise<AppChannel> {

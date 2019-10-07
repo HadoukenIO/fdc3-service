@@ -74,7 +74,7 @@ export function parseChannelId(channelId: ChannelId): ChannelId {
  * Validates the provided app channel name
  */
 export function parseAppChannelName(name: string): ChannelId {
-    if (typeof name !== 'string') {
+    if (typeof name !== 'string' || name === '') {
         throw new TypeError(`${safeStringify(name, 'The provided app channel name')} is not a valid app channel name`);
     }
 

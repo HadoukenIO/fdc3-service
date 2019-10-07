@@ -4,7 +4,14 @@ import {setupOpenDirectoryAppBookends} from '../utils/common';
 import {AppChannel} from '../../../src/client/main';
 import {fakeAppChannelName} from '../utils/channels';
 
-test('If an invalid name is provided, a TypeError is thrown', async () => {
+test('If a name of the wrong type is provided, a TypeError is thrown', async () => {
+    const invalidName = {irrelevantProperty: 'irrelevantValue'} as unknown as string;
+
+    await expect(fdc3Remote.getOrCreateAppChannel(testManagerIdentity, invalidName))
+        .rejects.toThrowError(new TypeError(`${JSON.stringify(invalidName)} is not a valid app channel name`));
+});
+
+test('If an empty string name is is provided, a TypeError is thrown', async () => {
     const invalidName = {irrelevantProperty: 'irrelevantValue'} as unknown as string;
 
     await expect(fdc3Remote.getOrCreateAppChannel(testManagerIdentity, invalidName))
