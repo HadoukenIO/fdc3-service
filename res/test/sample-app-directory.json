@@ -67,7 +67,10 @@
         }
     ],
     "intents": [
-        {"name": "DialCall"},
+        {
+            "name": "DialCall",
+            "contexts": ["fdc3.contact"]
+        },
         {"name": "StartCall"},
         {"name": "SaveContact"},
         {"name": "ViewChart"}
@@ -91,7 +94,10 @@
         }
     ],
     "intents": [
-        {"name": "DialCall"},
+        {
+            "name": "DialCall",
+            "contexts": ["fdc3.contact"]
+        },
         {"name": "StartCall"},
         {"name": "SaveContact"},
         {"name": "ViewChart"},
@@ -119,8 +125,14 @@
         }
     ],
     "intents": [
-        {"name": "test.IntentOnlyOnApp4"},
-        {"name": "DialCall"},
+        {
+            "name": "test.IntentOnlyOnApp4",
+            "contexts": ["test.IntentOnlyOnApp4Context"]
+        },
+        {
+            "name": "DialCall",
+            "contexts": ["fdc3.contactt"]
+        },
         {"name": "StartCall"},
         {"name": "SaveContact"},
         {"name": "ViewChart"},
@@ -146,7 +158,10 @@
     ],
     "intents": [
         {"name": "test.IntentNamePreregistered"},
-        {"name": "DialCall"},
+        {
+            "name": "DialCall",
+            "contexts": ["fdc3.contact"]
+        },
         {"name": "StartCall"},
         {"name": "SaveContact"},
         {"name": "ViewChart"}
@@ -170,7 +185,10 @@
         }
     ],
     "intents": [
-        {"name": "DialCall"},
+        {
+            "name": "DialCall",
+            "contexts": ["fdc3.contact"]
+        },
         {"name": "StartCall"},
         {"name": "SaveContact"},
         {"name": "ViewChart"}

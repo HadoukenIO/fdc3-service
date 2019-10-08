@@ -22,7 +22,7 @@ const testAppWithUniqueIntent = testAppInDirectory4;
  */
 const uniqueIntent: Intent = {
     type: 'test.IntentOnlyOnApp4',
-    context: {type: 'dummyContext'}
+    context: {type: 'test.IntentOnlyOnApp4Context'}
 };
 
 /**
@@ -30,7 +30,7 @@ const uniqueIntent: Intent = {
  */
 const intentInManyApps: Intent = {
     type: 'DialCall',
-    context: {type: 'dial-call-context'}
+    context: {type: 'fdc3.contact'}
 };
 
 /**
@@ -96,7 +96,7 @@ describe('Intent listeners and raising intents without a target', () => {
                                     ResolveError.ResolverClosedOrCancelled,
                                     'Resolver closed or cancelled'
                                 );
-                            });
+                            }, 1000 * 1000);
                             test('When choosing the directory app on the resolver, it receives intent', async () => {
                                 await raiseIntentExpectResolverSelectApp(uniqueIntent, testAppWithUniqueIntent, directoryAppListener);
                             });
@@ -232,8 +232,10 @@ function setupNoDirectoryAppCanHandleIntentTests(intent: Intent): void {
         const listener1 = setupStartNonDirectoryAppWithIntentListenerBookends(intent, testAppNotInDirectory1);
 
         describe('Just 1 ad-hoc app with a listener registered for the intent', () => {
-            test('When calling raiseIntent the listener is triggered once', async () => {
+            test.only('When calling raiseIntent the listener is triggered once', async () => {
+                console.log('**** raising intent');
                 await raiseIntent(intent);
+                console.log('**** raised intent');
 
                 const receivedContexts = await listener1.value.getReceivedContexts();
                 expect(receivedContexts).toEqual([intent.context]);
@@ -253,6 +255,8 @@ function setupNoDirectoryAppCanHandleIntentTests(intent: Intent): void {
 
             describe('When calling raiseIntent, the resolver is displayed with both apps', () => {
                 test('When closing the resolver, an error is thrown', async () => {
+                    const result = await raiseIntentExpectResolverAndClose(intent).catch((e) => e);
+
                     await expect(raiseIntentExpectResolverAndClose(intent)).toThrowFDC3Error(
                         ResolveError.ResolverClosedOrCancelled,
                         'Resolver closed or cancelled'

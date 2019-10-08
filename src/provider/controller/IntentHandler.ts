@@ -61,8 +61,8 @@ export class IntentHandler {
                 );
             }
 
-            // Target app is in directory -> ensure that it handles intent
-            if (!(appInfo.intents || []).some(appIntent => appIntent.name === intent.type)) {
+            // TODO: revise error code
+            if (!AppDirectory.mightAppSupportIntent(appInfo, intent.target, intent.context.type)) {
                 throw new FDC3Error(ResolveError.TargetAppDoesNotHandleIntent, `App '${intent.target}' does not handle intent '${intent.type}'`);
             }
         }
@@ -95,11 +95,14 @@ export class IntentHandler {
             this._resolvePromise = this._resolvePromise.catch(() => {}).then(() => this.startResolve(intent));
         } else {
             // Show resolver
-            const selection: ResolverResult|null = await this._resolver.handleIntent(intent, applications).catch(e => {
+            const selection: ResolverResult | null = await this._resolver.handleIntent(intent, applications).catch(e => {
                 console.warn(e);
-
-                throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Resolver closed or cancelled');
+                return null;
             });
+
+            if (!selection) {
+                throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Resolver closed or cancelled');
+            }
 
             // Handle response
             console.log(`App ${selection.app.name} selected to resolve intent '${intent.type}', firing intent`);
