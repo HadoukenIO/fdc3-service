@@ -20,6 +20,8 @@ import {ChannelHandler} from './controller/ChannelHandler';
 import {AppWindow} from './model/AppWindow';
 import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
+import {withTimeout} from './utils/async';
+import {Timeouts} from './constants';
 
 @injectable()
 export class Main {
@@ -115,12 +117,14 @@ export class Main {
         }
 
         if (payload.context) {
-            // TODO: This will never resolve if no app windows connect to FDC3 [SERVICE-556]
-            const appWindows = await this._model.expectWindowsForApp(appInfo);
+            // TODO: Revisit timeout logic [SERVICE-556]
+            await withTimeout(Timeouts.ADD_CONTEXT_LISTENER, (async () => {
+                const appWindows = await this._model.expectWindowsForApp(appInfo);
 
-            await Promise.all(appWindows.map(window => {
-                return this._contextHandler.send(window, parseContext(payload.context!));
-            }));
+                await Promise.all(appWindows.map(window => {
+                    return this._contextHandler.send(window, parseContext(payload.context!));
+                }));
+            })());
         }
     }
 

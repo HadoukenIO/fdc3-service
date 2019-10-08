@@ -9,6 +9,8 @@ import {AppDirectory} from '../model/AppDirectory';
 import {AppWindow} from '../model/AppWindow';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
+import {withTimeout} from '../utils/async';
+import {Timeouts} from '../constants';
 
 import {ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
@@ -111,23 +113,26 @@ export class IntentHandler {
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
         await this._model.ensureRunning(appInfo);
 
-        // TODO: This will never resolve if no windows of this app connect to FDC3 [SERVICE-556]
-        const appWindows = await this._model.expectWindowsForApp(appInfo);
+        // TODO: Revisit timeout logic [SERVICE-556]
+        const dispatchResults = await withTimeout(Timeouts.ADD_INTENT_LISTENER, (async () => {
+            const appWindows = await this._model.expectWindowsForApp(appInfo);
 
-        // Wait for windows to add intent listener, then dispatch payload
-        const dispatchResults = await Promise.all(appWindows.map(async (window: AppWindow): Promise<boolean> => {
-            if (await window.isReadyToReceiveIntent(intent.type)) {
-                const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
+            // Wait for windows to add intent listener, then dispatch payload
+            return Promise.all(appWindows.map(async (window: AppWindow): Promise<boolean> => {
+                if (await window.isReadyToReceiveIntent(intent.type)) {
+                    const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
 
-                // TODO: Implement a timeout so a misbehaving intent handler can't block the intent raiser (SERVICE-555)
-                await this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
-                return true;
-            } else {
+                    // TODO: Implement a timeout so a misbehaving intent handler can't block the intent raiser [SERVICE-555]
+                    if (dispatchResults !== undefined) {
+                        await this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
+                        return true;
+                    }
+                }
                 return false;
-            }
-        }));
+            }));
+        })());
 
-        if (!dispatchResults.some(dispatchResult => dispatchResult)) {
+        if (dispatchResults[0] || !dispatchResults[1]!.some(result => result)) {
             throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
         }
 
