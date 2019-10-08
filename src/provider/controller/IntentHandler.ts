@@ -132,7 +132,7 @@ export class IntentHandler {
             }));
         })());
 
-        if (dispatchResults[0] || !dispatchResults[1]!.some(result => result)) {
+        if (dispatchResults[0] || !dispatchResults[1]!.includes(true)) {
             throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
         }
 
