@@ -1,7 +1,7 @@
 import {injectable, inject} from 'inversify';
 
 import {Inject} from '../common/Injectables';
-import {Application, AppName} from '../../client/directory';
+import {Application, AppName, Intent} from '../../client/directory';
 import {AppIntent} from '../../client/main';
 import {AsyncInit} from '../controller/AsyncInit';
 
@@ -14,6 +14,36 @@ enum StorageKeys {
 
 @injectable()
 export class AppDirectory extends AsyncInit {
+    /**
+     * Test if an app *might* support an intent - i.e., were the app is running and had the appropriate listener added,
+     * should we regard it as supporting this intent (and optionally context)
+     */
+    public static mightAppSupportIntent(app: Application, intentType: string, contextType?: string): boolean {
+        if (contextType === undefined || app.intents === undefined) {
+            return true;
+        } else {
+            const intents = app.intents.filter(intent => intent.name === intentType);
+            return intents.length === 0 || AppDirectory.intentsSupportContext(intents, contextType);
+        }
+    }
+
+    /**
+     * Test if an app *should* support an intent - i.e., were the app running, would we expect it to add a listener for
+     * the given intent, and would we then regard it as supporting this intent (and optionally context)
+     */
+    public static shouldAppSupportIntent(app: Application, intentType: string, contextType?: string): boolean {
+        if (app.intents === undefined) {
+            return false;
+        } else {
+            const intents = app.intents.filter(intent => intent.name === intentType);
+            return intents.length > 0 && (contextType === undefined || AppDirectory.intentsSupportContext(intents, contextType));
+        }
+    }
+
+    private static intentsSupportContext(intents: Intent[], contextType: string): boolean {
+        return !intents.some(intent => intent.contexts && intent.contexts.length > 0 && !intent.contexts.includes(contextType));
+    }
+
     private readonly _configStore: ConfigStoreBinding;
     private _directory: Application[] = [];
     private _url!: string;
@@ -35,13 +65,8 @@ export class AppDirectory extends AsyncInit {
         }) || null;
     }
 
-    public async getAppsByIntent(intentType: string, contextType?: string): Promise<Application[]> {
-        return this._directory.filter((app: Application) => {
-            return app.intents && app.intents.some(intent => {
-                const isContextRelevant = contextType && intent.contexts && intent.contexts.length > 0;
-                return (intent.name === intentType) && (!isContextRelevant || intent.contexts!.includes(contextType!));
-            });
-        });
+    public async getAllAppsThatShouldSupportIntent(intentType: string, contextType?: string): Promise<Application[]> {
+        return this._directory.filter(app => AppDirectory.shouldAppSupportIntent(app, intentType, contextType));
     }
 
     /**
@@ -51,20 +76,27 @@ export class AppDirectory extends AsyncInit {
      * @param contextType type of context to find intents for
      */
     public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
-        const appIntentsByName: {[intentName: string]: AppIntent} = {};
+        /* const appIntentsByName: {[intentName: string]: AppIntent} = {};
+
         this._directory.forEach((app: Application) => {
+            app.intents!.
+
+            if (app.intents && app.intents.length > 0 && AppDirectory.intentsSupportContext(app.intents, contextType)) {
+                if (!appIntentsByName[intent.name]) {
+                    appIntentsByName[intent.name] = {
+                        intent: {
+                            name: intent.name,
+                            displayName: intent.displayName || intent.name
+                        },
+                        apps: []
+                    };
+                }
+                appIntentsByName[intent.name].apps.push(app);
+            }
+
             (app.intents || []).forEach(intent => {
                 if (intent.contexts && intent.contexts.includes(contextType)) {
-                    if (!appIntentsByName[intent.name]) {
-                        appIntentsByName[intent.name] = {
-                            intent: {
-                                name: intent.name,
-                                displayName: intent.displayName || intent.name
-                            },
-                            apps: []
-                        };
-                    }
-                    appIntentsByName[intent.name].apps.push(app);
+
                 }
             });
         });
@@ -73,7 +105,7 @@ export class AppDirectory extends AsyncInit {
             appIntent.apps.sort((a, b) => a.appId.localeCompare(b.appId, 'en'));
         });
 
-        return Object.values(appIntentsByName).sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));
+        return Object.values(appIntentsByName).sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));*/
     }
 
     /**

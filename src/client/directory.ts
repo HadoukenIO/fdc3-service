@@ -43,6 +43,16 @@ export interface Application {
     intents?: Intent[];
 }
 
+export interface Intent {
+    name: string;
+    displayName?: string;
+    contexts?: string[];
+
+    // Specification is ambiguous on type of customConfig, so leaving as 'any'
+    /* tslint:disable:no-any */
+    customConfig: any;
+}
+
 interface AppImage {
     url: string;
     tooltip?: string;
@@ -55,14 +65,4 @@ interface Icon {
 interface NameValuePair {
     name: string;
     value: string;
-}
-
-interface Intent {
-    name: string;
-    displayName?: string;
-    contexts?: string[];
-
-    // Specification is ambiguous on type of customConfig, so leaving as 'any'
-    /* tslint:disable:no-any */
-    customConfig: any;
 }

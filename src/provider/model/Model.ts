@@ -8,7 +8,7 @@ import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {SYSTEM_CHANNELS, Timeouts} from '../constants';
-import {withStrictTimeout, untilTrue, allowReject, untilSignal} from '../utils/async';
+import {withStrictTimeout, untilTrue, allowReject, untilSignal, asyncFilter} from '../utils/async';
 import {Boxed} from '../utils/types';
 
 import {AppWindow} from './AppWindow';
@@ -28,6 +28,11 @@ interface ExpectedWindow {
 
     // Rejects when the window is closed
     closed: Promise<void>;
+}
+
+interface WindowGroup {
+    application: Application;
+    windows: AppWindow[]
 }
 
 const EXPECT_TIMEOUT_MESSAGE = 'Timeout on window registration exceeded';
@@ -152,41 +157,36 @@ export class Model {
      * @param contextType context type
      */
     public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
-        const allAppWindows = this.windows;
+        const runningGroups = this.extractApplicationsFromWindows(this.windows);
 
-        const directoryAppsWithIntent = await this._directory.getAppsByIntent(intentType, contextType);
+        const runningAppsToInclude = (await asyncFilter(runningGroups, async (group: WindowGroup) => {
+            const {application, windows} = group;
 
-        // Include appInfos for any appWindows in model that have registered a listener for the intent
-        const appsInModelWithIntent = this.extractApplicationsFromWindows(allAppWindows.filter(appWindow => appWindow.hasIntentListener(intentType)));
+            return windows.some(window => window.hasIntentListener(intentType)) && AppDirectory.mightAppSupportIntent(application, intentType, contextType);
+        })).map(group => group.application);
 
-        // If context is specified don't use apps in model as there's no way to know about the context of non-directory
-        // app intents at the moment.
-        if (contextType) {
-            const appsInModelWithoutIntent = this.extractApplicationsFromWindows(allAppWindows).filter((app) => {
-                return !appsInModelWithIntent.some(activeApp => app.appId === activeApp.appId);
-            });
-            return directoryAppsWithIntent.filter((directoryApp) => {
-                return !appsInModelWithoutIntent.some(inactiveApp => directoryApp.appId === inactiveApp.appId);
-            });
-        } else {
-            const directoryAppsNotInModel = directoryAppsWithIntent
-                .filter(directoryApp => !allAppWindows.some(appWindow => appWindow.appInfo.appId === directoryApp.appId));
+        // TODO: Exclude on the basis of running apps (after SERVICE-552 is merged)
+        const directoryAppsToInclude = (await this._directory.getAllAppsThatShouldSupportIntent(intentType, contextType))
+            .filter(app => !runningAppsToInclude.some(runningApp => runningApp.appId === app.appId));
 
-            return [...appsInModelWithIntent, ...directoryAppsNotInModel];
-        }
+        // TODO: Use `AppDirectory.shouldAppSupportIntent` to include apps that we expect to add a listener but haven't yet [SERVICE-556]
+        return [...runningAppsToInclude, ...directoryAppsToInclude].sort((a, b) => this.compareAppsForIntent(a, b, intentType, contextType));
     }
 
     public findWindowsByAppName(name: AppName): AppWindow[] {
         return this.findWindows(appWindow => appWindow.appInfo.name === name);
     }
 
-    private extractApplicationsFromWindows(windows: AppWindow[]): Application[] {
-        return windows.reduce<Application[]>((apps, appWindow) => {
-            if (apps.some(app => app.appId === appWindow.appInfo.appId)) {
-                // AppInfo has already been added by another window on the same app also listening for the same intent
-                return apps;
+    private extractApplicationsFromWindows(windows: AppWindow[]): WindowGroup[] {
+        return windows.reduce((groups: WindowGroup[], appWindow: AppWindow) => {
+            const group = groups.find(group => group.application.appId === appWindow.appInfo.appId);
+            if (group) {
+                group.windows.push(appWindow);
+            } else {
+                groups.push({application: appWindow.appInfo, windows: [appWindow]});
             }
-            return apps.concat([appWindow.appInfo]);
+
+            return groups;
         }, []);
     }
 
@@ -334,5 +334,27 @@ export class Model {
 
             return expectedWindow;
         }
+    }
+
+    private compareAppsForIntent(app1: Application, app2: Application, intentType: string, contextType?: string): number {
+        const support1 = AppDirectory.shouldAppSupportIntent(app1, intentType, contextType);
+        const support2 = AppDirectory.shouldAppSupportIntent(app2, intentType, contextType);
+
+        if (support1 && !support2) {
+            return -1;
+        } else if (!support1 && support2) {
+            return 1;
+        }
+
+        const running1 = this.findWindowsByAppId(app1.appId).length > 0;
+        const running2 = this.findWindowsByAppId(app2.appId).length > 0;
+
+        if (running1 && !running2) {
+            return -1;
+        } else if (!running1 && running2) {
+            return 1;
+        }
+
+        return (app1.title || app1.name).localeCompare(app2.title || app2.name, 'en');
     }
 }
