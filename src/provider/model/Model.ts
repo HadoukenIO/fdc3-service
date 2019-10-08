@@ -68,7 +68,6 @@ export class Model {
         this._apiHandler = apiHandler;
 
         this._environment.windowSeen.add(this.onWindowSeen, this);
-        this._environment.windowCreated.add(this.onWindowCreated, this);
         this._environment.windowClosed.add(this.onWindowClosed, this);
 
         this._apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
@@ -168,11 +167,7 @@ export class Model {
         return this.findWindows(appWindow => appWindow.appInfo.name === name);
     }
 
-    private onWindowSeen(identity: Identity): void {
-        this.getOrCreateExpectedWindow(identity);
-    }
-
-    private async onWindowCreated(identity: Identity): Promise<void> {
+    private async onWindowSeen(identity: Identity): Promise<void> {
         const apps = await this._directory.getAllApps();
         const appInfoFromDirectory = apps.find((app) => {
             return app.appId === identity.uuid || checkCustomConfigField(app, CustomConfigFields.OPENFIN_APP_UUID) === identity.uuid;
@@ -263,7 +258,7 @@ export class Model {
         } else {
             // Create a promise that resolves once the window has been seen
             const seen = untilTrue(this._environment.windowSeen, () => {
-                return this._environment.isWindowSeen(identity);
+                return this._environment.isWindowCreated(identity);
             });
 
             // Create a promise that resolves when the window has connected

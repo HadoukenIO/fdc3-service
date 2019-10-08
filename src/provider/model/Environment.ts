@@ -8,7 +8,6 @@ import {ContextChannel} from './ContextChannel';
 
 export interface Environment {
     windowSeen: Signal<[Identity]>;
-    windowCreated: Signal<[Identity]>;
     windowClosed: Signal<[Identity]>;
 
     /**
@@ -31,7 +30,7 @@ export interface Environment {
     inferApplication: (identity: Identity) => Promise<Application>;
 
     /**
-     * Returns whether the window has been seen by the service and is still open
+     * Returns whether the window has been created by the service and is still open
      */
-    isWindowSeen: (identity: Identity) => boolean;
+    isWindowCreated: (identity: Identity) => boolean;
 }

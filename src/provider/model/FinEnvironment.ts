@@ -32,24 +32,11 @@ type ChannelEventMap = Map<string, Set<Events['type']>>;
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
     /**
-     * Indicates that a window has been seen by the service.
-     *
-     * Unlike the `windowCreated` signal, this will be fired synchronously from the listener for the runtime window-created event,
-     * but does not provide all information provided by the `windowCreated` signal. For a given window, this will always be fired
-     * before the `windowCreated` signal.
+     * Indicates that a window has been created by the service.
      *
      * Arguments: (identity: Identity)
      */
     public readonly windowSeen: Signal<[Identity]> = new Signal();
-
-    /**
-     * Indicates that a new window has been created.
-     *
-     * When the service first starts, this signal will also be fired for any pre-existing windows.
-     *
-     * Arguments: (identity: Identity, manifestUrl: string)
-     */
-    public readonly windowCreated: Signal<[Identity]> = new Signal();
 
     /**
      * Indicates that a window has been closed.
@@ -117,7 +104,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         }
     }
 
-    public isWindowSeen(identity: Identity): boolean {
+    public isWindowCreated(identity: Identity): boolean {
         return !!this._seenWindows[getId(identity)];
     }
 
@@ -160,9 +147,6 @@ export class FinEnvironment extends AsyncInit implements Environment {
         this._windowsCreated++;
 
         this.windowSeen.emit(identity);
-
-        const info = await fin.Application.wrapSync(identity).getInfo();
-        this.windowCreated.emit(identity);
     }
 
     private async isExternalWindow(identity: Identity): Promise<boolean> {

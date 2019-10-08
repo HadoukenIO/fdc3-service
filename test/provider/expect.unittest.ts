@@ -253,7 +253,7 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
             return mockApplication;
         });
 
-        mockEnvironment.isWindowSeen.mockImplementation((testIdentity: Identity): boolean => {
+        mockEnvironment.isWindowCreated.mockImplementation((testIdentity: Identity): boolean => {
             if (getId(testIdentity) === getId(identity)) {
                 const time = Date.now();
 
