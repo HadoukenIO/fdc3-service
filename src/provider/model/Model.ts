@@ -106,6 +106,10 @@ export class Model {
         return this._channelsById[id] || null;
     }
 
+    public setChannel(channel: ContextChannel): void {
+        this._channelsById[channel.id] = channel;
+    }
+
     public async findOrCreate(appInfo: Application): Promise<AppWindow[]> {
         const matchingWindows = this.findWindowsByAppId(appInfo.appId);
 

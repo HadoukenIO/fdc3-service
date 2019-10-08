@@ -12,7 +12,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution} from './main';
-import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase} from './contextChannels';
+import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel} from './contextChannels';
 import {FDC3Error} from './errors';
 
 /**
@@ -44,6 +44,7 @@ export enum APIFromClientTopic {
     GET_SYSTEM_CHANNELS = 'GET-SYSTEM-CHANNELS',
     GET_CHANNEL_BY_ID = 'GET-CHANNEL-BY-ID',
     GET_CURRENT_CHANNEL = 'GET-CURRENT-CHANNEL',
+    GET_OR_CREATE_APP_CHANNEL = 'GET-OR-CREATE-APP-CHANNEL',
     CHANNEL_GET_MEMBERS = 'CHANNEL-GET-MEMBERS',
     CHANNEL_JOIN = 'CHANNEL-JOIN',
     CHANNEL_BROADCAST = 'CHANNEL-BROADCAST',
@@ -76,6 +77,7 @@ export type APIFromClient = {
     [APIFromClientTopic.GET_SYSTEM_CHANNELS]: [GetSystemChannelsPayload, SystemChannelTransport[]];
     [APIFromClientTopic.GET_CHANNEL_BY_ID]: [GetChannelByIdPayload, ChannelTransport];
     [APIFromClientTopic.GET_CURRENT_CHANNEL]: [GetCurrentChannelPayload, ChannelTransport];
+    [APIFromClientTopic.GET_OR_CREATE_APP_CHANNEL]: [GetOrCreateAppChannelPayload, AppChannelTransport];
     [APIFromClientTopic.CHANNEL_GET_MEMBERS]: [ChannelGetMembersPayload, Identity[]];
     [APIFromClientTopic.CHANNEL_JOIN]: [ChannelJoinPayload, void];
     [APIFromClientTopic.CHANNEL_BROADCAST]: [ChannelBroadcastPayload, void];
@@ -108,13 +110,15 @@ export type MainEvents = ChannelChangedEvent;
 export type ChannelEvents = ChannelWindowAddedEvent | ChannelWindowRemovedEvent;
 
 export type TransportMappings<T> =
-    T extends SystemChannel ? SystemChannelTransport :
     T extends DefaultChannel ? ChannelTransport :
+    T extends SystemChannel ? SystemChannelTransport :
+    T extends AppChannel ? AppChannelTransport :
     T extends ChannelBase ? ChannelTransport :
     never;
 export type TransportMemberMappings<T> =
-    T extends SystemChannel ? SystemChannelTransport :
     T extends DefaultChannel ? ChannelTransport :
+    T extends SystemChannel ? SystemChannelTransport :
+    T extends AppChannel ? AppChannelTransport :
     T extends ChannelBase ? ChannelTransport :
     T;
 
@@ -126,6 +130,11 @@ export interface ChannelTransport {
 export interface SystemChannelTransport extends ChannelTransport {
     type: 'system';
     visualIdentity: DisplayMetadata;
+}
+
+export interface AppChannelTransport extends ChannelTransport {
+    type: 'app';
+    name: string;
 }
 
 export interface OpenPayload {
@@ -162,6 +171,10 @@ export interface GetChannelByIdPayload {
 
 export interface GetCurrentChannelPayload {
     identity?: Identity;
+}
+
+export interface GetOrCreateAppChannelPayload {
+    name: string;
 }
 
 export interface ChannelGetMembersPayload {

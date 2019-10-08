@@ -254,6 +254,20 @@ export async function getCurrentChannel(executionTarget: Identity, identity?: Id
     return deserializeChannel(executionTarget, testChannelTransport);
 }
 
+export async function getOrCreateAppChannel(executionTarget: Identity, name: string): Promise<RemoteChannel> {
+    const testChannelTransport = await ofBrowser.executeOnWindow(
+        executionTarget,
+        async function(this: TestWindowContext, name: string): Promise<TestChannelTransport> {
+            const channel = await this.fdc3.getOrCreateAppChannel(name).catch(this.errorHandler);
+
+            return this.serializeChannel(channel);
+        },
+        name
+    ).catch(handlePuppeteerError);
+
+    return deserializeChannel(executionTarget, testChannelTransport);
+}
+
 /**
  * Puppeteer catches and rethrows errors its own way, losing information on extra fields (e.g. `code` for FDC3Error objects).
  * So what we do is serialize all these fields into the single `message` from the client apps, then from here strip back whatever puppeteer

@@ -43,7 +43,7 @@ export function createMockChannel(): jest.Mocked<ContextChannel> {
     return {
         id: '',
         type: '',
-        getStoredContext: jest.fn<Context | null, []>(),
+        storedContext: null,
         setLastBroadcastContext: jest.fn<void, [Context]>(),
         clearStoredContext: jest.fn<void, []>(),
         serialize: jest.fn<ChannelTransport, []>()
