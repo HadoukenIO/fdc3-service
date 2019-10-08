@@ -10,7 +10,7 @@ import {AppWindow} from '../model/AppWindow';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
 
-import {ResolverHandler, ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
+import {ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
 @injectable()
 export class IntentHandler {
@@ -25,7 +25,7 @@ export class IntentHandler {
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
         @inject(Inject.MODEL) model: Model,
         @inject(Inject.RESOLVER) resolver: ResolverHandlerBinding,
-        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIToClientTopic>,
+        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIToClientTopic>
     ) {
         this._directory = directory;
         this._model = model;
@@ -116,7 +116,7 @@ export class IntentHandler {
                 const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
 
                 // TODO: Implement a timeout so a misbehaving intent handler can't block the intent raiser (SERVICE-555)
-                await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
+                await this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
                 return true;
             } else {
                 return false;

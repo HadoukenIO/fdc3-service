@@ -50,7 +50,7 @@ module.exports = [
     }, webpackTools.versionPlugin),
     webpackTools.createConfig(`${outputDir}/provider`, './src/provider/index.ts', undefined, webpackTools.manifestPlugin, webpackTools.versionPlugin, schemaDefaultsPlugin, schemaTypesPlugin),
     webpackTools.createConfig(`${outputDir}/provider/ui`, {
-        'resolver': './src/provider/view/Resolver.tsx'
+        'resolver': './src/provider/view/ResolverApp.tsx'
     }, undefined, webpackTools.versionPlugin),
     webpackTools.createConfig(`${outputDir}/demo`, {
         app: './src/demo/index.tsx'

@@ -6,7 +6,7 @@ import {Context} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic, APIToClientTopic, ChannelReceiveContextPayload, ReceiveContextPayload} from '../../client/internal';
 import {Inject} from '../common/Injectables';
-import {getId} from '../model/Model';
+import {getId} from '../utils/getId';
 import {ContextChannel} from '../model/ContextChannel';
 
 import {ChannelHandler} from './ChannelHandler';
@@ -32,7 +32,7 @@ export class ContextHandler {
     public async send(window: AppWindow, context: Context): Promise<void> {
         const payload: ReceiveContextPayload = {context};
 
-        return this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload);
+        return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload);
     }
 
     /**
@@ -86,6 +86,6 @@ export class ContextHandler {
     private async sendOnChannel(window: AppWindow, context: Context, channel: ContextChannel): Promise<void> {
         const payload: ChannelReceiveContextPayload = {channel: channel.id, context};
 
-        await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, payload);
+        await this._apiHandler.dispatch(window.identity, APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, payload);
     }
 }

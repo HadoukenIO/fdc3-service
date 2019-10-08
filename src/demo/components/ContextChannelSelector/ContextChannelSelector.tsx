@@ -1,6 +1,8 @@
 import * as React from 'react';
 
-import {Channel, defaultChannel, getCurrentChannel, getSystemChannels, SystemChannel} from '../../../client/contextChannels';
+import {Channel, defaultChannel, getCurrentChannel, getSystemChannels, ChannelChangedEvent} from '../../../client/contextChannels';
+import {addEventListener, removeEventListener} from '../../../client/main';
+import {getId} from '../../../provider/utils/getId';
 
 import {ContextChannelView} from './ChannelMemberView';
 
@@ -28,7 +30,18 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
         getSystemChannels().then(channels => {
             setChannels([defaultChannel, ...channels]);
         });
+        addEventListener('channel-changed', channelChanged);
+
+        return () => {
+            removeEventListener('channel-changed', channelChanged);
+        };
     }, []);
+
+    const channelChanged = (event: ChannelChangedEvent) => {
+        if (getId(event.identity) === getId(fin.Window.me) && event.channel !== currentChannel) {
+            setCurrentChannel(event.channel!);
+        }
+    };
 
     const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const {value: id} = event.currentTarget;
