@@ -383,8 +383,8 @@ export class SystemChannel extends ChannelBase {
  *
  * Applications can create these for specialised use-cases.  These channels should be obtained by name by calling
  * {@link getOrCreateAppChannel} and it is up to your organization to decide how applications are aware of this name.
- * It is recommended that channel names are prefixed with your organization's reverse domain name to avoid name
- * collisions, e.g., 'com.company-name.channel-name'.
+ * As with organization defined contexts, app channel names should have a prefix specific to your organization to avoid
+ * name collisions, e.g. 'company-name.channel-name'.
  *
  * App channels can be joined by any window, but are only indirectly discoverable if the name is not know.
  */
@@ -468,9 +468,9 @@ export async function getCurrentChannel(identity?: Identity): Promise<Channel> {
 /**
  * Returns an app channel with the given name. Either creates a new channel or returns an existing channel.
  *
- * It is up to your organization to decide how to share knowledge of these custom channels. It is recommended that
- * channel names are prefixed with your organization's reverse domain name to avoid name collisions, e.g.,
- * 'com.company-name.channel-name'.
+ * It is up to your organization to decide how to share knowledge of these custom channels. As with organization
+ * defined contexts, app channel names should have a prefix specific to your organization to avoid name collisions,
+ * e.g. 'company-name.channel-name'.
  *
  * The service will assign a unique ID when creating a new app channel, but no particular mapping of name to ID should
  * be assumed.
