@@ -165,9 +165,8 @@ export class Model {
             return windows.some(window => window.hasIntentListener(intentType)) && AppDirectory.mightAppSupportIntent(application, intentType, contextType);
         })).map(group => group.application);
 
-        // TODO: Exclude on the basis of running apps (after SERVICE-552 is merged)
         const directoryAppsToInclude = (await this._directory.getAllAppsThatShouldSupportIntent(intentType, contextType))
-            .filter(app => !runningAppsToInclude.some(runningApp => runningApp.appId === app.appId));
+            .filter(app => !this._environment.isRunning(app));
 
         // TODO: Use `AppDirectory.shouldAppSupportIntent` to include apps that we expect to add a listener but haven't yet [SERVICE-556]
         return [...runningAppsToInclude, ...directoryAppsToInclude].sort((a, b) => this.compareAppsForIntent(a, b, intentType, contextType));

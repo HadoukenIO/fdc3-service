@@ -22,8 +22,8 @@ export class AppDirectory extends AsyncInit {
         if (contextType === undefined || app.intents === undefined) {
             return true;
         } else {
-            const intents = app.intents.filter(intent => intent.name === intentType);
-            return intents.length === 0 || AppDirectory.intentsSupportContext(intents, contextType);
+            const intent = app.intents.find(intent => intent.name === intentType);
+            return intent === undefined || AppDirectory.intentsSupportContext(intent, contextType);
         }
     }
 
@@ -35,13 +35,13 @@ export class AppDirectory extends AsyncInit {
         if (app.intents === undefined) {
             return false;
         } else {
-            const intents = app.intents.filter(intent => intent.name === intentType);
-            return intents.length > 0 && (contextType === undefined || AppDirectory.intentsSupportContext(intents, contextType));
+            const intent = app.intents.find(intent => intent.name === intentType);
+            return intent !== undefined && (contextType === undefined || AppDirectory.intentsSupportContext(intent, contextType));
         }
     }
 
-    private static intentsSupportContext(intents: Intent[], contextType: string): boolean {
-        return !intents.some(intent => intent.contexts && intent.contexts.length > 0 && !intent.contexts.includes(contextType));
+    private static intentsSupportContext(intent: Intent, contextType: string): boolean {
+        return intent.contexts === undefined || intent.contexts.length === 0 || intent.contexts.includes(contextType);
     }
 
     private readonly _configStore: ConfigStoreBinding;
