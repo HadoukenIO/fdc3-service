@@ -51,7 +51,7 @@ type TestParam = [
 const FAKE_TEST_DURATION = 10000;
 
 const REGISTRATION_TIMEOUT = 5000;
-const PENDING_TIMEOUT = 250;
+const PENDING_TIMEOUT = 100;
 
 let model: Model;
 
@@ -282,7 +282,6 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
         });
 
         maybeSetTimeout(() => mockEnvironment.windowSeen.emit(identity), testWindow.seenTime);
-        maybeSetTimeout(() => mockEnvironment.windowCreated.emit(identity, manifestUrl), testWindow.createdTime);
         maybeSetTimeout(() => mockApiHandler.onConnection.emit(identity), testWindow.connectionTime);
         maybeSetTimeout(() => mockEnvironment.windowClosed.emit(identity), testWindow.closeTime);
         maybeSetTimeout(() => appDirectoryResultPromise.resolve(), appDirectoryResultTime);

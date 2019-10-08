@@ -175,7 +175,7 @@ export class Model {
         }, []);
     }
 
-    private onWindowSeen(identity: Identity): void {
+    private async onWindowSeen(identity: Identity): Promise<void> {
         const apps = await this._directory.getAllApps();
         const appInfoFromDirectory = apps.find((app) => {
             return app.appId === identity.uuid || checkCustomConfigField(app, CustomConfigFields.OPENFIN_APP_UUID) === identity.uuid;
