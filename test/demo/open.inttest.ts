@@ -11,6 +11,7 @@ import {
     testManagerIdentity, testAppInDirectory1, testAppInDirectory2,
     testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2
 } from './constants';
+import {delay, Duration} from './utils/delay';
 
 setupTeardown();
 
@@ -176,22 +177,59 @@ and does not trigger the context listener of the already open app', async () => 
     }, Timeouts.APP_START_FROM_MANIFEST + 2000);
 
     describe('When opening an app that delays registering a context listener, but less than the timeout', () => {
-        test('the app opens and the context is received', async () =>{
+        const testAppDelayedPreregisterShort = {uuid: 'test-app-delayed-preregister-short', name: 'test-app-delayed-preregister-short'};
+        const validContext: OrganizationContext = {type: 'fdc3.organization', name: 'OpenFin', id: {default: 'openfin'}};
 
+        let openPromise: Promise<void>;
+
+        beforeEach(async () => {
+            openPromise = open(testAppDelayedPreregisterShort.name, validContext);
         });
 
-        test('The promise resolves once the app opens', () =>{
+        afterEach(async () => {
+            await quitApps(testAppDelayedPreregisterShort);
+        });
 
+        test('The promise resolves and the app opens', async () =>{
+            await openPromise;
+
+            await expect(fin.Application.wrapSync(testAppDelayedPreregisterShort).isRunning()).resolves.toBe(true);
+        });
+
+        test('the context is received by the listener', async () =>{
+            await openPromise;
+
+            await delay(1000);
+            const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppDelayedPreregisterShort);
+            await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
         });
     });
 
     describe('When opening an app that takes longer than the timeout to register a listener', () => {
-        test('The app opens and the promise resolves', () => {
+        const testAppDelayedPreregisterLong = {uuid: 'test-app-delayed-preregister-long', name: 'test-app-delayed-preregister-long'};
+        const validContext: OrganizationContext = {type: 'fdc3.organization', name: 'OpenFin', id: {default: 'openfin'}};
 
+        let openPromise: Promise<void>;
+
+        beforeEach(async () => {
+            openPromise = open(testAppDelayedPreregisterLong.name, validContext);
         });
 
-        test('The app does not receive the context', () => {
+        afterEach(async () => {
+            await quitApps(testAppDelayedPreregisterLong);
+        });
 
+        test('The promise resolves and the app opens', async () =>{
+            await openPromise;
+            await expect(fin.Application.wrapSync(testAppDelayedPreregisterLong).isRunning()).resolves.toBe(true);
+        });
+
+        test('the context is not received by the listener', async () =>{
+            await openPromise;
+
+            await delay(10000);
+            const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppDelayedPreregisterLong);
+            await expect(preregisteredListener).toHaveReceivedContexts([]);
         });
     });
 });

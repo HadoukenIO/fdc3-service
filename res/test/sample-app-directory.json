@@ -213,5 +213,43 @@
         }
     ],
     "intents": []
+},
+{
+    "appId": "900",
+    "name": "test-app-delayed-preregister-short",
+    "manifest": "http://localhost:3923/test/configs/test-app-delayed-preregister-short.json",
+    "manifestType": "openfin",
+    "title": "Delays 1 second before adding listeners",
+    "description": "This app registers listeners after a short delay of 1 second",
+    "images": [],
+    "contactEmail": "support@openfin.co",
+    "supportEmail": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icons": [
+        {
+            "icon": "http://localhost:3923/demo/img/app-icons/blotter.svg"
+        }
+    ],
+    "intents": []
+},
+{
+    "appId": "1000",
+    "name": "test-app-delayed-preregister-long",
+    "manifest": "http://localhost:3923/test/configs/test-app-delayed-preregister-long.json",
+    "manifestType": "openfin",
+    "title": "Delays 10 seconds before adding listeners",
+    "description": "This app registers listeners after a short delay of 10 seconds",
+    "images": [],
+    "contactEmail": "support@openfin.co",
+    "supportEmail": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icons": [
+        {
+            "icon": "http://localhost:3923/demo/img/app-icons/blotter.svg"
+        }
+    ],
+    "intents": []
 }
 ]
