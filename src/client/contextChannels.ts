@@ -8,9 +8,9 @@ import {EventEmitter} from 'events';
 
 import {Identity} from 'openfin/_v2/main';
 
-import {parseIdentity, parseContext, validateEnvironment, parseChannelId} from './validation';
+import {parseIdentity, parseContext, validateEnvironment, parseChannelId, parseAppChannelName} from './validation';
 import {tryServiceDispatch, getEventRouter, getServicePromise} from './connection';
-import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents} from './internal';
+import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport} from './internal';
 import {Context} from './context';
 import {ContextListener} from './main';
 import {Transport} from './EventRouter';
@@ -44,7 +44,7 @@ export interface DisplayMetadata {
 /**
  * Union of all possible concrete channel classes that may be returned by the service.
  */
-export type Channel = SystemChannel | DefaultChannel;
+export type Channel = DefaultChannel | SystemChannel | AppChannel;
 
 /**
  * Event fired when a window is added to a channel. See {@link Channel.addEventListener}.
@@ -337,14 +337,28 @@ export abstract class ChannelBase {
 }
 
 /**
+ * The channel all windows start in.
+ *
+ * Unlike system channels, the default channel has no pre-defined name or visual style. It is up to apps to display
+ * this in the channel selector as they see fit - it could be as "default", or "none", or by "leaving" a user channel.
+ */
+export class DefaultChannel extends ChannelBase {
+    public readonly type!: 'default';
+
+    /**
+     * @hidden
+     */
+    public constructor() {
+        super(DEFAULT_CHANNEL_ID, 'default');
+    }
+}
+
+/**
  * User-facing channels, to display within a color picker or channel selector component.
  *
  * This list of channels should be considered fixed by applications - the service will own the list of user channels,
  * making the same list of channels available to all applications, and this list will not change over the lifecycle of
  * the service.
- *
- * We do not intend to support creation of 'user' channels at runtime, as this would add considerable complexity when
- * implementing a channel selector component, as it would need to support a dynamic channel list
  */
 export class SystemChannel extends ChannelBase {
     public readonly type!: 'system';
@@ -365,19 +379,27 @@ export class SystemChannel extends ChannelBase {
 }
 
 /**
- * All windows will start off in this channel.
+ * Custom application-created channels.
  *
- * Unlike system channels, the default channel has no pre-defined name or visual style. It is up to apps to display
- * this in the channel selector as they see fit - it could be as "default", or "none", or by "leaving" a user channel.
+ * Applications can create these for specialised use-cases.  These channels should be obtained by name by calling
+ * {@link getOrCreateAppChannel} and it is up to your organization to decide how applications are aware of this name.
+ * As with organization defined contexts, app channel names should have a prefix specific to your organization to avoid
+ * name collisions, e.g. 'company-name.channel-name'.
+ *
+ * App channels can be joined by any window, but are only indirectly discoverable if the name is not know.
  */
-export class DefaultChannel extends ChannelBase {
-    public readonly type!: 'default';
+export class AppChannel extends ChannelBase {
+    public readonly type!: 'app';
+
+    public readonly name: string;
 
     /**
      * @hidden
      */
-    public constructor() {
-        super(DEFAULT_CHANNEL_ID, 'default');
+    public constructor(transport: AppChannelTransport) {
+        super(transport.id, 'app');
+
+        this.name = transport.name;
     }
 }
 
@@ -391,10 +413,10 @@ export const DEFAULT_CHANNEL_ID: ChannelId = 'default';
 /**
  * The channel in which all windows will initially be placed.
  *
- * All windows will belong to exactly one channel at all times. If they have not explicitly
- * been placed into a channel via a {@link ChannelBase.join} call, they will be in this channel.
+ * All windows will belong to exactly one channel at all times. If they have not explicitly been placed into a channel
+ * via a {@link ChannelBase.join} call, they will be in this channel.
  *
- * If an app wishes to leave a system channel it can do so by (re-)joining this channel.
+ * If an app wishes to leave any other channel, it can do so by (re-)joining this channel.
  */
 export const defaultChannel: DefaultChannel = new DefaultChannel();
 
@@ -405,7 +427,7 @@ const channelLookup: {[id: string]: Channel} = {
 const channelContextListeners: ChannelContextListener[] = [];
 
 /**
- * Gets all user-visible channels.
+ * Gets all service-defined system channels.
  *
  * This is the list of channels that should be used to populate a channel selector. All channels returned will have
  * additional metadata that can be used to populate a selector UI with a consistent cross-app channel list.
@@ -444,6 +466,25 @@ export async function getCurrentChannel(identity?: Identity): Promise<Channel> {
 }
 
 /**
+ * Returns an app channel with the given name. Either creates a new channel or returns an existing channel.
+ *
+ * It is up to your organization to decide how to share knowledge of these custom channels. As with organization
+ * defined contexts, app channel names should have a prefix specific to your organization to avoid name collisions,
+ * e.g. 'company-name.channel-name'.
+ *
+ * The service will assign a unique ID when creating a new app channel, but no particular mapping of name to ID should
+ * be assumed.
+ *
+ * @param name The name of the channel. May not be an empty string
+ */
+
+export async function getOrCreateAppChannel(name: string): Promise<AppChannel> {
+    const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_OR_CREATE_APP_CHANNEL, {name: parseAppChannelName(name)});
+
+    return getChannelObject<AppChannel>(channelTransport);
+}
+
+/**
  * @hidden
  */
 export function getChannelObject<T extends Channel = Channel>(channelTransport: ChannelTransport): T {
@@ -457,6 +498,11 @@ export function getChannelObject<T extends Channel = Channel>(channelTransport: 
             case 'system':
                 channel = new SystemChannel(channelTransport as SystemChannelTransport);
                 channelLookup[channelTransport.id] = channel;
+                break;
+            case 'app':
+                channel = new AppChannel(channelTransport as AppChannelTransport);
+                channelLookup[channelTransport.id] = channel;
+                break;
         }
     }
 

@@ -73,7 +73,7 @@ const nonDirectoryApps: TestParam[] = [
     }]
 ];
 
-const testCatagories: TestCatagoryParam[] = [['Directory', directoryApps], ['Non Directory', nonDirectoryApps]];
+const testCatagories: TestCatagoryParam[] = [['Directory', directoryApps], ['Non-Directory', nonDirectoryApps]];
 
 describe('Disconnecting windows', () => {
     // Directory Apps or NonDirectory Apps
