@@ -11,7 +11,7 @@ const validContext: OrganizationContext = {type: 'fdc3.organization', name: 'Ope
 setupTeardown();
 
 // These tests all use the default channel for context broadcasts and listeners
-// Context-passing in a channelled environment is tested in a seperate file
+// Context-passing in a channelled environment is tested in a separate file
 describe('Context listeners and broadcasting', () => {
     test('When calling broadcast with no apps running, the promise resolves and there are no errors', async () => {
         await expect(fdc3Remote.broadcast(testManagerIdentity, validContext)).resolves.not.toThrowError();

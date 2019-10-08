@@ -174,6 +174,26 @@ and does not trigger the context listener of the already open app', async () => 
             `Timeout waiting for app '${appName}' to start from manifest`
         );
     }, Timeouts.APP_START_FROM_MANIFEST + 2000);
+
+    describe('When opening an app that delays registering a context listener, but less than the timeout', () => {
+        test('the app opens and the context is received', async () =>{
+
+        });
+
+        test('The promise resolves once the app opens', () =>{
+
+        });
+    });
+
+    describe('When opening an app that takes longer than the timeout to register a listener', () => {
+        test('The app opens and the promise resolves', () => {
+
+        });
+
+        test('The app does not receive the context', () => {
+
+        });
+    });
 });
 
 function open(appName: string, context?: Context | undefined): Promise<void> {
