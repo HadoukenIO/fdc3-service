@@ -14,7 +14,7 @@ export enum EntityType {
 }
 
 export interface Environment {
-    windowSeen: Signal<[Identity]>;
+    windowCreated: Signal<[Identity]>;
     windowClosed: Signal<[Identity]>;
 
     /**
@@ -42,7 +42,7 @@ export interface Environment {
     getEntityType(identity: Identity): Promise<EntityType>;
 
     /**
-     * Returns whether the window has been seen by the service and is still open
+     * Returns whether the window has been created by the service and is still open
      */
     isWindowCreated: (identity: Identity) => boolean;
 }

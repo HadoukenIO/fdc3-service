@@ -54,10 +54,6 @@
         {
             "name": "appUuid",
             "value": "fdc3-dialer"
-        },
-        {
-            "name": "appName",
-            "value": "fdc3-dialer"
         }
     ],
     "intents": [
@@ -81,7 +77,7 @@
 },
 {
     "appId": "fdc3-charts-red",
-    "name": "charts-red",
+    "name": "fdc3-charts-red",
     "manifest": "http://localhost:3923/demo/configs/app-charts-red.json",
     "manifestType": "openfin",
     "title": "Charts: Red",
@@ -90,12 +86,6 @@
     "contactEmail": "support@openfin.co",
     "supportEmail": "support@openfin.co",
     "publisher": "openfin",
-    "customConfig": [
-        {
-            "name": "appName",
-            "value": "fdc3-charts-red"
-        }
-    ],
     "icons": [
         {"icon": "http://localhost:3923/demo/img/app-icons/charts.svg"}
     ],

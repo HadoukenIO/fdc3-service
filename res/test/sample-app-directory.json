@@ -51,7 +51,7 @@
 },
 {
     "appId": "unmatchingAppId",
-    "name": "unmatchingAppName",
+    "name": "test-app-2",
     "manifest": "http://localhost:3923/test/configs/test-app-2.json",
     "manifestType": "openfin",
     "title": "Test App 2",
@@ -75,10 +75,6 @@
     "customConfig": [
         {
             "name": "appUuid",
-            "value": "test-app-2"
-        },
-        {
-            "name": "appName",
             "value": "test-app-2"
         }
     ]

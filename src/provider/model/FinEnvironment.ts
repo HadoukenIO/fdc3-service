@@ -18,7 +18,7 @@ import {Environment, EntityType} from './Environment';
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 
-interface SeenWindow {
+interface CreatedWindow {
     creationTime: number | undefined;
     index: number;
 }
@@ -36,7 +36,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
      *
      * Arguments: (identity: Identity)
      */
-    public readonly windowSeen: Signal<[Identity]> = new Signal();
+    public readonly windowCreated: Signal<[Identity]> = new Signal();
 
     /**
      * Indicates that a window has been closed.
@@ -46,7 +46,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public readonly windowClosed: Signal<[Identity]> = new Signal();
 
     private _windowsCreated: number = 0;
-    private readonly _seenWindows: {[id: string]: SeenWindow} = {};
+    private readonly _createdWindows: {[id: string]: CreatedWindow} = {};
 
     public async createApplication(appInfo: Application, channel: ContextChannel): Promise<void> {
         const [didTimeout] = await withTimeout(
@@ -64,10 +64,10 @@ export class FinEnvironment extends AsyncInit implements Environment {
         identity = parseIdentity(identity);
         const id = getId(identity);
 
-        // If `identity` is an adapter connection, there will not be any seenWindow entry for this identity
+        // If `identity` is an adapter connection, there will not be any createdWindow entry for this identity
         // We will instead take the time at which the identity was wrapped as this "window's" creation time
-        const seenWindow = this._seenWindows[id] || {creationTime: Date.now(), index: this._windowsCreated++};
-        const {creationTime, index} = seenWindow;
+        const createdWindow = this._createdWindows[id] || {creationTime: Date.now(), index: this._windowsCreated++};
+        const {creationTime, index} = createdWindow;
 
         return new FinAppWindow(identity, appInfo, channel, creationTime, index);
     }
@@ -114,7 +114,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     public isWindowCreated(identity: Identity): boolean {
-        return !!this._seenWindows[getId(identity)];
+        return !!this._createdWindows[getId(identity)];
     }
 
     protected async init(): Promise<void> {
@@ -130,7 +130,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             await Injector.initialized;
             const identity = {uuid: event.uuid, name: event.name};
 
-            delete this._seenWindows[getId(identity)];
+            delete this._createdWindows[getId(identity)];
 
             this.windowClosed.emit(identity);
         });
@@ -147,15 +147,15 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     private async registerWindow(identity: Identity, creationTime: number | undefined): Promise<void> {
-        const seenWindow = {
+        const createdWindow = {
             creationTime,
             index: this._windowsCreated
         };
 
-        this._seenWindows[getId(identity)] = seenWindow;
+        this._createdWindows[getId(identity)] = createdWindow;
         this._windowsCreated++;
 
-        this.windowSeen.emit(identity);
+        this.windowCreated.emit(identity);
     }
 
     private async isExternalWindow(identity: Identity): Promise<boolean> {

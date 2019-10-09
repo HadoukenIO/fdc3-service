@@ -33,7 +33,13 @@ export class AppDirectory extends AsyncInit {
 
     public async getAppByName(name: AppName): Promise<Application | null> {
         return this._directory.find((app: Application) => {
-            return (app.name === name || checkCustomConfigField(app, CustomConfigFields.OPENFIN_APP_NAME) === name);
+            return app.name === name;
+        }) || null;
+    }
+
+    public async getAppByUuid(uuid: string): Promise<Application | null> {
+        return this._directory.find((app: Application) => {
+            return checkCustomConfigField(app, CustomConfigFields.OPENFIN_APP_UUID) === uuid || app.appId === uuid;
         }) || null;
     }
 
