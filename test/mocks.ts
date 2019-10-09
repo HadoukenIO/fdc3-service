@@ -10,7 +10,7 @@ import {Environment, EntityType} from '../src/provider/model/Environment';
 /**
  * Creates a minimal mock app window. Any utilizing test should set properties and set up mock functions as needed
  */
-export function createMockAppWindow(): jest.Mocked<AppWindow> {
+export function createMockAppWindow(options: Partial<jest.Mocked<AppWindow>> = {}): jest.Mocked<AppWindow> {
     return {
         id: '',
         identity: {name: '', uuid: ''},
@@ -35,7 +35,9 @@ export function createMockAppWindow(): jest.Mocked<AppWindow> {
         focus: jest.fn<Promise<void>, []>(),
         isReadyToReceiveIntent: jest.fn<Promise<boolean>, [IntentType]>(),
         isReadyToReceiveContext: jest.fn<Promise<boolean>, []>(),
-        removeAllListeners: jest.fn<void, []>()
+        removeAllListeners: jest.fn<void, []>(),
+        // Apply any custom overrides
+        ...options
     };
 }
 
