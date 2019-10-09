@@ -114,8 +114,8 @@ export class IntentHandler {
         await this._model.ensureRunning(appInfo);
 
         // TODO: Revisit timeout logic [SERVICE-556]
-        let dispatchResults: [boolean, boolean[] | undefined] | undefined = undefined;
-        dispatchResults = await withTimeout(Timeouts.ADD_INTENT_LISTENER, (async () => {
+        let dispatchingCompleted = false;
+        const dispatchResults = await withTimeout(Timeouts.ADD_INTENT_LISTENER, (async () => {
             const appWindows = await this._model.expectWindowsForApp(appInfo);
 
             // Wait for windows to add intent listener, then dispatch payload
@@ -124,7 +124,7 @@ export class IntentHandler {
                     const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
 
                     // TODO: Implement a timeout so a misbehaving intent handler can't block the intent raiser [SERVICE-555]
-                    if (dispatchResults === undefined) {
+                    if (!dispatchingCompleted) {
                         await this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
                         return true;
                     }
@@ -132,6 +132,8 @@ export class IntentHandler {
                 return false;
             }));
         })());
+
+        dispatchingCompleted = true;
 
         if (dispatchResults[0] || !dispatchResults[1]!.includes(true)) {
             throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
