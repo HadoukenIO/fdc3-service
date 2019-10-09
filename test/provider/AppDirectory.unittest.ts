@@ -38,7 +38,7 @@ const fakeApp1: Application = {
     customConfig: [
         {
             'name': 'appUuid',
-            'value': '2'
+            'value': 'customUuid'
         }
     ],
     intents: [
@@ -198,17 +198,22 @@ describe('When querying the Directory', () => {
         expect(app).not.toBeNull();
     });
 
-    describe('With appId and Uuid matching', () => {
+    describe('With a custom appUuid is not defined', () => {
         it('Can get application by uuid using appId', async () => {
-            const app = await appDirectory.getAppByUuid('1');
+            const app = await appDirectory.getAppByUuid('2');
             expect(app).not.toBeNull();
         });
     });
 
-    describe('With appId and Uuid not matching', () => {
-        it('Can get application by uuid with appUuid property in customConfig and appUuid property should have a higher priority than appId', async () => {
-            const app = await appDirectory.getAppByUuid('2');
-            expect(app!.name).toBe('App 1');
+    describe('With a custom appUuid is defined', () => {
+        it('Can get application by uuid with appUuid property in customConfig', async () => {
+            const app = await appDirectory.getAppByUuid('customUuid');
+            expect(app).not.toBeNull();
+        });
+
+        it('Cannot get application by uuid using appId', async () => {
+            const app = await appDirectory.getAppByUuid('1');
+            expect(app).toBeNull();
         });
     });
 

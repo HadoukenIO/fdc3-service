@@ -25,7 +25,7 @@ interface ExpectedWindow {
     // Resolves when the window has connected to FDC3
     connected: Promise<void>;
 
-    // Resolves to the AppWindow when the window has been fully regstered and is ready for use outside the Model
+    // Resolves to the AppWindow when the window has been fully registered and is ready for use outside the Model
     registered: Promise<AppWindow>;
 }
 
@@ -176,7 +176,7 @@ export class Model {
     }
 
     private async onWindowCreated(identity: Identity): Promise<void> {
-        this.getOrCreateExpectedWindow(identity);
+        const expectedWindow = this.getOrCreateExpectedWindow(identity);
         const appInfoFromDirectory = await this._directory.getAppByUuid(identity.uuid);
 
         if (appInfoFromDirectory) {
@@ -184,7 +184,7 @@ export class Model {
             this.registerWindow(appInfoFromDirectory, identity, true);
         } else {
             // If the app is not in directory, we'll add it to the model if and when it connects to FDC3
-            allowReject(this.getOrCreateExpectedWindow(identity).connected.then(async () => {
+            allowReject(expectedWindow.connected.then(async () => {
                 let appInfo: Application;
 
                 // Attempt to copy appInfo from another appWindow in the model from the same app

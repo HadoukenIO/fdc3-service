@@ -39,7 +39,8 @@ export class AppDirectory extends AsyncInit {
 
     public async getAppByUuid(uuid: string): Promise<Application | null> {
         return this._directory.find((app: Application) => {
-            return checkCustomConfigField(app, CustomConfigFields.OPENFIN_APP_UUID) === uuid || app.appId === uuid;
+            const customValue = checkCustomConfigField(app, CustomConfigFields.OPENFIN_APP_UUID);
+            return (customValue !== undefined) ? (customValue === uuid) : (app.appId === uuid);
         }) || null;
     }
 
