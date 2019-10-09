@@ -175,15 +175,17 @@ export class Model {
      * Get information about intents that can handle a given contexts, and the apps that can handle that intent with that context
      */
     public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
-        const liveIntentTypes = Object.values(this._windowsById).map(window => window.intentListeners).reduce((acc: string[], curr: readonly string[]) => {
-            acc.push(...curr);
-            return acc;
-        }, []);
+        const liveIntentTypes = Object.values(this._windowsById).map(window => window.intentListeners)
+            .reduce((acc: string[], curr: readonly string[]) => {
+                acc.push(...curr);
+                return acc;
+            }, []);
 
-        const directoryIntentTypes = (await this._directory.getAllApps()).map(app => app.intents ? app.intents : []).reduce((acc: Intent[], curr: Intent[]) => {
-            acc.push(...curr);
-            return acc;
-        }, []).map(intent => intent.name);
+        const directoryIntentTypes = (await this._directory.getAllApps()).map(app => app.intents ? app.intents : [])
+            .reduce((acc: Intent[], curr: Intent[]) => {
+                acc.push(...curr);
+                return acc;
+            }, []).map(intent => intent.name);
 
         const intents = Array.from(new Set<string>([...liveIntentTypes, ...directoryIntentTypes]).values());
 

@@ -2,8 +2,6 @@
  * @module Index
  */
 
-import {EventEmitter} from 'events';
-
 import {tryServiceDispatch, getServicePromise, getEventRouter, eventEmitter} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
@@ -23,7 +21,7 @@ export * from './contextChannels';
 
 // Re-export types/enums at top-level
 export * from './context';
-export * from './directory';
+export {Application, AppId, AppName} from './directory';
 export * from './intents';
 export * from './errors';
 

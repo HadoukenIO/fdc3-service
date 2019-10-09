@@ -1,8 +1,7 @@
 import {injectable, inject} from 'inversify';
 
 import {Inject} from '../common/Injectables';
-import {Application, AppName, Intent} from '../../client/directory';
-import {AppIntent} from '../../client/main';
+import {Application, AppName} from '../../client/directory';
 import {AsyncInit} from '../controller/AsyncInit';
 
 import {ConfigStoreBinding} from './ConfigStore';
