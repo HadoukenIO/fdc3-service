@@ -10,5 +10,6 @@ export async function delay(duration: number) {
 
 export enum Duration {
     PAGE_RELOAD = 500,
-    PAGE_NAVIGATE = 500
+    PAGE_NAVIGATE = 500,
+    LISTENER_TIMEOUT = 10000
 }

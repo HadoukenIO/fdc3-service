@@ -2,7 +2,7 @@ import {Identity, Window} from 'openfin/_v2/main';
 
 import {Application} from '../../client/main';
 
-import {AppWindow, AbstractAppWindow} from './AppWindow';
+import {AbstractAppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 
 export class FinAppWindow extends AbstractAppWindow {

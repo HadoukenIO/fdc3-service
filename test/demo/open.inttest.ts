@@ -227,7 +227,7 @@ and does not trigger the context listener of the already open app', async () => 
         test('the context is not received by the listener', async () =>{
             await openPromise;
 
-            await delay(10000);
+            await delay(Duration.LISTENER_TIMEOUT);
             const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppDelayedPreregisterLong);
             await expect(preregisteredListener).toHaveReceivedContexts([]);
         });
