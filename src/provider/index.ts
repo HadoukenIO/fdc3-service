@@ -145,10 +145,12 @@ export class Main {
             apps = await this._directory.getAllApps();
         }
 
+        const displayName = AppDirectory.getIntentDisplayName(apps, payload.intent);
+
         return {
             intent: {
                 name: payload.intent,
-                displayName: payload.intent
+                displayName: displayName !== undefined ? displayName : payload.intent
             },
             apps
         };

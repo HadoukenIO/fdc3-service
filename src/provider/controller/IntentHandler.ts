@@ -46,31 +46,27 @@ export class IntentHandler {
     }
 
     private async raiseWithTarget(intent: IntentWithTarget): Promise<IntentResolution> {
-        let appInfo: Application|null;
+        const apps = await this._model.getApplicationsForIntent(intent.type, intent.context.type);
+        const targetApp = apps.find(app => app.name === intent.target);
 
-        const appWindows = this._model.findWindowsByAppName(intent.target);
-
-        if (appWindows.length > 0) {
-            // Target app is running -> fire intent at it
-            appInfo = appWindows[0].appInfo;
+        if (targetApp !== undefined) {
+            return this.fireIntent(intent, targetApp);
         } else {
-            // Target app not running -> Try to find in directory
-            appInfo = await this._directory.getAppByName(intent.target);
-            if (!appInfo) {
+            const targetInDirectory = await this._directory.getAppByName(intent.target);
+            const targetRunning = this._model.findWindowsByAppName(intent.target).length > 0;
+
+            if (!targetInDirectory && !targetRunning) {
                 throw new FDC3Error(
                     ResolveError.TargetAppNotAvailable,
                     `Couldn't resolve intent target '${intent.target}'. No matching app in directory or currently running.`
                 );
-            }
-
-            // TODO: revise error code
-            if (!AppDirectory.mightAppSupportIntent(appInfo, intent.target, intent.context.type)) {
-                throw new FDC3Error(ResolveError.TargetAppDoesNotHandleIntent, `App '${intent.target}' does not handle intent '${intent.type}'`);
+            } else {
+                throw new FDC3Error(
+                    ResolveError.TargetAppDoesNotHandleIntent,
+                    `App '${intent.target}' does not handle intent '${intent.type}' with context '${intent.context.type}'`
+                );
             }
         }
-
-        // At this point we are certain that the target app - whether already running or not - can handle the intent
-        return this.fireIntent(intent, appInfo);
     }
 
     private async startResolve(intent: Intent): Promise<IntentResolution> {

@@ -39,6 +39,18 @@ export class AppDirectory extends AsyncInit {
         }
     }
 
+    public static getIntentDisplayName(apps: Application[], intentType: string): string | undefined {
+        for (const app of apps) {
+            const intent = app.intents && app.intents.find(intent => intent.name === intentType);
+
+            if (intent && intent.displayName !== undefined) {
+                return intent.displayName;
+            }
+        }
+
+        return undefined;
+    }
+
     private static intentSupportsContext(intent: Intent, contextType: string): boolean {
         return intent.contexts === undefined || intent.contexts.length === 0 || intent.contexts.includes(contextType);
     }

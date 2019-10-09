@@ -214,13 +214,10 @@ export class Model {
 
         // Find and use a display name for each intent
         for (const appIntent of appIntents) {
-            for (const app of appIntent.apps) {
-                const intent = app.intents && app.intents.find(intent => intent.name === appIntent.intent.name);
+            const displayName = AppDirectory.getIntentDisplayName(appIntent.apps, appIntent.intent.name);
 
-                if (intent && intent.displayName !== undefined) {
-                    appIntent.intent.displayName = intent.displayName;
-                    break;
-                }
+            if (displayName !== undefined) {
+                appIntent.intent.displayName = displayName;
             }
         }
 

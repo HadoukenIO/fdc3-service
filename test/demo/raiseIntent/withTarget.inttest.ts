@@ -52,7 +52,7 @@ describe('Intent listeners and raising intents with a target', () => {
                 test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
                     await expect(raiseIntent(nonExistentIntent, testAppInDirectory1)).toThrowFDC3Error(
                         ResolveError.TargetAppDoesNotHandleIntent,
-                        `App '${testAppInDirectory1.name}' does not handle intent '${nonExistentIntent.type}'`
+                        `App '${testAppInDirectory1.name}' does not handle intent '${nonExistentIntent.type}' with context '${nonExistentIntent.context.type}'`
                     );
                 });
             });
@@ -144,8 +144,8 @@ function setupCommonTests(testAppData: TestAppData): void {
     describe('When the target has *not* registered listeners for the raised intent', () => {
         test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
             await expect(raiseIntent(nonExistentIntent, testAppData)).toThrowFDC3Error(
-                ResolveError.IntentTimeout,
-                `Timeout waiting for intent listener to be added for intent: ${nonExistentIntent.type}`
+                ResolveError.TargetAppDoesNotHandleIntent,
+                `App '${testAppData.name}' does not handle intent '${nonExistentIntent.type}' with context '${nonExistentIntent.context.type}'`
             );
         });
 
@@ -205,8 +205,8 @@ only the first listener is triggered', async () => {
             await listener.unsubscribe();
 
             await expect(raiseIntent(validIntent, testAppData)).toThrowFDC3Error(
-                ResolveError.IntentTimeout,
-                `Timeout waiting for intent listener to be added for intent: ${validIntent.type}`
+                ResolveError.TargetAppDoesNotHandleIntent,
+                `App '${testAppData.name}' does not handle intent '${validIntent.type}' with context '${validIntent.context.type}'`
             );
         });
 
