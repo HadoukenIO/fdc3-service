@@ -40,7 +40,7 @@ type ConnectTestParam = [
     (app: TestAppData) => Promise<void>,
 ];
 
-type ConnectTestCatagoryParam = [string, ConnectTestParam[]];
+type ConnectTestCategoryParam = [string, ConnectTestParam[]];
 
 const directoryConnectTestParams: ConnectTestParam[] = [
     ['has an FDC3 connection', testAppInDirectory1, RegistrationStatus.REGISTERED, openDirectoryApp],
@@ -52,11 +52,11 @@ const nonDirectoryConnectTestParams: ConnectTestParam[] = [
     ['does not have an FDC3 connection', testAppNotInDirectoryNotFdc3, RegistrationStatus.NOT_REGISTERED, openNonDirectoryApp]
 ];
 
-const connectTestCatagories: ConnectTestCatagoryParam[] = [['Directory', directoryConnectTestParams], ['Non-Directory', nonDirectoryConnectTestParams]];
+const connectTestCategories: ConnectTestCategoryParam[] = [['Directory', directoryConnectTestParams], ['Non-Directory', nonDirectoryConnectTestParams]];
 
 describe('Connecting windows', () => {
     // Directory Apps or Non-Directory Apps
-    describe.each(connectTestCatagories)('%s Apps', (catagoryTitle: string, tests: ConnectTestParam[]) => {
+    describe.each(connectTestCategories)('%s Apps', (categoryTitle: string, tests: ConnectTestParam[]) => {
         // E.g. When an app has an FDC3 connection
         describe.each(tests)('When an app %s', (
             testTitle: string,
@@ -87,7 +87,7 @@ type DisconnectTestParam = [
     (app: TestAppData) => Promise<void>
 ];
 
-type DisconnectTestCatagoryParam = [string, DisconnectTestParam[]];
+type DisconnectTestCategoryParam = [string, DisconnectTestParam[]];
 
 const directoryDisconnectTestParams: DisconnectTestParam[] = [
     ['closed', testAppInDirectory1, RegistrationStatus.NOT_REGISTERED, openDirectoryApp, async (app) => {
@@ -122,14 +122,14 @@ const nonDirectoryDisconnectTestParams: DisconnectTestParam[] = [
     }]
 ];
 
-const disconnectTestCatagories: DisconnectTestCatagoryParam[] = [
+const disconnectTestCategories: DisconnectTestCategoryParam[] = [
     ['Directory', directoryDisconnectTestParams],
     ['Non-Directory', nonDirectoryDisconnectTestParams]
 ];
 
 describe('Disconnecting windows', () => {
     // Directory Apps or Non-Directory Apps
-    describe.each(disconnectTestCatagories)('%s Apps', (catagoryTitle: string, tests: DisconnectTestParam[]) => {
+    describe.each(disconnectTestCategories)('%s Apps', (categoryTitle: string, tests: DisconnectTestParam[]) => {
         const TEST_INTENT = 'TestIntent';
         let redChannel: RemoteChannel;
         let blueChannel: RemoteChannel;
