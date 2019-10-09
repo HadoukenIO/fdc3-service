@@ -90,3 +90,11 @@ export async function asyncFilter<T>(arr: T[], asyncF: (x: T) => Promise<boolean
 
     return result;
 }
+
+export async function asyncMap<T, U>(arr: T[], asyncF: (x: T, i: number, r: T[]) => Promise<U>): Promise<U[]>;
+export async function asyncMap<T, U>(arr: T[], asyncF: (x: T, i: number) => Promise<U>): Promise<U[]>;
+export async function asyncMap<T, U>(arr: T[], asyncF: (x: T) => Promise<U>): Promise<U[]>;
+export async function asyncMap<T, U>(arr: T[], asyncF: () => Promise<U>): Promise<U[]>;
+export async function asyncMap<T, U>(arr: T[], asyncF: (...args: any[]) => any): Promise<U[]> {
+    return Promise.all<U>(arr.map(asyncF));
+}

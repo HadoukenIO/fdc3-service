@@ -155,7 +155,7 @@ export class Main {
     }
 
     private async findIntentsByContext (payload: FindIntentsByContextPayload): Promise<AppIntent[]> {
-        return this._directory.getAppIntentsByContext(parseContext(payload.context).type);
+        return this._model.getAppIntentsByContext(parseContext(payload.context).type);
     }
 
     private async broadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {

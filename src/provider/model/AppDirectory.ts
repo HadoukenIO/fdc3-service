@@ -23,7 +23,7 @@ export class AppDirectory extends AsyncInit {
             return true;
         } else {
             const intent = app.intents.find(intent => intent.name === intentType);
-            return intent === undefined || AppDirectory.intentsSupportContext(intent, contextType);
+            return intent === undefined || AppDirectory.intentSupportsContext(intent, contextType);
         }
     }
 
@@ -36,11 +36,11 @@ export class AppDirectory extends AsyncInit {
             return false;
         } else {
             const intent = app.intents.find(intent => intent.name === intentType);
-            return intent !== undefined && (contextType === undefined || AppDirectory.intentsSupportContext(intent, contextType));
+            return intent !== undefined && (contextType === undefined || AppDirectory.intentSupportsContext(intent, contextType));
         }
     }
 
-    private static intentsSupportContext(intent: Intent, contextType: string): boolean {
+    private static intentSupportsContext(intent: Intent, contextType: string): boolean {
         return intent.contexts === undefined || intent.contexts.length === 0 || intent.contexts.includes(contextType);
     }
 
@@ -67,45 +67,6 @@ export class AppDirectory extends AsyncInit {
 
     public async getAllAppsThatShouldSupportIntent(intentType: string, contextType?: string): Promise<Application[]> {
         return this._directory.filter(app => AppDirectory.shouldAppSupportIntent(app, intentType, contextType));
-    }
-
-    /**
-     * Get information about intents that expect contexts of a given type, and the apps that handle those intents
-     *
-     * Note this only considers directory apps and not "ad hoc" windows, as the latter don't specify context types when adding intent listeners
-     * @param contextType type of context to find intents for
-     */
-    public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
-        /* const appIntentsByName: {[intentName: string]: AppIntent} = {};
-
-        this._directory.forEach((app: Application) => {
-            app.intents!.
-
-            if (app.intents && app.intents.length > 0 && AppDirectory.intentsSupportContext(app.intents, contextType)) {
-                if (!appIntentsByName[intent.name]) {
-                    appIntentsByName[intent.name] = {
-                        intent: {
-                            name: intent.name,
-                            displayName: intent.displayName || intent.name
-                        },
-                        apps: []
-                    };
-                }
-                appIntentsByName[intent.name].apps.push(app);
-            }
-
-            (app.intents || []).forEach(intent => {
-                if (intent.contexts && intent.contexts.includes(contextType)) {
-
-                }
-            });
-        });
-
-        Object.values(appIntentsByName).forEach(appIntent => {
-            appIntent.apps.sort((a, b) => a.appId.localeCompare(b.appId, 'en'));
-        });
-
-        return Object.values(appIntentsByName).sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));*/
     }
 
     /**

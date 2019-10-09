@@ -2,13 +2,13 @@ import {injectable, inject} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
-import {Application, AppName, AppId} from '../../client/directory';
+import {Application, AppName, AppId, Intent} from '../../client/directory';
 import {Inject} from '../common/Injectables';
-import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
+import {ChannelId, DEFAULT_CHANNEL_ID, AppIntent} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {SYSTEM_CHANNELS, Timeouts} from '../constants';
-import {withStrictTimeout, untilTrue, allowReject, untilSignal, asyncFilter} from '../utils/async';
+import {withStrictTimeout, untilTrue, allowReject, untilSignal, asyncFilter, asyncMap} from '../utils/async';
 import {Boxed} from '../utils/types';
 
 import {AppWindow} from './AppWindow';
@@ -157,19 +157,58 @@ export class Model {
      * @param contextType context type
      */
     public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
-        const runningGroups = this.extractApplicationsFromWindows(this.windows);
+        const liveWindowGroups = this.extractApplicationsFromWindows(this.windows);
 
-        const runningAppsToInclude = (await asyncFilter(runningGroups, async (group: WindowGroup) => {
+        const liveApps = (await asyncFilter(liveWindowGroups, async (group: WindowGroup) => {
             const {application, windows} = group;
-
             return windows.some(window => window.hasIntentListener(intentType)) && AppDirectory.mightAppSupportIntent(application, intentType, contextType);
         })).map(group => group.application);
 
-        const directoryAppsToInclude = (await this._directory.getAllAppsThatShouldSupportIntent(intentType, contextType))
+        const directoryApps = (await this._directory.getAllAppsThatShouldSupportIntent(intentType, contextType))
             .filter(app => !this._environment.isRunning(app));
 
         // TODO: Use `AppDirectory.shouldAppSupportIntent` to include apps that we expect to add a listener but haven't yet [SERVICE-556]
-        return [...runningAppsToInclude, ...directoryAppsToInclude].sort((a, b) => this.compareAppsForIntent(a, b, intentType, contextType));
+        return [...liveApps, ...directoryApps].sort((a, b) => this.compareAppsForIntent(a, b, intentType, contextType));
+    }
+
+    /**
+     * Get information about intents that can handle a given contexts, and the apps that can handle that intent with that context
+     */
+    public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
+        const liveIntentTypes = Object.values(this._windowsById).map(window => window.intentListeners).reduce((acc: string[], curr: readonly string[]) => {
+            acc.push(...curr);
+            return acc;
+        }, []);
+
+        const directoryIntentTypes = (await this._directory.getAllApps()).map(app => app.intents ? app.intents : []).reduce((acc: Intent[], curr: Intent[]) => {
+            acc.push(...curr);
+            return acc;
+        }, []).map(intent => intent.name);
+
+        const intents = Array.from(new Set<string>([...liveIntentTypes, ...directoryIntentTypes]).values());
+
+        const appIntents: AppIntent[] = (await asyncMap(intents, async (intent) => {
+            return {
+                intent: {
+                    name: intent,
+                    displayName: intent
+                },
+                apps: await this.getApplicationsForIntent(intent, contextType)
+            };
+        })).filter(appIntent => appIntent.apps.length > 0);
+
+        for (const appIntent of appIntents) {
+            for (const app of appIntent.apps) {
+                const intent = app.intents && app.intents.find(intent => intent.name === appIntent.intent.name);
+
+                if (intent && intent.displayName !== undefined) {
+                    appIntent.intent.displayName = intent.displayName;
+                    break;
+                }
+            }
+        }
+
+        return appIntents.sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));
     }
 
     public findWindowsByAppName(name: AppName): AppWindow[] {
@@ -345,8 +384,8 @@ export class Model {
             return 1;
         }
 
-        const running1 = this.findWindowsByAppId(app1.appId).length > 0;
-        const running2 = this.findWindowsByAppId(app2.appId).length > 0;
+        const running1 = this._environment.isRunning(app1);
+        const running2 = this._environment.isRunning(app2);
 
         if (running1 && !running2) {
             return -1;
