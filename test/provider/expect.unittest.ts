@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
-import {Model, getId} from '../../src/provider/model/Model';
+import {Model} from '../../src/provider/model/Model';
 import {APIHandler} from '../../src/provider/APIHandler';
 import {APIFromClientTopic} from '../../src/client/internal';
 import {AppDirectory} from '../../src/provider/model/AppDirectory';
@@ -15,6 +15,7 @@ import {AppWindow} from '../../src/provider/model/AppWindow';
 import {advanceTime, useFakeTime} from '../demo/utils/time';
 import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
 import {PartiallyWritable} from '../types';
+import {getId} from '../../src/provider/utils/getId';
 
 jest.mock('../../src/provider/model/AppDirectory');
 jest.mock('../../src/provider/APIHandler');
