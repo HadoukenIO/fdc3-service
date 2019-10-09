@@ -157,13 +157,14 @@ export class Model {
      * @param contextType context type
      */
     public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
-        const liveWindowGroups = this.extractApplicationsFromWindows(this.windows);
-
-        const liveApps = (await asyncFilter(liveWindowGroups, async (group: WindowGroup) => {
+        // Get all live apps that support the given intent and context
+        const allLiveWindowGroups = this.extractApplicationsFromWindows(this.windows);
+        const liveApps = (await asyncFilter(allLiveWindowGroups, async (group: WindowGroup) => {
             const {application, windows} = group;
             return windows.some(window => window.hasIntentListener(intentType)) && AppDirectory.mightAppSupportIntent(application, intentType, contextType);
         })).map(group => group.application);
 
+        // Get all directory apps that support the given intent and context
         const directoryApps = (await this._directory.getAllAppsThatShouldSupportIntent(intentType, contextType))
             .filter(app => !this._environment.isRunning(app));
 
@@ -175,20 +176,24 @@ export class Model {
      * Get information about intents that can handle a given contexts, and the apps that can handle that intent with that context
      */
     public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
+        // Get all intent types from running apps
         const liveIntentTypes = Object.values(this._windowsById).map(window => window.intentListeners)
             .reduce((acc: string[], curr: readonly string[]) => {
                 acc.push(...curr);
                 return acc;
             }, []);
 
+        // Get all intent types from directory apps
         const directoryIntentTypes = (await this._directory.getAllApps()).map(app => app.intents ? app.intents : [])
             .reduce((acc: Intent[], curr: Intent[]) => {
                 acc.push(...curr);
                 return acc;
             }, []).map(intent => intent.name);
 
+        // Get flat list of all unique intent types
         const intents = Array.from(new Set<string>([...liveIntentTypes, ...directoryIntentTypes]).values());
 
+        // Build our list of app intents
         const appIntents: AppIntent[] = (await asyncMap(intents, async (intent) => {
             return {
                 intent: {
@@ -199,6 +204,7 @@ export class Model {
             };
         })).filter(appIntent => appIntent.apps.length > 0);
 
+        // Find and use a display name for each intent
         for (const appIntent of appIntents) {
             for (const app of appIntent.apps) {
                 const intent = app.intents && app.intents.find(intent => intent.name === appIntent.intent.name);
@@ -210,6 +216,7 @@ export class Model {
             }
         }
 
+        // Return app intents in consistent order
         return appIntents.sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));
     }
 
