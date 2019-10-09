@@ -23,6 +23,8 @@ interface CreatedWindow {
     index: number;
 }
 
+type CreatedWindowMap = Map<string, CreatedWindow>;
+
 type IntentMap = Set<string>;
 
 type ContextMap = Set<string>;
@@ -46,7 +48,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public readonly windowClosed: Signal<[Identity]> = new Signal();
 
     private _windowsCreated: number = 0;
-    private readonly _createdWindows: {[id: string]: CreatedWindow} = {};
+    private readonly _createdWindows: CreatedWindowMap = new Map<string, CreatedWindow>();
 
     public async createApplication(appInfo: Application, channel: ContextChannel): Promise<void> {
         const [didTimeout] = await withTimeout(
@@ -66,7 +68,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
         // If `identity` is an adapter connection, there will not be any createdWindow entry for this identity
         // We will instead take the time at which the identity was wrapped as this "window's" creation time
-        const createdWindow = this._createdWindows[id] || {creationTime: Date.now(), index: this._windowsCreated++};
+        const createdWindow = this._createdWindows.get(id) || {creationTime: Date.now(), index: this._windowsCreated++};
         const {creationTime, index} = createdWindow;
 
         return new FinAppWindow(identity, appInfo, channel, creationTime, index);
@@ -114,7 +116,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     public isWindowCreated(identity: Identity): boolean {
-        return !!this._createdWindows[getId(identity)];
+        return this._createdWindows.has(getId(identity));
     }
 
     protected async init(): Promise<void> {
@@ -130,7 +132,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             await Injector.initialized;
             const identity = {uuid: event.uuid, name: event.name};
 
-            delete this._createdWindows[getId(identity)];
+            this._createdWindows.delete(getId(identity));
 
             this.windowClosed.emit(identity);
         });
@@ -152,7 +154,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             index: this._windowsCreated
         };
 
-        this._createdWindows[getId(identity)] = createdWindow;
+        this._createdWindows.set(getId(identity), createdWindow);
         this._windowsCreated++;
 
         this.windowCreated.emit(identity);

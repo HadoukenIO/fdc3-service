@@ -7,10 +7,9 @@ import {Inject} from '../common/Injectables';
 import {ChannelId, DEFAULT_CHANNEL_ID} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
-import {SYSTEM_CHANNELS, Timeouts, CustomConfigFields} from '../constants';
+import {SYSTEM_CHANNELS, Timeouts} from '../constants';
 import {withStrictTimeout, untilTrue, allowReject, untilSignal} from '../utils/async';
 import {Boxed} from '../utils/types';
-import {checkCustomConfigField} from '../utils/helpers';
 import {getId} from '../utils/getId';
 
 import {AppWindow} from './AppWindow';
