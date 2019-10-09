@@ -18,8 +18,8 @@ import {Environment, EntityType} from './Environment';
 import {AppDirectory} from './AppDirectory';
 
 interface ExpectedWindow {
-    // Resolves when the window has been seen by the environment. Resolves to the `registered` promise wrapped in a timeout
-    seen: Promise<Boxed<Promise<AppWindow>>>;
+    // Resolves when the window has been created by the environment. Resolves to the `registered` promise wrapped in a timeout
+    created: Promise<Boxed<Promise<AppWindow>>>;
 
     // Resolves when the window has connected to FDC3
     connected: Promise<void>;
@@ -59,7 +59,6 @@ export class Model {
         this._environment = environment;
         this._apiHandler = apiHandler;
 
-        this._environment.windowSeen.add(this.onWindowSeen, this);
         this._environment.windowCreated.add(this.onWindowCreated, this);
         this._environment.windowClosed.add(this.onWindowClosed, this);
 
@@ -92,10 +91,10 @@ export class Model {
         } else {
             const expectedWindow = this.getOrCreateExpectedWindow(identity);
 
-            // Allow a short time between the `expectWindow` call and the window being 'seen'
-            const seenWithinTimeout = withStrictTimeout(Timeouts.WINDOW_EXPECT_TO_SEEN, expectedWindow.seen, EXPECT_TIMEOUT_MESSAGE);
+            // Allow a short time between the `expectWindow` call and the window being created
+            const createdWithinTimeout = withStrictTimeout(Timeouts.WINDOW_EXPECT_TO_CREATED, expectedWindow.created, EXPECT_TIMEOUT_MESSAGE);
 
-            const registeredWithinTimeout = (await seenWithinTimeout).value;
+            const registeredWithinTimeout = (await createdWithinTimeout).value;
             const appWindow = await registeredWithinTimeout;
 
             return appWindow;
@@ -179,20 +178,16 @@ export class Model {
         }, []);
     }
 
-    private onWindowSeen(identity: Identity): void {
-        this.getOrCreateExpectedWindow(identity);
-    }
-
-    private async onWindowCreated(identity: Identity, manifestUrl: string): Promise<void> {
-        const apps = await this._directory.getAllApps();
-        const appInfoFromDirectory = apps.find(app => app.manifest.startsWith(manifestUrl));
+    private async onWindowCreated(identity: Identity): Promise<void> {
+        const expectedWindow = this.getOrCreateExpectedWindow(identity);
+        const appInfoFromDirectory = await this._directory.getAppByUuid(identity.uuid);
 
         if (appInfoFromDirectory) {
             // If the app is in directory, we register it immediately
             this.registerWindow(appInfoFromDirectory, identity, true);
         } else {
             // If the app is not in directory, we'll add it to the model if and when it connects to FDC3
-            allowReject(this.getOrCreateExpectedWindow(identity).connected.then(async () => {
+            allowReject(expectedWindow.connected.then(async () => {
                 let appInfo: Application;
 
                 // Attempt to copy appInfo from another appWindow in the model from the same app
@@ -286,9 +281,9 @@ export class Model {
                 throw new Error(EXPECT_CLOSED_MESSAGE);
             }));
 
-            // Create a promise that resolves once the window has been seen
-            const seen = untilTrue(this._environment.windowSeen, () => {
-                return this._environment.isWindowSeen(identity);
+            // Create a promise that resolves once the window has been created
+            const created = untilTrue(this._environment.windowCreated, () => {
+                return this._environment.isWindowCreated(identity);
             });
 
             // Create a promise that resolves when the window has connected, or rejects when the window closes
@@ -303,12 +298,12 @@ export class Model {
                 return this._windowsById[id];
             }));
 
-            const seenThenRegisteredWithinTimeout = seen.then(() => {
-                return {value: withStrictTimeout(Timeouts.WINDOW_SEEN_TO_REGISTERED, registered, EXPECT_TIMEOUT_MESSAGE)};
+            const createdThenRegisteredWithinTimeout = created.then(() => {
+                return {value: withStrictTimeout(Timeouts.WINDOW_CREATED_TO_REGISTERED, registered, EXPECT_TIMEOUT_MESSAGE)};
             });
 
             const expectedWindow: ExpectedWindow = {
-                seen: seenThenRegisteredWithinTimeout,
+                created: createdThenRegisteredWithinTimeout,
                 connected,
                 registered
             };

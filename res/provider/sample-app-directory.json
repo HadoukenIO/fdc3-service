@@ -1,6 +1,6 @@
 [{
-    "appId": "blotter",
-    "name": "blotter",
+    "appId": "fdc3-blotter",
+    "name": "fdc3-blotter",
     "manifest": "http://localhost:3923/demo/configs/app-blotter.json",
     "manifestType": "openfin",
     "title": "Blotter",
@@ -15,8 +15,8 @@
     "intents": []
 },
 {
-    "appId": "contacts",
-    "name": "contacts",
+    "appId": "fdc3-contacts",
+    "name": "fdc3-contacts",
     "manifest": "http://localhost:3923/demo/configs/app-contacts.json",
     "manifestType": "openfin",
     "title": "Contacts",
@@ -50,6 +50,12 @@
     "icons": [
         {"icon": "http://localhost:3923/demo/img/app-icons/dialer.svg"}
     ],
+    "customConfig": [
+        {
+            "name": "appUuid",
+            "value": "fdc3-dialer"
+        }
+    ],
     "intents": [
         {
             "name": "fdc3.StartCall",
@@ -70,8 +76,8 @@
     ]
 },
 {
-    "appId": "charts-red",
-    "name": "charts-red",
+    "appId": "fdc3-charts-red",
+    "name": "fdc3-charts-red",
     "manifest": "http://localhost:3923/demo/configs/app-charts-red.json",
     "manifestType": "openfin",
     "title": "Charts: Red",
@@ -92,8 +98,8 @@
     ]
 },
 {
-    "appId": "charts-green",
-    "name": "charts-green",
+    "appId": "fdc3-charts-green",
+    "name": "fdc3-charts-green",
     "manifest": "http://localhost:3923/demo/configs/app-charts-green.json",
     "manifestType": "openfin",
     "title": "Charts: Green",
@@ -114,8 +120,8 @@
     ]
 },
 {
-    "appId": "charts-blue",
-    "name": "charts-blue",
+    "appId": "fdc3-charts-blue",
+    "name": "fdc3-charts-blue",
     "manifest": "http://localhost:3923/demo/configs/app-charts-blue.json",
     "manifestType": "openfin",
     "title": "Charts: Blue",

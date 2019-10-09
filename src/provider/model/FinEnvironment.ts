@@ -18,10 +18,12 @@ import {Environment, EntityType} from './Environment';
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 
-interface SeenWindow {
+interface CreatedWindow {
     creationTime: number | undefined;
     index: number;
 }
+
+type CreatedWindowMap = Map<string, CreatedWindow>;
 
 type IntentMap = Set<string>;
 
@@ -32,24 +34,11 @@ type ChannelEventMap = Map<string, Set<Events['type']>>;
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
     /**
-     * Indicates that a window has been seen by the service.
-     *
-     * Unlike the `windowCreated` signal, this will be fired synchronously from the listener for the runtime window-created event,
-     * but does not provide all information provided by the `windowCreated` signal. For a given window, this will always be fired
-     * before the `windowCreated` signal.
+     * Indicates that a window has been created by the service.
      *
      * Arguments: (identity: Identity)
      */
-    public readonly windowSeen: Signal<[Identity]> = new Signal();
-
-    /**
-     * Indicates that a new window has been created.
-     *
-     * When the service first starts, this signal will also be fired for any pre-existing windows.
-     *
-     * Arguments: (identity: Identity, manifestUrl: string)
-     */
-    public readonly windowCreated: Signal<[Identity, string]> = new Signal();
+    public readonly windowCreated: Signal<[Identity]> = new Signal();
 
     /**
      * Indicates that a window has been closed.
@@ -59,7 +48,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public readonly windowClosed: Signal<[Identity]> = new Signal();
 
     private _windowsCreated: number = 0;
-    private readonly _seenWindows: {[id: string]: SeenWindow} = {};
+    private readonly _createdWindows: CreatedWindowMap = new Map<string, CreatedWindow>();
 
     public async createApplication(appInfo: Application, channel: ContextChannel): Promise<void> {
         const [didTimeout] = await withTimeout(
@@ -77,10 +66,10 @@ export class FinEnvironment extends AsyncInit implements Environment {
         identity = parseIdentity(identity);
         const id = getId(identity);
 
-        // If `identity` is an adapter connection, there will not be any seenWindow entry for this identity
+        // If `identity` is an adapter connection, there will not be any createdWindow entry for this identity
         // We will instead take the time at which the identity was wrapped as this "window's" creation time
-        const seenWindow = this._seenWindows[id] || {creationTime: Date.now(), index: this._windowsCreated++};
-        const {creationTime, index} = seenWindow;
+        const createdWindow = this._createdWindows.get(id) || {creationTime: Date.now(), index: this._windowsCreated++};
+        const {creationTime, index} = createdWindow;
 
         return new FinAppWindow(identity, appInfo, channel, creationTime, index);
     }
@@ -126,8 +115,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
         return entityInfo.entityType as EntityType;
     }
 
-    public isWindowSeen(identity: Identity): boolean {
-        return !!this._seenWindows[getId(identity)];
+    public isWindowCreated(identity: Identity): boolean {
+        return this._createdWindows.has(getId(identity));
     }
 
     protected async init(): Promise<void> {
@@ -143,7 +132,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             await Injector.initialized;
             const identity = {uuid: event.uuid, name: event.name};
 
-            delete this._seenWindows[getId(identity)];
+            this._createdWindows.delete(getId(identity));
 
             this.windowClosed.emit(identity);
         });
@@ -160,18 +149,15 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     private async registerWindow(identity: Identity, creationTime: number | undefined): Promise<void> {
-        const seenWindow = {
+        const createdWindow = {
             creationTime,
             index: this._windowsCreated
         };
 
-        this._seenWindows[getId(identity)] = seenWindow;
+        this._createdWindows.set(getId(identity), createdWindow);
         this._windowsCreated++;
 
-        this.windowSeen.emit(identity);
-
-        const info = await fin.Application.wrapSync(identity).getInfo();
-        this.windowCreated.emit(identity, info.manifestUrl);
+        this.windowCreated.emit(identity);
     }
 
     private async isExternalWindow(identity: Identity): Promise<boolean> {
