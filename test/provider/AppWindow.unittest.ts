@@ -156,7 +156,6 @@ describe('When querying if a window is ready to receive contexts', () => {
             jest.advanceTimersByTime(3000);
             await Promise.resolve();
             // This needs to be in two steps because of some peculiarity in how our timeout code works with fake timers
-            jest.advanceTimersByTime(1);
             await Promise.resolve();
 
             expect(timingSpy).toHaveBeenCalledWith(false);
