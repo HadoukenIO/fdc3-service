@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import {Channel, defaultChannel, getCurrentChannel, getSystemChannels, ChannelChangedEvent} from '../../../client/contextChannels';
 import {addEventListener, removeEventListener} from '../../../client/main';
-import {getId} from '../../../provider/model/Model';
+import {getId} from '../../../provider/utils/getId';
 
 import {ContextChannelView} from './ChannelMemberView';
 

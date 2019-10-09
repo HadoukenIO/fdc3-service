@@ -28,7 +28,7 @@ export function parseIdentity(identity: Identity): Identity {
     }
 
     if (error) {
-        throw new TypeError(`${safeStringify(identity, 'Provided Identity')} is not a valid Identity`);
+        throw new TypeError(`${safeStringify(identity, 'The provided Identity')} is not a valid Identity`);
     }
 
     return {uuid: identity.uuid, name: identity.name || identity.uuid};
@@ -53,7 +53,7 @@ export function parseContext(context: Context): Context {
     }
 
     if (error) {
-        throw new TypeError(`${safeStringify(context, 'Provided Context')} is not a valid Context`);
+        throw new TypeError(`${safeStringify(context, 'The provided Context')} is not a valid Context`);
     }
 
     return context;
@@ -64,10 +64,21 @@ export function parseContext(context: Context): Context {
  */
 export function parseChannelId(channelId: ChannelId): ChannelId {
     if (typeof channelId !== 'string') {
-        throw new TypeError(`${safeStringify(channelId, 'Provided ChannelId')} is not a valid ChannelId`);
+        throw new TypeError(`${safeStringify(channelId, 'The provided ChannelId')} is not a valid ChannelId`);
     }
 
     return channelId;
+}
+
+/**
+ * Validates the provided app channel name
+ */
+export function parseAppChannelName(name: string): ChannelId {
+    if (typeof name !== 'string' || name === '') {
+        throw new TypeError(`${safeStringify(name, 'The provided app channel name')} is not a valid app channel name`);
+    }
+
+    return name;
 }
 
 /**

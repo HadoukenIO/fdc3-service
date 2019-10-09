@@ -3,10 +3,10 @@ import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload} from '../client/internal';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, GetOrCreateAppChannelPayload, AppChannelTransport} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Intent, Context} from '../client/main';
 import {FDC3Error, OpenError, IdentityError} from '../client/errors';
-import {parseIdentity, parseContext, parseChannelId} from '../client/validation';
+import {parseIdentity, parseContext, parseChannelId, parseAppChannelName} from '../client/validation';
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
@@ -80,6 +80,7 @@ export class Main {
             [APIFromClientTopic.GET_SYSTEM_CHANNELS]: this.getSystemChannels.bind(this),
             [APIFromClientTopic.GET_CHANNEL_BY_ID]: this.getChannelById.bind(this),
             [APIFromClientTopic.GET_CURRENT_CHANNEL]: this.getCurrentChannel.bind(this),
+            [APIFromClientTopic.GET_OR_CREATE_APP_CHANNEL]: this.getOrCreateAppChannel.bind(this),
             [APIFromClientTopic.CHANNEL_GET_MEMBERS]: this.channelGetMembers.bind(this),
             [APIFromClientTopic.CHANNEL_JOIN]: this.channelJoin.bind(this),
             [APIFromClientTopic.CHANNEL_BROADCAST]: this.channelBroadcast.bind(this),
@@ -202,6 +203,12 @@ export class Main {
         const appWindow = await this.expectWindow(identity);
 
         return appWindow.channel.serialize();
+    }
+
+    private async getOrCreateAppChannel(payload: GetOrCreateAppChannelPayload, source: ProviderIdentity): Promise<AppChannelTransport> {
+        const name = parseAppChannelName(payload.name);
+
+        return this._channelHandler.getAppChannelByName(name).serialize();
     }
 
     private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): ReadonlyArray<Identity> {
