@@ -158,6 +158,7 @@ export class Model {
      */
     public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
         // Get all live apps that support the given intent and context
+        // TODO: Use `AppDirectory.shouldAppSupportIntent` to include apps that we expect to add a listener but haven't yet [SERVICE-556]
         const allLiveWindowGroups = this.extractApplicationsFromWindows(this.windows);
         const liveApps = (await asyncFilter(allLiveWindowGroups, async (group: WindowGroup) => {
             const {application, windows} = group;
@@ -168,7 +169,7 @@ export class Model {
         const directoryApps = (await this._directory.getAllAppsThatShouldSupportIntent(intentType, contextType))
             .filter(app => !this._environment.isRunning(app));
 
-        // TODO: Use `AppDirectory.shouldAppSupportIntent` to include apps that we expect to add a listener but haven't yet [SERVICE-556]
+        // Return apps in consistent order
         return [...liveApps, ...directoryApps].sort((a, b) => this.compareAppsForIntent(a, b, intentType, contextType));
     }
 
