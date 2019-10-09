@@ -160,6 +160,7 @@ export class Model {
         // Get all live apps that support the given intent and context
         // TODO: Use `AppDirectory.shouldAppSupportIntent` to include apps that we expect to add a listener but haven't yet [SERVICE-556]
         const allLiveWindowGroups = this.extractApplicationsFromWindows(this.windows);
+
         const liveApps = (await asyncFilter(allLiveWindowGroups, async (group: WindowGroup) => {
             const {application, windows} = group;
             return windows.some(window => window.hasIntentListener(intentType)) && AppDirectory.mightAppSupportIntent(application, intentType, contextType);
