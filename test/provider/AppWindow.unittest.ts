@@ -72,4 +72,94 @@ describe('When querying if a window has a context listener', () => {
         testAppWindow.removeContextListener();
         expect(testAppWindow.hasContextListener()).toBe(false);
     });
+
+    test('The state of one TestAppWindow does not affect another', () => {
+        const secondTestAppWindow = new TestAppWindow(fakeIdentity, fakeAppInfo, mockChannel, Date.now(), 0);
+        secondTestAppWindow.addContextListener();
+
+        expect(testAppWindow.hasContextListener()).toBe(false);
+    });
+});
+
+describe('When querying if a window is ready to receive contexts', () => {
+    let testAppWindow: TestAppWindow;
+
+    beforeEach(() => {
+        // All tests in this section will use fake timers to allow us to control the Promise races precisely
+        jest.useFakeTimers();
+
+        testAppWindow = new TestAppWindow(fakeIdentity, fakeAppInfo, mockChannel, Date.now(), 0);
+    });
+
+    afterEach(() => {
+        jest.useRealTimers();
+    });
+
+    test('A window with a context listener already registered returns true immediately', async () => {
+        testAppWindow.addContextListener();
+
+        // Use a jest spy to track the timing of when the promise resolves without awaiting
+        const timingSpy = jest.fn();
+        testAppWindow.isReadyToReceiveContext().then(timingSpy);
+
+        // Do not advance time, but let any pending promises be actioned
+        await Promise.resolve();
+
+        // Promise should have resolved immediately, so spy should have been invoked
+        expect(timingSpy).toHaveBeenCalledWith(true);
+    });
+
+    describe('When the window does not have a listener registered', () => {
+        test('If the window was created longer than the timeout in the past, the promise resolves false immediately', async () => {
+            // @ts-ignore Updating the creation time to test old windows
+            testAppWindow._creationTime = Date.now() - 10000;
+
+            // Use a jest spy to track the timing of when the promise resolves without awaiting
+            const timingSpy = jest.fn();
+            testAppWindow.isReadyToReceiveContext().then(timingSpy);
+
+            // Do not advance time, but let any pending promises be actioned
+            await Promise.resolve();
+
+            // Promise should have resolved immediately, so spy should have been invoked
+            expect(timingSpy).toHaveBeenCalledWith(false);
+        });
+
+        test('If the window registers a listener within the timeout, the promise resolves true shortly after registration', async () => {
+            // Use a jest spy to track the timing of when the promise resolves without awaiting
+            const timingSpy = jest.fn();
+            testAppWindow.isReadyToReceiveContext().then(timingSpy);
+
+            jest.advanceTimersByTime(1000);
+            await Promise.resolve();
+            expect(timingSpy).not.toHaveBeenCalled();
+
+            testAppWindow.addContextListener();
+
+            await Promise.resolve();
+            jest.advanceTimersByTime(5000);
+            await Promise.resolve();
+            expect(timingSpy).toHaveBeenCalled();
+        });
+
+        test('If the window has not registered a listener after 5 seconds, the promise resolves false', async () => {
+            // Use a jest spy to track the timing of when the promise resolves without awaiting
+            const timingSpy = jest.fn();
+            testAppWindow.isReadyToReceiveContext().then(timingSpy);
+
+            // Does not fail early
+            jest.advanceTimersByTime(2000);
+            await Promise.resolve();
+            expect(timingSpy).not.toHaveBeenCalled();
+
+            // Advance to the timeout and then slightly past it
+            jest.advanceTimersByTime(3000);
+            await Promise.resolve();
+            // This needs to be in two steps because of some peculiarity in how our timeout code works with fake timers
+            jest.advanceTimersByTime(1);
+            await Promise.resolve();
+
+            expect(timingSpy).toHaveBeenCalledWith(false);
+        });
+    });
 });
