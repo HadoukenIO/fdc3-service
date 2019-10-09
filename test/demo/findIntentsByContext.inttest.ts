@@ -3,8 +3,9 @@ import 'jest';
 import {Context, AppIntent} from '../../src/client/main';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
-import {testManagerIdentity, testAppInDirectory1} from './constants';
+import {testManagerIdentity, testAppInDirectory1, testAppInDirectory4} from './constants';
 import {setupTeardown} from './utils/common';
+import {delay} from './utils/delay';
 
 /**
  * A context missing the mandatory `type` field
@@ -31,25 +32,51 @@ describe('Resolving intents by context, findIntentsByContext', () => {
         });
     });
 
-    describe('When calling findIntentsByContext with a context type not accepted by any directory app', () => {
-        test('The promise resolves to an empty array', async () => {
+    describe('When calling findIntentsByContext with a context not explicity registered by any app', () => {
+        test('The promise resolves to AppIntents for intents that take any context', async () => {
             const receivedAppIntents = await findIntentsByContext(unknownContext);
-            expect(receivedAppIntents).toEqual([]);
+            expect(receivedAppIntents).toEqual([
+                {
+                    intent: {
+                        displayName: 'test.ContextTestIntent',
+                        name: 'test.ContextTestIntent'
+                    },
+                    apps: [
+                        expect.objectContaining({
+                            appId: '400',
+                            name: testAppInDirectory4.name
+                        })
+                    ]
+                }
+            ]);
         });
     });
 
     describe('When calling findIntentsByContext with a context type accepted by some directory app', () => {
         const contactContext = {
-            type: 'fdc3.contact',
+            type: 'test.IntentNameContext',
             name: 'Test Name'
         };
         test('The promise resolves to an array of all compatible AppIntents', async () => {
             const receivedAppIntents = await findIntentsByContext(contactContext);
+
             expect(receivedAppIntents).toEqual([
                 {
                     intent: {
-                        displayName: 'Dial',
-                        name: 'DialCall'
+                        name: 'test.ContextTestIntent',
+                        displayName: 'test.ContextTestIntent'
+                    },
+                    apps: [
+                        expect.objectContaining({
+                            appId: '400',
+                            name: testAppInDirectory4.name
+                        })
+                    ]
+                },
+                {
+                    intent: {
+                        name: 'test.IntentName',
+                        displayName: 'Test Intent'
                     },
                     apps: [
                         expect.objectContaining({

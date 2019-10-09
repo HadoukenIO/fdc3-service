@@ -18,7 +18,8 @@
     "intents": [
         {
             "name": "test.IntentName",
-            "displayName": "Test Intent"
+            "displayName": "Test Intent",
+            "contexts": ["test.IntentNameContext"]
         },
         {
             "name": "DialCall",
@@ -31,17 +32,20 @@
         {
             "name": "StartCall",
             "displayName": "Call",
+            "contexts": ["fdc3.contact"],
             "customConfig": {
                 "icon": "fa-phone"
             }
         },
         {
             "name": "SaveContact",
-            "displayName": "Save"
+            "displayName": "Save",
+            "contexts": ["fdc3.contact"]
         },
         {
             "name": "ViewChart",
-            "displayName": "View Chart"
+            "displayName": "View Chart",
+            "contexts": ["fdc3.instrument"]
         },
         {
             "name": "test.ContextTestIntent",
@@ -71,9 +75,18 @@
             "name": "DialCall",
             "contexts": ["fdc3.contact"]
         },
-        {"name": "StartCall"},
-        {"name": "SaveContact"},
-        {"name": "ViewChart"}
+        {
+            "name": "StartCall",
+            "contexts": ["fdc3.contact"]
+        },
+        {
+            "name": "SaveContact",
+            "contexts": ["fdc3.contact"]
+        },
+        {
+            "name": "ViewChart",
+            "contexts": ["fdc3.instrument"]
+        }
     ]
 },
 {
@@ -98,9 +111,18 @@
             "name": "DialCall",
             "contexts": ["fdc3.contact"]
         },
-        {"name": "StartCall"},
-        {"name": "SaveContact"},
-        {"name": "ViewChart"},
+        {
+            "name": "StartCall",
+            "contexts": ["fdc3.contact"]
+        },
+        {
+            "name": "SaveContact",
+            "contexts": ["fdc3.contact"]
+        },
+        {
+            "name": "ViewChart",
+            "contexts": ["fdc3.instrument"]
+        },
         {
             "name": "test.ContextTestIntent",
             "contexts": ["test.UnmatchingContext"]
@@ -131,12 +153,23 @@
         },
         {
             "name": "DialCall",
-            "contexts": ["fdc3.contactt"]
+            "contexts": ["fdc3.contact"]
         },
-        {"name": "StartCall"},
-        {"name": "SaveContact"},
-        {"name": "ViewChart"},
-        {"name": "test.ContextTestIntent"}
+        {
+            "name": "StartCall",
+            "contexts": ["fdc3.contact"]
+        },
+        {
+            "name": "SaveContact",
+            "contexts": ["fdc3.contact"]
+        },
+        {
+            "name": "ViewChart",
+            "contexts": ["fdc3.instrument"]
+        },
+        {
+            "name": "test.ContextTestIntent"
+        }
     ]
 },
 {
@@ -157,14 +190,26 @@
         }
     ],
     "intents": [
-        {"name": "test.IntentNamePreregistered"},
+        {
+            "name": "test.IntentNamePreregistered",
+            "contexts": ["test.IntentNamePreregisteredContext"]
+        },
         {
             "name": "DialCall",
             "contexts": ["fdc3.contact"]
         },
-        {"name": "StartCall"},
-        {"name": "SaveContact"},
-        {"name": "ViewChart"}
+        {
+            "name": "StartCall",
+            "contexts": ["fdc3.contact"]
+        },
+        {
+            "name": "SaveContact",
+            "contexts": ["fdc3.contact"]
+        },
+        {
+            "name": "ViewChart",
+            "contexts": ["fdc3.instrument"]
+        }
     ]
 },
 {
@@ -189,9 +234,18 @@
             "name": "DialCall",
             "contexts": ["fdc3.contact"]
         },
-        {"name": "StartCall"},
-        {"name": "SaveContact"},
-        {"name": "ViewChart"}
+        {
+            "name": "StartCall",
+            "contexts": ["fdc3.contact"]
+        },
+        {
+            "name": "SaveContact",
+            "contexts": ["fdc3.contact"]
+        },
+        {
+            "name": "ViewChart",
+            "contexts": ["fdc3.instrument"]
+        }
     ]
 },
 {

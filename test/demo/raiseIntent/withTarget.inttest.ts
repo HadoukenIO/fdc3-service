@@ -1,8 +1,6 @@
 import 'jest';
 import 'reflect-metadata';
 
-import {Identity} from 'hadouken-js-adapter';
-
 import {ResolveError} from '../../../src/client/errors';
 import {Intent} from '../../../src/client/intents';
 import {Timeouts} from '../../../src/provider/constants';
@@ -18,7 +16,7 @@ import {allowReject} from '../../../src/provider/utils/async';
  */
 const preregisteredIntent: Intent = {
     type: 'test.IntentNamePreregistered',
-    context: {type: 'preregistered.context'}
+    context: {type: 'test.IntentNamePreregisteredContext'}
 };
 
 /**
@@ -27,7 +25,7 @@ const preregisteredIntent: Intent = {
 const validIntent: Intent = {
     type: 'test.IntentName',
     context: {
-        type: 'contact',
+        type: 'test.IntentNameContext',
         name: 'Test Name',
         id: {
             twitter: 'testname'
