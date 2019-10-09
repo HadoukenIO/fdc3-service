@@ -158,17 +158,23 @@ export class Model {
      */
     public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
         // Get all live apps that support the given intent and context
-        // TODO: Use `AppDirectory.shouldAppSupportIntent` to include apps that we expect to add a listener but haven't yet [SERVICE-556]
+        // TODO: Include apps that should add a listener but haven't yet, where the timeout has not expired [SERVICE-556]
         const allLiveWindowGroups = this.extractApplicationsFromWindows(this.windows);
 
         const liveApps = (await asyncFilter(allLiveWindowGroups, async (group: WindowGroup) => {
             const {application, windows} = group;
-            return windows.some(window => window.hasIntentListener(intentType)) && AppDirectory.mightAppSupportIntent(application, intentType, contextType);
+
+            const hasIntentListener = windows.some(window => window.hasIntentListener(intentType));
+
+            return hasIntentListener && AppDirectory.mightAppSupportIntent(application, intentType, contextType);
         })).map(group => group.application);
 
         // Get all directory apps that support the given intent and context
-        const directoryApps = (await this._directory.getAllAppsThatShouldSupportIntent(intentType, contextType))
-            .filter(app => !this._environment.isRunning(app));
+        // TODO: Include apps that are running with no registered windows, and still may register a window within the timeout [SERVICE-556]
+        const directoryApps = await asyncFilter(
+            await this._directory.getAllAppsThatShouldSupportIntent(intentType, contextType),
+            async (app) => !(await this._environment.isRunning(app))
+        );
 
         // Return apps in consistent order
         return [...liveApps, ...directoryApps].sort((a, b) => this.compareAppsForIntent(a, b, intentType, contextType));

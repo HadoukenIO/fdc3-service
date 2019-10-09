@@ -232,10 +232,8 @@ function setupNoDirectoryAppCanHandleIntentTests(intent: Intent): void {
         const listener1 = setupStartNonDirectoryAppWithIntentListenerBookends(intent, testAppNotInDirectory1);
 
         describe('Just 1 ad-hoc app with a listener registered for the intent', () => {
-            test.only('When calling raiseIntent the listener is triggered once', async () => {
-                console.log('**** raising intent');
+            test('When calling raiseIntent the listener is triggered once', async () => {
                 await raiseIntent(intent);
-                console.log('**** raised intent');
 
                 const receivedContexts = await listener1.value.getReceivedContexts();
                 expect(receivedContexts).toEqual([intent.context]);
