@@ -10,6 +10,7 @@ import {APIFromClientTopic} from '../../client/internal';
 import {SYSTEM_CHANNELS, Timeouts} from '../constants';
 import {withStrictTimeout, untilTrue, allowReject, untilSignal, asyncFilter, asyncMap} from '../utils/async';
 import {Boxed} from '../utils/types';
+import {getId} from '../utils/getId';
 
 import {AppWindow} from './AppWindow';
 import {ContextChannel, DefaultContextChannel, SystemContextChannel} from './ContextChannel';
@@ -37,14 +38,6 @@ interface WindowGroup {
 
 const EXPECT_TIMEOUT_MESSAGE = 'Timeout on window registration exceeded';
 const EXPECT_CLOSED_MESSAGE = 'Window closed before registration completed';
-
-/**
- * Generates a unique `string` id for a window based on its application's uuid and window name
- * @param identity
- */
-export function getId(identity: Identity): string {
-    return `${identity.uuid}/${identity.name || identity.uuid}`;
-}
 
 @injectable()
 export class Model {
@@ -117,6 +110,14 @@ export class Model {
         }
     }
 
+    public getChannel(id: ChannelId): ContextChannel|null {
+        return this._channelsById[id] || null;
+    }
+
+    public setChannel(channel: ContextChannel): void {
+        this._channelsById[channel.id] = channel;
+    }
+
     /**
      * Returns all registered windows for an app, waiting for at least one window
      */
@@ -137,10 +138,6 @@ export class Model {
             matchingWindows = await signalPromise;
         }
         return matchingWindows;
-    }
-
-    public getChannel(id: ChannelId): ContextChannel|null {
-        return this._channelsById[id] || null;
     }
 
     public async ensureRunning(appInfo: Application): Promise<void> {

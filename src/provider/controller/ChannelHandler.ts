@@ -4,7 +4,7 @@ import {Signal} from 'openfin-service-signal';
 import {Model} from '../model/Model';
 import {Inject} from '../common/Injectables';
 import {ChannelId, FDC3Error, ChannelError, Context} from '../../client/main';
-import {SystemContextChannel, ContextChannel} from '../model/ContextChannel';
+import {SystemContextChannel, ContextChannel, AppContextChannel} from '../model/ContextChannel';
 import {AppWindow} from '../model/AppWindow';
 import {ChannelEvents} from '../../client/internal';
 
@@ -32,8 +32,17 @@ export class ChannelHandler {
         return this._model.channels.filter<SystemContextChannel>(this.isSystemChannel);
     }
 
-    public getWindowsListeningToChannel(channel: ContextChannel): AppWindow[] {
-        return this._model.windows.filter(window => window.hasChannelContextListener(channel));
+    public getAppChannelByName(name: string): AppContextChannel {
+        const channelId = `app-channel-${name}`;
+
+        let channel = this._model.getChannel(channelId) as AppContextChannel | null;
+
+        if (!channel) {
+            channel = new AppContextChannel(channelId, name);
+            this._model.setChannel(channel);
+        }
+
+        return channel;
     }
 
     public getChannelById(channelId: ChannelId): ContextChannel {
@@ -41,8 +50,12 @@ export class ChannelHandler {
         return this._model.getChannel(channelId)!;
     }
 
+    public getWindowsListeningToChannel(channel: ContextChannel): AppWindow[] {
+        return this._model.windows.filter(window => window.hasChannelContextListener(channel));
+    }
+
     public getChannelContext(channel: ContextChannel): Context | null {
-        return channel.getStoredContext();
+        return channel.storedContext;
     }
 
     public getChannelMembers(channel: ContextChannel): AppWindow[] {

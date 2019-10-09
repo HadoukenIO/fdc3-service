@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import {Application} from '../../../client/directory';
+import {Application} from '../../../../client/directory';
 
-import './AppCard.css';
+import './AppCard.scss';
 
 interface AppCardProps {
     app: Application;

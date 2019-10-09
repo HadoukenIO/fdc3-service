@@ -12,11 +12,11 @@ import {parseIdentity} from '../../client/validation';
 import {DeferredPromise} from '../common/DeferredPromise';
 import {Events, ChannelEvents} from '../../client/internal';
 import {Injector} from '../common/Injector';
+import {getId} from '../utils/getId';
 
 import {Environment, EntityType} from './Environment';
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
-import {getId} from './Model';
 
 interface SeenWindow {
     creationTime: number | undefined;
