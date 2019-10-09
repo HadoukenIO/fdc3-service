@@ -72,7 +72,7 @@ beforeEach(async () => {
 
 describe('When creating a directory FDC3 app', () => {
     const testWindow: TestWindow = {
-        createdTime: 990,
+        createdTime: 1000,
         appType: 'directory'
     };
 
@@ -97,7 +97,7 @@ describe('When creating a directory FDC3 app', () => {
         expectTest(testWindow, 8000, [
             [
                 'When a window is expected while the window is being registered, the window promise rejects',
-                {callTime: 1500, finalizeTime: 990 + Timeouts.WINDOW_CREATED_TO_REGISTERED, result: 'reject-timeout'}
+                {callTime: 1500, finalizeTime: 1000 + Timeouts.WINDOW_CREATED_TO_REGISTERED, result: 'reject-timeout'}
             ],
             [
                 'When a window is expected shortly before the window is registered, the window promise rejects',
@@ -108,7 +108,7 @@ describe('When creating a directory FDC3 app', () => {
 
     describe('When a window is closed while pending', () => {
         const neverCreatedWindow: TestWindow = {
-            createdTime: 990,
+            createdTime: 1000,
             closeTime: 1000,
             appType: 'directory'
         };
@@ -116,14 +116,14 @@ describe('When creating a directory FDC3 app', () => {
         expectTest(neverCreatedWindow, 3000, [
             [
                 'When a window is expected shortly before it is created, the promise rejects',
-                {callTime: 950, finalizeTime: 1000, result: 'reject-closed'}
+                {callTime: 950, finalizeTime: 1200, result: 'reject-closed'}
             ]
         ]);
     });
 
     describe('When a window is closed after being created', () => {
         const fastCloseWindow: TestWindow = {
-            createdTime: 990,
+            createdTime: 1000,
             closeTime: 2000,
             appType: 'directory'
         };
@@ -138,7 +138,7 @@ describe('When creating a directory FDC3 app', () => {
 
     describe('When a window is closed after being registered', () => {
         const slowCloseWindow: TestWindow = {
-            createdTime: 990,
+            createdTime: 1000,
             closeTime: 4000,
             appType: 'directory'
         };
@@ -154,13 +154,13 @@ describe('When creating a directory FDC3 app', () => {
 
 describe('When creating a non-directory FDC3 app', () => {
     const fastConnectWindow: TestWindow = {
-        createdTime: 990,
+        createdTime: 1000,
         connectionTime: 4000,
         appType: 'non-directory'
     };
 
     const slowConnectWindow: TestWindow = {
-        createdTime: 990,
+        createdTime: 1000,
         connectionTime: 7000,
         appType: 'non-directory'
     };
@@ -203,11 +203,11 @@ describe('When creating a non-directory FDC3 app', () => {
         expectTest(slowConnectWindow, 3000, [
             [
                 'When a window is expected before the app directory has returned, the window promise rejects',
-                {callTime: 2500, finalizeTime: 990 + Timeouts.WINDOW_CREATED_TO_REGISTERED, result: 'reject-timeout'}
+                {callTime: 2500, finalizeTime: 1000 + Timeouts.WINDOW_CREATED_TO_REGISTERED, result: 'reject-timeout'}
             ],
             [
                 'When a window is expected after the app directory has returned but before it is registered, the window promise rejects',
-                {callTime: 3500, finalizeTime: 990 + Timeouts.WINDOW_CREATED_TO_REGISTERED, result: 'reject-timeout'}
+                {callTime: 3500, finalizeTime: 1000 + Timeouts.WINDOW_CREATED_TO_REGISTERED, result: 'reject-timeout'}
             ],
             [
                 'When a window is expected shortly before the window is registered, the window promise rejects',
@@ -228,9 +228,9 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
 
         const appDirectoryResultPromise = new DeferredPromise();
 
-        mockAppDirectory.getAllApps.mockImplementationOnce(async (): Promise<Application[]> => {
+        mockAppDirectory.getAppByUuid.mockImplementation(async (): Promise<Application | null> => {
             await appDirectoryResultPromise.promise;
-            return testWindow.appType === 'directory' ? [mockApplication] : [];
+            return testWindow.appType === 'directory' ? mockApplication : null;
         });
 
         mockEnvironment.wrapApplication.mockImplementationOnce((appInfo: Application, testIdentity: Identity, channel: ContextChannel): AppWindow => {
