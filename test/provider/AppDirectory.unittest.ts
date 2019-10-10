@@ -8,7 +8,7 @@ import {AppIntent} from '../../src/client/main';
 import {AppDirectory} from '../../src/provider/model/AppDirectory';
 import {ConfigurationObject} from '../../gen/provider/config/fdc3-config';
 import {ConfigStoreBinding} from '../../src/provider/model/ConfigStore';
-import {createFakeApp} from '../demo/utils/unit/fakes';
+import {createFakeApp, createFakeIntent, createFakeContextType} from '../demo/utils/unit/fakes';
 
 enum StorageKeys {
     URL = 'fdc3@url',
@@ -33,6 +33,12 @@ let appDirectory: AppDirectory;
 
 const fakeApp1: Application = {
     ...createFakeApp(),
+    customConfig: [
+        {
+            'name': 'appUuid',
+            'value': 'customUuid'
+        }
+    ],
     intents: [
         {
             name: 'testIntent.StartChat',
@@ -185,6 +191,25 @@ describe('When querying the Directory', () => {
     it('Can get applicaiton by name', async () => {
         const app = await appDirectory.getAppByName(fakeApp1.name);
         expect(app).not.toBeNull();
+    });
+
+    describe('With a custom appUuid is not defined', () => {
+        it('Can get application by uuid using appId', async () => {
+            const app = await appDirectory.getAppByUuid(fakeApp2.appId);
+            expect(app).not.toBeNull();
+        });
+    });
+
+    describe('With a custom appUuid is defined', () => {
+        it('Can get application by uuid with appUuid property in customConfig', async () => {
+            const app = await appDirectory.getAppByUuid('customUuid');
+            expect(app).not.toBeNull();
+        });
+
+        it('Cannot get application by uuid using appId', async () => {
+            const app = await appDirectory.getAppByUuid(fakeApp2.appId);
+            expect(app).toBeNull();
+        });
     });
 
     it('Can get application by intent', async () => {

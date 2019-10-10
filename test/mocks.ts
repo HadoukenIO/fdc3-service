@@ -48,14 +48,13 @@ export function createMockChannel(): jest.Mocked<ContextChannel> {
 
 export function createMockEnvironmnent(): jest.Mocked<Environment> {
     return {
-        windowSeen: new Signal<[Identity]>(),
-        windowCreated: new Signal<[Identity, string]>(),
+        windowCreated: new Signal<[Identity]>(),
         windowClosed: new Signal<[Identity]>(),
         isRunning: jest.fn<Promise<boolean>, [Application]>(),
         createApplication: jest.fn<Promise<void>, [Application, ContextChannel]>(),
         wrapApplication: jest.fn<AppWindow, [Application, Identity, ContextChannel]>(),
         inferApplication: jest.fn<Promise<Application>, [Identity]>(),
         getEntityType: jest.fn<Promise<EntityType>, [Identity]>(),
-        isWindowSeen: jest.fn<boolean, [Identity]>()
+        isWindowCreated: jest.fn<boolean, [Identity]>()
     };
 }

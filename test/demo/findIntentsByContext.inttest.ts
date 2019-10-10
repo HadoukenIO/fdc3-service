@@ -80,7 +80,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
                     },
                     apps: [
                         expect.objectContaining({
-                            appId: '100',
+                            appId: 'test-app-1',
                             name: testAppInDirectory1.name
                         })
                     ]

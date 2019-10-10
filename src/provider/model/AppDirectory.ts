@@ -3,6 +3,8 @@ import {injectable, inject} from 'inversify';
 import {Inject} from '../common/Injectables';
 import {Application, AppName, Intent} from '../../client/directory';
 import {AsyncInit} from '../controller/AsyncInit';
+import {CustomConfigFields} from '../constants';
+import {checkCustomConfigField} from '../utils/helpers';
 
 import {ConfigStoreBinding} from './ConfigStore';
 
@@ -51,6 +53,11 @@ export class AppDirectory extends AsyncInit {
         return undefined;
     }
 
+    public static getUuidFromApp(app: Application): string {
+        const customValue = checkCustomConfigField(app, CustomConfigFields.OPENFIN_APP_UUID);
+        return customValue !== undefined ? customValue : app.appId;
+    }
+
     private static intentSupportsContext(intent: Intent, contextType: string): boolean {
         return intent.contexts === undefined || intent.contexts.length === 0 || intent.contexts.includes(contextType);
     }
@@ -78,6 +85,10 @@ export class AppDirectory extends AsyncInit {
 
     public async getAllAppsThatShouldSupportIntent(intentType: string, contextType?: string): Promise<Application[]> {
         return this._directory.filter(app => AppDirectory.shouldAppSupportIntent(app, intentType, contextType));
+    }
+
+    public async getAppByUuid(uuid: string): Promise<Application | null> {
+        return this._directory.find(app => AppDirectory.getUuidFromApp(app) === uuid) || null;
     }
 
     /**
