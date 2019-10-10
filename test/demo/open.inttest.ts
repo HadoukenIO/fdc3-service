@@ -206,7 +206,7 @@ and does not trigger the context listener of the already open app', async () => 
             await expect(fin.Application.wrapSync(testAppDelayedPreregisterShort).isRunning()).resolves.toBe(true);
         });
 
-        test('the context is received by the listener', async () =>{
+        test('The context is received by the listener', async () =>{
             await openPromise;
 
             await delay(1000);
@@ -234,7 +234,7 @@ and does not trigger the context listener of the already open app', async () => 
             await expect(fin.Application.wrapSync(testAppDelayedPreregisterLong).isRunning()).resolves.toBe(true);
         });
 
-        test('the context is not received by the listener', async () =>{
+        test('The context is not received by the listener', async () =>{
             await openPromise;
 
             await delay(Duration.LISTENER_TIMEOUT);
