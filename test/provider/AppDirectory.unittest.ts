@@ -8,6 +8,7 @@ import {AppIntent} from '../../src/client/main';
 import {AppDirectory} from '../../src/provider/model/AppDirectory';
 import {ConfigurationObject} from '../../gen/provider/config/fdc3-config';
 import {ConfigStoreBinding} from '../../src/provider/model/ConfigStore';
+import {createFakeApp} from '../demo/utils/unit/fakes';
 
 enum StorageKeys {
     URL = 'fdc3@url',
@@ -31,10 +32,7 @@ const DEV_APP_DIRECTORY_URL = 'http://openfin.co';
 let appDirectory: AppDirectory;
 
 const fakeApp1: Application = {
-    appId: '1',
-    name: 'App 1',
-    manifestType: '',
-    manifest: '',
+    ...createFakeApp(),
     intents: [
         {
             name: 'testIntent.StartChat',
@@ -49,10 +47,7 @@ const fakeApp1: Application = {
 };
 
 const fakeApp2: Application = {
-    appId: '2',
-    name: 'App 2',
-    manifestType: '',
-    manifest: '',
+    ...createFakeApp(),
     intents: [{
         name: 'testIntent.StartChat',
         contexts: ['testContext.User', 'testContext.Bot'],
@@ -188,12 +183,116 @@ describe('When querying the Directory', () => {
     });
 
     it('Can get applicaiton by name', async () => {
-        const app = await appDirectory.getAppByName('App 1');
+        const app = await appDirectory.getAppByName(fakeApp1.name);
         expect(app).not.toBeNull();
     });
 
     it('Can get application by intent', async () => {
         const apps = await appDirectory.getAllAppsThatShouldSupportIntent('testIntent.SendEmail');
         expect(apps).toHaveLength(1);
+    });
+});
+
+describe('When querying individual applications', () => {
+    describe('When an app has an intent with no contexts', () => {
+        it('The app might support that intent', () => {
+
+        });
+
+        it('The app might support an arbitrary intent', () => {
+
+        });
+
+        it('The app might support that intent with an arbitray context', () => {
+
+        });
+
+        it('The app is expected to support that intent', () => {
+
+        });
+
+        it('The app is not expected to support an arbitrary intent', () => {
+
+        });
+
+        it('The app is not expected to support that intent with an arbitray context', () => {
+
+        });
+    });
+
+    describe('When an app has an intent with multiple contexts', () => {
+        it('The app might support that intent', () => {
+
+        });
+
+        it('The app might support an arbitrary intent', () => {
+
+        });
+
+        it('The app might support that intent with each of its contexts', () => {
+
+        });
+
+        it('The app will not support that intent with an arbitrary context', () => {
+
+        });
+
+        it('The app is expected to support that intent', () => {
+
+        });
+
+        it('The app is not expected to support an arbitrary intent', () => {
+
+        });
+
+        it('The app is expected to support that intent with each of its contexts', () => {
+
+        });
+
+        it('The app is not expect to support that intent with an arbitrary context', () => {
+
+        });
+    });
+
+    describe('When an app has multiple intents', () => {
+        it('The app might support each of its intents', () => {
+
+        });
+
+        it('The app might support an arbitrary intent', () => {
+
+        });
+
+        it('The app might support each intent with each of its contexts', () => {
+
+        });
+
+        it('For intents with no contexts, the app might support those intents with an arbitray context', () => {
+
+        });
+
+        it('For intents with contexts, the app will not support those intents with an arbitray context', () => {
+
+        });
+
+        it('The app is expected to support each of its intents', () => {
+
+        });
+
+        it('The app is not expected to support an arbitrary intent', () => {
+
+        });
+
+        it('For intents with contexts, the app is expected to support each of those intents with each intent\'s contexts', () => {
+
+        });
+
+        it('For intents with contexts, the app is not expected to support each of those intents with contexts of a different intent', () => {
+
+        });
+
+        it('For intents with no contexts, the app is expected to support each of those intents with an arbitrary context', () => {
+
+        });
     });
 });

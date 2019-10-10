@@ -14,7 +14,7 @@ enum StorageKeys {
 @injectable()
 export class AppDirectory extends AsyncInit {
     /**
-     * Test if an app *might* support an intent - i.e., were the app is running and had the appropriate listener added,
+     * Test if an app *might* support an intent - i.e., were the app running and had the appropriate listener added,
      * should we regard it as supporting this intent (and optionally context)
      */
     public static mightAppSupportIntent(app: Application, intentType: string, contextType?: string): boolean {
