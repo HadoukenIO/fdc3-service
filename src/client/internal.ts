@@ -72,8 +72,8 @@ export type APIFromClient = {
     [APIFromClientTopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
     [APIFromClientTopic.ADD_INTENT_LISTENER]: [AddIntentListenerPayload, void];
     [APIFromClientTopic.REMOVE_INTENT_LISTENER]: [RemoveIntentListenerPayload, void];
-    [APIFromClientTopic.ADD_CONTEXT_LISTENER]: [addContextListenerPayload, void];
-    [APIFromClientTopic.REMOVE_CONTEXT_LISTENER]: [addContextListenerPayload, void];
+    [APIFromClientTopic.ADD_CONTEXT_LISTENER]: [AddContextListenerPayload, void];
+    [APIFromClientTopic.REMOVE_CONTEXT_LISTENER]: [AddContextListenerPayload, void];
     [APIFromClientTopic.GET_SYSTEM_CHANNELS]: [GetSystemChannelsPayload, SystemChannelTransport[]];
     [APIFromClientTopic.GET_CHANNEL_BY_ID]: [GetChannelByIdPayload, ChannelTransport];
     [APIFromClientTopic.GET_CURRENT_CHANNEL]: [GetCurrentChannelPayload, ChannelTransport];
@@ -221,11 +221,11 @@ export interface RemoveIntentListenerPayload {
     intent: string;
 }
 
-export interface addContextListenerPayload {
+export interface AddContextListenerPayload {
 
 }
 
-export interface removeContextListenerPayload {
+export interface RemoveContextListenerPayload {
 
 }
 

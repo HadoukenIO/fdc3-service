@@ -3,7 +3,7 @@ import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, addContextListenerPayload, removeContextListenerPayload, GetOrCreateAppChannelPayload, AppChannelTransport} from '../client/internal';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, AddContextListenerPayload, RemoveContextListenerPayload, GetOrCreateAppChannelPayload, AppChannelTransport} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Intent, Context} from '../client/main';
 import {FDC3Error, OpenError, IdentityError} from '../client/errors';
 import {parseIdentity, parseContext, parseChannelId, parseAppChannelName} from '../client/validation';
@@ -192,13 +192,13 @@ export class Main {
         }
     }
 
-    private async addContextListener(payload: addContextListenerPayload, source: ProviderIdentity): Promise<void> {
+    private async addContextListener(payload: AddContextListenerPayload, source: ProviderIdentity): Promise<void> {
         const appWindow = await this.expectWindow(source);
 
         appWindow.addContextListener();
     }
 
-    private removeContextListener(payload: removeContextListenerPayload, source: ProviderIdentity): void {
+    private removeContextListener(payload: RemoveContextListenerPayload, source: ProviderIdentity): void {
         const appWindow = this.attemptGetWindow(source);
         if (appWindow) {
             appWindow.removeContextListener();
