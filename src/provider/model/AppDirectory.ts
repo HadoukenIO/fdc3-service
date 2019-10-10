@@ -83,10 +83,6 @@ export class AppDirectory extends AsyncInit {
         }) || null;
     }
 
-    public async getAllAppsThatShouldSupportIntent(intentType: string, contextType?: string): Promise<Application[]> {
-        return this._directory.filter(app => AppDirectory.shouldAppSupportIntent(app, intentType, contextType));
-    }
-
     public async getAppByUuid(uuid: string): Promise<Application | null> {
         return this._directory.find(app => AppDirectory.getUuidFromApp(app) === uuid) || null;
     }

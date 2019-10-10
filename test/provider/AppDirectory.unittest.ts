@@ -7,7 +7,7 @@ import {Application} from '../../src/client/directory';
 import {AppDirectory} from '../../src/provider/model/AppDirectory';
 import {ConfigurationObject} from '../../gen/provider/config/fdc3-config';
 import {ConfigStoreBinding} from '../../src/provider/model/ConfigStore';
-import {createFakeApp, createFakeIntent, createFakeContextType} from '../demo/utils/unit/fakes';
+import {createFakeApp, createFakeIntent, createFakeContextType} from '../demo/utils/fakes';
 
 enum StorageKeys {
     URL = 'fdc3@url',
@@ -209,11 +209,6 @@ describe('When querying the Directory', () => {
             const app = await appDirectory.getAppByUuid(fakeApp1.appId);
             expect(app).toBeNull();
         });
-    });
-
-    it('Can get application by intent', async () => {
-        const apps = await appDirectory.getAllAppsThatShouldSupportIntent('testIntent.SendEmail');
-        expect(apps).toHaveLength(1);
     });
 });
 

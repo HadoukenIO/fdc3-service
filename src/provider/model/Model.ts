@@ -168,8 +168,8 @@ export class Model {
         // Get all directory apps that support the given intent and context
         // TODO: Include apps that are running with no registered windows, and still may register a window within the timeout [SERVICE-556]
         const directoryApps = await asyncFilter(
-            await this._directory.getAllAppsThatShouldSupportIntent(intentType, contextType),
-            async (app) => !(await this._environment.isRunning(app))
+            await this._directory.getAllApps(),
+            async (app) => AppDirectory.shouldAppSupportIntent(app, intentType, contextType) && !(await this._environment.isRunning(app))
         );
 
         // Return apps in consistent order
@@ -259,6 +259,7 @@ export class Model {
 
             // If we're unable to copy appInfo from another window, attempt to use the app directory, or infer from environment
             const appInfoFromDirectory = await this._directory.getAppByUuid(identity.uuid);
+
             const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
 
             if (!registered) {
