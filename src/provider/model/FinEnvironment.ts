@@ -17,6 +17,7 @@ import {getId} from '../utils/getId';
 import {Environment, EntityType} from './Environment';
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
+import {AppDirectory} from './AppDirectory';
 
 interface CreatedWindow {
     creationTime: number | undefined;
@@ -51,12 +52,10 @@ export class FinEnvironment extends AsyncInit implements Environment {
     private readonly _createdWindows: CreatedWindowMap = new Map<string, CreatedWindow>();
 
     public async isRunning(appInfo: Application): Promise<boolean> {
-        // TODO: This can be simplified once we change how we map between OpenFin apps and directory entries [SERVICE-617]
-        const runningApplications = await Promise.all((await fin.System.getAllApplications())
-            .filter(info => info.isRunning)
-            .map(info => fin.Application.wrapSync({uuid: info.uuid})));
+        const uuid = AppDirectory.getUuidFromApp(appInfo);
+        const finApp = fin.Application.wrapSync({uuid});
 
-        return (await Promise.all(runningApplications.map(app => app.getInfo()))).some(info => info.manifestUrl === appInfo.manifest);
+        return finApp.isRunning();
     }
 
     public async createApplication(appInfo: Application, channel: ContextChannel): Promise<void> {
