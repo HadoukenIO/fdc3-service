@@ -35,6 +35,12 @@ const fakeApp1: Application = {
     name: 'App 1',
     manifestType: '',
     manifest: '',
+    customConfig: [
+        {
+            'name': 'appUuid',
+            'value': 'customUuid'
+        }
+    ],
     intents: [
         {
             name: 'testIntent.StartChat',
@@ -187,9 +193,28 @@ describe('When querying the Directory', () => {
         expect(apps).toEqual(fakeApps);
     });
 
-    it('Can get applicaiton by name', async () => {
+    it('Can get application by name', async () => {
         const app = await appDirectory.getAppByName('App 1');
         expect(app).not.toBeNull();
+    });
+
+    describe('With a custom appUuid is not defined', () => {
+        it('Can get application by uuid using appId', async () => {
+            const app = await appDirectory.getAppByUuid('2');
+            expect(app).not.toBeNull();
+        });
+    });
+
+    describe('With a custom appUuid is defined', () => {
+        it('Can get application by uuid with appUuid property in customConfig', async () => {
+            const app = await appDirectory.getAppByUuid('customUuid');
+            expect(app).not.toBeNull();
+        });
+
+        it('Cannot get application by uuid using appId', async () => {
+            const app = await appDirectory.getAppByUuid('1');
+            expect(app).toBeNull();
+        });
     });
 
     it('Can get application by intent', async () => {

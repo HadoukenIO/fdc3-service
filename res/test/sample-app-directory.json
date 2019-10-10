@@ -1,5 +1,5 @@
 [{
-    "appId": "100",
+    "appId": "test-app-1",
     "name": "test-app-1",
     "manifest": "http://localhost:3923/test/configs/test-app-1.json",
     "manifestType": "openfin",
@@ -50,7 +50,7 @@
     ]
 },
 {
-    "appId": "200",
+    "appId": "unmatchingAppId",
     "name": "test-app-2",
     "manifest": "http://localhost:3923/test/configs/test-app-2.json",
     "manifestType": "openfin",
@@ -71,10 +71,16 @@
         {"name": "StartCall"},
         {"name": "SaveContact"},
         {"name": "ViewChart"}
+    ],
+    "customConfig": [
+        {
+            "name": "appUuid",
+            "value": "test-app-2"
+        }
     ]
 },
 {
-    "appId": "300",
+    "appId": "test-app-3",
     "name": "test-app-3",
     "manifest": "http://localhost:3923/test/configs/test-app-3.json",
     "manifestType": "openfin",
@@ -102,7 +108,7 @@
     ]
 },
 {
-    "appId": "400",
+    "appId": "test-app-4",
     "name": "test-app-4",
     "manifest": "http://localhost:3923/test/configs/test-app-4.json",
     "manifestType": "openfin",
@@ -128,7 +134,7 @@
     ]
 },
 {
-    "appId": "500",
+    "appId": "test-app-preregistered-1",
     "name": "test-app-preregistered-1",
     "manifest": "http://localhost:3923/test/configs/test-app-preregistered-1.json",
     "manifestType": "openfin",
@@ -153,7 +159,7 @@
     ]
 },
 {
-    "appId": "600",
+    "appId": "test-app-preregistered-2",
     "name": "test-app-preregistered-2",
     "manifest": "http://localhost:3923/test/configs/test-app-preregistered-2.json",
     "manifestType": "openfin",
@@ -177,7 +183,7 @@
     ]
 },
 {
-    "appId": "700",
+    "appId": "test-app-invalid-manifest",
     "name": "test-app-invalid-manifest",
     "manifest": "http://localhost:3923/test/configs/non-existent-manifest.json",
     "manifestType": "openfin",
@@ -196,7 +202,7 @@
     "intents": []
 },
 {
-    "appId": "800",
+    "appId": "test-app-takes-long-to-load-manifest",
     "name": "test-app-takes-long-to-load-manifest",
     "manifest": "http://localhost:3923/fakeDelay/?t=30500",
     "manifestType": "openfin",
@@ -215,7 +221,7 @@
     "intents": []
 },
 {
-    "appId": "900",
+    "appId": "test-app-delayed-preregister-short",
     "name": "test-app-delayed-preregister-short",
     "manifest": "http://localhost:3923/test/configs/test-app-delayed-preregister-short.json",
     "manifestType": "openfin",
@@ -234,7 +240,7 @@
     "intents": []
 },
 {
-    "appId": "1000",
+    "appId": "test-app-delayed-preregister-long",
     "name": "test-app-delayed-preregister-long",
     "manifest": "http://localhost:3923/test/configs/test-app-delayed-preregister-long.json",
     "manifestType": "openfin",

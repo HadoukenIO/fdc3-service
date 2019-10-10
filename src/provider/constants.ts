@@ -20,12 +20,16 @@ export const Timeouts = {
     /**
      * Time service allows for a `window-created` event after a client expects the window to exist
      */
-    WINDOW_EXPECT_TO_SEEN: 250,
+    WINDOW_EXPECT_TO_CREATED: 250,
 
     /**
-     * Time service allows for a window to go from first seen to being fully registered with the model
+     * Time service allows for a window to go from first created to being fully registered with the model
      */
-    WINDOW_SEEN_TO_REGISTERED: 5000
+    WINDOW_CREATED_TO_REGISTERED: 5000
+};
+
+export const CustomConfigFields = {
+    OPENFIN_APP_UUID: 'appUuid'
 };
 
 export const SYSTEM_CHANNELS = [
