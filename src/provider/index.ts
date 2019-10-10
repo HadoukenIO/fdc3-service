@@ -20,6 +20,8 @@ import {ChannelHandler} from './controller/ChannelHandler';
 import {AppWindow} from './model/AppWindow';
 import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
+import {withTimeout} from './utils/async';
+import {Timeouts} from './constants';
 
 @injectable()
 export class Main {
@@ -108,17 +110,24 @@ export class Main {
         }
 
         // This can throw FDC3Errors if app fails to open or times out
-        const appWindows = await this._model.findOrCreate(appInfo);
+        await this._model.ensureRunning(appInfo);
 
-        await Promise.all(appWindows.map(window => window.bringToFront()));
-        if (appWindows.length > 0) {
-            appWindows[appWindows.length - 1].focus();
+        // Bring-to-front all currently open windows in creation order
+        const windowsToFocus = this._model.findWindowsByAppName(appInfo.name).sort((a: AppWindow, b: AppWindow) => a.appWindowNumber - b.appWindowNumber);
+        await Promise.all(windowsToFocus.map(window => window.bringToFront()));
+        if (windowsToFocus.length > 0) {
+            windowsToFocus[windowsToFocus.length - 1].focus();
         }
 
         if (payload.context) {
-            await Promise.all(appWindows.map(window => {
-                return this._contextHandler.send(window, parseContext(payload.context!));
-            }));
+            // TODO: Revisit timeout logic [SERVICE-556]
+            await withTimeout(Timeouts.ADD_CONTEXT_LISTENER, (async () => {
+                const appWindows = await this._model.expectWindowsForApp(appInfo);
+
+                await Promise.all(appWindows.map(window => {
+                    return this._contextHandler.send(window, parseContext(payload.context!));
+                }));
+            })());
         }
     }
 

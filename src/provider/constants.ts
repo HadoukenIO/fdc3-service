@@ -3,12 +3,12 @@
  */
 export const Timeouts = {
     /**
-     * Time for an app to register a listener after opening
+     * Time for an app to register an intent listener after opening
      */
     ADD_INTENT_LISTENER: 5000,
 
     /**
-     * Time for an app to register a listener after opening
+     * Time for an app to register a context listener after opening
      */
     ADD_CONTEXT_LISTENER: 5000,
 

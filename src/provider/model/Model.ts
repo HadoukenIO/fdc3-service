@@ -26,6 +26,9 @@ interface ExpectedWindow {
 
     // Resolves to the AppWindow when the window has been fully registered and is ready for use outside the Model
     registered: Promise<AppWindow>;
+
+    // Rejects when the window is closed
+    closed: Promise<void>;
 }
 
 const EXPECT_TIMEOUT_MESSAGE = 'Timeout on window registration exceeded';
@@ -109,16 +112,14 @@ export class Model {
         this._channelsById[channel.id] = channel;
     }
 
-    public async findOrCreate(appInfo: Application): Promise<AppWindow[]> {
-        const matchingWindows = this.findWindowsByAppId(appInfo.appId);
+    /**
+     * Returns all registered windows for an app, waiting for at least one window
+     */
+    public async expectWindowsForApp(appInfo: Application): Promise<AppWindow[]> {
+        // TODO: This dangerous method doesn't give proper timeouts. Will likely be changed extensively/removed when we revisit timeouts [SERVICE-556]
+        let matchingWindows = this.findWindowsByAppId(appInfo.appId);
 
-        if (matchingWindows.length > 0) {
-            // Sort windows into the order they were created
-            matchingWindows.sort((a: AppWindow, b: AppWindow) => a.appWindowNumber - b.appWindowNumber);
-
-            return matchingWindows;
-        } else {
-            const createPromise = this._environment.createApplication(appInfo, this._channelsById[DEFAULT_CHANNEL_ID]);
+        if (matchingWindows.length === 0) {
             const signalPromise = new Promise<AppWindow[]>(resolve => {
                 const slot = this._onWindowRegisteredInternal.add(() => {
                     const matchingWindows = this.findWindowsByAppId(appInfo.appId);
@@ -128,7 +129,14 @@ export class Model {
                     }
                 });
             });
-            return Promise.all([signalPromise, createPromise]).then(([windows]) => windows);
+            matchingWindows = await signalPromise;
+        }
+        return matchingWindows;
+    }
+
+    public async ensureRunning(appInfo: Application): Promise<void> {
+        if (this.findWindowsByAppId(appInfo.appId).length === 0 && !(await this._environment.isRunning(appInfo))) {
+            await this._environment.createApplication(appInfo, this._channelsById[DEFAULT_CHANNEL_ID]);
         }
     }
 
@@ -180,27 +188,32 @@ export class Model {
 
     private async onWindowCreated(identity: Identity): Promise<void> {
         const expectedWindow = this.getOrCreateExpectedWindow(identity);
-        const appInfoFromDirectory = await this._directory.getAppByUuid(identity.uuid);
 
-        if (appInfoFromDirectory) {
-            // If the app is in directory, we register it immediately
-            this.registerWindow(appInfoFromDirectory, identity, true);
-        } else {
-            // If the app is not in directory, we'll add it to the model if and when it connects to FDC3
-            allowReject(expectedWindow.connected.then(async () => {
-                let appInfo: Application;
+        // Only register windows once they are connected to the service
+        allowReject(expectedWindow.connected.then(async () => {
+            // Attempt to copy appInfo from another appWindow in the model from the same app
+            let registered = false;
+            let appWindowsFromSameApp: AppWindow[];
 
-                // Attempt to copy appInfo from another appWindow in the model from the same app
-                const appWindowsFromSameApp = this.findWindowsByAppId(identity.uuid);
-                if (appWindowsFromSameApp.length > 0) {
-                    appInfo = appWindowsFromSameApp[0].appInfo;
-                } else {
-                    appInfo = await this._environment.inferApplication(identity);
+            allowReject(untilTrue(this._onWindowRegisteredInternal, () => {
+                appWindowsFromSameApp = this.findWindowsByAppId(identity.uuid);
+                return appWindowsFromSameApp.length > 0;
+            }, expectedWindow.closed).then(() => {
+                if (!registered) {
+                    this.registerWindow(appWindowsFromSameApp[0].appInfo, identity);
+                    registered = true;
                 }
-
-                this.registerWindow(appInfo, identity, false);
             }));
-        }
+
+            // If we're unable to copy appInfo from another window, attempt to use the app directory, or infer from environment
+            const appInfoFromDirectory = await this._directory.getAppByUuid(identity.uuid);
+            const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
+
+            if (!registered) {
+                this.registerWindow(appInfo, identity);
+                registered = true;
+            }
+        }));
     }
 
     private onWindowClosed(identity: Identity): void {
@@ -219,11 +232,12 @@ export class Model {
         if (await this._environment.getEntityType(identity) === EntityType.EXTERNAL_CONNECTION) {
             // Any connections to the service from adapters should be immediately registered
             // TODO [SERVICE-737] Store the entity type as part of the registration process, so we can correctly handle disconnects
-            this.registerWindow(await this._environment.inferApplication(identity), identity, false);
+            this.registerWindow(await this._environment.inferApplication(identity), identity);
         }
     }
 
     private async onApiHandlerDisconnection(identity: Identity): Promise<void> {
+        // Although windows are only registered on connection, we do not unregister on disconnect, so channel membership is preserved on navigation
         // TODO [SERVICE-737] Handle differences in disconnect behaviour between windows and external connections
         const id = getId(identity);
 
@@ -243,14 +257,13 @@ export class Model {
      * Registers an appWindow in the model
      * @param appInfo Application info, either from the app directory, or 'crafted' for a non-registered app
      * @param identity Window identity
-     * @param isInAppDirectory boolean indicating whether the app is registered in the app directory
      */
-    private registerWindow(appInfo: Application, identity: Identity, isInAppDirectory: boolean): AppWindow {
+    private registerWindow(appInfo: Application, identity: Identity): AppWindow {
         const id = getId(identity);
 
         const appWindow = this._environment.wrapApplication(appInfo, identity, this._channelsById[DEFAULT_CHANNEL_ID]);
 
-        console.info(`Registering window [${isInAppDirectory ? '' : 'NOT '}in app directory] ${appWindow.id}`);
+        console.info(`Registering window ${appWindow.id}`);
         this._windowsById[appWindow.id] = appWindow;
         delete this._expectedWindowsById[id];
 
@@ -305,7 +318,8 @@ export class Model {
             const expectedWindow: ExpectedWindow = {
                 created: createdThenRegisteredWithinTimeout,
                 connected,
-                registered
+                registered,
+                closed
             };
 
             this._expectedWindowsById[id] = expectedWindow;

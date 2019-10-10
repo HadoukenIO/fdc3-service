@@ -73,6 +73,7 @@ beforeEach(async () => {
 describe('When creating a directory FDC3 app', () => {
     const testWindow: TestWindow = {
         createdTime: 1000,
+        connectionTime: 1100,
         appType: 'directory'
     };
 
@@ -121,9 +122,28 @@ describe('When creating a directory FDC3 app', () => {
         ]);
     });
 
+    describe('When a window never connects', () => {
+        const neverConnectingWindow: TestWindow = {
+            createdTime: 1000,
+            appType: 'directory'
+        };
+
+        expectTest(neverConnectingWindow, 3000, [
+            [
+                'When a window is expected after it is created, the promise rejects',
+                {callTime: 1500, finalizeTime: 1000 + Timeouts.WINDOW_CREATED_TO_REGISTERED, result: 'reject-timeout'}
+            ],
+            [
+                'When a window is expected shortly before it is created, the promise rejects',
+                {callTime: 950, finalizeTime: 1000 + Timeouts.WINDOW_CREATED_TO_REGISTERED, result: 'reject-timeout'}
+            ]
+        ]);
+    });
+
     describe('When a window is closed after being created', () => {
         const fastCloseWindow: TestWindow = {
             createdTime: 1000,
+            connectionTime: 1100,
             closeTime: 2000,
             appType: 'directory'
         };
@@ -139,6 +159,7 @@ describe('When creating a directory FDC3 app', () => {
     describe('When a window is closed after being registered', () => {
         const slowCloseWindow: TestWindow = {
             createdTime: 1000,
+            connectionTime: 1100,
             closeTime: 4000,
             appType: 'directory'
         };
@@ -288,7 +309,7 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
 }
 
 function buildTestParams(testWindow: TestWindow, appDirectoryResultTime: number, resultParams: ResultParam[]): TestParam[] {
-    if (testWindow.closeTime === undefined) {
+    if (testWindow.closeTime === undefined && ![testWindow.createdTime, testWindow.connectionTime].includes(undefined)) {
         resultParams.push([
             'When a window is expected after the window has been registered, the window promise resolves',
             {callTime: 9500, finalizeTime: 9500, result: 'resolve'}

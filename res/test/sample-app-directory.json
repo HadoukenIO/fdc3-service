@@ -240,6 +240,25 @@
     "intents": []
 },
 {
+    "appId": "test-app-not-fdc3",
+    "name": "test-app-not-fdc3",
+    "manifest": "http://localhost:3923/test/configs/test-app-not-fdc3.json",
+    "manifestType": "openfin",
+    "title": "Test App Not FDC3",
+    "description": "This app never connects to the FDC3 service",
+    "images": [],
+    "contactEmail": "support@openfin.co",
+    "supportEmail": "support@openfin.co",
+    "signature": "https://cdn.openfin.co",
+    "publisher": "openfin",
+    "icons": [
+        {
+            "icon": "http://localhost:3923/demo/img/app-icons/blotter.svg"
+        }
+    ],
+    "intents": []
+},
+{
     "appId": "test-app-delayed-preregister-long",
     "name": "test-app-delayed-preregister-long",
     "manifest": "http://localhost:3923/test/configs/test-app-delayed-preregister-long.json",

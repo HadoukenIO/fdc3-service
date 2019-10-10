@@ -16,6 +16,11 @@ enum StorageKeys {
 
 @injectable()
 export class AppDirectory extends AsyncInit {
+    public static getUuidFromApp(app: Application): string {
+        const customValue = checkCustomConfigField(app, CustomConfigFields.OPENFIN_APP_UUID);
+        return customValue !== undefined ? customValue : app.appId;
+    }
+
     private readonly _configStore: ConfigStoreBinding;
     private _directory: Application[] = [];
     private _url!: string;
@@ -38,10 +43,7 @@ export class AppDirectory extends AsyncInit {
     }
 
     public async getAppByUuid(uuid: string): Promise<Application | null> {
-        return this._directory.find((app: Application) => {
-            const customValue = checkCustomConfigField(app, CustomConfigFields.OPENFIN_APP_UUID);
-            return (customValue !== undefined) ? (customValue === uuid) : (app.appId === uuid);
-        }) || null;
+        return this._directory.find(app => AppDirectory.getUuidFromApp(app) === uuid) || null;
     }
 
     public async getAppsByIntent(intentType: string, contextType?: string): Promise<Application[]> {
