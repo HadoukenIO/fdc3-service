@@ -41,18 +41,20 @@ export function createMockAppWindow(options: Partial<jest.Mocked<AppWindow>> = {
     };
 }
 
-export function createMockChannel(): jest.Mocked<ContextChannel> {
+export function createMockChannel(options: Partial<jest.Mocked<ContextChannel>> = {}): jest.Mocked<ContextChannel> {
     return {
         id: '',
         type: '',
         storedContext: null,
         setLastBroadcastContext: jest.fn<void, [Context]>(),
         clearStoredContext: jest.fn<void, []>(),
-        serialize: jest.fn<ChannelTransport, []>()
+        serialize: jest.fn<ChannelTransport, []>(),
+        // Apply any custom overrides
+        ...options
     };
 }
 
-export function createMockEnvironmnent(): jest.Mocked<Environment> {
+export function createMockEnvironmnent(options: Partial<jest.Mocked<Environment>> = {}): jest.Mocked<Environment> {
     return {
         windowCreated: new Signal<[Identity]>(),
         windowClosed: new Signal<[Identity]>(),
@@ -61,6 +63,8 @@ export function createMockEnvironmnent(): jest.Mocked<Environment> {
         wrapApplication: jest.fn<AppWindow, [Application, Identity, ContextChannel]>(),
         inferApplication: jest.fn<Promise<Application>, [Identity]>(),
         getEntityType: jest.fn<Promise<EntityType>, [Identity]>(),
-        isWindowCreated: jest.fn<boolean, [Identity]>()
+        isWindowCreated: jest.fn<boolean, [Identity]>(),
+        // Apply any custom overrides
+        ...options
     };
 }

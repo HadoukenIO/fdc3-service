@@ -255,12 +255,7 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
         });
 
         mockEnvironment.wrapApplication.mockImplementationOnce((appInfo: Application, testIdentity: Identity, channel: ContextChannel): AppWindow => {
-            return {
-                ...createMockAppWindow(),
-                id: getId(testIdentity),
-                identity: testIdentity,
-                appInfo
-            };
+            return createMockAppWindow({id: getId(testIdentity), identity: testIdentity, appInfo});
         });
 
         mockEnvironment.inferApplication.mockImplementationOnce(async (indentity: Identity): Promise<Application> => {

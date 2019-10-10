@@ -33,9 +33,9 @@ beforeEach(() => {
 
 it('When getting system channels, ChannelHandler only returns system channels', () => {
     const testChannels = [
-        {...createMockChannel(), id: 'test-1', type: 'system'},
-        {...createMockChannel(), id: 'test-2'},
-        {...createMockChannel(), id: 'test-3', type: 'system'}
+        createMockChannel({id: 'test-1', type: 'system'}),
+        createMockChannel({id: 'test-2'}),
+        createMockChannel({id: 'test-3', type: 'system'})
     ];
 
     setModelChannels(testChannels);
@@ -96,9 +96,9 @@ it('When getting channel members, ChannelHandler returns expected AppWindows', (
     const testChannel = createMockChannel();
 
     const testWindows = [
-        {...createMockAppWindow(), id: 'test-1', channel: testChannel},
-        {...createMockAppWindow(), id: 'test-2'},
-        {...createMockAppWindow(), id: 'test-3', channel: testChannel}
+        createMockAppWindow({id: 'test-1', channel: testChannel}),
+        createMockAppWindow({id: 'test-2'}),
+        createMockAppWindow({id: 'test-3', channel: testChannel})
     ];
 
     setModelWindows(testWindows);
@@ -108,9 +108,9 @@ it('When getting channel members, ChannelHandler returns expected AppWindows', (
 
 it('When querying which windows are listening for contexts on a channel, ChannelHander returns the expected AppWindows', () => {
     const testWindows = [
-        {...createMockAppWindow(), id: 'test-1'},
-        {...createMockAppWindow(), id: 'test-2'},
-        {...createMockAppWindow(), id: 'test-3'}
+        createMockAppWindow({id: 'test-1'}),
+        createMockAppWindow({id: 'test-2'}),
+        createMockAppWindow({id: 'test-3'})
     ];
 
     const testChannel = createMockChannel();
@@ -125,9 +125,9 @@ it('When querying which windows are listening for contexts on a channel, Channel
 
 it('When querying which windows are listening for events on a channel, ChannelHander returns the expected AppWindows', () => {
     const testWindows = [
-        {...createMockAppWindow(), id: 'test-1'},
-        {...createMockAppWindow(), id: 'test-2'},
-        {...createMockAppWindow(), id: 'test-3'}
+        createMockAppWindow({id: 'test-1'}),
+        createMockAppWindow({id: 'test-2'}),
+        createMockAppWindow({id: 'test-3'})
     ];
 
     const testChannel = createMockChannel();
@@ -169,10 +169,10 @@ describe('When setting the last broadcast context for a channel', () => {
 
 describe('When joining a channel', () => {
     it('ChannelHandler sets the channel of the window', () => {
-        const testChannel1 = {...createMockChannel(), id: 'test-1'};
-        const testChannel2 = {...createMockChannel(), id: 'test-2'};
+        const testChannel1 = createMockChannel({id: 'test-1'});
+        const testChannel2 = createMockChannel({id: 'test-2'});
 
-        const testWindow = {...createMockAppWindow(), channel: testChannel1};
+        const testWindow = createMockAppWindow({channel: testChannel1});
         setModelWindows([testWindow]);
 
         channelHandler.joinChannel(testWindow, testChannel2);
@@ -181,10 +181,10 @@ describe('When joining a channel', () => {
     });
 
     it('If changing channel, ChannelHandler fires it onChannelChanged signal', () => {
-        const testChannel1 = {...createMockChannel(), id: 'test-1'};
-        const testChannel2 = {...createMockChannel(), id: 'test-2'};
+        const testChannel1 = createMockChannel({id: 'test-1'});
+        const testChannel2 = createMockChannel({id: 'test-2'});
 
-        const testWindow = {...createMockAppWindow(), channel: testChannel1};
+        const testWindow = createMockAppWindow({channel: testChannel1});
         setModelWindows([testWindow]);
 
         channelHandler.joinChannel(testWindow, testChannel2);
@@ -195,7 +195,7 @@ describe('When joining a channel', () => {
     it('If not changing channel, ChannelHandler fires a onChannelChanged signal', () => {
         const testChannel = createMockChannel();
 
-        const testWindow = {...createMockAppWindow(), channel: testChannel};
+        const testWindow = createMockAppWindow({channel: testChannel});
         setModelWindows([testWindow]);
 
         channelHandler.joinChannel(testWindow, testChannel);
@@ -207,7 +207,7 @@ describe('When joining a channel', () => {
         const testChannel1 = createMockChannel();
         const testChannel2 = createMockChannel();
 
-        const testWindow = {...createMockAppWindow(), channel: testChannel1};
+        const testWindow = createMockAppWindow({channel: testChannel1});
         setModelWindows([testWindow]);
 
         channelHandler.joinChannel(testWindow, testChannel2);
@@ -219,8 +219,8 @@ describe('When joining a channel', () => {
         const testChannel1 = createMockChannel();
         const testChannel2 = createMockChannel();
 
-        const testWindow1 = {...createMockAppWindow(), channel: testChannel1};
-        const testWindow2 = {...createMockAppWindow(), channel: testChannel1};
+        const testWindow1 = createMockAppWindow({channel: testChannel1});
+        const testWindow2 = createMockAppWindow({channel: testChannel1});
 
         setModelWindows([testWindow1, testWindow2]);
 
@@ -252,8 +252,8 @@ describe('When a window is removed from the Model', () => {
         const testChannel1 = createMockChannel();
         const testChannel2 = createMockChannel();
 
-        const testWindow1 = {...createMockAppWindow(), channel: testChannel1};
-        const testWindow2 = {...createMockAppWindow(), channel: testChannel2};
+        const testWindow1 = createMockAppWindow({channel: testChannel1});
+        const testWindow2 = createMockAppWindow({channel: testChannel2});
 
         setModelWindows([testWindow2]);
 
@@ -265,8 +265,8 @@ describe('When a window is removed from the Model', () => {
     it('If the window\'s channel is still populated, ChannelHandler does not clear the context of the channel', () => {
         const testChannel = createMockChannel();
 
-        const testWindow1 = {...createMockAppWindow(), channel: testChannel};
-        const testWindow2 = {...createMockAppWindow(), channel: testChannel};
+        const testWindow1 = createMockAppWindow({channel: testChannel});
+        const testWindow2 = createMockAppWindow({channel: testChannel});
 
         setModelWindows([testWindow2]);
 

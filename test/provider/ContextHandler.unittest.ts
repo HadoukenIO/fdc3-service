@@ -122,7 +122,7 @@ describe('When broadcasting a Context using ContextHandler', () => {
             const targetAppWindow1 = createCustomMockAppWindow('target-1', true);
             const targetAppWindow2 = createCustomMockAppWindow('target-2', true);
 
-            sourceAppWindow.channel = {...createMockChannel(), id: 'source-channel'};
+            sourceAppWindow.channel = createMockChannel({id: 'source-channel'});
             mockGetWindowsListeningToChannel.mockReturnValue([sourceAppWindow, targetAppWindow1, targetAppWindow2]);
 
             await contextHandler.broadcast(testContext, sourceAppWindow);
@@ -147,7 +147,7 @@ describe('When broadcasting a Context using ContextHandler', () => {
             const targetAppWindow2 = createCustomMockAppWindow('target-2', true);
             const expectedPayload: ReceiveContextPayload = {context: testContext};
 
-            sourceAppWindow.channel = {...createMockChannel(), id: 'source-channel'};
+            sourceAppWindow.channel = createMockChannel({id: 'source-channel'});
             mockGetChannelMembers.mockReturnValue([sourceAppWindow, targetAppWindow1, targetAppWindow2]);
             mockGetWindowsListeningToChannel.mockReturnValue([sourceAppWindow, targetAppWindow1, targetAppWindow2]);
 
@@ -180,7 +180,7 @@ describe('When broadcasting a Context using ContextHandler', () => {
 
         const expectedPayload: ReceiveContextPayload = {context: testContext};
 
-        sourceAppWindow.channel = {...createMockChannel(), id: 'source-channel'};
+        sourceAppWindow.channel = createMockChannel({id: 'source-channel'});
         mockGetChannelMembers.mockReturnValue([sourceAppWindow, readyAppWindow1, readyAppWindow2, notReadyAppWindow1, notReadyAppWindow2]);
 
         await contextHandler.broadcast(testContext, sourceAppWindow);
