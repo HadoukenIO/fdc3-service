@@ -18,6 +18,11 @@ export interface Environment {
     windowClosed: Signal<[Identity]>;
 
     /**
+     * Checks if an application is running, given an App Directory entry.
+     */
+    isRunning: (appInfo: Application) => Promise<boolean>;
+
+    /**
      * Creates a new application, given an App Directory entry.
      * @throws:
      * * FDC3Error if app fails to start

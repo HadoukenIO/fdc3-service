@@ -17,6 +17,7 @@ import {getId} from '../utils/getId';
 import {Environment, EntityType} from './Environment';
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
+import {AppDirectory} from './AppDirectory';
 
 interface CreatedWindow {
     creationTime: number | undefined;
@@ -49,6 +50,13 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
     private _windowsCreated: number = 0;
     private readonly _createdWindows: CreatedWindowMap = new Map<string, CreatedWindow>();
+
+    public async isRunning(appInfo: Application): Promise<boolean> {
+        const uuid = AppDirectory.getUuidFromApp(appInfo);
+        const finApp = fin.Application.wrapSync({uuid});
+
+        return finApp.isRunning();
+    }
 
     public async createApplication(appInfo: Application, channel: ContextChannel): Promise<void> {
         const [didTimeout] = await withTimeout(

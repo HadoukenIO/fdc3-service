@@ -9,7 +9,7 @@ import {fin} from './utils/fin';
 import {quitApps, setupOpenDirectoryAppBookends, setupTeardown} from './utils/common';
 import {
     testManagerIdentity, testAppInDirectory1, testAppInDirectory2,
-    testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2
+    testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2, testAppNotFdc3
 } from './constants';
 
 setupTeardown();
@@ -25,6 +25,16 @@ describe('Opening applications with the FDC3 client', () => {
                 await expect(fin.Application.wrapSync(testAppInDirectory1).isRunning()).resolves.toBe(true);
 
                 await quitApps(testAppInDirectory1);
+            });
+
+            test('When passing a valid app name of an app that never connects to FDC3 the app opens and the promise resolves', async () => {
+                // From the launcher app, call fdc3.open with a valid name
+                await open(testAppNotFdc3.name);
+
+                // Check that the app is now running
+                await expect(fin.Application.wrapSync(testAppNotFdc3).isRunning()).resolves.toBe(true);
+
+                await quitApps(testAppNotFdc3);
             });
 
             test('When passing an unknown app name the service returns an FDC3Error', async () => {

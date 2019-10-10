@@ -10,7 +10,7 @@ import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {delay} from '../utils/delay';
 import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning} from '../utils/common';
-import {appStartupTime, testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, testAppWithPreregisteredListeners1, testAppNotFdc3, testAppUrl} from '../constants';
+import {appStartupTime, testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, testAppWithPreregisteredListeners1, testAppNotInDirectoryNotFdc3, testAppUrl} from '../constants';
 import {allowReject} from '../../../src/provider/utils/async';
 
 /**
@@ -123,12 +123,12 @@ describe('Intent listeners and raising intents with a target', () => {
         });
 
         describe('When the target is running but is not in the directory and does not connect to FDC3', () => {
-            setupStartNonDirectoryAppBookends(testAppNotFdc3);
+            setupStartNonDirectoryAppBookends(testAppNotInDirectoryNotFdc3);
 
             test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
-                await expect(raiseIntent(validIntent, testAppNotFdc3)).toThrowFDC3Error(
+                await expect(raiseIntent(validIntent, testAppNotInDirectoryNotFdc3)).toThrowFDC3Error(
                     ResolveError.TargetAppNotAvailable,
-                    `Couldn't resolve intent target '${testAppNotFdc3.name}'. No matching app in directory or currently running.`
+                    `Couldn't resolve intent target '${testAppNotInDirectoryNotFdc3.name}'. No matching app in directory or currently running.`
                 );
             });
         });

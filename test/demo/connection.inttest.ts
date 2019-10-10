@@ -12,76 +12,133 @@ import {IntentHandler} from '../../src/provider/controller/IntentHandler';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
 import {OFPuppeteerBrowser} from './utils/ofPuppeteer';
-import {setupTeardown, quitApps, TestAppData} from './utils/common';
-import {testManagerIdentity, testAppInDirectory1, testAppWithPreregisteredListeners1, testAppNotInDirectory1} from './constants';
+import {setupTeardown, quitApps, TestAppData, NonDirectoryTestAppData} from './utils/common';
+import {testManagerIdentity, testAppInDirectory1, testAppWithPreregisteredListeners1, testAppNotInDirectory1, testAppNotInDirectoryNotFdc3, testAppNotFdc3} from './constants';
 import {RemoteChannel} from './utils/RemoteChannel';
 import {delay, Duration} from './utils/delay';
 
 setupTeardown();
 
-export type ProviderWindow = Window & {
+type ProviderWindow = Window & {
     model: Model;
     intentHandler: IntentHandler;
     channelHandler: ChannelHandler;
     eventHandler: EventHandler;
 }
 
-const ofBrowser = new OFPuppeteerBrowser();
-const TEST_INTENT = 'TestIntent';
-let redChannel: RemoteChannel;
-let blueChannel: RemoteChannel;
+enum RegistrationStatus {
+    REGISTERED,
+    NOT_REGISTERED
+}
 
-type TestParam = [
+const ofBrowser = new OFPuppeteerBrowser();
+
+type ConnectTestParam = [
     string,
     TestAppData,
+    RegistrationStatus,
+    (app: TestAppData) => Promise<void>,
+];
+
+type ConnectTestCategoryParam = [string, ConnectTestParam[]];
+
+const directoryConnectTestParams: ConnectTestParam[] = [
+    ['has an FDC3 connection', testAppInDirectory1, RegistrationStatus.REGISTERED, openDirectoryApp],
+    ['does not have an FDC3 connection', testAppNotFdc3, RegistrationStatus.NOT_REGISTERED, openDirectoryApp]
+];
+
+const nonDirectoryConnectTestParams: ConnectTestParam[] = [
+    ['has an FDC3 connection', testAppNotInDirectory1, RegistrationStatus.REGISTERED, openNonDirectoryApp],
+    ['does not have an FDC3 connection', testAppNotInDirectoryNotFdc3, RegistrationStatus.NOT_REGISTERED, openNonDirectoryApp]
+];
+
+const connectTestCategories: ConnectTestCategoryParam[] = [['Directory', directoryConnectTestParams], ['Non-Directory', nonDirectoryConnectTestParams]];
+
+describe('Connecting windows', () => {
+    // Directory Apps or Non-Directory Apps
+    describe.each(connectTestCategories)('%s Apps', (categoryTitle: string, tests: ConnectTestParam[]) => {
+        // E.g. When an app has an FDC3 connection
+        describe.each(tests)('When an app %s', (
+            testTitle: string,
+            application: TestAppData,
+            statusAfterDisconnect: RegistrationStatus,
+            openFunction: (app: TestAppData) => Promise<void>,
+        ) => {
+            beforeEach(async () => {
+                await openFunction(application);
+            });
+
+            afterEach(async () => {
+                await quitApps(application);
+            });
+
+            it(`Window is ${statusAfterDisconnect === RegistrationStatus.REGISTERED ? 'registered' : 'not registered'}`, async () => {
+                await expect(isRegistered(application)).resolves.toBe(statusAfterDisconnect === RegistrationStatus.REGISTERED);
+            });
+        });
+    });
+});
+
+type DisconnectTestParam = [
+    string,
+    TestAppData,
+    RegistrationStatus,
     (app: TestAppData) => Promise<void>,
     (app: TestAppData) => Promise<void>
 ];
 
-type TestCatagoryParam = [string, TestParam[]];
+type DisconnectTestCategoryParam = [string, DisconnectTestParam[]];
 
-const directoryApps: TestParam[] = [
-    ['closed', testAppInDirectory1, openDirectoryApp, async (app) => {
+const directoryDisconnectTestParams: DisconnectTestParam[] = [
+    ['closed', testAppInDirectory1, RegistrationStatus.NOT_REGISTERED, openDirectoryApp, async (app) => {
         await quitApps(app);
     }],
-    ['navigated away', testAppInDirectory1, openDirectoryApp, async (app) => {
+    ['navigated away', testAppInDirectory1, RegistrationStatus.REGISTERED, openDirectoryApp, async (app) => {
         await navigateTo(app, 'about:blank');
     }],
-    ['reloaded', testAppInDirectory1, openDirectoryApp, async (app) => {
+    ['reloaded', testAppInDirectory1, RegistrationStatus.REGISTERED, openDirectoryApp, async (app) => {
         await reload(app);
     }],
-    ['closed with preregistered listeners', testAppWithPreregisteredListeners1, openDirectoryApp, async (app) => {
+    ['closed with preregistered listeners', testAppWithPreregisteredListeners1, RegistrationStatus.NOT_REGISTERED, openDirectoryApp, async (app) => {
         await quitApps(app);
     }],
-    ['navigated away with preregisted listeners', testAppWithPreregisteredListeners1, openDirectoryApp, async (app) => {
+    ['navigated away with preregisted listeners', testAppWithPreregisteredListeners1, RegistrationStatus.REGISTERED, openDirectoryApp, async (app) => {
         await navigateTo(app, 'about:blank');
     }],
-    ['reloaded with preregistered listeners', testAppWithPreregisteredListeners1, openDirectoryApp, async (app) => {
-        await reload(app);
-    }]
-];
-
-const nonDirectoryApps: TestParam[] = [
-    ['closed', testAppNotInDirectory1, openNonDirectoryApp, async (app) => {
-        await quitApps(app);
-    }],
-    ['navigated away', testAppNotInDirectory1, openNonDirectoryApp, async (app) => {
-        await navigateTo(app, 'about:blank');
-    }],
-    ['reloaded', testAppNotInDirectory1, openNonDirectoryApp, async (app) => {
+    ['reloaded with preregistered listeners', testAppWithPreregisteredListeners1, RegistrationStatus.REGISTERED, openDirectoryApp, async (app) => {
         await reload(app);
     }]
 ];
 
-const testCatagories: TestCatagoryParam[] = [['Directory', directoryApps], ['Non-Directory', nonDirectoryApps]];
+const nonDirectoryDisconnectTestParams: DisconnectTestParam[] = [
+    ['closed', testAppNotInDirectory1, RegistrationStatus.NOT_REGISTERED, openNonDirectoryApp, async (app) => {
+        await quitApps(app);
+    }],
+    ['navigated away', testAppNotInDirectory1, RegistrationStatus.REGISTERED, openNonDirectoryApp, async (app) => {
+        await navigateTo(app, 'about:blank');
+    }],
+    ['reloaded', testAppNotInDirectory1, RegistrationStatus.REGISTERED, openNonDirectoryApp, async (app) => {
+        await reload(app);
+    }]
+];
+
+const disconnectTestCategories: DisconnectTestCategoryParam[] = [
+    ['Directory', directoryDisconnectTestParams],
+    ['Non-Directory', nonDirectoryDisconnectTestParams]
+];
 
 describe('Disconnecting windows', () => {
-    // Directory Apps or NonDirectory Apps
-    describe.each(testCatagories)('%s Apps', (catagoryTitle: string, tests: TestParam[]) => {
+    // Directory Apps or Non-Directory Apps
+    describe.each(disconnectTestCategories)('%s Apps', (categoryTitle: string, tests: DisconnectTestParam[]) => {
+        const TEST_INTENT = 'TestIntent';
+        let redChannel: RemoteChannel;
+        let blueChannel: RemoteChannel;
+
         // E.g. When an app is closed.
         describe.each(tests)('When an app is %s', (
             testTitle: string,
             application: TestAppData,
+            statusAfterDisconnect: RegistrationStatus,
             openFunction: (app: TestAppData) => Promise<void>,
             disconnectFunction: (app: TestAppData) => Promise<void>
         ) => {
@@ -111,6 +168,10 @@ describe('Disconnecting windows', () => {
                 expect(intents.length).toEqual(0);
             });
 
+            it(`Window is ${statusAfterDisconnect === RegistrationStatus.REGISTERED ? 'registered' : 'not registered'}`, async () => {
+                await expect(isRegistered(application)).resolves.toBe(statusAfterDisconnect === RegistrationStatus.REGISTERED);
+            });
+
             describe('Channels', () => {
                 it('Context listeners are removed', async () => {
                     const contextListeners = await getChannelContextListeners(blueChannel);
@@ -130,8 +191,8 @@ async function openDirectoryApp(app: TestAppData) {
     await fdc3Remote.open(testManagerIdentity, app.name);
 }
 
-async function openNonDirectoryApp() {
-    await fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl);
+async function openNonDirectoryApp(app: TestAppData) {
+    await fin.Application.startFromManifest((app as NonDirectoryTestAppData).manifestUrl);
 }
 
 async function reload(target: Identity): Promise<void> {
@@ -170,4 +231,10 @@ async function hasEventListeners(identity: Identity, eventType: ChannelEvents['t
         }).reduce((acc, current) => [...acc, ...current], []);
     }, eventType);
     return identities.some(id => id.name === identity.name && id.uuid === identity.uuid);
+}
+
+async function isRegistered(identity: Identity): Promise<boolean> {
+    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, identity: Identity): boolean {
+        return this.model.getWindow(identity) !== null;
+    }, identity);
 }

@@ -9,6 +9,8 @@ import {AppDirectory} from '../model/AppDirectory';
 import {AppWindow} from '../model/AppWindow';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
+import {withTimeout} from '../utils/async';
+import {Timeouts} from '../constants';
 
 import {ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
@@ -109,21 +111,31 @@ export class IntentHandler {
     }
 
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
-        const appWindows = await this._model.findOrCreate(appInfo);
-        // to decide between focus nothing or apps with intent listener
-        const dispatchResults = await Promise.all(appWindows.map(async (window: AppWindow): Promise<boolean> => {
-            if (await window.isReadyToReceiveIntent(intent.type)) {
-                const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
+        await this._model.ensureRunning(appInfo);
 
-                // TODO: Implement a timeout so a misbehaving intent handler can't block the intent raiser (SERVICE-555)
-                await this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
-                return true;
-            } else {
+        // TODO: Revisit timeout logic [SERVICE-556]
+        let dispatchingCompleted = false;
+        const dispatchResults = await withTimeout(Timeouts.ADD_INTENT_LISTENER, (async () => {
+            const appWindows = await this._model.expectWindowsForApp(appInfo);
+
+            // Wait for windows to add intent listener, then dispatch payload
+            return Promise.all(appWindows.map(async (window: AppWindow): Promise<boolean> => {
+                if (await window.isReadyToReceiveIntent(intent.type)) {
+                    const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
+
+                    // TODO: Implement a timeout so a misbehaving intent handler can't block the intent raiser [SERVICE-555]
+                    if (!dispatchingCompleted) {
+                        await this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
+                        return true;
+                    }
+                }
                 return false;
-            }
-        }));
+            }));
+        })());
 
-        if (!dispatchResults.some(dispatchResult => dispatchResult)) {
+        dispatchingCompleted = true;
+
+        if (dispatchResults[0] || !dispatchResults[1]!.includes(true)) {
             throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
         }
 

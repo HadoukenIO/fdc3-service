@@ -49,6 +49,15 @@ export const testAppWithPreregisteredListeners2: DirectoryTestAppData = {
 };
 
 /**
+ * Directory app that doesn't import the FDC3 library
+ */
+export const testAppNotFdc3: DirectoryTestAppData = {
+    uuid: 'test-app-not-fdc3',
+    name: 'test-app-not-fdc3',
+    appId: '1000'
+};
+
+/**
  * App not registered in directory
  */
 export const testAppNotInDirectory1: NonDirectoryTestAppData = {
@@ -67,10 +76,10 @@ export const testAppNotInDirectory2: NonDirectoryTestAppData = {
 };
 
 /**
- * App that doesn't import the FDC3 library
+ * App not registered in directory that doesn't import the FDC3 library
  */
-export const testAppNotFdc3: NonDirectoryTestAppData = {
-    uuid: 'test-app-not-fdc3',
-    name: 'test-app-not-fdc3',
-    manifestUrl: 'http://localhost:3923/test/configs/test-app-not-fdc3.json'
+export const testAppNotInDirectoryNotFdc3: NonDirectoryTestAppData = {
+    uuid: 'test-app-not-in-directory-not-fdc3',
+    name: 'test-app-not-in-directory-not-fdc3',
+    manifestUrl: 'http://localhost:3923/test/configs/test-app-not-in-directory-not-fdc3.json'
 };
