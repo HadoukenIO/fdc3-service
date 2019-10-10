@@ -189,7 +189,7 @@ describe('When querying the Directory', () => {
     });
 
     it('Can get applicaiton by name', async () => {
-        const app = await appDirectory.getAppByName(fakeApp1.name);
+        const app = await appDirectory.getAppByName(fakeApp2.name);
         expect(app).not.toBeNull();
     });
 
@@ -207,7 +207,7 @@ describe('When querying the Directory', () => {
         });
 
         it('Cannot get application by uuid using appId', async () => {
-            const app = await appDirectory.getAppByUuid(fakeApp2.appId);
+            const app = await appDirectory.getAppByUuid(fakeApp1.appId);
             expect(app).toBeNull();
         });
     });
@@ -220,28 +220,45 @@ describe('When querying the Directory', () => {
 
 describe('When querying individual applications', () => {
     describe('When an app has an intent with no contexts', () => {
-        it('The app might support that intent', () => {
+        const intent = createFakeIntent();
 
+        const app = {
+            ...createFakeApp(),
+            intents: [intent]
+        };
+
+        const intentType = intent.name;
+
+        it('The app might support that intent', () => {
+            expect(AppDirectory.mightAppSupportIntent(app, intentType)).toBe(true);
         });
 
         it('The app might support an arbitrary intent', () => {
+            const arbitraryIntentType = createFakeIntent().name;
 
+            expect(AppDirectory.mightAppSupportIntent(app, arbitraryIntentType)).toBe(true);
         });
 
         it('The app might support that intent with an arbitray context', () => {
+            const arbitraryContextType = createFakeContextType();
 
+            expect(AppDirectory.mightAppSupportIntent(app, intentType, arbitraryContextType)).toBe(true);
         });
 
         it('The app is expected to support that intent', () => {
-
+            expect(AppDirectory.shouldAppSupportIntent(app, intentType)).toBe(true);
         });
 
         it('The app is not expected to support an arbitrary intent', () => {
+            const arbitraryIntentType = createFakeIntent().name;
 
+            expect(AppDirectory.shouldAppSupportIntent(app, arbitraryIntentType)).toBe(false);
         });
 
-        it('The app is not expected to support that intent with an arbitray context', () => {
+        it('The app is expected to support that intent with an arbitray context', () => {
+            const arbitraryContextType = createFakeContextType();
 
+            expect(AppDirectory.shouldAppSupportIntent(app, intentType, arbitraryContextType)).toBe(true);
         });
     });
 
