@@ -156,7 +156,7 @@ export class Main {
         };
     }
 
-    private async findIntentsByContext (payload: FindIntentsByContextPayload): Promise<AppIntent[]> {
+    private async findIntentsByContext(payload: FindIntentsByContextPayload): Promise<AppIntent[]> {
         return this._model.getAppIntentsByContext(parseContext(payload.context).type);
     }
 
