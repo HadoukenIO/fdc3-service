@@ -21,7 +21,7 @@ export * from './contextChannels';
 
 // Re-export types/enums at top-level
 export * from './context';
-export {Application, AppId, AppName} from './directory';
+export * from './directory';
 export * from './intents';
 export * from './errors';
 

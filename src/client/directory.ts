@@ -1,3 +1,5 @@
+import {Intent} from './internal';
+
 /**
  * @module Directory
  */
@@ -41,16 +43,6 @@ export interface Application {
     customConfig?: NameValuePair[];
 
     intents?: Intent[];
-}
-
-export interface Intent {
-    name: string;
-    displayName?: string;
-    contexts?: string[];
-
-    // Specification is ambiguous on type of customConfig, so leaving as 'any'
-    /* tslint:disable:no-any */
-    customConfig: any;
 }
 
 interface AppImage {

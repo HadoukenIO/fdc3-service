@@ -2,7 +2,7 @@ import {injectable, inject} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
-import {Application, AppName, AppId, Intent} from '../../client/directory';
+import {Application, AppName, AppId} from '../../client/directory';
 import {Inject} from '../common/Injectables';
 import {ChannelId, DEFAULT_CHANNEL_ID, AppIntent} from '../../client/main';
 import {APIHandler} from '../APIHandler';
@@ -154,10 +154,10 @@ export class Model {
      */
     public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
         // Get all live apps that support the given intent and context
-        // TODO: Include apps that should add a listener but haven't yet, where the timeout has not expired [SERVICE-556]
-        const allLiveWindowGroups = this.extractApplicationsFromWindows(this.windows);
+        // TODO: Include apps that should add a listener but haven't yet, where the timeout has not expired (may have no registered windows) [SERVICE-556]
+        const liveWindowGroups = this.extractApplicationsFromWindows(this.windows);
 
-        const liveApps = (await asyncFilter(allLiveWindowGroups, async (group: WindowGroup) => {
+        const liveAppsForIntent = (await asyncFilter(liveWindowGroups, async (group: WindowGroup) => {
             const {application, windows} = group;
 
             const hasIntentListener = windows.some(window => window.hasIntentListener(intentType));
@@ -166,56 +166,61 @@ export class Model {
         })).map(group => group.application);
 
         // Get all directory apps that support the given intent and context
-        // TODO: Include apps that are running with no registered windows, and still may register a window within the timeout [SERVICE-556]
-        const directoryApps = await asyncFilter(
-            await this._directory.getAllApps(),
-            async (app) => AppDirectory.shouldAppSupportIntent(app, intentType, contextType) && !(await this._environment.isRunning(app))
-        );
+        const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => !(await this._environment.isRunning(app)));
+
+        const directoryAppsForIntent = directoryApps.filter(app => AppDirectory.shouldAppSupportIntent(app, intentType, contextType));
 
         // Return apps in consistent order
-        return [...liveApps, ...directoryApps].sort((a, b) => this.compareAppsForIntent(a, b, intentType, contextType));
+        return [...liveAppsForIntent, ...directoryAppsForIntent].sort((a, b) => this.compareAppsForIntent(a, b, intentType, contextType));
     }
 
     /**
      * Get information about intents that can handle a given contexts, and the apps that can handle that intent with that context
      */
     public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
-        // Get all intent types from running apps
-        const liveIntentTypes = Object.values(this._windowsById).map(window => window.intentListeners)
-            .reduce((acc: string[], curr: readonly string[]) => {
-                acc.push(...curr);
-                return acc;
-            }, []);
+        const appIntentPairs: [string, Application][] = [];
 
-        // Get all intent types from directory apps
-        const directoryIntentTypes = (await this._directory.getAllApps()).map(app => app.intents ? app.intents : [])
-            .reduce((acc: Intent[], curr: Intent[]) => {
-                acc.push(...curr);
-                return acc;
-            }, []).map(intent => intent.name);
+        // Populate appIntentPairs from running apps
+        // TODO: Include apps that should add a listener but haven't yet, where the timeout has not expired (may have no registered windows) [SERVICE-556]
+        this.windows.forEach(window => {
+            const intentTypes = window.intentListeners;
+            const app = window.appInfo;
 
-        // Get flat list of all unique intent types
-        const intents = Array.from(new Set<string>([...liveIntentTypes, ...directoryIntentTypes]).values());
+            intentTypes.filter(intentType => AppDirectory.mightAppSupportIntent(app, intentType, contextType)).forEach(intentType => {
+                appIntentPairs.push([intentType, window.appInfo]);
+            });
+        });
 
-        // Build our list of app intents
-        const appIntents: AppIntent[] = (await asyncMap(intents, async (intent) => {
-            return {
-                intent: {
-                    name: intent,
-                    displayName: intent
-                },
-                apps: await this.getApplicationsForIntent(intent, contextType)
-            };
-        })).filter(appIntent => appIntent.apps.length > 0);
+        // Populate appIntentPairs from non-running directory apps
+        const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => !(await this._environment.isRunning(app)));
 
-        // Find and use a display name for each intent
-        for (const appIntent of appIntents) {
-            const displayName = AppDirectory.getIntentDisplayName(appIntent.apps, appIntent.intent.name);
+        directoryApps.forEach(app => {
+            const intents = app.intents || [];
 
-            if (displayName !== undefined) {
-                appIntent.intent.displayName = displayName;
-            }
-        }
+            intents.filter(intent => AppDirectory.shouldAppSupportIntent(app, intent.name, contextType)).forEach(intent => {
+                appIntentPairs.push([intent.name, app]);
+            });
+        });
+
+        // Format data to remove duplicates
+        const appsByIntentType: Map<string, Set<Application>> = new Map();
+        appIntentPairs.forEach(pair => {
+            const [intentType, app] = pair;
+
+            const appsSet = appsByIntentType.get(intentType) || new Set<Application>();
+            appsSet.add(app);
+            appsByIntentType.set(intentType, appsSet);
+        });
+
+        // Sort and format for return to caller
+        const appIntents = Array.from(appsByIntentType.entries()).map(entry => {
+            const [name, appsSet] = entry;
+
+            const apps = Array.from(appsSet.values()).sort((a, b) => this.compareAppsForIntent(a, b, name, contextType));
+            const displayName = AppDirectory.getIntentDisplayName(apps, name) || name;
+
+            return {intent: {name, displayName}, apps};
+        });
 
         // Return app intents in consistent order
         return appIntents.sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));
