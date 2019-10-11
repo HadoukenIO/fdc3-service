@@ -4,13 +4,7 @@ import {Application} from '../../../src/client/directory';
 import {ChannelId} from '../../../src/client/main';
 import {Intent} from '../../../src/client/internal';
 
-import {ChannelDescriptor} from './channels';
-
 let fakeCount = 0;
-
-export function createFakeUuid(): string {
-    return `test-app-${idString()}`;
-}
 
 export function createFakeIdentity(options?: Partial<Identity>): Identity {
     return {
@@ -39,12 +33,12 @@ export function createFakeIntent(options?: Partial<Intent>): Intent {
     };
 }
 
-export function createFakeContextType(): string {
-    return `context=${idString()}`;
+export function createFakeUuid(): string {
+    return `test-app-${idString()}`;
 }
 
-export function fakeAppChannelDescriptor(): ChannelDescriptor {
-    return {type: 'app', name: fakeAppChannelName()};
+export function createFakeContextType(): string {
+    return `context-${idString()}`;
 }
 
 export function fakeAppChannelName(): ChannelId {
