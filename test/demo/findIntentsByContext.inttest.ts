@@ -51,7 +51,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
         });
     });
 
-    describe('When calling findIntentsByContext with a context type accepted by some directory app', () => {
+    describe('When calling findIntentsByContext with a context type accepted by some directory apps', () => {
         const contactContext = {
             type: 'test.IntentNameContext',
             name: 'Test Name'
