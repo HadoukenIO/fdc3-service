@@ -208,8 +208,12 @@ export class Model {
         // Build app intents
         const appIntents = appIntentsBuilder.build();
 
-        // Return app intents in consistent order
-        appIntents.forEach(appIntent => appIntent.apps.sort((a, b) => this.compareAppsForIntent(a, b, name, contextType)));
+        // Normalize result and set display names
+        appIntents.forEach(appIntent => {
+            appIntent.apps.sort((a, b) => this.compareAppsForIntent(a, b, appIntent.intent.name, contextType));
+            appIntent.intent.displayName = AppDirectory.getIntentDisplayName(appIntent.apps, appIntent.intent.name);
+        });
+
         appIntents.sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));
 
         return appIntents;
@@ -409,12 +413,17 @@ class AppIntentsBuilder {
 
     public build(): AppIntent[] {
         const appIntents = Array.from(this._appsByIntentType.entries()).map((entry) => {
-            const [name, appSet] = entry;
+            const [intentType, appSet] = entry;
 
             const apps = Array.from(appSet.values());
-            const displayName = AppDirectory.getIntentDisplayName(apps, name);
 
-            return {intent: {name, displayName}, apps};
+            return {
+                intent: {
+                    name: intentType,
+                    displayName: intentType
+                },
+                apps
+            };
         });
 
         return appIntents;
