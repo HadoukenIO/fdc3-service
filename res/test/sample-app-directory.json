@@ -255,7 +255,7 @@
     ]
 },
 {
-    "appId": "700",
+    "appId": "test-app-invalid-manifest",
     "name": "test-app-invalid-manifest",
     "manifest": "http://localhost:3923/test/configs/non-existent-manifest.json",
     "manifestType": "openfin",
@@ -274,7 +274,7 @@
     "intents": []
 },
 {
-    "appId": "800",
+    "appId": "test-app-takes-long-to-load-manifest",
     "name": "test-app-takes-long-to-load-manifest",
     "manifest": "http://localhost:3923/fakeDelay/?t=30500",
     "manifestType": "openfin",
@@ -293,7 +293,7 @@
     "intents": []
 },
 {
-    "appId": "1000",
+    "appId": "test-app-not-fdc3",
     "name": "test-app-not-fdc3",
     "manifest": "http://localhost:3923/test/configs/test-app-not-fdc3.json",
     "manifestType": "openfin",
@@ -309,5 +309,11 @@
             "icon": "http://localhost:3923/demo/img/app-icons/blotter.svg"
         }
     ],
-    "intents": []
+    "intents": [
+        {
+            "name": "test.IntentOnlyOnTestAppNotFdc3",
+            "displayName": "Test Intent",
+            "contexts": ["test.IntentOnlyOnTestAppNotFdc3Context"]
+        }
+    ]
 }]

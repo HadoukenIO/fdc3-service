@@ -3,8 +3,9 @@ import 'jest';
 import {Context, AppIntent} from '../../src/client/main';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
-import {testManagerIdentity, testAppInDirectory1, testAppInDirectory4} from './constants';
-import {setupTeardown} from './utils/common';
+import {testManagerIdentity, testAppInDirectory1, testAppInDirectory4, testAppNotFdc3} from './constants';
+import {setupTeardown, setupOpenDirectoryAppBookends} from './utils/common';
+import {delay} from './utils/delay';
 
 /**
  * A context missing the mandatory `type` field
@@ -81,6 +82,34 @@ describe('Resolving intents by context, findIntentsByContext', () => {
                         expect.objectContaining({
                             appId: 'test-app-1',
                             name: testAppInDirectory1.name
+                        })
+                    ]
+                }
+            ]);
+        });
+    });
+
+    describe('When calling findIntentsByContext with a context type only explicitly accepted by a running app that has not registered any listeners', () => {
+        const context = {
+            type: 'test.IntentOnlyOnTestAppNotFdc3Context',
+            name: 'Test Name'
+        };
+
+        setupOpenDirectoryAppBookends(testAppNotFdc3);
+
+        test('The promise resolves to AppIntents for intents that take any context only', async () => {
+            const receivedAppIntents = await findIntentsByContext(context);
+
+            expect(receivedAppIntents).toEqual([
+                {
+                    intent: {
+                        displayName: 'test.ContextTestIntent',
+                        name: 'test.ContextTestIntent'
+                    },
+                    apps: [
+                        expect.objectContaining({
+                            appId: 'test-app-4',
+                            name: testAppInDirectory4.name
                         })
                     ]
                 }
