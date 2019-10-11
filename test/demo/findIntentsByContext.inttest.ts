@@ -52,12 +52,12 @@ describe('Resolving intents by context, findIntentsByContext', () => {
     });
 
     describe('When calling findIntentsByContext with a context type accepted by some directory apps', () => {
-        const contactContext = {
+        const context = {
             type: 'test.IntentNameContext',
             name: 'Test Name'
         };
         test('The promise resolves to an array of all compatible AppIntents', async () => {
-            const receivedAppIntents = await findIntentsByContext(contactContext);
+            const receivedAppIntents = await findIntentsByContext(context);
 
             expect(receivedAppIntents).toEqual([
                 {
