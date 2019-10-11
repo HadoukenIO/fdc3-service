@@ -1,11 +1,8 @@
 import {_Window} from 'openfin/_v2/api/window/window';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
-import {injectable, inject} from 'inversify';
+import {injectable} from 'inversify';
 
-import {Inject} from '../common/Injectables';
-import {AppDirectory} from '../model/AppDirectory';
-import {Model} from '../model/Model';
 import {Intent, Application} from '../../client/main';
 import {RESOLVER_IDENTITY} from '../utils/constants';
 
@@ -47,20 +44,8 @@ export interface ResolverHandlerBinding {
 
 @injectable()
 export class ResolverHandler extends AsyncInit implements ResolverHandlerBinding {
-    private readonly _directory: AppDirectory;
-    private readonly _model: Model;
-
     private _window!: _Window;
     private _channel!: ChannelClient;
-
-    constructor(
-        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
-        @inject(Inject.MODEL) model: Model
-    ) {
-        super();
-        this._directory = directory;
-        this._model = model;
-    }
 
     /**
      * Performs one-off initialisation
@@ -96,6 +81,7 @@ export class ResolverHandler extends AsyncInit implements ResolverHandlerBinding
      * Resolver should refresh it's UI, and then show itself when ready.
      *
      * @param intent Intent that is about to be resolved
+     * @param applications The applications to present in the resolver
      */
     public async handleIntent(intent: Intent, applications: Application[]): Promise<ResolverResult> {
         const msg: ResolverArgs = {intent, applications};
