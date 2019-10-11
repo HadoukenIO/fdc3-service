@@ -254,7 +254,7 @@ describe('When querying individual applications', () => {
     });
 
     describe('When an app has an intent with multiple contexts', () => {
-        const contexts = Array.from(Array(3).keys()).map(value => createFakeContextType());
+        const contexts = [createFakeContextType(), createFakeContextType(), createFakeContextType()];
 
         const intent = createFakeIntent({
             contexts
@@ -312,7 +312,7 @@ describe('When querying individual applications', () => {
     });
 
     describe('When an app has multiple intents', () => {
-        const intent1Contexts = Array.from(Array(5).keys()).map(value => createFakeContextType());
+        const intent1Contexts = [createFakeContextType(), createFakeContextType(), createFakeContextType()];
 
         const intent1 = createFakeIntent({
             contexts: intent1Contexts
@@ -349,8 +349,8 @@ describe('When querying individual applications', () => {
         });
 
         it('The app might support each intent with each of its contexts', () => {
-            for (const intent of [intent1, intent2]) {
-                for (const context of intent.contexts!) {
+            for (const intent of intents) {
+                for (const context of intent.contexts || []) {
                     expect(AppDirectory.mightAppSupportIntent(app, intent.name, context)).toBe(true);
                 }
             }
@@ -385,8 +385,8 @@ describe('When querying individual applications', () => {
         });
 
         it('For intents with contexts, the app is expected to support each of those intents with each intent\'s contexts', () => {
-            for (const intent of [intent1, intent2]) {
-                for (const context of intent.contexts!) {
+            for (const intent of intents) {
+                for (const context of intent.contexts || []) {
                     expect(AppDirectory.shouldAppSupportIntent(app, intent.name, context)).toBe(true);
                 }
             }
@@ -394,6 +394,7 @@ describe('When querying individual applications', () => {
 
         it('For intents with contexts, the app is not expected to support each of those intents with contexts of a different intent', () => {
             expect(AppDirectory.shouldAppSupportIntent(app, intent1.name, intent2Contexts[0])).toBe(false);
+            expect(AppDirectory.shouldAppSupportIntent(app, intent2.name, intent1Contexts[0])).toBe(false);
         });
 
         it('For intents with no contexts, the app is expected to support each of those intents with an arbitrary context', () => {
