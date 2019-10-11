@@ -11,7 +11,7 @@ import {
     testManagerIdentity, testAppInDirectory1, testAppInDirectory2,
     testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2, testAppNotFdc3
 } from './constants';
-import {delay, Duration} from './utils/delay';
+import {delay} from './utils/delay';
 
 setupTeardown();
 
@@ -237,7 +237,7 @@ and does not trigger the context listener of the already open app', async () => 
         test('The context is not received by the listener', async () =>{
             await openPromise;
 
-            await delay(Duration.LISTENER_TIMEOUT);
+            await delay(10000);
             const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppDelayedPreregisterLong);
             await expect(preregisteredListener).toHaveReceivedContexts([]);
         });
