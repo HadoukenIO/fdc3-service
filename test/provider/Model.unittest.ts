@@ -7,8 +7,8 @@ import {Model} from '../../src/provider/model/Model';
 import {createMockAppDirectory, createMockEnvironmnent, createMockApiHandler, getterMock, createMockAppWindow} from '../mocks';
 import {Application} from '../../src/client/main';
 import {createFakeApp, createFakeIntent, createFakeContextType, createFakeIdentity} from '../demo/utils/fakes';
-import {Intent} from '../../src/client/directory';
 import {getId} from '../../src/provider/utils/getId';
+import { Intent } from '../../src/client/internal';
 
 const mockAppDirectory = createMockAppDirectory();
 const mockEnvironment = createMockEnvironmnent();
@@ -41,22 +41,19 @@ describe('When an app is in the directory with multiple intents', () => {
         context1 = createFakeContextType();
         context2 = createFakeContextType();
 
-        intent1 = {
-            ...createFakeIntent(),
+        intent1 = createFakeIntent({
             contexts: [context1, context2]
-        };
+        });
 
-        intent2 = {
-            ...createFakeIntent(),
+        intent2 = createFakeIntent({
             contexts: [context1]
-        };
+        });
 
         intent3 = createFakeIntent();
 
-        app = {
-            ...createFakeApp(),
+        app = createFakeApp({
             intents: [intent1, intent2, intent3]
-        };
+        })
 
         mockAppDirectory.getAllApps.mockResolvedValue([app]);
     });
@@ -192,7 +189,7 @@ function setupWindowForApp(app: Application, intents: string[]): void {
 
     mockAppDirectory.getAppByUuid.mockResolvedValue(app);
 
-    const identity = {...createFakeIdentity(), uuid: app.appId};
+    const identity = createFakeIdentity({uuid: app.appId});
 
     const appWindow = {
         ...createMockAppWindow(),

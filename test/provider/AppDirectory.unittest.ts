@@ -30,8 +30,7 @@ declare const global: NodeJS.Global & {localStorage: LocalStore} & {fetch: (url:
 const DEV_APP_DIRECTORY_URL = 'http://openfin.co';
 let appDirectory: AppDirectory;
 
-const fakeApp1: Application = {
-    ...createFakeApp(),
+const fakeApp1: Application = createFakeApp({
     customConfig: [
         {
             'name': 'appUuid',
@@ -49,10 +48,9 @@ const fakeApp1: Application = {
             customConfig: {}
         }
     ]
-};
+});
 
-const fakeApp2: Application = {
-    ...createFakeApp(),
+const fakeApp2: Application = createFakeApp({
     intents: [{
         name: 'testIntent.StartChat',
         contexts: ['testContext.User', 'testContext.Bot'],
@@ -62,7 +60,7 @@ const fakeApp2: Application = {
         contexts: ['testContext.Instrument'],
         customConfig: {}
     }]
-};
+});
 
 const fakeApps: Application[] = [fakeApp1, fakeApp2];
 const cachedFakeApps: Application[] = [fakeApp1, fakeApp1, fakeApp2, fakeApp2];
@@ -218,10 +216,9 @@ describe('When querying individual applications', () => {
 
         const intentType = intent.name;
 
-        const app = {
-            ...createFakeApp(),
+        const app = createFakeApp({
             intents: [intent]
-        };
+        });
 
         it('The app might support that intent', () => {
             expect(AppDirectory.mightAppSupportIntent(app, intentType)).toBe(true);
@@ -259,17 +256,15 @@ describe('When querying individual applications', () => {
     describe('When an app has an intent with multiple contexts', () => {
         const contexts = Array.from(Array(3).keys()).map(value => createFakeContextType());
 
-        const intent = {
-            ...createFakeIntent(),
+        const intent = createFakeIntent({
             contexts
-        };
+        });
 
         const intentType = intent.name;
 
-        const app = {
-            ...createFakeApp(),
+        const app = createFakeApp({
             intents: [intent]
-        };
+        });
 
         it('The app might support that intent', () => {
             expect(AppDirectory.mightAppSupportIntent(app, intentType)).toBe(true);
@@ -319,31 +314,27 @@ describe('When querying individual applications', () => {
     describe('When an app has multiple intents', () => {
         const intent1Contexts = Array.from(Array(5).keys()).map(value => createFakeContextType());
 
-        const intent1 = {
-            ...createFakeIntent(),
+        const intent1 = createFakeIntent({
             contexts: intent1Contexts
-        };
+        });
 
         const intent2Contexts = [createFakeContextType()];
 
-        const intent2 = {
-            ...createFakeIntent(),
+        const intent2 = createFakeIntent({
             contexts: intent2Contexts
-        };
+        });
 
-        const intent3 = {
-            ...createFakeIntent(),
+        const intent3 = createFakeIntent({
             contexts: []
-        };
+        });
 
         const intent4 = createFakeIntent();
 
         const intents = [intent1, intent2, intent3, intent4];
 
-        const app = {
-            ...createFakeApp(),
+        const app = createFakeApp({
             intents
-        };
+        });
 
         it('The app might support each of its intents', () => {
             for (const intent of intents) {
@@ -359,7 +350,7 @@ describe('When querying individual applications', () => {
 
         it('The app might support each intent with each of its contexts', () => {
             for (const intent of [intent1, intent2]) {
-                for (const context of intent.contexts) {
+                for (const context of intent.contexts!) {
                     expect(AppDirectory.mightAppSupportIntent(app, intent.name, context)).toBe(true);
                 }
             }
@@ -395,7 +386,7 @@ describe('When querying individual applications', () => {
 
         it('For intents with contexts, the app is expected to support each of those intents with each intent\'s contexts', () => {
             for (const intent of [intent1, intent2]) {
-                for (const context of intent.contexts) {
+                for (const context of intent.contexts!) {
                     expect(AppDirectory.shouldAppSupportIntent(app, intent.name, context)).toBe(true);
                 }
             }

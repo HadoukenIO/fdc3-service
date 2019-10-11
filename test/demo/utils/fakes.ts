@@ -1,9 +1,10 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {Application, Intent} from '../../../src/client/directory';
+import {Application} from '../../../src/client/directory';
 import {ChannelId} from '../../../src/client/main';
 
 import {ChannelDescriptor} from './channels';
+import { Intent } from '../../../src/client/internal';
 
 let fakeCount = 0;
 
@@ -11,24 +12,30 @@ export function createFakeUuid(): string {
     return `test-app-${idString()}`;
 }
 
-export function createFakeIdentity(): Identity {
-    return {name: `test-window-${idString()}`, uuid: createFakeUuid()};
+export function createFakeIdentity(options?: Partial<Identity>): Identity {
+    return {
+        name: `test-window-${idString()}`,
+        uuid: createFakeUuid(),
+        ...options
+    };
 }
 
-export function createFakeApp(): Application {
+export function createFakeApp(options?: Partial<Application>): Application {
     return {
         appId: `app-id-${idString()}`,
         name: `app-name-${idString()}`,
         manifestType: '',
         manifest: '',
-        intents: []
+        intents: [],
+        ...options
     };
 }
 
-export function createFakeIntent(): Intent {
+export function createFakeIntent(options?: Partial<Intent>): Intent {
     return {
         name: `intent-name-${idString()}`,
-        customConfig: []
+        customConfig: [],
+        ...options
     };
 }
 
