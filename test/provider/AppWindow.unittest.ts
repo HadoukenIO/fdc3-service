@@ -6,6 +6,7 @@ import {createMockChannel} from '../mocks';
 import {Application} from '../../src/client/main';
 import {AbstractAppWindow} from '../../src/provider/model/AppWindow';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
+import {useMockTime, unmockTime, advanceTime, resolvePromiseChain} from '../utils/unit/time';
 
 class TestAppWindow extends AbstractAppWindow {
     private readonly _identity: Readonly<Identity>;
@@ -86,13 +87,13 @@ describe('When querying if a window is ready to receive contexts', () => {
 
     beforeEach(() => {
         // All tests in this section will use fake timers to allow us to control the Promise races precisely
-        jest.useFakeTimers();
+        useMockTime();
 
         testAppWindow = new TestAppWindow(fakeIdentity, fakeAppInfo, mockChannel, Date.now(), 0);
     });
 
     afterEach(() => {
-        jest.useRealTimers();
+        unmockTime();
     });
 
     test('A window with a context listener already registered returns true immediately', async () => {
@@ -112,14 +113,16 @@ describe('When querying if a window is ready to receive contexts', () => {
     describe('When the window does not have a listener registered', () => {
         test('If the window was created longer than the timeout in the past, the promise resolves false immediately', async () => {
             // @ts-ignore Updating the creation time to test old windows
-            testAppWindow._creationTime = Date.now() - 10000;
+            // testAppWindow._creationTime = Date.now() - 10000;
+            // Fast forward time to well after the window's creation time
+            await advanceTime(10000);
 
             // Use a jest spy to track the timing of when the promise resolves without awaiting
             const timingSpy = jest.fn();
             testAppWindow.isReadyToReceiveContext().then(timingSpy);
 
             // Do not advance time, but let any pending promises be actioned
-            await Promise.resolve();
+            await resolvePromiseChain();
 
             // Promise should have resolved immediately, so spy should have been invoked
             expect(timingSpy).toHaveBeenCalledWith(false);
@@ -130,15 +133,14 @@ describe('When querying if a window is ready to receive contexts', () => {
             const timingSpy = jest.fn();
             testAppWindow.isReadyToReceiveContext().then(timingSpy);
 
-            jest.advanceTimersByTime(1000);
-            await Promise.resolve();
+            await advanceTime(1000);
+            await resolvePromiseChain();
             expect(timingSpy).not.toHaveBeenCalled();
 
             testAppWindow.addContextListener();
 
-            await Promise.resolve();
-            jest.advanceTimersByTime(5000);
-            await Promise.resolve();
+            await advanceTime(5000);
+            await resolvePromiseChain();
             expect(timingSpy).toHaveBeenCalled();
         });
 
@@ -148,15 +150,15 @@ describe('When querying if a window is ready to receive contexts', () => {
             testAppWindow.isReadyToReceiveContext().then(timingSpy);
 
             // Does not fail early
-            jest.advanceTimersByTime(2000);
-            await Promise.resolve();
+            await advanceTime(2000);
+            await resolvePromiseChain();
             expect(timingSpy).not.toHaveBeenCalled();
 
             // Advance to the timeout and then slightly past it
-            jest.advanceTimersByTime(3000);
-            await Promise.resolve();
+            await advanceTime(3000);
+            await resolvePromiseChain();
             // This needs to be in two steps because of some peculiarity in how our timeout code works with fake timers
-            await Promise.resolve();
+            // await Promise.resolve();
 
             expect(timingSpy).toHaveBeenCalledWith(false);
         });
