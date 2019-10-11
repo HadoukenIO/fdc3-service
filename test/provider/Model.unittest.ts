@@ -8,7 +8,7 @@ import {createMockAppDirectory, createMockEnvironmnent, createMockApiHandler, ge
 import {Application} from '../../src/client/main';
 import {createFakeApp, createFakeIntent, createFakeContextType, createFakeIdentity} from '../demo/utils/fakes';
 import {getId} from '../../src/provider/utils/getId';
-import { Intent } from '../../src/client/internal';
+import {Intent} from '../../src/client/internal';
 
 const mockAppDirectory = createMockAppDirectory();
 const mockEnvironment = createMockEnvironmnent();
@@ -53,7 +53,7 @@ describe('When an app is in the directory with multiple intents', () => {
 
         app = createFakeApp({
             intents: [intent1, intent2, intent3]
-        })
+        });
 
         mockAppDirectory.getAllApps.mockResolvedValue([app]);
     });

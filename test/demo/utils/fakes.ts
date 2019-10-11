@@ -2,9 +2,9 @@ import {Identity} from 'openfin/_v2/main';
 
 import {Application} from '../../../src/client/directory';
 import {ChannelId} from '../../../src/client/main';
+import {Intent} from '../../../src/client/internal';
 
 import {ChannelDescriptor} from './channels';
-import { Intent } from '../../../src/client/internal';
 
 let fakeCount = 0;
 
