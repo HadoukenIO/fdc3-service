@@ -3,9 +3,8 @@ import 'jest';
 import {Context, AppIntent} from '../../src/client/main';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
-import {testManagerIdentity, testAppInDirectory1, testAppInDirectory4, testAppNotFdc3} from './constants';
+import {testManagerIdentity, testAppInDirectory1, testAppInDirectory4, testAppNotFdc3, testAppInDirectory3} from './constants';
 import {setupTeardown, setupOpenDirectoryAppBookends} from './utils/common';
-import {delay} from './utils/delay';
 
 /**
  * A context missing the mandatory `type` field
@@ -57,35 +56,81 @@ describe('Resolving intents by context, findIntentsByContext', () => {
             type: 'test.IntentNameContext',
             name: 'Test Name'
         };
-        test('The promise resolves to an array of all compatible AppIntents', async () => {
-            const receivedAppIntents = await findIntentsByContext(context);
 
-            expect(receivedAppIntents).toEqual([
-                {
-                    intent: {
-                        name: 'test.ContextTestIntent',
-                        displayName: 'test.ContextTestIntent'
+        describe('When no apps are running', () => {
+            test('The promise resolves to an array of all compatible AppIntents', async () => {
+                const receivedAppIntents = await findIntentsByContext(context);
+    
+                expect(receivedAppIntents).toEqual([
+                    {
+                        intent: {
+                            name: 'test.ContextTestIntent',
+                            displayName: 'test.ContextTestIntent'
+                        },
+                        apps: [
+                            expect.objectContaining({
+                                appId: 'test-app-4',
+                                name: testAppInDirectory4.name
+                            })
+                        ]
                     },
-                    apps: [
-                        expect.objectContaining({
-                            appId: 'test-app-4',
-                            name: testAppInDirectory4.name
-                        })
-                    ]
-                },
-                {
-                    intent: {
-                        name: 'test.IntentName',
-                        displayName: 'Test Intent'
+                    {
+                        intent: {
+                            name: 'test.IntentName',
+                            displayName: 'Test Intent'
+                        },
+                        apps: [
+                            expect.objectContaining({
+                                appId: 'test-app-1',
+                                name: testAppInDirectory1.name
+                            })
+                        ]
+                    }
+                ]);
+            });
+        });
+
+        describe('When a directory app is running that has registered an unexpected intent listener', () => {
+            setupOpenDirectoryAppBookends(testAppInDirectory3);
+    
+            beforeEach(async () => {
+                await fdc3Remote.addIntentListener(testAppInDirectory3, 'test.IntentName')
+            })
+    
+            test('The promise resolves to AppIntents that include the running app', async () => {
+                const receivedAppIntents = await findIntentsByContext(context);
+    
+                expect(receivedAppIntents).toEqual([
+                    {
+                        intent: {
+                            name: 'test.ContextTestIntent',
+                            displayName: 'test.ContextTestIntent'
+                        },
+                        apps: [
+                            expect.objectContaining({
+                                appId: 'test-app-4',
+                                name: testAppInDirectory4.name
+                            })
+                        ]
                     },
-                    apps: [
-                        expect.objectContaining({
-                            appId: 'test-app-1',
-                            name: testAppInDirectory1.name
-                        })
-                    ]
-                }
-            ]);
+                    {
+                        intent: {
+                            name: 'test.IntentName',
+                            displayName: 'Test Intent'
+                        },
+                        apps: [
+                            expect.objectContaining({
+                                appId: 'test-app-1',
+                                name: testAppInDirectory1.name
+                            }),
+                            expect.objectContaining({
+                                appId: 'test-app-3',
+                                name: testAppInDirectory3.name
+                            })
+                        ]
+                    }
+                ]);
+            });
         });
     });
 
@@ -110,6 +155,54 @@ describe('Resolving intents by context, findIntentsByContext', () => {
                         expect.objectContaining({
                             appId: 'test-app-4',
                             name: testAppInDirectory4.name
+                        })
+                    ]
+                }
+            ]);
+        });
+    });
+
+    describe('When calling findIntentsByContext when a directory app has registered an unexpected intent listener', () => {
+        const context = {
+            type: 'test.IntentNameContext',
+            name: 'Test Name'
+        };
+
+        setupOpenDirectoryAppBookends(testAppInDirectory3);
+
+        beforeEach(async () => {
+            await fdc3Remote.addIntentListener(testAppInDirectory3, 'test.IntentName')
+        })
+
+        test('The promise resolves to AppIntents that include the running app', async () => {
+            const receivedAppIntents = await findIntentsByContext(context);
+
+            expect(receivedAppIntents).toEqual([
+                {
+                    intent: {
+                        name: 'test.ContextTestIntent',
+                        displayName: 'test.ContextTestIntent'
+                    },
+                    apps: [
+                        expect.objectContaining({
+                            appId: 'test-app-4',
+                            name: testAppInDirectory4.name
+                        })
+                    ]
+                },
+                {
+                    intent: {
+                        name: 'test.IntentName',
+                        displayName: 'Test Intent'
+                    },
+                    apps: [
+                        expect.objectContaining({
+                            appId: 'test-app-1',
+                            name: testAppInDirectory1.name
+                        }),
+                        expect.objectContaining({
+                            appId: 'test-app-3',
+                            name: testAppInDirectory3.name
                         })
                     ]
                 }
