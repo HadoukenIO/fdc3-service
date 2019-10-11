@@ -60,7 +60,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
         describe('When no apps are running', () => {
             test('The promise resolves to an array of all compatible AppIntents', async () => {
                 const receivedAppIntents = await findIntentsByContext(context);
-    
+
                 expect(receivedAppIntents).toEqual([
                     {
                         intent: {
@@ -92,14 +92,14 @@ describe('Resolving intents by context, findIntentsByContext', () => {
 
         describe('When a directory app is running that has registered an unexpected intent listener', () => {
             setupOpenDirectoryAppBookends(testAppInDirectory3);
-    
+
             beforeEach(async () => {
-                await fdc3Remote.addIntentListener(testAppInDirectory3, 'test.IntentName')
-            })
-    
+                await fdc3Remote.addIntentListener(testAppInDirectory3, 'test.IntentName');
+            });
+
             test('The promise resolves to AppIntents that include the running app', async () => {
                 const receivedAppIntents = await findIntentsByContext(context);
-    
+
                 expect(receivedAppIntents).toEqual([
                     {
                         intent: {
@@ -171,8 +171,8 @@ describe('Resolving intents by context, findIntentsByContext', () => {
         setupOpenDirectoryAppBookends(testAppInDirectory3);
 
         beforeEach(async () => {
-            await fdc3Remote.addIntentListener(testAppInDirectory3, 'test.IntentName')
-        })
+            await fdc3Remote.addIntentListener(testAppInDirectory3, 'test.IntentName');
+        });
 
         test('The promise resolves to AppIntents that include the running app', async () => {
             const receivedAppIntents = await findIntentsByContext(context);
