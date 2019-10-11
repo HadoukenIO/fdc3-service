@@ -50,8 +50,10 @@ export class IntentHandler {
         const targetApp = apps.find(app => app.name === intent.target);
 
         if (targetApp !== undefined) {
+            // Target intent handles intent with given context, so fire
             return this.fireIntent(intent, targetApp);
         } else {
+            // Target intent does not handles intent with given, so determine why and throw an error
             const targetInDirectory = await this._directory.getAppByName(intent.target);
             const targetRunning = this._model.findWindowsByAppName(intent.target).length > 0;
 
@@ -91,6 +93,8 @@ export class IntentHandler {
             console.log(`Resolver showing, re-resolving intent '${intent.type}' when resolver closes'`);
 
             this._resolvePromise = this._resolvePromise.catch(() => {}).then(() => this.startResolve(intent));
+
+            return this._resolvePromise;
         } else {
             // Show resolver
             const selection: ResolverResult | null = await this._resolver.handleIntent(intent, applications).catch(e => {
@@ -106,8 +110,6 @@ export class IntentHandler {
             console.log(`App ${selection.app.name} selected to resolve intent '${intent.type}', firing intent`);
             return this.fireIntent(intent, selection.app);
         }
-
-        return this._resolvePromise;
     }
 
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
