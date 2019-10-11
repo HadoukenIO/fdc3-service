@@ -112,8 +112,6 @@ describe('When querying if a window is ready to receive contexts', () => {
 
     describe('When the window does not have a listener registered', () => {
         test('If the window was created longer than the timeout in the past, the promise resolves false immediately', async () => {
-            // @ts-ignore Updating the creation time to test old windows
-            // testAppWindow._creationTime = Date.now() - 10000;
             // Fast forward time to well after the window's creation time
             await advanceTime(10000);
 
@@ -157,8 +155,6 @@ describe('When querying if a window is ready to receive contexts', () => {
             // Advance to the timeout and then slightly past it
             await advanceTime(3000);
             await resolvePromiseChain();
-            // This needs to be in two steps because of some peculiarity in how our timeout code works with fake timers
-            // await Promise.resolve();
 
             expect(timingSpy).toHaveBeenCalledWith(false);
         });
