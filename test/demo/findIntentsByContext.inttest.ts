@@ -42,7 +42,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
                     },
                     apps: [
                         expect.objectContaining({
-                            appId: '400',
+                            appId: 'test-app-4',
                             name: testAppInDirectory4.name
                         })
                     ]
@@ -67,7 +67,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
                     },
                     apps: [
                         expect.objectContaining({
-                            appId: '400',
+                            appId: 'test-app-4',
                             name: testAppInDirectory4.name
                         })
                     ]
