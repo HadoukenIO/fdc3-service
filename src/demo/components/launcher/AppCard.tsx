@@ -1,13 +1,12 @@
 import * as React from 'react';
 
 import './AppCard.css';
-
-import {Application} from '../../../client/directory';
+import {AppLaunchData} from '../../apps/LauncherApp';
 
 interface AppCardProps {
-    app: Application;
+    app: AppLaunchData;
     isDirectoryApp: boolean;
-    handleClick?: (app: Application) => void;
+    handleClick?: (app: AppLaunchData) => void;
 }
 
 export function AppCard(props: AppCardProps): React.ReactElement {
@@ -21,10 +20,14 @@ export function AppCard(props: AppCardProps): React.ReactElement {
 
     return (
         <div className="app-card w3-card w3-hover-shadow" onClick={handleClick}>
-            {(app.icons && app.icons.length > 0) && <img className={isDirectoryApp ? 'w3-blue-gray' : 'w3-light-blue'} src={app.icons[0].icon} />}
+            {(app.type === 'manifest') ?
+                (app.data.icons && app.data.icons.length > 0) &&
+                    <img className={isDirectoryApp ? 'w3-blue-gray' : 'w3-light-blue'} src={app.data.icons[0].icon} /> :
+                <img className={'w3-light-green'} src={app.data.icon} />
+            }
             <div>
-                <h6><b>{app.title}</b></h6>
-                <p className="w3-small w3-text-grey">{app.description}</p>
+                <h6><b>{(app.type === 'manifest') ? app.data.title : app.data.name}</b></h6>
+                <p className="w3-small w3-text-grey">{app.data.description}</p>
             </div>
         </div>
     );
