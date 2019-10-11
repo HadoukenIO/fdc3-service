@@ -3,7 +3,7 @@ import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, GetOrCreateAppChannelPayload, AppChannelTransport} from '../client/internal';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, AddContextListenerPayload, RemoveContextListenerPayload, GetOrCreateAppChannelPayload, AppChannelTransport} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Intent, Context} from '../client/main';
 import {FDC3Error, OpenError, IdentityError} from '../client/errors';
 import {parseIdentity, parseContext, parseChannelId, parseAppChannelName} from '../client/validation';
@@ -77,6 +77,8 @@ export class Main {
             [APIFromClientTopic.RAISE_INTENT]: this.raiseIntent.bind(this),
             [APIFromClientTopic.ADD_INTENT_LISTENER]: this.addIntentListener.bind(this),
             [APIFromClientTopic.REMOVE_INTENT_LISTENER]: this.removeIntentListener.bind(this),
+            [APIFromClientTopic.ADD_CONTEXT_LISTENER]: this.addContextListener.bind(this),
+            [APIFromClientTopic.REMOVE_CONTEXT_LISTENER]: this.removeContextListener.bind(this),
             [APIFromClientTopic.GET_SYSTEM_CHANNELS]: this.getSystemChannels.bind(this),
             [APIFromClientTopic.GET_CHANNEL_BY_ID]: this.getChannelById.bind(this),
             [APIFromClientTopic.GET_CURRENT_CHANNEL]: this.getCurrentChannel.bind(this),
@@ -184,6 +186,22 @@ export class Main {
         const appWindow = this.attemptGetWindow(source);
         if (appWindow) {
             appWindow.removeIntentListener(payload.intent);
+        } else {
+            // If for some odd reason the window is not in the model it's still OK to return successfully,
+            // as the caller's intention was to remove a listener and the listener is certainly not there.
+        }
+    }
+
+    private async addContextListener(payload: AddContextListenerPayload, source: ProviderIdentity): Promise<void> {
+        const appWindow = await this.expectWindow(source);
+
+        appWindow.addContextListener();
+    }
+
+    private removeContextListener(payload: RemoveContextListenerPayload, source: ProviderIdentity): void {
+        const appWindow = this.attemptGetWindow(source);
+        if (appWindow) {
+            appWindow.removeContextListener();
         } else {
             // If for some odd reason the window is not in the model it's still OK to return successfully,
             // as the caller's intention was to remove a listener and the listener is certainly not there.

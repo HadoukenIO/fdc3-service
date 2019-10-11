@@ -1,22 +1,21 @@
 import {WindowEvent} from 'openfin/_v2/api/events/base';
 import {injectable} from 'inversify';
-import {Identity, Window} from 'openfin/_v2/main';
+import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {Application, IntentType, ChannelId} from '../../client/main';
+import {Application} from '../../client/main';
 import {FDC3Error, OpenError} from '../../client/errors';
 import {withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
 import {parseIdentity} from '../../client/validation';
-import {DeferredPromise} from '../common/DeferredPromise';
-import {Events, ChannelEvents} from '../../client/internal';
 import {Injector} from '../common/Injector';
 import {getId} from '../utils/getId';
 
 import {Environment, EntityType} from './Environment';
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
+import {FinAppWindow} from './FinAppWindow';
 import {AppDirectory} from './AppDirectory';
 
 interface CreatedWindow {
@@ -25,12 +24,6 @@ interface CreatedWindow {
 }
 
 type CreatedWindowMap = Map<string, CreatedWindow>;
-
-type IntentMap = Set<string>;
-
-type ContextMap = Set<string>;
-
-type ChannelEventMap = Map<string, Set<Events['type']>>;
 
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
@@ -180,148 +173,5 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
             return entityInfo.entityType === externalWindowType;
         }
-    }
-}
-
-class FinAppWindow implements AppWindow {
-    public channel: ContextChannel;
-
-    private readonly _id: string;
-    private readonly _appInfo: Application;
-    private readonly _window: Window;
-    private readonly _appWindowNumber: number;
-
-    private readonly _creationTime: number | undefined;
-
-    private readonly _intentListeners: IntentMap;
-    private readonly _channelContextListeners: ContextMap;
-    private readonly _channelEventListeners: ChannelEventMap;
-
-    private readonly _onIntentListenerAdded: Signal<[IntentType]> = new Signal();
-
-    constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined, appWindowNumber: number) {
-        this._id = getId(identity);
-        this._window = fin.Window.wrapSync(identity);
-        this._appInfo = appInfo;
-        this._appWindowNumber = appWindowNumber;
-
-        this._creationTime = creationTime;
-
-        this._intentListeners = new Set();
-        this._channelContextListeners = new Set();
-        this._channelEventListeners = new Map();
-
-        this.channel = channel;
-    }
-
-    public get id(): string {
-        return this._id;
-    }
-
-    public get identity(): Readonly<Identity> {
-        return this._window.identity;
-    }
-
-    public get appInfo(): Readonly<Application> {
-        return this._appInfo;
-    }
-
-    public get appWindowNumber(): number {
-        return this._appWindowNumber;
-    }
-
-    public get channelContextListeners(): ReadonlyArray<ChannelId> {
-        return Object.keys(this._channelContextListeners);
-    }
-
-    public get intentListeners(): ReadonlyArray<string> {
-        return Object.keys(this._intentListeners);
-    }
-
-    public hasIntentListener(intentName: string): boolean {
-        return this._intentListeners.has(intentName);
-    }
-
-    public addIntentListener(intentName: string): void {
-        this._intentListeners.add(intentName);
-        this._onIntentListenerAdded.emit(intentName);
-    }
-
-    public removeIntentListener(intentName: string): void {
-        this._intentListeners.delete(intentName);
-    }
-
-    public hasChannelContextListener(channel: ContextChannel): boolean {
-        return this._channelContextListeners.has(channel.id);
-    }
-
-    public addChannelContextListener(channel: ContextChannel): void {
-        this._channelContextListeners.add(channel.id);
-    }
-
-    public removeChannelContextListener(channel: ContextChannel): void {
-        this._channelContextListeners.delete(channel.id);
-    }
-
-    public hasChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): boolean {
-        return this._channelEventListeners.has(channel.id) && (this._channelEventListeners.get(channel.id)!.has(eventType));
-    }
-
-    public addChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): void {
-        if (!this._channelEventListeners.has(channel.id)) {
-            this._channelEventListeners.set(channel.id, new Set());
-        }
-
-        this._channelEventListeners.get(channel.id)!.add(eventType);
-    }
-
-    public removeChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): void {
-        if (this._channelEventListeners.has(channel.id)) {
-            const events = this._channelEventListeners.get(channel.id)!;
-            events.delete(eventType);
-        }
-    }
-
-    public bringToFront(): Promise<void> {
-        return this._window.bringToFront();
-    }
-
-    public focus(): Promise<void> {
-        return this._window.focus();
-    }
-
-    public async isReadyToReceiveIntent(intent: IntentType): Promise<boolean> {
-        if (this.hasIntentListener(intent)) {
-            // App has already registered the intent listener
-            return true;
-        }
-
-        const age = this._creationTime === undefined ? undefined : Date.now() - this._creationTime;
-
-        if (age === undefined || age >= Timeouts.ADD_INTENT_LISTENER) {
-            // App has been running for a while
-            return false;
-        } else {
-            // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
-            const deferredPromise = new DeferredPromise();
-
-            const slot = this._onIntentListenerAdded.add(intentAdded => {
-                if (intentAdded === intent) {
-                    deferredPromise.resolve();
-                }
-            });
-
-            const [didTimeout] = await withTimeout(Timeouts.ADD_INTENT_LISTENER - age, deferredPromise.promise);
-
-            slot.remove();
-
-            return !didTimeout;
-        }
-    }
-
-    public removeAllListeners(): void {
-        this._channelContextListeners.clear();
-        this._channelEventListeners.clear();
-        this._intentListeners.clear();
     }
 }

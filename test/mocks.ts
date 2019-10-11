@@ -10,7 +10,7 @@ import {Environment, EntityType} from '../src/provider/model/Environment';
 /**
  * Creates a minimal mock app window. Any utilizing test should set properties and set up mock functions as needed
  */
-export function createMockAppWindow(): jest.Mocked<AppWindow> {
+export function createMockAppWindow(options: Partial<jest.Mocked<AppWindow>> = {}): jest.Mocked<AppWindow> {
     return {
         id: '',
         identity: {name: '', uuid: ''},
@@ -22,6 +22,9 @@ export function createMockAppWindow(): jest.Mocked<AppWindow> {
         hasIntentListener: jest.fn<boolean, [string]>(),
         addIntentListener: jest.fn<void, [string]>(),
         removeIntentListener: jest.fn<void, [string]>(),
+        hasContextListener: jest.fn<boolean, []>(),
+        addContextListener: jest.fn<void, []>(),
+        removeContextListener: jest.fn<void, []>(),
         hasChannelContextListener: jest.fn<boolean, [ContextChannel]>(),
         addChannelContextListener: jest.fn<void, [ContextChannel]>(),
         removeChannelContextListener: jest.fn<void, [ContextChannel]>(),
@@ -31,22 +34,27 @@ export function createMockAppWindow(): jest.Mocked<AppWindow> {
         bringToFront: jest.fn<Promise<void>, []>(),
         focus: jest.fn<Promise<void>, []>(),
         isReadyToReceiveIntent: jest.fn<Promise<boolean>, [IntentType]>(),
-        removeAllListeners: jest.fn<void, []>()
+        isReadyToReceiveContext: jest.fn<Promise<boolean>, []>(),
+        removeAllListeners: jest.fn<void, []>(),
+        // Apply any custom overrides
+        ...options
     };
 }
 
-export function createMockChannel(): jest.Mocked<ContextChannel> {
+export function createMockChannel(options: Partial<jest.Mocked<ContextChannel>> = {}): jest.Mocked<ContextChannel> {
     return {
         id: '',
         type: '',
         storedContext: null,
         setLastBroadcastContext: jest.fn<void, [Context]>(),
         clearStoredContext: jest.fn<void, []>(),
-        serialize: jest.fn<ChannelTransport, []>()
+        serialize: jest.fn<ChannelTransport, []>(),
+        // Apply any custom overrides
+        ...options
     };
 }
 
-export function createMockEnvironmnent(): jest.Mocked<Environment> {
+export function createMockEnvironmnent(options: Partial<jest.Mocked<Environment>> = {}): jest.Mocked<Environment> {
     return {
         windowCreated: new Signal<[Identity]>(),
         windowClosed: new Signal<[Identity]>(),
@@ -55,6 +63,8 @@ export function createMockEnvironmnent(): jest.Mocked<Environment> {
         wrapApplication: jest.fn<AppWindow, [Application, Identity, ContextChannel]>(),
         inferApplication: jest.fn<Promise<Application>, [Identity]>(),
         getEntityType: jest.fn<Promise<EntityType>, [Identity]>(),
-        isWindowCreated: jest.fn<boolean, [Identity]>()
+        isWindowCreated: jest.fn<boolean, [Identity]>(),
+        // Apply any custom overrides
+        ...options
     };
 }

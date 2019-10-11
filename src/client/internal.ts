@@ -39,6 +39,8 @@ export enum APIFromClientTopic {
     RAISE_INTENT = 'RAISE-INTENT',
     ADD_INTENT_LISTENER = 'ADD-INTENT-LISTENER',
     REMOVE_INTENT_LISTENER = 'REMOVE-INTENT-LISTENER',
+    ADD_CONTEXT_LISTENER = 'ADD-CONTEXT-LISTENER',
+    REMOVE_CONTEXT_LISTENER = 'REMOVE-CONTEXT-LISTENER',
     GET_SYSTEM_CHANNELS = 'GET-SYSTEM-CHANNELS',
     GET_CHANNEL_BY_ID = 'GET-CHANNEL-BY-ID',
     GET_CURRENT_CHANNEL = 'GET-CURRENT-CHANNEL',
@@ -70,6 +72,8 @@ export type APIFromClient = {
     [APIFromClientTopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
     [APIFromClientTopic.ADD_INTENT_LISTENER]: [AddIntentListenerPayload, void];
     [APIFromClientTopic.REMOVE_INTENT_LISTENER]: [RemoveIntentListenerPayload, void];
+    [APIFromClientTopic.ADD_CONTEXT_LISTENER]: [AddContextListenerPayload, void];
+    [APIFromClientTopic.REMOVE_CONTEXT_LISTENER]: [AddContextListenerPayload, void];
     [APIFromClientTopic.GET_SYSTEM_CHANNELS]: [GetSystemChannelsPayload, SystemChannelTransport[]];
     [APIFromClientTopic.GET_CHANNEL_BY_ID]: [GetChannelByIdPayload, ChannelTransport];
     [APIFromClientTopic.GET_CURRENT_CHANNEL]: [GetCurrentChannelPayload, ChannelTransport];
@@ -215,6 +219,14 @@ export interface AddIntentListenerPayload {
 
 export interface RemoveIntentListenerPayload {
     intent: string;
+}
+
+export interface AddContextListenerPayload {
+
+}
+
+export interface RemoveContextListenerPayload {
+
 }
 
 export interface ReceiveContextPayload {
