@@ -126,11 +126,11 @@ export abstract class AbstractAppWindow implements AppWindow {
     }
 
     public get channelContextListeners(): ReadonlyArray<ChannelId> {
-        return Object.keys(this._channelContextListeners);
+        return Array.from(this._channelContextListeners.values());
     }
 
     public get intentListeners(): ReadonlyArray<string> {
-        return Object.keys(this._intentListeners);
+        return Array.from(this._intentListeners.values());
     }
 
     public hasIntentListener(intentName: string): boolean {

@@ -1,3 +1,5 @@
+import {Intent} from './internal';
+
 /**
  * @module Directory
  */
@@ -55,14 +57,4 @@ interface Icon {
 interface NameValuePair {
     name: string;
     value: string;
-}
-
-interface Intent {
-    name: string;
-    displayName?: string;
-    contexts?: string[];
-
-    // Specification is ambiguous on type of customConfig, so leaving as 'any'
-    /* tslint:disable:no-any */
-    customConfig: any;
 }

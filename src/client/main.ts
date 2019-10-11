@@ -2,8 +2,6 @@
  * @module Index
  */
 
-import {EventEmitter} from 'events';
-
 import {tryServiceDispatch, getServicePromise, getEventRouter, eventEmitter} from './connection';
 import {Context} from './context';
 import {Application} from './directory';

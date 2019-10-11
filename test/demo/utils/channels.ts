@@ -1,11 +1,8 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {ChannelId} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 
 import {RemoteChannel} from './RemoteChannel';
-
-let fakeCount = 0;
 
 export type ChannelDescriptor = {
     type: 'default'
@@ -29,16 +26,4 @@ export async function getChannel(executionTarget: Identity, descriptor: ChannelD
     } else {
         return fdc3Remote.getOrCreateAppChannel(executionTarget, descriptor.name);
     }
-}
-
-export function fakeAppChannelDescriptor(): ChannelDescriptor {
-    return {type: 'app', name: fakeAppChannelName()};
-}
-
-export function fakeAppChannelName(): ChannelId {
-    return `app-channel-name-${idString()}`;
-}
-
-function idString(): string {
-    return `[${(fakeCount++).toString(16).toUpperCase()}]`;
 }

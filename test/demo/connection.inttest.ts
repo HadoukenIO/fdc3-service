@@ -210,9 +210,9 @@ async function navigateTo(target: Identity, url: string): Promise<void> {
     await delay(Duration.PAGE_NAVIGATE);
 }
 
-async function getIntentListeners(intentType: string): Promise<Application[]> {
-    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, type: string): Promise<Application[]> {
-        return this.model.getApplicationsForIntent(type);
+async function getIntentListeners(intentType: string): Promise<AppWindow[]> {
+    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, async function (this: ProviderWindow, type: string): Promise<AppWindow[]> {
+        return (await this.model.windows).filter(window => window.hasIntentListener(type));
     }, intentType);
 }
 
