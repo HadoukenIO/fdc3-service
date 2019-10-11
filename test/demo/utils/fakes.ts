@@ -1,8 +1,10 @@
 import {Identity} from 'openfin/_v2/main';
 
 import {Application} from '../../../src/client/directory';
-import {ChannelId} from '../../../src/client/main';
+import {ChannelId, Channel} from '../../../src/client/main';
 import {Intent} from '../../../src/client/internal';
+
+import {ChannelDescriptor} from './channels';
 
 let fakeCount = 0;
 
@@ -31,6 +33,10 @@ export function createFakeIntent(options?: Partial<Intent>): Intent {
         customConfig: [],
         ...options
     };
+}
+
+export function fakeAppChannelDescriptor(): ChannelDescriptor {
+    return {type: 'app', name: fakeAppChannelName()};
 }
 
 export function createFakeUuid(): string {

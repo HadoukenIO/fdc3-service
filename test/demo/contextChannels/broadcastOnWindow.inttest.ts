@@ -5,7 +5,8 @@ import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {appStartupTime, testManagerIdentity, testAppNotInDirectory1, testAppInDirectory1, testAppInDirectory2, testAppInDirectory3, testAppInDirectory4, testAppWithPreregisteredListeners1} from '../constants';
 import {fin} from '../utils/fin';
 import {setupTeardown, quitApps} from '../utils/common';
-import {ChannelDescriptor, getChannel, fakeAppChannelDescriptor} from '../utils/channels';
+import {ChannelDescriptor, getChannel} from '../utils/channels';
+import {fakeAppChannelDescriptor} from '../utils/fakes';
 
 /*
  * Tests top-level broadcast(), and addContextListener() calls, and how they interact with Channel.join()
