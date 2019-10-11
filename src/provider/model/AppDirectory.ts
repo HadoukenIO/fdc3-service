@@ -42,7 +42,7 @@ export class AppDirectory extends AsyncInit {
         }
     }
 
-    public static getIntentDisplayName(apps: Application[], intentType: string): string | undefined {
+    public static getIntentDisplayName(apps: Application[], intentType: string): string {
         for (const app of apps) {
             const intent = app.intents && app.intents.find(intent => intent.name === intentType);
 
@@ -51,7 +51,7 @@ export class AppDirectory extends AsyncInit {
             }
         }
 
-        return undefined;
+        return intentType;
     }
 
     public static getUuidFromApp(app: Application): string {

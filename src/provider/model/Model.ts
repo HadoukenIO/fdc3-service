@@ -412,7 +412,7 @@ class AppIntentsBuilder {
             const [name, appSet] = entry;
 
             const apps = Array.from(appSet.values());
-            const displayName = AppDirectory.getIntentDisplayName(apps, name) || name;
+            const displayName = AppDirectory.getIntentDisplayName(apps, name);
 
             return {intent: {name, displayName}, apps};
         });
