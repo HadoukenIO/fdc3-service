@@ -96,7 +96,7 @@ describe('Intent listeners and raising intents without a target', () => {
                                     ResolveError.ResolverClosedOrCancelled,
                                     'Resolver closed or cancelled'
                                 );
-                            }, 1000 * 1000);
+                            });
                             test('When choosing the directory app on the resolver, it receives intent', async () => {
                                 await raiseIntentExpectResolverSelectApp(uniqueIntent, testAppWithUniqueIntent, directoryAppListener);
                             });
@@ -253,8 +253,6 @@ function setupNoDirectoryAppCanHandleIntentTests(intent: Intent): void {
 
             describe('When calling raiseIntent, the resolver is displayed with both apps', () => {
                 test('When closing the resolver, an error is thrown', async () => {
-                    const result = await raiseIntentExpectResolverAndClose(intent).catch((e) => e);
-
                     await expect(raiseIntentExpectResolverAndClose(intent)).toThrowFDC3Error(
                         ResolveError.ResolverClosedOrCancelled,
                         'Resolver closed or cancelled'
