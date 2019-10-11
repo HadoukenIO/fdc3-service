@@ -5,7 +5,6 @@ import {Context, AppIntent} from '../../src/client/main';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {testManagerIdentity, testAppInDirectory1, testAppInDirectory4} from './constants';
 import {setupTeardown} from './utils/common';
-import {delay} from './utils/delay';
 
 /**
  * A context missing the mandatory `type` field
