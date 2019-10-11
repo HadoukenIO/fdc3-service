@@ -8,7 +8,7 @@ import {ChannelId, DEFAULT_CHANNEL_ID, AppIntent} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {SYSTEM_CHANNELS, Timeouts} from '../constants';
-import {withStrictTimeout, untilTrue, allowReject, untilSignal, asyncFilter, asyncMap} from '../utils/async';
+import {withStrictTimeout, untilTrue, allowReject, untilSignal, asyncFilter} from '../utils/async';
 import {Boxed} from '../utils/types';
 import {getId} from '../utils/getId';
 
@@ -33,7 +33,7 @@ interface ExpectedWindow {
 
 interface WindowGroup {
     application: Application;
-    windows: AppWindow[]
+    windows: AppWindow[];
 }
 
 const EXPECT_TIMEOUT_MESSAGE = 'Timeout on window registration exceeded';
@@ -415,14 +415,12 @@ class AppIntentsBuilder {
         const appIntents = Array.from(this._appsByIntentType.entries()).map((entry) => {
             const [intentType, appSet] = entry;
 
-            const apps = Array.from(appSet.values());
-
             return {
                 intent: {
                     name: intentType,
                     displayName: intentType
                 },
-                apps
+                apps: Array.from(appSet.values())
             };
         });
 
