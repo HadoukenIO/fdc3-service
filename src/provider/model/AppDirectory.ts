@@ -25,7 +25,7 @@ export class AppDirectory extends AsyncInit {
             return true;
         } else {
             const intent = app.intents.find(intent => intent.name === intentType);
-            return intent === undefined || AppDirectory.intentSupportsContext(intent, contextType);
+            return intent === undefined || intentSupportsContext(intent, contextType);
         }
     }
 
@@ -38,7 +38,7 @@ export class AppDirectory extends AsyncInit {
             return false;
         } else {
             const intent = app.intents.find(intent => intent.name === intentType);
-            return intent !== undefined && (contextType === undefined || AppDirectory.intentSupportsContext(intent, contextType));
+            return intent !== undefined && (contextType === undefined || intentSupportsContext(intent, contextType));
         }
     }
 
@@ -57,10 +57,6 @@ export class AppDirectory extends AsyncInit {
     public static getUuidFromApp(app: Application): string {
         const customValue = checkCustomConfigField(app, CustomConfigFields.OPENFIN_APP_UUID);
         return customValue !== undefined ? customValue : app.appId;
-    }
-
-    private static intentSupportsContext(intent: Intent, contextType: string): boolean {
-        return intent.contexts === undefined || intent.contexts.length === 0 || intent.contexts.includes(contextType);
     }
 
     private readonly _configStore: ConfigStoreBinding;
@@ -152,4 +148,8 @@ export class AppDirectory extends AsyncInit {
         localStorage.setItem(StorageKeys.URL, url);
         localStorage.setItem(StorageKeys.APPLICATIONS, JSON.stringify(applications));
     }
+}
+
+function intentSupportsContext(intent: Intent, contextType: string): boolean {
+    return intent.contexts === undefined || intent.contexts.length === 0 || intent.contexts.includes(contextType);
 }

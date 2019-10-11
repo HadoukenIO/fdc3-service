@@ -149,13 +149,13 @@ export class Model {
      * Get apps that can handle an intent and optionally with specified context type
      *
      * Includes windows that are not in the app directory but have registered a listener for it if contextType is not specified
-     * @param intentType intent type
-     * @param contextType context type
+     * @param intentType The intent type we want to find supporting apps for
+     * @param contextType The optional context type that we want apps to support with the given intent
      */
     public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
         // Get all live apps that support the given intent and context
         // TODO: Include apps that should add a listener but haven't yet, where the timeout has not expired (may have no registered windows) [SERVICE-556]
-        const liveWindowGroups = this.extractApplicationsFromWindows(this.windows);
+        const liveWindowGroups = groupWindowsByApplication(this.windows);
 
         const liveAppsForIntent = (await asyncFilter(liveWindowGroups, async (group: WindowGroup) => {
             const {application, windows} = group;
@@ -175,72 +175,48 @@ export class Model {
     }
 
     /**
-     * Get information about intents that can handle a given contexts, and the apps that can handle that intent with that context
+     * Get information about intents that can handle a given contexts, and the apps that can handle that intent with that context. Result
+     * will be consistent with `getApplicationsForIntent`
+     *
+     * @param contextType The optional context type that we want to find intents to handle
      */
     public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
-        const appIntentPairs: [string, Application][] = [];
+        const appIntentsBuilder = new AppIntentsBuilder();
 
-        // Populate appIntentPairs from running apps
+        // Populate appIntentsBuilder from running apps
         // TODO: Include apps that should add a listener but haven't yet, where the timeout has not expired (may have no registered windows) [SERVICE-556]
         this.windows.forEach(window => {
             const intentTypes = window.intentListeners;
             const app = window.appInfo;
 
             intentTypes.filter(intentType => AppDirectory.mightAppSupportIntent(app, intentType, contextType)).forEach(intentType => {
-                appIntentPairs.push([intentType, window.appInfo]);
+                appIntentsBuilder.addApplicationForIntent(intentType, window.appInfo);
             });
         });
 
-        // Populate appIntentPairs from non-running directory apps
+        // Populate appIntentsBuilder from non-running directory apps
         const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => !(await this._environment.isRunning(app)));
 
         directoryApps.forEach(app => {
             const intents = app.intents || [];
 
             intents.filter(intent => AppDirectory.shouldAppSupportIntent(app, intent.name, contextType)).forEach(intent => {
-                appIntentPairs.push([intent.name, app]);
+                appIntentsBuilder.addApplicationForIntent(intent.name, app);
             });
         });
 
-        // Format data to remove duplicates
-        const appsByIntentType: Map<string, Set<Application>> = new Map();
-        appIntentPairs.forEach(pair => {
-            const [intentType, app] = pair;
-
-            const appsSet = appsByIntentType.get(intentType) || new Set<Application>();
-            appsSet.add(app);
-            appsByIntentType.set(intentType, appsSet);
-        });
-
-        // Sort and format for return to caller
-        const appIntents = Array.from(appsByIntentType.entries()).map(entry => {
-            const [name, appsSet] = entry;
-
-            const apps = Array.from(appsSet.values()).sort((a, b) => this.compareAppsForIntent(a, b, name, contextType));
-            const displayName = AppDirectory.getIntentDisplayName(apps, name) || name;
-
-            return {intent: {name, displayName}, apps};
-        });
+        // Build app intents
+        const appIntents = appIntentsBuilder.build();
 
         // Return app intents in consistent order
-        return appIntents.sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));
+        appIntents.forEach(appIntent => appIntent.apps.sort((a, b) => this.compareAppsForIntent(a, b, name, contextType)));
+        appIntents.sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));
+
+        return appIntents;
     }
 
     public findWindowsByAppName(name: AppName): AppWindow[] {
         return this.findWindows(appWindow => appWindow.appInfo.name === name);
-    }
-
-    private extractApplicationsFromWindows(windows: AppWindow[]): WindowGroup[] {
-        return windows.reduce((groups: WindowGroup[], appWindow: AppWindow) => {
-            const group = groups.find(group => group.application.appId === appWindow.appInfo.appId);
-            if (group) {
-                group.windows.push(appWindow);
-            } else {
-                groups.push({application: appWindow.appInfo, windows: [appWindow]});
-            }
-
-            return groups;
-        }, []);
     }
 
     private onWindowCreated(identity: Identity): void {
@@ -406,5 +382,41 @@ export class Model {
         }
 
         return (app1.title || app1.name).localeCompare(app2.title || app2.name, 'en');
+    }
+}
+
+function groupWindowsByApplication(windows: AppWindow[]): WindowGroup[] {
+    return windows.reduce((groups: WindowGroup[], appWindow: AppWindow) => {
+        const group = groups.find(group => group.application.appId === appWindow.appInfo.appId);
+        if (group) {
+            group.windows.push(appWindow);
+        } else {
+            groups.push({application: appWindow.appInfo, windows: [appWindow]});
+        }
+
+        return groups;
+    }, []);
+}
+
+class AppIntentsBuilder {
+    private _appsByIntentType: Map<string, Set<Application>> = new Map();
+
+    public addApplicationForIntent(intentType: string, app: Application): void {
+        const appsSet = this._appsByIntentType.get(intentType) || new Set<Application>();
+        appsSet.add(app);
+        this._appsByIntentType.set(intentType, appsSet);
+    }
+
+    public build(): AppIntent[] {
+        const appIntents = Array.from(this._appsByIntentType.entries()).map((entry) => {
+            const [name, appSet] = entry;
+
+            const apps = Array.from(appSet.values());
+            const displayName = AppDirectory.getIntentDisplayName(apps, name) || name;
+
+            return {intent: {name, displayName}, apps};
+        });
+
+        return appIntents;
     }
 }
