@@ -104,7 +104,7 @@ describe('When querying if a window is ready to receive contexts', () => {
         testAppWindow.isReadyToReceiveContext().then(timingSpy);
 
         // Do not advance time, but let any pending promises be actioned
-        await Promise.resolve();
+        await resolvePromiseChain();
 
         // Promise should have resolved immediately, so spy should have been invoked
         expect(timingSpy).toHaveBeenCalledWith(true);
