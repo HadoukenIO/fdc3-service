@@ -8,15 +8,20 @@ import {ChannelTransport, ChannelEvents, APIFromClientTopic} from '../src/client
 import {Environment, EntityType} from '../src/provider/model/Environment';
 import {AppDirectory} from '../src/provider/model/AppDirectory';
 import {APIHandler} from '../src/provider/APIHandler';
+import {getId} from '../src/provider/utils/getId';
+
+import {createFakeIdentity, createFakeApp} from './demo/utils/fakes';
 
 /**
  * Creates a minimal mock app window. Any utilizing test should set properties and set up mock functions as needed
  */
-export function createMockAppWindow(): jest.Mocked<AppWindow> {
+export function createMockAppWindow(options?: Partial<jest.Mocked<AppWindow>>): jest.Mocked<AppWindow> {
+    const identity = createFakeIdentity();
+
     return {
-        id: '',
-        identity: {name: '', uuid: ''},
-        appInfo: {appId: '', name: '', manifest: '', manifestType: ''},
+        id: getId(identity),
+        identity,
+        appInfo: createFakeApp({appId: identity.uuid}),
         appWindowNumber: 0,
         channel: createMockChannel(),
         channelContextListeners: [],
@@ -33,7 +38,8 @@ export function createMockAppWindow(): jest.Mocked<AppWindow> {
         bringToFront: jest.fn<Promise<void>, []>(),
         focus: jest.fn<Promise<void>, []>(),
         isReadyToReceiveIntent: jest.fn<Promise<boolean>, [IntentType]>(),
-        removeAllListeners: jest.fn<void, []>()
+        removeAllListeners: jest.fn<void, []>(),
+        ...options
     };
 }
 

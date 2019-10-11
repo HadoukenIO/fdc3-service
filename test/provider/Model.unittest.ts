@@ -59,7 +59,7 @@ describe('When an app is in the directory with multiple intents', () => {
     });
 
     describe('When the app is not running', () => {
-        test('The model returns the app in intents that handle a given context', async () => {
+        test('The model returns the app in app intents that handle a given context', async () => {
             await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([
                 {
                     intent: {
@@ -113,12 +113,36 @@ describe('When an app is in the directory with multiple intents', () => {
         });
     });
 
-    describe('When the app is running, and has only added a listener for a single intent from the directory', () => {
+    describe('When the app is running, but no windows have connected to the service', () => {
         beforeEach(async () => {
-            setupWindowForApp(app, [intent1.name]);
+            mockEnvironment.isRunning.mockResolvedValue(true);
         });
 
-        test('The model returns the app in only that intent', async () => {
+        test('The model does not return the app for any context', async () => {
+            await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([]);
+
+            await expect(model.getAppIntentsByContext(context2)).resolves.toEqual([]);
+        });
+    });
+
+    describe('When the app is running, but has not added any intent listeners', () => {
+        beforeEach(async () => {
+            setupAppRunningWithWindowWithIntentListeners(app, []);
+        });
+
+        test('The model does not return the app for any context', async () => {
+            await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([]);
+
+            await expect(model.getAppIntentsByContext(context2)).resolves.toEqual([]);
+        });
+    });
+
+    describe('When the app is running, and has only added a listener for a single intent from the directory', () => {
+        beforeEach(async () => {
+            setupAppRunningWithWindowWithIntentListeners(app, [intent1.name]);
+        });
+
+        test('The model returns the app in only the app intent for that intent', async () => {
             await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([
                 {
                     intent: {
@@ -149,10 +173,10 @@ describe('When an app is in the directory with multiple intents', () => {
         beforeEach(async () => {
             arbitraryIntentType = createFakeIntent().name;
 
-            setupWindowForApp(app, [arbitraryIntentType]);
+            setupAppRunningWithWindowWithIntentListeners(app, [arbitraryIntentType]);
         });
 
-        test('The model returns the app in only that intent for any context', async () => {
+        test('The model returns the app in only the app intent for that intent, for any context', async () => {
             const contexts = [context1, context2, createFakeContextType()];
 
             for (const context in contexts) {
@@ -169,40 +193,112 @@ describe('When an app is in the directory with multiple intents', () => {
         });
     });
 
-    describe('When the app is running, but no windows have connected to the service', () => {
+    describe('When the app is running, and has added listeners for multiple intents', () => {
+        let arbitraryIntentType: string;
+
         beforeEach(async () => {
-            mockEnvironment.isRunning.mockResolvedValue(true);
+            arbitraryIntentType = createFakeIntent().name;
+
+            setupAppRunningWithWindowWithIntentListeners(app, [intent1.name, intent2.name, intent3.name, arbitraryIntentType]);
         });
 
-        test('The model does not return the app for any context', async () => {
-            await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([]);
+        test('The model returns the app in the expected the app intents, for each context', async () => {
+            await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([
+                {
+                    intent: {
+                        name: intent1.name,
+                        displayName: intent1.name
+                    },
+                    apps: [app]
+                },
+                {
+                    intent: {
+                        name: intent2.name,
+                        displayName: intent2.name
+                    },
+                    apps: [app]
+                },
+                {
+                    intent: {
+                        name: intent3.name,
+                        displayName: intent3.name
+                    },
+                    apps: [app]
+                },
+                {
+                    intent: {
+                        name: arbitraryIntentType,
+                        displayName: arbitraryIntentType
+                    },
+                    apps: [app]
+                }
+            ]);
 
-            await expect(model.getAppIntentsByContext(context2)).resolves.toEqual([]);
+            await expect(model.getAppIntentsByContext(context2)).resolves.toEqual([
+                {
+                    intent: {
+                        name: intent1.name,
+                        displayName: intent1.name
+                    },
+                    apps: [app]
+                },
+                {
+                    intent: {
+                        name: intent3.name,
+                        displayName: intent3.name
+                    },
+                    apps: [app]
+                },
+                {
+                    intent: {
+                        name: arbitraryIntentType,
+                        displayName: arbitraryIntentType
+                    },
+                    apps: [app]
+                }
+            ]);
+
+            await expect(model.getAppIntentsByContext(createFakeContextType())).resolves.toEqual([
+                {
+                    intent: {
+                        name: intent3.name,
+                        displayName: intent3.name
+                    },
+                    apps: [app]
+                },
+                {
+                    intent: {
+                        name: arbitraryIntentType,
+                        displayName: arbitraryIntentType
+                    },
+                    apps: [app]
+                }
+            ]);
         });
     });
 });
 
-function setupWindowForApp(app: Application, intents: string[]): void {
-    mockEnvironment.isRunning.mockResolvedValue(true);
-    mockEnvironment.isWindowCreated.mockReturnValue(true);
-    mockApiHandler.isClientConnection.mockReturnValue(true);
+function setupAppRunningWithWindowWithIntentListeners(app: Application, intents: string[]): void {
+    mockEnvironment.isRunning.mockImplementation(async (testApp) => testApp.appId === app.appId);
+    mockEnvironment.isWindowCreated.mockImplementation(identity => identity.uuid === app.appId);
 
-    mockAppDirectory.getAppByUuid.mockResolvedValue(app);
+    mockApiHandler.isClientConnection.mockImplementation(identity => identity.uuid === app.appId);
 
-    const identity = createFakeIdentity({uuid: app.appId});
+    mockAppDirectory.getAppByUuid.mockImplementation(async (uuid) => uuid === app.appId ? app : null);
 
-    const appWindow = {
-        ...createMockAppWindow(),
-        identity,
-        id: getId(identity),
-        appInfo: app
-    };
+    mockEnvironment.wrapApplication.mockImplementation((app, identity) => {
+        const appWindow = createMockAppWindow({
+            identity,
+            id: getId(identity),
+            appInfo: app
+        });
 
-    mockEnvironment.wrapApplication.mockReturnValue(appWindow);
-    mockEnvironment.windowCreated.emit(appWindow.identity);
+        appWindow.intentListeners = intents;
+        appWindow.hasIntentListener.mockImplementation((intentType: string) => {
+            return intents.includes(intentType);
+        });
 
-    appWindow.intentListeners = intents;
-    appWindow.hasIntentListener.mockImplementation((intentType: string) => {
-        return intents.includes(intentType);
+        return appWindow;
     });
+    mockEnvironment.windowCreated.emit(createFakeIdentity({uuid: app.appId}));
 }
