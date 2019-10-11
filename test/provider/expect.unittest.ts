@@ -140,24 +140,6 @@ describe('When creating a directory FDC3 app', () => {
         ]);
     });
 
-    describe('When a window never connects', () => {
-        const neverConnectingWindow: TestWindow = {
-            createdTime: 1000,
-            appType: 'directory'
-        };
-
-        expectTest(neverConnectingWindow, 3000, [
-            [
-                'When a window is expected after it is created, the promise rejects',
-                {callTime: 1500, finalizeTime: 1000 + Timeouts.WINDOW_CREATED_TO_REGISTERED, result: 'reject-timeout'}
-            ],
-            [
-                'When a window is expected shortly before it is created, the promise rejects',
-                {callTime: 950, finalizeTime: 1000 + Timeouts.WINDOW_CREATED_TO_REGISTERED, result: 'reject-timeout'}
-            ]
-        ]);
-    });
-
     describe('When a window is closed after being created', () => {
         const fastCloseWindow: TestWindow = {
             createdTime: 1000,
