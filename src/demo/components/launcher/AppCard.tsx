@@ -9,45 +9,25 @@ interface AppCardProps {
     handleClick?: (app: AppLaunchData) => void;
 }
 
-interface AppCardViewData {
-    title: string;
-    description: string;
-    icon: string;
-    className: string;
-}
-
 export function AppCard(props: AppCardProps): React.ReactElement {
     const {app, isDirectoryApp, handleClick: handler} = props;
-    const [viewData, setViewData] = React.useState<AppCardViewData>({
-        title: '',
-        description: '',
-        icon: '',
-        className: 'w3-blue-gray'
-    });
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
         event.stopPropagation();
         if (handler) {
             handler(app);
         }
     };
-
-    React.useEffect(() => {
-        if (app.type === 'manifest') {
-            setViewData({
-                title: app.data.title || '',
-                description: app.data.description || '',
-                icon: (app.data.icons && app.data.icons[0] && app.data.icons[0].icon) || '',
-                className: isDirectoryApp ? 'w3-blue-gray' : 'w3-light-blue'
-            });
-        } else {
-            setViewData({
-                title: app.data.name || '',
-                description: app.data.description || '',
-                icon: app.data.icon || '',
-                className: 'w3-light-green'
-            });
-        }
-    }, [app]);
+    const viewData = (app.type === 'manifest') ? {
+        title: app.data.title || app.data.appId,
+        description: app.data.description || '',
+        icon: (app.data.icons && app.data.icons[0] && app.data.icons[0].icon) || '',
+        className: isDirectoryApp ? 'w3-blue-gray' : 'w3-light-blue'
+    } : {
+        title: app.data.name || app.data.uuid,
+        description: app.data.description || '',
+        icon: app.data.icon || '',
+        className: 'w3-light-green'
+    };
 
     return (
         <div className="app-card w3-card w3-hover-shadow" onClick={handleClick}>

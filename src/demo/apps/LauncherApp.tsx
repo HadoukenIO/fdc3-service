@@ -102,7 +102,7 @@ export function LauncherApp(): React.ReactElement {
             {NON_DIRECTORY_APPS.map((app, index) => <AppCard key={app.data.appId + index} app={app} handleClick={launchApp} isDirectoryApp={false} />)}
             <hr/>
             <h2>Programmatic apps</h2>
-            {NON_MANIFEST_APPS.map((app, index) => <AppCard key={app.data.uuid + index} app={app} handleClick={launchApp} isDirectoryApp={false} />)}
+            {PROGRAMMATIC_APPS.map((app, index) => <AppCard key={app.data.uuid + index} app={app} handleClick={launchApp} isDirectoryApp={false} />)}
         </div>
     );
 }
@@ -129,18 +129,18 @@ const NON_DIRECTORY_APPS: ManifestAppLaunchData[] = APP_DATA.map(({id, icon, tit
             {icon: `http://localhost:3923/demo/img/app-icons/${icon}.svg`}
         ],
         title: title || id,
-        description: 'Sample Non-directory ' + description
+        description: 'Sample Non-Directory ' + description
     }
 }));
 
-const NON_MANIFEST_APPS: ProgrammaticAppLaunchData[] = APP_DATA.map(({id, icon, title, description, extraOptions}) => ({
+const PROGRAMMATIC_APPS: ProgrammaticAppLaunchData[] = APP_DATA.map(({id, icon, title, description, extraOptions}) => ({
     type: 'programmatic',
     data: {
-        name: title,
+        name: title.replace('Pink', 'Orange').replace('Grey', 'Cyan').replace('Teal', 'Purple'),
         description: 'Sample Programmatic ' + description,
         url: 'http://localhost:3923/demo/index.html',
         icon: `http://localhost:3923/demo/img/app-icons/${icon}.svg`,
-        uuid: `fdc3-${id}-programmatic`,
+        uuid: `fdc3-${id.replace('pink', 'orange').replace('grey', 'cyan').replace('teal', 'purple')}-programmatic`,
         autoShow: true,
         resizable: extraOptions && extraOptions.resizable,
         defaultWidth: extraOptions && extraOptions.defaultWidth,

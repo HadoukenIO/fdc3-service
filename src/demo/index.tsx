@@ -27,7 +27,7 @@ function App(): React.ReactElement {
     let appToken = uuid.replace('fdc3-', '').replace('-nodir', '').replace('-programmatic', '');
 
     let color = 'blue-grey';
-    const regexResult = /-(red|green|blue|grey|pink|teal)/.exec(uuid);
+    const regexResult = /-(red|green|blue|grey|pink|teal|orange|cyan|purple)/.exec(uuid);
     if (regexResult && regexResult.length > 1) {
         color = regexResult[1];
         appToken = appToken.replace(`-${color}`, '');
