@@ -9,8 +9,21 @@ interface AppCardProps {
     handleClick?: (app: AppLaunchData) => void;
 }
 
+interface AppCardViewData {
+    title: string;
+    description: string;
+    icon: string;
+    className: string;
+}
+
 export function AppCard(props: AppCardProps): React.ReactElement {
     const {app, isDirectoryApp, handleClick: handler} = props;
+    const [viewData, setViewData] = React.useState<AppCardViewData>({
+        title: '',
+        description: '',
+        icon: '',
+        className: 'w3-blue-gray'
+    });
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
         event.stopPropagation();
         if (handler) {
@@ -18,16 +31,30 @@ export function AppCard(props: AppCardProps): React.ReactElement {
         }
     };
 
+    React.useEffect(() => {
+        if (app.type === 'manifest') {
+            setViewData({
+                title: app.data.title || '',
+                description: app.data.description || '',
+                icon: (app.data.icons && app.data.icons[0] && app.data.icons[0].icon) || '',
+                className: isDirectoryApp ? 'w3-blue-gray' : 'w3-light-blue'
+            });
+        } else {
+            setViewData({
+                title: app.data.name || '',
+                description: app.data.description || '',
+                icon: app.data.icon || '',
+                className: 'w3-light-green'
+            });
+        }
+    }, [app]);
+
     return (
         <div className="app-card w3-card w3-hover-shadow" onClick={handleClick}>
-            {(app.type === 'manifest') ?
-                (app.data.icons && app.data.icons.length > 0) &&
-                    <img className={isDirectoryApp ? 'w3-blue-gray' : 'w3-light-blue'} src={app.data.icons[0].icon} /> :
-                <img className={'w3-light-green'} src={app.data.icon} />
-            }
+            <img className={viewData.className.toString()} src={viewData.icon} />
             <div>
-                <h6><b>{(app.type === 'manifest') ? app.data.title : app.data.name}</b></h6>
-                <p className="w3-small w3-text-grey">{app.data.description}</p>
+                <h6><b>{viewData.title}</b></h6>
+                <p className="w3-small w3-text-grey">{viewData.description}</p>
             </div>
         </div>
     );

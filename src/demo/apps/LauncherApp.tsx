@@ -46,10 +46,11 @@ export function LauncherApp(): React.ReactElement {
     }, []);
 
     const openApp = async (app: AppLaunchData) => {
-        const title: string | undefined = (app.type === 'manifest') ? app.data.title : app.data.name;
+        const id: string = (app.type === 'manifest') ? app.data.appId : app.data.uuid;
+        const title: string = ((app.type === 'manifest') ? app.data.title : app.data.name) || id;
         console.log(`Opening app ${title}`);
         try {
-            await fdc3.open((app.type === 'manifest') ? app.data.appId : app.data.uuid);
+            await fdc3.open(id);
             console.log(`Opened app ${title}`);
         } catch (e) {
             // Stringifying an `Error` omits the message!
@@ -62,7 +63,8 @@ export function LauncherApp(): React.ReactElement {
     };
 
     const launchApp = async (app: AppLaunchData) => {
-        const title: string | undefined = (app.type === 'manifest') ? app.data.title : app.data.name;
+        const id: string = (app.type === 'manifest') ? app.data.appId : app.data.uuid;
+        const title: string = ((app.type === 'manifest') ? app.data.title : app.data.name) || id;
         console.log(`Launching app ${title}`);
         try {
             try {
@@ -74,8 +76,7 @@ export function LauncherApp(): React.ReactElement {
                 console.log(`Launched app ${title}`);
             } catch (e) {
                 if (/Application with specified UUID is already running/.test(e.message)) {
-                    const uuid = (app.type === 'manifest') ? app.data.appId : app.data.uuid;
-                    const window = fin.Window.wrapSync({uuid, name: uuid});
+                    const window = fin.Window.wrapSync({uuid: id, name: id});
                     await window.setAsForeground();
                     console.log(`App ${title} was already running - focused`);
                 } else {
@@ -135,7 +136,7 @@ const NON_DIRECTORY_APPS: ManifestAppLaunchData[] = APP_DATA.map(({id, icon, tit
 const NON_MANIFEST_APPS: ProgrammaticAppLaunchData[] = APP_DATA.map(({id, icon, title, description, extraOptions}) => ({
     type: 'programmatic',
     data: {
-        name: `FDC3 ${title} POC`,
+        name: title,
         description: 'Sample Programmatic ' + description,
         url: 'http://localhost:3923/demo/index.html',
         icon: `http://localhost:3923/demo/img/app-icons/${icon}.svg`,
