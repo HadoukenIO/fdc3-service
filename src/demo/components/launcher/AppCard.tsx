@@ -31,7 +31,7 @@ export function AppCard(props: AppCardProps): React.ReactElement {
 
     return (
         <div className="app-card w3-card w3-hover-shadow" onClick={handleClick}>
-            <img className={viewData.className.toString()} src={viewData.icon} />
+            <img className={viewData.className} src={viewData.icon} />
             <div>
                 <h6><b>{viewData.title}</b></h6>
                 <p className="w3-small w3-text-grey">{viewData.description}</p>
