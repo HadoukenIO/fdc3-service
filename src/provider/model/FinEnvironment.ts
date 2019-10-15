@@ -1,4 +1,4 @@
-import {WindowEvent} from 'openfin/_v2/api/events/base';
+import {WindowEvent, ApplicationEvent} from 'openfin/_v2/api/events/base';
 import {injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
@@ -11,19 +11,26 @@ import {Timeouts} from '../constants';
 import {parseIdentity} from '../../client/validation';
 import {Injector} from '../common/Injector';
 import {getId} from '../utils/getId';
+import {DeferredPromise} from '../common/DeferredPromise';
 
-import {Environment, EntityType} from './Environment';
+import {Environment, EntityType, ApplicationResult} from './Environment';
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 import {FinAppWindow} from './FinAppWindow';
 import {AppDirectory} from './AppDirectory';
 
-interface CreatedWindow {
-    creationTime: number | undefined;
+interface EnvironmentWindow {
     index: number;
 }
 
-type CreatedWindowMap = Map<string, CreatedWindow>;
+interface EnvironmentApplication {
+    state: 'starting' | 'fresh' | 'mature';
+    maturityDeferredPromise: DeferredPromise<void>;
+    startApplicationPromise: Promise<void>;
+}
+
+type EnvironmentWindowMap = Map<string, EnvironmentWindow>;
+type EnvironmentApplicationMap = Map<string, EnvironmentApplication>;
 
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
@@ -42,37 +49,43 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public readonly windowClosed: Signal<[Identity]> = new Signal();
 
     private _windowsCreated: number = 0;
-    private readonly _createdWindows: CreatedWindowMap = new Map<string, CreatedWindow>();
+
+    private readonly _applications: EnvironmentApplicationMap = new Map<string, EnvironmentApplication>();
+    private readonly _windows: EnvironmentWindowMap = new Map<string, EnvironmentWindow>();
 
     public async isRunning(appInfo: Application): Promise<boolean> {
+        return this._applications.hasOwnProperty(AppDirectory.getUuidFromApp(appInfo));
+    }
+
+    public createApplication(appInfo: Application): ApplicationResult {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
-        const finApp = fin.Application.wrapSync({uuid});
 
-        return finApp.isRunning();
+        const application = this._applications.get(uuid) || this.startApplication(appInfo);
+
+        return {
+            started: application.startApplicationPromise,
+            mature: application.maturityDeferredPromise.promise
+        };
     }
 
-    public async createApplication(appInfo: Application, channel: ContextChannel): Promise<void> {
-        const [didTimeout] = await withTimeout(
-            Timeouts.APP_START_FROM_MANIFEST,
-            fin.Application.startFromManifest(appInfo.manifest).catch(e => {
-                throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
-            })
-        );
-        if (didTimeout) {
-            throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
-        }
-    }
-
-    public wrapApplication(appInfo: Application, identity: Identity, channel: ContextChannel): AppWindow {
+    public wrapWindow(appInfo: Application, identity: Identity, channel: ContextChannel): AppWindow {
         identity = parseIdentity(identity);
         const id = getId(identity);
 
-        // If `identity` is an adapter connection, there will not be any createdWindow entry for this identity
-        // We will instead take the time at which the identity was wrapped as this "window's" creation time
-        const createdWindow = this._createdWindows.get(id) || {creationTime: Date.now(), index: this._windowsCreated++};
-        const {creationTime, index} = createdWindow;
+        // If `identity` is an adapter connection, there will not be any `_applications` or `_windows` entry for this
+        // identity. We will instead take the time at which the identity was wrapped as this application's creation time
+        const environmentWindow = this._windows.get(id) || {index: this._windowsCreated++};
+        const environmentApplication = this._applications.get(identity.uuid) || {
+            state: 'starting',
+            startApplicationPromise: Promise.resolve(),
+            maturityDeferredPromise: new DeferredPromise()
+        };
 
-        return new FinAppWindow(identity, appInfo, channel, creationTime, index);
+        if (environmentApplication.state === 'starting') {
+            setTimeout(environmentApplication.maturityDeferredPromise.resolve, Timeouts.ADD_CONTEXT_LISTENER);
+        }
+
+        return new FinAppWindow(identity, appInfo, channel, environmentApplication.maturityDeferredPromise.promise, environmentWindow.index);
     }
 
     public async inferApplication(identity: Identity): Promise<Application> {
@@ -117,48 +130,76 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     public isWindowCreated(identity: Identity): boolean {
-        return this._createdWindows.has(getId(identity));
+        return this._windows.has(getId(identity));
     }
 
     protected async init(): Promise<void> {
-        // Register windows that were running before launching the FDC3 service
         const windowInfo = await fin.System.getAllWindows();
 
-        fin.System.addListener('window-created', async (event: WindowEvent<'system', 'window-created'>) => {
-            await Injector.initialized;
-            const identity = {uuid: event.uuid, name: event.name};
-            this.registerWindow(identity, Date.now());
+        windowInfo.forEach(info => {
+            if (!this._applications.has(info.uuid)) {
+                const deferredPromise = new DeferredPromise<void>();
+                deferredPromise.resolve();
+
+                this._applications.set(info.uuid, {
+                    state: 'mature',
+                    maturityDeferredPromise: deferredPromise,
+                    startApplicationPromise: Promise.resolve()
+                });
+            }
         });
-        fin.System.addListener('window-closed', async (event: WindowEvent<'system', 'window-closed'>) => {
-            await Injector.initialized;
+
+        fin.System.addListener('application-started', (event: ApplicationEvent<'system', 'application-started'>) => {
+            this.setApplicationFresh(event.uuid);
+        });
+
+        const appicationClosedHandler = (event: {uuid: string}) => {
+            this.removeApplication(event.uuid);
+        };
+
+        fin.System.addListener('application-closed', appicationClosedHandler);
+        fin.System.addListener('application-crashed', appicationClosedHandler);
+
+        fin.System.addListener('window-created', async (event: WindowEvent<'system', 'window-created'>) => {
             const identity = {uuid: event.uuid, name: event.name};
 
-            this._createdWindows.delete(getId(identity));
+            this.setApplicationFresh(event.uuid);
 
-            this.windowClosed.emit(identity);
+            await Injector.initialized;
+            this.registerWindow(identity);
+        });
+
+        fin.System.addListener('window-closed', async (event: WindowEvent<'system', 'window-closed'>) => {
+            const identity = {uuid: event.uuid, name: event.name};
+
+            await Injector.initialized;
+            this.deregisterWindow(identity);
         });
 
         // No await here otherwise the injector will never properly initialize - The injector awaits this init before completion!
         Injector.initialized.then(async () => {
+            // Register windows that were running before launching the FDC3 service
             windowInfo.forEach(info => {
                 const {uuid, mainWindow, childWindows} = info;
 
-                this.registerWindow({uuid, name: mainWindow.name}, undefined);
-                childWindows.forEach(child => this.registerWindow({uuid, name: child.name}, undefined));
+                this.registerWindow({uuid, name: mainWindow.name});
+                childWindows.forEach(child => this.registerWindow({uuid, name: child.name}));
             });
         });
     }
 
-    private async registerWindow(identity: Identity, creationTime: number | undefined): Promise<void> {
-        const createdWindow = {
-            creationTime,
-            index: this._windowsCreated
-        };
+    private registerWindow(identity: Identity): void {
+        const createdWindow = {index: this._windowsCreated};
 
-        this._createdWindows.set(getId(identity), createdWindow);
+        this._windows.set(getId(identity), createdWindow);
         this._windowsCreated++;
 
         this.windowCreated.emit(identity);
+    }
+
+    private deregisterWindow(identity: Identity): void {
+        this._windows.delete(getId(identity));
+        this.windowClosed.emit(identity);
     }
 
     private async isExternalWindow(identity: Identity): Promise<boolean> {
@@ -172,6 +213,59 @@ export class FinEnvironment extends AsyncInit implements Environment {
             const entityInfo = await fin.System.getEntityInfo(identity.uuid, identity.uuid);
 
             return entityInfo.entityType === externalWindowType;
+        }
+    }
+
+    private startApplication(appInfo: Application): EnvironmentApplication {
+        const uuid = AppDirectory.getUuidFromApp(appInfo);
+
+        const startPromise = withTimeout(
+            Timeouts.APP_START_FROM_MANIFEST,
+            fin.Application.startFromManifest(appInfo.manifest).catch(e => {
+                this.removeApplication(uuid);
+
+                throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
+            })
+        ).then((result) => {
+            const didTimeout = [result];
+
+            if (didTimeout) {
+                this.removeApplication(uuid);
+
+                throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
+            }
+        });
+
+        const application: EnvironmentApplication = {
+            state: 'starting',
+            maturityDeferredPromise: new DeferredPromise(),
+            startApplicationPromise: startPromise
+        };
+
+        this._applications.set(uuid, application);
+
+        return application;
+    }
+
+    private setApplicationFresh(uuid: string): void {
+        const application = this._applications.get(uuid) || {
+            state: 'starting',
+            maturityDeferredPromise: new DeferredPromise(),
+            startApplicationPromise: Promise.resolve()
+        };
+        this._applications.set(uuid, application);
+
+        if (application.state === 'starting') {
+            setTimeout(application.maturityDeferredPromise.resolve, Timeouts.ADD_CONTEXT_LISTENER);
+        }
+    }
+
+    private removeApplication(uuid: string): void {
+        const failedApplication = this._applications.get(uuid);
+
+        if (failedApplication) {
+            failedApplication.maturityDeferredPromise.reject();
+            this._applications.delete(uuid);
         }
     }
 }

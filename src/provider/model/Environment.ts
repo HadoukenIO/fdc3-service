@@ -13,6 +13,11 @@ export enum EntityType {
     UNKNOWN = 'unknown'
 }
 
+export interface ApplicationResult {
+    started: Promise<void>,
+    mature: Promise<void>
+}
+
 export interface Environment {
     windowCreated: Signal<[Identity]>;
     windowClosed: Signal<[Identity]>;
@@ -28,13 +33,13 @@ export interface Environment {
      * * FDC3Error if app fails to start
      * * FDC3Error if timeout trying to start app
      */
-    createApplication: (appInfo: Application, channel: ContextChannel) => Promise<void>;
+    createApplication: (appInfo: Application) => ApplicationResult;
 
     /**
      * Creates an `AppWindow` object for an existing window. Should only be called once per window, after the `windowCreated` signal has
      * been fired for that window
      */
-    wrapApplication: (appInfo: Application, identity: Identity, channel: ContextChannel) => AppWindow;
+    wrapWindow: (appInfo: Application, identity: Identity, channel: ContextChannel) => AppWindow;
 
     /**
      * Examines a running window, and returns a best-effort Application description

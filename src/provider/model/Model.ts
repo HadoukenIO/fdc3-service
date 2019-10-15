@@ -11,6 +11,7 @@ import {SYSTEM_CHANNELS, Timeouts} from '../constants';
 import {withStrictTimeout, untilTrue, allowReject, untilSignal, asyncFilter} from '../utils/async';
 import {Boxed} from '../utils/types';
 import {getId} from '../utils/getId';
+import {DeferredPromise} from '../common/DeferredPromise';
 
 import {AppWindow} from './AppWindow';
 import {ContextChannel, DefaultContextChannel, SystemContextChannel} from './ContextChannel';
@@ -52,7 +53,7 @@ export class Model {
     private readonly _channelsById: {[id: string]: ContextChannel};
     private readonly _expectedWindowsById: {[id: string]: ExpectedWindow};
 
-    private readonly _onWindowRegisteredInternal = new Signal<[]>();
+    private readonly _onWindowRegisteredInternal = new Signal<[AppWindow]>();
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
@@ -120,28 +121,50 @@ export class Model {
     /**
      * Returns all registered windows for an app, waiting for at least one window
      */
-    public async expectWindowsForApp(appInfo: Application): Promise<AppWindow[]> {
-        // TODO: This dangerous method doesn't give proper timeouts. Will likely be changed extensively/removed when we revisit timeouts [SERVICE-556]
-        let matchingWindows = this.findWindowsByAppId(appInfo.appId);
+    public async expectWindowsForApp(
+        appInfo: Application,
+        syncPredicate: (window: AppWindow) => boolean,
+        asyncPredicate: (window: AppWindow) => Promise<boolean>
+    ): Promise<AppWindow[]> {
+        const windows = this.findWindowsByAppId(appInfo.appId);
 
-        if (matchingWindows.length === 0) {
-            const signalPromise = new Promise<AppWindow[]>(resolve => {
-                const slot = this._onWindowRegisteredInternal.add(() => {
-                    const matchingWindows = this.findWindowsByAppId(appInfo.appId);
-                    if (matchingWindows.length > 0) {
+        const result: AppWindow[] = [];
+
+        for (const window of windows) {
+            if (syncPredicate(window)) {
+                result.push(window);
+            }
+        }
+
+        if (result.length > 0) {
+            return result;
+        } else {
+            for (const window of windows) {
+                asyncPredicate(window).then((matching) => {
+                    if (matching) {
                         slot.remove();
-                        resolve(matchingWindows);
+                        deferredPromise.resolve(window);
                     }
                 });
-            });
-            matchingWindows = await signalPromise;
-        }
-        return matchingWindows;
-    }
+            }
 
-    public async ensureRunning(appInfo: Application): Promise<void> {
-        if (this.findWindowsByAppId(appInfo.appId).length === 0 && !(await this._environment.isRunning(appInfo))) {
-            await this._environment.createApplication(appInfo, this._channelsById[DEFAULT_CHANNEL_ID]);
+            const deferredPromise = new DeferredPromise<AppWindow>();
+
+            const slot = this._onWindowRegisteredInternal.add((window) => {
+                if (window.appInfo.appId === appInfo.appId) {
+                    asyncPredicate(window).then((matching) => {
+                        if (matching) {
+                            slot.remove();
+                            deferredPromise.resolve(window);
+                        }
+                    });
+                }
+            });
+
+            return Promise.race([
+                deferredPromise.promise.then((result) => [result]),
+                this._environment.createApplication(appInfo).mature.then(() => [])
+            ]);
         }
     }
 
@@ -299,14 +322,14 @@ export class Model {
     private registerWindow(appInfo: Application, identity: Identity): AppWindow {
         const id = getId(identity);
 
-        const appWindow = this._environment.wrapApplication(appInfo, identity, this._channelsById[DEFAULT_CHANNEL_ID]);
+        const appWindow = this._environment.wrapWindow(appInfo, identity, this._channelsById[DEFAULT_CHANNEL_ID]);
 
         console.info(`Registering window ${appWindow.id}`);
         this._windowsById[appWindow.id] = appWindow;
         delete this._expectedWindowsById[id];
 
         this.onWindowAdded.emit(appWindow);
-        this._onWindowRegisteredInternal.emit();
+        this._onWindowRegisteredInternal.emit(appWindow);
 
         return appWindow;
     }

@@ -113,31 +113,17 @@ export class IntentHandler {
     }
 
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
-        await this._model.ensureRunning(appInfo);
+        const listeningWindows = await this._model.expectWindowsForApp(
+            appInfo,
+            (window) => window.hasIntentListener(intent.type),
+            async (window) => window.isReadyToReceiveIntent(intent.type)
+        );
 
-        // TODO: Revisit timeout logic [SERVICE-556]
-        let dispatchingCompleted = false;
-        const dispatchResults = await withTimeout(Timeouts.ADD_INTENT_LISTENER, (async () => {
-            const appWindows = await this._model.expectWindowsForApp(appInfo);
+        if (listeningWindows.length > 0) {
+            const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
 
-            // Wait for windows to add intent listener, then dispatch payload
-            return Promise.all(appWindows.map(async (window: AppWindow): Promise<boolean> => {
-                if (await window.isReadyToReceiveIntent(intent.type)) {
-                    const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
-
-                    // TODO: Implement a timeout so a misbehaving intent handler can't block the intent raiser [SERVICE-555]
-                    if (!dispatchingCompleted) {
-                        await this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
-                        return true;
-                    }
-                }
-                return false;
-            }));
-        })());
-
-        dispatchingCompleted = true;
-
-        if (dispatchResults[0] || !dispatchResults[1]!.includes(true)) {
+            await Promise.all(listeningWindows.map((window) => this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload)));
+        } else {
             throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
         }
 

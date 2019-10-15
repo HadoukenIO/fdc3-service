@@ -22,47 +22,55 @@ import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
 import {withTimeout} from './utils/async';
 import {Timeouts} from './constants';
+import {Environment} from './model/Environment';
+import {DeferredPromise} from './common/DeferredPromise';
 
 @injectable()
 export class Main {
-    private readonly _directory: AppDirectory;
-    private readonly _model: Model;
-    private readonly _contextHandler: ContextHandler;
-    private readonly _intentHandler: IntentHandler;
-    private readonly _channelHandler: ChannelHandler;
-    private readonly _eventHandler: EventHandler;
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
+    private readonly _directory: AppDirectory;
+    private readonly _channelHandler: ChannelHandler;
     private readonly _configStore: ConfigStoreBinding
+    private readonly _contextHandler: ContextHandler;
+    private readonly _environment: Environment;
+    private readonly _eventHandler: EventHandler;
+    private readonly _intentHandler: IntentHandler;
+    private readonly _model: Model;
 
     constructor(
-        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
-        @inject(Inject.MODEL) model: Model,
-        @inject(Inject.CONTEXT_HANDLER) contextHandler: ContextHandler,
-        @inject(Inject.INTENT_HANDLER) intentHandler: IntentHandler,
-        @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
-        @inject(Inject.EVENT_HANDLER) eventHandler: EventHandler,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
-        @inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding
+        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
+        @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
+        @inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding,
+        @inject(Inject.CONTEXT_HANDLER) contextHandler: ContextHandler,
+        @inject(Inject.ENVIRONMENT) environment: Environment,
+        @inject(Inject.EVENT_HANDLER) eventHandler: EventHandler,
+        @inject(Inject.INTENT_HANDLER) intentHandler: IntentHandler,
+        @inject(Inject.MODEL) model: Model
     ) {
-        this._directory = directory;
-        this._model = model;
-        this._contextHandler = contextHandler;
-        this._intentHandler = intentHandler;
-        this._channelHandler = channelHandler;
-        this._eventHandler = eventHandler;
         this._apiHandler = apiHandler;
+        this._directory = directory;
+        this._channelHandler = channelHandler;
         this._configStore = configStore;
+        this._contextHandler = contextHandler;
+        this._environment = environment;
+        this._eventHandler = eventHandler;
+        this._intentHandler = intentHandler;
+        this._model = model;
     }
 
     public async register(): Promise<void> {
         Object.assign(window, {
             main: this,
+            apiHandler: this._apiHandler,
             directory: this._directory,
-            model: this._model,
-            contextHandler: this._contextHandler,
-            intentHandler: this._intentHandler,
             channelHandler: this._channelHandler,
-            configStore: this._configStore
+            configStore: this._configStore,
+            contextHandler: this._contextHandler,
+            environment: this._environment,
+            eventHandler: this._eventHandler,
+            intentHandler: this._intentHandler,
+            model: this._model
         });
 
         // Wait for creation of any injected components that require async initialization
@@ -103,32 +111,47 @@ export class Main {
     }
 
     private async open(payload: OpenPayload): Promise<void> {
+        const context = payload.context && parseContext(payload.context);
+
         const appInfo: Application|null = await this._directory.getAppByName(payload.name);
 
         if (!appInfo) {
             throw new FDC3Error(OpenError.AppNotFound, `No app in directory with name: ${payload.name}`);
         }
 
-        // This can throw FDC3Errors if app fails to open or times out
-        await this._model.ensureRunning(appInfo);
+        const promises: Promise<void>[] = [];
+
+        // Start the application if not already running
+        promises.push(this._environment.createApplication(appInfo).started);
 
         // Bring-to-front all currently open windows in creation order
         const windowsToFocus = this._model.findWindowsByAppName(appInfo.name).sort((a: AppWindow, b: AppWindow) => a.appWindowNumber - b.appWindowNumber);
-        await Promise.all(windowsToFocus.map(window => window.bringToFront()));
-        if (windowsToFocus.length > 0) {
-            windowsToFocus[windowsToFocus.length - 1].focus();
+
+        const bringToFrontPromise = Promise.all(windowsToFocus.map(window => window.bringToFront()));
+        const focusPromise = bringToFrontPromise.then(async () => {
+            if (windowsToFocus.length > 0) {
+                await windowsToFocus[windowsToFocus.length - 1].focus();
+            }
+        });
+
+        // If a context has been provided, send to listening windows
+        if (context) {
+            const windowsPromise = this._model.expectWindowsForApp(
+                appInfo,
+                (window) => window.hasContextListener(),
+                async (window) => window.isReadyToReceiveContext()
+            );
+
+            const sendContextPromise = windowsPromise.then(async (windows) => {
+                await Promise.all(windows.map(window => this._contextHandler.send(window, context)));
+            });
+
+            promises.push(sendContextPromise);
         }
 
-        if (payload.context) {
-            // TODO: Revisit timeout logic [SERVICE-556]
-            await withTimeout(Timeouts.ADD_CONTEXT_LISTENER, (async () => {
-                const appWindows = await this._model.expectWindowsForApp(appInfo);
+        promises.push(focusPromise);
 
-                await Promise.all(appWindows.map(window => {
-                    return this._contextHandler.send(window, parseContext(payload.context!));
-                }));
-            })());
-        }
+        await Promise.all(promises);
     }
 
     /**

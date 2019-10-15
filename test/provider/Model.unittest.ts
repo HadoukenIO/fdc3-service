@@ -286,7 +286,7 @@ function setupAppRunningWithWindowWithIntentListeners(app: Application, intents:
 
     mockAppDirectory.getAppByUuid.mockImplementation(async (uuid) => uuid === app.appId ? app : null);
 
-    mockEnvironment.wrapApplication.mockImplementation((app, identity) => {
+    mockEnvironment.wrapWindow.mockImplementation((app, identity) => {
         const appWindow = createMockAppWindow({
             identity,
             id: getId(identity),

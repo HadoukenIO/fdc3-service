@@ -254,7 +254,7 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
             return testWindow.appType === 'directory' ? mockApplication : null;
         });
 
-        mockEnvironment.wrapApplication.mockImplementationOnce((appInfo: Application, testIdentity: Identity, channel: ContextChannel): AppWindow => {
+        mockEnvironment.wrapWindow.mockImplementationOnce((appInfo: Application, testIdentity: Identity, channel: ContextChannel): AppWindow => {
             return createMockAppWindow({id: getId(testIdentity), identity: testIdentity, appInfo});
         });
 

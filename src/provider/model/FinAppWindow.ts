@@ -8,8 +8,8 @@ import {ContextChannel} from './ContextChannel';
 export class FinAppWindow extends AbstractAppWindow {
     private readonly _window: Window;
 
-    constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined, appWindowNumber: number) {
-        super(identity, appInfo, channel, creationTime, appWindowNumber);
+    constructor(identity: Identity, appInfo: Application, channel: ContextChannel, maturityPromise: Promise<void>, appWindowNumber: number) {
+        super(identity, appInfo, channel, maturityPromise, appWindowNumber);
 
         this._window = fin.Window.wrapSync(identity);
     }

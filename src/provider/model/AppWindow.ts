@@ -86,7 +86,7 @@ export abstract class AbstractAppWindow implements AppWindow {
     private readonly _appInfo: Application;
     private readonly _appWindowNumber: number;
 
-    private readonly _creationTime: number | undefined;
+    private readonly _maturityPromise: Promise<void>;
 
     private readonly _intentListeners: IntentMap;
     private readonly _channelContextListeners: ContextMap;
@@ -97,12 +97,12 @@ export abstract class AbstractAppWindow implements AppWindow {
     private readonly _onIntentListenerAdded: Signal<[IntentType]> = new Signal();
     private readonly _onContextListenerAdded: Signal<[]> = new Signal();
 
-    constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined, appWindowNumber: number) {
+    constructor(identity: Identity, appInfo: Application, channel: ContextChannel, maturityPromise: Promise<void>, appWindowNumber: number) {
         this._id = getId(identity);
         this._appInfo = appInfo;
         this._appWindowNumber = appWindowNumber;
 
-        this._creationTime = creationTime;
+        this._maturityPromise = maturityPromise;
 
         this._intentListeners = new Set();
         this._channelContextListeners = new Set();
@@ -196,27 +196,19 @@ export abstract class AbstractAppWindow implements AppWindow {
             return true;
         }
 
-        const age = this._creationTime === undefined ? undefined : Date.now() - this._creationTime;
+        const deferredPromise = new DeferredPromise();
 
-        if (age === undefined || age >= Timeouts.ADD_INTENT_LISTENER) {
-            // App has been running for a while
-            return false;
-        } else {
-            // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
-            const deferredPromise = new DeferredPromise();
+        const slot = this._onIntentListenerAdded.add((addedIntent) => {
+            if (addedIntent === intent) {
+                slot.remove();
+                deferredPromise.resolve();
+            }
+        });
 
-            const slot = this._onIntentListenerAdded.add(intentAdded => {
-                if (intentAdded === intent) {
-                    deferredPromise.resolve();
-                }
-            });
-
-            const [didTimeout] = await withTimeout(Timeouts.ADD_INTENT_LISTENER - age, deferredPromise.promise);
-
-            slot.remove();
-
-            return !didTimeout;
-        }
+        return Promise.race([
+            this._maturityPromise.catch(() => {}).then(() => false),
+            deferredPromise.promise.then(() => true)
+        ]);
     }
 
     public async isReadyToReceiveContext(): Promise<boolean> {
@@ -225,25 +217,17 @@ export abstract class AbstractAppWindow implements AppWindow {
             return true;
         }
 
-        const age = this._creationTime === undefined ? undefined : Date.now() - this._creationTime;
+        const deferredPromise = new DeferredPromise();
 
-        if (age === undefined || age >= Timeouts.ADD_CONTEXT_LISTENER) {
-            // App has been running for a while
-            return false;
-        } else {
-            // App may be starting - Give it some time to initialize and call `addContextListener()`, otherwise timeout
-            const deferredPromise = new DeferredPromise();
-
-            const slot = this._onContextListenerAdded.add(() => {
-                deferredPromise.resolve();
-            });
-
-            const [didTimeout] = await withTimeout(Timeouts.ADD_CONTEXT_LISTENER - age, deferredPromise.promise);
-
+        const slot = this._onContextListenerAdded.add(() => {
             slot.remove();
+            deferredPromise.resolve();
+        });
 
-            return !didTimeout;
-        }
+        return Promise.race([
+            this._maturityPromise.catch(() => {}).then(() => false),
+            deferredPromise.promise.then(() => true)
+        ]);
     }
 
     public removeAllListeners(): void {
