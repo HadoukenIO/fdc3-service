@@ -21,24 +21,24 @@ import {getId} from '../../src/provider/utils/getId';
 jest.mock('../../src/provider/model/AppDirectory');
 jest.mock('../../src/provider/APIHandler');
 
-type TestWindow = {
+interface TestWindow {
     createdTime?: number;
     connectionTime?: number;
     closeTime?: number;
     appType: 'directory' | 'non-directory';
-};
+}
 
-type ExpectCall = {
+interface ExpectCall {
     callTime: number;
     finalizeTime: number;
     result: 'resolve' | 'reject-timeout' | 'reject-closed';
-};
+}
 
-type ExpectCallResult = {
+interface ExpectCallResult {
     promise: Promise<AppWindow>;
     time: number;
     call: ExpectCall;
-};
+}
 
 type ResultParam = [string, ExpectCall];
 
@@ -311,14 +311,14 @@ function buildTestParams(testWindow: TestWindow, appDirectoryResultTime: number,
         ]);
     }
 
-    const testParams: TestParam[] = resultParams.map(resultParam => ([resultParam[0], testWindow, appDirectoryResultTime, [resultParam[1]]] as TestParam));
+    const testParams: TestParam[] = resultParams.map((resultParam) => ([resultParam[0], testWindow, appDirectoryResultTime, [resultParam[1]]] as TestParam));
 
     if (testParams.length > 1) {
         testParams.push([
             'When a window is expected multiple times, window promises resolve and reject independently',
             testWindow,
             appDirectoryResultTime,
-            resultParams.map(resultParam => resultParam[1])
+            resultParams.map((resultParam) => resultParam[1])
         ] as TestParam);
     }
 

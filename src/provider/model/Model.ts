@@ -120,7 +120,7 @@ export class Model {
         let matchingWindows = this.findWindowsByAppId(appInfo.appId);
 
         if (matchingWindows.length === 0) {
-            const signalPromise = new Promise<AppWindow[]>(resolve => {
+            const signalPromise = new Promise<AppWindow[]>((resolve) => {
                 const slot = this._onWindowRegisteredInternal.add(() => {
                     const matchingWindows = this.findWindowsByAppId(appInfo.appId);
                     if (matchingWindows.length > 0) {
@@ -153,32 +153,32 @@ export class Model {
         const directoryAppsWithIntent = await this._directory.getAppsByIntent(intentType, contextType);
 
         // Include appInfos for any appWindows in model that have registered a listener for the intent
-        const appsInModelWithIntent = this.extractApplicationsFromWindows(allAppWindows.filter(appWindow => appWindow.hasIntentListener(intentType)));
+        const appsInModelWithIntent = this.extractApplicationsFromWindows(allAppWindows.filter((appWindow) => appWindow.hasIntentListener(intentType)));
 
         // If context is specified don't use apps in model as there's no way to know about the context of non-directory
         // app intents at the moment.
         if (contextType) {
             const appsInModelWithoutIntent = this.extractApplicationsFromWindows(allAppWindows).filter((app) => {
-                return !appsInModelWithIntent.some(activeApp => app.appId === activeApp.appId);
+                return !appsInModelWithIntent.some((activeApp) => app.appId === activeApp.appId);
             });
             return directoryAppsWithIntent.filter((directoryApp) => {
-                return !appsInModelWithoutIntent.some(inactiveApp => directoryApp.appId === inactiveApp.appId);
+                return !appsInModelWithoutIntent.some((inactiveApp) => directoryApp.appId === inactiveApp.appId);
             });
         } else {
             const directoryAppsNotInModel = directoryAppsWithIntent
-                .filter(directoryApp => !allAppWindows.some(appWindow => appWindow.appInfo.appId === directoryApp.appId));
+                .filter((directoryApp) => !allAppWindows.some((appWindow) => appWindow.appInfo.appId === directoryApp.appId));
 
             return [...appsInModelWithIntent, ...directoryAppsNotInModel];
         }
     }
 
     public findWindowsByAppName(name: AppName): AppWindow[] {
-        return this.findWindows(appWindow => appWindow.appInfo.name === name);
+        return this.findWindows((appWindow) => appWindow.appInfo.name === name);
     }
 
     private extractApplicationsFromWindows(windows: AppWindow[]): Application[] {
         return windows.reduce<Application[]>((apps, appWindow) => {
-            if (apps.some(app => app.appId === appWindow.appInfo.appId)) {
+            if (apps.some((app) => app.appId === appWindow.appInfo.appId)) {
                 // AppInfo has already been added by another window on the same app also listening for the same intent
                 return apps;
             }
@@ -274,7 +274,7 @@ export class Model {
     }
 
     private findWindowsByAppId(appId: AppId): AppWindow[] {
-        return this.findWindows(appWindow => appWindow.appInfo.appId === appId);
+        return this.findWindows((appWindow) => appWindow.appInfo.appId === appId);
     }
 
     private findWindows(predicate: (appWindow: AppWindow) => boolean): AppWindow[] {

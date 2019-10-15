@@ -7,23 +7,23 @@ import {AppCard} from '../components/launcher/AppCard';
 
 import '../../../res/demo/css/w3.css';
 
-type ManifestAppLaunchData = {
+interface ManifestAppLaunchData {
     type: 'manifest';
     data: Application;
-};
+}
 
-type ProgrammaticAppLaunchData = {
+interface ProgrammaticAppLaunchData {
     type: 'programmatic';
     data: ApplicationOption & {description: string};
-};
+}
 
-type AppData = {
+interface AppData {
     id: string;
     icon: string;
     title: string;
     description: string;
-    extraOptions?: {resizable: boolean, defaultWidth: number, defaultHeight: number, saveWindowState: boolean};
-};
+    extraOptions?: {resizable: boolean; defaultWidth: number; defaultHeight: number; saveWindowState: boolean};
+}
 
 export type AppLaunchData = ManifestAppLaunchData | ProgrammaticAppLaunchData;
 
@@ -107,7 +107,7 @@ export function LauncherApp(): React.ReactElement {
     );
 }
 
-const APP_DATA: Array<AppData> = [
+const APP_DATA: AppData[] = [
     {id: 'blotter', icon: 'blotter', title: 'Blotter', description: 'blotter app'},
     {id: 'contacts', icon: 'contacts', title: 'Contacts', description: 'contacts app'},
     {id: 'dialer', icon: 'dialer', title: 'Dialer', description: 'dialer app',
@@ -129,7 +129,7 @@ const NON_DIRECTORY_APPS: ManifestAppLaunchData[] = APP_DATA.map(({id, icon, tit
             {icon: `http://localhost:3923/demo/img/app-icons/${icon}.svg`}
         ],
         title: title || id,
-        description: 'Sample Non-Directory ' + description
+        description: `Sample Non-Directory ${description}`
     }
 }));
 
@@ -137,7 +137,7 @@ const PROGRAMMATIC_APPS: ProgrammaticAppLaunchData[] = APP_DATA.map(({id, icon, 
     type: 'programmatic',
     data: {
         name: title.replace('Pink', 'Orange').replace('Grey', 'Cyan').replace('Teal', 'Purple'),
-        description: 'Sample Programmatic ' + description,
+        description: `Sample Programmatic ${description}`,
         url: 'http://localhost:3923/demo/index.html',
         icon: `http://localhost:3923/demo/img/app-icons/${icon}.svg`,
         uuid: `fdc3-${id.replace('pink', 'orange').replace('grey', 'cyan').replace('teal', 'purple')}-programmatic`,

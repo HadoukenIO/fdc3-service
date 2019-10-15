@@ -28,7 +28,7 @@ export function Number(props: NumberProps) {
 
     return (
         <div className="number">
-            <i className={'fa fa-close w3-button w3-text-gray' + (inCall ? ' w3-hide' : '')} onClick={handleClear} />
+            <i className={`fa fa-close w3-button w3-text-gray${inCall ? ' w3-hide' : ''}`} onClick={handleClear} />
             <input className="number-input w3-input w3-border" type="text" value={phoneNumber} onChange={handleChange} readOnly={inCall} />
         </div>
     );

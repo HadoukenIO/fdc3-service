@@ -35,27 +35,27 @@ interface ContextMenuParameters {
 type clickCallback<T extends {}={}> = (payload: T) => any;
 
 class ContextMenu {
-    private _windowV1: fin.OpenFinWindow;
-    private _window: _Window;
-    private _nativeWindow: Window;
+    private readonly _windowV1: fin.OpenFinWindow;
+    private readonly _window: _Window;
+    private readonly _nativeWindow: Window;
     private _isShowing: boolean = false;
     private _child!: ContextMenu;
 
-    private transitionOut: Transition = {
+    private readonly transitionOut: Transition = {
         opacity: {
             opacity: 0,
             duration: 100
         }
     };
 
-    private transitionIn: Transition = {
+    private readonly transitionIn: Transition = {
         opacity: {
             opacity: 1,
             duration: 100
         }
     };
 
-    private _isRoot: boolean;
+    private readonly _isRoot: boolean;
 
     public get isRoot() {
         return this._isRoot;
@@ -123,7 +123,7 @@ class ContextMenu {
      * @memberof ContextMenu
      */
     public childCheck(menuItems: ContextMenuItem[]) {
-        return menuItems.some(item => item.children !== undefined);
+        return menuItems.some((item) => item.children !== undefined);
     }
 
     /**
@@ -137,7 +137,7 @@ class ContextMenu {
         // Check that there is any children if so make a child node
         let child = await this._child;
         if (this.childCheck(menuItems) && child === undefined) {
-            child = await ContextMenu.create(this._window.identity.name + ':child', false);
+            child = await ContextMenu.create(`${this._window.identity.name}:child`, false);
             this._child = child;
         }
         const document = this._nativeWindow.document;
@@ -168,7 +168,7 @@ class ContextMenu {
                     // Show next window
                     const bounds = await this._window.getBounds();
                     const position = {x: bounds.left + bounds.width, y: bounds.top + itemHeight * index};
-                    await child.setContent(item.children!, clickCallback);
+                    await child.setContent(item.children, clickCallback);
                     child.showAt(position);
                 }
             });
@@ -252,8 +252,8 @@ class ContextMenu {
     public async setStyle(css?: string) {
         const style = this._nativeWindow.document.createElement('link');
         style.rel = 'stylesheet';
-        style.href = location.origin + '/demo/css/context-menu.css';
-        this._nativeWindow.document.head!.appendChild(style);
+        style.href = `${location.origin}/demo/css/context-menu.css`;
+        this._nativeWindow.document.head.appendChild(style);
     }
 }
 

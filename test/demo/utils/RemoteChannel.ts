@@ -41,13 +41,13 @@ export class RemoteChannel {
     }
 
     public async getMembers(): Promise<Identity[]> {
-        return ofBrowser.executeOnWindow(this.executionTarget, async function(this: TestWindowContext, channelInstanceId: string): Promise<Identity[]> {
+        return ofBrowser.executeOnWindow(this.executionTarget, async function (this: TestWindowContext, channelInstanceId: string): Promise<Identity[]> {
             return this.channelTransports[channelInstanceId].channel.getMembers().catch(this.errorHandler);
         }, this.id).catch(handlePuppeteerError);
     }
 
     public async getCurrentContext(): Promise<Context|null> {
-        return ofBrowser.executeOnWindow(this.executionTarget, async function(this: TestWindowContext, channelInstanceId: string): Promise<Context|null> {
+        return ofBrowser.executeOnWindow(this.executionTarget, async function (this: TestWindowContext, channelInstanceId: string): Promise<Context|null> {
             return this.channelTransports[channelInstanceId].channel.getCurrentContext().catch(this.errorHandler);
         }, this.id).catch(handlePuppeteerError);
     }
@@ -55,7 +55,7 @@ export class RemoteChannel {
     public async join(identity?: Identity): Promise<void> {
         return ofBrowser.executeOnWindow(
             this.executionTarget,
-            async function(this: TestWindowContext, channelInstanceId: string, identity?: Identity): Promise<void> {
+            async function (this: TestWindowContext, channelInstanceId: string, identity?: Identity): Promise<void> {
                 return this.channelTransports[channelInstanceId].channel.join(identity).catch(this.errorHandler);
             },
             this.id,
@@ -66,7 +66,7 @@ export class RemoteChannel {
     public async broadcast(context: Context): Promise<void> {
         return ofBrowser.executeOnWindow(
             this.executionTarget,
-            function(this: TestWindowContext, channelInstanceId: string, context: Context): void {
+            function (this: TestWindowContext, channelInstanceId: string, context: Context): void {
                 try {
                     return this.channelTransports[channelInstanceId].channel.broadcast(context);
                 } catch (error) {
@@ -75,14 +75,14 @@ export class RemoteChannel {
             },
             this.id,
             context
-        ).then(() => new Promise<void>(res => setTimeout(res, 100))) // Broadcast is fire-and-forget. Slight delay to allow for service to handle
+        ).then(() => new Promise<void>((res) => setTimeout(res, 100))) // Broadcast is fire-and-forget. Slight delay to allow for service to handle
             .catch(handlePuppeteerError);
     }
 
     public async addContextListener(): Promise<RemoteContextListener> {
         const id = await ofBrowser.executeOnWindow(
             this.executionTarget,
-            async function(this:TestWindowContext, channelInstanceId: string): Promise<number> {
+            async function (this: TestWindowContext, channelInstanceId: string): Promise<number> {
                 const listenerID = this.contextListeners.length;
                 this.contextListeners[listenerID] = await this.channelTransports[channelInstanceId].channel.addContextListener((context) => {
                     this.receivedContexts.push({listenerID, context});
@@ -97,7 +97,7 @@ export class RemoteChannel {
     public async addEventListener(eventType: ChannelEvents['type']): Promise<RemoteChannelEventListener> {
         const id = await ofBrowser.executeOnWindow(
             this.executionTarget,
-            function(this: TestWindowContext, channelInstanceId: string, eventType: ChannelEvents['type']): number {
+            function (this: TestWindowContext, channelInstanceId: string, eventType: ChannelEvents['type']): number {
                 const listenerID = this.channelEventListeners.length;
                 const channel = this.channelTransports[channelInstanceId].channel;
 
@@ -121,13 +121,13 @@ export class RemoteChannel {
             remoteIdentity: this.executionTarget,
             id,
             unsubscribe: async () => {
-                return ofBrowser.executeOnWindow(this.executionTarget, function(this: TestWindowContext, id: number): void {
+                return ofBrowser.executeOnWindow(this.executionTarget, function (this: TestWindowContext, id: number): void {
                     this.channelEventListeners[id].unsubscribe();
                 }, id);
             },
             getReceivedEvents: async (): Promise<ChannelEvents[]> => {
-                return ofBrowser.executeOnWindow(this.executionTarget, function(this: TestWindowContext, id: number): ChannelEvents[] {
-                    return this.receivedChannelEvents.filter(entry => entry.listenerID === id).map(entry => entry.payload);
+                return ofBrowser.executeOnWindow(this.executionTarget, function (this: TestWindowContext, id: number): ChannelEvents[] {
+                    return this.receivedChannelEvents.filter((entry) => entry.listenerID === id).map((entry) => entry.payload);
                 }, id);
             }
         };

@@ -1,7 +1,7 @@
 import {NewsItem} from './NewsCard';
 
 export function fetchNews(symbol: string) {
-    return new Promise<NewsItem[]>(resolve => {
+    return new Promise<NewsItem[]>((resolve) => {
         setTimeout(() => {
             resolve([symbol, symbol, symbol].map(getNewsItem).sort(byDate));
         }, 100 + Math.random() * 500);

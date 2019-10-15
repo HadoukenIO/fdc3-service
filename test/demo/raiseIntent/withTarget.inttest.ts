@@ -151,7 +151,7 @@ function setupCommonTests(testAppData: TestAppData): void {
 
         test('When the target has a child window with an intent listener, when calling raiseIntent from another app, \
 the child listener is triggered exactly once with the correct context', async () => {
-            const childIdentity = {uuid: testAppData.uuid, name: testAppData.name + '-child-window'};
+            const childIdentity = {uuid: testAppData.uuid, name: `${testAppData.name}-child-window`};
 
             await fdc3Remote.createFinWindow(testAppData, {name: childIdentity.name, url: testAppUrl});
             const childListener = await fdc3Remote.addIntentListener(childIdentity, validIntent.type);
@@ -192,7 +192,7 @@ both listeners are triggered exactly once with the correct context', async () =>
 
         test('When adding a distinct intent listener, then calling raiseIntent from another app, \
 only the first listener is triggered', async () => {
-            const distinctListener = await fdc3Remote.addIntentListener(testAppData, validIntent.type + 'distinguisher');
+            const distinctListener = await fdc3Remote.addIntentListener(testAppData, `${validIntent.type}distinguisher`);
 
             await raiseIntent(validIntent, testAppData);
 
@@ -238,7 +238,7 @@ all listeners are triggered exactly once with the correct context', async (title
             const childListeners: fdc3Remote.RemoteContextListener[] = [];
 
             for (let i = 0; i < childWindowCount; i++) {
-                const childIdentity = {uuid: testAppData.uuid, name: testAppData.name + `-child-window-${i}`};
+                const childIdentity = {uuid: testAppData.uuid, name: `${testAppData.name}-child-window-${i}`};
 
                 await fdc3Remote.createFinWindow(testAppData, {name: childIdentity.name, url: testAppUrl});
                 childListeners.push(await fdc3Remote.addIntentListener(childIdentity, validIntent.type));

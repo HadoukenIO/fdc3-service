@@ -23,7 +23,7 @@ export function SymbolsTable(props: SymbolsTableProps): React.ReactElement {
     };
 
     React.useEffect(() => {
-        loadCharts().then(appIntent => {
+        loadCharts().then((appIntent) => {
             setChartApps(appIntent.apps);
         });
     }, []);

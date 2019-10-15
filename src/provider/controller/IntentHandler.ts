@@ -74,7 +74,7 @@ export class IntentHandler {
             }
 
             // Target app is in directory -> ensure that it handles intent
-            if (!(appInfo.intents || []).some(appIntent => appIntent.name === intent.type)) {
+            if (!(appInfo.intents || []).some((appIntent) => appIntent.name === intent.type)) {
                 throw new FDC3Error(ResolveError.TargetAppDoesNotHandleIntent, `App '${intent.target}' does not handle intent '${intent.type}'`);
             }
         }
@@ -97,7 +97,7 @@ export class IntentHandler {
         console.log('Handling intent', intent.type);
 
         // Show resolver
-        const selection: ResolverResult|null = await this._resolver.handleIntent(intent).catch(e => {
+        const selection: ResolverResult|null = await this._resolver.handleIntent(intent).catch((e) => {
             console.warn(e);
             return null;
         });

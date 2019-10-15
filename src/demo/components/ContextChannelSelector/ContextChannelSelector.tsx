@@ -24,10 +24,10 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
     const [currentChannel, setCurrentChannel] = React.useState<Channel>(defaultChannel);
     const [channels, setChannels] = React.useState<Channel[]>([]);
     React.useEffect(() => {
-        getCurrentChannel().then(channel => {
+        getCurrentChannel().then((channel) => {
             setCurrentChannel(channel);
         });
-        getSystemChannels().then(channels => {
+        getSystemChannels().then((channels) => {
             setChannels([defaultChannel, ...channels]);
         });
         addEventListener('channel-changed', channelChanged);
@@ -45,7 +45,7 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
 
     const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const {value: id} = event.currentTarget;
-        const selectedChannel = channels.find(channel => channel.id === id);
+        const selectedChannel = channels.find((channel) => channel.id === id);
 
         if (selectedChannel) {
             selectedChannel
@@ -61,7 +61,7 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
 
     return (
         <div className={`context-channel ${float ? 'float' : ''}`}>
-            <div className='selector'>
+            <div className="selector">
                 <ContextChannelView channel={currentChannel} />
                 <select value={currentChannel.id} onChange={handleChange}>
                     {

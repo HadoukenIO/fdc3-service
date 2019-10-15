@@ -32,7 +32,7 @@ export class Main {
     private readonly _channelHandler: ChannelHandler;
     private readonly _eventHandler: EventHandler;
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
-    private readonly _configStore: ConfigStoreBinding
+    private readonly _configStore: ConfigStoreBinding;
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
@@ -114,7 +114,7 @@ export class Main {
 
         // Bring-to-front all currently open windows in creation order
         const windowsToFocus = this._model.findWindowsByAppName(appInfo.name).sort((a: AppWindow, b: AppWindow) => a.appWindowNumber - b.appWindowNumber);
-        await Promise.all(windowsToFocus.map(window => window.bringToFront()));
+        await Promise.all(windowsToFocus.map((window) => window.bringToFront()));
         if (windowsToFocus.length > 0) {
             windowsToFocus[windowsToFocus.length - 1].focus();
         }
@@ -124,7 +124,7 @@ export class Main {
             await withTimeout(Timeouts.ADD_CONTEXT_LISTENER, (async () => {
                 const appWindows = await this._model.expectWindowsForApp(appInfo);
 
-                await Promise.all(appWindows.map(window => {
+                await Promise.all(appWindows.map((window) => {
                     return this._contextHandler.send(window, parseContext(payload.context!));
                 }));
             })());
@@ -156,7 +156,7 @@ export class Main {
         };
     }
 
-    private async findIntentsByContext (payload: FindIntentsByContextPayload): Promise<AppIntent[]> {
+    private async findIntentsByContext(payload: FindIntentsByContextPayload): Promise<AppIntent[]> {
         return this._directory.getAppIntentsByContext(parseContext(payload.context).type);
     }
 
@@ -208,8 +208,8 @@ export class Main {
         }
     }
 
-    private getSystemChannels(payload: GetSystemChannelsPayload, source: ProviderIdentity): ReadonlyArray<SystemChannelTransport> {
-        return this._channelHandler.getSystemChannels().map(channel => channel.serialize());
+    private getSystemChannels(payload: GetSystemChannelsPayload, source: ProviderIdentity): readonly SystemChannelTransport[] {
+        return this._channelHandler.getSystemChannels().map((channel) => channel.serialize());
     }
 
     private getChannelById(payload: GetChannelByIdPayload, source: ProviderIdentity): ChannelTransport {
@@ -229,10 +229,10 @@ export class Main {
         return this._channelHandler.getAppChannelByName(name).serialize();
     }
 
-    private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): ReadonlyArray<Identity> {
+    private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): readonly Identity[] {
         const channel = this._channelHandler.getChannelById(payload.id);
 
-        return this._channelHandler.getChannelMembers(channel).map(appWindow => parseIdentity(appWindow.identity));
+        return this._channelHandler.getChannelMembers(channel).map((appWindow) => parseIdentity(appWindow.identity));
     }
 
     private async channelJoin(payload: ChannelJoinPayload, source: ProviderIdentity): Promise<void> {

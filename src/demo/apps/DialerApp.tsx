@@ -50,7 +50,7 @@ export function DialerApp(props: AppProps): React.ReactElement {
 
     // Setup listeners
     React.useEffect(() => {
-        getCurrentChannel().then(async channel => {
+        getCurrentChannel().then(async (channel) => {
             const context = await channel.getCurrentContext();
             if (context && context.type === 'fdc3.contact') {
                 handleIntent(context as ContactContext, false);
@@ -98,7 +98,7 @@ export function DialerApp(props: AppProps): React.ReactElement {
             <Dialog
                 show={!!pendingCall}
                 title="Replace call?"
-                body={'Hang up and call ' + (pendingCall && pendingCall.id.phone) + '?'}
+                body={`Hang up and call ${pendingCall && pendingCall.id.phone}?`}
                 options={['No', 'Yes']} handleOption={handleDialog}
             />
         </div>

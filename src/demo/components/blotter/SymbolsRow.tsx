@@ -50,9 +50,9 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     const {item, chartApps, selected, handleSelect} = props;
 
     React.useEffect(() => {
-        const appItems = chartApps.map(app => {
+        const appItems = chartApps.map((app) => {
             return {
-                text: 'View ' + app.title,
+                text: `View ${app.title}`,
                 payload: {
                     intent: fdc3.Intents.VIEW_CHART,
                     appName: app.name
@@ -103,7 +103,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     };
 
     return (
-        <tr className={'symbols-row' + (selected ? ' w3-theme-l2' : '')} onClick={handleClick}>
+        <tr className={`symbols-row${selected ? ' w3-theme-l2' : ''}`} onClick={handleClick}>
             <td><span title={item.ticker}>{item.name}</span></td>
             <td>##.##</td>
             <td>##.##</td>

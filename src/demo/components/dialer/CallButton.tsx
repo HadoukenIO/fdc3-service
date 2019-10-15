@@ -17,7 +17,7 @@ export function CallButton(props: CallButtonProps): React.ReactElement {
         }
     };
     return (
-        <button className={'call-btn w3-button ' + (inCall ? 'w3-red' : 'w3-green')} disabled={!isEnabled} onClick={handleClick}>
+        <button className={`call-btn w3-button ${inCall ? 'w3-red' : 'w3-green'}`} disabled={!isEnabled} onClick={handleClick}>
             {inCall ? 'End Call' : 'Call'}
         </button>
     );

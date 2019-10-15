@@ -70,13 +70,13 @@ export class ContextHandler {
 
         promises.push(...memberWindows
             // Sender window should not receive its own broadcasts
-            .filter(window => getId(window.identity) !== sourceId)
-            .map(window => this.send(window, context)));
+            .filter((window) => getId(window.identity) !== sourceId)
+            .map((window) => this.send(window, context)));
 
         promises.push(...listeningWindows
             // Sender window should not receive its own broadcasts
-            .filter(window => getId(window.identity) !== sourceId)
-            .map(window => this.sendOnChannel(window, context, channel)));
+            .filter((window) => getId(window.identity) !== sourceId)
+            .map((window) => this.sendOnChannel(window, context, channel)));
 
         return Promise.all(promises).then(() => {});
     }

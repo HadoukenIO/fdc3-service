@@ -30,9 +30,9 @@ export interface AppWindow {
 
     channel: ContextChannel;
 
-    intentListeners: ReadonlyArray<string>;
+    intentListeners: readonly string[];
 
-    channelContextListeners: ReadonlyArray<ChannelId>;
+    channelContextListeners: readonly ChannelId[];
 
     hasIntentListener(intentName: string): boolean;
 
@@ -76,7 +76,7 @@ type ContextMap = Set<string>;
 type ChannelEventMap = Map<string, Set<Events['type']>>;
 
 export abstract class AbstractAppWindow implements AppWindow {
-    public abstract identity: Readonly<Identity>
+    public abstract identity: Readonly<Identity>;
     public abstract bringToFront(): Promise<void>;
     public abstract focus(): Promise<void>;
 
@@ -125,11 +125,11 @@ export abstract class AbstractAppWindow implements AppWindow {
         return this._appWindowNumber;
     }
 
-    public get channelContextListeners(): ReadonlyArray<ChannelId> {
+    public get channelContextListeners(): readonly ChannelId[] {
         return Object.keys(this._channelContextListeners);
     }
 
-    public get intentListeners(): ReadonlyArray<string> {
+    public get intentListeners(): readonly string[] {
         return Object.keys(this._intentListeners);
     }
 
@@ -205,7 +205,7 @@ export abstract class AbstractAppWindow implements AppWindow {
             // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
             const deferredPromise = new DeferredPromise();
 
-            const slot = this._onIntentListenerAdded.add(intentAdded => {
+            const slot = this._onIntentListenerAdded.add((intentAdded) => {
                 if (intentAdded === intent) {
                     deferredPromise.resolve();
                 }

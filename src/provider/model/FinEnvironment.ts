@@ -54,7 +54,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public async createApplication(appInfo: Application, channel: ContextChannel): Promise<void> {
         const [didTimeout] = await withTimeout(
             Timeouts.APP_START_FROM_MANIFEST,
-            fin.Application.startFromManifest(appInfo.manifest).catch(e => {
+            fin.Application.startFromManifest(appInfo.manifest).catch((e) => {
                 throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
             })
         );
@@ -86,10 +86,10 @@ export class FinEnvironment extends AsyncInit implements Environment {
                 manifest: ''
             };
         } else {
-            type OFManifest = {
-                shortcut?: {name?: string, icon: string},
-                startup_app: {uuid: string, name?: string, icon?: string}
-            };
+            interface OFManifest {
+                shortcut?: {name?: string; icon: string};
+                startup_app: {uuid: string; name?: string; icon?: string};
+            }
 
             const application = fin.Application.wrapSync(identity);
             const applicationInfo = await application.getInfo();
@@ -102,7 +102,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             return {
                 appId: application.identity.uuid,
                 name: application.identity.uuid,
-                title: title,
+                title,
                 icons: icon ? [{icon}] : undefined,
                 manifestType: 'openfin',
                 manifest: applicationInfo.manifestUrl
@@ -140,11 +140,11 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
         // No await here otherwise the injector will never properly initialize - The injector awaits this init before completion!
         Injector.initialized.then(async () => {
-            windowInfo.forEach(info => {
+            windowInfo.forEach((info) => {
                 const {uuid, mainWindow, childWindows} = info;
 
                 this.registerWindow({uuid, name: mainWindow.name}, undefined);
-                childWindows.forEach(child => this.registerWindow({uuid, name: child.name}, undefined));
+                childWindows.forEach((child) => this.registerWindow({uuid, name: child.name}, undefined));
             });
         });
     }

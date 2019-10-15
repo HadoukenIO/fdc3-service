@@ -78,7 +78,7 @@ export class APIHandler<T extends Enum> {
     }
 
     public dispatch(to: Identity, action: string, payload: any): Promise<any> {
-        return this._providerChannel.dispatch(to, action, payload).catch(error => {
+        return this._providerChannel.dispatch(to, action, payload).catch((error) => {
             // Log and re-throw
             console.error(`Error when dispatching '${action}' to ${to.uuid}/${to.name}`, payload);
             throw error;
@@ -87,7 +87,7 @@ export class APIHandler<T extends Enum> {
 
     public publish(action: string, payload: any): Promise<any>[] {
         const connections = this._providerChannel.connections.slice();
-        return this._providerChannel.publish(action, payload).map((promise, index) => promise.catch(error => {
+        return this._providerChannel.publish(action, payload).map((promise, index) => promise.catch((error) => {
             // We don't know which connection had the error, but assume that the indices of the promises match the indices of the channel connections.
             const connectionInfo = `probably from connection ${index + 1}/${connections.length}: ${connections[index].uuid} / ${connections[index].name}`;
 
@@ -137,7 +137,7 @@ export class APIHandler<T extends Enum> {
         });
     }
 
-    private onDisconnectionHandler(app:Identity): void {
+    private onDisconnectionHandler(app: Identity): void {
         this.onDisconnection.emit(app);
     }
 }

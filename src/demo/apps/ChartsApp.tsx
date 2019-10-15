@@ -31,7 +31,7 @@ export function ChartsApp(props: AppProps): React.ReactElement {
     }, []);
 
     React.useEffect(() => {
-        getCurrentChannel().then(async channel => {
+        getCurrentChannel().then(async (channel) => {
             const context = await channel.getCurrentContext();
             if (context && context.type === 'fdc3.instrument') {
                 handleIntent(context as InstrumentContext);

@@ -14,7 +14,7 @@ import {AsyncInit} from './AsyncInit';
 const RESOLVER_URL = (() => {
     let providerLocation = window.location.href;
 
-    if (providerLocation.indexOf('http://localhost') === 0) {
+    if (providerLocation.startsWith('http://localhost')) {
         // Work-around for fake provider used within test runner
         providerLocation = providerLocation.replace('/test', '/provider');
     }

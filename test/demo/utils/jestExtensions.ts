@@ -26,7 +26,7 @@ declare global {
              * @param channel An object with optional `id` and `type` properties that if present we expect the channel to match, or the `ChannelId`
              * @param classType The class we expect the channel to be an instance of
              */
-            toBeChannel(channel: {id?: ChannelId, type?: string} | ChannelId, classType?: Function): R;
+            toBeChannel(channel: {id?: ChannelId; type?: string} | ChannelId, classType?: Function): R;
 
             /**
              * Used to test that a remote listener has received the provided contexts
@@ -67,7 +67,7 @@ expect.extend({
         }
     },
 
-    toBeChannel(channel: RemoteChannel, expectedChannel: {id?: ChannelId, type?: string} | ChannelId, channelType?: Function): CustomMatcherResult {
+    toBeChannel(channel: RemoteChannel, expectedChannel: {id?: ChannelId; type?: string} | ChannelId, channelType?: Function): CustomMatcherResult {
         const inflatedExpectedChannel = typeof expectedChannel === 'string' ? {id: expectedChannel} : expectedChannel;
 
         let pass = true;
@@ -104,12 +104,10 @@ expect.extend({
 
                 if (!pass) {
                     return errorLines.join('\n');
+                } else if (channelType) {
+                    return `Expected channel not to match: ${JSON.stringify(inflatedExpectedChannel)}, with protoype ${receivedPrototype.name}`;
                 } else {
-                    if (channelType) {
-                        return `Expected channel not to match: ${JSON.stringify(inflatedExpectedChannel)}, with protoype ${receivedPrototype.name}`;
-                    } else {
-                        return `Expected channel not to match: ${JSON.stringify(inflatedExpectedChannel)}`;
-                    }
+                    return `Expected channel not to match: ${JSON.stringify(inflatedExpectedChannel)}`;
                 }
             }
         };

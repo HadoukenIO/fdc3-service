@@ -43,12 +43,12 @@ export class AppDirectory extends AsyncInit {
     }
 
     public async getAppByUuid(uuid: string): Promise<Application | null> {
-        return this._directory.find(app => AppDirectory.getUuidFromApp(app) === uuid) || null;
+        return this._directory.find((app) => AppDirectory.getUuidFromApp(app) === uuid) || null;
     }
 
     public async getAppsByIntent(intentType: string, contextType?: string): Promise<Application[]> {
         return this._directory.filter((app: Application) => {
-            return app.intents && app.intents.some(intent => {
+            return app.intents && app.intents.some((intent) => {
                 const isContextRelevant = contextType && intent.contexts && intent.contexts.length > 0;
                 return (intent.name === intentType) && (!isContextRelevant || intent.contexts!.includes(contextType!));
             });
@@ -64,7 +64,7 @@ export class AppDirectory extends AsyncInit {
     public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
         const appIntentsByName: {[intentName: string]: AppIntent} = {};
         this._directory.forEach((app: Application) => {
-            (app.intents || []).forEach(intent => {
+            (app.intents || []).forEach((intent) => {
                 if (intent.contexts && intent.contexts.includes(contextType)) {
                     if (!appIntentsByName[intent.name]) {
                         appIntentsByName[intent.name] = {
@@ -80,7 +80,7 @@ export class AppDirectory extends AsyncInit {
             });
         });
 
-        Object.values(appIntentsByName).forEach(appIntent => {
+        Object.values(appIntentsByName).forEach((appIntent) => {
             appIntent.apps.sort((a, b) => a.appId.localeCompare(b.appId, 'en'));
         });
 

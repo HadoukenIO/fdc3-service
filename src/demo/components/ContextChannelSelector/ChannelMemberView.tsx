@@ -33,7 +33,7 @@ export function ContextChannelView(props: ChannelViewProps): React.ReactElement 
         addEventListener('channel-changed', (event) => {
             const changedChannel = event.channel || event.previousChannel;
             if (changedChannel!.id === channel.id) {
-                changedChannel!.getMembers().then(result => {
+                changedChannel!.getMembers().then((result) => {
                     setMembers(result);
                 });
             }

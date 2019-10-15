@@ -63,7 +63,7 @@ describe('Intent listeners and raising intents without a target', () => {
                     return fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
                 }],
                 ['the app\'s child window', async () => {
-                    const childIdentity = {uuid: testAppWithUniqueIntent.uuid, name: testAppWithUniqueIntent.name + '-child-window'};
+                    const childIdentity = {uuid: testAppWithUniqueIntent.uuid, name: `${testAppWithUniqueIntent.name}-child-window`};
 
                     await fdc3Remote.createFinWindow(testAppWithUniqueIntent, {name: childIdentity.name, url: testAppUrl});
 
@@ -144,7 +144,7 @@ the app opens and receives the intent with the correct context', async () => {
                     // TODO: Re-enable once we have at timeout to allow apps to add intent listeners on mulitple windows on startup (SERVICE-556)
                     test.skip('When the listener is registered on the child window, when calling raiseIntent from another app \
 the app opens and receives the intent with the correct context', async () => {
-                        const childIdentity = {uuid: testAppWithUniqueIntent.uuid, name: testAppWithUniqueIntent.name + '-child-window'};
+                        const childIdentity = {uuid: testAppWithUniqueIntent.uuid, name: `${testAppWithUniqueIntent.name}-child-window`};
 
                         await fdc3Remote.createFinWindow(testAppWithUniqueIntent, {name: childIdentity.name, url: testAppUrl});
                         await fdc3Remote.addIntentListener(childIdentity, uniqueIntent.type);

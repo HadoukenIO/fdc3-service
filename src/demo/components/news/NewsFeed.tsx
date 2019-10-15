@@ -14,7 +14,7 @@ export function NewsFeed(props: NewsFeedProps): React.ReactElement {
 
     React.useEffect(() => {
         setLoading(true);
-        fetchNews(symbol).then(feed => {
+        fetchNews(symbol).then((feed) => {
             setFeed(feed);
             setLoading(false);
         });

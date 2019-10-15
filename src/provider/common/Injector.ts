@@ -21,18 +21,18 @@ import {DeferredPromise} from './DeferredPromise';
 /**
  * For each entry in `Inject`, defines the type that will be injected for that key.
  */
-type Types = {
-    [Inject.API_HANDLER]: APIHandler<APIFromClientTopic>,
-    [Inject.APP_DIRECTORY]: AppDirectory,
-    [Inject.CHANNEL_HANDLER]: ChannelHandler,
-    [Inject.CONFIG_STORE]: ConfigStoreBinding,
-    [Inject.CONTEXT_HANDLER]: ContextHandler,
-    [Inject.ENVIRONMENT]: Environment,
-    [Inject.EVENT_HANDLER]: EventHandler,
-    [Inject.INTENT_HANDLER]: IntentHandler,
-    [Inject.MODEL]: Model,
-    [Inject.RESOLVER]: ResolverHandlerBinding
-};
+interface Types {
+    [Inject.API_HANDLER]: APIHandler<APIFromClientTopic>;
+    [Inject.APP_DIRECTORY]: AppDirectory;
+    [Inject.CHANNEL_HANDLER]: ChannelHandler;
+    [Inject.CONFIG_STORE]: ConfigStoreBinding;
+    [Inject.CONTEXT_HANDLER]: ContextHandler;
+    [Inject.ENVIRONMENT]: Environment;
+    [Inject.EVENT_HANDLER]: EventHandler;
+    [Inject.INTENT_HANDLER]: IntentHandler;
+    [Inject.MODEL]: Model;
+    [Inject.RESOLVER]: ResolverHandlerBinding;
+}
 
 /**
  * Default injector mappings. Used at startup to initialise injectify.
@@ -59,15 +59,15 @@ type Keys = (keyof typeof Inject & keyof typeof Bindings & keyof Types);
  * Wrapper around inversify that allows more concise injection
  */
 export class Injector {
-    private static _initialized: DeferredPromise = new DeferredPromise();
+    private static readonly _initialized: DeferredPromise = new DeferredPromise();
     private static _ready: boolean = false;
-    private static _container: Container = Injector.createContainer();
+    private static readonly _container: Container = Injector.createContainer();
 
     public static async init(): Promise<void> {
         const container: Container = Injector._container;
         const promises: Promise<unknown>[] = [];
 
-        Object.keys(Bindings).forEach(k => {
+        Object.keys(Bindings).forEach((k) => {
             const key: Keys = k as any;
             const proto = (Bindings[key] as Function).prototype;
 
@@ -124,7 +124,7 @@ export class Injector {
     private static createContainer(): Container {
         const container = new Container();
 
-        Object.keys(Bindings).forEach(k => {
+        Object.keys(Bindings).forEach((k) => {
             const key: Keys = k as any;
 
             if (typeof Bindings[key] === 'function') {

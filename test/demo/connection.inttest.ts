@@ -24,7 +24,7 @@ type ProviderWindow = Window & {
     intentHandler: IntentHandler;
     channelHandler: ChannelHandler;
     eventHandler: EventHandler;
-}
+};
 
 enum RegistrationStatus {
     REGISTERED,
@@ -62,7 +62,7 @@ describe('Connecting windows', () => {
             testTitle: string,
             application: TestAppData,
             statusAfterDisconnect: RegistrationStatus,
-            openFunction: (app: TestAppData) => Promise<void>,
+            openFunction: (app: TestAppData) => Promise<void>
         ) => {
             beforeEach(async () => {
                 await openFunction(application);
@@ -226,11 +226,11 @@ async function getChannelContextListeners(remoteChannel: RemoteChannel): Promise
 async function hasEventListeners(identity: Identity, eventType: ChannelEvents['type']): Promise<boolean> {
     const identities = await ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, event: ChannelEvents['type']): Identity[] {
         // Check that the window identity is on any channel.
-        return this.model.channels.map(channel => {
-            return this.channelHandler.getWindowsListeningForEventsOnChannel(channel, event).map(appWindow => appWindow.identity);
+        return this.model.channels.map((channel) => {
+            return this.channelHandler.getWindowsListeningForEventsOnChannel(channel, event).map((appWindow) => appWindow.identity);
         }).reduce((acc, current) => [...acc, ...current], []);
     }, eventType);
-    return identities.some(id => id.name === identity.name && id.uuid === identity.uuid);
+    return identities.some((id) => id.name === identity.name && id.uuid === identity.uuid);
 }
 
 async function isRegistered(identity: Identity): Promise<boolean> {

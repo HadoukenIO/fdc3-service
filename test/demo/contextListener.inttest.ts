@@ -80,7 +80,7 @@ describe('Context listeners and broadcasting', () => {
                 // Send the context
                 await fdc3Remote.broadcast(testManagerIdentity, validContext);
 
-                const receivedContexts = await Promise.all(listeners.map(listener => listener.getReceivedContexts()));
+                const receivedContexts = await Promise.all(listeners.map((listener) => listener.getReceivedContexts()));
                 for (const contextList of receivedContexts) {
                     expect(contextList).toEqual([validContext]);
                 }
@@ -89,7 +89,7 @@ describe('Context listeners and broadcasting', () => {
             test('When calling broadcast from the first app, none of its own listeners will be triggered', async () => {
                 await fdc3Remote.broadcast(testAppInDirectory1, validContext);
 
-                const receivedContexts = await Promise.all(listeners.map(listener => listener.getReceivedContexts()));
+                const receivedContexts = await Promise.all(listeners.map((listener) => listener.getReceivedContexts()));
                 expect(receivedContexts).toEqual([[], []]);
             });
 
@@ -106,7 +106,7 @@ describe('Context listeners and broadcasting', () => {
                 test('When calling broadcast, only the still-registered listener is triggered', async () => {
                     // Send the context
                     await fdc3Remote.broadcast(testManagerIdentity, validContext);
-                    const receivedContexts = await Promise.all(listeners.map(listener => listener.getReceivedContexts()));
+                    const receivedContexts = await Promise.all(listeners.map((listener) => listener.getReceivedContexts()));
 
                     // First listener not triggered
                     expect(receivedContexts[0]).toEqual([]);
@@ -129,7 +129,7 @@ describe('Context listeners and broadcasting', () => {
 
     describe('Broadcasting with multiple windows in the same app', () => {
         const testAppMainWindowIdentity = testAppInDirectory1;
-        const testAppChildWindowName = testAppInDirectory1.name + '-child-window';
+        const testAppChildWindowName = `${testAppInDirectory1.name}-child-window`;
         beforeEach(async () => {
             await fdc3Remote.open(testManagerIdentity, testAppMainWindowIdentity.name);
         });
