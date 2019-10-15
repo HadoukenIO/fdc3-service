@@ -11,12 +11,14 @@ import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
 import {withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
+import {Environment} from '../model/Environment';
 
 import {ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
 @injectable()
 export class IntentHandler {
     private readonly _directory: AppDirectory;
+    private readonly _environment: Environment;
     private readonly _model: Model;
     private readonly _resolver: ResolverHandlerBinding;
     private readonly _apiHandler: APIHandler<APIToClientTopic>;
@@ -25,11 +27,13 @@ export class IntentHandler {
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
+        @inject(Inject.ENVIRONMENT) environment: Environment,
         @inject(Inject.MODEL) model: Model,
         @inject(Inject.RESOLVER) resolver: ResolverHandlerBinding,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIToClientTopic>
     ) {
         this._directory = directory;
+        this._environment = environment;
         this._model = model;
         this._resolver = resolver;
         this._apiHandler = apiHandler;
@@ -55,7 +59,7 @@ export class IntentHandler {
         } else {
             // Target intent does not handles intent with given, so determine why and throw an error
             const targetInDirectory = await this._directory.getAppByName(intent.target);
-            const targetRunning = this._model.findWindowsByAppName(intent.target).length > 0;
+            const targetRunning = await this._environment.isRunning(targetInDirectory ? AppDirectory.getUuidFromApp(targetInDirectory) : intent.target);
 
             if (!targetInDirectory && !targetRunning) {
                 throw new FDC3Error(

@@ -140,7 +140,7 @@ export class Model {
     }
 
     public async ensureRunning(appInfo: Application): Promise<void> {
-        if (this.findWindowsByAppId(appInfo.appId).length === 0 && !(await this._environment.isRunning(appInfo))) {
+        if (!await this._environment.isRunning(AppDirectory.getUuidFromApp(appInfo))) {
             await this._environment.createApplication(appInfo, this._channelsById[DEFAULT_CHANNEL_ID]);
         }
     }
@@ -166,7 +166,9 @@ export class Model {
         })).map(group => group.application);
 
         // Get all directory apps that support the given intent and context
-        const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => !(await this._environment.isRunning(app)));
+        const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
+            return !await this._environment.isRunning(AppDirectory.getUuidFromApp(app));
+        });
 
         const directoryAppsForIntent = directoryApps.filter(app => AppDirectory.shouldAppSupportIntent(app, intentType, contextType));
 
@@ -195,7 +197,9 @@ export class Model {
         });
 
         // Populate appIntentsBuilder from non-running directory apps
-        const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => !(await this._environment.isRunning(app)));
+        const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
+            return !await this._environment.isRunning(AppDirectory.getUuidFromApp(app));
+        });
 
         directoryApps.forEach(app => {
             const intents = app.intents || [];
@@ -376,8 +380,8 @@ export class Model {
             return 1;
         }
 
-        const running1 = this._environment.isRunning(app1);
-        const running2 = this._environment.isRunning(app2);
+        const running1 = this._environment.isRunning(AppDirectory.getUuidFromApp(app1));
+        const running2 = this._environment.isRunning(AppDirectory.getUuidFromApp(app2));
 
         if (running1 && !running2) {
             return -1;
