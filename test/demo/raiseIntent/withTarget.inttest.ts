@@ -251,6 +251,8 @@ only the first listener is triggered', async () => {
                     `App '${testAppData.name}' does not handle intent '${validIntent.type}' with context '${validIntent.context.type}'`
                 );
             }
+
+            await expect(listener).toHaveReceivedContexts([]);
         });
 
         test('When calling unsubscribe from a second intent listener, then calling raiseIntent from another app, \
