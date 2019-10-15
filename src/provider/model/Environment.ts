@@ -25,7 +25,7 @@ export interface Environment {
     /**
      * Checks if an application is running, given an App Directory entry.
      */
-    isRunning: (appInfo: Application) => Promise<boolean>;
+    isRunning: (uuid: string) => Promise<boolean>;
 
     /**
      * Creates a new application, given an App Directory entry.

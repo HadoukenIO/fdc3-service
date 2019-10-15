@@ -32,7 +32,7 @@ interface ExpectedWindow {
     closed: Promise<void>;
 }
 
-interface WindowGroup {
+interface LiveApp {
     application: Application;
     windows: AppWindow[];
 }
@@ -178,9 +178,9 @@ export class Model {
     public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
         // Get all live apps that support the given intent and context
         // TODO: Include apps that should add a listener but haven't yet, where the timeout has not expired (may have no registered windows) [SERVICE-556]
-        const liveWindowGroups = groupWindowsByApplication(this.windows);
+        const liveApps = getLiveApps(this.windows);
 
-        const liveAppsForIntent = (await asyncFilter(liveWindowGroups, async (group: WindowGroup) => {
+        const liveAppsForIntent = (await asyncFilter(liveApps, async (group: LiveApp) => {
             const {application, windows} = group;
 
             const hasIntentListener = windows.some(window => window.hasIntentListener(intentType));
@@ -189,7 +189,9 @@ export class Model {
         })).map(group => group.application);
 
         // Get all directory apps that support the given intent and context
-        const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => !(await this._environment.isRunning(app)));
+        const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
+            return !await this._environment.isRunning(AppDirectory.getUuidFromApp(app));
+        });
 
         const directoryAppsForIntent = directoryApps.filter(app => AppDirectory.shouldAppSupportIntent(app, intentType, contextType));
 
@@ -218,7 +220,9 @@ export class Model {
         });
 
         // Populate appIntentsBuilder from non-running directory apps
-        const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => !(await this._environment.isRunning(app)));
+        const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
+            return !await this._environment.isRunning(AppDirectory.getUuidFromApp(app));
+        });
 
         directoryApps.forEach(app => {
             const intents = app.intents || [];
@@ -399,8 +403,8 @@ export class Model {
             return 1;
         }
 
-        const running1 = this._environment.isRunning(app1);
-        const running2 = this._environment.isRunning(app2);
+        const running1 = this._environment.isRunning(AppDirectory.getUuidFromApp(app1));
+        const running2 = this._environment.isRunning(AppDirectory.getUuidFromApp(app2));
 
         if (running1 && !running2) {
             return -1;
@@ -412,16 +416,16 @@ export class Model {
     }
 }
 
-function groupWindowsByApplication(windows: AppWindow[]): WindowGroup[] {
-    return windows.reduce((groups: WindowGroup[], appWindow: AppWindow) => {
-        const group = groups.find(group => group.application.appId === appWindow.appInfo.appId);
-        if (group) {
-            group.windows.push(appWindow);
+function getLiveApps(windows: AppWindow[]): LiveApp[] {
+    return windows.reduce((liveApps: LiveApp[], appWindow: AppWindow) => {
+        const liveApp = liveApps.find(liveApp => liveApp.application.appId === appWindow.appInfo.appId);
+        if (liveApp) {
+            liveApp.windows.push(appWindow);
         } else {
-            groups.push({application: appWindow.appInfo, windows: [appWindow]});
+            liveApps.push({application: appWindow.appInfo, windows: [appWindow]});
         }
 
-        return groups;
+        return liveApps;
     }, []);
 }
 

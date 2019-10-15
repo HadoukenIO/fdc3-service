@@ -53,8 +53,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
     private readonly _applications: EnvironmentApplicationMap = new Map<string, EnvironmentApplication>();
     private readonly _windows: EnvironmentWindowMap = new Map<string, EnvironmentWindow>();
 
-    public async isRunning(appInfo: Application): Promise<boolean> {
-        return this._applications.hasOwnProperty(AppDirectory.getUuidFromApp(appInfo));
+    public async isRunning(uuid: string): Promise<boolean> {
+        return this._applications.hasOwnProperty(uuid);
     }
 
     public createApplication(appInfo: Application): ApplicationResult {

@@ -9,6 +9,7 @@ import {Application} from '../../src/client/main';
 import {createFakeApp, createFakeIntent, createFakeContextType, createFakeIdentity} from '../demo/utils/fakes';
 import {getId} from '../../src/provider/utils/getId';
 import {Intent} from '../../src/client/internal';
+import {AppDirectory} from '../../src/provider/model/AppDirectory';
 
 const mockAppDirectory = createMockAppDirectory();
 const mockEnvironment = createMockEnvironmnent();
@@ -279,7 +280,7 @@ describe('When an app is in the directory with multiple intents', () => {
 });
 
 function setupAppRunningWithWindowWithIntentListeners(app: Application, intents: string[]): void {
-    mockEnvironment.isRunning.mockImplementation(async (testApp) => testApp.appId === app.appId);
+    mockEnvironment.isRunning.mockImplementation(async (uuid) => uuid === AppDirectory.getUuidFromApp(app));
     mockEnvironment.isWindowCreated.mockImplementation(identity => identity.uuid === app.appId);
 
     mockApiHandler.isClientConnection.mockImplementation(identity => identity.uuid === app.appId);

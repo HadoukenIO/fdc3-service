@@ -2,7 +2,6 @@ import 'jest';
 import {Identity} from 'openfin/_v2/main';
 
 import {AppWindow} from '../../src/provider/model/AppWindow';
-import {Application} from '../../src/client/directory';
 import {SERVICE_IDENTITY, ChannelEvents} from '../../src/client/internal';
 import {Model} from '../../src/provider/model/Model';
 import {ChannelHandler} from '../../src/provider/controller/ChannelHandler';
