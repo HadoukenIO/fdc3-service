@@ -2,17 +2,17 @@ import * as React from 'react';
 
 import * as fdc3 from '../../../client/main';
 import {Application, AppName} from '../../../client/directory';
-import {Symbol} from '../../apps/BlotterApp';
+import {Instrument} from '../../apps/BlotterApp';
 import {IntentButton} from '../common/IntentButton';
 import {showContextMenu, ContextMenuItem} from '../common/ContextMenu';
 
 import './SymbolsRow.css';
 
 interface SymbolsRowProps {
-    item: Symbol;
+    item: Instrument;
     chartApps: Application[];
     selected?: boolean;
-    handleSelect?: (item: Symbol | null) => void;
+    handleSelect?: (item: Instrument | null) => void;
 }
 
 interface Payload {
