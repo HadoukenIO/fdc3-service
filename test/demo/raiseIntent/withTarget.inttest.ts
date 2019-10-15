@@ -7,7 +7,7 @@ import {Timeouts} from '../../../src/provider/constants';
 import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {delay} from '../utils/delay';
-import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning} from '../utils/common';
+import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning, NonDirectoryTestAppData} from '../utils/common';
 import {appStartupTime, testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, testAppWithPreregisteredListeners1, testAppNotInDirectoryNotFdc3, testAppUrl} from '../constants';
 import {allowReject} from '../../../src/provider/utils/async';
 
@@ -56,7 +56,7 @@ describe('Intent listeners and raising intents with a target', () => {
             });
 
             describe('When the target is registered to accept the raised intent', () => {
-                describe('And the listener is registered right after opening the app', () => {
+                describe('And the listener is added when the ap starts', () => {
                     setupQuitAppAfterEach(testAppWithPreregisteredListeners1);
 
                     test('The targeted app opens and its listener is triggered exactly once with the correct context', async () => {
@@ -71,42 +71,78 @@ describe('Intent listeners and raising intents with a target', () => {
                     });
                 });
 
-                describe('And the listener is added after a delay', () => {
+                describe('And the listener is added after the app starts', () => {
                     setupQuitAppAfterEach(testAppInDirectory1);
 
-                    describe('Delay is short enough for the intent handshake to succeed', () => {
-                        test('The targeted app opens and its listener is triggered just once after it is set up, with the correct context', async () => {
-                            // Raise the intent but only add the intent listener after the some time
-                            await raiseDelayedIntentWithTarget(validIntent, testAppInDirectory1, 1500);
+                    test('When the intent listener is added after a short delay, the targeted app opens and its listener is triggered \
+just once after it is set up, with the correct context', async () => {
+                        // Raise the intent but only add the intent listener after the some time
+                        await raiseDelayedIntentWithTarget(validIntent, testAppInDirectory1, 1500);
 
-                            // Since the time is under the listener handshake timeout, intent should be triggered correctly
-                            const listener = await fdc3Remote.getRemoteIntentListener(testAppInDirectory1, validIntent.type);
-                            await expect(listener).toHaveReceivedContexts([validIntent.context]);
-                        }, appStartupTime + 1500);
+                        // Since the time is under the listener handshake timeout, intent should be triggered correctly
+                        const listener = await fdc3Remote.getRemoteIntentListener(testAppInDirectory1, validIntent.type);
+                        await expect(listener).toHaveReceivedContexts([validIntent.context]);
+                    }, appStartupTime + 1500);
+
+                    test('When the intent listener is added on a child window, the targeted app opens and its listener is triggered \
+just once after it is set up, with the correct context', async () => {
+                        // Raise the intent, and wait for the app to be running
+                        const raisePromise = raiseIntent(validIntent, testAppInDirectory1);
+                        await waitForAppToBeRunning(testAppInDirectory1);
+
+                        // Create a child window and add a listener on it
+                        const childWindow = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-windww'});
+                        const listener = await fdc3Remote.addIntentListener(childWindow, validIntent.type);
+
+                        await raisePromise;
+
+                        // Check our listener received the context
+                        await expect(listener).toHaveReceivedContexts([validIntent.context]);
                     });
 
-                    describe('Delay is longer than the threshold to add intent listeners', () => {
-                        test('The targeted app opens but it times out waiting for the listener to be added', async () => {
-                            // Raise the intent but only add the intent listener after the listener handshake timeout has been exceeded
-                            const raiseIntentPromise = raiseDelayedIntentWithTarget(
-                                validIntent,
-                                testAppInDirectory1,
-                                Timeouts.ADD_INTENT_LISTENER + 2000
-                            );
+                    test('When the intent listeners are added on multiple windows, the targeted app opens and the first window\'s \
+listener is triggered just once after it is set up, with the correct context', async () => {
+                        // Raise the intent, and wait for the app to be running
+                        const raisePromise = raiseIntent(validIntent, testAppInDirectory1);
+                        await waitForAppToBeRunning(testAppInDirectory1);
 
-                            await expect(raiseIntentPromise).toThrowFDC3Error(
-                                ResolveError.IntentTimeout,
-                                `Timeout waiting for intent listener to be added for intent: ${validIntent.type}`
-                            );
-                        }, appStartupTime + 1500);
+                        const childWindow1 = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-window-1'});
+                        const childWindow2 = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-window-2'});
+
+                        // Add listeners
+                        const listener1 = await fdc3Remote.addIntentListener(childWindow1, validIntent.type);
+                        const listener2 = await fdc3Remote.addIntentListener(childWindow2, validIntent.type);
+                        const listener3 = await fdc3Remote.addIntentListener(testAppInDirectory1, validIntent.type);
+
+                        await raisePromise;
+
+                        // Check only the first listener recevied the context
+                        await expect(listener1).toHaveReceivedContexts([validIntent.context]);
+                        await expect(listener2).toHaveReceivedContexts([]);
+                        await expect(listener3).toHaveReceivedContexts([]);
                     });
+
+                    test('When the intent listener is added after a long delay, the targeted app opens but it times out waiting for the \
+listener to be added', async () => {
+                        // Raise the intent but only add the intent listener after the listener handshake timeout has been exceeded
+                        const raiseIntentPromise = raiseDelayedIntentWithTarget(
+                            validIntent,
+                            testAppInDirectory1,
+                            Timeouts.ADD_INTENT_LISTENER + 2000
+                        );
+
+                        await expect(raiseIntentPromise).toThrowFDC3Error(
+                            ResolveError.IntentTimeout,
+                            `Timeout waiting for intent listener to be added for intent: ${validIntent.type}`
+                        );
+                    }, appStartupTime + 1500);
                 });
             });
         });
 
         describe('When the target is running', () => {
             setupOpenDirectoryAppBookends(testAppInDirectory1);
-            setupCommonTests(testAppInDirectory1);
+            setupCommonRunningAppTests(testAppInDirectory1, true);
         });
     });
 
@@ -133,12 +169,12 @@ describe('Intent listeners and raising intents with a target', () => {
 
         describe('When the target (which is an ad-hoc app) is running', () => {
             setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
-            setupCommonTests(testAppNotInDirectory1);
+            setupCommonRunningAppTests(testAppNotInDirectory1, false);
         });
     });
 });
 
-function setupCommonTests(testAppData: TestAppData): void {
+function setupCommonRunningAppTests(testAppData: TestAppData, directory: boolean): void {
     describe('When the target has *not* registered listeners for the raised intent', () => {
         test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
             await expect(raiseIntent(nonExistentIntent, testAppData)).toThrowFDC3Error(
@@ -202,10 +238,19 @@ only the first listener is triggered', async () => {
         test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it errors', async () => {
             await listener.unsubscribe();
 
-            await expect(raiseIntent(validIntent, testAppData)).toThrowFDC3Error(
-                ResolveError.TargetAppDoesNotHandleIntent,
-                `App '${testAppData.name}' does not handle intent '${validIntent.type}' with context '${validIntent.context.type}'`
-            );
+            const expectedRaise = expect(raiseIntent(validIntent, testAppData));
+
+            if (directory) {
+                await expectedRaise.toThrowFDC3Error(
+                    ResolveError.IntentTimeout,
+                    `Timeout waiting for intent listener to be added for intent: ${validIntent.type}`
+                );
+            } else {
+                await expectedRaise.toThrowFDC3Error(
+                    ResolveError.TargetAppDoesNotHandleIntent,
+                    `App '${testAppData.name}' does not handle intent '${validIntent.type}' with context '${validIntent.context.type}'`
+                );
+            }
         });
 
         test('When calling unsubscribe from a second intent listener, then calling raiseIntent from another app, \

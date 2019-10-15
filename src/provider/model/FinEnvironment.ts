@@ -227,7 +227,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
                 throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
             })
         ).then((result) => {
-            const didTimeout = [result];
+            const [didTimeout] = result;
 
             if (didTimeout) {
                 this.removeApplication(uuid);
