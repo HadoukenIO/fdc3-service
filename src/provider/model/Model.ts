@@ -31,7 +31,7 @@ interface ExpectedWindow {
     closed: Promise<void>;
 }
 
-interface WindowGroup {
+interface LiveApp {
     application: Application;
     windows: AppWindow[];
 }
@@ -155,9 +155,9 @@ export class Model {
     public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
         // Get all live apps that support the given intent and context
         // TODO: Include apps that should add a listener but haven't yet, where the timeout has not expired (may have no registered windows) [SERVICE-556]
-        const liveWindowGroups = groupWindowsByApplication(this.windows);
+        const liveApps = getLiveApps(this.windows);
 
-        const liveAppsForIntent = (await asyncFilter(liveWindowGroups, async (group: WindowGroup) => {
+        const liveAppsForIntent = (await asyncFilter(liveApps, async (group: LiveApp) => {
             const {application, windows} = group;
 
             const hasIntentListener = windows.some(window => window.hasIntentListener(intentType));
@@ -393,16 +393,16 @@ export class Model {
     }
 }
 
-function groupWindowsByApplication(windows: AppWindow[]): WindowGroup[] {
-    return windows.reduce((groups: WindowGroup[], appWindow: AppWindow) => {
-        const group = groups.find(group => group.application.appId === appWindow.appInfo.appId);
-        if (group) {
-            group.windows.push(appWindow);
+function getLiveApps(windows: AppWindow[]): LiveApp[] {
+    return windows.reduce((liveApps: LiveApp[], appWindow: AppWindow) => {
+        const liveApp = liveApps.find(liveApp => liveApp.application.appId === appWindow.appInfo.appId);
+        if (liveApp) {
+            liveApp.windows.push(appWindow);
         } else {
-            groups.push({application: appWindow.appInfo, windows: [appWindow]});
+            liveApps.push({application: appWindow.appInfo, windows: [appWindow]});
         }
 
-        return groups;
+        return liveApps;
     }, []);
 }
 
