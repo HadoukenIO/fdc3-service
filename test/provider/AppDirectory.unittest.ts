@@ -230,7 +230,7 @@ describe('When querying individual applications', () => {
             expect(AppDirectory.mightAppSupportIntent(app, arbitraryIntentType)).toBe(true);
         });
 
-        it('The app might support that intent with an arbitray context', () => {
+        it('The app might support that intent with an arbitrary context', () => {
             const arbitraryContextType = createFakeContextType();
 
             expect(AppDirectory.mightAppSupportIntent(app, intentType, arbitraryContextType)).toBe(true);
@@ -246,7 +246,7 @@ describe('When querying individual applications', () => {
             expect(AppDirectory.shouldAppSupportIntent(app, arbitraryIntentType)).toBe(false);
         });
 
-        it('The app is expected to support that intent with an arbitray context', () => {
+        it('The app is expected to support that intent with an arbitrarycontext', () => {
             const arbitraryContextType = createFakeContextType();
 
             expect(AppDirectory.shouldAppSupportIntent(app, intentType, arbitraryContextType)).toBe(true);
@@ -356,7 +356,7 @@ describe('When querying individual applications', () => {
             }
         });
 
-        it('For intents with no contexts, the app might support those intents with an arbitray context', () => {
+        it('For intents with no contexts, the app might support those intents with an arbitrarycontext', () => {
             const arbitraryContextType = createFakeContextType();
 
             for (const intent of [intent3, intent4]) {
@@ -364,7 +364,7 @@ describe('When querying individual applications', () => {
             }
         });
 
-        it('For intents with contexts, the app will not support those intents with an arbitray context', () => {
+        it('For intents with contexts, the app will not support those intents with an arbitrarycontext', () => {
             const arbitraryContextType = createFakeContextType();
 
             for (const intent of [intent1, intent2]) {
