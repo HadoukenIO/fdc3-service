@@ -13,6 +13,7 @@ import {Boxed} from '../utils/types';
 import {getId} from '../utils/getId';
 import {DeferredPromise} from '../common/DeferredPromise';
 
+import {LiveApp} from './LiveApp';
 import {AppWindow} from './AppWindow';
 import {ContextChannel, DefaultContextChannel, SystemContextChannel} from './ContextChannel';
 import {Environment, EntityType} from './Environment';
@@ -32,11 +33,6 @@ interface ExpectedWindow {
     closed: Promise<void>;
 }
 
-interface LiveApp {
-    application: Application;
-    windows: AppWindow[];
-}
-
 const EXPECT_TIMEOUT_MESSAGE = 'Timeout on window registration exceeded';
 const EXPECT_CLOSED_MESSAGE = 'Window closed before registration completed';
 
@@ -49,6 +45,7 @@ export class Model {
     private readonly _environment: Environment;
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
 
+    private readonly _liveAppsByUuid: {[id: string]: LiveApp};
     private readonly _windowsById: {[id: string]: AppWindow};
     private readonly _channelsById: {[id: string]: ContextChannel};
     private readonly _expectedWindowsById: {[id: string]: ExpectedWindow};
@@ -60,6 +57,7 @@ export class Model {
         @inject(Inject.ENVIRONMENT) environment: Environment,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>
     ) {
+        this._liveAppsByUuid = {};
         this._windowsById = {};
         this._channelsById = {};
         this._expectedWindowsById = {};
@@ -181,15 +179,15 @@ export class Model {
      */
     public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
         // Get all live apps that support the given intent and context
-        const liveApps = getLiveApps(this.windows);
+        const liveApps = Object.values(this._liveAppsByUuid);
 
-        const liveAppsForIntent = (await asyncFilter(liveApps, async (group: LiveApp) => {
-            const {application, windows} = group;
+        const liveAppsForIntent = (await asyncFilter(liveApps, async (liveApp: LiveApp) => {
+            const {appInfo: application, windows} = liveApp;
 
             const hasIntentListener = windows.some(window => window.hasIntentListener(intentType));
 
             return hasIntentListener && AppDirectory.mightAppSupportIntent(application, intentType, contextType);
-        })).map(group => group.application);
+        })).map(group => group.appInfo);
 
         // Get all directory apps that support the given intent and context
         const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
@@ -274,16 +272,14 @@ export class Model {
 
         // Only register windows once they are connected to the service
         allowReject(expectedWindow.connected.then(async () => {
-            // Attempt to copy appInfo from another appWindow in the model from the same app
+            // Attempt to copy appInfo from this window's LiveApp
             let registered = false;
-            let appWindowsFromSameApp: AppWindow[];
 
             allowReject(untilTrue(this._onWindowRegisteredInternal, () => {
-                appWindowsFromSameApp = this.findWindowsByAppId(identity.uuid);
-                return appWindowsFromSameApp.length > 0;
+                return this._liveAppsByUuid.hasOwnProperty(identity.uuid);
             }, expectedWindow.closed).then(() => {
                 if (!registered) {
-                    this.registerWindow(appWindowsFromSameApp[0].appInfo, identity);
+                    this.registerWindow(this._liveAppsByUuid[identity.uuid].appInfo, identity);
                     registered = true;
                 }
             }));
@@ -305,6 +301,17 @@ export class Model {
         const window = this._windowsById[id];
 
         if (window) {
+            const uuid = identity.uuid;
+            const liveApp = this._liveAppsByUuid.hasOwnProperty(uuid) ? this._liveAppsByUuid[uuid] : undefined;
+
+            if (liveApp) {
+                liveApp.removeWindow(window);
+
+                if (!liveApp.hasWindows()) {
+                    delete this._liveAppsByUuid[identity.uuid];
+                }
+            }
+
             delete this._windowsById[id];
             this.onWindowRemoved.emit(window);
         } else if (this._expectedWindowsById[id]) {
@@ -350,6 +357,11 @@ export class Model {
         console.info(`Registering window ${appWindow.id}`);
         this._windowsById[appWindow.id] = appWindow;
         delete this._expectedWindowsById[id];
+
+        const uuid = identity.uuid;
+        const liveApp = this._liveAppsByUuid.hasOwnProperty(uuid) ? this._liveAppsByUuid[uuid] : new LiveApp(appInfo);
+        liveApp.addWindow(appWindow);
+        this._liveAppsByUuid[uuid] = liveApp;
 
         this.onWindowAdded.emit(appWindow);
         this._onWindowRegisteredInternal.emit(appWindow);
@@ -433,19 +445,6 @@ export class Model {
 
         return (app1.title || app1.name).localeCompare(app2.title || app2.name, 'en');
     }
-}
-
-function getLiveApps(windows: AppWindow[]): LiveApp[] {
-    return windows.reduce((liveApps: LiveApp[], appWindow: AppWindow) => {
-        const liveApp = liveApps.find(liveApp => liveApp.application.appId === appWindow.appInfo.appId);
-        if (liveApp) {
-            liveApp.windows.push(appWindow);
-        } else {
-            liveApps.push({application: appWindow.appInfo, windows: [appWindow]});
-        }
-
-        return liveApps;
-    }, []);
 }
 
 class AppIntentsBuilder {
