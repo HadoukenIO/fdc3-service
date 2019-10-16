@@ -78,3 +78,23 @@ export function allowReject<T>(promise: Promise<T>): Promise<T> {
     promise.catch(() => {});
     return promise;
 }
+
+export async function asyncFilter<T>(arr: T[], callback: (x: T) => Promise<boolean>): Promise<T[]> {
+    const result: T[] = [];
+
+    for (let i = 0; i < arr.length; i++) {
+        if (await callback(arr[i])) {
+            result.push(arr[i]);
+        }
+    }
+
+    return result;
+}
+
+export async function asyncMap<T, U>(arr: T[], callback: (x: T, i: number, r: T[]) => Promise<U>): Promise<U[]>;
+export async function asyncMap<T, U>(arr: T[], callback: (x: T, i: number) => Promise<U>): Promise<U[]>;
+export async function asyncMap<T, U>(arr: T[], callback: (x: T) => Promise<U>): Promise<U[]>;
+export async function asyncMap<T, U>(arr: T[], callback: () => Promise<U>): Promise<U[]>;
+export async function asyncMap<T, U>(arr: T[], callback: (...args: any[]) => any): Promise<U[]> {
+    return Promise.all<U>(arr.map(callback));
+}

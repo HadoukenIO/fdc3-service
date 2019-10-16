@@ -2,10 +2,10 @@ import {injectable, inject} from 'inversify';
 
 import {Inject} from '../common/Injectables';
 import {Application, AppName} from '../../client/directory';
-import {AppIntent} from '../../client/main';
 import {AsyncInit} from '../controller/AsyncInit';
 import {CustomConfigFields} from '../constants';
 import {checkCustomConfigField} from '../utils/helpers';
+import {Intent} from '../../client/internal';
 
 import {ConfigStoreBinding} from './ConfigStore';
 
@@ -16,6 +16,44 @@ enum StorageKeys {
 
 @injectable()
 export class AppDirectory extends AsyncInit {
+    /**
+     * Test if an app *might* support an intent - i.e., were the app running with the appropriate listener added,
+     * should we regard it as supporting this intent (and optionally context)
+     */
+    public static mightAppSupportIntent(app: Application, intentType: string, contextType?: string): boolean {
+        if (contextType === undefined || app.intents === undefined) {
+            return true;
+        } else {
+            const intent = app.intents.find(intent => intent.name === intentType);
+            return intent === undefined || intentSupportsContext(intent, contextType);
+        }
+    }
+
+    /**
+     * Test if an app *should* support an intent - i.e., were the app running, would we expect it to add a listener for
+     * the given intent, and would we then regard it as supporting this intent (and optionally context)
+     */
+    public static shouldAppSupportIntent(app: Application, intentType: string, contextType?: string): boolean {
+        if (app.intents === undefined) {
+            return false;
+        } else {
+            const intent = app.intents.find(intent => intent.name === intentType);
+            return intent !== undefined && (contextType === undefined || intentSupportsContext(intent, contextType));
+        }
+    }
+
+    public static getIntentDisplayName(apps: Application[], intentType: string): string {
+        for (const app of apps) {
+            const intent = app.intents && app.intents.find(intent => intent.name === intentType);
+
+            if (intent && intent.displayName !== undefined) {
+                return intent.displayName;
+            }
+        }
+
+        return intentType;
+    }
+
     public static getUuidFromApp(app: Application): string {
         const customValue = checkCustomConfigField(app, CustomConfigFields.OPENFIN_APP_UUID);
         return customValue !== undefined ? customValue : app.appId;
@@ -44,47 +82,6 @@ export class AppDirectory extends AsyncInit {
 
     public async getAppByUuid(uuid: string): Promise<Application | null> {
         return this._directory.find(app => AppDirectory.getUuidFromApp(app) === uuid) || null;
-    }
-
-    public async getAppsByIntent(intentType: string, contextType?: string): Promise<Application[]> {
-        return this._directory.filter((app: Application) => {
-            return app.intents && app.intents.some(intent => {
-                const isContextRelevant = contextType && intent.contexts && intent.contexts.length > 0;
-                return (intent.name === intentType) && (!isContextRelevant || intent.contexts!.includes(contextType!));
-            });
-        });
-    }
-
-    /**
-     * Get information about intents that expect contexts of a given type, and the apps that handle those intents
-     *
-     * Note this only considers directory apps and not "ad hoc" windows, as the latter don't specify context types when adding intent listeners
-     * @param contextType type of context to find intents for
-     */
-    public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
-        const appIntentsByName: {[intentName: string]: AppIntent} = {};
-        this._directory.forEach((app: Application) => {
-            (app.intents || []).forEach(intent => {
-                if (intent.contexts && intent.contexts.includes(contextType)) {
-                    if (!appIntentsByName[intent.name]) {
-                        appIntentsByName[intent.name] = {
-                            intent: {
-                                name: intent.name,
-                                displayName: intent.displayName || intent.name
-                            },
-                            apps: []
-                        };
-                    }
-                    appIntentsByName[intent.name].apps.push(app);
-                }
-            });
-        });
-
-        Object.values(appIntentsByName).forEach(appIntent => {
-            appIntent.apps.sort((a, b) => a.appId.localeCompare(b.appId, 'en'));
-        });
-
-        return Object.values(appIntentsByName).sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));
     }
 
     /**
@@ -151,4 +148,8 @@ export class AppDirectory extends AsyncInit {
         localStorage.setItem(StorageKeys.URL, url);
         localStorage.setItem(StorageKeys.APPLICATIONS, JSON.stringify(applications));
     }
+}
+
+function intentSupportsContext(intent: Intent, contextType: string): boolean {
+    return intent.contexts === undefined || intent.contexts.length === 0 || intent.contexts.includes(contextType);
 }

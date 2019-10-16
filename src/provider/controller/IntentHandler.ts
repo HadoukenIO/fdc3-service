@@ -11,12 +11,14 @@ import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
 import {withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
+import {Environment} from '../model/Environment';
 
 import {ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
 @injectable()
 export class IntentHandler {
     private readonly _directory: AppDirectory;
+    private readonly _environment: Environment;
     private readonly _model: Model;
     private readonly _resolver: ResolverHandlerBinding;
     private readonly _apiHandler: APIHandler<APIToClientTopic>;
@@ -25,11 +27,13 @@ export class IntentHandler {
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
+        @inject(Inject.ENVIRONMENT) environment: Environment,
         @inject(Inject.MODEL) model: Model,
         @inject(Inject.RESOLVER) resolver: ResolverHandlerBinding,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIToClientTopic>
     ) {
         this._directory = directory;
+        this._environment = environment;
         this._model = model;
         this._resolver = resolver;
         this._apiHandler = apiHandler;
@@ -40,74 +44,76 @@ export class IntentHandler {
     public async raise(intent: Intent): Promise<IntentResolution> {
         if (hasTarget(intent)) {
             return this.raiseWithTarget(intent);
-        }
-
-        const apps: Application[] = await this._model.getApplicationsForIntent(intent.type);
-
-        if (apps.length === 0) {
-            throw new FDC3Error(ResolveError.NoAppsFound, 'No applications available to handle this intent');
-        } else if (apps.length === 1) {
-            // Resolve intent immediately
-            return this.fireIntent(intent, apps[0]);
         } else {
-            // Prompt the user to select an application to use
-            return this.queueResolve(intent);
+            return this.startResolve(intent);
         }
     }
 
     private async raiseWithTarget(intent: IntentWithTarget): Promise<IntentResolution> {
-        let appInfo: Application|null;
+        const apps = await this._model.getApplicationsForIntent(intent.type, intent.context.type);
+        const targetApp = apps.find(app => app.name === intent.target);
 
-        const appWindows = this._model.findWindowsByAppName(intent.target);
-
-        if (appWindows.length > 0) {
-            // Target app is running -> fire intent at it
-            appInfo = appWindows[0].appInfo;
+        if (targetApp !== undefined) {
+            // Target intent handles intent with given context, so fire
+            return this.fireIntent(intent, targetApp);
         } else {
-            // Target app not running -> Try to find in directory
-            appInfo = await this._directory.getAppByName(intent.target);
-            if (!appInfo) {
+            // Target intent does not handles intent with given, so determine why and throw an error
+            const targetInDirectory = await this._directory.getAppByName(intent.target);
+            const targetRunning = await this._environment.isRunning(targetInDirectory ? AppDirectory.getUuidFromApp(targetInDirectory) : intent.target);
+
+            if (!targetInDirectory && !targetRunning) {
                 throw new FDC3Error(
                     ResolveError.TargetAppNotAvailable,
                     `Couldn't resolve intent target '${intent.target}'. No matching app in directory or currently running.`
                 );
-            }
-
-            // Target app is in directory -> ensure that it handles intent
-            if (!(appInfo.intents || []).some(appIntent => appIntent.name === intent.type)) {
-                throw new FDC3Error(ResolveError.TargetAppDoesNotHandleIntent, `App '${intent.target}' does not handle intent '${intent.type}'`);
+            } else {
+                throw new FDC3Error(
+                    ResolveError.TargetAppDoesNotHandleIntent,
+                    `App '${intent.target}' does not handle intent '${intent.type}' with context '${intent.context.type}'`
+                );
             }
         }
-
-        // At this point we are certain that the target app - whether already running or not - can handle the intent
-        return this.fireIntent(intent, appInfo);
-    }
-
-    private async queueResolve(intent: Intent): Promise<IntentResolution> {
-        if (this._resolvePromise) {
-            this._resolvePromise = this._resolvePromise.catch(() => {}).then(() => this.startResolve(intent));
-        } else {
-            this._resolvePromise = this.startResolve(intent);
-        }
-
-        return this._resolvePromise;
     }
 
     private async startResolve(intent: Intent): Promise<IntentResolution> {
-        console.log('Handling intent', intent.type);
+        const apps: Application[] = await this._model.getApplicationsForIntent(intent.type, intent.context.type);
 
-        // Show resolver
-        const selection: ResolverResult|null = await this._resolver.handleIntent(intent).catch(e => {
-            console.warn(e);
-            return null;
-        });
-        if (!selection) {
-            throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Resolver closed or cancelled');
+        if (apps.length === 0) {
+            throw new FDC3Error(ResolveError.NoAppsFound, 'No applications available to handle this intent');
+        } else if (apps.length === 1) {
+            console.log(`App '${apps[0].name}' found to resolve intent '${intent.type}, firing intent'`);
+
+            // Resolve intent immediately
+            return this.fireIntent(intent, apps[0]);
+        } else {
+            console.log(`${apps.length} apps found to resolve intent '${intent.type}', showing resolver'`);
+
+            return this.queueResolve(intent, apps);
         }
+    }
 
-        // Handle response
-        console.log('Selected from resolver:', selection.app.title);
-        return this.fireIntent(intent, selection.app);
+    private async queueResolve(intent: Intent, applications: Application[]): Promise<IntentResolution> {
+        if (this._resolvePromise) {
+            console.log(`Resolver showing, re-resolving intent '${intent.type}' when resolver closes'`);
+
+            this._resolvePromise = this._resolvePromise.catch(() => {}).then(() => this.startResolve(intent));
+
+            return this._resolvePromise;
+        } else {
+            // Show resolver
+            const selection: ResolverResult | null = await this._resolver.handleIntent(intent, applications).catch(e => {
+                console.warn(e);
+                return null;
+            });
+
+            if (!selection) {
+                throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Resolver closed or cancelled');
+            }
+
+            // Handle response
+            console.log(`App ${selection.app.name} selected to resolve intent '${intent.type}', firing intent`);
+            return this.fireIntent(intent, selection.app);
+        }
     }
 
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
