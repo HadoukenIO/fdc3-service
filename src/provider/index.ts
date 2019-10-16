@@ -20,10 +20,7 @@ import {ChannelHandler} from './controller/ChannelHandler';
 import {AppWindow} from './model/AppWindow';
 import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
-import {withTimeout} from './utils/async';
-import {Timeouts} from './constants';
 import {Environment} from './model/Environment';
-import {DeferredPromise} from './common/DeferredPromise';
 
 @injectable()
 export class Main {
@@ -122,7 +119,7 @@ export class Main {
         const promises: Promise<void>[] = [];
 
         // Start the application if not already running
-        promises.push(this._environment.createApplication(appInfo).started);
+        promises.push(this._model.expectLiveApplication(appInfo));
 
         // Bring-to-front all currently open windows in creation order
         const windowsToFocus = this._model.findWindowsByAppName(appInfo.name).sort((a: AppWindow, b: AppWindow) => a.appWindowNumber - b.appWindowNumber);

@@ -110,14 +110,6 @@ export class Model {
         }
     }
 
-    public getChannel(id: ChannelId): ContextChannel|null {
-        return this._channelsById[id] || null;
-    }
-
-    public setChannel(channel: ContextChannel): void {
-        this._channelsById[channel.id] = channel;
-    }
-
     /**
      * Returns all registered windows for an app, waiting for at least one window
      */
@@ -168,6 +160,18 @@ export class Model {
         }
     }
 
+    public async expectLiveApplication(appInfo: Application): Promise<void> {
+        return this._environment.createApplication(appInfo).started;
+    }
+
+    public getChannel(id: ChannelId): ContextChannel|null {
+        return this._channelsById[id] || null;
+    }
+
+    public setChannel(channel: ContextChannel): void {
+        this._channelsById[channel.id] = channel;
+    }
+
     /**
      * Get apps that can handle an intent and optionally with specified context type
      *
@@ -177,7 +181,6 @@ export class Model {
      */
     public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
         // Get all live apps that support the given intent and context
-        // TODO: Include apps that should add a listener but haven't yet, where the timeout has not expired (may have no registered windows) [SERVICE-556]
         const liveApps = getLiveApps(this.windows);
 
         const liveAppsForIntent = (await asyncFilter(liveApps, async (group: LiveApp) => {
@@ -190,7 +193,15 @@ export class Model {
 
         // Get all directory apps that support the given intent and context
         const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
-            return !await this._environment.isRunning(AppDirectory.getUuidFromApp(app));
+            if (await this._environment.isMature(AppDirectory.getUuidFromApp(app))) {
+                return false;
+            }
+
+            if (liveAppsForIntent.find(liveApp => liveApp.appId === app.appId)) {
+                return false;
+            }
+
+            return true;
         });
 
         const directoryAppsForIntent = directoryApps.filter(app => AppDirectory.shouldAppSupportIntent(app, intentType, contextType));
@@ -209,7 +220,6 @@ export class Model {
         const appIntentsBuilder = new AppIntentsBuilder();
 
         // Populate appIntentsBuilder from running apps
-        // TODO: Include apps that should add a listener but haven't yet, where the timeout has not expired (may have no registered windows) [SERVICE-556]
         this.windows.forEach(window => {
             const intentTypes = window.intentListeners;
             const app = window.appInfo;
@@ -219,9 +229,9 @@ export class Model {
             });
         });
 
-        // Populate appIntentsBuilder from non-running directory apps
+        // Populate appIntentsBuilder from non-mature directory apps
         const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
-            return !await this._environment.isRunning(AppDirectory.getUuidFromApp(app));
+            return !await this._environment.isMature(AppDirectory.getUuidFromApp(app));
         });
 
         directoryApps.forEach(app => {
@@ -248,6 +258,15 @@ export class Model {
 
     public findWindowsByAppName(name: AppName): AppWindow[] {
         return this.findWindows(appWindow => appWindow.appInfo.name === name);
+    }
+
+    public async getAppStatusByName(name: AppName): Promise<'unknown' | 'directory' | 'running'> {
+        const directoryApp = await this._directory.getAppByName(name);
+
+        const directory = directoryApp !== undefined;
+        const running = this._environment.isRunning(directoryApp ? AppDirectory.getUuidFromApp(directoryApp) : name);
+
+        return running ? 'running' : directory ? 'directory' : 'unknown';
     }
 
     private onWindowCreated(identity: Identity): void {

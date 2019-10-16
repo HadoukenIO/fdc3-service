@@ -128,7 +128,7 @@ listener to be added', async () => {
                         const raiseIntentPromise = raiseDelayedIntentWithTarget(
                             validIntent,
                             testAppInDirectory1,
-                            Timeouts.ADD_INTENT_LISTENER + 2000
+                            Timeouts.APP_MATURITY + 2000
                         );
 
                         await expect(raiseIntentPromise).toThrowFDC3Error(
@@ -142,7 +142,7 @@ listener to be added', async () => {
 
         describe('When the target is running', () => {
             setupOpenDirectoryAppBookends(testAppInDirectory1);
-            setupCommonRunningAppTests(testAppInDirectory1, true);
+            setupCommonRunningAppTests(testAppInDirectory1);
         });
     });
 
@@ -169,12 +169,12 @@ listener to be added', async () => {
 
         describe('When the target (which is an ad-hoc app) is running', () => {
             setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
-            setupCommonRunningAppTests(testAppNotInDirectory1, false);
+            setupCommonRunningAppTests(testAppNotInDirectory1);
         });
     });
 });
 
-function setupCommonRunningAppTests(testAppData: TestAppData, directory: boolean): void {
+function setupCommonRunningAppTests(testAppData: TestAppData): void {
     describe('When the target has *not* registered listeners for the raised intent', () => {
         test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
             await expect(raiseIntent(nonExistentIntent, testAppData)).toThrowFDC3Error(
@@ -238,19 +238,15 @@ only the first listener is triggered', async () => {
         test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it errors', async () => {
             await listener.unsubscribe();
 
+            // Wait for the app to be considered mature to ensure we get the expected error
+            await delay(Timeouts.APP_MATURITY);
+
             const expectedRaise = expect(raiseIntent(validIntent, testAppData));
 
-            if (directory) {
-                await expectedRaise.toThrowFDC3Error(
-                    ResolveError.IntentTimeout,
-                    `Timeout waiting for intent listener to be added for intent: ${validIntent.type}`
-                );
-            } else {
-                await expectedRaise.toThrowFDC3Error(
-                    ResolveError.TargetAppDoesNotHandleIntent,
-                    `App '${testAppData.name}' does not handle intent '${validIntent.type}' with context '${validIntent.context.type}'`
-                );
-            }
+            await expectedRaise.toThrowFDC3Error(
+                ResolveError.TargetAppDoesNotHandleIntent,
+                `App '${testAppData.name}' does not handle intent '${validIntent.type}' with context '${validIntent.context.type}'`
+            );
 
             await expect(listener).toHaveReceivedContexts([]);
         });

@@ -53,8 +53,14 @@ export class FinEnvironment extends AsyncInit implements Environment {
     private readonly _applications: EnvironmentApplicationMap = new Map<string, EnvironmentApplication>();
     private readonly _windows: EnvironmentWindowMap = new Map<string, EnvironmentWindow>();
 
-    public async isRunning(uuid: string): Promise<boolean> {
-        return this._applications.hasOwnProperty(uuid);
+    public isRunning(uuid: string): boolean {
+        return this._applications.has(uuid);
+    }
+
+    public isMature(uuid: string): boolean {
+        const app = this._applications.get(uuid);
+
+        return app !== undefined && app.state === 'mature';
     }
 
     public createApplication(appInfo: Application): ApplicationResult {
@@ -82,7 +88,11 @@ export class FinEnvironment extends AsyncInit implements Environment {
         };
 
         if (environmentApplication.state === 'starting') {
-            setTimeout(environmentApplication.maturityDeferredPromise.resolve, Timeouts.ADD_CONTEXT_LISTENER);
+            environmentApplication.state = 'fresh';
+            setTimeout(() => {
+                environmentApplication.state = 'mature';
+                environmentApplication.maturityDeferredPromise.resolve();
+            }, Timeouts.APP_MATURITY);
         }
 
         return new FinAppWindow(identity, appInfo, channel, environmentApplication.maturityDeferredPromise.promise, environmentWindow.index);
@@ -256,7 +266,11 @@ export class FinEnvironment extends AsyncInit implements Environment {
         this._applications.set(uuid, application);
 
         if (application.state === 'starting') {
-            setTimeout(application.maturityDeferredPromise.resolve, Timeouts.ADD_CONTEXT_LISTENER);
+            application.state = 'fresh';
+            setTimeout(() => {
+                application.state = 'mature';
+                application.maturityDeferredPromise.resolve();
+            }, Timeouts.APP_MATURITY);
         }
     }
 

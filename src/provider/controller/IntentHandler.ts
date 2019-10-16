@@ -5,20 +5,13 @@ import {Intent} from '../../client/intents';
 import {IntentResolution, Application} from '../../client/main';
 import {FDC3Error, ResolveError} from '../../client/errors';
 import {Model} from '../model/Model';
-import {AppDirectory} from '../model/AppDirectory';
-import {AppWindow} from '../model/AppWindow';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
-import {withTimeout} from '../utils/async';
-import {Timeouts} from '../constants';
-import {Environment} from '../model/Environment';
 
 import {ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
 @injectable()
 export class IntentHandler {
-    private readonly _directory: AppDirectory;
-    private readonly _environment: Environment;
     private readonly _model: Model;
     private readonly _resolver: ResolverHandlerBinding;
     private readonly _apiHandler: APIHandler<APIToClientTopic>;
@@ -26,14 +19,10 @@ export class IntentHandler {
     private _resolvePromise: Promise<IntentResolution>|null;
 
     constructor(
-        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
-        @inject(Inject.ENVIRONMENT) environment: Environment,
         @inject(Inject.MODEL) model: Model,
         @inject(Inject.RESOLVER) resolver: ResolverHandlerBinding,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIToClientTopic>
     ) {
-        this._directory = directory;
-        this._environment = environment;
         this._model = model;
         this._resolver = resolver;
         this._apiHandler = apiHandler;
@@ -58,10 +47,7 @@ export class IntentHandler {
             return this.fireIntent(intent, targetApp);
         } else {
             // Target intent does not handles intent with given, so determine why and throw an error
-            const targetInDirectory = await this._directory.getAppByName(intent.target);
-            const targetRunning = await this._environment.isRunning(targetInDirectory ? AppDirectory.getUuidFromApp(targetInDirectory) : intent.target);
-
-            if (!targetInDirectory && !targetRunning) {
+            if (await this._model.getAppStatusByName(intent.target) === 'unknown') {
                 throw new FDC3Error(
                     ResolveError.TargetAppNotAvailable,
                     `Couldn't resolve intent target '${intent.target}'. No matching app in directory or currently running.`
