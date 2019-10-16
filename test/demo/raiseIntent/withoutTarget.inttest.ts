@@ -11,6 +11,7 @@ import {TestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppWit
 import {testManagerIdentity, testAppInDirectory4, testAppNotInDirectory1, testAppNotInDirectory2, testAppWithPreregisteredListeners1, testAppUrl, appStartupTime} from '../constants';
 import {Boxed} from '../../../src/provider/utils/types';
 import {allowReject} from '../../../src/provider/utils/async';
+import {Timeouts} from '../../../src/provider/constants';
 
 /**
  * Alias for `testAppInDirectory4`, which is only in the directory registering the intent `test.IntentOnlyOnApp4`
@@ -53,6 +54,10 @@ describe('Intent listeners and raising intents without a target', () => {
             setupOpenDirectoryAppBookends(testAppWithUniqueIntent);
 
             describe('But the app does not have the listener registered on the model', () => {
+                beforeEach(async () => {
+                    await delay(Timeouts.APP_MATURITY);
+                });
+
                 // This case is equivalent to 0 apps in directory
                 setupNoDirectoryAppCanHandleIntentTests(uniqueIntent);
             });
@@ -115,6 +120,8 @@ describe('Intent listeners and raising intents without a target', () => {
 
                 beforeEach(async () => {
                     raiseIntentPromise = raiseIntent(uniqueIntent);
+                    raiseIntentPromise.catch(() => {});
+
                     // Wait for app to open after raising intent
                     await waitForAppToBeRunning(testAppWithUniqueIntent);
                 });
@@ -168,7 +175,6 @@ app the app opens but the promise rejects', async () => {
                         await delay(7500);
 
                         const listener = await fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
-                        await raiseIntentPromise;
 
                         await expect(raiseIntentPromise).toThrowFDC3Error(
                             ResolveError.IntentTimeout,
