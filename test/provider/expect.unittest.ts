@@ -17,6 +17,7 @@ import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
 import {PartiallyWritable} from '../types';
 import {Timeouts} from '../../src/provider/constants';
 import {getId} from '../../src/provider/utils/getId';
+import { LiveApp } from '../../src/provider/model/LiveApp';
 
 jest.mock('../../src/provider/model/AppDirectory');
 jest.mock('../../src/provider/APIHandler');
@@ -254,8 +255,8 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
             return testWindow.appType === 'directory' ? mockApplication : null;
         });
 
-        mockEnvironment.wrapWindow.mockImplementationOnce((appInfo: Application, testIdentity: Identity, channel: ContextChannel): AppWindow => {
-            return createMockAppWindow({id: getId(testIdentity), identity: testIdentity, appInfo});
+        mockEnvironment.wrapWindow.mockImplementationOnce((liveApp: LiveApp, testIdentity: Identity, channel: ContextChannel): AppWindow => {
+            return createMockAppWindow({id: getId(testIdentity), identity: testIdentity, appInfo: liveApp.appInfo!});
         });
 
         mockEnvironment.inferApplication.mockImplementationOnce(async (indentity: Identity): Promise<Application> => {

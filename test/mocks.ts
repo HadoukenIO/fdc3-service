@@ -5,12 +5,13 @@ import {AppWindow} from '../src/provider/model/AppWindow';
 import {IntentType, Context, Application} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
 import {ChannelTransport, ChannelEvents, APIFromClientTopic} from '../src/client/internal';
-import {Environment, EntityType, ApplicationResult} from '../src/provider/model/Environment';
+import {Environment, EntityType} from '../src/provider/model/Environment';
 import {AppDirectory} from '../src/provider/model/AppDirectory';
 import {APIHandler} from '../src/provider/APIHandler';
 import {getId} from '../src/provider/utils/getId';
 
 import {createFakeIdentity, createFakeApp} from './demo/utils/fakes';
+import { LiveApp } from '../src/provider/model/LiveApp';
 
 /**
  * Creates a minimal mock app window. Any utilizing test should set properties and set up mock functions as needed
@@ -63,12 +64,12 @@ export function createMockChannel(options: Partial<jest.Mocked<ContextChannel>> 
 
 export function createMockEnvironmnent(options: Partial<jest.Mocked<Environment>> = {}): jest.Mocked<Environment> {
     return {
+        applicationCreated: new Signal<[string, LiveApp]>(),
+        applicationClosed: new Signal<[string]>(),
         windowCreated: new Signal<[Identity]>(),
         windowClosed: new Signal<[Identity]>(),
-        isRunning: jest.fn<boolean, [string]>(),
-        isMature: jest.fn<boolean, [string]>(),
-        createApplication: jest.fn<ApplicationResult, [Application]>(),
-        wrapWindow: jest.fn<AppWindow, [Application, Identity, ContextChannel]>(),
+        createApplication: jest.fn<void, [Application]>(),
+        wrapWindow: jest.fn<AppWindow, [LiveApp, Identity, ContextChannel]>(),
         inferApplication: jest.fn<Promise<Application>, [Identity]>(),
         getEntityType: jest.fn<Promise<EntityType>, [Identity]>(),
         isWindowCreated: jest.fn<boolean, [Identity]>(),
