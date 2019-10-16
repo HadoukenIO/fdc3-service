@@ -1,7 +1,7 @@
 import {Application} from '../../client/directory';
+import {DeferredPromise} from '../common/DeferredPromise';
 
 import {AppWindow} from './AppWindow';
-import {DeferredPromise} from '../common/DeferredPromise';
 
 /**
  * Represents a running appliction
