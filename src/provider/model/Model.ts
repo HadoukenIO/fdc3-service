@@ -2,7 +2,7 @@ import {injectable, inject} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
-import {Application, AppName, AppId} from '../../client/directory';
+import {Application, AppName} from '../../client/directory';
 import {Inject} from '../common/Injectables';
 import {ChannelId, DEFAULT_CHANNEL_ID, AppIntent} from '../../client/main';
 import {APIHandler} from '../APIHandler';
@@ -109,17 +109,19 @@ export class Model {
     }
 
     /**
-     * Returns all registered windows for an app, waiting for at least one window
+     * Returns all registered windows for an app satisfying our predicate, waiting for at least one window
      */
     public async expectWindowsForApp(
         appInfo: Application,
         syncPredicate: (window: AppWindow) => boolean,
         asyncPredicate: (window: AppWindow) => Promise<boolean>
     ): Promise<AppWindow[]> {
-        const windows = this.findWindowsByAppId(appInfo.appId);
+        const uuid = AppDirectory.getUuidFromApp(appInfo);
+        const windows = this._liveAppsByUuid.hasOwnProperty(uuid) ? this._liveAppsByUuid[uuid].windows : [];
 
         const result: AppWindow[] = [];
 
+        // Find any windows that immediately satisfy our predicate
         for (const window of windows) {
             if (syncPredicate(window)) {
                 result.push(window);
@@ -127,19 +129,13 @@ export class Model {
         }
 
         if (result.length > 0) {
+            // If we have any windows that immediately satisfy our predicate, return those
             return result;
         } else {
-            for (const window of windows) {
-                asyncPredicate(window).then((matching) => {
-                    if (matching) {
-                        slot.remove();
-                        deferredPromise.resolve(window);
-                    }
-                });
-            }
-
+            // Otherwise, wait until we have a single window that satisfies our predicate
             const deferredPromise = new DeferredPromise<AppWindow>();
 
+            // Apply the async predicate to any incoming windows
             const slot = this._onWindowRegisteredInternal.add((window) => {
                 if (window.appInfo.appId === appInfo.appId) {
                     asyncPredicate(window).then((matching) => {
@@ -151,6 +147,17 @@ export class Model {
                 }
             });
 
+            // Apply the async predicate to any existing windows
+            for (const window of windows) {
+                asyncPredicate(window).then((matching) => {
+                    if (matching) {
+                        slot.remove();
+                        deferredPromise.resolve(window);
+                    }
+                });
+            }
+
+            // Return a window once we have one, or timeout when the application is mature
             return Promise.race([
                 deferredPromise.promise.then((result) => [result]),
                 this._environment.createApplication(appInfo).mature.then(() => [])
@@ -182,12 +189,12 @@ export class Model {
         const liveApps = Object.values(this._liveAppsByUuid);
 
         const liveAppsForIntent = (await asyncFilter(liveApps, async (liveApp: LiveApp) => {
-            const {appInfo: application, windows} = liveApp;
+            const {appInfo, windows} = liveApp;
 
             const hasIntentListener = windows.some(window => window.hasIntentListener(intentType));
 
-            return hasIntentListener && AppDirectory.mightAppSupportIntent(application, intentType, contextType);
-        })).map(group => group.appInfo);
+            return hasIntentListener && appInfo !== undefined && AppDirectory.mightAppSupportIntent(appInfo, intentType, contextType);
+        })).map(liveApp => liveApp.appInfo!);
 
         // Get all directory apps that support the given intent and context
         const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
@@ -255,7 +262,9 @@ export class Model {
     }
 
     public findWindowsByAppName(name: AppName): AppWindow[] {
-        return this.findWindows(appWindow => appWindow.appInfo.name === name);
+        const liveApp = Object.values(this._liveAppsByUuid).find(liveApp => !!liveApp.appInfo && liveApp.appInfo.name === name);
+
+        return liveApp ? liveApp.windows : [];
     }
 
     public async getAppStatusByName(name: AppName): Promise<'unknown' | 'directory' | 'running'> {
@@ -270,46 +279,45 @@ export class Model {
     private onWindowCreated(identity: Identity): void {
         const expectedWindow = this.getOrCreateExpectedWindow(identity);
 
+        const uuid = identity.uuid;
+        const liveApp = this._liveAppsByUuid.hasOwnProperty(identity.uuid) ? this._liveAppsByUuid[uuid] : new LiveApp();
+        this._liveAppsByUuid[uuid] = liveApp;
+
+        liveApp.incrementWindows();
+
         // Only register windows once they are connected to the service
         allowReject(expectedWindow.connected.then(async () => {
             // Attempt to copy appInfo from this window's LiveApp
-            let registered = false;
-
-            allowReject(untilTrue(this._onWindowRegisteredInternal, () => {
-                return this._liveAppsByUuid.hasOwnProperty(identity.uuid);
-            }, expectedWindow.closed).then(() => {
-                if (!registered) {
-                    this.registerWindow(this._liveAppsByUuid[identity.uuid].appInfo, identity);
-                    registered = true;
-                }
-            }));
+            liveApp.getAppInfo().then(appInfo => {
+                this.registerWindow(liveApp, identity);
+            });
 
             // If we're unable to copy appInfo from another window, attempt to use the app directory, or infer from environment
             const appInfoFromDirectory = await this._directory.getAppByUuid(identity.uuid);
-
             const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
 
-            if (!registered) {
-                this.registerWindow(appInfo, identity);
-                registered = true;
-            }
+            liveApp.setAppInfo(appInfo);
         }));
     }
 
     private onWindowClosed(identity: Identity): void {
+        const uuid = identity.uuid;
         const id: string = getId(identity);
+
+        const liveApp = this._liveAppsByUuid.hasOwnProperty(uuid) ? this._liveAppsByUuid[uuid] : undefined;
         const window = this._windowsById[id];
 
-        if (window) {
-            const uuid = identity.uuid;
-            const liveApp = this._liveAppsByUuid.hasOwnProperty(uuid) ? this._liveAppsByUuid[uuid] : undefined;
+        if (liveApp) {
+            liveApp.decrementWindows();
 
+            if (!liveApp.hasWindows()) {
+                delete this._liveAppsByUuid[uuid];
+            }
+        }
+
+        if (window) {
             if (liveApp) {
                 liveApp.removeWindow(window);
-
-                if (!liveApp.hasWindows()) {
-                    delete this._liveAppsByUuid[identity.uuid];
-                }
             }
 
             delete this._windowsById[id];
@@ -322,8 +330,12 @@ export class Model {
     private async onApiHandlerConnection(identity: Identity): Promise<void> {
         if (await this._environment.getEntityType(identity) === EntityType.EXTERNAL_CONNECTION) {
             // Any connections to the service from adapters should be immediately registered
-            // TODO [SERVICE-737] Store the entity type as part of the registration process, so we can correctly handle disconnects
-            this.registerWindow(await this._environment.inferApplication(identity), identity);
+            const appInfo = await this._environment.inferApplication(identity);
+            const liveApp = new LiveApp();
+            liveApp.setAppInfo(appInfo);
+            this._liveAppsByUuid[identity.uuid] = liveApp;
+
+            this.registerWindow(liveApp, identity);
         }
     }
 
@@ -349,32 +361,21 @@ export class Model {
      * @param appInfo Application info, either from the app directory, or 'crafted' for a non-registered app
      * @param identity Window identity
      */
-    private registerWindow(appInfo: Application, identity: Identity): AppWindow {
+    private registerWindow(liveApp: LiveApp, identity: Identity): AppWindow {
         const id = getId(identity);
 
-        const appWindow = this._environment.wrapWindow(appInfo, identity, this._channelsById[DEFAULT_CHANNEL_ID]);
+        const appWindow = this._environment.wrapWindow(liveApp.appInfo!, identity, this._channelsById[DEFAULT_CHANNEL_ID]);
 
         console.info(`Registering window ${appWindow.id}`);
         this._windowsById[appWindow.id] = appWindow;
         delete this._expectedWindowsById[id];
 
-        const uuid = identity.uuid;
-        const liveApp = this._liveAppsByUuid.hasOwnProperty(uuid) ? this._liveAppsByUuid[uuid] : new LiveApp(appInfo);
         liveApp.addWindow(appWindow);
-        this._liveAppsByUuid[uuid] = liveApp;
 
         this.onWindowAdded.emit(appWindow);
         this._onWindowRegisteredInternal.emit(appWindow);
 
         return appWindow;
-    }
-
-    private findWindowsByAppId(appId: AppId): AppWindow[] {
-        return this.findWindows(appWindow => appWindow.appInfo.appId === appId);
-    }
-
-    private findWindows(predicate: (appWindow: AppWindow) => boolean): AppWindow[] {
-        return this.windows.filter(predicate);
     }
 
     private getOrCreateExpectedWindow(identity: Identity): ExpectedWindow {
