@@ -285,7 +285,7 @@ export class Model {
     public async getAppStatusByName(name: AppName): Promise<'unknown' | 'directory' | 'running'> {
         const directoryApp = await this._directory.getAppByName(name);
 
-        const directory = directoryApp !== undefined;
+        const directory = directoryApp !== null;
         const running = this._liveAppsByUuid.hasOwnProperty(directoryApp ? AppDirectory.getUuidFromApp(directoryApp) : name);
 
         return running ? 'running' : directory ? 'directory' : 'unknown';
