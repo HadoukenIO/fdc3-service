@@ -61,56 +61,7 @@ describe('When an app is in the directory with multiple intents', () => {
 
     describe('When the app is not running', () => {
         test('The model returns the app in app intents that handle a given context', async () => {
-            await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([
-                {
-                    intent: {
-                        name: intent1.name,
-                        displayName: intent1.name
-                    },
-                    apps: [app]
-                },
-                {
-                    intent: {
-                        name: intent2.name,
-                        displayName: intent2.name
-                    },
-                    apps: [app]
-                },
-                {
-                    intent: {
-                        name: intent3.name,
-                        displayName: intent3.name
-                    },
-                    apps: [app]
-                }
-            ]);
-
-            await expect(model.getAppIntentsByContext(context2)).resolves.toEqual([
-                {
-                    intent: {
-                        name: intent1.name,
-                        displayName: intent1.name
-                    },
-                    apps: [app]
-                },
-                {
-                    intent: {
-                        name: intent3.name,
-                        displayName: intent3.name
-                    },
-                    apps: [app]
-                }
-            ]);
-
-            await expect(model.getAppIntentsByContext(createFakeContextType())).resolves.toEqual([
-                {
-                    intent: {
-                        name: intent3.name,
-                        displayName: intent3.name
-                    },
-                    apps: [app]
-                }
-            ]);
+            await expectAppIntentsFromDirectory();
         });
     });
 
@@ -130,6 +81,16 @@ describe('When an app is in the directory with multiple intents', () => {
                 await expect(model.getAppIntentsByContext(context2)).resolves.toEqual([]);
             });
         });
+
+        describe('When the app is not mature', () => {
+            beforeEach(() => {
+                mockEnvironment.isMature.mockReturnValue(false);
+            });
+
+            test('The model returns the app in app intents that handle a given context according to the directory', async () => {
+                await expectAppIntentsFromDirectory();
+            });
+        });
     });
 
     describe('When the app is running, but has not added any intent listeners', () => {
@@ -146,6 +107,16 @@ describe('When an app is in the directory with multiple intents', () => {
                 await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([]);
 
                 await expect(model.getAppIntentsByContext(context2)).resolves.toEqual([]);
+            });
+        });
+
+        describe('When the app is not mature', () => {
+            beforeEach(() => {
+                mockEnvironment.isMature.mockReturnValue(false);
+            });
+
+            test('The model returns the app in app intents that handle a given context according to the directory', async () => {
+                await expectAppIntentsFromDirectory();
             });
         });
     });
@@ -184,6 +155,16 @@ describe('When an app is in the directory with multiple intents', () => {
                 await expect(model.getAppIntentsByContext(createFakeContextType())).resolves.toEqual([]);
             });
         });
+
+        describe('When the app is not mature', () => {
+            beforeEach(() => {
+                mockEnvironment.isMature.mockReturnValue(false);
+            });
+
+            test('The model returns the app in app intents that handle a given context according to the directory', async () => {
+                await expectAppIntentsFromDirectory();
+            });
+        });
     });
 
     describe('When the app is running, and has only added a listener for an intent not in the directory', () => {
@@ -216,6 +197,17 @@ describe('When an app is in the directory with multiple intents', () => {
                 }
             });
         });
+
+        describe('When the app is not mature', () => {
+            beforeEach(() => {
+                mockEnvironment.isMature.mockReturnValue(false);
+            });
+
+            test('The model returns the app in app intents that handle a given context according to the directory, plus the app intent \
+for the non-directory intent', async () => {
+                await expectAppIntentsFromDirectoryPlusAdHocIntent(arbitraryIntentType);
+            });
+        });
     });
 
     describe('When the app is running, and has added listeners for multiple intents', () => {
@@ -227,80 +219,153 @@ describe('When an app is in the directory with multiple intents', () => {
             setupAppRunningWithWindowWithIntentListeners(app, [intent1.name, intent2.name, intent3.name, arbitraryIntentType]);
         });
 
-        test('The model returns the app in the expected the app intents, for each context', async () => {
-            await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([
-                {
-                    intent: {
-                        name: intent1.name,
-                        displayName: intent1.name
-                    },
-                    apps: [app]
-                },
-                {
-                    intent: {
-                        name: intent2.name,
-                        displayName: intent2.name
-                    },
-                    apps: [app]
-                },
-                {
-                    intent: {
-                        name: intent3.name,
-                        displayName: intent3.name
-                    },
-                    apps: [app]
-                },
-                {
-                    intent: {
-                        name: arbitraryIntentType,
-                        displayName: arbitraryIntentType
-                    },
-                    apps: [app]
-                }
-            ]);
+        describe('When the app is mature', () => {
+            beforeEach(() => {
+                mockEnvironment.isMature.mockReturnValue(true);
+            });
 
-            await expect(model.getAppIntentsByContext(context2)).resolves.toEqual([
-                {
-                    intent: {
-                        name: intent1.name,
-                        displayName: intent1.name
-                    },
-                    apps: [app]
-                },
-                {
-                    intent: {
-                        name: intent3.name,
-                        displayName: intent3.name
-                    },
-                    apps: [app]
-                },
-                {
-                    intent: {
-                        name: arbitraryIntentType,
-                        displayName: arbitraryIntentType
-                    },
-                    apps: [app]
-                }
-            ]);
+            test('The model returns the app in the expected the app intents, for each context', async () => {
+                await expectAppIntentsFromDirectoryPlusAdHocIntent(arbitraryIntentType);
+            });
+        });
 
-            await expect(model.getAppIntentsByContext(createFakeContextType())).resolves.toEqual([
-                {
-                    intent: {
-                        name: intent3.name,
-                        displayName: intent3.name
-                    },
-                    apps: [app]
-                },
-                {
-                    intent: {
-                        name: arbitraryIntentType,
-                        displayName: arbitraryIntentType
-                    },
-                    apps: [app]
-                }
-            ]);
+        describe('When the app is not mature', () => {
+            beforeEach(() => {
+                mockEnvironment.isMature.mockReturnValue(false);
+            });
+
+            test('The model returns the app in the expected the app intents, for each context', async () => {
+                await expectAppIntentsFromDirectoryPlusAdHocIntent(arbitraryIntentType);
+            });
         });
     });
+
+    async function expectAppIntentsFromDirectory(): Promise<void> {
+        await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([
+            {
+                intent: {
+                    name: intent1.name,
+                    displayName: intent1.name
+                },
+                apps: [app]
+            },
+            {
+                intent: {
+                    name: intent2.name,
+                    displayName: intent2.name
+                },
+                apps: [app]
+            },
+            {
+                intent: {
+                    name: intent3.name,
+                    displayName: intent3.name
+                },
+                apps: [app]
+            }
+        ]);
+
+        await expect(model.getAppIntentsByContext(context2)).resolves.toEqual([
+            {
+                intent: {
+                    name: intent1.name,
+                    displayName: intent1.name
+                },
+                apps: [app]
+            },
+            {
+                intent: {
+                    name: intent3.name,
+                    displayName: intent3.name
+                },
+                apps: [app]
+            }
+        ]);
+
+        await expect(model.getAppIntentsByContext(createFakeContextType())).resolves.toEqual([
+            {
+                intent: {
+                    name: intent3.name,
+                    displayName: intent3.name
+                },
+                apps: [app]
+            }
+        ]);
+    }
+
+    async function expectAppIntentsFromDirectoryPlusAdHocIntent(adHocIntentType: string): Promise<void> {
+        await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([
+            {
+                intent: {
+                    name: intent1.name,
+                    displayName: intent1.name
+                },
+                apps: [app]
+            },
+            {
+                intent: {
+                    name: intent2.name,
+                    displayName: intent2.name
+                },
+                apps: [app]
+            },
+            {
+                intent: {
+                    name: intent3.name,
+                    displayName: intent3.name
+                },
+                apps: [app]
+            },
+            {
+                intent: {
+                    name: adHocIntentType,
+                    displayName: adHocIntentType
+                },
+                apps: [app]
+            }
+        ]);
+
+        await expect(model.getAppIntentsByContext(context2)).resolves.toEqual([
+            {
+                intent: {
+                    name: intent1.name,
+                    displayName: intent1.name
+                },
+                apps: [app]
+            },
+            {
+                intent: {
+                    name: intent3.name,
+                    displayName: intent3.name
+                },
+                apps: [app]
+            },
+            {
+                intent: {
+                    name: adHocIntentType,
+                    displayName: adHocIntentType
+                },
+                apps: [app]
+            }
+        ]);
+
+        await expect(model.getAppIntentsByContext(createFakeContextType())).resolves.toEqual([
+            {
+                intent: {
+                    name: intent3.name,
+                    displayName: intent3.name
+                },
+                apps: [app]
+            },
+            {
+                intent: {
+                    name: adHocIntentType,
+                    displayName: adHocIntentType
+                },
+                apps: [app]
+            }
+        ]);
+    }
 });
 
 function setupAppRunningWithWindowWithIntentListeners(app: Application, intents: string[]): void {
