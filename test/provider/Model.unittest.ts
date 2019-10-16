@@ -115,14 +115,20 @@ describe('When an app is in the directory with multiple intents', () => {
     });
 
     describe('When the app is running, but no windows have connected to the service', () => {
-        beforeEach(async () => {
-            mockEnvironment.isRunning.mockResolvedValue(true);
+        beforeEach(() => {
+            mockEnvironment.isRunning.mockReturnValue(true);
         });
 
-        test('The model does not return the app for any context', async () => {
-            await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([]);
+        describe('When the app is mature', () => {
+            beforeEach(() => {
+                mockEnvironment.isMature.mockReturnValue(true);
+            });
 
-            await expect(model.getAppIntentsByContext(context2)).resolves.toEqual([]);
+            test('The model does not return the app for any context', async () => {
+                await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([]);
+
+                await expect(model.getAppIntentsByContext(context2)).resolves.toEqual([]);
+            });
         });
     });
 
@@ -131,66 +137,84 @@ describe('When an app is in the directory with multiple intents', () => {
             setupAppRunningWithWindowWithIntentListeners(app, []);
         });
 
-        test('The model does not return the app for any context', async () => {
-            await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([]);
+        describe('When the app is mature', () => {
+            beforeEach(() => {
+                mockEnvironment.isMature.mockReturnValue(true);
+            });
 
-            await expect(model.getAppIntentsByContext(context2)).resolves.toEqual([]);
+            test('The model does not return the app for any context', async () => {
+                await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([]);
+
+                await expect(model.getAppIntentsByContext(context2)).resolves.toEqual([]);
+            });
         });
     });
 
     describe('When the app is running, and has only added a listener for a single intent from the directory', () => {
-        beforeEach(async () => {
+        beforeEach(() => {
             setupAppRunningWithWindowWithIntentListeners(app, [intent1.name]);
         });
 
-        test('The model returns the app in only the app intent for that intent', async () => {
-            await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([
-                {
-                    intent: {
-                        name: intent1.name,
-                        displayName: intent1.name
-                    },
-                    apps: [app]
-                }
-            ]);
+        describe('When the app is mature', () => {
+            beforeEach(() => {
+                mockEnvironment.isMature.mockReturnValue(true);
+            });
 
-            await expect(model.getAppIntentsByContext(context2)).resolves.toEqual([
-                {
-                    intent: {
-                        name: intent1.name,
-                        displayName: intent1.name
-                    },
-                    apps: [app]
-                }
-            ]);
+            test('The model returns the app in only the app intent for that intent', async () => {
+                await expect(model.getAppIntentsByContext(context1)).resolves.toEqual([
+                    {
+                        intent: {
+                            name: intent1.name,
+                            displayName: intent1.name
+                        },
+                        apps: [app]
+                    }
+                ]);
 
-            await expect(model.getAppIntentsByContext(createFakeContextType())).resolves.toEqual([]);
+                await expect(model.getAppIntentsByContext(context2)).resolves.toEqual([
+                    {
+                        intent: {
+                            name: intent1.name,
+                            displayName: intent1.name
+                        },
+                        apps: [app]
+                    }
+                ]);
+
+                await expect(model.getAppIntentsByContext(createFakeContextType())).resolves.toEqual([]);
+            });
         });
     });
 
     describe('When the app is running, and has only added a listener for an intent not in the directory', () => {
         let arbitraryIntentType: string;
 
-        beforeEach(async () => {
+        beforeEach(() => {
             arbitraryIntentType = createFakeIntent().name;
 
             setupAppRunningWithWindowWithIntentListeners(app, [arbitraryIntentType]);
         });
 
-        test('The model returns the app in only the app intent for that intent, for any context', async () => {
-            const contexts = [context1, context2, createFakeContextType()];
+        describe('When the app is mature', () => {
+            beforeEach(() => {
+                mockEnvironment.isMature.mockReturnValue(true);
+            });
 
-            for (const context in contexts) {
-                await expect(model.getAppIntentsByContext(context)).resolves.toEqual([
-                    {
-                        intent: {
-                            name: arbitraryIntentType,
-                            displayName: arbitraryIntentType
-                        },
-                        apps: [app]
-                    }
-                ]);
-            }
+            test('The model returns the app in only the app intent for that intent, for any context', async () => {
+                const contexts = [context1, context2, createFakeContextType()];
+
+                for (const context in contexts) {
+                    await expect(model.getAppIntentsByContext(context)).resolves.toEqual([
+                        {
+                            intent: {
+                                name: arbitraryIntentType,
+                                displayName: arbitraryIntentType
+                            },
+                            apps: [app]
+                        }
+                    ]);
+                }
+            });
         });
     });
 
@@ -280,7 +304,7 @@ describe('When an app is in the directory with multiple intents', () => {
 });
 
 function setupAppRunningWithWindowWithIntentListeners(app: Application, intents: string[]): void {
-    mockEnvironment.isRunning.mockImplementation(async (uuid) => uuid === AppDirectory.getUuidFromApp(app));
+    mockEnvironment.isRunning.mockImplementation((uuid) => uuid === AppDirectory.getUuidFromApp(app));
     mockEnvironment.isWindowCreated.mockImplementation(identity => identity.uuid === app.appId);
 
     mockApiHandler.isClientConnection.mockImplementation(identity => identity.uuid === app.appId);
