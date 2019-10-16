@@ -125,8 +125,8 @@ describe('Intent listeners and raising intents with a target', () => {
 
             test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
                 await expect(raiseIntent(validIntent, testAppNotInDirectoryNotFdc3)).toThrowFDC3Error(
-                    ResolveError.TargetAppNotAvailable,
-                    `Couldn't resolve intent target '${testAppNotInDirectoryNotFdc3.name}'. No matching app in directory or currently running.`
+                    ResolveError.TargetAppDoesNotHandleIntent,
+                    `App '${testAppNotInDirectoryNotFdc3.name}' does not handle intent '${validIntent.type}' with context '${validIntent.context.type}'`
                 );
             });
         });
