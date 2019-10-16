@@ -9,9 +9,9 @@ import {Environment, EntityType} from '../src/provider/model/Environment';
 import {AppDirectory} from '../src/provider/model/AppDirectory';
 import {APIHandler} from '../src/provider/APIHandler';
 import {getId} from '../src/provider/utils/getId';
+import {LiveApp} from '../src/provider/model/LiveApp';
 
 import {createFakeIdentity, createFakeApp} from './demo/utils/fakes';
-import { LiveApp } from '../src/provider/model/LiveApp';
 
 /**
  * Creates a minimal mock app window. Any utilizing test should set properties and set up mock functions as needed

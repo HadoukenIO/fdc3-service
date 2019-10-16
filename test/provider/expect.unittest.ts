@@ -17,7 +17,7 @@ import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
 import {PartiallyWritable} from '../types';
 import {Timeouts} from '../../src/provider/constants';
 import {getId} from '../../src/provider/utils/getId';
-import { LiveApp } from '../../src/provider/model/LiveApp';
+import {LiveApp} from '../../src/provider/model/LiveApp';
 
 jest.mock('../../src/provider/model/AppDirectory');
 jest.mock('../../src/provider/APIHandler');
