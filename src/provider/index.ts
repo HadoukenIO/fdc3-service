@@ -119,7 +119,7 @@ export class Main {
         const promises: Promise<void>[] = [];
 
         // Start the application if not already running
-        promises.push(this._model.expectLiveApplication(appInfo));
+        promises.push(this._model.expectLiveApplication(appInfo).startedPromise);
 
         // Bring-to-front all currently open windows in creation order
         const windowsToFocus = this._model.findWindowsByAppName(appInfo.name).sort((a: AppWindow, b: AppWindow) => a.appWindowNumber - b.appWindowNumber);

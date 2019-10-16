@@ -11,29 +11,28 @@ import {Timeouts} from '../constants';
 import {parseIdentity} from '../../client/validation';
 import {Injector} from '../common/Injector';
 import {getId} from '../utils/getId';
-import {DeferredPromise} from '../common/DeferredPromise';
 
-import {Environment, EntityType, ApplicationResult} from './Environment';
+import {Environment, EntityType} from './Environment';
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 import {FinAppWindow} from './FinAppWindow';
 import {AppDirectory} from './AppDirectory';
+import {LiveApp} from './LiveApp';
 
 interface EnvironmentWindow {
     index: number;
 }
 
-interface EnvironmentApplication {
-    state: 'starting' | 'fresh' | 'mature';
-    maturityDeferredPromise: DeferredPromise<void>;
-    startApplicationPromise: Promise<void>;
-}
+interface EnvironmentApplication {}
 
 type EnvironmentWindowMap = Map<string, EnvironmentWindow>;
 type EnvironmentApplicationMap = Map<string, EnvironmentApplication>;
 
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
+    public readonly applicationCreated: Signal<[string, LiveApp]> = new Signal();
+    public readonly applicationClosed: Signal<[string]> = new Signal();
+
     /**
      * Indicates that a window has been created by the service.
      *
@@ -53,49 +52,38 @@ export class FinEnvironment extends AsyncInit implements Environment {
     private readonly _applications: EnvironmentApplicationMap = new Map<string, EnvironmentApplication>();
     private readonly _windows: EnvironmentWindowMap = new Map<string, EnvironmentWindow>();
 
-    public isRunning(uuid: string): boolean {
-        return this._applications.has(uuid);
-    }
-
-    public isMature(uuid: string): boolean {
-        const app = this._applications.get(uuid);
-
-        return app !== undefined && app.state === 'mature';
-    }
-
-    public createApplication(appInfo: Application): ApplicationResult {
+    public createApplication(appInfo: Application): void {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
 
-        const application = this._applications.get(uuid) || this.startApplication(appInfo);
+        const startPromise = withTimeout(
+            Timeouts.APP_START_FROM_MANIFEST,
+            fin.Application.startFromManifest(appInfo.manifest).catch(e => {
+                this.removeApplication(uuid);
 
-        return {
-            started: application.startApplicationPromise,
-            mature: application.maturityDeferredPromise.promise
-        };
+                throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
+            })
+        ).then((result) => {
+            const [didTimeout] = result;
+
+            if (didTimeout) {
+                this.removeApplication(uuid);
+
+                throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
+            }
+        });
+
+        this.addApplication(uuid, startPromise);
     }
 
-    public wrapWindow(appInfo: Application, identity: Identity, channel: ContextChannel): AppWindow {
+    public wrapWindow(liveApp: LiveApp, identity: Identity, channel: ContextChannel): AppWindow {
         identity = parseIdentity(identity);
         const id = getId(identity);
 
         // If `identity` is an adapter connection, there will not be any `_applications` or `_windows` entry for this
         // identity. We will instead take the time at which the identity was wrapped as this application's creation time
         const environmentWindow = this._windows.get(id) || {index: this._windowsCreated++};
-        const environmentApplication = this._applications.get(identity.uuid) || {
-            state: 'starting',
-            startApplicationPromise: Promise.resolve(),
-            maturityDeferredPromise: new DeferredPromise()
-        };
 
-        if (environmentApplication.state === 'starting') {
-            environmentApplication.state = 'fresh';
-            setTimeout(() => {
-                environmentApplication.state = 'mature';
-                environmentApplication.maturityDeferredPromise.resolve();
-            }, Timeouts.APP_MATURITY);
-        }
-
-        return new FinAppWindow(identity, appInfo, channel, environmentApplication.maturityDeferredPromise.promise, environmentWindow.index);
+        return new FinAppWindow(identity, liveApp.appInfo!, channel, liveApp.maturePromise, environmentWindow.index);
     }
 
     public async inferApplication(identity: Identity): Promise<Application> {
@@ -148,19 +136,12 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
         windowInfo.forEach(info => {
             if (!this._applications.has(info.uuid)) {
-                const deferredPromise = new DeferredPromise<void>();
-                deferredPromise.resolve();
-
-                this._applications.set(info.uuid, {
-                    state: 'mature',
-                    maturityDeferredPromise: deferredPromise,
-                    startApplicationPromise: Promise.resolve()
-                });
+                this.addApplication(info.uuid, undefined);
             }
         });
 
         fin.System.addListener('application-started', (event: ApplicationEvent<'system', 'application-started'>) => {
-            this.setApplicationFresh(event.uuid);
+            this.addApplication(event.uuid, Promise.resolve());
         });
 
         const appicationClosedHandler = (event: {uuid: string}) => {
@@ -173,7 +154,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         fin.System.addListener('window-created', async (event: WindowEvent<'system', 'window-created'>) => {
             const identity = {uuid: event.uuid, name: event.name};
 
-            this.setApplicationFresh(event.uuid);
+            this.addApplication(event.uuid, Promise.resolve());
 
             await Injector.initialized;
             this.registerWindow(identity);
@@ -184,6 +165,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
             await Injector.initialized;
             this.deregisterWindow(identity);
+            this.removeApplication(event.uuid);
         });
 
         // No await here otherwise the injector will never properly initialize - The injector awaits this init before completion!
@@ -226,60 +208,21 @@ export class FinEnvironment extends AsyncInit implements Environment {
         }
     }
 
-    private startApplication(appInfo: Application): EnvironmentApplication {
-        const uuid = AppDirectory.getUuidFromApp(appInfo);
+    private addApplication(uuid: string, startedPromise: Promise<void> | undefined): void {
+        const application = this._applications.get(uuid);
 
-        const startPromise = withTimeout(
-            Timeouts.APP_START_FROM_MANIFEST,
-            fin.Application.startFromManifest(appInfo.manifest).catch(e => {
-                this.removeApplication(uuid);
-
-                throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
-            })
-        ).then((result) => {
-            const [didTimeout] = result;
-
-            if (didTimeout) {
-                this.removeApplication(uuid);
-
-                throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
-            }
-        });
-
-        const application: EnvironmentApplication = {
-            state: 'starting',
-            maturityDeferredPromise: new DeferredPromise(),
-            startApplicationPromise: startPromise
-        };
-
-        this._applications.set(uuid, application);
-
-        return application;
-    }
-
-    private setApplicationFresh(uuid: string): void {
-        const application = this._applications.get(uuid) || {
-            state: 'starting',
-            maturityDeferredPromise: new DeferredPromise(),
-            startApplicationPromise: Promise.resolve()
-        };
-        this._applications.set(uuid, application);
-
-        if (application.state === 'starting') {
-            application.state = 'fresh';
-            setTimeout(() => {
-                application.state = 'mature';
-                application.maturityDeferredPromise.resolve();
-            }, Timeouts.APP_MATURITY);
+        if (!application) {
+            this._applications.set(uuid, {});
+            this.applicationCreated.emit(uuid, new LiveApp(startedPromise));
         }
     }
 
     private removeApplication(uuid: string): void {
-        const failedApplication = this._applications.get(uuid);
+        const application = this._applications.get(uuid);
 
-        if (failedApplication) {
-            failedApplication.maturityDeferredPromise.reject();
+        if (application) {
             this._applications.delete(uuid);
+            this.applicationClosed.emit(uuid);
         }
     }
 }

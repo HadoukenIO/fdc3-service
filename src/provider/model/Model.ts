@@ -66,6 +66,9 @@ export class Model {
         this._environment = environment;
         this._apiHandler = apiHandler;
 
+        this._environment.applicationCreated.add(this.onApplicationCreated, this);
+        this._environment.applicationClosed.add(this.onApplicationClosed, this);
+
         this._environment.windowCreated.add(this.onWindowCreated, this);
         this._environment.windowClosed.add(this.onWindowClosed, this);
 
@@ -160,13 +163,19 @@ export class Model {
             // Return a window once we have one, or timeout when the application is mature
             return Promise.race([
                 deferredPromise.promise.then((result) => [result]),
-                this._environment.createApplication(appInfo).mature.then(() => [])
+                this.expectLiveApplication(appInfo).maturePromise.then(() => [])
             ]);
         }
     }
 
-    public async expectLiveApplication(appInfo: Application): Promise<void> {
-        return this._environment.createApplication(appInfo).started;
+    public expectLiveApplication(appInfo: Application): LiveApp {
+        const uuid = AppDirectory.getUuidFromApp(appInfo);
+
+        if (!this._liveAppsByUuid.hasOwnProperty(uuid)) {
+            this._environment.createApplication(appInfo);
+        }
+
+        return this._liveAppsByUuid[uuid];
     }
 
     public getChannel(id: ChannelId): ContextChannel|null {
@@ -198,7 +207,10 @@ export class Model {
 
         // Get all directory apps that support the given intent and context
         const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
-            if (await this._environment.isMature(AppDirectory.getUuidFromApp(app))) {
+            const uuid = AppDirectory.getUuidFromApp(app);
+            const liveApp = this._liveAppsByUuid.hasOwnProperty(uuid) ? this._liveAppsByUuid[uuid] : undefined;
+
+            if (liveApp && liveApp.mature) {
                 return false;
             }
 
@@ -236,7 +248,10 @@ export class Model {
 
         // Populate appIntentsBuilder from non-mature directory apps
         const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
-            return !await this._environment.isMature(AppDirectory.getUuidFromApp(app));
+            const uuid = AppDirectory.getUuidFromApp(app);
+            const liveApp = this._liveAppsByUuid.hasOwnProperty(uuid) ? this._liveAppsByUuid[uuid] : undefined;
+
+            return !(liveApp && liveApp.mature);
         });
 
         directoryApps.forEach(app => {
@@ -271,24 +286,30 @@ export class Model {
         const directoryApp = await this._directory.getAppByName(name);
 
         const directory = directoryApp !== undefined;
-        const running = this._environment.isRunning(directoryApp ? AppDirectory.getUuidFromApp(directoryApp) : name);
+        const running = this._liveAppsByUuid.hasOwnProperty(directoryApp ? AppDirectory.getUuidFromApp(directoryApp) : name);
 
         return running ? 'running' : directory ? 'directory' : 'unknown';
+    }
+
+    private onApplicationCreated(uuid: string, liveApp: LiveApp): void {
+        this._liveAppsByUuid[uuid] = liveApp;
+    }
+
+    private onApplicationClosed(uuid: string): void {
+        delete this._liveAppsByUuid[uuid];
     }
 
     private onWindowCreated(identity: Identity): void {
         const expectedWindow = this.getOrCreateExpectedWindow(identity);
 
         const uuid = identity.uuid;
-        const liveApp = this._liveAppsByUuid.hasOwnProperty(identity.uuid) ? this._liveAppsByUuid[uuid] : new LiveApp();
+        const liveApp = this._liveAppsByUuid[uuid];
         this._liveAppsByUuid[uuid] = liveApp;
-
-        liveApp.incrementWindows();
 
         // Only register windows once they are connected to the service
         allowReject(expectedWindow.connected.then(async () => {
             // Attempt to copy appInfo from this window's LiveApp
-            liveApp.getAppInfo().then(appInfo => {
+            liveApp.getAppInfo().then(() => {
                 this.registerWindow(liveApp, identity);
             });
 
@@ -307,14 +328,6 @@ export class Model {
         const liveApp = this._liveAppsByUuid.hasOwnProperty(uuid) ? this._liveAppsByUuid[uuid] : undefined;
         const window = this._windowsById[id];
 
-        if (liveApp) {
-            liveApp.decrementWindows();
-
-            if (!liveApp.hasWindows()) {
-                delete this._liveAppsByUuid[uuid];
-            }
-        }
-
         if (window) {
             if (liveApp) {
                 liveApp.removeWindow(window);
@@ -331,7 +344,7 @@ export class Model {
         if (await this._environment.getEntityType(identity) === EntityType.EXTERNAL_CONNECTION) {
             // Any connections to the service from adapters should be immediately registered
             const appInfo = await this._environment.inferApplication(identity);
-            const liveApp = new LiveApp();
+            const liveApp = new LiveApp(Promise.resolve());
             liveApp.setAppInfo(appInfo);
             this._liveAppsByUuid[identity.uuid] = liveApp;
 
@@ -364,7 +377,7 @@ export class Model {
     private registerWindow(liveApp: LiveApp, identity: Identity): AppWindow {
         const id = getId(identity);
 
-        const appWindow = this._environment.wrapWindow(liveApp.appInfo!, identity, this._channelsById[DEFAULT_CHANNEL_ID]);
+        const appWindow = this._environment.wrapWindow(liveApp, identity, this._channelsById[DEFAULT_CHANNEL_ID]);
 
         console.info(`Registering window ${appWindow.id}`);
         this._windowsById[appWindow.id] = appWindow;
@@ -435,8 +448,8 @@ export class Model {
             return 1;
         }
 
-        const running1 = this._environment.isRunning(AppDirectory.getUuidFromApp(app1));
-        const running2 = this._environment.isRunning(AppDirectory.getUuidFromApp(app2));
+        const running1 = this._liveAppsByUuid.hasOwnProperty(AppDirectory.getUuidFromApp(app1));
+        const running2 = this._liveAppsByUuid.hasOwnProperty(AppDirectory.getUuidFromApp(app2));
 
         if (running1 && !running2) {
             return -1;
