@@ -205,6 +205,7 @@ export abstract class AbstractAppWindow implements AppWindow {
             }
         });
 
+        // App may be starting - give until app maturity to register a listener
         return Promise.race([
             this._maturePromise.catch(() => {}).then(() => false),
             deferredPromise.promise.then(() => true)
@@ -224,6 +225,7 @@ export abstract class AbstractAppWindow implements AppWindow {
             deferredPromise.resolve();
         });
 
+        // App may be starting - give until app maturity to register a listener
         return Promise.race([
             this._maturePromise.catch(() => {}).then(() => false),
             deferredPromise.promise.then(() => true)
