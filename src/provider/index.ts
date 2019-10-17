@@ -119,17 +119,24 @@ export class Main {
         const promises: Promise<void>[] = [];
 
         // Start the application if not already running
-        promises.push(this._model.expectLiveApplication(appInfo).startedPromise);
+        const startedPromise = this._model.getOrCreateLiveApp(appInfo).startedPromise;
 
-        // Bring-to-front all currently open windows in creation order
-        const windowsToFocus = this._model.findWindowsByAppName(appInfo.name).sort((a: AppWindow, b: AppWindow) => a.appWindowNumber - b.appWindowNumber);
+        promises.push(startedPromise);
 
-        const bringToFrontPromise = Promise.all(windowsToFocus.map(window => window.bringToFront()));
-        const focusPromise = bringToFrontPromise.then(async () => {
-            if (windowsToFocus.length > 0) {
-                await windowsToFocus[windowsToFocus.length - 1].focus();
-            }
-        });
+        // If the app has open windows, bring-to-front all currently open windows in creation order
+        const windows = this._model.findWindowsByAppName(appInfo.name);
+        if (windows.length > 0) {
+            const windowsToFocus = windows.sort((a, b) => a.appWindowNumber - b.appWindowNumber);
+
+            const bringToFrontPromise = Promise.all(windowsToFocus.map(window => window.bringToFront()));
+            const focusPromise = bringToFrontPromise.then(async () => {
+                if (windowsToFocus.length > 0) {
+                    await windowsToFocus[windowsToFocus.length - 1].focus();
+                }
+            });
+
+            promises.push(focusPromise);
+        }
 
         // If a context has been provided, send to listening windows
         if (context) {
@@ -145,8 +152,6 @@ export class Main {
 
             promises.push(sendContextPromise);
         }
-
-        promises.push(focusPromise);
 
         await Promise.all(promises);
     }

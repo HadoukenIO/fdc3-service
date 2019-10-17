@@ -163,12 +163,12 @@ export class Model {
             // Return a window once we have one, or timeout when the application is mature
             return Promise.race([
                 deferredPromise.promise.then((result) => [result]),
-                this.expectLiveApplication(appInfo).maturePromise.then(() => [])
+                this.getOrCreateLiveApp(appInfo).maturePromise.then(() => [])
             ]);
         }
     }
 
-    public expectLiveApplication(appInfo: Application): LiveApp {
+    public getOrCreateLiveApp(appInfo: Application): LiveApp {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
 
         if (!this._liveAppsByUuid[uuid]) {
