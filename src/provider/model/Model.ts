@@ -1,4 +1,4 @@
-import {injectable, inject} from 'inversify';
+import {injectable, inject, id} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
@@ -163,19 +163,30 @@ export class Model {
             // Return a window once we have one, or timeout when the application is mature
             return Promise.race([
                 deferredPromise.promise.then((result) => [result]),
-                this.getOrCreateLiveApp(appInfo).maturePromise.then(() => [])
+                this.getOrCreateLiveApp(appInfo).then(liveApp => liveApp.maturePromise.then(() => []))
             ]);
         }
     }
 
-    public getOrCreateLiveApp(appInfo: Application): LiveApp {
+    public async getOrCreateLiveApp(appInfo: Application): Promise<LiveApp> {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
 
-        if (!this._liveAppsByUuid[uuid]) {
-            this._environment.createApplication(appInfo);
-        }
+        if (this._liveAppsByUuid[uuid]) {
+            return this._liveAppsByUuid[uuid];
+        } else {
+            const deferredPromise = new DeferredPromise<LiveApp>();
 
-        return this._liveAppsByUuid[uuid];
+            const slot = this._environment.applicationCreated.add((identity: Identity, liveApp: LiveApp) => {
+                if (identity.uuid === uuid) {
+                    slot.remove();
+                    deferredPromise.resolve(liveApp);
+                }
+            });
+
+            this._environment.createApplication(appInfo);
+
+            return deferredPromise.promise;
+        }
     }
 
     public getChannel(id: ChannelId): ContextChannel|null {

@@ -39,7 +39,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
     private _windowsCreated: number = 0;
 
-    public createApplication(appInfo: Application): void {
+    public createApplication(appInfo: Application): LiveApp {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
 
         const startPromise = withTimeout(

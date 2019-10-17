@@ -16,7 +16,7 @@ export enum EntityType {
 
 export interface Environment {
     /**
-     * Indicates that a application has been created by the service.
+     * Indicates that an application has been created by the service.
      *
      * Arguments: (identity: Identity)
      */
@@ -25,7 +25,7 @@ export interface Environment {
     /**
      * Indicates that an application has been closed.
      *
-     * Arguments: (uuid: string)
+     * Arguments: (identity: Identity)
      */
     applicationClosed: Signal<[Identity]>;
 
