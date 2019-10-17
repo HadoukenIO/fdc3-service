@@ -3,12 +3,12 @@ import fetch from 'node-fetch';
 
 import {Application as DirectoryApp} from '../../src/client/directory';
 import {Context, AppIntent} from '../../src/client/main';
+import {Timeouts} from '../../src/provider/constants';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay} from './utils/delay';
 import {setupStartNonDirectoryAppBookends, setupOpenDirectoryAppBookends, setupTeardown} from './utils/common';
 import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1} from './constants';
-import { Timeouts } from '../../src/provider/constants';
 
 const validIntent = 'DialCall';
 
@@ -70,7 +70,7 @@ directory applications accept the intent with specifies the given context or no 
             describe('But it does not register a listener for an intent it is supposed to handle', () => {
                 beforeEach(async () => {
                     await delay(Timeouts.APP_MATURITY);
-                })
+                });
 
                 test('When calling findIntent with the intent, the app is NOT returned', async () => {
                     const appsForIntent = getDirectoryAppsForIntent(directory, validIntent);
