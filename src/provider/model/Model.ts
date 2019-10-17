@@ -120,7 +120,7 @@ export class Model {
         asyncPredicate: (window: AppWindow) => Promise<boolean>
     ): Promise<AppWindow[]> {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
-        const windows = this._liveAppsByUuid.hasOwnProperty(uuid) ? this._liveAppsByUuid[uuid].windows : [];
+        const windows = this._liveAppsByUuid[uuid] ? this._liveAppsByUuid[uuid].windows : [];
 
         const result: AppWindow[] = [];
 
@@ -171,7 +171,7 @@ export class Model {
     public expectLiveApplication(appInfo: Application): LiveApp {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
 
-        if (!this._liveAppsByUuid.hasOwnProperty(uuid)) {
+        if (!this._liveAppsByUuid[uuid]) {
             this._environment.createApplication(appInfo);
         }
 
@@ -208,7 +208,7 @@ export class Model {
         // Get all directory apps that support the given intent and context
         const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
             const uuid = AppDirectory.getUuidFromApp(app);
-            const liveApp = this._liveAppsByUuid.hasOwnProperty(uuid) ? this._liveAppsByUuid[uuid] : undefined;
+            const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
 
             if (liveApp && liveApp.mature) {
                 return false;
@@ -249,7 +249,7 @@ export class Model {
         // Populate appIntentsBuilder from non-mature directory apps
         const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
             const uuid = AppDirectory.getUuidFromApp(app);
-            const liveApp = this._liveAppsByUuid.hasOwnProperty(uuid) ? this._liveAppsByUuid[uuid] : undefined;
+            const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
 
             return !(liveApp && liveApp.mature);
         });
@@ -286,7 +286,7 @@ export class Model {
         const directoryApp = await this._directory.getAppByName(name);
 
         const directory = directoryApp !== null;
-        const running = this._liveAppsByUuid.hasOwnProperty(directoryApp ? AppDirectory.getUuidFromApp(directoryApp) : name);
+        const running = this._liveAppsByUuid[directoryApp ? AppDirectory.getUuidFromApp(directoryApp) : name] !== undefined;
 
         return running ? 'running' : directory ? 'directory' : 'unknown';
     }
@@ -325,7 +325,7 @@ export class Model {
         const uuid = identity.uuid;
         const id: string = getId(identity);
 
-        const liveApp = this._liveAppsByUuid.hasOwnProperty(uuid) ? this._liveAppsByUuid[uuid] : undefined;
+        const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
         const window = this._windowsById[id];
 
         if (window) {
@@ -448,8 +448,8 @@ export class Model {
             return 1;
         }
 
-        const running1 = this._liveAppsByUuid.hasOwnProperty(AppDirectory.getUuidFromApp(app1));
-        const running2 = this._liveAppsByUuid.hasOwnProperty(AppDirectory.getUuidFromApp(app2));
+        const running1 = this._liveAppsByUuid[AppDirectory.getUuidFromApp(app1)] !== undefined;
+        const running2 = this._liveAppsByUuid[AppDirectory.getUuidFromApp(app2)] !== undefined;
 
         if (running1 && !running2) {
             return -1;
