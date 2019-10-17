@@ -14,13 +14,13 @@ export class LiveApp {
     private readonly _startedPromise: Promise<void>;
     private readonly _maturePromise: Promise<void>;
 
-    private _appInfo: Application | undefined;
+    private _appInfo: Application | undefined = undefined;
     private _mature: boolean = false;
 
     /**
      * Constructs a new LiveApp
      *
-     * @param startedPromise A promise that resolves once the app fully started, or undefined if the app started "long ago" (eg., was
+     * @param startedPromise A promise that resolves once the app fully started, or undefined if the app started "long ago" (e.g., was
      * running before the servive started)
      */
     public constructor(startedPromise: Promise<void> | undefined) {
@@ -67,7 +67,7 @@ export class LiveApp {
         return this._appInfoDeferredPromise.promise;
     }
 
-    public setAppInfo(appInfo: Application) {
+    public setAppInfo(appInfo: Application): void {
         if (this._appInfo === undefined) {
             this._appInfo = appInfo;
             this._appInfoDeferredPromise.resolve(appInfo);
