@@ -112,7 +112,7 @@ export class Model {
     }
 
     /**
-     * Returns all registered windows for an app satisfying our predicate, waiting for at least one window
+     * Returns all registered windows for an app satisfying our predicate, waiting for at least one window or until the app is mature
      */
     public async expectWindowsForApp(
         appInfo: Application,
@@ -355,6 +355,7 @@ export class Model {
             // Any connections to the service from adapters should be immediately registered
             const appInfo = await this._environment.inferApplication(identity);
             const liveApp = new LiveApp(Promise.resolve());
+
             liveApp.setAppInfo(appInfo);
             this._liveAppsByUuid[identity.uuid] = liveApp;
 
