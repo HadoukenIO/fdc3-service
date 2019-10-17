@@ -282,13 +282,14 @@ export class Model {
         return liveApp ? liveApp.windows : [];
     }
 
-    public async getAppStatusByName(name: AppName): Promise<'unknown' | 'directory' | 'running'> {
+    public async existsAppForName(name: AppName): Promise<boolean> {
         const directoryApp = await this._directory.getAppByName(name);
 
-        const directory = directoryApp !== null;
-        const running = this._liveAppsByUuid[directoryApp ? AppDirectory.getUuidFromApp(directoryApp) : name] !== undefined;
-
-        return running ? 'running' : directory ? 'directory' : 'unknown';
+        if (directoryApp) {
+            return true;
+        } else {
+            return !!this._liveAppsByUuid[name];
+        }
     }
 
     private async onApplicationCreated(identity: Identity, liveApp: LiveApp): Promise<void> {

@@ -47,15 +47,15 @@ export class IntentHandler {
             return this.fireIntent(intent, targetApp);
         } else {
             // Target intent does not handles intent with given, so determine why and throw an error
-            if (await this._model.getAppStatusByName(intent.target) === 'unknown') {
-                throw new FDC3Error(
-                    ResolveError.TargetAppNotAvailable,
-                    `Couldn't resolve intent target '${intent.target}'. No matching app in directory or currently running.`
-                );
-            } else {
+            if (await this._model.existsAppForName(intent.target)) {
                 throw new FDC3Error(
                     ResolveError.TargetAppDoesNotHandleIntent,
                     `App '${intent.target}' does not handle intent '${intent.type}' with context '${intent.context.type}'`
+                );
+            } else {
+                throw new FDC3Error(
+                    ResolveError.TargetAppNotAvailable,
+                    `Couldn't resolve intent target '${intent.target}'. No matching app in directory or currently running.`
                 );
             }
         }
