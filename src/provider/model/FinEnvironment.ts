@@ -134,17 +134,13 @@ export class FinEnvironment extends AsyncInit implements Environment {
     protected async init(): Promise<void> {
         const windowInfo = await fin.System.getAllWindows();
 
-        windowInfo.forEach(info => {
-            if (!this._applications.has(info.uuid)) {
-                this.addApplication(info.uuid, undefined);
-            }
-        });
-
-        fin.System.addListener('application-started', (event: ApplicationEvent<'system', 'application-started'>) => {
+        fin.System.addListener('application-started', async (event: ApplicationEvent<'system', 'application-started'>) => {
+            await Injector.initialized;
             this.addApplication(event.uuid, Promise.resolve());
         });
 
-        const appicationClosedHandler = (event: {uuid: string}) => {
+        const appicationClosedHandler = async (event: {uuid: string}) => {
+            await Injector.initialized;
             this.removeApplication(event.uuid);
         };
 
@@ -154,9 +150,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
         fin.System.addListener('window-created', async (event: WindowEvent<'system', 'window-created'>) => {
             const identity = {uuid: event.uuid, name: event.name};
 
-            this.addApplication(event.uuid, Promise.resolve());
-
             await Injector.initialized;
+            this.addApplication(event.uuid, Promise.resolve());
             this.registerWindow(identity);
         });
 
@@ -173,6 +168,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             // Register windows that were running before launching the FDC3 service
             windowInfo.forEach(info => {
                 const {uuid, mainWindow, childWindows} = info;
+                this.addApplication(info.uuid, undefined);
 
                 this.registerWindow({uuid, name: mainWindow.name});
                 childWindows.forEach(child => this.registerWindow({uuid, name: child.name}));
