@@ -18,16 +18,16 @@ export interface Environment {
     /**
      * Indicates that a application has been created by the service.
      *
-     * Arguments: (uuid: string)
+     * Arguments: (identity: Identity)
      */
-    applicationCreated: Signal<[string, LiveApp]>;
+    applicationCreated: Signal<[Identity, LiveApp]>;
 
     /**
      * Indicates that an application has been closed.
      *
      * Arguments: (uuid: string)
      */
-    applicationClosed: Signal<[string]>;
+    applicationClosed: Signal<[Identity]>;
 
     /**
      * Indicates that a window has been created by the service.

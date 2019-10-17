@@ -292,7 +292,7 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
         });
 
         maybeSetTimeout(() => {
-            mockEnvironment.applicationCreated.emit(identity.uuid, new LiveApp(Promise.resolve()));
+            mockEnvironment.applicationCreated.emit(identity, new LiveApp(Promise.resolve()));
             mockEnvironment.windowCreated.emit(identity);
         }, testWindow.createdTime);
         maybeSetTimeout(() => mockApiHandler.onConnection.emit(identity), testWindow.connectionTime);

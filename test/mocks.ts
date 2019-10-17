@@ -64,8 +64,8 @@ export function createMockChannel(options: Partial<jest.Mocked<ContextChannel>> 
 
 export function createMockEnvironmnent(options: Partial<jest.Mocked<Environment>> = {}): jest.Mocked<Environment> {
     return {
-        applicationCreated: new Signal<[string, LiveApp]>(),
-        applicationClosed: new Signal<[string]>(),
+        applicationCreated: new Signal<[Identity, LiveApp]>(),
+        applicationClosed: new Signal<[Identity]>(),
         windowCreated: new Signal<[Identity]>(),
         windowClosed: new Signal<[Identity]>(),
         createApplication: jest.fn<void, [Application]>(),

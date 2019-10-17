@@ -291,12 +291,19 @@ export class Model {
         return running ? 'running' : directory ? 'directory' : 'unknown';
     }
 
-    private onApplicationCreated(uuid: string, liveApp: LiveApp): void {
+    private async onApplicationCreated(identity: Identity, liveApp: LiveApp): Promise<void> {
+        const {uuid} = identity;
         this._liveAppsByUuid[uuid] = liveApp;
+
+        // Attempt to get appInfo from the app directory, otherwise infer from environment
+        const appInfoFromDirectory = await this._directory.getAppByUuid(uuid);
+        const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
+
+        liveApp.setAppInfo(appInfo);
     }
 
-    private onApplicationClosed(uuid: string): void {
-        delete this._liveAppsByUuid[uuid];
+    private onApplicationClosed(identity: Identity): void {
+        delete this._liveAppsByUuid[identity.uuid];
     }
 
     private onWindowCreated(identity: Identity): void {
@@ -308,16 +315,7 @@ export class Model {
 
         // Only register windows once they are connected to the service
         allowReject(expectedWindow.connected.then(async () => {
-            // Attempt to copy appInfo from this window's LiveApp
-            liveApp.getAppInfo().then(() => {
-                this.registerWindow(liveApp, identity);
-            });
-
-            // If we're unable to copy appInfo from another window, attempt to use the app directory, or infer from environment
-            const appInfoFromDirectory = await this._directory.getAppByUuid(identity.uuid);
-            const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
-
-            liveApp.setAppInfo(appInfo);
+            await this.registerWindow(liveApp, identity);
         }));
     }
 
@@ -348,7 +346,7 @@ export class Model {
             liveApp.setAppInfo(appInfo);
             this._liveAppsByUuid[identity.uuid] = liveApp;
 
-            this.registerWindow(liveApp, identity);
+            await this.registerWindow(liveApp, identity);
         }
     }
 
@@ -371,10 +369,13 @@ export class Model {
 
     /**
      * Registers an appWindow in the model
-     * @param appInfo Application info, either from the app directory, or 'crafted' for a non-registered app
+     * @param liveApp The app this window should be registered to
      * @param identity Window identity
      */
-    private registerWindow(liveApp: LiveApp, identity: Identity): AppWindow {
+    private async registerWindow(liveApp: LiveApp, identity: Identity): Promise<void> {
+        // Don't register windows for any app until the app's info is known
+        await liveApp.getAppInfo();
+
         const id = getId(identity);
 
         const appWindow = this._environment.wrapWindow(liveApp, identity, this._channelsById[DEFAULT_CHANNEL_ID]);
@@ -387,8 +388,6 @@ export class Model {
 
         this.onWindowAdded.emit(appWindow);
         this._onWindowRegisteredInternal.emit(appWindow);
-
-        return appWindow;
     }
 
     private getOrCreateExpectedWindow(identity: Identity): ExpectedWindow {

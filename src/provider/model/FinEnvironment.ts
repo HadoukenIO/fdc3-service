@@ -23,22 +23,20 @@ interface EnvironmentWindow {
     index: number;
 }
 
-interface EnvironmentApplication {}
-
 type EnvironmentWindowMap = Map<string, EnvironmentWindow>;
-type EnvironmentApplicationMap = Map<string, EnvironmentApplication>;
+type EnvironmentApplicationSet = Set<string>;
 
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
-    public readonly applicationCreated: Signal<[string, LiveApp]> = new Signal();
-    public readonly applicationClosed: Signal<[string]> = new Signal();
+    public readonly applicationCreated: Signal<[Identity, LiveApp]> = new Signal();
+    public readonly applicationClosed: Signal<[Identity]> = new Signal();
 
     public readonly windowCreated: Signal<[Identity]> = new Signal();
     public readonly windowClosed: Signal<[Identity]> = new Signal();
 
     private _windowsCreated: number = 0;
 
-    private readonly _applications: EnvironmentApplicationMap = new Map<string, EnvironmentApplication>();
+    private readonly _applications: EnvironmentApplicationSet = new Set<string>();
     private readonly _windows: EnvironmentWindowMap = new Map<string, EnvironmentWindow>();
 
     public createApplication(appInfo: Application): void {
@@ -47,7 +45,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         const startPromise = withTimeout(
             Timeouts.APP_START_FROM_MANIFEST,
             fin.Application.startFromManifest(appInfo.manifest).catch(e => {
-                this.removeApplication(uuid);
+                this.removeApplication({uuid});
 
                 throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
             })
@@ -55,13 +53,13 @@ export class FinEnvironment extends AsyncInit implements Environment {
             const [didTimeout] = result;
 
             if (didTimeout) {
-                this.removeApplication(uuid);
+                this.removeApplication({uuid});
 
                 throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
             }
         });
 
-        this.addApplication(uuid, startPromise);
+        this.addApplication({uuid}, startPromise);
     }
 
     public wrapWindow(liveApp: LiveApp, identity: Identity, channel: ContextChannel): AppWindow {
@@ -125,12 +123,12 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
         fin.System.addListener('application-started', async (event: ApplicationEvent<'system', 'application-started'>) => {
             await Injector.initialized;
-            this.addApplication(event.uuid, Promise.resolve());
+            this.addApplication({uuid: event.uuid}, Promise.resolve());
         });
 
         const appicationClosedHandler = async (event: {uuid: string}) => {
             await Injector.initialized;
-            this.removeApplication(event.uuid);
+            this.removeApplication({uuid: event.uuid});
         };
 
         fin.System.addListener('application-closed', appicationClosedHandler);
@@ -140,7 +138,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             const identity = {uuid: event.uuid, name: event.name};
 
             await Injector.initialized;
-            this.addApplication(event.uuid, Promise.resolve());
+            this.addApplication({uuid: event.uuid}, Promise.resolve());
             this.registerWindow(identity);
         });
 
@@ -149,7 +147,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
             await Injector.initialized;
             this.deregisterWindow(identity);
-            this.removeApplication(event.uuid);
+            this.removeApplication({uuid: event.uuid});
         });
 
         // No await here otherwise the injector will never properly initialize - The injector awaits this init before completion!
@@ -157,7 +155,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             // Register windows that were running before launching the FDC3 service
             windowInfo.forEach(info => {
                 const {uuid, mainWindow, childWindows} = info;
-                this.addApplication(info.uuid, undefined);
+                this.addApplication({uuid: info.uuid}, undefined);
 
                 this.registerWindow({uuid, name: mainWindow.name});
                 childWindows.forEach(child => this.registerWindow({uuid, name: child.name}));
@@ -193,21 +191,20 @@ export class FinEnvironment extends AsyncInit implements Environment {
         }
     }
 
-    private addApplication(uuid: string, startedPromise: Promise<void> | undefined): void {
-        const application = this._applications.get(uuid);
+    private addApplication(identity: Identity, startedPromise: Promise<void> | undefined): void {
+        const {uuid} = identity;
 
-        if (!application) {
-            this._applications.set(uuid, {});
-            this.applicationCreated.emit(uuid, new LiveApp(startedPromise));
+        if (!this._applications.has(uuid)) {
+            this._applications.add(uuid);
+            this.applicationCreated.emit(identity, new LiveApp(startedPromise));
         }
     }
 
-    private removeApplication(uuid: string): void {
-        const application = this._applications.get(uuid);
+    private removeApplication(identity: Identity): void {
+        const {uuid} = identity;
 
-        if (application) {
-            this._applications.delete(uuid);
-            this.applicationClosed.emit(uuid);
+        if (this._applications.delete(uuid)) {
+            this.applicationClosed.emit(identity);
         }
     }
 }

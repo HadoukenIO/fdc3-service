@@ -17,6 +17,32 @@ export class LiveApp {
     private _appInfo: Application | undefined;
     private _mature: boolean = false;
 
+    /**
+     * Constructs a new LiveApp
+     *
+     * @param startedPromise A promise that resolves once the app fully started, or undefined if the app started "long ago" (eg., was
+     * running before the servive started)
+     */
+    public constructor(startedPromise: Promise<void> | undefined) {
+        if (startedPromise) {
+            this._startedPromise = startedPromise;
+
+            const matureDeferredPromise = new DeferredPromise();
+
+            startedPromise.then(() => {
+                setTimeout(() => {
+                    this._mature = true;
+                    matureDeferredPromise.resolve();
+                }, Timeouts.APP_MATURITY);
+            });
+
+            this._maturePromise = matureDeferredPromise.promise;
+        } else {
+            this._startedPromise = Promise.resolve();
+            this._maturePromise = Promise.resolve();
+        }
+    }
+
     public get windows(): AppWindow[] {
         return Array.from(this._windowsById.values());
     }
@@ -35,23 +61,6 @@ export class LiveApp {
 
     public get maturePromise(): Promise<void> {
         return this._maturePromise;
-    }
-
-    public constructor(startedPromise: Promise<void> | undefined) {
-        if (startedPromise) {
-            this._startedPromise = startedPromise;
-
-            const matureDeferredPromise = new DeferredPromise();
-            setTimeout(() => {
-                this._mature = true;
-                matureDeferredPromise.resolve();
-            }, Timeouts.APP_MATURITY);
-
-            this._maturePromise = matureDeferredPromise.promise;
-        } else {
-            this._startedPromise = Promise.resolve();
-            this._maturePromise = Promise.resolve();
-        }
     }
 
     public async getAppInfo(): Promise<Application> {
