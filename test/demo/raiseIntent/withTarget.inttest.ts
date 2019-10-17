@@ -75,17 +75,17 @@ describe('Intent listeners and raising intents with a target', () => {
                     setupQuitAppAfterEach(testAppInDirectory1);
 
                     test('When the intent listener is added after a short delay, the targeted app opens and its listener is triggered \
-just once after it is set up, with the correct context', async () => {
+just once, with the correct context', async () => {
                         // Raise the intent but only add the intent listener after the some time
                         await raiseDelayedIntentWithTarget(validIntent, testAppInDirectory1, 1500);
 
-                        // Since the time is under the listener handshake timeout, intent should be triggered correctly
+                        // Since we are within listener handshake timeout, intent should be triggered correctly
                         const listener = await fdc3Remote.getRemoteIntentListener(testAppInDirectory1, validIntent.type);
                         await expect(listener).toHaveReceivedContexts([validIntent.context]);
                     }, appStartupTime + 1500);
 
                     test('When the intent listener is added on a child window, the targeted app opens and its listener is triggered \
-just once after it is set up, with the correct context', async () => {
+just once, with the correct context', async () => {
                         // Raise the intent, and wait for the app to be running
                         const raisePromise = raiseIntent(validIntent, testAppInDirectory1);
                         await waitForAppToBeRunning(testAppInDirectory1);
@@ -101,7 +101,7 @@ just once after it is set up, with the correct context', async () => {
                     });
 
                     test('When the intent listeners are added on multiple windows, the targeted app opens and the first window\'s \
-listener is triggered just once after it is set up, with the correct context', async () => {
+listener is triggered just once, with the correct context', async () => {
                         // Raise the intent, and wait for the app to be running
                         const raisePromise = raiseIntent(validIntent, testAppInDirectory1);
                         await waitForAppToBeRunning(testAppInDirectory1);
@@ -135,7 +135,7 @@ listener to be added', async () => {
                             ResolveError.IntentTimeout,
                             `Timeout waiting for intent listener to be added for intent: ${validIntent.type}`
                         );
-                    }, appStartupTime + 1500);
+                    }, appStartupTime + 2000);
                 });
             });
         });
