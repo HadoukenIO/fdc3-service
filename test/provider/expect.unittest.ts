@@ -259,7 +259,7 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
             return createMockAppWindow({id: getId(testIdentity), identity: testIdentity, appInfo: liveApp.appInfo!});
         });
 
-        mockEnvironment.inferApplication.mockImplementationOnce(async (indentity: Identity): Promise<Application> => {
+        mockEnvironment.inferApplication.mockImplementationOnce(async (identity: Identity): Promise<Application> => {
             return mockApplication;
         });
 
@@ -291,7 +291,10 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
             return false;
         });
 
-        maybeSetTimeout(() => mockEnvironment.windowCreated.emit(identity), testWindow.createdTime);
+        maybeSetTimeout(() => {
+            mockEnvironment.applicationCreated.emit(identity.uuid, new LiveApp(Promise.resolve()));
+            mockEnvironment.windowCreated.emit(identity);
+        }, testWindow.createdTime);
         maybeSetTimeout(() => mockApiHandler.onConnection.emit(identity), testWindow.connectionTime);
         maybeSetTimeout(() => mockEnvironment.windowClosed.emit(identity), testWindow.closeTime);
         maybeSetTimeout(() => appDirectoryResultPromise.resolve(), appDirectoryResultTime);
