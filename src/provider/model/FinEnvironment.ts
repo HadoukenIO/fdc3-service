@@ -70,7 +70,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         // identity. We will instead take the time at which the identity was wrapped as this application's creation time
         const environmentWindow = this._windows.get(id) || {index: this._windowsCreated++};
 
-        return new FinAppWindow(identity, liveApp.appInfo!, channel, liveApp.maturePromise, environmentWindow.index);
+        return new FinAppWindow(identity, liveApp, channel, environmentWindow.index);
     }
 
     public async inferApplication(identity: Identity): Promise<Application> {

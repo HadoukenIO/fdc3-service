@@ -13,8 +13,8 @@ import {Timeouts} from '../../src/provider/constants';
 class TestAppWindow extends AbstractAppWindow {
     private readonly _identity: Readonly<Identity>;
 
-    constructor(identity: Identity, appInfo: Application, channel: ContextChannel, maturityPromise: Promise<void>, appWindowNumber: number) {
-        super(identity, appInfo, channel, maturityPromise, appWindowNumber);
+    constructor(identity: Identity, appInfo: Application, maturityPromise: Promise<void>, channel: ContextChannel, appWindowNumber: number) {
+        super(identity, appInfo, maturityPromise, channel, appWindowNumber);
 
         this._identity = identity;
     }
@@ -45,7 +45,7 @@ describe('When querying if a window has a context listener', () => {
     let testAppWindow: TestAppWindow;
 
     beforeEach(() => {
-        testAppWindow = new TestAppWindow(fakeIdentity, fakeAppInfo, mockChannel, createMaturityPromise(), 0);
+        testAppWindow = new TestAppWindow(fakeIdentity, fakeAppInfo, createMaturityPromise(), mockChannel, 0);
     });
 
     test('A freshly-initialized window returns false', () => {
@@ -77,7 +77,7 @@ describe('When querying if a window has a context listener', () => {
     });
 
     test('The state of one TestAppWindow does not affect another', () => {
-        const secondTestAppWindow = new TestAppWindow(fakeIdentity, fakeAppInfo, mockChannel, createMaturityPromise(), 0);
+        const secondTestAppWindow = new TestAppWindow(fakeIdentity, fakeAppInfo, createMaturityPromise(), mockChannel, 0);
         secondTestAppWindow.addContextListener();
 
         expect(testAppWindow.hasContextListener()).toBe(false);
@@ -91,7 +91,7 @@ describe('When querying if a window is ready to receive contexts', () => {
         // All tests in this section will use fake timers to allow us to control the Promise races precisely
         useMockTime();
 
-        testAppWindow = new TestAppWindow(fakeIdentity, fakeAppInfo, mockChannel, createMaturityPromise(), 0);
+        testAppWindow = new TestAppWindow(fakeIdentity, fakeAppInfo, createMaturityPromise(), mockChannel, 0);
     });
 
     afterEach(() => {

@@ -86,7 +86,7 @@ export abstract class AbstractAppWindow implements AppWindow {
     private readonly _appInfo: Application;
     private readonly _appWindowNumber: number;
 
-    private readonly _maturityPromise: Promise<void>;
+    private readonly _maturePromise: Promise<void>;
 
     private readonly _intentListeners: IntentMap;
     private readonly _channelContextListeners: ContextMap;
@@ -97,12 +97,12 @@ export abstract class AbstractAppWindow implements AppWindow {
     private readonly _onIntentListenerAdded: Signal<[IntentType]> = new Signal();
     private readonly _onContextListenerAdded: Signal<[]> = new Signal();
 
-    constructor(identity: Identity, appInfo: Application, channel: ContextChannel, maturityPromise: Promise<void>, appWindowNumber: number) {
+    constructor(identity: Identity, appInfo: Application, maturePromise: Promise<void>, channel: ContextChannel, appWindowNumber: number) {
         this._id = getId(identity);
         this._appInfo = appInfo;
         this._appWindowNumber = appWindowNumber;
 
-        this._maturityPromise = maturityPromise;
+        this._maturePromise = maturePromise;
 
         this._intentListeners = new Set();
         this._channelContextListeners = new Set();
@@ -206,7 +206,7 @@ export abstract class AbstractAppWindow implements AppWindow {
         });
 
         return Promise.race([
-            this._maturityPromise.catch(() => {}).then(() => false),
+            this._maturePromise.catch(() => {}).then(() => false),
             deferredPromise.promise.then(() => true)
         ]);
     }
@@ -225,7 +225,7 @@ export abstract class AbstractAppWindow implements AppWindow {
         });
 
         return Promise.race([
-            this._maturityPromise.catch(() => {}).then(() => false),
+            this._maturePromise.catch(() => {}).then(() => false),
             deferredPromise.promise.then(() => true)
         ]);
     }
