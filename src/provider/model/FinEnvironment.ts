@@ -33,18 +33,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public readonly applicationCreated: Signal<[string, LiveApp]> = new Signal();
     public readonly applicationClosed: Signal<[string]> = new Signal();
 
-    /**
-     * Indicates that a window has been created by the service.
-     *
-     * Arguments: (identity: Identity)
-     */
     public readonly windowCreated: Signal<[Identity]> = new Signal();
-
-    /**
-     * Indicates that a window has been closed.
-     *
-     * Arguments: (identity: Identity)
-     */
     public readonly windowClosed: Signal<[Identity]> = new Signal();
 
     private _windowsCreated: number = 0;

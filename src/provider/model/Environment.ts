@@ -15,10 +15,32 @@ export enum EntityType {
 }
 
 export interface Environment {
+    /**
+     * Indicates that a application has been created by the service.
+     *
+     * Arguments: (uuid: string)
+     */
     applicationCreated: Signal<[string, LiveApp]>;
+
+    /**
+     * Indicates that an application has been closed.
+     *
+     * Arguments: (uuid: string)
+     */
     applicationClosed: Signal<[string]>;
 
+    /**
+     * Indicates that a window has been created by the service.
+     *
+     * Arguments: (identity: Identity)
+     */
     windowCreated: Signal<[Identity]>;
+
+    /**
+     * Indicates that a window has been closed.
+     *
+     * Arguments: (identity: Identity)
+     */
     windowClosed: Signal<[Identity]>;
 
     /**
