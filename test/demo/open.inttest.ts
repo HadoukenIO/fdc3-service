@@ -102,7 +102,7 @@ describe('Opening applications with the FDC3 client', () => {
                     await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
                 });
 
-                test('When the app adds its listeners after a short delay, the app opens and its context listener is triggered with the \
+                test('When the app adds its listener after a short delay, the app opens and its context listener is triggered with the \
 correct data', async () => {
                     // From the launcher app, call fdc3.open with a valid name and context
                     const openPromise = open(testAppInDirectory1.name, validContext);
@@ -120,7 +120,7 @@ correct data', async () => {
                     await expect(listener).toHaveReceivedContexts([validContext]);
                 });
 
-                test('When the app adds its listeners on a child window, the app opens and its context listener is triggered with the \
+                test('When the app adds its listener on a child window, the app opens and its context listener is triggered with the \
 correct data', async () => {
                     // From the launcher app, call fdc3.open with a valid name and context
                     const openPromise = open(testAppInDirectory1.name, validContext);
@@ -160,7 +160,7 @@ triggered with the correct data', async () => {
                     await expect(listener3).toHaveReceivedContexts([]);
                 });
 
-                test('When the app adds its listeners after a long delay, the app opens but its context listener is not triggered', async () => {
+                test('When the app adds its listener after a long delay, the app opens but its context listener is not triggered', async () => {
                     // From the launcher app, call fdc3.open with a valid name and context
                     const openPromise = open(testAppInDirectory1.name, validContext);
 
