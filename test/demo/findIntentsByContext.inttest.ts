@@ -176,7 +176,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
 
         setupOpenDirectoryAppBookends(testAppNotFdc3);
 
-        test('The promise resolves to AppIntents for intents that include the running app', async () => {
+        test('The promise resolves to AppIntents for intents that include the immature app', async () => {
             const receivedAppIntents = await findIntentsByContext(context);
 
             expect(receivedAppIntents).toEqual([
