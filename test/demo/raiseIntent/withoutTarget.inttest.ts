@@ -53,7 +53,7 @@ describe('Intent listeners and raising intents without a target', () => {
         describe('With the registered app running', () => {
             setupOpenDirectoryAppBookends(testAppWithUniqueIntent);
 
-            describe('But the app does not have the listener registered on the model', () => {
+            describe('But the app is mature and does not have the listener registered on the model', () => {
                 beforeEach(async () => {
                     await delay(Timeouts.APP_MATURITY);
                 });
