@@ -34,10 +34,10 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public readonly windowCreated: Signal<[Identity]> = new Signal();
     public readonly windowClosed: Signal<[Identity]> = new Signal();
 
-    private _windowsCreated: number = 0;
-
     private readonly _applications: EnvironmentApplicationSet = new Set<string>();
     private readonly _windows: EnvironmentWindowMap = new Map<string, EnvironmentWindow>();
+
+    private _windowsCreated: number = 0;
 
     public createApplication(appInfo: Application): void {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
@@ -66,8 +66,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
         identity = parseIdentity(identity);
         const id = getId(identity);
 
-        // If `identity` is an adapter connection, there will not be any `_applications` or `_windows` entry for this
-        // identity. We will instead take the time at which the identity was wrapped as this application's creation time
+        // If `identity` is an adapter connection, there will not be any `_windows` entry for this identity. We will
+        // instead take the time at which the identity was wrapped as this application's creation time
         const environmentWindow = this._windows.get(id) || {index: this._windowsCreated++};
 
         return new FinAppWindow(identity, liveApp, channel, environmentWindow.index);
