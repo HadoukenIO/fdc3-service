@@ -3,7 +3,7 @@
  */
 export const Timeouts = {
     /**
-     * Time for an app to register a context/intent listeners after opening
+     * Time before we consider an app 'mature', i.e., has had chance to register any listeners
      */
     APP_MATURITY: 5000,
 
