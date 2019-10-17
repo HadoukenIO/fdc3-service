@@ -7,10 +7,7 @@ import {Timeouts} from '../../src/provider/constants';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
 import {quitApps, setupOpenDirectoryAppBookends, setupTeardown, waitForAppToBeRunning} from './utils/common';
-import {
-    testManagerIdentity, testAppInDirectory1, testAppInDirectory2,
-    testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2, testAppNotFdc3, testAppUrl
-} from './constants';
+import {testManagerIdentity, testAppInDirectory1, testAppInDirectory2, testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2, testAppNotFdc3, testAppUrl} from './constants';
 import {delay} from './utils/delay';
 
 setupTeardown();

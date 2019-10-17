@@ -7,7 +7,7 @@ import {Timeouts} from '../../../src/provider/constants';
 import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {delay} from '../utils/delay';
-import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning, NonDirectoryTestAppData} from '../utils/common';
+import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning} from '../utils/common';
 import {appStartupTime, testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, testAppWithPreregisteredListeners1, testAppNotInDirectoryNotFdc3, testAppUrl} from '../constants';
 import {allowReject} from '../../../src/provider/utils/async';
 
@@ -56,7 +56,7 @@ describe('Intent listeners and raising intents with a target', () => {
             });
 
             describe('When the target is registered to accept the raised intent', () => {
-                describe('And the listener is added when the ap starts', () => {
+                describe('And the listener is added when the app starts', () => {
                     setupQuitAppAfterEach(testAppWithPreregisteredListeners1);
 
                     test('The targeted app opens and its listener is triggered exactly once with the correct context', async () => {
@@ -71,7 +71,7 @@ describe('Intent listeners and raising intents with a target', () => {
                     });
                 });
 
-                describe('And the listener is added after the app starts', () => {
+                describe('And the listener is not added when the app starts', () => {
                     setupQuitAppAfterEach(testAppInDirectory1);
 
                     test('When the intent listener is added after a short delay, the targeted app opens and its listener is triggered \
