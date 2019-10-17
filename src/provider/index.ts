@@ -123,7 +123,7 @@ export class Main {
 
         promises.push(startedPromise);
 
-        // If the app has open windows, bring-to-front all currently open windows in creation order
+        // If the app has open windows, bring all to front in creation order
         const windows = this._model.findWindowsByAppName(appInfo.name);
         if (windows.length > 0) {
             const windowsToFocus = windows.sort((a, b) => a.appWindowNumber - b.appWindowNumber);
