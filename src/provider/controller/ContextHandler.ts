@@ -92,7 +92,7 @@ export class ContextHandler {
                     windows
                         // Sender window should not receive its own broadcasts
                         .filter(window => getId(window.identity) !== sourceId)
-                        .filter(window => listeningWindows.includes(window))
+                        .filter(window => !listeningWindows.includes(window))
                         .forEach(window => this.sendOnChannel(window, context, channel));
                 });
             });
