@@ -58,6 +58,10 @@ export class ChannelHandler {
         return this._model.windows.filter(window => window.channel === channel);
     }
 
+    public getWindowsListeningForContextsOnChannel(channel: ContextChannel): AppWindow[] {
+        return this._model.windows.filter(window => window.hasChannelContextListener(channel));
+    }
+
     public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: ChannelEvents['type']): AppWindow[] {
         return this._model.windows.filter(window => window.hasChannelEventListener(channel, eventType));
     }

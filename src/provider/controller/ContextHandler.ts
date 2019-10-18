@@ -64,6 +64,7 @@ export class ContextHandler {
      */
     public async broadcastOnChannel(context: Context, source: AppWindow, channel: ContextChannel): Promise<void> {
         const memberWindows = this._channelHandler.getChannelMembers(channel);
+        const listeningWindows = this._channelHandler.getWindowsListeningForContextsOnChannel(channel);
 
         this._channelHandler.setLastBroadcastOnChannel(channel, context);
 
@@ -76,11 +77,21 @@ export class ContextHandler {
             .filter(window => getId(window.identity) !== sourceId)
             .map(window => this.send(window, context)));
 
-        const listeningWindows = this._model.expectWindows();
-
-        promises.push(...this._model.windows
+        promises.push(...listeningWindows
             // Sender window should not receive its own broadcasts
             .filter(window => getId(window.identity) !== sourceId)
+            .map(window => this.sendOnChannel(window, context, channel)));
+
+        const listeningWindowsPromise = this._model.expectWindowsForAllApps(
+            (window: AppWindow) => window.hasChannelContextListener(channel),
+            async (window: AppWindow) => window.isReadyToReceiveContextOnChannel(channel)
+        );
+
+        // We intentionally don't await this - these sends aren't important enough to block the caller for
+        listeningWindowsPromise.then(windows => windows
+            // Sender window should not receive its own broadcasts
+            .filter(window => getId(window.identity) !== sourceId)
+            .filter(window => listeningWindows.includes(window))
             .map(window => this.sendOnChannel(window, context, channel)));
 
         return Promise.all(promises).then(() => {});

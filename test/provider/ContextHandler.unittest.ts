@@ -1,8 +1,5 @@
 import 'reflect-metadata';
 
-import {Identity} from 'openfin/_v2/main';
-import {ChannelProvider} from 'openfin/_v2/api/interappbus/channel/provider';
-
 import {ContextHandler} from '../../src/provider/controller/ContextHandler';
 import {APIHandler} from '../../src/provider/APIHandler';
 import {AppWindow} from '../../src/provider/model/AppWindow';
@@ -20,8 +17,9 @@ const mockChannelHandler: jest.Mocked<ChannelHandler> = createMockChannelHandler
 const mockModel: jest.Mocked<Model> = createMockModel();
 const mockApiHandler: jest.Mocked<APIHandler<APIFromClientTopic>> = createMockApiHandler();
 
-const mockGetChannelMembers: jest.Mock<AppWindow[], [ContextChannel]> = mockChannelHandler.getChannelMembers as jest.Mock<AppWindow[], [ContextChannel]>;
-const mockDispatch: jest.Mock<Promise<any>, [Identity, string, any]> = mockApiHandler.dispatch as jest.Mock<Promise<any>, [Identity, string, any]>;
+const mockGetChannelMembers = mockChannelHandler.getChannelMembers;
+const mockGetWindowsListeningForContextsOnChannel = mockChannelHandler.getWindowsListeningForContextsOnChannel;
+const mockDispatch = mockApiHandler.dispatch;
 
 const mockWindows: AppWindow[] = [];
 
@@ -30,6 +28,9 @@ beforeEach(() => {
     mockWindows.length = 0;
 
     mockGetChannelMembers.mockReturnValue([]);
+    mockGetWindowsListeningForContextsOnChannel.mockReturnValue([]);
+    mockModel.expectWindowsForAllApps.mockResolvedValue([]);
+
     getterMock(mockModel, 'windows').mockReturnValue(mockWindows);
 
     contextHandler = new ContextHandler(mockApiHandler, mockChannelHandler, mockModel);
@@ -111,9 +112,7 @@ describe('When broadcasting a Context using ContextHandler', () => {
 
             sourceAppWindow.channel = channel;
 
-            setWindowListeningToChannel(sourceAppWindow, channel);
-            setWindowListeningToChannel(targetAppWindow1, channel);
-            setWindowListeningToChannel(targetAppWindow2, channel);
+            setWindowsListeningToChannel([sourceAppWindow, targetAppWindow1, targetAppWindow2], channel);
 
             await contextHandler.broadcast(testContext, sourceAppWindow);
 
@@ -142,9 +141,7 @@ describe('When broadcasting a Context using ContextHandler', () => {
             sourceAppWindow.channel = channel;
             mockGetChannelMembers.mockReturnValue([sourceAppWindow, targetAppWindow1, targetAppWindow2]);
 
-            setWindowListeningToChannel(sourceAppWindow, channel);
-            setWindowListeningToChannel(targetAppWindow1, channel);
-            setWindowListeningToChannel(targetAppWindow2, channel);
+            setWindowsListeningToChannel([sourceAppWindow, targetAppWindow1, targetAppWindow2], channel);
 
             await contextHandler.broadcast(testContext, sourceAppWindow);
 
@@ -201,7 +198,10 @@ function createCustomMockAppWindow(name: string, ready: boolean): jest.Mocked<Ap
     return mockWindow;
 }
 
-function setWindowListeningToChannel(appWindow: jest.Mocked<AppWindow>, channel: ContextChannel): void {
-    appWindow.hasChannelContextListener.mockImplementation((testChannel) => testChannel.id === channel.id);
-    appWindow.isReadyToReceiveContextOnChannel.mockImplementation(async (testChannel) => testChannel.id === channel.id);
+function setWindowsListeningToChannel(windows: jest.Mocked<AppWindow>[], channel: ContextChannel): void {
+    mockGetWindowsListeningForContextsOnChannel.mockImplementation((testChannel => testChannel.id === channel.id ? windows : []));
+
+    for (const window of windows) {
+        window.isReadyToReceiveContextOnChannel.mockImplementation(async (testChannel) => testChannel.id === channel.id);
+    }
 }

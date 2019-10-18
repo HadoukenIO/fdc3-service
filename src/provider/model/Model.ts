@@ -8,7 +8,7 @@ import {ChannelId, DEFAULT_CHANNEL_ID, AppIntent} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {SYSTEM_CHANNELS, Timeouts} from '../constants';
-import {withStrictTimeout, untilTrue, allowReject, untilSignal, asyncFilter} from '../utils/async';
+import {withStrictTimeout, untilTrue, allowReject, untilSignal, asyncFilter, asyncMap} from '../utils/async';
 import {Boxed} from '../utils/types';
 import {getId} from '../utils/getId';
 import {DeferredPromise} from '../common/DeferredPromise';
@@ -166,6 +166,24 @@ export class Model {
                 this.getOrCreateLiveApp(appInfo).then(liveApp => liveApp.maturePromise.then(() => [], () => []))
             ]);
         }
+    }
+
+    /**
+     * Returns all registered windows satisfying our predicate for all started apps, waiting for at least one window
+     * per app or until each app is mature
+     */
+    public async expectWindowsForAllApps(
+        syncPredicate: (window: AppWindow) => boolean,
+        asyncPredicate: (window: AppWindow) => Promise<boolean>
+    ): Promise<AppWindow[]> {
+        const apps = Object.values(this._liveAppsByUuid).filter(app => app.started);
+
+        const windows = await asyncMap(apps, async (app) => this.expectWindowsForApp(await app.getAppInfo(), syncPredicate, asyncPredicate));
+
+        return windows.reduce((acc, curr) => {
+            acc.push(...curr);
+            return acc;
+        }, [] as AppWindow[]);
     }
 
     public async getOrCreateLiveApp(appInfo: Application): Promise<LiveApp> {

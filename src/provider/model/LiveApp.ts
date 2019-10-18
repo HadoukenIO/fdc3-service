@@ -15,6 +15,7 @@ export class LiveApp {
     private readonly _maturePromise: Promise<void>;
 
     private _appInfo: Application | undefined = undefined;
+    private _started: boolean = false;
     private _mature: boolean = false;
 
     /**
@@ -30,6 +31,7 @@ export class LiveApp {
             const matureDeferredPromise = new DeferredPromise();
 
             startedPromise.then(() => {
+                this._started = true;
                 setTimeout(() => {
                     this._mature = true;
                     matureDeferredPromise.resolve();
@@ -49,6 +51,10 @@ export class LiveApp {
 
     public get appInfo(): Application | undefined {
         return this._appInfo;
+    }
+
+    public get started(): boolean {
+        return this._started;
     }
 
     public get mature(): boolean {
