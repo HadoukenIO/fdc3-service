@@ -5,7 +5,7 @@ import {Timeouts} from '../constants';
 import {AppWindow} from './AppWindow';
 
 /**
- * Represents a running appliction
+ * Represents a running application
  */
 export class LiveApp {
     private readonly _windowsById: Map<string, AppWindow> = new Map();
