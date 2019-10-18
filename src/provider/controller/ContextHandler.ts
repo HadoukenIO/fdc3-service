@@ -94,11 +94,9 @@ export class ContextHandler {
                         .filter(window => getId(window.identity) !== sourceId)
                         .filter(window => !memberWindows.includes(window))
                         .filter(window => window.channel.id === channel.id)
-                        .forEach(window => this.sendOnChannel(window, context, channel));
+                        .forEach(window => this.send(window, context));
                 });
-            });
 
-            app.getAppInfo().then((appInfo) => {
                 this._model.expectWindowsForApp(
                     appInfo,
                     (window: AppWindow) => window.hasChannelContextListener(channel),
