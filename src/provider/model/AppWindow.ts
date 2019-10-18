@@ -94,6 +94,7 @@ export abstract class AbstractAppWindow implements AppWindow {
 
     private readonly _onIntentListenerAdded: Signal<[IntentType]> = new Signal();
     private readonly _onContextListenerAdded: Signal<[]> = new Signal();
+    private readonly _onChannelContextListenerAdded: Signal<[ContextChannel]> = new Signal();
 
     constructor(identity: Identity, appInfo: Application, maturePromise: Promise<void>, channel: ContextChannel, appWindowNumber: number) {
         this._id = getId(identity);
@@ -163,6 +164,7 @@ export abstract class AbstractAppWindow implements AppWindow {
 
     public addChannelContextListener(channel: ContextChannel): void {
         this._channelContextListeners.add(channel.id);
+        this._onChannelContextListenerAdded.emit(channel);
     }
 
     public removeChannelContextListener(channel: ContextChannel): void {
@@ -221,6 +223,28 @@ export abstract class AbstractAppWindow implements AppWindow {
         const slot = this._onContextListenerAdded.add(() => {
             slot.remove();
             deferredPromise.resolve();
+        });
+
+        // App may be starting - give until app maturity to register a listener
+        return Promise.race([
+            this._maturePromise.catch(() => {}).then(() => false),
+            deferredPromise.promise.then(() => true)
+        ]);
+    }
+
+    public async isReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<boolean> {
+        if (this.hasChannelContextListener(channel)) {
+            // App has already registered the channel context listener
+            return true;
+        }
+
+        const deferredPromise = new DeferredPromise();
+
+        const slot = this._onChannelContextListenerAdded.add((addedChannel) => {
+            if (addedChannel.id === channel.id) {
+                slot.remove();
+                deferredPromise.resolve();
+            }
         });
 
         // App may be starting - give until app maturity to register a listener
