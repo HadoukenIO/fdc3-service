@@ -39,11 +39,11 @@ const fakeApp1: Application = createFakeApp({
     ],
     intents: [
         {
-            name: 'testIntent.StartChat',
+            name: 'StartChat',
             contexts: ['testContext.User'],
             customConfig: {}
         }, {
-            name: 'testIntent.SendEmail',
+            name: 'SendEmail',
             contexts: ['testContext.User'],
             customConfig: {}
         }
@@ -52,11 +52,11 @@ const fakeApp1: Application = createFakeApp({
 
 const fakeApp2: Application = createFakeApp({
     intents: [{
-        name: 'testIntent.StartChat',
+        name: 'StartChat',
         contexts: ['testContext.User', 'testContext.Bot'],
         customConfig: {}
     }, {
-        name: 'testIntent.ShowChart',
+        name: 'ShowChart',
         contexts: ['testContext.Instrument'],
         customConfig: {}
     }]

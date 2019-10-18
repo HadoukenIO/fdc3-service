@@ -39,7 +39,7 @@ the returned object lists all and only those apps which accept the intent', asyn
 
         test('When resolving an intent without a specific context, the returned object lists all \
 directory applications accept the intent regardless of their context specifications.', async () => {
-            const receivedAppIntents = await findIntent('test.ContextTestIntent');
+            const receivedAppIntents = await findIntent('ContextTestIntent');
             const expectedAppNames = ['test-app-1', 'test-app-3', 'test-app-4'];
             expect(extractSortedAppNames(receivedAppIntents)).toEqual(expectedAppNames);
         });
@@ -49,7 +49,7 @@ directory applications accept the intent with specifies the given context or no 
             const context = {
                 type: 'test.MatchingContext'
             };
-            const receivedAppIntents = await findIntent('test.ContextTestIntent', context);
+            const receivedAppIntents = await findIntent('ContextTestIntent', context);
             const expectedAppNames = ['test-app-1', 'test-app-4'];
 
             expect(extractSortedAppNames(receivedAppIntents)).toEqual(expectedAppNames);
@@ -81,7 +81,7 @@ the list of applications accept the intent does NOT include the app.', async () 
                     const context = {
                         type: 'test.MatchingContext'
                     };
-                    const receivedAppIntents = await findIntent('test.ContextTestIntent', context);
+                    const receivedAppIntents = await findIntent('ContextTestIntent', context);
 
                     expect(extractSortedAppNames(receivedAppIntents)).toEqual(['test-app-4']);
                 });

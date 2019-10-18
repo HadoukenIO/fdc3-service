@@ -21,7 +21,7 @@ const testAppWithUniqueIntent = testAppInDirectory4;
  * Intent that is only registered by a single app in the directory (`test-app-4`)
  */
 const uniqueIntent: Intent = {
-    type: 'test.IntentOnlyOnApp4',
+    type: 'IntentOnlyOnApp4',
     context: {type: 'test.IntentOnlyOnApp4Context'}
 };
 
@@ -37,7 +37,7 @@ const intentInManyApps: Intent = {
  * An intent not registered by any directory app, but ad-hoc apps may register it
  */
 const intentNotInDirectory: Intent = {
-    type: 'test.IntentNotInDirectory',
+    type: 'IntentNotInDirectory',
     context: {type: 'dummyContext'}
 };
 

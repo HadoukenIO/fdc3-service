@@ -17,7 +17,7 @@
     ],
     "intents": [
         {
-            "name": "test.IntentName",
+            "name": "IntentName",
             "displayName": "Test Intent",
             "contexts": ["test.IntentNameContext"]
         },
@@ -48,7 +48,7 @@
             "contexts": ["fdc3.instrument"]
         },
         {
-            "name": "test.ContextTestIntent",
+            "name": "ContextTestIntent",
             "contexts": ["test.MatchingContext"]
         }
     ]
@@ -130,7 +130,7 @@
             "contexts": ["fdc3.instrument"]
         },
         {
-            "name": "test.ContextTestIntent",
+            "name": "ContextTestIntent",
             "contexts": ["test.UnmatchingContext"]
         }
     ]
@@ -154,7 +154,7 @@
     ],
     "intents": [
         {
-            "name": "test.IntentOnlyOnApp4",
+            "name": "IntentOnlyOnApp4",
             "contexts": ["test.IntentOnlyOnApp4Context"]
         },
         {
@@ -174,7 +174,7 @@
             "contexts": ["fdc3.instrument"]
         },
         {
-            "name": "test.ContextTestIntent"
+            "name": "ContextTestIntent"
         }
     ]
 },
@@ -197,7 +197,7 @@
     ],
     "intents": [
         {
-            "name": "test.IntentNamePreregistered",
+            "name": "IntentNamePreregistered",
             "contexts": ["test.IntentNamePreregisteredContext"]
         },
         {
@@ -349,7 +349,7 @@
     ],
     "intents": [
         {
-            "name": "test.IntentOnlyOnTestAppNotFdc3",
+            "name": "IntentOnlyOnTestAppNotFdc3",
             "displayName": "Test Intent",
             "contexts": ["test.IntentOnlyOnTestAppNotFdc3Context"]
         }
