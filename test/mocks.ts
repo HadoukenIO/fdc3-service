@@ -102,6 +102,7 @@ export function createMockModel(): jest.Mocked<Model> {
     const model = new Model();
 
     assignMockGetter(model, 'windows');
+    assignMockGetter(model, 'apps');
 
     return model;
 }

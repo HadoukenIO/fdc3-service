@@ -13,9 +13,9 @@ let contextHandler: ContextHandler;
 
 const testContext = {type: 'test-context-payload'};
 
-const mockChannelHandler: jest.Mocked<ChannelHandler> = createMockChannelHandler();
-const mockModel: jest.Mocked<Model> = createMockModel();
-const mockApiHandler: jest.Mocked<APIHandler<APIFromClientTopic>> = createMockApiHandler();
+const mockChannelHandler = createMockChannelHandler();
+const mockModel = createMockModel();
+const mockApiHandler = createMockApiHandler();
 
 const mockGetChannelMembers = mockChannelHandler.getChannelMembers;
 const mockGetWindowsListeningForContextsOnChannel = mockChannelHandler.getWindowsListeningForContextsOnChannel;
@@ -32,6 +32,7 @@ beforeEach(() => {
     mockModel.expectWindowsForAllApps.mockResolvedValue([]);
 
     getterMock(mockModel, 'windows').mockReturnValue(mockWindows);
+    getterMock(mockModel, 'apps').mockReturnValue([]);
 
     contextHandler = new ContextHandler(mockApiHandler, mockChannelHandler, mockModel);
 });

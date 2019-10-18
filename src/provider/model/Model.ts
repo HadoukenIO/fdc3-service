@@ -81,6 +81,10 @@ export class Model {
         }
     }
 
+    public get apps(): LiveApp[] {
+        return Object.values(this._liveAppsByUuid);
+    }
+
     public get windows(): AppWindow[] {
         return Object.values(this._windowsById);
     }
