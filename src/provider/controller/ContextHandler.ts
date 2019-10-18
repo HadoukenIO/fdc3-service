@@ -86,6 +86,21 @@ export class ContextHandler {
             app.getAppInfo().then((appInfo) => {
                 this._model.expectWindowsForApp(
                     appInfo,
+                    (window: AppWindow) => window.hasContextListener(),
+                    async (window: AppWindow) => window.isReadyToReceiveContext()
+                ).then((windows) => {
+                    windows
+                        // Sender window should not receive its own broadcasts
+                        .filter(window => getId(window.identity) !== sourceId)
+                        .filter(window => !memberWindows.includes(window))
+                        .filter(window => window.channel.id === channel.id)
+                        .forEach(window => this.sendOnChannel(window, context, channel));
+                });
+            });
+
+            app.getAppInfo().then((appInfo) => {
+                this._model.expectWindowsForApp(
+                    appInfo,
                     (window: AppWindow) => window.hasChannelContextListener(channel),
                     async (window: AppWindow) => window.isReadyToReceiveContextOnChannel(channel)
                 ).then((windows) => {
