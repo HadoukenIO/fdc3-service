@@ -7,47 +7,32 @@ import {ContextHandler} from '../../src/provider/controller/ContextHandler';
 import {APIHandler} from '../../src/provider/APIHandler';
 import {AppWindow} from '../../src/provider/model/AppWindow';
 import {APIFromClientTopic, APIToClientTopic, ReceiveContextPayload} from '../../src/client/internal';
-import {createMockAppWindow, createMockChannel} from '../mocks';
+import {createMockAppWindow, createMockChannel, createMockChannelHandler, createMockModel, createMockApiHandler, getterMock} from '../mocks';
 import {ChannelHandler} from '../../src/provider/controller/ChannelHandler';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
-
-jest.mock('../../src/provider/controller/ChannelHandler');
-
-const testContext = {type: 'test-context-payload'};
-const mockDispatch = jest.fn<Promise<any>, [Identity, string, any]>();
+import {Model} from '../../src/provider/model/Model';
 
 let contextHandler: ContextHandler;
 
-let mockChannelHandler: ChannelHandler;
-let mockApiHandler: APIHandler<APIFromClientTopic>;
+const testContext = {type: 'test-context-payload'};
 
-let mockGetChannelMembers: jest.Mock<AppWindow[], [ContextChannel]>;
-let mockGetWindowsListeningToChannel: jest.Mock<AppWindow[], [ContextChannel]>;
+const mockChannelHandler: jest.Mocked<ChannelHandler> = createMockChannelHandler();
+const mockModel: jest.Mocked<Model> = createMockModel();
+const mockApiHandler: jest.Mocked<APIHandler<APIFromClientTopic>> = createMockApiHandler();
 
-function createCustomMockAppWindow(name: string, ready: boolean): AppWindow {
-    return createMockAppWindow({
-        identity: {uuid: 'test', name},
-        isReadyToReceiveContext: jest.fn().mockResolvedValue(ready)
-    });
-}
+const mockGetChannelMembers: jest.Mock<AppWindow[], [ContextChannel]> = mockChannelHandler.getChannelMembers as jest.Mock<AppWindow[], [ContextChannel]>;
+const mockDispatch: jest.Mock<Promise<any>, [Identity, string, any]> = mockApiHandler.dispatch as jest.Mock<Promise<any>, [Identity, string, any]>;
+
+const mockWindows: AppWindow[] = [];
 
 beforeEach(() => {
     jest.resetAllMocks();
-
-    mockChannelHandler = new ChannelHandler(null!);
-    // Grab getChannelMembers and getWindowsListeningToChannel so we can control their result for each test
-    mockGetChannelMembers = mockChannelHandler.getChannelMembers as jest.Mock<AppWindow[], [ContextChannel]>;
-    mockGetWindowsListeningToChannel = mockChannelHandler.getWindowsListeningForContextsOnChannel as jest.Mock<AppWindow[], [ContextChannel]>;
+    mockWindows.length = 0;
 
     mockGetChannelMembers.mockReturnValue([]);
-    mockGetWindowsListeningToChannel.mockReturnValue([]);
+    getterMock(mockModel, 'windows').mockReturnValue(mockWindows);
 
-    mockApiHandler = new APIHandler<APIFromClientTopic>();
-    // Set up _providerChannel on our mock APIHandler so we can spy on it
-    mockDispatch.mockResolvedValue(undefined);
-    mockApiHandler['_providerChannel'] = {dispatch: mockDispatch} as unknown as ChannelProvider;
-
-    contextHandler = new ContextHandler(mockChannelHandler, mockApiHandler);
+    contextHandler = new ContextHandler(mockApiHandler, mockChannelHandler, mockModel);
 });
 
 describe('When sending a Context using ContextHandler', () => {
@@ -122,8 +107,13 @@ describe('When broadcasting a Context using ContextHandler', () => {
             const targetAppWindow1 = createCustomMockAppWindow('target-1', true);
             const targetAppWindow2 = createCustomMockAppWindow('target-2', true);
 
-            sourceAppWindow.channel = createMockChannel({id: 'source-channel'});
-            mockGetWindowsListeningToChannel.mockReturnValue([sourceAppWindow, targetAppWindow1, targetAppWindow2]);
+            const channel = createMockChannel({id: 'source-channel'});
+
+            sourceAppWindow.channel = channel;
+
+            setWindowListeningToChannel(sourceAppWindow, channel);
+            setWindowListeningToChannel(targetAppWindow1, channel);
+            setWindowListeningToChannel(targetAppWindow2, channel);
 
             await contextHandler.broadcast(testContext, sourceAppWindow);
 
@@ -147,9 +137,14 @@ describe('When broadcasting a Context using ContextHandler', () => {
             const targetAppWindow2 = createCustomMockAppWindow('target-2', true);
             const expectedPayload: ReceiveContextPayload = {context: testContext};
 
-            sourceAppWindow.channel = createMockChannel({id: 'source-channel'});
+            const channel = createMockChannel({id: 'source-channel'});
+
+            sourceAppWindow.channel = channel;
             mockGetChannelMembers.mockReturnValue([sourceAppWindow, targetAppWindow1, targetAppWindow2]);
-            mockGetWindowsListeningToChannel.mockReturnValue([sourceAppWindow, targetAppWindow1, targetAppWindow2]);
+
+            setWindowListeningToChannel(sourceAppWindow, channel);
+            setWindowListeningToChannel(targetAppWindow1, channel);
+            setWindowListeningToChannel(targetAppWindow2, channel);
 
             await contextHandler.broadcast(testContext, sourceAppWindow);
 
@@ -194,3 +189,19 @@ describe('When broadcasting a Context using ContextHandler', () => {
         expect(mockDispatch.mock.calls).not.toContainEqual([notReadyAppWindow2.identity, APIToClientTopic.RECEIVE_CONTEXT, expectedPayload]);
     });
 });
+
+function createCustomMockAppWindow(name: string, ready: boolean): jest.Mocked<AppWindow> {
+    const mockWindow = createMockAppWindow({
+        identity: {uuid: 'test', name},
+        isReadyToReceiveContext: jest.fn().mockResolvedValue(ready)
+    });
+
+    mockWindows.push(mockWindow);
+
+    return mockWindow;
+}
+
+function setWindowListeningToChannel(appWindow: jest.Mocked<AppWindow>, channel: ContextChannel): void {
+    appWindow.hasChannelContextListener.mockImplementation((testChannel) => testChannel.id === channel.id);
+    appWindow.isReadyToReceiveContextOnChannel.mockImplementation(async (testChannel) => testChannel.id === channel.id);
+}

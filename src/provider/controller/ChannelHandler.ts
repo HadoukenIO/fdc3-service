@@ -50,20 +50,12 @@ export class ChannelHandler {
         return this._model.getChannel(channelId)!;
     }
 
-    public getWindowsListeningToChannel(channel: ContextChannel): AppWindow[] {
-        return this._model.windows.filter(window => window.hasChannelContextListener(channel));
-    }
-
     public getChannelContext(channel: ContextChannel): Context | null {
         return channel.storedContext;
     }
 
     public getChannelMembers(channel: ContextChannel): AppWindow[] {
         return this._model.windows.filter(window => window.channel === channel);
-    }
-
-    public getWindowsListeningForContextsOnChannel(channel: ContextChannel): AppWindow[] {
-        return this._model.windows.filter(window => window.hasChannelContextListener(channel));
     }
 
     public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: ChannelEvents['type']): AppWindow[] {

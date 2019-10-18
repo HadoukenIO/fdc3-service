@@ -8,20 +8,24 @@ import {APIFromClientTopic, APIToClientTopic, ChannelReceiveContextPayload, Rece
 import {Inject} from '../common/Injectables';
 import {getId} from '../utils/getId';
 import {ContextChannel} from '../model/ContextChannel';
+import {Model} from '../model/Model';
 
 import {ChannelHandler} from './ChannelHandler';
 
 @injectable()
 export class ContextHandler {
-    private readonly _channelHandler: ChannelHandler;
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
+    private readonly _channelHandler: ChannelHandler;
+    private readonly _model: Model;
 
     constructor(
+        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
         @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
-        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>
+        @inject(Inject.MODEL) model: Model,
     ) {
-        this._channelHandler = channelHandler;
         this._apiHandler = apiHandler;
+        this._channelHandler = channelHandler;
+        this._model = model;
     }
 
     /**
@@ -60,7 +64,6 @@ export class ContextHandler {
      */
     public async broadcastOnChannel(context: Context, source: AppWindow, channel: ContextChannel): Promise<void> {
         const memberWindows = this._channelHandler.getChannelMembers(channel);
-        const listeningWindows = this._channelHandler.getWindowsListeningForContextsOnChannel(channel);
 
         this._channelHandler.setLastBroadcastOnChannel(channel, context);
 
@@ -73,7 +76,7 @@ export class ContextHandler {
             .filter(window => getId(window.identity) !== sourceId)
             .map(window => this.send(window, context)));
 
-        promises.push(...listeningWindows
+        promises.push(...this._model.windows
             // Sender window should not receive its own broadcasts
             .filter(window => getId(window.identity) !== sourceId)
             .map(window => this.sendOnChannel(window, context, channel)));
@@ -90,7 +93,7 @@ export class ContextHandler {
     private async sendOnChannel(window: AppWindow, context: Context, channel: ContextChannel): Promise<void> {
         const payload: ChannelReceiveContextPayload = {channel: channel.id, context};
 
-        if (await window.hasChannelContextListener(channel)) {
+        if (await window.isReadyToReceiveContextOnChannel(channel)) {
             await this._apiHandler.dispatch(window.identity, APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, payload);
         }
     }

@@ -10,6 +10,8 @@ import {AppDirectory} from '../src/provider/model/AppDirectory';
 import {APIHandler} from '../src/provider/APIHandler';
 import {getId} from '../src/provider/utils/getId';
 import {LiveApp} from '../src/provider/model/LiveApp';
+import {Model} from '../src/provider/model/Model';
+import {ChannelHandler} from '../src/provider/controller/ChannelHandler';
 
 import {createFakeIdentity, createFakeApp} from './demo/utils/fakes';
 
@@ -79,11 +81,6 @@ export function createMockEnvironmnent(options: Partial<jest.Mocked<Environment>
     };
 }
 
-export function createMockAppDirectory(): jest.Mocked<AppDirectory> {
-    const {AppDirectory} = jest.requireMock('../src/provider/model/AppDirectory');
-    return new AppDirectory();
-}
-
 export function createMockApiHandler(): jest.Mocked<APIHandler<APIFromClientTopic>> {
     const {APIHandler} = jest.requireMock('../src/provider/APIHandler');
 
@@ -93,6 +90,25 @@ export function createMockApiHandler(): jest.Mocked<APIHandler<APIFromClientTopi
     assignMockGetter(apiHandler, 'onDisconnection');
 
     return apiHandler;
+}
+
+export function createMockAppDirectory(): jest.Mocked<AppDirectory> {
+    const {AppDirectory} = jest.requireMock('../src/provider/model/AppDirectory');
+    return new AppDirectory();
+}
+
+export function createMockModel(): jest.Mocked<Model> {
+    const {Model} = jest.requireMock('../src/provider/model/Model');
+    const model = new Model();
+
+    assignMockGetter(model, 'windows');
+
+    return model;
+}
+
+export function createMockChannelHandler(): jest.Mocked<ChannelHandler> {
+    const {ChannelHandler} = jest.requireMock('../src/provider/controller/ChannelHandler');
+    return new ChannelHandler();
 }
 
 /**

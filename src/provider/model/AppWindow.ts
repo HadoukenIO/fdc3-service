@@ -5,6 +5,7 @@ import {Application, IntentType, ChannelId} from '../../client/main';
 import {DeferredPromise} from '../common/DeferredPromise';
 import {Events, ChannelEvents} from '../../client/internal';
 import {getId} from '../utils/getId';
+import {untilTrue} from '../utils/async';
 
 import {ContextChannel} from './ContextChannel';
 
@@ -193,66 +194,38 @@ export abstract class AbstractAppWindow implements AppWindow {
     }
 
     public async isReadyToReceiveIntent(intent: IntentType): Promise<boolean> {
-        if (this.hasIntentListener(intent)) {
-            // App has already registered the intent listener
-            return true;
-        }
-
-        const deferredPromise = new DeferredPromise();
-
-        const slot = this._onIntentListenerAdded.add((addedIntent) => {
-            if (addedIntent === intent) {
-                slot.remove();
-                deferredPromise.resolve();
-            }
-        });
-
         // App may be starting - give until app maturity to register a listener
         return Promise.race([
-            this._maturePromise.catch(() => {}).then(() => false),
-            deferredPromise.promise.then(() => true)
+            this._maturePromise.then(() => false, () => false),
+            untilTrue(
+                this._onIntentListenerAdded,
+                () => this.hasIntentListener(intent),
+                this._maturePromise
+            ).then(() => true, () => false)
         ]);
     }
 
     public async isReadyToReceiveContext(): Promise<boolean> {
-        if (this.hasContextListener()) {
-            // App has already registered the context listener
-            return true;
-        }
-
-        const deferredPromise = new DeferredPromise();
-
-        const slot = this._onContextListenerAdded.add(() => {
-            slot.remove();
-            deferredPromise.resolve();
-        });
-
         // App may be starting - give until app maturity to register a listener
         return Promise.race([
-            this._maturePromise.catch(() => {}).then(() => false),
-            deferredPromise.promise.then(() => true)
+            this._maturePromise.then(() => false, () => false),
+            untilTrue(
+                this._onContextListenerAdded,
+                () => this.hasContextListener(),
+                this._maturePromise
+            ).then(() => true, () => false)
         ]);
     }
 
     public async isReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<boolean> {
-        if (this.hasChannelContextListener(channel)) {
-            // App has already registered the channel context listener
-            return true;
-        }
-
-        const deferredPromise = new DeferredPromise();
-
-        const slot = this._onChannelContextListenerAdded.add((addedChannel) => {
-            if (addedChannel.id === channel.id) {
-                slot.remove();
-                deferredPromise.resolve();
-            }
-        });
-
         // App may be starting - give until app maturity to register a listener
         return Promise.race([
-            this._maturePromise.catch(() => {}).then(() => false),
-            deferredPromise.promise.then(() => true)
+            this._maturePromise.then(() => false, () => false),
+            untilTrue(
+                this._onChannelContextListenerAdded,
+                () => this.hasChannelContextListener(channel),
+                this._maturePromise
+            ).then(() => true, () => false)
         ]);
     }
 
