@@ -81,7 +81,7 @@ export class ContextHandler {
             .filter(window => getId(window.identity) !== sourceId)
             .map(window => this.sendOnChannel(window, context, channel)));
 
-        // We intentionally don't wait any of this. These dispatches are not important enough to block the caller
+        // We intentionally don't await any of this, as these dispatches are not important enough to block the caller
         for (const app of this._model.apps.filter((app: LiveApp) => app.started)) {
             app.getAppInfo().then((appInfo) => {
                 this._model.expectWindowsForApp(
