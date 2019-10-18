@@ -76,6 +76,8 @@ export class ContextHandler {
             .filter(window => getId(window.identity) !== sourceId)
             .map(window => this.send(window, context)));
 
+        const listeningWindows = this._model.expectWindows();
+
         promises.push(...this._model.windows
             // Sender window should not receive its own broadcasts
             .filter(window => getId(window.identity) !== sourceId)

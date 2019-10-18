@@ -163,7 +163,7 @@ export class Model {
             // Return a window once we have one, or timeout when the application is mature
             return Promise.race([
                 deferredPromise.promise.then((result) => [result]),
-                this.getOrCreateLiveApp(appInfo).then(liveApp => liveApp.maturePromise.then(() => []))
+                this.getOrCreateLiveApp(appInfo).then(liveApp => liveApp.maturePromise.then(() => [], () => []))
             ]);
         }
     }
