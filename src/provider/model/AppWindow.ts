@@ -5,6 +5,7 @@ import {Application, IntentType, ChannelId} from '../../client/main';
 import {DeferredPromise} from '../common/DeferredPromise';
 import {Events, ChannelEvents} from '../../client/internal';
 import {getId} from '../utils/getId';
+import {untilTrue} from '../utils/async';
 
 import {ContextChannel} from './ContextChannel';
 
@@ -64,6 +65,8 @@ export interface AppWindow {
 
     isReadyToReceiveContext(): Promise<boolean>;
 
+    isReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<boolean>;
+
     removeAllListeners(): void;
 }
 
@@ -94,6 +97,7 @@ export abstract class AbstractAppWindow implements AppWindow {
 
     private readonly _onIntentListenerAdded: Signal<[IntentType]> = new Signal();
     private readonly _onContextListenerAdded: Signal<[]> = new Signal();
+    private readonly _onChannelContextListenerAdded: Signal<[ContextChannel]> = new Signal();
 
     constructor(identity: Identity, appInfo: Application, maturePromise: Promise<void>, channel: ContextChannel, appWindowNumber: number) {
         this._id = getId(identity);
@@ -163,6 +167,7 @@ export abstract class AbstractAppWindow implements AppWindow {
 
     public addChannelContextListener(channel: ContextChannel): void {
         this._channelContextListeners.add(channel.id);
+        this._onChannelContextListenerAdded.emit(channel);
     }
 
     public removeChannelContextListener(channel: ContextChannel): void {
@@ -189,45 +194,15 @@ export abstract class AbstractAppWindow implements AppWindow {
     }
 
     public async isReadyToReceiveIntent(intent: IntentType): Promise<boolean> {
-        if (this.hasIntentListener(intent)) {
-            // App has already registered the intent listener
-            return true;
-        }
-
-        const deferredPromise = new DeferredPromise();
-
-        const slot = this._onIntentListenerAdded.add((addedIntent) => {
-            if (addedIntent === intent) {
-                slot.remove();
-                deferredPromise.resolve();
-            }
-        });
-
-        // App may be starting - give until app maturity to register a listener
-        return Promise.race([
-            this._maturePromise.catch(() => {}).then(() => false),
-            deferredPromise.promise.then(() => true)
-        ]);
+        return this.isListenerReady(this._onIntentListenerAdded, () => this.hasIntentListener(intent));
     }
 
     public async isReadyToReceiveContext(): Promise<boolean> {
-        if (this.hasContextListener()) {
-            // App has already registered the context listener
-            return true;
-        }
+        return this.isListenerReady(this._onContextListenerAdded, () => this.hasContextListener());
+    }
 
-        const deferredPromise = new DeferredPromise();
-
-        const slot = this._onContextListenerAdded.add(() => {
-            slot.remove();
-            deferredPromise.resolve();
-        });
-
-        // App may be starting - give until app maturity to register a listener
-        return Promise.race([
-            this._maturePromise.catch(() => {}).then(() => false),
-            deferredPromise.promise.then(() => true)
-        ]);
+    public async isReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<boolean> {
+        return this.isListenerReady(this._onChannelContextListenerAdded, () => this.hasChannelContextListener(channel));
     }
 
     public removeAllListeners(): void {
@@ -235,5 +210,12 @@ export abstract class AbstractAppWindow implements AppWindow {
         this._channelEventListeners.clear();
         this._intentListeners.clear();
         this._contextListener = false;
+    }
+
+    private isListenerReady<A extends any[]>(listenerAddedSignal: Signal<A>, hasListenerPredicate: () => boolean): Promise<boolean> {
+        return Promise.race([
+            this._maturePromise.then(() => false, () => false),
+            untilTrue(listenerAddedSignal, hasListenerPredicate, this._maturePromise).then(() => true, () => false)
+        ]);
     }
 }
