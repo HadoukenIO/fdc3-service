@@ -64,6 +64,8 @@ export interface AppWindow {
 
     isReadyToReceiveContext(): Promise<boolean>;
 
+    isReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<boolean>;
+
     removeAllListeners(): void;
 }
 
