@@ -31,12 +31,10 @@ export class ContextHandler {
      */
     public async send(window: AppWindow, context: Context): Promise<void> {
         const payload: ReceiveContextPayload = {context};
-        if (await window.isReadyToReceiveContext()) {
+        return window.waitForReadyToReceiveContext().then(() => {
             // TODO: Make sure this will not cause problems if it never returns [SERVICE-555]
             return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload);
-        } else {
-            return;
-        }
+        }, () => {});
     }
 
     /**

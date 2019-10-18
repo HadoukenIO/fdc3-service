@@ -41,8 +41,9 @@ export function createMockAppWindow(options: Partial<jest.Mocked<AppWindow>> = {
         removeChannelEventListener: jest.fn<void, [ContextChannel, ChannelEvents['type']]>(),
         bringToFront: jest.fn<Promise<void>, []>(),
         focus: jest.fn<Promise<void>, []>(),
-        isReadyToReceiveIntent: jest.fn<Promise<boolean>, [IntentType]>(),
-        isReadyToReceiveContext: jest.fn<Promise<boolean>, []>(),
+        waitForReadyToReceiveIntent: jest.fn<Promise<void>, [IntentType]>(),
+        waitForReadyToReceiveContext: jest.fn<Promise<void>, []>(),
+        waitForReadyToReceiveContextOnChannel: jest.fn<Promise<void>, [ContextChannel]>(),
         removeAllListeners: jest.fn<void, []>(),
         // Apply any custom overrides
         ...options

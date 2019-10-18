@@ -61,11 +61,11 @@ export interface AppWindow {
 
     focus(): Promise<void>;
 
-    isReadyToReceiveIntent(intent: IntentType): Promise<boolean>;
+    waitForReadyToReceiveIntent(intent: IntentType): Promise<void>;
 
-    isReadyToReceiveContext(): Promise<boolean>;
+    waitForReadyToReceiveContext(): Promise<void>;
 
-    isReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<boolean>;
+    waitForReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<void>;
 
     removeAllListeners(): void;
 }
@@ -193,16 +193,16 @@ export abstract class AbstractAppWindow implements AppWindow {
         }
     }
 
-    public async isReadyToReceiveIntent(intent: IntentType): Promise<boolean> {
-        return this.isListenerReady(this._onIntentListenerAdded, () => this.hasIntentListener(intent));
+    public async waitForReadyToReceiveIntent(intent: IntentType): Promise<void> {
+        return this.waitForListener(this._onIntentListenerAdded, () => this.hasIntentListener(intent));
     }
 
-    public async isReadyToReceiveContext(): Promise<boolean> {
-        return this.isListenerReady(this._onContextListenerAdded, () => this.hasContextListener());
+    public async waitForReadyToReceiveContext(): Promise<void> {
+        return this.waitForListener(this._onContextListenerAdded, () => this.hasContextListener());
     }
 
-    public async isReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<boolean> {
-        return this.isListenerReady(this._onChannelContextListenerAdded, () => this.hasChannelContextListener(channel));
+    public async waitForReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<void> {
+        return this.waitForListener(this._onChannelContextListenerAdded, () => this.hasChannelContextListener(channel));
     }
 
     public removeAllListeners(): void {
@@ -212,10 +212,10 @@ export abstract class AbstractAppWindow implements AppWindow {
         this._contextListener = false;
     }
 
-    private isListenerReady<A extends any[]>(listenerAddedSignal: Signal<A>, hasListenerPredicate: () => boolean): Promise<boolean> {
+    private waitForListener<A extends any[]>(listenerAddedSignal: Signal<A>, hasListenerPredicate: () => boolean): Promise<void> {
         return Promise.race([
-            this._maturePromise.then(() => false, () => false),
-            untilTrue(listenerAddedSignal, hasListenerPredicate, this._maturePromise).then(() => true, () => false)
+            this._maturePromise.then(() => Promise.reject(new Error('Timeout waiting for listener'))),
+            untilTrue(listenerAddedSignal, hasListenerPredicate, this._maturePromise)
         ]);
     }
 }

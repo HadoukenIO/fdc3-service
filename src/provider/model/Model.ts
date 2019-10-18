@@ -116,8 +116,8 @@ export class Model {
      */
     public async expectWindowsForApp(
         appInfo: Application,
-        syncPredicate: (window: AppWindow) => boolean,
-        asyncPredicate: (window: AppWindow) => Promise<boolean>
+        windowReadyNow: (window: AppWindow) => boolean,
+        waitForWindowReady: (window: AppWindow) => Promise<void>
     ): Promise<AppWindow[]> {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
         const windows = this._liveAppsByUuid[uuid] ? this._liveAppsByUuid[uuid].windows : [];
@@ -126,7 +126,7 @@ export class Model {
 
         // Find any windows that immediately satisfy our predicate
         for (const window of windows) {
-            if (syncPredicate(window)) {
+            if (windowReadyNow(window)) {
                 result.push(window);
             }
         }
@@ -141,30 +141,27 @@ export class Model {
             // Apply the async predicate to any incoming windows
             const slot = this._onWindowRegisteredInternal.add((window) => {
                 if (window.appInfo.appId === appInfo.appId) {
-                    asyncPredicate(window).then((matching) => {
-                        if (matching) {
-                            slot.remove();
-                            deferredPromise.resolve(window);
-                        }
-                    });
+                    waitForWindowReady(window).then(() => {
+                        deferredPromise.resolve(window);
+                    }, () => {});
                 }
             });
 
             // Apply the async predicate to any existing windows
             for (const window of windows) {
-                asyncPredicate(window).then((matching) => {
-                    if (matching) {
-                        slot.remove();
-                        deferredPromise.resolve(window);
-                    }
-                });
+                waitForWindowReady(window).then(() => {
+                    deferredPromise.resolve(window);
+                }, () => {});
             }
 
             // Return a window once we have one, or timeout when the application is mature
             return Promise.race([
                 deferredPromise.promise.then((result) => [result]),
                 this.getOrCreateLiveApp(appInfo).then(liveApp => liveApp.maturePromise.then(() => [], () => []))
-            ]);
+            ]).then((result) => {
+                slot.remove();
+                return result;
+            });
         }
     }
 

@@ -24,10 +24,10 @@ let mockApiHandler: APIHandler<APIFromClientTopic>;
 let mockGetChannelMembers: jest.Mock<AppWindow[], [ContextChannel]>;
 let mockGetWindowsListeningToChannel: jest.Mock<AppWindow[], [ContextChannel]>;
 
-function createCustomMockAppWindow(name: string, ready: boolean): AppWindow {
+function createCustomMockAppWindow(name: string, listensForContext: boolean): AppWindow {
     return createMockAppWindow({
         identity: {uuid: 'test', name},
-        isReadyToReceiveContext: jest.fn().mockResolvedValue(ready)
+        waitForReadyToReceiveContext: listensForContext ? jest.fn().mockResolvedValue(undefined) : jest.fn().mockRejectedValue(undefined)
     });
 }
 
