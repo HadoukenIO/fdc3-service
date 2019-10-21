@@ -192,21 +192,22 @@ describe('When adding a context listener to a channel', () => {
         const broadcastingChannel = await fdc3Remote.getChannelById(broadcastingApp, 'orange');
         const listeningChannel = await fdc3Remote.getChannelById(listeningApp, 'orange');
 
+        // Set up our listener
+        const listener = await listeningChannel.addContextListener();
+
         // Set up a cached context in our system channel
         await broadcastingChannel.join();
         await broadcastingChannel.broadcast(testContext);
-        // Check the context had been cached
+        // Check the context has been cached and received as expected
         await expect(broadcastingChannel.getCurrentContext()).resolves.toEqual(testContext);
         await expect(listeningChannel.getCurrentContext()).resolves.toEqual(testContext);
-
-        // Set up our listener
-        const listener = await listeningChannel.addContextListener();
+        await expect(listener.getReceivedContexts()).resolves.toEqual([testContext]);
 
         // Have our listening window join our system channel
         await listeningChannel.join();
 
-        // Check no context is received, contrary to 'flat' API behaviour
-        await expect(listener.getReceivedContexts()).resolves.toEqual([]);
+        // Check no additional context is received, contrary to 'flat' API behaviour
+        await expect(listener.getReceivedContexts()).resolves.toEqual([testContext]);
     });
 });
 
