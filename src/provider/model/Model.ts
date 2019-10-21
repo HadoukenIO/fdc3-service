@@ -167,7 +167,7 @@ export class Model {
                 return result;
             });
         }
-    } 
+    }
 
     public async getOrCreateLiveApp(appInfo: Application): Promise<LiveApp> {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
