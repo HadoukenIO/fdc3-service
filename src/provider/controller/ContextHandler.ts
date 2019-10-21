@@ -95,7 +95,7 @@ export class ContextHandler {
                         .forEach(window => this.send(window, context));
                 });
 
-                /*this._model.expectWindowsForApp(
+                this._model.expectWindowsForApp(
                     appInfo,
                     (window: AppWindow) => window.hasChannelContextListener(channel),
                     async (window: AppWindow) => window.waitForReadyToReceiveContextOnChannel(channel)
@@ -104,7 +104,7 @@ export class ContextHandler {
                         .filter(notSender)
                         .filter(window => !listeningWindows.includes(window))
                         .forEach(window => this.sendOnChannel(window, context, channel));
-                });*/
+                });
             });
         }
 

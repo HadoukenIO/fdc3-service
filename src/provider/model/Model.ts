@@ -316,13 +316,19 @@ export class Model {
     }
 
     private onApplicationClosed(identity: Identity): void {
-        delete this._liveAppsByUuid[identity.uuid];
+        const {uuid} = identity;
+        const app = this._liveAppsByUuid[uuid];
+
+        if (app) {
+            app.setClosed();
+            delete this._liveAppsByUuid[identity.uuid];
+        }
     }
 
     private onWindowCreated(identity: Identity): void {
         const expectedWindow = this.getOrCreateExpectedWindow(identity);
 
-        const uuid = identity.uuid;
+        const {uuid} = identity;
         const liveApp = this._liveAppsByUuid[uuid];
         this._liveAppsByUuid[uuid] = liveApp;
 
@@ -353,12 +359,14 @@ export class Model {
 
     private async onApiHandlerConnection(identity: Identity): Promise<void> {
         if (await this._environment.getEntityType(identity) === EntityType.EXTERNAL_CONNECTION) {
+            const {uuid} = identity;
+
             // Any connections to the service from adapters should be immediately registered
             const appInfo = await this._environment.inferApplication(identity);
             const liveApp = new LiveApp(Promise.resolve());
 
             liveApp.setAppInfo(appInfo);
-            this._liveAppsByUuid[identity.uuid] = liveApp;
+            this._liveAppsByUuid[uuid] = liveApp;
 
             await this.registerWindow(liveApp, identity);
         }

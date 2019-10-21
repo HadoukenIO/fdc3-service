@@ -213,9 +213,8 @@ export abstract class AbstractAppWindow implements AppWindow {
     }
 
     private waitForListener<A extends any[]>(listenerAddedSignal: Signal<A>, hasListenerPredicate: () => boolean): Promise<void> {
-        return Promise.race([
-            this._maturePromise.then(() => Promise.reject(new Error('Timeout waiting for listener'))),
-            untilTrue(listenerAddedSignal, hasListenerPredicate, this._maturePromise)
-        ]);
+        const rejectOnMaturePromise = this._maturePromise.then(() => Promise.reject(new Error('Timeout waiting for listener')));
+
+        return untilTrue(listenerAddedSignal, hasListenerPredicate, rejectOnMaturePromise);
     }
 }

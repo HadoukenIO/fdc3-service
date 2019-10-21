@@ -14,6 +14,8 @@ export class LiveApp {
     private readonly _startedPromise: Promise<void>;
     private readonly _maturePromise: Promise<void>;
 
+    private readonly _matureDeferredPromise: DeferredPromise<void> | undefined;
+
     private _appInfo: Application | undefined = undefined;
     private _started: boolean = false;
     private _mature: boolean = false;
@@ -28,17 +30,20 @@ export class LiveApp {
         if (startedPromise) {
             this._startedPromise = startedPromise;
 
-            const matureDeferredPromise = new DeferredPromise();
+            this._matureDeferredPromise = new DeferredPromise();
 
             startedPromise.then(() => {
                 this._started = true;
                 setTimeout(() => {
                     this._mature = true;
-                    matureDeferredPromise.resolve();
+                    this._matureDeferredPromise!.resolve();
                 }, Timeouts.APP_MATURITY);
+            }, () => {
+                this._appInfoDeferredPromise.reject(new Error('App failed to start'));
+                this._matureDeferredPromise!.reject(new Error('App failed to start'));
             });
 
-            this._maturePromise = matureDeferredPromise.promise;
+            this._maturePromise = this._matureDeferredPromise.promise;
         } else {
             this._startedPromise = Promise.resolve();
             this._maturePromise = Promise.resolve();
@@ -86,5 +91,16 @@ export class LiveApp {
 
     public removeWindow(window: AppWindow): void {
         this._windowsById.delete(window.id);
+    }
+
+    public hasWindow(window: AppWindow): boolean {
+        return this._windowsById.has(window.id);
+    }
+
+    public setClosed(): void {
+        this._appInfoDeferredPromise.reject(new Error('App closed before appInfo set'));
+        if (this._matureDeferredPromise) {
+            this._matureDeferredPromise.reject(new Error('App closed before mature'));
+        }
     }
 }
