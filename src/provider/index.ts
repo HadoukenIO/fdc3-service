@@ -128,7 +128,7 @@ export class Main {
         if (windows.length > 0) {
             windows.sort((a, b) => a.appWindowNumber - b.appWindowNumber);
 
-            const bringToFrontPromise = Promise.all(windows.map(window => window.bringToFront()));
+            const bringToFrontPromise = Promise.all(windows.map((window) => window.bringToFront()));
             const focusPromise = bringToFrontPromise.then(() => windows[windows.length - 1].focus());
 
             promises.push(focusPromise);
@@ -143,7 +143,7 @@ export class Main {
             );
 
             const sendContextPromise = windowsPromise.then((windows) => {
-                return Promise.all(windows.map(window => this._contextHandler.send(window, context)));
+                return Promise.all(windows.map((window) => this._contextHandler.send(window, context)));
             }).then(() => {});
 
             promises.push(sendContextPromise);
