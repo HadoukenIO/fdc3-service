@@ -129,9 +129,7 @@ export class Main {
             windows.sort((a, b) => a.appWindowNumber - b.appWindowNumber);
 
             const bringToFrontPromise = Promise.all(windows.map(window => window.bringToFront()));
-            const focusPromise = bringToFrontPromise.then(async () => {
-                await windows[windows.length - 1].focus();
-            });
+            const focusPromise = bringToFrontPromise.then(() => windows[windows.length - 1].focus());
 
             promises.push(focusPromise);
         }
@@ -144,9 +142,9 @@ export class Main {
                 (window) => window.waitForReadyToReceiveContext()
             );
 
-            const sendContextPromise = windowsPromise.then(async (windows) => {
-                await Promise.all(windows.map(window => this._contextHandler.send(window, context)));
-            });
+            const sendContextPromise = windowsPromise.then((windows) => {
+                return Promise.all(windows.map(window => this._contextHandler.send(window, context)));
+            }).then(() => {});
 
             promises.push(sendContextPromise);
         }
