@@ -68,7 +68,7 @@ export class LiveApp {
         return this._maturePromise;
     }
 
-    public async waitForAppInfo(): Promise<Application> {
+    public waitForAppInfo(): Promise<Application> {
         return this._appInfoDeferredPromise.promise;
     }
 

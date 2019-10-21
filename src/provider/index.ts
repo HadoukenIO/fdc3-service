@@ -141,7 +141,7 @@ export class Main {
             const windowsPromise = this._model.expectWindowsForApp(
                 appInfo,
                 (window) => window.hasContextListener(),
-                async (window) => window.waitForReadyToReceiveContext()
+                (window) => window.waitForReadyToReceiveContext()
             );
 
             const sendContextPromise = windowsPromise.then(async (windows) => {

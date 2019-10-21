@@ -106,7 +106,7 @@ export class IntentHandler {
         const listeningWindows = await this._model.expectWindowsForApp(
             appInfo,
             (window) => window.hasIntentListener(intent.type),
-            async (window) => window.waitForReadyToReceiveIntent(intent.type)
+            (window) => window.waitForReadyToReceiveIntent(intent.type)
         );
 
         if (listeningWindows.length > 0) {

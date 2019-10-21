@@ -193,15 +193,15 @@ export abstract class AbstractAppWindow implements AppWindow {
         }
     }
 
-    public async waitForReadyToReceiveIntent(intent: IntentType): Promise<void> {
+    public waitForReadyToReceiveIntent(intent: IntentType): Promise<void> {
         return this.waitForListener(this._onIntentListenerAdded, () => this.hasIntentListener(intent));
     }
 
-    public async waitForReadyToReceiveContext(): Promise<void> {
+    public waitForReadyToReceiveContext(): Promise<void> {
         return this.waitForListener(this._onContextListenerAdded, () => this.hasContextListener());
     }
 
-    public async waitForReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<void> {
+    public waitForReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<void> {
         return this.waitForListener(this._onChannelContextListenerAdded, () => this.hasChannelContextListener(channel));
     }
 

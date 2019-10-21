@@ -29,7 +29,7 @@ export class ContextHandler {
      * @param window Window to send the context to
      * @param context Context to be sent
      */
-    public async send(window: AppWindow, context: Context): Promise<void> {
+    public send(window: AppWindow, context: Context): Promise<void> {
         const payload: ReceiveContextPayload = {context};
         return window.waitForReadyToReceiveContext().then(() => {
             // TODO: Make sure this will not cause problems if it never returns [SERVICE-555]
@@ -44,7 +44,7 @@ export class ContextHandler {
      * @param context Context to send
      * @param source Window sending the context. It won't receive the broadcast
      */
-    public async broadcast(context: Context, source: AppWindow): Promise<void> {
+    public broadcast(context: Context, source: AppWindow): Promise<void> {
         return this.broadcastOnChannel(context, source, source.channel);
     }
 
@@ -56,7 +56,7 @@ export class ContextHandler {
      * @param source Window sending the context. It won't receive the broadcast
      * @param channel ContextChannel to broadcast on
      */
-    public async broadcastOnChannel(context: Context, source: AppWindow, channel: ContextChannel): Promise<void> {
+    public broadcastOnChannel(context: Context, source: AppWindow, channel: ContextChannel): Promise<void> {
         const memberWindows = this._channelHandler.getChannelMembers(channel);
         const listeningWindows = this._channelHandler.getWindowsListeningForContextsOnChannel(channel);
 
