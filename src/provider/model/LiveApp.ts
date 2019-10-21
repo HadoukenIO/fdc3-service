@@ -55,15 +55,15 @@ export class LiveApp {
         return this._mature;
     }
 
-    public get startedPromise(): Promise<void> {
+    public waitForAppStarted(): Promise<void> {
         return this._startedPromise;
     }
 
-    public get maturePromise(): Promise<void> {
+    public waitForAppMature(): Promise<void> {
         return this._maturePromise;
     }
 
-    public async getAppInfo(): Promise<Application> {
+    public async waitForAppInfo(): Promise<Application> {
         return this._appInfoDeferredPromise.promise;
     }
 

@@ -157,7 +157,7 @@ export class Model {
             // Return a window once we have one, or timeout when the application is mature
             return Promise.race([
                 deferredPromise.promise.then((result) => [result]),
-                this.getOrCreateLiveApp(appInfo).then(liveApp => liveApp.maturePromise.then(() => [], () => []))
+                this.getOrCreateLiveApp(appInfo).then(liveApp => liveApp.waitForAppMature().then(() => [], () => []))
             ]).then((result) => {
                 slot.remove();
                 return result;
@@ -384,7 +384,7 @@ export class Model {
      */
     private async registerWindow(liveApp: LiveApp, identity: Identity): Promise<void> {
         // Don't register windows for any app until the app's info is known
-        await liveApp.getAppInfo();
+        await liveApp.waitForAppInfo();
 
         const id = getId(identity);
 

@@ -119,7 +119,7 @@ export class Main {
         const promises: Promise<void>[] = [];
 
         // Start the application if not already running
-        const {startedPromise} = await this._model.getOrCreateLiveApp(appInfo);
+        const startedPromise = (await this._model.getOrCreateLiveApp(appInfo)).waitForAppStarted();
 
         promises.push(startedPromise);
 
