@@ -98,7 +98,7 @@ describe('When querying if a window is ready to receive contexts', () => {
         unmockTime();
     });
 
-    test('A window with a context listener already registered resovles immediately', async () => {
+    test('A window with a context listener already registered resolves immediately', async () => {
         testAppWindow.addContextListener();
 
         // Use a jest spy to track the timing of when the promise resolves without awaiting

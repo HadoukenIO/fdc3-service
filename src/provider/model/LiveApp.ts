@@ -24,7 +24,7 @@ export class LiveApp {
      * Constructs a new LiveApp
      *
      * @param startedPromise A promise that resolves once the app fully started, or undefined if the app started "long ago" (e.g., was
-     * running before the servive started)
+     * running before the service started)
      */
     public constructor(startedPromise: Promise<void> | undefined) {
         if (startedPromise) {
@@ -74,7 +74,7 @@ export class LiveApp {
         return this._maturePromise;
     }
 
-    public async waitForAppInfo(): Promise<Application> {
+    public waitForAppInfo(): Promise<Application> {
         return this._appInfoDeferredPromise.promise;
     }
 

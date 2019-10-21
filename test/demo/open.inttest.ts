@@ -134,7 +134,7 @@ correct data', async () => {
                     await expect(listener).toHaveReceivedContexts([validContext]);
                 });
 
-                test('When the app adds listeners on mulitple windows, the app opens and the first windows\'s context listener is \
+                test('When the app adds listeners on multiple windows, the app opens and the first window\'s context listener is \
 triggered with the correct data', async () => {
                     // From the launcher app, call fdc3.open with a valid name and context
                     const openPromise = open(testAppInDirectory1.name, validContext);
