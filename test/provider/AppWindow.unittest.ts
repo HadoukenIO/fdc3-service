@@ -98,40 +98,40 @@ describe('When querying if a window is ready to receive contexts', () => {
         unmockTime();
     });
 
-    test('A window with a context listener already registered returns true immediately', async () => {
+    test('A window with a context listener already registered resovles immediately', async () => {
         testAppWindow.addContextListener();
 
         // Use a jest spy to track the timing of when the promise resolves without awaiting
         const timingSpy = jest.fn();
-        testAppWindow.isReadyToReceiveContext().then(timingSpy);
+        testAppWindow.waitForReadyToReceiveContext().then(timingSpy);
 
         // Do not advance time, but let any pending promises be actioned
         await resolvePromiseChain();
 
         // Promise should have resolved immediately, so spy should have been invoked
-        expect(timingSpy).toHaveBeenCalledWith(true);
+        expect(timingSpy).toHaveBeenCalledTimes(1);
     });
 
     describe('When the window does not have a listener registered', () => {
-        test('If the window was created longer than the timeout in the past, the promise resolves false immediately', async () => {
+        test('If the window was created longer than the timeout in the past, the promise rejects immediately', async () => {
             // Fast forward time to well after the window's creation time
             await advanceTime(10000);
 
             // Use a jest spy to track the timing of when the promise resolves without awaiting
             const timingSpy = jest.fn();
-            testAppWindow.isReadyToReceiveContext().then(timingSpy);
+            testAppWindow.waitForReadyToReceiveContext().catch(timingSpy);
 
             // Do not advance time, but let any pending promises be actioned
             await resolvePromiseChain();
 
             // Promise should have resolved immediately, so spy should have been invoked
-            expect(timingSpy).toHaveBeenCalledWith(false);
+            expect(timingSpy).toHaveBeenCalledTimes(1);
         });
 
-        test('If the window registers a listener within the timeout, the promise resolves true shortly after registration', async () => {
+        test('If the window registers a listener within the timeout, the promise resolves shortly after registration', async () => {
             // Use a jest spy to track the timing of when the promise resolves without awaiting
             const timingSpy = jest.fn();
-            testAppWindow.isReadyToReceiveContext().then(timingSpy);
+            testAppWindow.waitForReadyToReceiveContext().then(timingSpy);
 
             await advanceTime(1000);
             await resolvePromiseChain();
@@ -144,10 +144,10 @@ describe('When querying if a window is ready to receive contexts', () => {
             expect(timingSpy).toHaveBeenCalled();
         });
 
-        test('If the window has not registered a listener after 5 seconds, the promise resolves false', async () => {
+        test('If the window has not registered a listener after 5 seconds, the promise rejects', async () => {
             // Use a jest spy to track the timing of when the promise resolves without awaiting
             const timingSpy = jest.fn();
-            testAppWindow.isReadyToReceiveContext().then(timingSpy);
+            testAppWindow.waitForReadyToReceiveContext().catch(timingSpy);
 
             // Does not fail early
             await advanceTime(2000);
@@ -158,7 +158,7 @@ describe('When querying if a window is ready to receive contexts', () => {
             await advanceTime(3000);
             await resolvePromiseChain();
 
-            expect(timingSpy).toHaveBeenCalledWith(false);
+            expect(timingSpy).toHaveBeenCalledTimes(1);
         });
     });
 });

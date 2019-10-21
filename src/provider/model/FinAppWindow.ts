@@ -8,7 +8,7 @@ export class FinAppWindow extends AbstractAppWindow {
     private readonly _window: Window;
 
     constructor(identity: Identity, liveApp: LiveApp, channel: ContextChannel, appWindowNumber: number) {
-        super(identity, liveApp.appInfo!, liveApp.maturePromise, channel, appWindowNumber);
+        super(identity, liveApp.appInfo!, liveApp.waitForAppMature(), channel, appWindowNumber);
 
         this._window = fin.Window.wrapSync(identity);
     }

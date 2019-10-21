@@ -1,13 +1,10 @@
 import 'reflect-metadata';
 
 import {ContextHandler} from '../../src/provider/controller/ContextHandler';
-import {APIHandler} from '../../src/provider/APIHandler';
 import {AppWindow} from '../../src/provider/model/AppWindow';
-import {APIFromClientTopic, APIToClientTopic, ReceiveContextPayload} from '../../src/client/internal';
+import {APIToClientTopic, ReceiveContextPayload} from '../../src/client/internal';
 import {createMockAppWindow, createMockChannel, createMockChannelHandler, createMockModel, createMockApiHandler, getterMock} from '../mocks';
-import {ChannelHandler} from '../../src/provider/controller/ChannelHandler';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
-import {Model} from '../../src/provider/model/Model';
 
 let contextHandler: ContextHandler;
 
@@ -29,7 +26,6 @@ beforeEach(() => {
 
     mockGetChannelMembers.mockReturnValue([]);
     mockGetWindowsListeningForContextsOnChannel.mockReturnValue([]);
-    mockModel.expectWindowsForAllApps.mockResolvedValue([]);
 
     getterMock(mockModel, 'windows').mockReturnValue(mockWindows);
     getterMock(mockModel, 'apps').mockReturnValue([]);
@@ -188,10 +184,10 @@ describe('When broadcasting a Context using ContextHandler', () => {
     });
 });
 
-function createCustomMockAppWindow(name: string, ready: boolean): jest.Mocked<AppWindow> {
+function createCustomMockAppWindow(name: string, listensForContext: boolean): jest.Mocked<AppWindow> {
     const mockWindow = createMockAppWindow({
         identity: {uuid: 'test', name},
-        isReadyToReceiveContext: jest.fn().mockResolvedValue(ready)
+        waitForReadyToReceiveContext: listensForContext ? jest.fn().mockResolvedValue(undefined) : jest.fn().mockRejectedValue(undefined)
     });
 
     mockWindows.push(mockWindow);
@@ -203,6 +199,8 @@ function setWindowsListeningToChannel(windows: jest.Mocked<AppWindow>[], channel
     mockGetWindowsListeningForContextsOnChannel.mockImplementation((testChannel => testChannel.id === channel.id ? windows : []));
 
     for (const window of windows) {
-        window.isReadyToReceiveContextOnChannel.mockImplementation(async (testChannel) => testChannel.id === channel.id);
+        window.waitForReadyToReceiveContextOnChannel.mockImplementation((testChannel) => {
+            return testChannel.id === channel.id ? Promise.resolve() : Promise.reject(new Error());
+        });
     }
 }

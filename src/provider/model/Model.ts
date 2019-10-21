@@ -120,8 +120,8 @@ export class Model {
      */
     public async expectWindowsForApp(
         appInfo: Application,
-        syncPredicate: (window: AppWindow) => boolean,
-        asyncPredicate: (window: AppWindow) => Promise<boolean>
+        windowReadyNow: (window: AppWindow) => boolean,
+        waitForWindowReady: (window: AppWindow) => Promise<void>
     ): Promise<AppWindow[]> {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
         const windows = this._liveAppsByUuid[uuid] ? this._liveAppsByUuid[uuid].windows : [];
@@ -130,7 +130,7 @@ export class Model {
 
         // Find any windows that immediately satisfy our predicate
         for (const window of windows) {
-            if (syncPredicate(window)) {
+            if (windowReadyNow(window)) {
                 result.push(window);
             }
         }
@@ -145,50 +145,29 @@ export class Model {
             // Apply the async predicate to any incoming windows
             const slot = this._onWindowRegisteredInternal.add((window) => {
                 if (window.appInfo.appId === appInfo.appId) {
-                    asyncPredicate(window).then((matching) => {
-                        if (matching) {
-                            slot.remove();
-                            deferredPromise.resolve(window);
-                        }
-                    });
+                    waitForWindowReady(window).then(() => {
+                        deferredPromise.resolve(window);
+                    }, () => {});
                 }
             });
 
             // Apply the async predicate to any existing windows
             for (const window of windows) {
-                asyncPredicate(window).then((matching) => {
-                    if (matching) {
-                        slot.remove();
-                        deferredPromise.resolve(window);
-                    }
-                });
+                waitForWindowReady(window).then(() => {
+                    deferredPromise.resolve(window);
+                }, () => {});
             }
 
             // Return a window once we have one, or timeout when the application is mature
             return Promise.race([
                 deferredPromise.promise.then((result) => [result]),
-                this.getOrCreateLiveApp(appInfo).then(liveApp => liveApp.maturePromise.then(() => [], () => []))
-            ]);
+                this.getOrCreateLiveApp(appInfo).then(liveApp => liveApp.waitForAppMature().then(() => [], () => []))
+            ]).then((result) => {
+                slot.remove();
+                return result;
+            });
         }
-    }
-
-    /**
-     * Returns all registered windows satisfying our predicate for all started apps, waiting for at least one window
-     * per app or until each app is mature
-     */
-    public async expectWindowsForAllApps(
-        syncPredicate: (window: AppWindow) => boolean,
-        asyncPredicate: (window: AppWindow) => Promise<boolean>
-    ): Promise<AppWindow[]> {
-        const apps = Object.values(this._liveAppsByUuid).filter(app => app.started);
-
-        const windows = await asyncMap(apps, async (app) => this.expectWindowsForApp(await app.getAppInfo(), syncPredicate, asyncPredicate));
-
-        return windows.reduce((acc, curr) => {
-            acc.push(...curr);
-            return acc;
-        }, [] as AppWindow[]);
-    }
+    } 
 
     public async getOrCreateLiveApp(appInfo: Application): Promise<LiveApp> {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
@@ -409,7 +388,7 @@ export class Model {
      */
     private async registerWindow(liveApp: LiveApp, identity: Identity): Promise<void> {
         // Don't register windows for any app until the app's info is known
-        await liveApp.getAppInfo();
+        await liveApp.waitForAppInfo();
 
         const id = getId(identity);
 

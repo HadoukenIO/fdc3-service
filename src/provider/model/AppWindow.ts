@@ -61,11 +61,11 @@ export interface AppWindow {
 
     focus(): Promise<void>;
 
-    isReadyToReceiveIntent(intent: IntentType): Promise<boolean>;
+    waitForReadyToReceiveIntent(intent: IntentType): Promise<void>;
 
-    isReadyToReceiveContext(): Promise<boolean>;
+    waitForReadyToReceiveContext(): Promise<void>;
 
-    isReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<boolean>;
+    waitForReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<void>;
 
     removeAllListeners(): void;
 }
@@ -193,40 +193,16 @@ export abstract class AbstractAppWindow implements AppWindow {
         }
     }
 
-    public async isReadyToReceiveIntent(intent: IntentType): Promise<boolean> {
-        // App may be starting - give until app maturity to register a listener
-        return Promise.race([
-            this._maturePromise.then(() => false, () => false),
-            untilTrue(
-                this._onIntentListenerAdded,
-                () => this.hasIntentListener(intent),
-                this._maturePromise
-            ).then(() => true, () => false)
-        ]);
+    public async waitForReadyToReceiveIntent(intent: IntentType): Promise<void> {
+        return this.waitForListener(this._onIntentListenerAdded, () => this.hasIntentListener(intent));
     }
 
-    public async isReadyToReceiveContext(): Promise<boolean> {
-        // App may be starting - give until app maturity to register a listener
-        return Promise.race([
-            this._maturePromise.then(() => false, () => false),
-            untilTrue(
-                this._onContextListenerAdded,
-                () => this.hasContextListener(),
-                this._maturePromise
-            ).then(() => true, () => false)
-        ]);
+    public async waitForReadyToReceiveContext(): Promise<void> {
+        return this.waitForListener(this._onContextListenerAdded, () => this.hasContextListener());
     }
 
-    public async isReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<boolean> {
-        // App may be starting - give until app maturity to register a listener
-        return Promise.race([
-            this._maturePromise.then(() => false, () => false),
-            untilTrue(
-                this._onChannelContextListenerAdded,
-                () => this.hasChannelContextListener(channel),
-                this._maturePromise
-            ).then(() => true, () => false)
-        ]);
+    public async waitForReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<void> {
+        return this.waitForListener(this._onChannelContextListenerAdded, () => this.hasChannelContextListener(channel));
     }
 
     public removeAllListeners(): void {
@@ -234,5 +210,12 @@ export abstract class AbstractAppWindow implements AppWindow {
         this._channelEventListeners.clear();
         this._intentListeners.clear();
         this._contextListener = false;
+    }
+
+    private waitForListener<A extends any[]>(listenerAddedSignal: Signal<A>, hasListenerPredicate: () => boolean): Promise<void> {
+        return Promise.race([
+            this._maturePromise.then(() => Promise.reject(new Error('Timeout waiting for listener'))),
+            untilTrue(listenerAddedSignal, hasListenerPredicate, this._maturePromise)
+        ]);
     }
 }

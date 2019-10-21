@@ -5,7 +5,7 @@ import {Timeouts} from '../constants';
 import {AppWindow} from './AppWindow';
 
 /**
- * Represents a running appliction
+ * Represents a running application
  */
 export class LiveApp {
     private readonly _windowsById: Map<string, AppWindow> = new Map();
@@ -61,15 +61,15 @@ export class LiveApp {
         return this._mature;
     }
 
-    public get startedPromise(): Promise<void> {
+    public waitForAppStarted(): Promise<void> {
         return this._startedPromise;
     }
 
-    public get maturePromise(): Promise<void> {
+    public waitForAppMature(): Promise<void> {
         return this._maturePromise;
     }
 
-    public async getAppInfo(): Promise<Application> {
+    public async waitForAppInfo(): Promise<Application> {
         return this._appInfoDeferredPromise.promise;
     }
 

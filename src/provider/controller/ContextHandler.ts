@@ -36,10 +36,10 @@ export class ContextHandler {
      */
     public async send(window: AppWindow, context: Context): Promise<void> {
         const payload: ReceiveContextPayload = {context};
-        if (await window.isReadyToReceiveContext()) {
+        return window.waitForReadyToReceiveContext().then(() => {
             // TODO: Make sure this will not cause problems if it never returns [SERVICE-555]
             return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload);
-        }
+        }, () => {});
     }
 
     /**
@@ -83,11 +83,11 @@ export class ContextHandler {
 
         // We intentionally don't await any of this, as these dispatches are not important enough to block the caller
         for (const app of this._model.apps.filter((app: LiveApp) => app.started)) {
-            app.getAppInfo().then((appInfo) => {
+            app.waitForAppInfo().then((appInfo) => {
                 this._model.expectWindowsForApp(
                     appInfo,
                     (window: AppWindow) => window.hasContextListener(),
-                    async (window: AppWindow) => window.isReadyToReceiveContext()
+                    async (window: AppWindow) => window.waitForReadyToReceiveContext()
                 ).then((windows) => {
                     windows
                         // Sender window should not receive its own broadcasts
@@ -100,7 +100,7 @@ export class ContextHandler {
                 this._model.expectWindowsForApp(
                     appInfo,
                     (window: AppWindow) => window.hasChannelContextListener(channel),
-                    async (window: AppWindow) => window.isReadyToReceiveContextOnChannel(channel)
+                    async (window: AppWindow) => window.waitForReadyToReceiveContextOnChannel(channel)
                 ).then((windows) => {
                     windows
                         // Sender window should not receive its own broadcasts
