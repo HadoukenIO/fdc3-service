@@ -68,17 +68,16 @@ export class ContextHandler {
         this._channelHandler.setLastBroadcastOnChannel(channel, context);
 
         const sourceId = getId(source.identity);
+        const notSender = (window: AppWindow) => getId(window.identity) !== sourceId;
 
         const promises: Promise<void>[] = [];
 
         promises.push(...memberWindows
-            // Sender window should not receive its own broadcasts
-            .filter(window => getId(window.identity) !== sourceId)
+            .filter(notSender)
             .map(window => this.send(window, context)));
 
         promises.push(...listeningWindows
-        // Sender window should not receive its own broadcasts
-            .filter(window => getId(window.identity) !== sourceId)
+            .filter(notSender)
             .map(window => this.sendOnChannel(window, context, channel)));
 
         // We intentionally don't await any of this, as these dispatches are not important enough to block the caller
@@ -90,8 +89,7 @@ export class ContextHandler {
                     async (window: AppWindow) => window.waitForReadyToReceiveContext()
                 ).then((windows) => {
                     windows
-                        // Sender window should not receive its own broadcasts
-                        .filter(window => getId(window.identity) !== sourceId)
+                        .filter(notSender)
                         .filter(window => !memberWindows.includes(window))
                         .filter(window => window.channel.id === channel.id)
                         .forEach(window => this.send(window, context));
@@ -103,8 +101,7 @@ export class ContextHandler {
                     async (window: AppWindow) => window.waitForReadyToReceiveContextOnChannel(channel)
                 ).then((windows) => {
                     windows
-                        // Sender window should not receive its own broadcasts
-                        .filter(window => getId(window.identity) !== sourceId)
+                        .filter(notSender)
                         .filter(window => !listeningWindows.includes(window))
                         .forEach(window => this.sendOnChannel(window, context, channel));
                 });
