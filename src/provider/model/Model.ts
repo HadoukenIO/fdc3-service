@@ -145,17 +145,13 @@ export class Model {
             // Apply the async predicate to any incoming windows
             const slot = this._onWindowRegisteredInternal.add((window) => {
                 if (window.appInfo.appId === appInfo.appId) {
-                    waitForWindowReady(window).then(() => {
-                        deferredPromise.resolve(window);
-                    }, () => {});
+                    waitForWindowReady(window).then(() => deferredPromise.resolve(window), () => {});
                 }
             });
 
             // Apply the async predicate to any existing windows
             for (const window of windows) {
-                waitForWindowReady(window).then(() => {
-                    deferredPromise.resolve(window);
-                }, () => {});
+                waitForWindowReady(window).then(() => deferredPromise.resolve(window), () => {});
             }
 
             // Return a window once we have one, or timeout when the application is mature
