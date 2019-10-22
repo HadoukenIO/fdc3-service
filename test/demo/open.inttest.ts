@@ -151,6 +151,12 @@ triggered with the correct data', async () => {
 
                     await openPromise;
 
+                    console.log(JSON.stringify([
+                        await listener1.getReceivedContexts(),
+                        await listener2.getReceivedContexts(),
+                        await listener3.getReceivedContexts()
+                    ]));
+
                     // Check that only the first listener received the context passed in open
                     await expect(listener1).toHaveReceivedContexts([validContext]);
                     await expect(listener2).toHaveReceivedContexts([]);
