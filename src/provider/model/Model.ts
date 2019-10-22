@@ -324,9 +324,7 @@ export class Model {
         const liveApp = this._liveAppsByUuid[uuid];
 
         // Only register windows once they are connected to the service
-        allowReject(expectedWindow.connected.then(async () => {
-            await this.registerWindow(liveApp, identity);
-        }));
+        allowReject(expectedWindow.connected.then(() => this.registerWindow(liveApp, identity)));
     }
 
     private onWindowClosed(identity: Identity): void {
