@@ -8,11 +8,13 @@ import {Events, ChannelEvents} from '../../../src/client/internal';
 declare const global: NodeJS.Global & {__BROWSER__: Browser};
 
 export interface TestWindowEventListener {
+    // eslint-disable-next-line
     handler: (payload: any) => void;
     unsubscribe: () => void;
 }
 
 export interface TestWindowChannelEventListener {
+    // eslint-disable-next-line
     handler: (payload: any) => void;
     unsubscribe: () => void;
 }
@@ -20,8 +22,6 @@ export interface TestWindowChannelEventListener {
 export type TestWindowContext = Window&{
     fin: Fin;
     fdc3: typeof import('../../../src/client/main');
-    errorHandler(error: Error): never;
-    serializeChannel(channel: Channel): TestChannelTransport;
 
     contextListeners: ContextListener[];
     intentListeners: {[intent: string]: IntentListener[]};
@@ -34,6 +34,9 @@ export type TestWindowContext = Window&{
     receivedEvents: {listenerID: number; payload: Events}[];
     receivedIntents: {listenerID: number; intent: IntentType; context: Context}[];
     receivedChannelEvents: {listenerID: number; payload: ChannelEvents}[];
+
+    errorHandler(error: Error): never;
+    serializeChannel(channel: Channel): TestChannelTransport;
 };
 
 export interface TestChannelTransport {
@@ -55,6 +58,19 @@ export class OFPuppeteerBrowser {
         this._identityPageCache = new Map<string, Page>();
         this._browser = global.__BROWSER__;
         this._ready = this.registerCleanupListener();
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public async executeOnWindow<T extends any[], R, C = TestWindowContext>(executionTarget: Identity, fn: (this: C, ...args: T) => R, ...args: T):
+    Promise<R> {
+        const page = await this.getPage(executionTarget);
+        if (!page) {
+            throw new Error('could not find specified executionTarget');
+        }
+
+        // Explicit cast needed to appease typescript. Puppeteer types make liberal
+        // use of the any type, which confuses things here.
+        return page.evaluate(fn as (...args: T) => R, ...args);
     }
 
     private async registerCleanupListener() {
@@ -114,19 +130,6 @@ export class OFPuppeteerBrowser {
         }
 
         return identity;
-    }
-
-    public async executeOnWindow<T extends any[], R, C = TestWindowContext>(executionTarget: Identity, fn: (this: C, ...args: T) => R, ...args: T):
-    Promise<R> {
-        const page = await this.getPage(executionTarget);
-        if (!page) {
-            throw new Error('could not find specified executionTarget');
-        }
-
-        // Explicit cast needed to appease typescript. Puppeteer types make liberal
-        // use of the any type, which confuses things here.
-        // tslint:disable-next-line: no-any
-        return page.evaluate(fn as (...args: any[]) => R, ...args);
     }
 
     // Using this function from multiple test files causes big issues with this

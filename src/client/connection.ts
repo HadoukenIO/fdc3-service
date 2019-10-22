@@ -59,7 +59,7 @@ export function getServicePromise(): Promise<ChannelClient> {
         } else {
             channelPromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}}).then((channel: ChannelClient) => {
                 // Register service listeners
-                channel.register('WARN', (payload: any) => console.warn(payload));  // tslint:disable-line:no-any
+                channel.register('WARN', (payload: unknown) => console.warn(payload));  // tslint:disable-line:no-any
 
                 // Any unregistered action will simply return false
                 channel.setDefaultAction(() => false);

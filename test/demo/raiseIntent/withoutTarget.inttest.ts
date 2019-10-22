@@ -83,7 +83,7 @@ describe('Intent listeners and raising intents without a target', () => {
                         test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
                             await raiseIntent(uniqueIntent);
 
-                            await expect(directoryAppListener).toHaveReceivedContexts([uniqueIntent.context]);
+                            expect(directoryAppListener).toHaveReceivedContexts([uniqueIntent.context]);
                         });
                     });
 
@@ -138,7 +138,7 @@ the app opens and receives the intent with the correct context', async () => {
 
                         const listener = await fdc3Remote.getRemoteIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
 
-                        await expect(listener).toHaveReceivedContexts([uniqueIntent.context]);
+                        expect(listener).toHaveReceivedContexts([uniqueIntent.context]);
                     });
 
                     // TODO: Re-enable once we have at timeout to allow apps to add intent listeners on mulitple windows on startup (SERVICE-556)
@@ -153,7 +153,7 @@ the app opens and receives the intent with the correct context', async () => {
 
                         const listener = await fdc3Remote.getRemoteIntentListener(childIdentity, uniqueIntent.type);
 
-                        await expect(listener).toHaveReceivedContexts([uniqueIntent.context]);
+                        expect(listener).toHaveReceivedContexts([uniqueIntent.context]);
                     });
                 });
             });
@@ -181,7 +181,7 @@ the app opens and receives the intent with the correct context', async () => {
 
                             const listener = await fdc3Remote.getRemoteIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
 
-                            await expect(listener).toHaveReceivedContexts([uniqueIntent.context]);
+                            expect(listener).toHaveReceivedContexts([uniqueIntent.context]);
                         });
                     });
 
@@ -299,7 +299,7 @@ async function raiseIntentExpectResolverSelectApp(intent: Intent, app: TestAppDa
     // If no intent listener provided, try to fetch it "live"
     const remoteListener = listener || await fdc3Remote.getRemoteIntentListener(app, intent.type);
 
-    await expect(remoteListener).toHaveReceivedContexts([intent.context]);
+    expect(remoteListener).toHaveReceivedContexts([intent.context]);
 }
 
 /**

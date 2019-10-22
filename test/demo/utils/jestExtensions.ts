@@ -12,6 +12,7 @@ interface CustomMatcherResult {
 }
 
 declare global {
+    // eslint-disable-next-line @typescript-eslint/no-namespace
     namespace jest {
         interface Matchers<R> {
             /**
@@ -38,7 +39,7 @@ declare global {
 }
 
 expect.extend({
-    async toThrowFDC3Error<T = any>(promiseOrFunction: Promise<T> | (() => T), code: string, message?: string | RegExp): Promise<CustomMatcherResult> {
+    async toThrowFDC3Error<T>(promiseOrFunction: Promise<T> | (() => T), code: string, message?: string | RegExp): Promise<CustomMatcherResult> {
         try {
             if (promiseOrFunction instanceof Promise) {
                 await promiseOrFunction;

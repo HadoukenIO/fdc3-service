@@ -36,7 +36,7 @@ export function LauncherApp(): React.ReactElement {
 
     React.useEffect(() => {
         fdc3.findIntent(null!)
-            .then(async (appIntent) => setApplications(appIntent.apps.map((app) => {
+            .then((appIntent) => setApplications(appIntent.apps.map((app) => {
                 return {
                     type: 'manifest',
                     data: app
@@ -54,7 +54,7 @@ export function LauncherApp(): React.ReactElement {
             console.log(`Opened app ${title}`);
         } catch (e) {
             // Stringifying an `Error` omits the message!
-            const error: any = {
+            const error: Error = {
                 message: e.message,
                 ...e
             };
@@ -85,7 +85,7 @@ export function LauncherApp(): React.ReactElement {
             }
         } catch (e) {
             // Stringifying an `Error` omits the message!
-            const error: any = {
+            const error = {
                 message: e.message,
                 ...e
             };
@@ -96,13 +96,13 @@ export function LauncherApp(): React.ReactElement {
     return (
         <div>
             <h1>Launcher</h1>
-            {applications.map((app, index) => <AppCard key={app.data.appId + index} app={app} handleClick={openApp} isDirectoryApp={true} />)}
+            {applications.map((app, index) => <AppCard key={`${app.data.appId}${index}`} app={app} handleClick={openApp} isDirectoryApp={true} />)}
             <hr/>
             <h2>Non-directory apps</h2>
-            {NON_DIRECTORY_APPS.map((app, index) => <AppCard key={app.data.appId + index} app={app} handleClick={launchApp} isDirectoryApp={false} />)}
+            {NON_DIRECTORY_APPS.map((app, index) => <AppCard key={`${app.data.appId}${index}`} app={app} handleClick={launchApp} isDirectoryApp={false} />)}
             <hr/>
             <h2>Programmatic apps</h2>
-            {PROGRAMMATIC_APPS.map((app, index) => <AppCard key={app.data.uuid + index} app={app} handleClick={launchApp} isDirectoryApp={false} />)}
+            {PROGRAMMATIC_APPS.map((app, index) => <AppCard key={`${app.data.uuid}${index}`} app={app} handleClick={launchApp} isDirectoryApp={false} />)}
         </div>
     );
 }

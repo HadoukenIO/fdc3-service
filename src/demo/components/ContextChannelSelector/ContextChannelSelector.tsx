@@ -27,8 +27,8 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
         getCurrentChannel().then((channel) => {
             setCurrentChannel(channel);
         });
-        getSystemChannels().then((channels) => {
-            setChannels([defaultChannel, ...channels]);
+        getSystemChannels().then((channelsLocal) => {
+            setChannels([defaultChannel, ...channelsLocal]);
         });
         addEventListener('channel-changed', channelChanged);
 
@@ -68,7 +68,7 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
                         channels.map((channel, index) => {
                             return (
                                 <option
-                                    key={channel.id + index}
+                                    key={`${channel.id}${index}`}
                                     value={channel.id}
                                 >
                                     {channel.type === 'system' ? channel.visualIdentity.name : 'Default'}

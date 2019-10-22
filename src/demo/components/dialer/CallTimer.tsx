@@ -10,7 +10,7 @@ export function CallTimer(): React.ReactElement {
 
     React.useEffect(() => {
         const timer = setInterval(() => {
-            setCounter((counter) => counter + 1);
+            setCounter((counterLocal) => counterLocal + 1);
         }, 1000);
         // Cleanup
         return () => {

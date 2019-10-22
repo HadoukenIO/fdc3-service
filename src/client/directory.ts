@@ -63,6 +63,6 @@ interface Intent {
     contexts?: string[];
 
     // Specification is ambiguous on type of customConfig, so leaving as 'any'
-    /* tslint:disable:no-any */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     customConfig: any;
 }

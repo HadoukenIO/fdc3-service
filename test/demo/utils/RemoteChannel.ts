@@ -55,20 +55,20 @@ export class RemoteChannel {
     public async join(identity?: Identity): Promise<void> {
         return ofBrowser.executeOnWindow(
             this.executionTarget,
-            async function (this: TestWindowContext, channelInstanceId: string, identity?: Identity): Promise<void> {
-                return this.channelTransports[channelInstanceId].channel.join(identity).catch(this.errorHandler);
+            async function (this: TestWindowContext, channelInstanceId: string, identityRemote?: Identity): Promise<void> {
+                return this.channelTransports[channelInstanceId].channel.join(identityRemote).catch(this.errorHandler);
             },
             this.id,
             identity
         ).catch(handlePuppeteerError);
     }
 
-    public async broadcast(context: Context): Promise<void> {
+    public broadcast(context: Context): Promise<void> {
         return ofBrowser.executeOnWindow(
             this.executionTarget,
-            function (this: TestWindowContext, channelInstanceId: string, context: Context): void {
+            function (this: TestWindowContext, channelInstanceId: string, contextRemote: Context): void {
                 try {
-                    return this.channelTransports[channelInstanceId].channel.broadcast(context);
+                    return this.channelTransports[channelInstanceId].channel.broadcast(contextRemote);
                 } catch (error) {
                     this.errorHandler(error);
                 }
@@ -97,7 +97,7 @@ export class RemoteChannel {
     public async addEventListener(eventType: ChannelEvents['type']): Promise<RemoteChannelEventListener> {
         const id = await ofBrowser.executeOnWindow(
             this.executionTarget,
-            function (this: TestWindowContext, channelInstanceId: string, eventType: ChannelEvents['type']): number {
+            function (this: TestWindowContext, channelInstanceId: string, eventTypeRemote: ChannelEvents['type']): number {
                 const listenerID = this.channelEventListeners.length;
                 const channel = this.channelTransports[channelInstanceId].channel;
 
@@ -106,10 +106,12 @@ export class RemoteChannel {
                 };
 
                 const unsubscribe = () => {
-                    channel.removeEventListener(eventType as any, handler as any);
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    channel.removeEventListener(eventTypeRemote as any, handler as any);
                 };
 
-                channel.addEventListener(eventType as any, handler as any);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                channel.addEventListener(eventTypeRemote as any, handler as any);
                 this.channelEventListeners[listenerID] = {handler, unsubscribe};
                 return listenerID;
             },
@@ -120,14 +122,14 @@ export class RemoteChannel {
         return {
             remoteIdentity: this.executionTarget,
             id,
-            unsubscribe: async () => {
-                return ofBrowser.executeOnWindow(this.executionTarget, function (this: TestWindowContext, id: number): void {
-                    this.channelEventListeners[id].unsubscribe();
+            unsubscribe: () => {
+                return ofBrowser.executeOnWindow(this.executionTarget, function (this: TestWindowContext, idRemote: number): void {
+                    this.channelEventListeners[idRemote].unsubscribe();
                 }, id);
             },
-            getReceivedEvents: async (): Promise<ChannelEvents[]> => {
-                return ofBrowser.executeOnWindow(this.executionTarget, function (this: TestWindowContext, id: number): ChannelEvents[] {
-                    return this.receivedChannelEvents.filter((entry) => entry.listenerID === id).map((entry) => entry.payload);
+            getReceivedEvents: (): Promise<ChannelEvents[]> => {
+                return ofBrowser.executeOnWindow(this.executionTarget, function (this: TestWindowContext, idRemote: number): ChannelEvents[] {
+                    return this.receivedChannelEvents.filter((entry) => entry.listenerID === idRemote).map((entry) => entry.payload);
                 }, id);
             }
         };

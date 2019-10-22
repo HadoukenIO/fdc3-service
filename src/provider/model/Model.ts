@@ -47,7 +47,7 @@ export class Model {
     private readonly _channelsById: {[id: string]: ContextChannel};
     private readonly _expectedWindowsById: {[id: string]: ExpectedWindow};
 
-    private readonly _onWindowRegisteredInternal = new Signal<[]>();
+    private readonly _onWindowRegisteredInternal: Signal<[], void, void> = new Signal<[]>();
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
@@ -122,10 +122,10 @@ export class Model {
         if (matchingWindows.length === 0) {
             const signalPromise = new Promise<AppWindow[]>((resolve) => {
                 const slot = this._onWindowRegisteredInternal.add(() => {
-                    const matchingWindows = this.findWindowsByAppId(appInfo.appId);
-                    if (matchingWindows.length > 0) {
+                    const matchingWindowsAfter = this.findWindowsByAppId(appInfo.appId);
+                    if (matchingWindowsAfter.length > 0) {
                         slot.remove();
-                        resolve(matchingWindows);
+                        resolve(matchingWindowsAfter);
                     }
                 });
             });
@@ -186,7 +186,7 @@ export class Model {
         }, []);
     }
 
-    private async onWindowCreated(identity: Identity): Promise<void> {
+    private onWindowCreated(identity: Identity): void {
         const expectedWindow = this.getOrCreateExpectedWindow(identity);
 
         // Only register windows once they are connected to the service

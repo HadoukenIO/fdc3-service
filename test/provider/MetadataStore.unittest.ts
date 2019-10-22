@@ -46,7 +46,8 @@ describe('Given an empty MetadataStore', () => {
         // Empty store to be used in update tests
         const store = new MetadataStore();
         // Parameters for the call
-        const appData = {} as DirectoryApplication; const app = {identity: {uuid: 'some-uuid'}} as Application;
+        const appData = {} as DirectoryApplication;
+        const app = {identity: {uuid: 'some-uuid'}} as Application;
 
         it('The method throws an error', () => {
             expect(() => store.update(appData, app)).toThrowError(TypeError);

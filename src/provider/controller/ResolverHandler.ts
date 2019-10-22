@@ -63,34 +63,6 @@ export class ResolverHandler extends AsyncInit implements ResolverHandlerBinding
     }
 
     /**
-     * Performs one-off initialisation
-     */
-    protected async init(): Promise<void> {
-        const options: WindowOption = {
-            url: RESOLVER_URL,
-            name: RESOLVER_IDENTITY.name,
-            alwaysOnTop: true,
-            autoShow: false,
-            contextMenu: !(process.env.NODE_ENV === 'production'),
-            showTaskbarIcon: false,
-            saveWindowState: false,
-            defaultCentered: true,
-            frame: false,
-            resizable: false,
-            defaultWidth: 242,
-            defaultHeight: 444
-        };
-
-        // Close any existing resolver window (in case service is restarted)
-        await fin.Window.wrapSync(RESOLVER_IDENTITY).close(true).catch(() => {});
-
-        // Create resolver
-        this._window = await fin.Window.create(options);
-        this._window.addListener('close-requested', () => false);
-        this._channel = await fin.InterApplicationBus.Channel.connect('resolver');
-    }
-
-    /**
      * Instructs the resolver to prepare for a new intent.
      *
      * Resolver should refresh it's UI, and then show itself when ready.
@@ -117,7 +89,35 @@ export class ResolverHandler extends AsyncInit implements ResolverHandlerBinding
      * The resolver will be re-used if another intent needs to be resolved later. If there are queued intents, this
      * could be immediately after the resolver is done cleaning-up.
      */
-    public async cancel(): Promise<void> {
-        this._window.hide();
+    public cancel(): Promise<void> {
+        return this._window.hide();
+    }
+
+    /**
+     * Performs one-off initialisation
+     */
+    protected async init(): Promise<void> {
+        const options: WindowOption = {
+            url: RESOLVER_URL,
+            name: RESOLVER_IDENTITY.name,
+            alwaysOnTop: true,
+            autoShow: false,
+            contextMenu: !(process.env.NODE_ENV === 'production'),
+            showTaskbarIcon: false,
+            saveWindowState: false,
+            defaultCentered: true,
+            frame: false,
+            resizable: false,
+            defaultWidth: 242,
+            defaultHeight: 444
+        };
+
+        // Close any existing resolver window (in case service is restarted)
+        await fin.Window.wrapSync(RESOLVER_IDENTITY).close(true).catch(() => {});
+
+        // Create resolver
+        this._window = await fin.Window.create(options);
+        this._window.addListener('close-requested', () => false);
+        this._channel = await fin.InterApplicationBus.Channel.connect('resolver');
     }
 }

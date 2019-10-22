@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/camelcase, camelcase */
+
 import {WindowEvent} from 'openfin/_v2/api/events/base';
 import {injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
@@ -76,7 +78,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     public async inferApplication(identity: Identity): Promise<Application> {
-        if (this.isExternalWindow(identity)) {
+        if (await this.isExternalWindow(identity)) {
             const application = fin.ExternalApplication.wrapSync(identity.uuid);
 
             return {
@@ -139,7 +141,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         });
 
         // No await here otherwise the injector will never properly initialize - The injector awaits this init before completion!
-        Injector.initialized.then(async () => {
+        Injector.initialized.then(() => {
             windowInfo.forEach((info) => {
                 const {uuid, mainWindow, childWindows} = info;
 
@@ -149,7 +151,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         });
     }
 
-    private async registerWindow(identity: Identity, creationTime: number | undefined): Promise<void> {
+    private registerWindow(identity: Identity, creationTime: number | undefined): void {
         const createdWindow = {
             creationTime,
             index: this._windowsCreated

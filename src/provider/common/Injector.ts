@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import {Container} from 'inversify';
 import {interfaces as inversify} from 'inversify/dts/interfaces/interfaces';
 
@@ -67,8 +69,7 @@ export class Injector {
         const container: Container = Injector._container;
         const promises: Promise<unknown>[] = [];
 
-        Object.keys(Bindings).forEach((k) => {
-            const key: Keys = k as any;
+        Injector.getKeys().forEach((key) => {
             const proto = (Bindings[key] as Function).prototype;
 
             if (proto && proto.hasOwnProperty('init')) {
@@ -121,14 +122,16 @@ export class Injector {
         return value;
     }
 
+    private static getKeys(): Keys[] {
+        return Object.keys(Bindings) as Keys[];
+    }
+
     private static createContainer(): Container {
         const container = new Container();
 
-        Object.keys(Bindings).forEach((k) => {
-            const key: Keys = k as any;
-
+        Injector.getKeys().forEach((key) => {
             if (typeof Bindings[key] === 'function') {
-                container.bind(Inject[key]).to(Bindings[key] as any).inSingletonScope();
+                container.bind(Inject[key]).to(Bindings[key]).inSingletonScope();
             } else {
                 container.bind(Inject[key]).toConstantValue(Bindings[key]);
             }

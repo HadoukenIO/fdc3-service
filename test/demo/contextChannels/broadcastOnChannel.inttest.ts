@@ -33,6 +33,7 @@ describe('When attempting to broadcast on a channel object', () => {
     });
 
     test('If a valid context is provided, the broadcast() resolves successfully', async () => {
+        // eslint-disable-next-line
         await expect(channel.broadcast(testContext)).resolves;
     });
 });

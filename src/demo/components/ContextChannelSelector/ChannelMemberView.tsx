@@ -18,10 +18,10 @@ export function ContextChannelView(props: ChannelViewProps): React.ReactElement 
         setVisible(!visible);
     };
 
-    const setInfo = async (channel: Channel) => {
-        setMembers(await channel.getMembers());
-        if (channel.type === 'system') {
-            setColor(channel.visualIdentity.color);
+    const setInfo = async (channelLocal: Channel) => {
+        setMembers(await channelLocal.getMembers());
+        if (channelLocal.type === 'system') {
+            setColor(channelLocal.visualIdentity.color);
         } else {
             // Use white for default channel
             setColor('#FFFFFF');
@@ -70,8 +70,4 @@ function MemberList(props: MemberList): React.ReactElement {
             </ul>
         </div>
     );
-}
-
-function numberToHex(num: number) {
-    return num.toString(16).padStart(6, '0');
 }

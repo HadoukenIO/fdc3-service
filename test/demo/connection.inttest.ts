@@ -216,7 +216,7 @@ async function getIntentListeners(intentType: string): Promise<Application[]> {
     }, intentType);
 }
 
-async function getChannelContextListeners(remoteChannel: RemoteChannel): Promise<AppWindow[]> {
+function getChannelContextListeners(remoteChannel: RemoteChannel): Promise<AppWindow[]> {
     return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, id: string): AppWindow[] {
         const channel = this.channelHandler.getChannelById(id);
         return this.channelHandler.getWindowsListeningForContextsOnChannel(channel);
@@ -233,8 +233,8 @@ async function hasEventListeners(identity: Identity, eventType: ChannelEvents['t
     return identities.some((id) => id.name === identity.name && id.uuid === identity.uuid);
 }
 
-async function isRegistered(identity: Identity): Promise<boolean> {
-    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, identity: Identity): boolean {
-        return this.model.getWindow(identity) !== null;
+function isRegistered(identity: Identity): Promise<boolean> {
+    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, identityRemote: Identity): boolean {
+        return this.model.getWindow(identityRemote) !== null;
     }, identity);
 }

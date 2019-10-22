@@ -43,19 +43,19 @@ describe('Context listeners and broadcasting', () => {
                 // Send the context
                 await fdc3Remote.broadcast(testManagerIdentity, validContext);
 
-                await expect(listener).toHaveReceivedContexts([validContext]);
+                expect(listener).toHaveReceivedContexts([validContext]);
             });
 
             test('When broadcast is called from the app that is listening, its listeners doesn\'t get triggered', async () => {
                 await fdc3Remote.broadcast(testAppInDirectory1, validContext);
 
                 // Received contexts
-                await expect(listener).toHaveReceivedContexts([]);
+                expect(listener).toHaveReceivedContexts([]);
             });
 
-            test('When calling addContextListener a second time there are no errors', async () => {
+            test('When calling addContextListener a second time there are no errors', () => {
                 // Add second listener
-                await fdc3Remote.addContextListener(testAppInDirectory1);
+                fdc3Remote.addContextListener(testAppInDirectory1);
             });
 
             test('When calling unsubsribe on the listener no errors are seen and the listener is no longer triggered when broadcast is called', async () => {
@@ -64,7 +64,7 @@ describe('Context listeners and broadcasting', () => {
                 await fdc3Remote.broadcast(testManagerIdentity, validContext);
 
                 // Received contexts
-                await expect(listener).toHaveReceivedContexts([]);
+                expect(listener).toHaveReceivedContexts([]);
             });
         });
 
@@ -121,7 +121,7 @@ describe('Context listeners and broadcasting', () => {
                     // Send the context
                     await fdc3Remote.broadcast(testManagerIdentity, validContext);
 
-                    await expect(newListener).toHaveReceivedContexts([validContext]);
+                    expect(newListener).toHaveReceivedContexts([validContext]);
                 });
             });
         });
@@ -148,10 +148,10 @@ describe('Context listeners and broadcasting', () => {
             await fdc3Remote.broadcast(testAppMainWindowIdentity, validContext);
 
             // Window broadcasting the context does NOT receive it
-            await expect(testAppMainWindowListener).toHaveReceivedContexts([]);
+            expect(testAppMainWindowListener).toHaveReceivedContexts([]);
 
             // Window on the same app as the one broadcasting DOES receive context
-            await expect(testAppChildWindowListener).toHaveReceivedContexts([validContext]);
+            expect(testAppChildWindowListener).toHaveReceivedContexts([validContext]);
         });
 
         test('When child window broadcasts context, it does not receive its own context, but main window does', async () => {
@@ -163,10 +163,10 @@ describe('Context listeners and broadcasting', () => {
             await fdc3Remote.broadcast(testAppChildWindowIdentity, validContext);
 
             // Window broadcasting the context does NOT receive it
-            await expect(testAppChildWindowListener).toHaveReceivedContexts([]);
+            expect(testAppChildWindowListener).toHaveReceivedContexts([]);
 
             // Window on the same app as the one broadcasting DOES receive context
-            await expect(testAppMainWindowListener).toHaveReceivedContexts([validContext]);
+            expect(testAppMainWindowListener).toHaveReceivedContexts([validContext]);
         });
     });
 });

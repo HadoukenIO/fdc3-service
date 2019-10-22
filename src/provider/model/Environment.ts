@@ -18,13 +18,18 @@ export interface Environment {
     windowClosed: Signal<[Identity]>;
 
     /**
+     * Returns whether the window has been created by the service and is still open
+     */
+    isWindowCreated: (identity: Identity) => boolean;
+
+    /**
      * Checks if an application is running, given an App Directory entry.
      */
     isRunning: (appInfo: Application) => Promise<boolean>;
 
     /**
      * Creates a new application, given an App Directory entry.
-     * @throws:
+     * @throws
      * * FDC3Error if app fails to start
      * * FDC3Error if timeout trying to start app
      */
@@ -45,9 +50,4 @@ export interface Environment {
      * Determines the type of object that is represented by 'identity'
      */
     getEntityType(identity: Identity): Promise<EntityType>;
-
-    /**
-     * Returns whether the window has been created by the service and is still open
-     */
-    isWindowCreated: (identity: Identity) => boolean;
 }

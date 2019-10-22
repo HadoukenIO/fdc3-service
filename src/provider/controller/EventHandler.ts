@@ -1,5 +1,4 @@
 import {injectable, inject} from 'inversify';
-import _WindowModule from 'openfin/_v2/api/window/window';
 
 import {AppWindow} from '../model/AppWindow';
 import {APIHandler} from '../APIHandler';

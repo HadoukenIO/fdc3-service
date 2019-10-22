@@ -31,28 +31,23 @@ export class AppDirectory extends AsyncInit {
         this._configStore = configStore;
     }
 
-    protected async init(): Promise<void> {
-        await this._configStore.initialized;
-        await this.initializeDirectoryData();
-    }
-
-    public async getAppByName(name: AppName): Promise<Application | null> {
-        return this._directory.find((app: Application) => {
+    public getAppByName(name: AppName): Promise<Application | null> {
+        return Promise.resolve(this._directory.find((app: Application) => {
             return app.name === name;
-        }) || null;
+        }) || null);
     }
 
-    public async getAppByUuid(uuid: string): Promise<Application | null> {
-        return this._directory.find((app) => AppDirectory.getUuidFromApp(app) === uuid) || null;
+    public getAppByUuid(uuid: string): Promise<Application | null> {
+        return Promise.resolve(this._directory.find((app) => AppDirectory.getUuidFromApp(app) === uuid) || null);
     }
 
-    public async getAppsByIntent(intentType: string, contextType?: string): Promise<Application[]> {
-        return this._directory.filter((app: Application) => {
+    public getAppsByIntent(intentType: string, contextType?: string): Promise<Application[]> {
+        return Promise.resolve(this._directory.filter((app: Application) => {
             return app.intents && app.intents.some((intent) => {
                 const isContextRelevant = contextType && intent.contexts && intent.contexts.length > 0;
                 return (intent.name === intentType) && (!isContextRelevant || intent.contexts!.includes(contextType!));
             });
-        });
+        }));
     }
 
     /**
@@ -61,7 +56,7 @@ export class AppDirectory extends AsyncInit {
      * Note this only considers directory apps and not "ad hoc" windows, as the latter don't specify context types when adding intent listeners
      * @param contextType type of context to find intents for
      */
-    public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
+    public getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
         const appIntentsByName: {[intentName: string]: AppIntent} = {};
         this._directory.forEach((app: Application) => {
             (app.intents || []).forEach((intent) => {
@@ -84,14 +79,19 @@ export class AppDirectory extends AsyncInit {
             appIntent.apps.sort((a, b) => a.appId.localeCompare(b.appId, 'en'));
         });
 
-        return Object.values(appIntentsByName).sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));
+        return Promise.resolve(Object.values(appIntentsByName).sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en')));
     }
 
     /**
      * Retrieves all of the applications in the Application Directory.
      */
-    public async getAllApps(): Promise<Application[]> {
-        return this._directory;
+    public getAllApps(): Promise<Application[]> {
+        return Promise.resolve(this._directory);
+    }
+
+    protected async init(): Promise<void> {
+        await this._configStore.initialized;
+        await this.initializeDirectoryData();
     }
 
     private async initializeDirectoryData(): Promise<void> {

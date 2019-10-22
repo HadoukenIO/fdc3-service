@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import * as fdc3 from '../../../client/main';
 import {Instrument} from '../../apps/BlotterApp';
-import {Application} from '../../../client/main';
 
 import {SymbolsRow} from './SymbolsRow';
 
@@ -16,7 +15,7 @@ async function loadCharts() {
 
 export function SymbolsTable(props: SymbolsTableProps): React.ReactElement {
     const {items} = props;
-    const [chartApps, setChartApps] = React.useState<Application[]>([]);
+    const [chartApps, setChartApps] = React.useState<fdc3.Application[]>([]);
     const [selectedItem, setSelectedItem] = React.useState<Instrument | null>(null);
     const handleSelect = (item: Instrument | null) => {
         setSelectedItem(item);

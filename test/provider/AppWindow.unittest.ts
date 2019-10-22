@@ -9,6 +9,9 @@ import {ContextChannel} from '../../src/provider/model/ContextChannel';
 import {useMockTime, unmockTime, advanceTime, resolvePromiseChain} from '../utils/unit/time';
 
 class TestAppWindow extends AbstractAppWindow {
+    public bringToFront: jest.Mock<Promise<void>, []> = jest.fn<Promise<void>, []>();
+    public focus: jest.Mock<Promise<void>, []> = jest.fn<Promise<void>, []>();
+
     private readonly _identity: Readonly<Identity>;
 
     constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined, appWindowNumber: number) {
@@ -20,9 +23,6 @@ class TestAppWindow extends AbstractAppWindow {
     public get identity() {
         return this._identity;
     }
-
-    public bringToFront = jest.fn<Promise<void>, []>();
-    public focus = jest.fn<Promise<void>, []>();
 }
 
 const mockChannel = createMockChannel();

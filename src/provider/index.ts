@@ -208,7 +208,7 @@ export class Main {
         }
     }
 
-    private getSystemChannels(payload: GetSystemChannelsPayload, source: ProviderIdentity): readonly SystemChannelTransport[] {
+    private getSystemChannels(payload: GetSystemChannelsPayload, source: ProviderIdentity): ReadonlyArray<SystemChannelTransport> {
         return this._channelHandler.getSystemChannels().map((channel) => channel.serialize());
     }
 
@@ -223,13 +223,13 @@ export class Main {
         return appWindow.channel.serialize();
     }
 
-    private async getOrCreateAppChannel(payload: GetOrCreateAppChannelPayload, source: ProviderIdentity): Promise<AppChannelTransport> {
+    private getOrCreateAppChannel(payload: GetOrCreateAppChannelPayload, source: ProviderIdentity): AppChannelTransport {
         const name = parseAppChannelName(payload.name);
 
         return this._channelHandler.getAppChannelByName(name).serialize();
     }
 
-    private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): readonly Identity[] {
+    private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): ReadonlyArray<Identity> {
         const channel = this._channelHandler.getChannelById(payload.id);
 
         return this._channelHandler.getChannelMembers(channel).map((appWindow) => parseIdentity(appWindow.identity));

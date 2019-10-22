@@ -30,9 +30,9 @@ export interface AppWindow {
 
     channel: ContextChannel;
 
-    intentListeners: readonly string[];
+    intentListeners: ReadonlyArray<string>;
 
-    channelContextListeners: readonly ChannelId[];
+    channelContextListeners: ReadonlyArray<ChannelId>;
 
     hasIntentListener(intentName: string): boolean;
 
@@ -76,10 +76,6 @@ type ContextMap = Set<string>;
 type ChannelEventMap = Map<string, Set<Events['type']>>;
 
 export abstract class AbstractAppWindow implements AppWindow {
-    public abstract identity: Readonly<Identity>;
-    public abstract bringToFront(): Promise<void>;
-    public abstract focus(): Promise<void>;
-
     public channel: ContextChannel;
 
     private readonly _id: string;
@@ -125,11 +121,11 @@ export abstract class AbstractAppWindow implements AppWindow {
         return this._appWindowNumber;
     }
 
-    public get channelContextListeners(): readonly ChannelId[] {
+    public get channelContextListeners(): ReadonlyArray<ChannelId> {
         return Object.keys(this._channelContextListeners);
     }
 
-    public get intentListeners(): readonly string[] {
+    public get intentListeners(): ReadonlyArray<string> {
         return Object.keys(this._intentListeners);
     }
 
@@ -252,4 +248,8 @@ export abstract class AbstractAppWindow implements AppWindow {
         this._intentListeners.clear();
         this._contextListener = false;
     }
+
+    public abstract identity: Readonly<Identity>;
+    public abstract bringToFront(): Promise<void>;
+    public abstract focus(): Promise<void>;
 }

@@ -14,7 +14,7 @@ import {Identity} from 'openfin/_v2/main';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 
 import {Context, IntentType, AppIntent, ChannelId} from '../../../src/client/main';
-import {RaiseIntentPayload, deserializeError, Events, MainEvents} from '../../../src/client/internal';
+import {RaiseIntentPayload, deserializeError, Events, MainEvents, FindIntentPayload, OpenPayload, BroadcastPayload} from '../../../src/client/internal';
 
 import {OFPuppeteerBrowser, TestWindowContext, TestChannelTransport} from './ofPuppeteer';
 import {RemoteChannel} from './RemoteChannel';
@@ -46,25 +46,25 @@ export interface RemoteEventListener {
 }
 
 export async function open(executionTarget: Identity, name: string, context?: Context): Promise<void> {
-    return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, name: string, context?: Context): Promise<void> {
-        return this.fdc3.open(name, context).catch(this.errorHandler);
-    }, name, context).catch(handlePuppeteerError);
+    return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, payload: OpenPayload): Promise<void> {
+        return this.fdc3.open(payload.name, payload.context).catch(this.errorHandler);
+    }, {name, context}).catch(handlePuppeteerError);
 }
 
 export async function findIntent(executionTarget: Identity, intent: IntentType, context?: Context): Promise<AppIntent> {
-    return ofBrowser.executeOnWindow(executionTarget, async function (this: TestWindowContext, intent: IntentType, context?: Context): Promise<AppIntent> {
-        return this.fdc3.findIntent(intent, context).catch(this.errorHandler);
-    }, intent, context).catch(handlePuppeteerError);
+    return ofBrowser.executeOnWindow(executionTarget, async function (this: TestWindowContext, payload: FindIntentPayload): Promise<AppIntent> {
+        return this.fdc3.findIntent(payload.intent, payload.context).catch(this.errorHandler);
+    }, {intent, context}).catch(handlePuppeteerError);
 }
 
 export async function broadcast(executionTarget: Identity, context: Context): Promise<void> {
     return ofBrowser
         .executeOnWindow(
             executionTarget,
-            async function (this: TestWindowContext, context: Context): Promise<void> {
-                return this.fdc3.broadcast(context);
+            async function (this: TestWindowContext, payload: BroadcastPayload): Promise<void> {
+                return this.fdc3.broadcast(payload.context);
             },
-            context
+            {context}
         )
         .then(() => new Promise<void>((res) => setTimeout(res, 100))); // Broadcast is fire-and-forget. Slight delay to allow for service to handle
 }
@@ -126,11 +126,12 @@ export async function getRemoteContextListener(executionTarget: Identity, listen
     return createRemoteContextListener(executionTarget, listenerID);
 }
 
+interface GetRemoteIntentListenerPayload {intent: IntentType; listenerID: number}
 export async function getRemoteIntentListener(executionTarget: Identity, intent: IntentType, listenerID: number = 0): Promise<RemoteIntentListener> {
     // Check that the intent/ID pair maps to a listener
-    const exists = await ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, intent: IntentType, id: number): boolean {
-        return typeof this.intentListeners[intent] !== 'undefined' && typeof this.intentListeners[intent][id] !== 'undefined';
-    }, intent, listenerID);
+    const exists = await ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, payload: GetRemoteIntentListenerPayload): boolean {
+        return typeof this.intentListeners[payload.intent] !== 'undefined' && typeof this.intentListeners[payload.intent][payload.listenerID] !== 'undefined';
+    }, {intent, listenerID});
 
     if (!exists) {
         throw new Error(`Could not get remoteListener: No listener found for intent "${intent}" with ID "${listenerID}" \
@@ -140,7 +141,7 @@ export async function getRemoteIntentListener(executionTarget: Identity, intent:
 }
 
 export async function addEventListener(executionTarget: Identity, eventType: MainEvents['type']): Promise<RemoteEventListener> {
-    const id = await ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, eventType: MainEvents['type']): number {
+    const id = await ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, eventTypeRemote: MainEvents['type']): number {
         const listenerID = this.eventListeners.length;
 
         const handler = (payload: Events) => {
@@ -148,10 +149,10 @@ export async function addEventListener(executionTarget: Identity, eventType: Mai
         };
 
         const unsubscribe = () => {
-            this.fdc3.removeEventListener(eventType, handler);
+            this.fdc3.removeEventListener(eventTypeRemote, handler);
         };
 
-        this.fdc3.addEventListener(eventType, handler);
+        this.fdc3.addEventListener(eventTypeRemote, handler);
         this.eventListeners[listenerID] = {handler, unsubscribe};
         return listenerID;
     }, eventType);
@@ -159,14 +160,14 @@ export async function addEventListener(executionTarget: Identity, eventType: Mai
     return {
         remoteIdentity: executionTarget,
         id,
-        unsubscribe: async () => {
-            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, id: number): void {
-                this.eventListeners[id].unsubscribe();
+        unsubscribe: () => {
+            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, idRemote: number): void {
+                this.eventListeners[idRemote].unsubscribe();
             }, id);
         },
-        getReceivedEvents: async (): Promise<Events[]> => {
-            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, id: number): Events[] {
-                return this.receivedEvents.filter((entry) => entry.listenerID === id).map((entry) => entry.payload);
+        getReceivedEvents: (): Promise<Events[]> => {
+            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, idRemote: number): Events[] {
+                return this.receivedEvents.filter((entry) => entry.listenerID === idRemote).map((entry) => entry.payload);
             }, id);
         }
     };
@@ -184,13 +185,13 @@ export async function getRemoteEventListener(executionTarget: Identity, listener
         return {
             remoteIdentity: executionTarget,
             id: listenerID,
-            unsubscribe: async () => {
+            unsubscribe: () => {
                 return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, id: number): void {
                     this.eventListeners[id].unsubscribe();
                     delete this.eventListeners[id];
                 }, listenerID);
             },
-            getReceivedEvents: async (): Promise<Events[]> => {
+            getReceivedEvents: (): Promise<Events[]> => {
                 return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, id: number): Events[] {
                     return this.receivedEvents.filter((entry) => entry.listenerID === id).map((entry) => entry.payload);
                 }, listenerID);
@@ -200,14 +201,14 @@ export async function getRemoteEventListener(executionTarget: Identity, listener
 }
 
 export async function findIntentsByContext(executionTarget: Identity, context: Context): Promise<AppIntent[]> {
-    return ofBrowser.executeOnWindow(executionTarget, async function (this: TestWindowContext, context: Context): Promise<AppIntent[]> {
-        return this.fdc3.findIntentsByContext(context).catch(this.errorHandler);
+    return ofBrowser.executeOnWindow(executionTarget, async function (this: TestWindowContext, contextRemote: Context): Promise<AppIntent[]> {
+        return this.fdc3.findIntentsByContext(contextRemote).catch(this.errorHandler);
     }, context).catch(handlePuppeteerError);
 }
 
-export async function clickHTMLElement(executionTarget: Identity, elementSelector: string): Promise<boolean> {
-    return ofBrowser.executeOnWindow(executionTarget, async function (this: TestWindowContext, elementSelector: string): Promise<boolean> {
-        const element = this.document.querySelector(elementSelector) as HTMLElement;
+export function clickHTMLElement(executionTarget: Identity, elementSelector: string): Promise<boolean> {
+    return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, elementSelectorRemote: string): boolean {
+        const element = this.document.querySelector(elementSelectorRemote) as HTMLElement;
         if (!element) {
             return false;
         }
@@ -218,9 +219,9 @@ export async function clickHTMLElement(executionTarget: Identity, elementSelecto
 
 export async function getSystemChannels(executionTarget: Identity): Promise<RemoteChannel[]> {
     const channels = await ofBrowser.executeOnWindow(executionTarget, async function (this: TestWindowContext): Promise<TestChannelTransport[]> {
-        const channels = await this.fdc3.getSystemChannels().catch(this.errorHandler);
+        const channelsRemote = await this.fdc3.getSystemChannels().catch(this.errorHandler);
 
-        return channels.map(this.serializeChannel);
+        return channelsRemote.map(this.serializeChannel);
     }).catch(handlePuppeteerError);
 
     return channels.map((channel) => deserializeChannel(executionTarget, channel));
@@ -229,8 +230,8 @@ export async function getSystemChannels(executionTarget: Identity): Promise<Remo
 export async function getChannelById(executionTarget: Identity, id: ChannelId): Promise<RemoteChannel> {
     const testChannelTransport = await ofBrowser.executeOnWindow(
         executionTarget,
-        async function (this: TestWindowContext, id: ChannelId): Promise<TestChannelTransport> {
-            const channel = await this.fdc3.getChannelById(id).catch(this.errorHandler);
+        async function (this: TestWindowContext, idRemote: ChannelId): Promise<TestChannelTransport> {
+            const channel = await this.fdc3.getChannelById(idRemote).catch(this.errorHandler);
 
             return this.serializeChannel(channel);
         },
@@ -243,8 +244,8 @@ export async function getChannelById(executionTarget: Identity, id: ChannelId): 
 export async function getCurrentChannel(executionTarget: Identity, identity?: Identity): Promise<RemoteChannel> {
     const testChannelTransport = await ofBrowser.executeOnWindow(
         executionTarget,
-        async function (this: TestWindowContext, identity?: Identity): Promise<TestChannelTransport> {
-            const channel = await this.fdc3.getCurrentChannel(identity).catch(this.errorHandler);
+        async function (this: TestWindowContext, identityRemote?: Identity): Promise<TestChannelTransport> {
+            const channel = await this.fdc3.getCurrentChannel(identityRemote).catch(this.errorHandler);
 
             return this.serializeChannel(channel);
         },
@@ -257,8 +258,8 @@ export async function getCurrentChannel(executionTarget: Identity, identity?: Id
 export async function getOrCreateAppChannel(executionTarget: Identity, name: string): Promise<RemoteChannel> {
     const testChannelTransport = await ofBrowser.executeOnWindow(
         executionTarget,
-        async function (this: TestWindowContext, name: string): Promise<TestChannelTransport> {
-            const channel = await this.fdc3.getOrCreateAppChannel(name).catch(this.errorHandler);
+        async function (this: TestWindowContext, nameRemote: string): Promise<TestChannelTransport> {
+            const channel = await this.fdc3.getOrCreateAppChannel(nameRemote).catch(this.errorHandler);
 
             return this.serializeChannel(channel);
         },
@@ -290,15 +291,15 @@ export function createRemoteContextListener(executionTarget: Identity, id: numbe
     return {
         remoteIdentity: executionTarget,
         id,
-        unsubscribe: async () => {
-            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, id: number): void {
-                this.contextListeners[id].unsubscribe();
-                delete this.contextListeners[id];
+        unsubscribe: () => {
+            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, idRemote: number): void {
+                this.contextListeners[idRemote].unsubscribe();
+                delete this.contextListeners[idRemote];
             }, id);
         },
-        getReceivedContexts: async (): Promise<Context[]> => {
-            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, id: number): Context[] {
-                return this.receivedContexts.filter((entry) => entry.listenerID === id).map((entry) => entry.context);
+        getReceivedContexts: (): Promise<Context[]> => {
+            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, idRemote: number): Context[] {
+                return this.receivedContexts.filter((entry) => entry.listenerID === idRemote).map((entry) => entry.context);
             }, id);
         }
     };
@@ -320,15 +321,15 @@ function createRemoteIntentListener(executionTarget: Identity, id: number, inten
         remoteIdentity: executionTarget,
         id,
         intent,
-        unsubscribe: async () => {
-            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, intent: IntentType, id: number): void {
-                this.intentListeners[intent][id].unsubscribe();
-                delete this.intentListeners[intent][id];
+        unsubscribe: () => {
+            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, intentRemote: IntentType, idRemote: number): void {
+                this.intentListeners[intentRemote][idRemote].unsubscribe();
+                delete this.intentListeners[intentRemote][idRemote];
             }, intent, id);
         },
-        getReceivedContexts: async (): Promise<Context[]> => {
-            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, intent: IntentType, id: number): Context[] {
-                return this.receivedIntents.filter((entry) => entry.listenerID === id && entry.intent === intent).map((entry) => entry.context);
+        getReceivedContexts: (): Promise<Context[]> => {
+            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, intentRemote: IntentType, idRemote: number): Context[] {
+                return this.receivedIntents.filter((entry) => entry.listenerID === idRemote && entry.intent === intentRemote).map((entry) => entry.context);
             }, intent, id);
         }
     };

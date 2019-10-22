@@ -211,6 +211,7 @@ ${JSON.stringify({uuid: testAppNotInDirectoryNotFdc3.uuid, name: testAppNotInDir
         setupOpenDirectoryAppBookends(testAppInDirectory1);
 
         test('If the FDC3 app identity is provided, join resolves successfully', async () => {
+            // eslint-disable-next-line
             await expect(blueChannel.join(testAppInDirectory1)).resolves;
         });
     });

@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 /**
  * Declare all injectable types/values here.
  *
