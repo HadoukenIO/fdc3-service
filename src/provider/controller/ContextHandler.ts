@@ -39,6 +39,7 @@ export class ContextHandler {
         if (window.hasContextListener()) {
             return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload);
         } else {
+            // We intentionally don't await this, as we have no expectation that windows will add a context listener
             window.waitForReadyToReceiveContext().then(() => {
                 // TODO: Make sure this will not cause problems if it never returns [SERVICE-555]
                 return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload);
@@ -86,7 +87,7 @@ export class ContextHandler {
             .filter(notSender)
             .map(window => this.sendOnChannel(window, context, channel)));
 
-        // We intentionally don't await any of this, as these dispatches are not important enough to block the caller
+        // We intentionally don't await this, as we have no expectation that windows will add a context listener
         for (const app of this._model.apps.filter((app: LiveApp) => app.started)) {
             app.waitForAppInfo().then((appInfo) => {
                 this._model.expectWindowsForApp(
