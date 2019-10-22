@@ -184,7 +184,7 @@ describe('When attempting to join a channel', () => {
             toThrowError(new TypeError(`${JSON.stringify(invalidIdentity)} is not a valid Identity`));
     });
 
-    test('If an identity for a window that does not exist is provided, an FDC3 error is thrown', async () => {
+    test.skip('If an identity for a window that does not exist is provided, an FDC3 error is thrown', async () => {
         const nonExistentWindowIdentity: Identity = {uuid: 'does-not-exist', name: 'does-not-exist'};
 
         await expect(blueChannel.join(nonExistentWindowIdentity)).
@@ -194,7 +194,7 @@ describe('When attempting to join a channel', () => {
             );
     });
 
-    describe('When a non-FDC3 app has been started', () => {
+    describe.skip('When a non-FDC3 app has been started', () => {
         setupStartNonDirectoryAppBookends(testAppNotInDirectoryNotFdc3);
 
         test('If the non-FDC3 app identity is provided, an FDC3 error is thrown', async () => {

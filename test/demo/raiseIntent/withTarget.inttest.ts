@@ -122,7 +122,7 @@ listener is triggered just once, with the correct context', async () => {
                         await expect(listener3).toHaveReceivedContexts([]);
                     });
 
-                    test('When the intent listener is added after a long delay, the targeted app opens but it times out waiting for the \
+                    test.skip('When the intent listener is added after a long delay, the targeted app opens but it times out waiting for the \
 listener to be added', async () => {
                         // Raise the intent but only add the intent listener after the listener handshake timeout has been exceeded
                         const raiseIntentPromise = raiseDelayedIntentWithTarget(

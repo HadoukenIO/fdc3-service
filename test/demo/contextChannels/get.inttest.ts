@@ -103,7 +103,7 @@ describe('When attempting to get the current channel', () => {
             .toThrowError(new TypeError(`${JSON.stringify(invalidIdentity)} is not a valid Identity`));
     });
 
-    test('When an identity for a window that does not exist is provided, an FDC3 error is thrown', async () => {
+    test.skip('When an identity for a window that does not exist is provided, an FDC3 error is thrown', async () => {
         const nonExistentWindowIdentity: Identity = {uuid: 'does-not-exist', name: 'does-not-exist'};
 
         await expect(fdc3Remote.getCurrentChannel(testManagerIdentity, nonExistentWindowIdentity)).toThrowFDC3Error(
@@ -121,7 +121,7 @@ describe('When attempting to get the current channel', () => {
             await fin.Application.wrapSync(testAppNotInDirectoryNotFdc3).quit(true);
         });
 
-        test('When the non-FDC3 window identity is provided, an FDC3 error is thrown', async () => {
+        test.skip('When the non-FDC3 window identity is provided, an FDC3 error is thrown', async () => {
             await expect(fdc3Remote.getCurrentChannel(testManagerIdentity, testAppNotInDirectoryNotFdc3)).toThrowFDC3Error(
                 IdentityError.WindowWithIdentityNotFound,
                 `No connection to FDC3 service found from window with identity: \
