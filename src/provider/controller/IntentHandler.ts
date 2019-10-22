@@ -7,7 +7,6 @@ import {FDC3Error, ResolveError} from '../../client/errors';
 import {Model} from '../model/Model';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
-import {AppDirectory} from '../model/AppDirectory';
 
 import {ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
@@ -115,13 +114,7 @@ export class IntentHandler {
 
             await Promise.all(listeningWindows.map((window) => this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload)));
         } else {
-            const finApp = fin.Application.wrapSync({uuid: AppDirectory.getUuidFromApp(appInfo)});
-            const info = await finApp.getInfo();
-
-            throw new FDC3Error(
-                ResolveError.IntentTimeout,
-                `Timeout waiting for intent listener to be added for intent: ${intent.type}, appInfo: ${JSON.stringify(info)}`
-            );
+            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
         }
 
         const result: IntentResolution = {

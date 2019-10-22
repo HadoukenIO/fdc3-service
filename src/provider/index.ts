@@ -327,12 +327,9 @@ export class Main {
         try {
             return await windowPromise;
         } catch {
-            const finApp = fin.Application.wrapSync({uuid: identity.uuid});
-            const info = await finApp.getInfo();
-
             throw new FDC3Error(
                 IdentityError.WindowWithIdentityNotFound,
-                `No connection to FDC3 service found from window with identity: ${JSON.stringify(identity)}. Appinfo: ${JSON.stringify(info)}`
+                `No connection to FDC3 service found from window with identity: ${JSON.stringify(identity)}`
             );
         }
     }

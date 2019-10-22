@@ -128,7 +128,7 @@ describe('Intent listeners and raising intents without a target', () => {
 
                 setupQuitAppAfterEach(testAppWithUniqueIntent);
 
-                describe.skip('When the directory app does not register the intent listener after opening', () => {
+                describe('When the directory app does not register the intent listener after opening', () => {
                     test('When calling raiseIntent from another app, the app opens but it times out waiting for the listener to be added', async () => {
                         await expect(raiseIntentPromise).toThrowFDC3Error(
                             ResolveError.IntentTimeout,
@@ -170,7 +170,7 @@ app, the app opens and the first window\'s listener the correct context', async 
                         await expect(listener3).toHaveReceivedContexts([]);
                     });
 
-                    test.skip('When the listener is registered on the main window after a long delay, when calling raiseIntent from another \
+                    test('When the listener is registered on the main window after a long delay, when calling raiseIntent from another \
 app, the app opens but the promise rejects', async () => {
                         await delay(7500);
 
