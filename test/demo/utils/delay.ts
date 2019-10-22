@@ -10,5 +10,9 @@ export async function delay(duration: number) {
 
 export enum Duration {
     PAGE_RELOAD = 500,
-    PAGE_NAVIGATE = 500
+    PAGE_NAVIGATE = 500,
+    SHORTER_THAN_APP_MATURITY = 2500,
+    LONGER_THAN_APP_MATURITY = 7500,
+    // Should only be used when this isn't captured in the promise returned by a client-to-service API call
+    SERVICE_TO_CLIENT_API_CALL = 100
 }

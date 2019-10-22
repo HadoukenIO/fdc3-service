@@ -7,8 +7,8 @@ import {Timeouts} from '../../src/provider/constants';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
 import {quitApps, setupOpenDirectoryAppBookends, setupTeardown, waitForAppToBeRunning} from './utils/common';
-import {testManagerIdentity, testAppInDirectory1, testAppInDirectory2, testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2, testAppNotFdc3, testAppUrl} from './constants';
-import {delay} from './utils/delay';
+import {testManagerIdentity, testAppInDirectory1, testAppInDirectory2, testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2, testAppNotFdc3, testAppUrl, appStartupTime} from './constants';
+import {delay, Duration} from './utils/delay';
 
 setupTeardown();
 
@@ -106,7 +106,7 @@ correct data', async () => {
 
                     // Wait a short delay after the app is running
                     await waitForAppToBeRunning(testAppInDirectory1);
-                    await delay(2500);
+                    await delay(Duration.SHORTER_THAN_APP_MATURITY);
 
                     // Add a listener
                     const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
@@ -163,7 +163,7 @@ triggered with the correct data', async () => {
 
                     // Wait a long delay after the app is running
                     await waitForAppToBeRunning(testAppInDirectory1);
-                    await delay(7500);
+                    await delay(Duration.LONGER_THAN_APP_MATURITY);
 
                     // Add a listener
                     const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
@@ -172,7 +172,7 @@ triggered with the correct data', async () => {
 
                     // Check the listener did not receive the context in open
                     await expect(listener).toHaveReceivedContexts([]);
-                });
+                }, appStartupTime + Duration.LONGER_THAN_APP_MATURITY);
             });
 
             test('When passing a known app name but invalid context, the service returns an FDC3Error', async () => {
