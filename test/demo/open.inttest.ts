@@ -151,6 +151,15 @@ triggered with the correct data', async () => {
 
                     await openPromise;
 
+                    console.log('******');
+                    console.log(JSON.stringify([
+                        await listener1.getReceivedContexts(),
+                        await listener2.getReceivedContexts(),
+                        await listener3.getReceivedContexts()
+                    ]));
+
+                    await delay(1000);
+
                     console.log(JSON.stringify([
                         await listener1.getReceivedContexts(),
                         await listener2.getReceivedContexts(),
