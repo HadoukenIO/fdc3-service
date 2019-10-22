@@ -317,7 +317,7 @@ export class Model {
 
         if (app) {
             app.setClosed();
-            delete this._liveAppsByUuid[identity.uuid];
+            delete this._liveAppsByUuid[uuid];
         }
     }
 
@@ -326,12 +326,9 @@ export class Model {
 
         const {uuid} = identity;
         const liveApp = this._liveAppsByUuid[uuid];
-        this._liveAppsByUuid[uuid] = liveApp;
 
         // Only register windows once they are connected to the service
-        allowReject(expectedWindow.connected.then(async () => {
-            await this.registerWindow(liveApp, identity);
-        }));
+        allowReject(expectedWindow.connected.then(() => this.registerWindow(liveApp, identity)));
     }
 
     private onWindowClosed(identity: Identity): void {
