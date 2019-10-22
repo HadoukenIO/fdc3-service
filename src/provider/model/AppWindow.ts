@@ -5,7 +5,7 @@ import {Application, IntentType, ChannelId} from '../../client/main';
 import {DeferredPromise} from '../common/DeferredPromise';
 import {Events, ChannelEvents} from '../../client/internal';
 import {getId} from '../utils/getId';
-import {untilTrue} from '../utils/async';
+import {untilTrue, allowReject} from '../utils/async';
 
 import {ContextChannel} from './ContextChannel';
 
@@ -213,7 +213,7 @@ export abstract class AbstractAppWindow implements AppWindow {
     }
 
     private waitForListener<A extends any[]>(listenerAddedSignal: Signal<A>, hasListenerPredicate: () => boolean): Promise<void> {
-        const rejectOnMaturePromise = this._maturePromise.then(() => Promise.reject(new Error('Timeout waiting for listener')));
+        const rejectOnMaturePromise = allowReject(this._maturePromise.then(() => Promise.reject(new Error('Timeout waiting for listener'))));
 
         return untilTrue(listenerAddedSignal, hasListenerPredicate, rejectOnMaturePromise);
     }
