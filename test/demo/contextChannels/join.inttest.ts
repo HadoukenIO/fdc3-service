@@ -6,7 +6,7 @@ import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel, RemoteChannelEventListener} from '../utils/RemoteChannel';
 import {fin} from '../utils/fin';
 import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, quitApps} from '../utils/common';
-import {fakeAppChannelName} from '../utils/channels';
+import {fakeAppChannelName} from '../utils/fakes';
 
 /*
  * Tests simple behaviour of Channel.getMembers() and the channel-changed and Channel events, before testing how they and getCurrentChannel()
