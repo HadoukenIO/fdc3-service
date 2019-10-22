@@ -2,6 +2,8 @@
  * @module Index
  */
 
+import {raceTilPredicate} from '../provider/utils/async';
+
 import {tryServiceDispatch, getServicePromise, getEventRouter, eventEmitter} from './connection';
 import {Context} from './context';
 import {Application} from './directory';
@@ -69,7 +71,7 @@ export interface ContextListener {
 
 export interface IntentListener {
     intent: string;
-    handler: (context: Context) => void;
+    handler: (context: Context) => any;
     /**
      * Unsubscribe the listener object.
      */
@@ -298,14 +300,20 @@ function deserializeChannelChangedEvent(eventTransport: Transport<ChannelChanged
     return {type, identity, channel, previousChannel};
 }
 
+function returnValuePredicate(value?: any): boolean {
+    return (value === false || value === '' || !!value);
+}
+
 if (typeof fin !== 'undefined') {
     getServicePromise().then(channelClient => {
-        channelClient.register(APIToClientTopic.RECEIVE_INTENT, (payload: RaiseIntentPayload) => {
-            intentListeners.forEach((listener: IntentListener) => {
-                if (payload.intent === listener.intent) {
-                    listener.handler(payload.context);
-                }
-            });
+        channelClient.register(APIToClientTopic.RECEIVE_INTENT, async (payload: RaiseIntentPayload) => {
+            const result = await raceTilPredicate(
+                intentListeners
+                    .filter(listener => listener.intent === payload.intent)
+                    .map(async listener => listener.handler(payload.context)),
+                returnValuePredicate
+            );
+            return result;
         });
 
         channelClient.register(APIToClientTopic.RECEIVE_CONTEXT, (payload: ReceiveContextPayload) => {

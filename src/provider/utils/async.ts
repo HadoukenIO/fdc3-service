@@ -79,6 +79,32 @@ export function allowReject<T>(promise: Promise<T>): Promise<T> {
     return promise;
 }
 
+export async function raceTilPredicate(items: any[], predicate: (v: any) => boolean): Promise<any | null> {
+    let promisesCompleted = 0;
+    const errors: Error[] = [];
+    const valueFound = new DeferredPromise<any | null>();
+
+    const resolveCheck = async (value?: any) => {
+        promisesCompleted++;
+        if (value instanceof Error) {
+            errors.push(value);
+        } else if (predicate(value)) {
+            return valueFound.resolve(value);
+        }
+        if (items.length === promisesCompleted) {
+            if (items.length === errors.length) {
+                throw new Error('Exceptions in all promises');
+            }
+            valueFound.resolve(null);
+        }
+        await valueFound.promise;
+    };
+    // Wrap `item` incase it is not a Promise
+    const racePromises = items.map(item => Promise.resolve(item).then(resolveCheck, resolveCheck));
+    racePromises.push(valueFound.promise);
+
+    return Promise.race(racePromises);
+}
 export async function asyncFilter<T>(arr: T[], callback: (x: T) => Promise<boolean>): Promise<T[]> {
     const result: T[] = [];
 

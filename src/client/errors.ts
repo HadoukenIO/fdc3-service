@@ -14,10 +14,15 @@ export enum ResolveError {
     TargetAppNotAvailable = 'TargetAppNotAvailable',
     TargetAppDoesNotHandleIntent = 'TargetAppDoesNotHandleIntent',
     IntentTimeout = 'IntentTimeout',
+    IntentHandlerException = 'IntentHandlerException',
     ResolverUnavailable = 'ResolverUnavailable',
     ResolverTimeout = 'ResolverTimeout',
     ResolverClosedOrCancelled = 'ResolverClosedOrCancelled',
 }
+
+export const ResolveErrorMessage = {
+    [ResolveError.IntentHandlerException]: 'Exception occured in intent handling app'
+};
 
 export enum ChannelError {
     ChannelDoesNotExist = 'ChannelDoesNotExist'

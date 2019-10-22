@@ -3,13 +3,13 @@ import {injectable, inject} from 'inversify';
 import {Inject} from '../common/Injectables';
 import {Intent} from '../../client/intents';
 import {IntentResolution, Application} from '../../client/main';
-import {FDC3Error, ResolveError} from '../../client/errors';
+import {FDC3Error, ResolveError, ResolveErrorMessage} from '../../client/errors';
 import {Model} from '../model/Model';
 import {AppDirectory} from '../model/AppDirectory';
 import {AppWindow} from '../model/AppWindow';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
-import {withTimeout} from '../utils/async';
+import {raceTilPredicate, withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
 import {Environment} from '../model/Environment';
 
@@ -23,7 +23,7 @@ export class IntentHandler {
     private readonly _resolver: ResolverHandlerBinding;
     private readonly _apiHandler: APIHandler<APIToClientTopic>;
 
-    private _resolvePromise: Promise<IntentResolution>|null;
+    private _resolvePromise: Promise<IntentResolution> | null;
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
@@ -118,42 +118,44 @@ export class IntentHandler {
 
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
         await this._model.ensureRunning(appInfo);
+        const appWindows = await this._model.expectWindowsForApp(appInfo);
+        const promises = appWindows.map(async (window: AppWindow): Promise<any> => {
+            if (await window.isReadyToReceiveIntent(intent.type)) {
+                const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
+                return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
+            } else {
+                throw new Error(`${appInfo.name} not ready to recieve intents.`);
+            }
+        });
 
-        // TODO: Revisit timeout logic [SERVICE-556]
-        let dispatchingCompleted = false;
-        const dispatchResults = await withTimeout(Timeouts.ADD_INTENT_LISTENER, (async () => {
-            const appWindows = await this._model.expectWindowsForApp(appInfo);
-
-            // Wait for windows to add intent listener, then dispatch payload
-            return Promise.all(appWindows.map(async (window: AppWindow): Promise<boolean> => {
-                if (await window.isReadyToReceiveIntent(intent.type)) {
-                    const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
-
-                    // TODO: Implement a timeout so a misbehaving intent handler can't block the intent raiser [SERVICE-555]
-                    if (!dispatchingCompleted) {
-                        await this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
-                        return true;
-                    }
-                }
-                return false;
-            }));
-        })());
-
-        dispatchingCompleted = true;
-
-        if (dispatchResults[0] || !dispatchResults[1]!.includes(true)) {
-            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
+        let data: unknown;
+        try {
+            // Use the first handler return data that matches the predicate
+            const [didTimeout, result] = await withTimeout(Timeouts.INTENT_RESOLUTION, raceTilPredicate(promises, returnValuePredicate));
+            if (didTimeout) {
+                throw new Error('Race timed out');
+            }
+            data = result;
+        } catch (error) {
+            if (/Exceptions in all/.test(error.message)) {
+                throw new FDC3Error(ResolveError.IntentHandlerException, `${ResolveErrorMessage[ResolveError.IntentHandlerException]} ${appInfo.name}`);
+            }
+            if (/Race/.test(error.message)) {
+                throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
+            }
+            throw error;
         }
 
-        const result: IntentResolution = {
+        const resolution: IntentResolution = {
             source: appInfo.name,
-            version: '1.0.0'
+            version: '1.0.0',
+            data
         };
 
         // Handle next queued intent
-        console.log('Finished intent', intent.type);
+        console.log(`Finished intent: ${intent.type}`, resolution);
 
-        return result;
+        return resolution;
     }
 }
 
@@ -165,4 +167,9 @@ interface IntentWithTarget extends Intent {
 // Guard to help narrow down Intent into IntentWithTarget
 function hasTarget(intent: Intent): intent is IntentWithTarget {
     return !!intent.target;
+}
+
+// Check if the intent handler return value is valid defined.
+function returnValuePredicate(value?: any) {
+    return value === false || value === '' || !!value;
 }

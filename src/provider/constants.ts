@@ -18,6 +18,11 @@ export const Timeouts = {
     APP_START_FROM_MANIFEST: 30000,
 
     /**
+     * Time service allows for an application's intent handler to resolve and return a value for the data field on an {@link IntentResolution}.
+     */
+    INTENT_RESOLUTION: 5000,
+
+    /**
      * Time service allows for a `window-created` event after a client expects the window to exist
      */
     WINDOW_EXPECT_TO_CREATED: 250,
