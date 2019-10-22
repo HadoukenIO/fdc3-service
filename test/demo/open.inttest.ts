@@ -146,6 +146,8 @@ triggered with the correct data', async () => {
 
                     await waitForAppToBeRunning(testAppInDirectory1);
 
+                    console.log('****** app running');
+
                     const childWindow1 = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-window-1'});
                     const childWindow2 = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-window-2'});
 
