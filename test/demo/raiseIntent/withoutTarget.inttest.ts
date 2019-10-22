@@ -172,7 +172,7 @@ app, the app opens and the first window\'s listener the correct context', async 
                         await expect(listener1).toHaveReceivedContexts([uniqueIntent.context]);
                         await expect(listener2).toHaveReceivedContexts([]);
                         await expect(listener3).toHaveReceivedContexts([]);
-                    });
+                    }, appStartupTime + 2500);
 
                     test('When the listener is registered on the main window after a long delay, when calling raiseIntent from another \
 app, the app opens but the promise rejects', async () => {
