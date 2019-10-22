@@ -158,12 +158,16 @@ app, the app opens and receives the intent with the correct context', async () =
 
                     test('When listeners are registered on multiple windows after a short delay, when calling raiseIntent from another \
 app, the app opens and the first window\'s listener the correct context', async () => {
+                        await delay(2500);
+
                         const childWindow1 = await fdc3Remote.createFinWindow(testAppWithUniqueIntent, {url: testAppUrl, name: 'child-window-1'});
                         const childWindow2 = await fdc3Remote.createFinWindow(testAppWithUniqueIntent, {url: testAppUrl, name: 'child-window-2'});
 
                         const listener1 = await fdc3Remote.addIntentListener(childWindow1, uniqueIntent.type);
                         const listener2 = await fdc3Remote.addIntentListener(childWindow2, uniqueIntent.type);
                         const listener3 = await fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
+
+                        await raiseIntentPromise;
 
                         await expect(listener1).toHaveReceivedContexts([uniqueIntent.context]);
                         await expect(listener2).toHaveReceivedContexts([]);
