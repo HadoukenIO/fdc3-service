@@ -70,7 +70,8 @@ export class OFPuppeteerBrowser {
 
         // Explicit cast needed to appease typescript. Puppeteer types make liberal
         // use of the any type, which confuses things here.
-        return page.evaluate(fn as (...args: T) => R, ...args);
+        // tslint:disable-next-line: no-any
+        return page.evaluate(fn as (...args: any[]) => R, ...args);
     }
 
     private async registerCleanupListener() {
