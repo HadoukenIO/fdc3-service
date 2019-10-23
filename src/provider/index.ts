@@ -3,9 +3,9 @@ import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, AddContextListenerPayload, RemoveContextListenerPayload, GetOrCreateAppChannelPayload, AppChannelTransport} from '../client/internal';
-import {AppIntent, IntentResolution, Application, Intent, Context} from '../client/main';
 import {FDC3Error, OpenError, IdentityError} from '../client/errors';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, GetOrCreateAppChannelPayload, AppChannelTransport, AddContextListenerPayload, RemoveContextListenerPayload} from '../client/internal';
+import {AppIntent, IntentResolution, Application, Intent, Context} from '../client/main';
 import {parseIdentity, parseContext, parseChannelId, parseAppChannelName} from '../client/validation';
 
 import {Inject} from './common/Injectables';
@@ -150,14 +150,14 @@ export class Main {
         return {
             intent: {
                 name: payload.intent,
-                displayName: payload.intent
+                displayName: AppDirectory.getIntentDisplayName(apps, payload.intent)
             },
             apps
         };
     }
 
     private async findIntentsByContext(payload: FindIntentsByContextPayload): Promise<AppIntent[]> {
-        return this._directory.getAppIntentsByContext(parseContext(payload.context).type);
+        return this._model.getAppIntentsByContext(parseContext(payload.context).type);
     }
 
     private async broadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {

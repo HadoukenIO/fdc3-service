@@ -5,7 +5,8 @@ import {Context} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel} from '../utils/RemoteChannel';
 import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends} from '../utils/common';
-import {getChannel, fakeAppChannelDescriptor, ChannelDescriptor} from '../utils/channels';
+import {getChannel, ChannelDescriptor} from '../utils/channels';
+import {fakeAppChannelDescriptor} from '../utils/fakes';
 
 /**
  * Tests Channel.broadcast(), its interaction with Channel.getCurrentContext(), and Channel.addContextListener
