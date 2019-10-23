@@ -1,7 +1,7 @@
 import {injectable, inject} from 'inversify';
 import _WindowModule from 'openfin/_v2/api/window/window';
 
-import {AppWindow} from '../model/AppWindow';
+import {AppConnection} from '../model/AppWindow';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic, Events} from '../../client/internal';
 import {Inject} from '../common/Injectables';
@@ -24,7 +24,11 @@ export class EventHandler {
         this._apiHandler = apiHandler;
     }
 
-    public async dispatchEventOnChannelChanged(appWindow: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null): Promise<void> {
+    public async dispatchEventOnChannelChanged(
+        appWindow: AppConnection,
+        channel: ContextChannel | null,
+        previousChannel: ContextChannel | null
+    ): Promise<void> {
         const partialEvent = {
             identity: appWindow.identity,
             channel: channel && channel.serialize(),
@@ -70,7 +74,7 @@ export class EventHandler {
         return Promise.all(promises).then(() => {});
     }
 
-    private dispatchEvent<T extends Events>(targetWindow: AppWindow, eventTransport: Targeted<Transport<T>>): Promise<void> {
+    private dispatchEvent<T extends Events>(targetWindow: AppConnection, eventTransport: Targeted<Transport<T>>): Promise<void> {
         return this._apiHandler.dispatch(targetWindow.identity, 'event', eventTransport);
     }
 

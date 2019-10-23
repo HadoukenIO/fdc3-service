@@ -5,7 +5,7 @@ import {Model} from '../model/Model';
 import {Inject} from '../common/Injectables';
 import {ChannelId, FDC3Error, ChannelError, Context} from '../../client/main';
 import {SystemContextChannel, ContextChannel, AppContextChannel} from '../model/ContextChannel';
-import {AppWindow} from '../model/AppWindow';
+import {AppConnection} from '../model/AppWindow';
 import {ChannelEvents} from '../../client/internal';
 
 @injectable()
@@ -13,9 +13,9 @@ export class ChannelHandler {
     /**
      * Channel is adding or removing a window
      *
-     * Arguments: (window: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null)
+     * Arguments: (connection: AppConnection, channel: ContextChannel | null, previousChannel: ContextChannel | null)
      */
-    public readonly onChannelChanged: Signal<[AppWindow, ContextChannel | null, ContextChannel | null]>;
+    public readonly onChannelChanged: Signal<[AppConnection, ContextChannel | null, ContextChannel | null]>;
 
     private readonly _model: Model;
 
@@ -24,8 +24,8 @@ export class ChannelHandler {
 
         this.onChannelChanged = new Signal();
 
-        this._model.onWindowAdded.add(this.onModelWindowAdded, this);
-        this._model.onWindowRemoved.add(this.onModelWindowRemoved, this);
+        this._model.onConnectionAdded.add(this.onModelWindowAdded, this);
+        this._model.onConnectionRemoved.add(this.onModelWindowRemoved, this);
     }
 
     public getSystemChannels(): SystemContextChannel[] {
@@ -50,7 +50,7 @@ export class ChannelHandler {
         return this._model.getChannel(channelId)!;
     }
 
-    public getWindowsListeningToChannel(channel: ContextChannel): AppWindow[] {
+    public getWindowsListeningToChannel(channel: ContextChannel): AppConnection[] {
         return this._model.windows.filter(window => window.hasChannelContextListener(channel));
     }
 
@@ -58,19 +58,19 @@ export class ChannelHandler {
         return channel.storedContext;
     }
 
-    public getChannelMembers(channel: ContextChannel): AppWindow[] {
+    public getChannelMembers(channel: ContextChannel): AppConnection[] {
         return this._model.windows.filter(window => window.channel === channel);
     }
 
-    public getWindowsListeningForContextsOnChannel(channel: ContextChannel): AppWindow[] {
+    public getWindowsListeningForContextsOnChannel(channel: ContextChannel): AppConnection[] {
         return this._model.windows.filter(window => window.hasChannelContextListener(channel));
     }
 
-    public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: ChannelEvents['type']): AppWindow[] {
+    public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: ChannelEvents['type']): AppConnection[] {
         return this._model.windows.filter(window => window.hasChannelEventListener(channel, eventType));
     }
 
-    public joinChannel(appWindow: AppWindow, channel: ContextChannel): void {
+    public joinChannel(appWindow: AppConnection, channel: ContextChannel): void {
         const previousChannel = appWindow.channel;
 
         if (previousChannel !== channel) {
@@ -90,11 +90,11 @@ export class ChannelHandler {
         }
     }
 
-    private onModelWindowAdded(window: AppWindow): void {
+    private onModelWindowAdded(window: AppConnection): void {
         this.onChannelChanged.emit(window, window.channel, null);
     }
 
-    private onModelWindowRemoved(window: AppWindow): void {
+    private onModelWindowRemoved(window: AppConnection): void {
         if (this.isChannelEmpty(window.channel)) {
             window.channel.clearStoredContext();
         }

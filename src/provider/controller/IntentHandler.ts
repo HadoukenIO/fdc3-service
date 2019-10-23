@@ -6,7 +6,7 @@ import {IntentResolution, Application} from '../../client/main';
 import {FDC3Error, ResolveError} from '../../client/errors';
 import {Model} from '../model/Model';
 import {AppDirectory} from '../model/AppDirectory';
-import {AppWindow} from '../model/AppWindow';
+import {AppConnection} from '../model/AppWindow';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
 import {withTimeout} from '../utils/async';
@@ -125,7 +125,7 @@ export class IntentHandler {
             const appWindows = await this._model.expectWindowsForApp(appInfo);
 
             // Wait for windows to add intent listener, then dispatch payload
-            return Promise.all(appWindows.map(async (window: AppWindow): Promise<boolean> => {
+            return Promise.all(appWindows.map(async (window: AppConnection): Promise<boolean> => {
                 if (await window.isReadyToReceiveIntent(intent.type)) {
                     const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
 

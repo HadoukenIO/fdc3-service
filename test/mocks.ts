@@ -1,7 +1,7 @@
 import {Signal} from 'openfin-service-signal';
 import {Identity} from 'openfin/_v2/main';
 
-import {AppWindow} from '../src/provider/model/AppWindow';
+import {AppConnection} from '../src/provider/model/AppWindow';
 import {IntentType, Context, Application} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
 import {ChannelTransport, ChannelEvents, APIFromClientTopic} from '../src/client/internal';
@@ -15,12 +15,13 @@ import {createFakeIdentity, createFakeApp} from './demo/utils/fakes';
 /**
  * Creates a minimal mock app window. Any utilizing test should set properties and set up mock functions as needed
  */
-export function createMockAppWindow(options: Partial<jest.Mocked<AppWindow>> = {}): jest.Mocked<AppWindow> {
+export function createMockAppConnection(options: Partial<jest.Mocked<AppConnection>> = {}): jest.Mocked<AppConnection> {
     const identity = createFakeIdentity();
 
     return {
         id: getId(identity),
         identity,
+        entityType: EntityType.WINDOW,
         appInfo: createFakeApp({appId: identity.uuid}),
         appWindowNumber: 0,
         channel: createMockChannel(),
@@ -63,14 +64,14 @@ export function createMockChannel(options: Partial<jest.Mocked<ContextChannel>> 
 
 export function createMockEnvironmnent(options: Partial<jest.Mocked<Environment>> = {}): jest.Mocked<Environment> {
     return {
-        windowCreated: new Signal<[Identity]>(),
-        windowClosed: new Signal<[Identity]>(),
+        onWindowCreated: new Signal<[Identity]>(),
+        onWindowClosed: new Signal<[Identity]>(),
         isRunning: jest.fn<Promise<boolean>, [string]>(),
         createApplication: jest.fn<Promise<void>, [Application, ContextChannel]>(),
-        wrapApplication: jest.fn<AppWindow, [Application, Identity, ContextChannel]>(),
+        wrapApplication: jest.fn<AppConnection, [Application, Identity, EntityType, ContextChannel]>(),
         inferApplication: jest.fn<Promise<Application>, [Identity]>(),
         getEntityType: jest.fn<Promise<EntityType>, [Identity]>(),
-        isWindowCreated: jest.fn<boolean, [Identity]>(),
+        isKnownEntity: jest.fn<boolean, [Identity]>(),
         // Apply any custom overrides
         ...options
     };

@@ -4,7 +4,7 @@ import {Signal} from 'openfin-service-signal';
 import {Identity} from 'openfin/_v2/main';
 
 import {Model} from '../../src/provider/model/Model';
-import {createMockAppDirectory, createMockEnvironmnent, createMockApiHandler, getterMock, createMockAppWindow} from '../mocks';
+import {createMockAppDirectory, createMockEnvironmnent, createMockApiHandler, getterMock, createMockAppConnection} from '../mocks';
 import {Application} from '../../src/client/main';
 import {createFakeApp, createFakeIntent, createFakeContextType, createFakeIdentity} from '../demo/utils/fakes';
 import {getId} from '../../src/provider/utils/getId';
@@ -23,7 +23,7 @@ beforeEach(() => {
     getterMock(mockApiHandler, 'onConnection').mockReturnValue(new Signal<[Identity]>());
     getterMock(mockApiHandler, 'onDisconnection').mockReturnValue(new Signal<[Identity]>());
 
-    mockEnvironment.windowCreated = new Signal<[Identity]>();
+    mockEnvironment.onWindowCreated = new Signal<[Identity]>();
 
     model = new Model(mockAppDirectory, mockEnvironment, mockApiHandler);
 });
@@ -281,14 +281,14 @@ describe('When an app is in the directory with multiple intents', () => {
 
 function setupAppRunningWithWindowWithIntentListeners(app: Application, intents: string[]): void {
     mockEnvironment.isRunning.mockImplementation(async (uuid) => uuid === AppDirectory.getUuidFromApp(app));
-    mockEnvironment.isWindowCreated.mockImplementation(identity => identity.uuid === app.appId);
+    mockEnvironment.isKnownEntity.mockImplementation(identity => identity.uuid === app.appId);
 
     mockApiHandler.isClientConnection.mockImplementation(identity => identity.uuid === app.appId);
 
     mockAppDirectory.getAppByUuid.mockImplementation(async (uuid) => uuid === app.appId ? app : null);
 
     mockEnvironment.wrapApplication.mockImplementation((app, identity) => {
-        const appWindow = createMockAppWindow({
+        const appWindow = createMockAppConnection({
             identity,
             id: getId(identity),
             appInfo: app
@@ -301,5 +301,5 @@ function setupAppRunningWithWindowWithIntentListeners(app: Application, intents:
 
         return appWindow;
     });
-    mockEnvironment.windowCreated.emit(createFakeIdentity({uuid: app.appId}));
+    mockEnvironment.onWindowCreated.emit(createFakeIdentity({uuid: app.appId}));
 }

@@ -1,7 +1,7 @@
 import 'jest';
 import {Identity} from 'openfin/_v2/main';
 
-import {AppWindow} from '../../src/provider/model/AppWindow';
+import {AppConnection} from '../../src/provider/model/AppWindow';
 import {SERVICE_IDENTITY, ChannelEvents} from '../../src/client/internal';
 import {Model} from '../../src/provider/model/Model';
 import {ChannelHandler} from '../../src/provider/controller/ChannelHandler';
@@ -209,14 +209,14 @@ async function navigateTo(target: Identity, url: string): Promise<void> {
     await delay(Duration.PAGE_NAVIGATE);
 }
 
-async function getIntentListeners(intentType: string): Promise<AppWindow[]> {
-    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, async function (this: ProviderWindow, type: string): Promise<AppWindow[]> {
+async function getIntentListeners(intentType: string): Promise<AppConnection[]> {
+    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, async function (this: ProviderWindow, type: string): Promise<AppConnection[]> {
         return (await this.model.windows).filter(window => window.hasIntentListener(type));
     }, intentType);
 }
 
-async function getChannelContextListeners(remoteChannel: RemoteChannel): Promise<AppWindow[]> {
-    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, id: string): AppWindow[] {
+async function getChannelContextListeners(remoteChannel: RemoteChannel): Promise<AppConnection[]> {
+    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, id: string): AppConnection[] {
         const channel = this.channelHandler.getChannelById(id);
         return this.channelHandler.getWindowsListeningForContextsOnChannel(channel);
     }, remoteChannel.channel.id);

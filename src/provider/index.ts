@@ -17,7 +17,7 @@ import {APIHandler} from './APIHandler';
 import {EventHandler} from './controller/EventHandler';
 import {Injector} from './common/Injector';
 import {ChannelHandler} from './controller/ChannelHandler';
-import {AppWindow} from './model/AppWindow';
+import {AppConnection} from './model/AppWindow';
 import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
 import {withTimeout} from './utils/async';
@@ -98,7 +98,7 @@ export class Main {
         console.log('Service Initialised');
     }
 
-    private async onChannelChangedHandler(appWindow: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null): Promise<void> {
+    private async onChannelChangedHandler(appWindow: AppConnection, channel: ContextChannel | null, previousChannel: ContextChannel | null): Promise<void> {
         return this._eventHandler.dispatchEventOnChannelChanged(appWindow, channel, previousChannel);
     }
 
@@ -113,7 +113,9 @@ export class Main {
         await this._model.ensureRunning(appInfo);
 
         // Bring-to-front all currently open windows in creation order
-        const windowsToFocus = this._model.findWindowsByAppName(appInfo.name).sort((a: AppWindow, b: AppWindow) => a.appWindowNumber - b.appWindowNumber);
+        const windowsToFocus = this._model.findWindowsByAppName(appInfo.name).sort((a: AppConnection, b: AppConnection) => {
+            return a.appWindowNumber - b.appWindowNumber;
+        });
         await Promise.all(windowsToFocus.map(window => window.bringToFront()));
         if (windowsToFocus.length > 0) {
             windowsToFocus[windowsToFocus.length - 1].focus();
@@ -299,9 +301,9 @@ export class Main {
         }
     }
 
-    private async expectWindow(identity: Identity): Promise<AppWindow> {
+    private async expectWindow(identity: Identity): Promise<AppConnection> {
         identity = parseIdentity(identity);
-        const windowPromise = this._model.expectWindow(identity);
+        const windowPromise = this._model.expectConnection(identity);
 
         try {
             return await windowPromise;
@@ -313,7 +315,7 @@ export class Main {
         }
     }
 
-    private attemptGetWindow(identity: Identity): AppWindow | null {
+    private attemptGetWindow(identity: Identity): AppConnection | null {
         return this._model.getWindow(parseIdentity(identity));
     }
 }
