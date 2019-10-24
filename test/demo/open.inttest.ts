@@ -166,7 +166,6 @@ triggered with the correct data', async () => {
                     const l2 = await listener2.getReceivedContexts();
                     const l3 = await listener3.getReceivedContexts();
 
-
                     console.log('******');
                     console.log(JSON.stringify([l1, l2, l3]));
 
