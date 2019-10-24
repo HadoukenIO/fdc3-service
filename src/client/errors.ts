@@ -3,8 +3,8 @@
  */
 
 /**
-  * Error codes returned by actions involving creating applications.
-  */
+ * Error codes returned by actions involving creating applications.
+ */
 export enum OpenError {
     /**
      * Indicates that an application cannot be found in the application directory.

@@ -2,6 +2,10 @@
  * @module ContextChannels
  */
 
+/**
+ * Contains API definitions for context channels
+ */
+
 /* eslint-disable no-dupe-class-members */
 
 import {EventEmitter} from 'events';
@@ -303,6 +307,15 @@ export abstract class ChannelBase {
      */
     public async addEventListener(eventType: 'window-removed', listener: (event: ChannelWindowRemovedEvent) => void): Promise<void>;
 
+    /**
+     * Subscribes to a particular event. This is not for subscribing to context updates on this channel, use [[addContextListener]] to receive broadcasts.
+     * This is used for events that are raised from a specific channel.
+     *
+     * See also [[main#addEventListener]], for subscribing to "global" events that are not related to a specific channel.
+     *
+     * @param eventType The event type.
+     * @param handler The handler to call when the event is fired.
+     */
     public async addEventListener<E extends ChannelEvents>(eventType: E['type'], listener: (event: E) => void): Promise<void> {
         validateEnvironment();
 
@@ -318,12 +331,12 @@ export abstract class ChannelBase {
     public async removeEventListener(eventType: 'window-removed', listener: (event: ChannelWindowRemovedEvent) => void): Promise<void>;
 
     /**
-     * Removes a listener previously added with {@link addEventListener}.
+     * Unsubscribes from a particular event.
      *
      * Has no effect if `eventType` isn't a valid event, or `listener` isn't a callback registered against `eventType`.
      *
-     * @param eventType The event being unsubscribed from
-     * @param listener The callback function to remove
+     * @param eventType The event being unsubscribed from.
+     * @param listener The callback function to remove.
      */
     public async removeEventListener<E extends ChannelEvents>(eventType: E['type'], listener: (event: E) => void): Promise<void> {
         validateEnvironment();
@@ -341,12 +354,16 @@ export abstract class ChannelBase {
  *
  * Unlike system channels, the default channel has no pre-defined name or visual style. It is up to apps to display
  * this in the channel selector as they see fit - it could be as "default", or "none", or by "leaving" a user channel.
+ *
+ * An instance of the default channel is available from the [[defaultChannel]] getter API.
  */
 export class DefaultChannel extends ChannelBase {
     public readonly type!: 'default';
 
     /**
      * @hidden
+     *
+     * Channel objects should not be created directly by an application, channel objects should be obtained by calling the relevant APIs.
      */
     public constructor() {
         super(DEFAULT_CHANNEL_ID, 'default');
@@ -359,6 +376,8 @@ export class DefaultChannel extends ChannelBase {
  * This list of channels should be considered fixed by applications - the service will own the list of user channels,
  * making the same list of channels available to all applications, and this list will not change over the lifecycle of
  * the service.
+ *
+ * To fetch the list of available channels, use [[getSystemChannels]].
  */
 export class SystemChannel extends ChannelBase {
     public readonly type!: 'system';
@@ -369,8 +388,9 @@ export class SystemChannel extends ChannelBase {
     public readonly visualIdentity: DisplayMetadata;
 
     /**
-     * Constructor for DesktopChannel
-     * @param transport Identifies which channel this is.
+     * @hidden
+     *
+     * Channel objects should not be created directly by an application, channel objects should be obtained by calling the relevant APIs.
      */
     public constructor(transport: SystemChannelTransport) {
         super(transport.id, 'system');
@@ -387,15 +407,20 @@ export class SystemChannel extends ChannelBase {
  * As with organization defined contexts, app channel names should have a prefix specific to your organization to avoid
  * name collisions, e.g. 'company-name.channel-name'.
  *
- * App channels can be joined by any window, but are only indirectly discoverable if the name is not know.
+ * App channels can be joined by any window, but are only indirectly discoverable if the name is not known.
  */
 export class AppChannel extends ChannelBase {
     public readonly type!: 'app';
 
+    /**
+     * The name of this channel. This is the same string as is passed to [[getOrCreateAppChannel]].
+     */
     public readonly name: string;
 
     /**
-     * As the default channel is quite boring, this takes no arguments.
+     * @hidden
+     *
+     * Channel objects should not be created directly by an application, channel objects should be obtained by calling the relevant APIs.
      */
     public constructor(transport: AppChannelTransport) {
         super(transport.id, 'app');

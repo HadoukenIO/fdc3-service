@@ -1,6 +1,7 @@
 /**
  * @module Intents
  */
+
 /**
  * Enum that defines the standard set of intents that are defined as part of the FDC3 specification.
  *
