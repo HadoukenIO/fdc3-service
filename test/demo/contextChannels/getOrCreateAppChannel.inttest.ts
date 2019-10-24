@@ -48,7 +48,7 @@ describe('When getting an already created app channel within a different app', (
         const appChannelName = fakeAppChannelName();
 
         const appChannel1 = await fdc3Remote.getOrCreateAppChannel(testAppInDirectory1, appChannelName);
-        appChannel1.join(testAppInDirectory1);
+        await appChannel1.join(testAppInDirectory1);
 
         // Since the channel objects come from different apps, they cannot be the same instance, but we can indirectly
         // check they represent the same channel
