@@ -138,18 +138,44 @@ correct data', async () => {
 triggered with the correct data', async () => {
                     // From the launcher app, call fdc3.open with a valid name and context
                     const openPromise = open(testAppInDirectory1.name, validContext);
+                    console.log('****** open called');
+
+                    openPromise.then(() => {
+                        console.log('**** open promise resolved');
+                    });
 
                     await waitForAppToBeRunning(testAppInDirectory1);
 
+                    console.log('****** app running');
+
                     const childWindow1 = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-window-1'});
                     const childWindow2 = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-window-2'});
+
+                    console.log('****** windows opened');
 
                     // Add listeners
                     const listener1 = await fdc3Remote.addContextListener(childWindow1);
                     const listener2 = await fdc3Remote.addContextListener(childWindow2);
                     const listener3 = await fdc3Remote.addContextListener(testAppInDirectory1);
 
+                    console.log('****** context listeners added');
+
                     await openPromise;
+
+                    console.log('******');
+                    console.log(JSON.stringify([
+                        await listener1.getReceivedContexts(),
+                        await listener2.getReceivedContexts(),
+                        await listener3.getReceivedContexts()
+                    ]));
+
+                    await delay(1000);
+
+                    console.log(JSON.stringify([
+                        await listener1.getReceivedContexts(),
+                        await listener2.getReceivedContexts(),
+                        await listener3.getReceivedContexts()
+                    ]));
 
                     // Check that only the first listener received the context passed in open
                     await expect(listener1).toHaveReceivedContexts([validContext]);
