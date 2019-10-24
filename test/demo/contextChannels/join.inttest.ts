@@ -7,7 +7,6 @@ import {RemoteChannel, RemoteChannelEventListener} from '../utils/RemoteChannel'
 import {fin} from '../utils/fin';
 import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, quitApps} from '../utils/common';
 import {fakeAppChannelName} from '../utils/fakes';
-import {delay} from '../utils/delay';
 
 /*
  * Tests simple behaviour of Channel.getMembers() and the channel-changed and Channel events, before testing how they and getCurrentChannel()
@@ -437,18 +436,7 @@ describe('When joining a non-default channel', () => {
 
     test('When joining a channel and no target window is specified, the current window is used', async () => {
         // Get a system channel from our joining window
-        let testChannel = await fdc3Remote.getChannelById(joiningApp, 'blue').catch(() => false);
-
-        if (!testChannel) {
-            await delay(1000);
-            testChannel = await fdc3Remote.getChannelById(joiningApp, 'blue').catch(() => false);
-
-            console.log('failed to get channel, retry result', testChannel);
-
-            expect(true).toBe(false);
-        }
-
-        const blueChannel = testChannel as RemoteChannel;
+        const blueChannel = await fdc3Remote.getChannelById(joiningApp, 'blue');
 
         // Set up listeners for our blue channel
         const blueChannelWindowAddedListener = await blueChannel.addEventListener('window-added');
