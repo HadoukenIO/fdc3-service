@@ -12,15 +12,8 @@ import {EntityType} from '../../src/provider/model/Environment';
 class TestAppWindow extends AppConnectionBase {
     private readonly _identity: Readonly<Identity>;
 
-    constructor(
-        identity: Identity,
-        entityType: EntityType,
-        appInfo: Application,
-        channel: ContextChannel,
-        creationTime: number | undefined,
-        appWindowNumber: number
-    ) {
-        super(identity, entityType, appInfo, channel, creationTime, appWindowNumber);
+    constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined, appWindowNumber: number) {
+        super(identity, EntityType.WINDOW, appInfo, channel, creationTime, appWindowNumber);
 
         this._identity = identity;
     }
@@ -51,7 +44,7 @@ describe('When querying if a window has a context listener', () => {
     let testAppWindow: TestAppWindow;
 
     beforeEach(() => {
-        testAppWindow = new TestAppWindow(fakeIdentity, EntityType.WINDOW, fakeAppInfo, mockChannel, Date.now(), 0);
+        testAppWindow = new TestAppWindow(fakeIdentity, fakeAppInfo, mockChannel, Date.now(), 0);
     });
 
     test('A freshly-initialized window returns false', () => {
@@ -83,7 +76,7 @@ describe('When querying if a window has a context listener', () => {
     });
 
     test('The state of one TestAppWindow does not affect another', () => {
-        const secondTestAppWindow = new TestAppWindow(fakeIdentity, EntityType.WINDOW, fakeAppInfo, mockChannel, Date.now(), 0);
+        const secondTestAppWindow = new TestAppWindow(fakeIdentity, fakeAppInfo, mockChannel, Date.now(), 0);
         secondTestAppWindow.addContextListener();
 
         expect(testAppWindow.hasContextListener()).toBe(false);
@@ -97,7 +90,7 @@ describe('When querying if a window is ready to receive contexts', () => {
         // All tests in this section will use fake timers to allow us to control the Promise races precisely
         useMockTime();
 
-        testAppWindow = new TestAppWindow(fakeIdentity, EntityType.WINDOW, fakeAppInfo, mockChannel, Date.now(), 0);
+        testAppWindow = new TestAppWindow(fakeIdentity, fakeAppInfo, mockChannel, Date.now(), 0);
     });
 
     afterEach(() => {

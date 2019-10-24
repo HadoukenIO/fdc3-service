@@ -239,7 +239,7 @@ describe('When creating a non-directory FDC3 app', () => {
 });
 
 describe('When creating an external connection', () => {
-    // External connections won't have a corresponding window. These "windows" MUST have a createdTime of undefined to produce accurate scenerios.
+    // External connections won't have a corresponding window. These "windows" MUST have a createdTime of undefined to produce accurate scenarios.
     // Connections from external windows must connect within the WINDOW_EXPECT_TO_CREATED timeout, which is a much stricter requirement than normal OF windows
 
     const fastConnectWindow: TestWindow = {

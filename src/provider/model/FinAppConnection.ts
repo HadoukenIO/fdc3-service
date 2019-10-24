@@ -1,4 +1,4 @@
-import {Identity, Window} from 'openfin/_v2/main';
+import {Identity} from 'openfin/_v2/main';
 
 import {Application} from '../../client/main';
 

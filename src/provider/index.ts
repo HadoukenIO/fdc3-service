@@ -163,7 +163,7 @@ export class Main {
     }
 
     private async broadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = await this.expectWindow(source);
+        const appWindow = await this.expectConnection(source);
 
         return this._contextHandler.broadcast(parseContext(payload.context), appWindow);
     }
@@ -179,13 +179,13 @@ export class Main {
     }
 
     private async addIntentListener(payload: AddIntentListenerPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = await this.expectWindow(source);
+        const appWindow = await this.expectConnection(source);
 
         appWindow.addIntentListener(payload.intent);
     }
 
     private removeIntentListener(payload: RemoveIntentListenerPayload, source: ProviderIdentity): void {
-        const appWindow = this.attemptGetWindow(source);
+        const appWindow = this.attemptGetConnection(source);
         if (appWindow) {
             appWindow.removeIntentListener(payload.intent);
         } else {
@@ -195,13 +195,13 @@ export class Main {
     }
 
     private async addContextListener(payload: AddContextListenerPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = await this.expectWindow(source);
+        const appWindow = await this.expectConnection(source);
 
         appWindow.addContextListener();
     }
 
     private removeContextListener(payload: RemoveContextListenerPayload, source: ProviderIdentity): void {
-        const appWindow = this.attemptGetWindow(source);
+        const appWindow = this.attemptGetConnection(source);
         if (appWindow) {
             appWindow.removeContextListener();
         } else {
@@ -220,7 +220,7 @@ export class Main {
 
     private async getCurrentChannel(payload: GetCurrentChannelPayload, source: ProviderIdentity): Promise<ChannelTransport> {
         const identity = payload.identity || source;
-        const appWindow = await this.expectWindow(identity);
+        const appWindow = await this.expectConnection(identity);
 
         return appWindow.channel.serialize();
     }
@@ -238,7 +238,7 @@ export class Main {
     }
 
     private async channelJoin(payload: ChannelJoinPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = await this.expectWindow(payload.identity || source);
+        const appWindow = await this.expectConnection(payload.identity || source);
 
         const channel = this._channelHandler.getChannelById(payload.id);
 
@@ -251,7 +251,7 @@ export class Main {
     }
 
     private async channelBroadcast(payload: ChannelBroadcastPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = await this.expectWindow(source);
+        const appWindow = await this.expectConnection(source);
         const channel = this._channelHandler.getChannelById(payload.id);
 
         return this._contextHandler.broadcastOnChannel(parseContext(payload.context), appWindow, channel);
@@ -264,14 +264,14 @@ export class Main {
     }
 
     private async channelAddContextListener(payload: ChannelAddContextListenerPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = await this.expectWindow(source);
+        const appWindow = await this.expectConnection(source);
         const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
 
         appWindow.addChannelContextListener(channel);
     }
 
     private channelRemoveContextListener(payload: ChannelRemoveContextListenerPayload, source: ProviderIdentity): void {
-        const appWindow = this.attemptGetWindow(source);
+        const appWindow = this.attemptGetConnection(source);
         const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
 
         if (appWindow) {
@@ -283,14 +283,14 @@ export class Main {
     }
 
     private async channelAddEventListener(payload: ChannelAddEventListenerPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = await this.expectWindow(source);
+        const appWindow = await this.expectConnection(source);
         const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
 
         appWindow.addChannelEventListener(channel, payload.eventType);
     }
 
     private channelRemoveEventListener(payload: ChannelRemoveEventListenerPayload, source: ProviderIdentity): void {
-        const appWindow = this.attemptGetWindow(source);
+        const appWindow = this.attemptGetConnection(source);
         const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
 
         if (appWindow) {
@@ -301,7 +301,7 @@ export class Main {
         }
     }
 
-    private async expectWindow(identity: Identity): Promise<AppConnection> {
+    private async expectConnection(identity: Identity): Promise<AppConnection> {
         identity = parseIdentity(identity);
         const windowPromise = this._model.expectConnection(identity);
 
@@ -315,7 +315,7 @@ export class Main {
         }
     }
 
-    private attemptGetWindow(identity: Identity): AppConnection | null {
+    private attemptGetConnection(identity: Identity): AppConnection | null {
         return this._model.getConnection(parseIdentity(identity));
     }
 }

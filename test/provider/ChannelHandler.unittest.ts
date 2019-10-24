@@ -144,16 +144,16 @@ describe('When setting the last broadcast context for a channel', () => {
     const testChannel = createMockChannel();
     const testContext = {type: 'test'};
 
-    let testWindow: AppConnection;
+    let testConnection: AppConnection;
 
     beforeEach(() => {
-        testWindow = createMockAppConnection();
+        testConnection = createMockAppConnection();
 
-        setModelConnections([testWindow]);
+        setModelConnections([testConnection]);
     });
 
     it('If the channel is populated, ChannelHandler sets the context on the channel', () => {
-        testWindow.channel = testChannel;
+        testConnection.channel = testChannel;
 
         channelHandler.setLastBroadcastOnChannel(testChannel, testContext);
 

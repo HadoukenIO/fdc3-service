@@ -365,7 +365,7 @@ export class Model {
             const windowCreated = untilTrue(this._environment.onWindowCreated, () => {
                 return this._environment.isKnownEntity(identity);
             });
-            const connectionCreated = untilTrue(this.onConnectionAdded, () => {
+            const connectionCreated = untilTrue(this._apiHandler.onConnection, () => {
                 return this._apiHandler.isClientConnection(identity);
             });
             const created = Promise.race([windowCreated, connectionCreated]);
