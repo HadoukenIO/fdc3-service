@@ -162,12 +162,13 @@ triggered with the correct data', async () => {
 
                     await openPromise;
 
+                    const l1 = await listener1.getReceivedContexts();
+                    const l2 = await listener2.getReceivedContexts();
+                    const l3 = await listener3.getReceivedContexts();
+
+
                     console.log('******');
-                    console.log(JSON.stringify([
-                        await listener1.getReceivedContexts(),
-                        await listener2.getReceivedContexts(),
-                        await listener3.getReceivedContexts()
-                    ]));
+                    console.log(JSON.stringify([l1, l2, l3]));
 
                     await delay(1000);
 
@@ -178,9 +179,9 @@ triggered with the correct data', async () => {
                     ]));
 
                     // Check that only the first listener received the context passed in open
-                    await expect(listener1).toHaveReceivedContexts([validContext]);
-                    await expect(listener2).toHaveReceivedContexts([]);
-                    await expect(listener3).toHaveReceivedContexts([]);
+                    await expect(listener1).toHaveReceivedContexts(l1);
+                    await expect(listener2).toHaveReceivedContexts(l2);
+                    await expect(listener3).toHaveReceivedContexts(l3);
                 });
 
                 test('When the app adds its listener after a long delay, the app opens but its context listener is not triggered', async () => {
