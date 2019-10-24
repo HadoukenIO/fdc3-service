@@ -44,7 +44,7 @@ describe('When getting an already created app channel within a different app', (
     setupOpenDirectoryAppBookends(testAppInDirectory1);
     setupOpenDirectoryAppBookends(testAppInDirectory2);
 
-    test('An indentical app channel is returned', async () => {
+    test('An identical app channel is returned', async () => {
         const appChannelName = fakeAppChannelName();
 
         const appChannel1 = await fdc3Remote.getOrCreateAppChannel(testAppInDirectory1, appChannelName);
