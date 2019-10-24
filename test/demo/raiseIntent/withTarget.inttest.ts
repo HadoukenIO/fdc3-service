@@ -103,22 +103,16 @@ just once, with the correct context', async () => {
                     test('When the intent listeners are added on multiple windows, the targeted app opens and the first window\'s \
 listener is triggered just once, with the correct context', async () => {
                         // Raise the intent, and wait for the app to be running
-                        console.log('**** raising intent');
                         const raisePromise = raiseIntent(validIntent, testAppInDirectory1);
                         await waitForAppToBeRunning(testAppInDirectory1);
-                        console.log('**** app started');
 
                         const childWindow1 = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-window-1'});
                         const childWindow2 = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-window-2'});
-
-                        console.log('**** created windows');
 
                         // Add listeners
                         const listener1 = await fdc3Remote.addIntentListener(childWindow1, validIntent.type);
                         const listener2 = await fdc3Remote.addIntentListener(childWindow2, validIntent.type);
                         const listener3 = await fdc3Remote.addIntentListener(testAppInDirectory1, validIntent.type);
-
-                        console.log('**** added listeners');
 
                         await raisePromise;
 
