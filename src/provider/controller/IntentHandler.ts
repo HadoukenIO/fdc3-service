@@ -6,7 +6,7 @@ import {IntentResolution, Application} from '../../client/main';
 import {FDC3Error, ResolveError} from '../../client/errors';
 import {Model} from '../model/Model';
 import {AppDirectory} from '../model/AppDirectory';
-import {AppConnection} from '../model/AppWindow';
+import {AppConnection} from '../model/AppConnection';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
 import {withTimeout} from '../utils/async';
@@ -122,7 +122,7 @@ export class IntentHandler {
         // TODO: Revisit timeout logic [SERVICE-556]
         let dispatchingCompleted = false;
         const dispatchResults = await withTimeout(Timeouts.ADD_INTENT_LISTENER, (async () => {
-            const appWindows = await this._model.expectWindowsForApp(appInfo);
+            const appWindows = await this._model.expectConnectionsForApp(appInfo);
 
             // Wait for windows to add intent listener, then dispatch payload
             return Promise.all(appWindows.map(async (window: AppConnection): Promise<boolean> => {

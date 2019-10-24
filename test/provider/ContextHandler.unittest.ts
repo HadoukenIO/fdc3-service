@@ -5,7 +5,7 @@ import {ChannelProvider} from 'openfin/_v2/api/interappbus/channel/provider';
 
 import {ContextHandler} from '../../src/provider/controller/ContextHandler';
 import {APIHandler} from '../../src/provider/APIHandler';
-import {AppConnection} from '../../src/provider/model/AppWindow';
+import {AppConnection} from '../../src/provider/model/AppConnection';
 import {APIFromClientTopic, APIToClientTopic, ReceiveContextPayload} from '../../src/client/internal';
 import {createMockAppConnection, createMockChannel} from '../mocks';
 import {ChannelHandler} from '../../src/provider/controller/ChannelHandler';

@@ -2,7 +2,7 @@ import {Identity, Window} from 'openfin/_v2/main';
 
 import {Application} from '../../client/main';
 
-import {AppConnectionBase} from './AppWindow';
+import {AppConnectionBase} from './AppConnection';
 import {ContextChannel} from './ContextChannel';
 import {EntityType} from './Environment';
 

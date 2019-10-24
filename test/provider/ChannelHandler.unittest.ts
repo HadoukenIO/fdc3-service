@@ -3,7 +3,7 @@ import {Signal} from 'openfin-service-signal';
 
 import {ChannelHandler} from '../../src/provider/controller/ChannelHandler';
 import {Model} from '../../src/provider/model/Model';
-import {AppConnection} from '../../src/provider/model/AppWindow';
+import {AppConnection} from '../../src/provider/model/AppConnection';
 import {SystemContextChannel, ContextChannel} from '../../src/provider/model/ContextChannel';
 import {ChannelError} from '../../src/client/main';
 import {createMockChannel, createMockAppConnection} from '../mocks';
@@ -101,7 +101,7 @@ it('When getting channel members, ChannelHandler returns expected AppWindows', (
         createMockAppConnection({id: 'test-3', channel: testChannel})
     ];
 
-    setModelWindows(testWindows);
+    setModelConnections(testWindows);
 
     expect(channelHandler.getChannelMembers(testChannel)).toEqual([testWindows[0], testWindows[2]]);
 });
@@ -118,7 +118,7 @@ it('When querying which windows are listening for contexts on a channel, Channel
     testWindows[0].hasChannelContextListener.mockImplementation((channel) => true);
     testWindows[2].hasChannelContextListener.mockImplementation((channel) => true);
 
-    setModelWindows(testWindows);
+    setModelConnections(testWindows);
 
     expect(channelHandler.getWindowsListeningForContextsOnChannel(testChannel)).toEqual([testWindows[0], testWindows[2]]);
 });
@@ -135,7 +135,7 @@ it('When querying which windows are listening for events on a channel, ChannelHa
     testWindows[0].hasChannelEventListener.mockImplementation((channel) => true);
     testWindows[2].hasChannelEventListener.mockImplementation((channel) => true);
 
-    setModelWindows(testWindows);
+    setModelConnections(testWindows);
 
     expect(channelHandler.getWindowsListeningForEventsOnChannel(testChannel, 'window-added')).toEqual([testWindows[0], testWindows[2]]);
 });
@@ -149,7 +149,7 @@ describe('When setting the last broadcast context for a channel', () => {
     beforeEach(() => {
         testWindow = createMockAppConnection();
 
-        setModelWindows([testWindow]);
+        setModelConnections([testWindow]);
     });
 
     it('If the channel is populated, ChannelHandler sets the context on the channel', () => {
@@ -173,7 +173,7 @@ describe('When joining a channel', () => {
         const testChannel2 = createMockChannel({id: 'test-2'});
 
         const testWindow = createMockAppConnection({channel: testChannel1});
-        setModelWindows([testWindow]);
+        setModelConnections([testWindow]);
 
         channelHandler.joinChannel(testWindow, testChannel2);
 
@@ -185,7 +185,7 @@ describe('When joining a channel', () => {
         const testChannel2 = createMockChannel({id: 'test-2'});
 
         const testWindow = createMockAppConnection({channel: testChannel1});
-        setModelWindows([testWindow]);
+        setModelConnections([testWindow]);
 
         channelHandler.joinChannel(testWindow, testChannel2);
 
@@ -196,7 +196,7 @@ describe('When joining a channel', () => {
         const testChannel = createMockChannel();
 
         const testWindow = createMockAppConnection({channel: testChannel});
-        setModelWindows([testWindow]);
+        setModelConnections([testWindow]);
 
         channelHandler.joinChannel(testWindow, testChannel);
 
@@ -208,7 +208,7 @@ describe('When joining a channel', () => {
         const testChannel2 = createMockChannel();
 
         const testWindow = createMockAppConnection({channel: testChannel1});
-        setModelWindows([testWindow]);
+        setModelConnections([testWindow]);
 
         channelHandler.joinChannel(testWindow, testChannel2);
 
@@ -222,7 +222,7 @@ describe('When joining a channel', () => {
         const testWindow1 = createMockAppConnection({channel: testChannel1});
         const testWindow2 = createMockAppConnection({channel: testChannel1});
 
-        setModelWindows([testWindow1, testWindow2]);
+        setModelConnections([testWindow1, testWindow2]);
 
         channelHandler.joinChannel(testWindow1, testChannel2);
 
@@ -241,7 +241,7 @@ it('When a window is added to the Model, ChannelHandler fires a onChannelChanged
 describe('When a window is removed from the Model', () => {
     it('ChannelHandler fires a onChannelChanged signal', () => {
         const testWindow = createMockAppConnection();
-        setModelWindows([]);
+        setModelConnections([]);
 
         mockModel.onConnectionRemoved.emit(testWindow);
 
@@ -255,7 +255,7 @@ describe('When a window is removed from the Model', () => {
         const testWindow1 = createMockAppConnection({channel: testChannel1});
         const testWindow2 = createMockAppConnection({channel: testChannel2});
 
-        setModelWindows([testWindow2]);
+        setModelConnections([testWindow2]);
 
         mockModel.onConnectionRemoved.emit(testWindow1);
 
@@ -268,7 +268,7 @@ describe('When a window is removed from the Model', () => {
         const testWindow1 = createMockAppConnection({channel: testChannel});
         const testWindow2 = createMockAppConnection({channel: testChannel});
 
-        setModelWindows([testWindow2]);
+        setModelConnections([testWindow2]);
 
         mockModel.onConnectionRemoved.emit(testWindow1);
 
@@ -282,8 +282,8 @@ function setModelChannels(channels: ContextChannel[]): void {
     });
 }
 
-function setModelWindows(windows: AppConnection[]): void {
-    Object.defineProperty(mockModel, 'windows', {
-        get: () => windows
+function setModelConnections(connections: AppConnection[]): void {
+    Object.defineProperty(mockModel, 'connections', {
+        get: () => connections
     });
 }

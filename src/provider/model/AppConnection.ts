@@ -12,12 +12,9 @@ import {ContextChannel} from './ContextChannel';
 import {EntityType} from './Environment';
 
 /**
- * Model interface, representing an application that has connected to the service.
+ * Model interface, representing an entity that has connected to the service.
  *
- * Only application entities that have created intent or context listeners will be represented in this model.
- *
- * TODO [SERVICE-737] Review naming of this interface, due to these objects now representing (potentially window-less)
- * external connections. Likewise for "downstream" types/functions/etc.
+ * Since an IAB connection is required for an `AppConnection` object to be created, these will only ever refer to FDC3-enabled windows/applications/etc.
  */
 export interface AppConnection {
     id: string;

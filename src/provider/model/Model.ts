@@ -12,13 +12,13 @@ import {withStrictTimeout, untilTrue, allowReject, untilSignal, asyncFilter} fro
 import {Boxed} from '../utils/types';
 import {getId} from '../utils/getId';
 
-import {AppConnection} from './AppWindow';
+import {AppConnection} from './AppConnection';
 import {ContextChannel, DefaultContextChannel, SystemContextChannel} from './ContextChannel';
 import {Environment, EntityType} from './Environment';
 import {AppDirectory} from './AppDirectory';
 
 interface ExpectedConnection {
-    // Resolves when the window has been created by the environment, or the named identity connects to the service via the IAB
+    // Resolves when the window has been created by the environment, or the named entity connects to the service via the IAB
     // Resolves to the `registered` promise wrapped in a timeout
     created: Promise<Boxed<Promise<AppConnection>>>;
 
@@ -46,7 +46,7 @@ export class Model {
      * Signal emitted whenever a new application entity connects to the service. This will typically be an OpenFin
      * window, but also includes non-window connections such as those from adapters.
      *
-     * The lifecycle of window and non-window connections differ slightly. See `AppWindow`/`AppConnection` for details.
+     * The lifecycle of window and non-window connections differ slightly. See `onApiHandlerDisconnection` for details.
      */
     public readonly onConnectionAdded: Signal<[AppConnection]> = new Signal();
 
@@ -66,7 +66,7 @@ export class Model {
     private readonly _channelsById: {[id: string]: ContextChannel};
     private readonly _expectedConnectionsById: {[id: string]: ExpectedConnection};
 
-    private readonly _onWindowRegisteredInternal = new Signal<[]>();
+    private readonly _onConnectionRegisteredInternal = new Signal<[]>();
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
@@ -93,7 +93,7 @@ export class Model {
         }
     }
 
-    public get windows(): AppConnection[] {
+    public get connections(): AppConnection[] {
         return Object.values(this._connectionsById);
     }
 
@@ -101,7 +101,7 @@ export class Model {
         return Object.values(this._channelsById);
     }
 
-    public getWindow(identity: Identity): AppConnection|null {
+    public getConnection(identity: Identity): AppConnection|null {
         return this._connectionsById[getId(identity)] || null;
     }
 
@@ -117,9 +117,9 @@ export class Model {
             const createdWithinTimeout = withStrictTimeout(Timeouts.WINDOW_EXPECT_TO_CREATED, expectedConnection.created, EXPECT_TIMEOUT_MESSAGE);
 
             const registeredWithinTimeout = (await createdWithinTimeout).value;
-            const appWindow = await registeredWithinTimeout;
+            const connection = await registeredWithinTimeout;
 
-            return appWindow;
+            return connection;
         }
     }
 
@@ -132,25 +132,25 @@ export class Model {
     }
 
     /**
-     * Returns all registered windows for an app, waiting for at least one window
+     * Returns all registered connections for an app, waiting for at least one entity
      */
-    public async expectWindowsForApp(appInfo: Application): Promise<AppConnection[]> {
+    public async expectConnectionsForApp(appInfo: Application): Promise<AppConnection[]> {
         // TODO: This dangerous method doesn't give proper timeouts. Will likely be changed extensively/removed when we revisit timeouts [SERVICE-556]
-        let matchingWindows = this.findWindowsByAppId(appInfo.appId);
+        let connections = this.findConnectionsByAppId(appInfo.appId);
 
-        if (matchingWindows.length === 0) {
+        if (connections.length === 0) {
             const signalPromise = new Promise<AppConnection[]>(resolve => {
-                const slot = this._onWindowRegisteredInternal.add(() => {
-                    const matchingWindows = this.findWindowsByAppId(appInfo.appId);
-                    if (matchingWindows.length > 0) {
+                const slot = this._onConnectionRegisteredInternal.add(() => {
+                    const matchingConnections = this.findConnectionsByAppId(appInfo.appId);
+                    if (matchingConnections.length > 0) {
                         slot.remove();
-                        resolve(matchingWindows);
+                        resolve(matchingConnections);
                     }
                 });
             });
-            matchingWindows = await signalPromise;
+            connections = await signalPromise;
         }
-        return matchingWindows;
+        return connections;
     }
 
     public async ensureRunning(appInfo: Application): Promise<void> {
@@ -162,19 +162,20 @@ export class Model {
     /**
      * Get apps that can handle an intent and optionally with specified context type
      *
-     * Includes windows that are not in the app directory but have registered a listener for it if contextType is not specified
+     * Includes entities that are not in the app directory but have registered a listener for it if contextType is not specified
+     *
      * @param intentType The intent type we want to find supporting apps for
      * @param contextType The optional context type that we want apps to support with the given intent
      */
     public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
         // Get all live apps that support the given intent and context
         // TODO: Include apps that should add a listener but haven't yet, where the timeout has not expired (may have no registered windows) [SERVICE-556]
-        const liveApps = getLiveApps(this.windows);
+        const liveApps = getLiveApps(this.connections);
 
         const liveAppsForIntent = (await asyncFilter(liveApps, async (group: LiveApp) => {
-            const {application, connections: windows} = group;
+            const {application, connections} = group;
 
-            const hasIntentListener = windows.some(window => window.hasIntentListener(intentType));
+            const hasIntentListener = connections.some(connection => connection.hasIntentListener(intentType));
 
             return hasIntentListener && AppDirectory.mightAppSupportIntent(application, intentType, contextType);
         })).map(group => group.application);
@@ -201,12 +202,12 @@ export class Model {
 
         // Populate appIntentsBuilder from running apps
         // TODO: Include apps that should add a listener but haven't yet, where the timeout has not expired (may have no registered windows) [SERVICE-556]
-        this.windows.forEach(window => {
-            const intentTypes = window.intentListeners;
-            const app = window.appInfo;
+        this.connections.forEach(connection => {
+            const intentTypes = connection.intentListeners;
+            const app = connection.appInfo;
 
             intentTypes.filter(intentType => AppDirectory.mightAppSupportIntent(app, intentType, contextType)).forEach(intentType => {
-                appIntentsBuilder.addApplicationForIntent(intentType, window.appInfo);
+                appIntentsBuilder.addApplicationForIntent(intentType, connection.appInfo);
             });
         });
 
@@ -237,8 +238,8 @@ export class Model {
         return appIntents;
     }
 
-    public findWindowsByAppName(name: AppName): AppConnection[] {
-        return this.findWindows(appWindow => appWindow.appInfo.name === name);
+    public findConnectionsByAppName(name: AppName): AppConnection[] {
+        return this.findConnections(connection => connection.appInfo.name === name);
     }
 
     private onWindowCreated(identity: Identity): void {
@@ -250,8 +251,8 @@ export class Model {
             let registered = false;
             let appWindowsFromSameApp: AppConnection[];
 
-            allowReject(untilTrue(this._onWindowRegisteredInternal, () => {
-                appWindowsFromSameApp = this.findWindowsByAppId(identity.uuid);
+            allowReject(untilTrue(this._onConnectionRegisteredInternal, () => {
+                appWindowsFromSameApp = this.findConnectionsByAppId(identity.uuid);
                 return appWindowsFromSameApp.length > 0;
             }, connection.closed).then(() => {
                 if (!registered) {
@@ -281,47 +282,50 @@ export class Model {
         // console.log('onconnection handler', identity, entityType);
         if (entityType === EntityType.EXTERNAL_CONNECTION) {
             // Any connections to the service from adapters should be immediately registered
-            // TODO [SERVICE-737] Store the entity type as part of the registration process, so we can correctly handle disconnects
             this.registerConnection(await this._environment.inferApplication(identity), identity, entityType);
         }
     }
 
     private async onApiHandlerDisconnection(identity: Identity): Promise<void> {
         // Although windows are only registered on connection, we do not unregister on disconnect, so channel membership is preserved on navigation
-        // TODO [SERVICE-737] Handle differences in disconnect behaviour between windows and external connections
         const id = getId(identity);
 
-        let appWindow: AppConnection | undefined;
+        let connection: AppConnection | undefined;
         if (this._connectionsById[id]) {
-            appWindow = this._connectionsById[id];
+            connection = this._connectionsById[id];
         } else if (this._expectedConnectionsById[id]) {
-            appWindow = await this._expectedConnectionsById[id].registered.catch(() => undefined);
+            connection = await this._expectedConnectionsById[id].registered.catch(() => undefined);
         }
 
-        if (appWindow) {
-            appWindow.removeAllListeners();
+        if (connection) {
+            // Assume client disconnected due to a page reload, or some other change that resets its listener state
+            connection.removeAllListeners();
 
-            if (appWindow.entityType !== EntityType.WINDOW) {
-                this.removeConnection(appWindow.identity);
+            // For non-window connections, also treat this as the entity being destroyed
+            // There is no `window-closed` equivilant for external connections, so we will do our full clean-up of state here
+            if (connection.entityType !== EntityType.WINDOW) {
+                this.removeConnection(connection.identity);
             }
         }
     }
 
     /**
-     * Registers an appWindow in the model
+     * Registers an entity in the model
+     *
      * @param appInfo Application info, either from the app directory, or 'crafted' for a non-registered app
-     * @param identity Window identity
+     * @param identity Window/connection identity
      * @param entityType Indicates the type of entity that is connecting to the service
      */
     private registerConnection(appInfo: Application, identity: Identity, entityType: EntityType): void {
         const connection = this._environment.wrapApplication(appInfo, identity, entityType, this._channelsById[DEFAULT_CHANNEL_ID]);
 
-        console.info(`Registering window ${connection.id}`);
+        console.info(`Registering connection ${connection.id}`);
+
         this._connectionsById[connection.id] = connection;
         delete this._expectedConnectionsById[connection.id];
 
         this.onConnectionAdded.emit(connection);
-        this._onWindowRegisteredInternal.emit();
+        this._onConnectionRegisteredInternal.emit();
     }
 
     private removeConnection(identity: Identity): void {
@@ -336,12 +340,12 @@ export class Model {
         }
     }
 
-    private findWindowsByAppId(appId: AppId): AppConnection[] {
-        return this.findWindows(appWindow => appWindow.appInfo.appId === appId);
+    private findConnectionsByAppId(appId: AppId): AppConnection[] {
+        return this.findConnections(connection => connection.appInfo.appId === appId);
     }
 
-    private findWindows(predicate: (appWindow: AppConnection) => boolean): AppConnection[] {
-        return this.windows.filter(predicate);
+    private findConnections(predicate: (connection: AppConnection) => boolean): AppConnection[] {
+        return this.connections.filter(predicate);
     }
 
     private getOrCreateExpectedConnection(identity: Identity): ExpectedConnection {
@@ -366,13 +370,13 @@ export class Model {
             });
             const created = Promise.race([windowCreated, connectionCreated]);
 
-            // Create a promise that resolves when the window has connected, or rejects when the window closes
+            // Create a promise that resolves when the entity connects, or rejects when the window closes
             const connected = untilTrue(this._apiHandler.onConnection, () => {
                 return this._apiHandler.isClientConnection(identity);
             }, closed);
 
-            // Create a promise that resolves when the window has registered, or rejects when the window closes
-            const registered = allowReject(untilTrue(this._onWindowRegisteredInternal, () => {
+            // Create a promise that resolves when the entity registers, or rejects when the window closes
+            const registered = allowReject(untilTrue(this._onConnectionRegisteredInternal, () => {
                 return !!this._connectionsById[id];
             }, closed).then(() => {
                 return this._connectionsById[id];
@@ -382,16 +386,16 @@ export class Model {
                 return {value: withStrictTimeout(Timeouts.WINDOW_CREATED_TO_REGISTERED, registered, EXPECT_TIMEOUT_MESSAGE)};
             });
 
-            const expectedWindow: ExpectedConnection = {
+            const expectedConnection: ExpectedConnection = {
                 created: createdThenRegisteredWithinTimeout,
                 connected,
                 registered,
                 closed
             };
 
-            this._expectedConnectionsById[id] = expectedWindow;
+            this._expectedConnectionsById[id] = expectedConnection;
 
-            return expectedWindow;
+            return expectedConnection;
         }
     }
 
@@ -418,13 +422,13 @@ export class Model {
     }
 }
 
-function getLiveApps(windows: AppConnection[]): LiveApp[] {
-    return windows.reduce((liveApps: LiveApp[], appWindow: AppConnection) => {
-        const liveApp = liveApps.find(liveApp => liveApp.application.appId === appWindow.appInfo.appId);
+function getLiveApps(connections: AppConnection[]): LiveApp[] {
+    return connections.reduce((liveApps: LiveApp[], connection: AppConnection) => {
+        const liveApp = liveApps.find(liveApp => liveApp.application.appId === connection.appInfo.appId);
         if (liveApp) {
-            liveApp.connections.push(appWindow);
+            liveApp.connections.push(connection);
         } else {
-            liveApps.push({application: appWindow.appInfo, connections: [appWindow]});
+            liveApps.push({application: connection.appInfo, connections: [connection]});
         }
 
         return liveApps;

@@ -4,7 +4,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {createMockChannel} from '../mocks';
 import {Application} from '../../src/client/main';
-import {AppConnectionBase} from '../../src/provider/model/AppWindow';
+import {AppConnectionBase} from '../../src/provider/model/AppConnection';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
 import {useMockTime, unmockTime, advanceTime, resolvePromiseChain} from '../utils/unit/time';
 import {EntityType} from '../../src/provider/model/Environment';

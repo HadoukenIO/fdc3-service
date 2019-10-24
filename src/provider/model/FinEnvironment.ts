@@ -16,7 +16,7 @@ import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 
 import {Environment, EntityType} from './Environment';
-import {AppConnection} from './AppWindow';
+import {AppConnection} from './AppConnection';
 import {ContextChannel} from './ContextChannel';
 import {FinAppConnection} from './FinAppConnection';
 import {FinAppWindow} from './FinAppWindow';
@@ -168,6 +168,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
         const id: string = getId(identity);
         const connection: KnownEntity|undefined = this._knownEntities.get(id);
 
+        // Only retain knowledge of the entity if it's a window.
+        // Windows are removed when they are closed, all other entity types are removed when they disconnect.
         if (connection && connection.entityType !== EntityType.WINDOW) {
             this._knownEntities.delete(id);
         }

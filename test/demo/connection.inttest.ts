@@ -1,7 +1,7 @@
 import 'jest';
 import {Identity} from 'openfin/_v2/main';
 
-import {AppConnection} from '../../src/provider/model/AppWindow';
+import {AppConnection} from '../../src/provider/model/AppConnection';
 import {SERVICE_IDENTITY, ChannelEvents} from '../../src/client/internal';
 import {Model} from '../../src/provider/model/Model';
 import {ChannelHandler} from '../../src/provider/controller/ChannelHandler';
@@ -211,7 +211,7 @@ async function navigateTo(target: Identity, url: string): Promise<void> {
 
 async function getIntentListeners(intentType: string): Promise<AppConnection[]> {
     return ofBrowser.executeOnWindow(SERVICE_IDENTITY, async function (this: ProviderWindow, type: string): Promise<AppConnection[]> {
-        return (await this.model.windows).filter(window => window.hasIntentListener(type));
+        return (await this.model.connections).filter(window => window.hasIntentListener(type));
     }, intentType);
 }
 
@@ -234,6 +234,6 @@ async function hasEventListeners(identity: Identity, eventType: ChannelEvents['t
 
 async function isRegistered(identity: Identity): Promise<boolean> {
     return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, identity: Identity): boolean {
-        return this.model.getWindow(identity) !== null;
+        return this.model.getConnection(identity) !== null;
     }, identity);
 }

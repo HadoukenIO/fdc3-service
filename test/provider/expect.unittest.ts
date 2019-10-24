@@ -11,7 +11,7 @@ import {Environment, EntityType} from '../../src/provider/model/Environment';
 import {createMockEnvironmnent, createMockAppConnection} from '../mocks';
 import {Application} from '../../src/client/main';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
-import {AppConnection} from '../../src/provider/model/AppWindow';
+import {AppConnection} from '../../src/provider/model/AppConnection';
 import {advanceTime, useMockTime} from '../utils/unit/time';
 import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
 import {PartiallyWritable} from '../types';

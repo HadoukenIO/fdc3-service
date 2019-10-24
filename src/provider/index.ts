@@ -17,7 +17,7 @@ import {APIHandler} from './APIHandler';
 import {EventHandler} from './controller/EventHandler';
 import {Injector} from './common/Injector';
 import {ChannelHandler} from './controller/ChannelHandler';
-import {AppConnection} from './model/AppWindow';
+import {AppConnection} from './model/AppConnection';
 import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
 import {withTimeout} from './utils/async';
@@ -113,7 +113,7 @@ export class Main {
         await this._model.ensureRunning(appInfo);
 
         // Bring-to-front all currently open windows in creation order
-        const windowsToFocus = this._model.findWindowsByAppName(appInfo.name).sort((a: AppConnection, b: AppConnection) => {
+        const windowsToFocus = this._model.findConnectionsByAppName(appInfo.name).sort((a: AppConnection, b: AppConnection) => {
             return a.appWindowNumber - b.appWindowNumber;
         });
         await Promise.all(windowsToFocus.map(window => window.bringToFront()));
@@ -124,7 +124,7 @@ export class Main {
         if (payload.context) {
             // TODO: Revisit timeout logic [SERVICE-556]
             await withTimeout(Timeouts.ADD_CONTEXT_LISTENER, (async () => {
-                const appWindows = await this._model.expectWindowsForApp(appInfo);
+                const appWindows = await this._model.expectConnectionsForApp(appInfo);
 
                 await Promise.all(appWindows.map(window => {
                     return this._contextHandler.send(window, parseContext(payload.context!));
@@ -316,7 +316,7 @@ export class Main {
     }
 
     private attemptGetWindow(identity: Identity): AppConnection | null {
-        return this._model.getWindow(parseIdentity(identity));
+        return this._model.getConnection(parseIdentity(identity));
     }
 }
 

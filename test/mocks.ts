@@ -1,7 +1,7 @@
 import {Signal} from 'openfin-service-signal';
 import {Identity} from 'openfin/_v2/main';
 
-import {AppConnection} from '../src/provider/model/AppWindow';
+import {AppConnection} from '../src/provider/model/AppConnection';
 import {IntentType, Context, Application} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
 import {ChannelTransport, ChannelEvents, APIFromClientTopic} from '../src/client/internal';

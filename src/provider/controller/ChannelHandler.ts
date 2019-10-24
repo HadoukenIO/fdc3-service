@@ -5,7 +5,7 @@ import {Model} from '../model/Model';
 import {Inject} from '../common/Injectables';
 import {ChannelId, FDC3Error, ChannelError, Context} from '../../client/main';
 import {SystemContextChannel, ContextChannel, AppContextChannel} from '../model/ContextChannel';
-import {AppConnection} from '../model/AppWindow';
+import {AppConnection} from '../model/AppConnection';
 import {ChannelEvents} from '../../client/internal';
 
 @injectable()
@@ -51,7 +51,7 @@ export class ChannelHandler {
     }
 
     public getWindowsListeningToChannel(channel: ContextChannel): AppConnection[] {
-        return this._model.windows.filter(window => window.hasChannelContextListener(channel));
+        return this._model.connections.filter(window => window.hasChannelContextListener(channel));
     }
 
     public getChannelContext(channel: ContextChannel): Context | null {
@@ -59,15 +59,15 @@ export class ChannelHandler {
     }
 
     public getChannelMembers(channel: ContextChannel): AppConnection[] {
-        return this._model.windows.filter(window => window.channel === channel);
+        return this._model.connections.filter(window => window.channel === channel);
     }
 
     public getWindowsListeningForContextsOnChannel(channel: ContextChannel): AppConnection[] {
-        return this._model.windows.filter(window => window.hasChannelContextListener(channel));
+        return this._model.connections.filter(window => window.hasChannelContextListener(channel));
     }
 
     public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: ChannelEvents['type']): AppConnection[] {
-        return this._model.windows.filter(window => window.hasChannelEventListener(channel, eventType));
+        return this._model.connections.filter(window => window.hasChannelEventListener(channel, eventType));
     }
 
     public joinChannel(appWindow: AppConnection, channel: ContextChannel): void {
@@ -85,7 +85,7 @@ export class ChannelHandler {
     }
 
     public setLastBroadcastOnChannel(channel: ContextChannel, context: Context): void {
-        if (this._model.windows.some(window => window.channel === channel)) {
+        if (this._model.connections.some(window => window.channel === channel)) {
             channel.setLastBroadcastContext(context);
         }
     }
@@ -103,7 +103,7 @@ export class ChannelHandler {
     }
 
     private isChannelEmpty(channel: ContextChannel): boolean {
-        return !this._model.windows.some(window => window.channel === channel);
+        return !this._model.connections.some(window => window.channel === channel);
     }
 
     private validateChannelId(channelId: ChannelId): void {

@@ -3,7 +3,7 @@ import {Signal} from 'openfin-service-signal';
 
 import {Application} from '../../client/main';
 
-import {AppConnection} from './AppWindow';
+import {AppConnection} from './AppConnection';
 import {ContextChannel} from './ContextChannel';
 
 export enum EntityType {
