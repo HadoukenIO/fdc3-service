@@ -51,7 +51,7 @@ describe('When sending a Context using ContextHandler', () => {
         it('The send call resolves', async () => {
             const targetAppWindow = createCustomMockAppWindow('target', false);
 
-            await expect(contextHandler.send(targetAppWindow, testContext)).resolves;
+            await contextHandler.send(targetAppWindow, testContext);
         });
 
         it('Dispatch is not called', async () => {
