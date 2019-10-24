@@ -8,7 +8,7 @@ import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
 import {quitApps, setupOpenDirectoryAppBookends, setupTeardown, waitForAppToBeRunning} from './utils/common';
 import {testManagerIdentity, testAppInDirectory1, testAppInDirectory2, testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2, testAppNotFdc3, testAppUrl} from './constants';
-import {delay} from './utils/delay';
+import {delay, Duration} from './utils/delay';
 
 setupTeardown();
 
@@ -106,7 +106,7 @@ correct data', async () => {
 
                     // Wait a short delay after the app is running
                     await waitForAppToBeRunning(testAppInDirectory1);
-                    await delay(2500);
+                    await delay(Duration.SHORTER_THAN_APP_MATURITY);
 
                     // Add a listener
                     const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
@@ -189,7 +189,7 @@ triggered with the correct data', async () => {
 
                     // Wait a long delay after the app is running
                     await waitForAppToBeRunning(testAppInDirectory1);
-                    await delay(7500);
+                    await delay(Duration.LONGER_THAN_APP_MATURITY);
 
                     // Add a listener
                     const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
