@@ -3,8 +3,9 @@ import {OrganizationContext} from '../../src/client/main';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
-import {setupTeardown} from './utils/common';
+import {setupTeardown, setupOpenDirectoryAppBookends} from './utils/common';
 import {testManagerIdentity, testAppInDirectory1, testAppUrl} from './constants';
+import {delay, Duration} from './utils/delay';
 
 const validContext: OrganizationContext = {type: 'fdc3.organization', name: 'OpenFin', id: {default: 'openfin'}};
 
@@ -18,18 +19,46 @@ describe('Context listeners and broadcasting', () => {
     });
 
     describe('Registering and unsubscribing context listeners', () => {
-        beforeEach(async () => {
-            // Open the app to be used in each test
-            await fdc3Remote.open(testManagerIdentity, testAppInDirectory1.name);
-        });
-
-        afterEach(async () => {
-            // Close down the app once done
-            await fin.Application.wrapSync(testAppInDirectory1).quit(true);
-        });
+        setupOpenDirectoryAppBookends(testAppInDirectory1);
 
         test('When calling addContextListener for the first time the promise resolves and there are no errors', async () => {
             await expect(fdc3Remote.addContextListener(testAppInDirectory1)).resolves.toBeTruthy();
+        });
+
+        describe('With no context listener registered', () => {
+            test('When calling broadcast from another app, when a listener is added after a short delay, the listener \
+is triggered exactly once with the correct context', async () => {
+                await fdc3Remote.broadcast(testManagerIdentity, validContext);
+
+                await delay(Duration.SHORTER_THAN_APP_MATURITY);
+                const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
+
+                await delay(Duration.SERVICE_TO_CLIENT_API_CALL);
+                await expect(listener).toHaveReceivedContexts([validContext]);
+            });
+
+            test('When calling broadcast from another app, when a listener is added after a long delay, the listener \
+is not triggered', async () => {
+                await fdc3Remote.broadcast(testManagerIdentity, validContext);
+
+                await delay(Duration.LONGER_THAN_APP_MATURITY);
+                const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
+
+                await delay(Duration.SERVICE_TO_CLIENT_API_CALL);
+                await expect(listener).toHaveReceivedContexts([]);
+            });
+
+            test('When calling broadcast from another app, when a listener is added after a short delay on a child \
+window, the listener is triggered exactly once with the correct context', async () => {
+                await fdc3Remote.broadcast(testManagerIdentity, validContext);
+
+                await delay(Duration.SHORTER_THAN_APP_MATURITY);
+                const childIdentity = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-window'});
+                const listener = await fdc3Remote.addContextListener(childIdentity);
+
+                await delay(Duration.SERVICE_TO_CLIENT_API_CALL);
+                await expect(listener).toHaveReceivedContexts([validContext]);
+            });
         });
 
         describe('With one context listener registered', () => {
@@ -46,7 +75,7 @@ describe('Context listeners and broadcasting', () => {
                 await expect(listener).toHaveReceivedContexts([validContext]);
             });
 
-            test('When broadcast is called from the app that is listening, its listeners doesn\'t get triggered', async () => {
+            test('When broadcast is called from the app that is listening, its listeners don\'t get triggered', async () => {
                 await fdc3Remote.broadcast(testAppInDirectory1, validContext);
 
                 // Received contexts

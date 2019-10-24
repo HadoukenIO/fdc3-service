@@ -50,10 +50,6 @@ export class ChannelHandler {
         return this._model.getChannel(channelId)!;
     }
 
-    public getWindowsListeningToChannel(channel: ContextChannel): AppWindow[] {
-        return this._model.windows.filter(window => window.hasChannelContextListener(channel));
-    }
-
     public getChannelContext(channel: ContextChannel): Context | null {
         return channel.storedContext;
     }

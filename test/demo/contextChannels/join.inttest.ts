@@ -100,7 +100,7 @@ describe('When listening for channel-changed and Channel events', () => {
         [
             'a non-directory app',
             testAppNotInDirectory1,
-            async () => fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl).then()
+            async () => fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl).then(() => {})
         ]
     ];
 
