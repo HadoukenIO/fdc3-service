@@ -14,7 +14,8 @@
 }
 
 .app-card div {
-    height: 82px;
+    padding: 0 5px 5px 5px;
+    min-height: 128px;
 }
 
 .app-card p {

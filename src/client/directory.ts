@@ -130,6 +130,7 @@ export interface NameValuePair {
     name: string;
     value: string;
 }
+
 /**
  * A representation of an [FDC3 Intent](https://fdc3.finos.org/docs/1.0/intents-intro) supported by the app in the app directory.
  */

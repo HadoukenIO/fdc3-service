@@ -9,8 +9,9 @@ import {fin} from './utils/fin';
 import {quitApps, setupOpenDirectoryAppBookends, setupTeardown} from './utils/common';
 import {
     testManagerIdentity, testAppInDirectory1, testAppInDirectory2,
-    testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2
+    testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2, testAppNotFdc3
 } from './constants';
+import {delay} from './utils/delay';
 
 setupTeardown();
 
@@ -25,6 +26,16 @@ describe('Opening applications with the FDC3 client', () => {
                 await expect(fin.Application.wrapSync(testAppInDirectory1).isRunning()).resolves.toBe(true);
 
                 await quitApps(testAppInDirectory1);
+            });
+
+            test('When passing a valid app name of an app that never connects to FDC3 the app opens and the promise resolves', async () => {
+                // From the launcher app, call fdc3.open with a valid name
+                await open(testAppNotFdc3.name);
+
+                // Check that the app is now running
+                await expect(fin.Application.wrapSync(testAppNotFdc3).isRunning()).resolves.toBe(true);
+
+                await quitApps(testAppNotFdc3);
             });
 
             test('When passing an unknown app name the service returns an FDC3Error', async () => {
@@ -174,6 +185,63 @@ and does not trigger the context listener of the already open app', async () => 
             `Timeout waiting for app '${appName}' to start from manifest`
         );
     }, Timeouts.APP_START_FROM_MANIFEST + 2000);
+
+    describe('When opening an app that delays registering a context listener, but less than the timeout', () => {
+        const testAppDelayedPreregisterShort = {uuid: 'test-app-delayed-preregister-short', name: 'test-app-delayed-preregister-short'};
+        const validContext: OrganizationContext = {type: 'fdc3.organization', name: 'OpenFin', id: {default: 'openfin'}};
+
+        let openPromise: Promise<void>;
+
+        beforeEach(async () => {
+            openPromise = open(testAppDelayedPreregisterShort.name, validContext);
+        });
+
+        afterEach(async () => {
+            await quitApps(testAppDelayedPreregisterShort);
+        });
+
+        test('The promise resolves and the app opens', async () =>{
+            await openPromise;
+
+            await expect(fin.Application.wrapSync(testAppDelayedPreregisterShort).isRunning()).resolves.toBe(true);
+        });
+
+        test('The context is received by the listener', async () =>{
+            await openPromise;
+
+            await delay(1000);
+            const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppDelayedPreregisterShort);
+            await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
+        });
+    });
+
+    describe('When opening an app that takes longer than the timeout to register a listener', () => {
+        const testAppDelayedPreregisterLong = {uuid: 'test-app-delayed-preregister-long', name: 'test-app-delayed-preregister-long'};
+        const validContext: OrganizationContext = {type: 'fdc3.organization', name: 'OpenFin', id: {default: 'openfin'}};
+
+        let openPromise: Promise<void>;
+
+        beforeEach(async () => {
+            openPromise = open(testAppDelayedPreregisterLong.name, validContext);
+        });
+
+        afterEach(async () => {
+            await quitApps(testAppDelayedPreregisterLong);
+        });
+
+        test('The promise resolves and the app opens', async () =>{
+            await openPromise;
+            await expect(fin.Application.wrapSync(testAppDelayedPreregisterLong).isRunning()).resolves.toBe(true);
+        });
+
+        test('The context is not received by the listener', async () =>{
+            await openPromise;
+
+            await delay(10000);
+            const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppDelayedPreregisterLong);
+            await expect(preregisteredListener).toHaveReceivedContexts([]);
+        });
+    });
 });
 
 function open(appName: string, context?: Context | undefined): Promise<void> {

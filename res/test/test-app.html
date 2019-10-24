@@ -53,20 +53,7 @@
                     .substring(2) + new Date().getTime().toString(36));
         }
 
-        window.contextListeners = [];
-        window.intentListeners = [];
-        window.eventListeners = [];
-        window.channelEventListeners = [];
-
-        window.channelTransports = {};
-
-        window.receivedContexts = [];
-        window.receivedIntents = [];
-        window.receivedEvents = [];
-        window.receivedChannelEvents = [];
-
-        const queryParams = new URLSearchParams(location.search);
-        if (queryParams.get('registerListeners') === 'true') {
+        function registerListeners() {
             const intents = [
                 'test.IntentNamePreregistered',
                 'DialCall',
@@ -107,6 +94,28 @@
 
                 fdc3.addEventListener(eventType, handler);
                 window.eventListeners[0] = {eventType, handler, unsubscribe};
+            }
+        }
+
+        window.contextListeners = [];
+        window.intentListeners = [];
+        window.eventListeners = [];
+        window.channelEventListeners = [];
+
+        window.channelTransports = {};
+
+        window.receivedContexts = [];
+        window.receivedIntents = [];
+        window.receivedEvents = [];
+        window.receivedChannelEvents = [];
+
+        const queryParams = new URLSearchParams(location.search);
+        if (queryParams.get('registerListeners') === 'true') {
+            const delay = Number.parseInt(queryParams.get('listenerDelay'));
+            if (isNaN(delay)) {
+                registerListeners();
+            } else {
+                setTimeout(registerListeners, delay);
             }
         }
     </script>

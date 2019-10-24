@@ -3,9 +3,14 @@
  */
 export const Timeouts = {
     /**
-     * Time for an app to register a listener after opening
+     * Time for an app to register an intent listener after opening
      */
     ADD_INTENT_LISTENER: 5000,
+
+    /**
+     * Time for an app to register a context listener after opening
+     */
+    ADD_CONTEXT_LISTENER: 5000,
 
     /**
      * Time for an OpenFin app to start by calling `fin.Application.startFromManifest`
@@ -15,43 +20,65 @@ export const Timeouts = {
     /**
      * Time service allows for a `window-created` event after a client expects the window to exist
      */
-    WINDOW_EXPECT_TO_SEEN: 100,
+    WINDOW_EXPECT_TO_CREATED: 250,
 
     /**
-     * Time service allows for a window to go from first seen to being fully registered with the model
+     * Time service allows for a window to go from first created to being fully registered with the model
      */
-    WINDOW_SEEN_TO_REGISTERED: 5000
+    WINDOW_CREATED_TO_REGISTERED: 5000
 };
 
-export const DESKTOP_CHANNELS = [
+export const CustomConfigFields = {
+    OPENFIN_APP_UUID: 'appUuid'
+};
+
+export const SYSTEM_CHANNELS = [
     {
         id: 'red',
-        name: 'Red',
-        color: 0xFF0000
+        visualIdentity: {
+            name: 'Red',
+            color: '#FF0000',
+            glyph: 'https://openfin.co/favicon.ico'
+        }
     },
     {
         id: 'orange',
-        name: 'Orange',
-        color: 0xFF8000
+        visualIdentity: {
+            name: 'Orange',
+            color: '#FF8000',
+            glyph: 'https://openfin.co/favicon.ico'
+        }
     },
     {
         id: 'yellow',
-        name: 'Yellow',
-        color: 0xFFFF00
+        visualIdentity: {
+            name: 'Yellow',
+            color: '#FFFF00',
+            glyph: 'https://openfin.co/favicon.ico'
+        }
     },
     {
         id: 'green',
-        name: 'Green',
-        color: 0x00FF00
+        visualIdentity: {
+            name: 'Green',
+            color: '#00FF00',
+            glyph: 'https://openfin.co/favicon.ico'
+        }
     },
     {
         id: 'blue',
-        name: 'Blue',
-        color: 0x0000FF
+        visualIdentity: {
+            name: 'Blue',
+            color: '#0000FF',
+            glyph: 'https://openfin.co/favicon.ico'
+        }
     },
     {
         id: 'purple',
-        name: 'Purple',
-        color: 0xFF00FF
+        visualIdentity: {
+            name: 'Purple',
+            color: '#FF00FF',
+            glyph: 'https://openfin.co/favicon.ico'
+        }
     }
 ];

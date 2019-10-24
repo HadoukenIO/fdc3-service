@@ -4,9 +4,9 @@ import _WindowModule from 'openfin/_v2/api/window/window';
 import {AppWindow} from '../model/AppWindow';
 import {Context} from '../../client/main';
 import {APIHandler} from '../APIHandler';
-import {APIFromClientTopic, APIToClientTopic, HandleChannelContextPayload} from '../../client/internal';
+import {APIFromClientTopic, APIToClientTopic, ChannelReceiveContextPayload, ReceiveContextPayload} from '../../client/internal';
 import {Inject} from '../common/Injectables';
-import {getId} from '../model/Model';
+import {getId} from '../utils/getId';
 import {ContextChannel} from '../model/ContextChannel';
 
 import {ChannelHandler} from './ChannelHandler';
@@ -30,7 +30,13 @@ export class ContextHandler {
      * @param context Context to be sent
      */
     public async send(window: AppWindow, context: Context): Promise<void> {
-        return this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.CONTEXT, context);
+        const payload: ReceiveContextPayload = {context};
+        if (await window.isReadyToReceiveContext()) {
+            // TODO: Make sure this will not cause problems if it never returns [SERVICE-555]
+            return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload);
+        } else {
+            return;
+        }
     }
 
     /**
@@ -82,8 +88,8 @@ export class ContextHandler {
      * @param channel Channel context is to be sent on
      */
     private async sendOnChannel(window: AppWindow, context: Context, channel: ContextChannel): Promise<void> {
-        const payload: HandleChannelContextPayload = {channel: channel.id, context};
+        const payload: ChannelReceiveContextPayload = {channel: channel.id, context};
 
-        await this._apiHandler.channel.dispatch(window.identity, APIToClientTopic.HANDLE_CHANNEL_CONTEXT, payload);
+        await this._apiHandler.dispatch(window.identity, APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, payload);
     }
 }

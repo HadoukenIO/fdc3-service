@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
-import {Model, getId} from '../../src/provider/model/Model';
+import {Model} from '../../src/provider/model/Model';
 import {APIHandler} from '../../src/provider/APIHandler';
 import {APIFromClientTopic} from '../../src/client/internal';
 import {AppDirectory} from '../../src/provider/model/AppDirectory';
@@ -12,15 +12,16 @@ import {createMockEnvironmnent, createMockAppWindow} from '../mocks';
 import {Application} from '../../src/client/main';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
 import {AppWindow} from '../../src/provider/model/AppWindow';
-import {advanceTime, useFakeTime} from '../demo/utils/time';
+import {advanceTime, useMockTime} from '../utils/unit/time';
 import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
 import {PartiallyWritable} from '../types';
+import {Timeouts} from '../../src/provider/constants';
+import {getId} from '../../src/provider/utils/getId';
 
 jest.mock('../../src/provider/model/AppDirectory');
 jest.mock('../../src/provider/APIHandler');
 
 type TestWindow = {
-    seenTime?: number;
     createdTime?: number;
     connectionTime?: number;
     closeTime?: number;
@@ -50,9 +51,6 @@ type TestParam = [
 
 const FAKE_TEST_DURATION = 10000;
 
-const REGISTRATION_TIMEOUT = 5000;
-const PENDING_TIMEOUT = 100;
-
 let model: Model;
 
 let mockAppDirectory: jest.Mocked<AppDirectory>;
@@ -69,13 +67,13 @@ beforeEach(async () => {
     model = new Model(mockAppDirectory, mockEnvironment, mockApiHandler);
 
     jest.resetAllMocks();
-    useFakeTime();
+    useMockTime();
 });
 
 describe('When creating a directory FDC3 app', () => {
     const testWindow: TestWindow = {
-        seenTime: 990,
         createdTime: 1000,
+        connectionTime: 1100,
         appType: 'directory'
     };
 
@@ -83,7 +81,7 @@ describe('When creating a directory FDC3 app', () => {
         expectTest(testWindow, 3000, [
             [
                 'When a window is expected long before it is created, the window promise rejects',
-                {callTime: 500, finalizeTime: 500 + PENDING_TIMEOUT, result: 'reject-timeout'}
+                {callTime: 500, finalizeTime: 500 + Timeouts.WINDOW_EXPECT_TO_CREATED, result: 'reject-timeout'}
             ],
             [
                 'When a window is expected shortly before it is created, the window promise resolves',
@@ -100,7 +98,7 @@ describe('When creating a directory FDC3 app', () => {
         expectTest(testWindow, 8000, [
             [
                 'When a window is expected while the window is being registered, the window promise rejects',
-                {callTime: 1500, finalizeTime: 990 + REGISTRATION_TIMEOUT, result: 'reject-timeout'}
+                {callTime: 1500, finalizeTime: 1000 + Timeouts.WINDOW_CREATED_TO_REGISTERED, result: 'reject-timeout'}
             ],
             [
                 'When a window is expected shortly before the window is registered, the window promise rejects',
@@ -111,7 +109,7 @@ describe('When creating a directory FDC3 app', () => {
 
     describe('When a window is closed while pending', () => {
         const neverCreatedWindow: TestWindow = {
-            seenTime: 990,
+            createdTime: 1000,
             closeTime: 1000,
             appType: 'directory'
         };
@@ -119,15 +117,33 @@ describe('When creating a directory FDC3 app', () => {
         expectTest(neverCreatedWindow, 3000, [
             [
                 'When a window is expected shortly before it is created, the promise rejects',
-                {callTime: 950, finalizeTime: 1000, result: 'reject-closed'}
+                {callTime: 950, finalizeTime: 1200, result: 'reject-closed'}
+            ]
+        ]);
+    });
+
+    describe('When a window never connects', () => {
+        const neverConnectingWindow: TestWindow = {
+            createdTime: 1000,
+            appType: 'directory'
+        };
+
+        expectTest(neverConnectingWindow, 3000, [
+            [
+                'When a window is expected after it is created, the promise rejects',
+                {callTime: 1500, finalizeTime: 1000 + Timeouts.WINDOW_CREATED_TO_REGISTERED, result: 'reject-timeout'}
+            ],
+            [
+                'When a window is expected shortly before it is created, the promise rejects',
+                {callTime: 950, finalizeTime: 1000 + Timeouts.WINDOW_CREATED_TO_REGISTERED, result: 'reject-timeout'}
             ]
         ]);
     });
 
     describe('When a window is closed after being created', () => {
         const fastCloseWindow: TestWindow = {
-            seenTime: 990,
             createdTime: 1000,
+            connectionTime: 1100,
             closeTime: 2000,
             appType: 'directory'
         };
@@ -142,8 +158,8 @@ describe('When creating a directory FDC3 app', () => {
 
     describe('When a window is closed after being registered', () => {
         const slowCloseWindow: TestWindow = {
-            seenTime: 990,
             createdTime: 1000,
+            connectionTime: 1100,
             closeTime: 4000,
             appType: 'directory'
         };
@@ -151,7 +167,7 @@ describe('When creating a directory FDC3 app', () => {
         expectTest(slowCloseWindow, 3000, [
             [
                 'When a window is expected after being closed, the promise rejects',
-                {callTime: 5000, finalizeTime: 5000 + PENDING_TIMEOUT, result: 'reject-timeout'}
+                {callTime: 5000, finalizeTime: 5000 + Timeouts.WINDOW_EXPECT_TO_CREATED, result: 'reject-timeout'}
             ]
         ]);
     });
@@ -159,14 +175,12 @@ describe('When creating a directory FDC3 app', () => {
 
 describe('When creating a non-directory FDC3 app', () => {
     const fastConnectWindow: TestWindow = {
-        seenTime: 990,
         createdTime: 1000,
         connectionTime: 4000,
         appType: 'non-directory'
     };
 
     const slowConnectWindow: TestWindow = {
-        seenTime: 990,
         createdTime: 1000,
         connectionTime: 7000,
         appType: 'non-directory'
@@ -210,11 +224,11 @@ describe('When creating a non-directory FDC3 app', () => {
         expectTest(slowConnectWindow, 3000, [
             [
                 'When a window is expected before the app directory has returned, the window promise rejects',
-                {callTime: 2500, finalizeTime: 990 + REGISTRATION_TIMEOUT, result: 'reject-timeout'}
+                {callTime: 2500, finalizeTime: 1000 + Timeouts.WINDOW_CREATED_TO_REGISTERED, result: 'reject-timeout'}
             ],
             [
                 'When a window is expected after the app directory has returned but before it is registered, the window promise rejects',
-                {callTime: 3500, finalizeTime: 990 + REGISTRATION_TIMEOUT, result: 'reject-timeout'}
+                {callTime: 3500, finalizeTime: 1000 + Timeouts.WINDOW_CREATED_TO_REGISTERED, result: 'reject-timeout'}
             ],
             [
                 'When a window is expected shortly before the window is registered, the window promise rejects',
@@ -235,29 +249,24 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
 
         const appDirectoryResultPromise = new DeferredPromise();
 
-        mockAppDirectory.getAllApps.mockImplementationOnce(async (): Promise<Application[]> => {
+        mockAppDirectory.getAppByUuid.mockImplementation(async (): Promise<Application | null> => {
             await appDirectoryResultPromise.promise;
-            return testWindow.appType === 'directory' ? [mockApplication] : [];
+            return testWindow.appType === 'directory' ? mockApplication : null;
         });
 
         mockEnvironment.wrapApplication.mockImplementationOnce((appInfo: Application, testIdentity: Identity, channel: ContextChannel): AppWindow => {
-            return {
-                ...createMockAppWindow(),
-                id: getId(testIdentity),
-                identity: testIdentity,
-                appInfo
-            };
+            return createMockAppWindow({id: getId(testIdentity), identity: testIdentity, appInfo});
         });
 
         mockEnvironment.inferApplication.mockImplementationOnce(async (indentity: Identity): Promise<Application> => {
             return mockApplication;
         });
 
-        mockEnvironment.isWindowSeen.mockImplementation((testIdentity: Identity): boolean => {
+        mockEnvironment.isWindowCreated.mockImplementation((testIdentity: Identity): boolean => {
             if (getId(testIdentity) === getId(identity)) {
                 const time = Date.now();
 
-                if (testWindow.seenTime !== undefined && time >= testWindow.seenTime) {
+                if (testWindow.createdTime !== undefined && time >= testWindow.createdTime) {
                     if (testWindow.closeTime === undefined || time < testWindow.closeTime) {
                         return true;
                     }
@@ -281,8 +290,7 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
             return false;
         });
 
-        maybeSetTimeout(() => mockEnvironment.windowSeen.emit(identity), testWindow.seenTime);
-        maybeSetTimeout(() => mockEnvironment.windowCreated.emit(identity, manifestUrl), testWindow.createdTime);
+        maybeSetTimeout(() => mockEnvironment.windowCreated.emit(identity), testWindow.createdTime);
         maybeSetTimeout(() => mockApiHandler.onConnection.emit(identity), testWindow.connectionTime);
         maybeSetTimeout(() => mockEnvironment.windowClosed.emit(identity), testWindow.closeTime);
         maybeSetTimeout(() => appDirectoryResultPromise.resolve(), appDirectoryResultTime);
@@ -296,7 +304,7 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
 }
 
 function buildTestParams(testWindow: TestWindow, appDirectoryResultTime: number, resultParams: ResultParam[]): TestParam[] {
-    if (testWindow.closeTime === undefined) {
+    if (testWindow.closeTime === undefined && ![testWindow.createdTime, testWindow.connectionTime].includes(undefined)) {
         resultParams.push([
             'When a window is expected after the window has been registered, the window promise resolves',
             {callTime: 9500, finalizeTime: 9500, result: 'resolve'}

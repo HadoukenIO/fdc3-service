@@ -6,10 +6,21 @@ import {Application} from '../../client/main';
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 
+export enum EntityType {
+    WINDOW = 'window',
+    IFRAME = 'iframe',
+    EXTERNAL_CONNECTION = 'external connection',
+    UNKNOWN = 'unknown'
+}
+
 export interface Environment {
-    windowSeen: Signal<[Identity]>;
-    windowCreated: Signal<[Identity, string]>;
+    windowCreated: Signal<[Identity]>;
     windowClosed: Signal<[Identity]>;
+
+    /**
+     * Checks if an application is running, given an App Directory entry.
+     */
+    isRunning: (uuid: string) => Promise<boolean>;
 
     /**
      * Creates a new application, given an App Directory entry.
@@ -31,7 +42,12 @@ export interface Environment {
     inferApplication: (identity: Identity) => Promise<Application>;
 
     /**
-     * Returns whether the window has been seen by the service and is still open
+     * Determines the type of object that is represented by 'identity'
      */
-    isWindowSeen: (identity: Identity) => boolean;
+    getEntityType(identity: Identity): Promise<EntityType>;
+
+    /**
+     * Returns whether the window has been created by the service and is still open
+     */
+    isWindowCreated: (identity: Identity) => boolean;
 }

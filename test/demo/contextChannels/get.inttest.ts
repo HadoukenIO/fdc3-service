@@ -1,13 +1,14 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {DesktopChannel, DefaultChannel, ChannelError, IdentityError, ChannelId} from '../../../src/client/main';
+import {SystemChannel, DefaultChannel, ChannelError, IdentityError, ChannelId} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
-import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, appStartupTime, testAppNotFdc3} from '../constants';
+import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, appStartupTime, testAppNotInDirectoryNotFdc3} from '../constants';
 import {fin} from '../utils/fin';
-import {setupTeardown} from '../utils/common';
+import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends} from '../utils/common';
+import {fakeAppChannelName} from '../utils/fakes';
 
 /**
- * Tests getDesktopChannels(), getChannelById(), and getCurrentChannel()
+ * Tests getSystemChannels(), getChannelById(), and getCurrentChannel()
  */
 
 setupTeardown();
@@ -17,20 +18,28 @@ describe('When getting a channel by ID', () => {
         await expect(fdc3Remote.getChannelById(testManagerIdentity, 'default')).resolves.toBeChannel({id: 'default', type: 'default'}, DefaultChannel);
     });
 
-    const desktopChannelIdParams = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
+    const systemChannelIdParams = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
 
-    test.each(desktopChannelIdParams)(
-        'When the ID provided is \'%s\', the expected desktop channel is returned',
+    test.each(systemChannelIdParams)(
+        'When the ID provided is \'%s\', the expected system channel is returned',
         async (channelId: ChannelId) => {
             const channel = await fdc3Remote.getChannelById(testManagerIdentity, channelId);
 
-            await expect(channel).toBeChannel({id: channelId, type: 'desktop'}, DesktopChannel);
+            await expect(channel).toBeChannel({id: channelId, type: 'system'}, SystemChannel);
         }
     );
 
     test('Subsequent calls return the same channel instance', async () => {
         const redChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'red');
         await expect(fdc3Remote.getChannelById(testManagerIdentity, 'red')).resolves.toBe(redChannel);
+    });
+
+    test('When the ID corresponds to an app channel, the expected app channel is returned', async () => {
+        const appChannel = await fdc3Remote.getOrCreateAppChannel(testManagerIdentity, fakeAppChannelName());
+
+        const id = appChannel.channel.id;
+
+        await expect(fdc3Remote.getChannelById(testManagerIdentity, id)).resolves.toBe(appChannel);
     });
 
     test('When the ID does not correspond to a channel, an FDC3Error is thrown', async () => {
@@ -58,11 +67,13 @@ describe('When getting a channel by ID', () => {
     });
 });
 
-describe('When getting the list of desktop channels', () => {
-    test('All expected channels are returned', async () => {
-        const channels = await fdc3Remote.getDesktopChannels(testManagerIdentity);
+describe('When getting the list of system channels', () => {
+    const systemChannels = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
 
-        for (const channelId of ['red', 'orange', 'yellow', 'green', 'blue', 'purple']) {
+    test('All expected channels are returned', async () => {
+        const channels = await fdc3Remote.getSystemChannels(testManagerIdentity);
+
+        for (const channelId of systemChannels) {
             // Get channel by ID, to compare with our returned channels
             const channel = await fdc3Remote.getChannelById(testManagerIdentity, channelId);
 
@@ -70,8 +81,17 @@ describe('When getting the list of desktop channels', () => {
             expect(channels).toContain(channel);
         }
 
-        // Check all expected channels have been returned
-        expect(channels).toHaveLength(6);
+        // Check only expected channels have been returned
+        expect(channels).toHaveLength(systemChannels.length);
+    });
+
+    test('App channels are not included in the list of system channels', async () => {
+        const appChannel = await fdc3Remote.getOrCreateAppChannel(testManagerIdentity, fakeAppChannelName());
+
+        const channels = await fdc3Remote.getSystemChannels(testManagerIdentity);
+
+        expect(channels).not.toContain(appChannel);
+        expect(channels).toHaveLength(systemChannels.length);
     });
 });
 
@@ -94,18 +114,18 @@ describe('When attempting to get the current channel', () => {
 
     describe('When a non-FDC3 app has been started', () => {
         beforeEach(async () => {
-            await fin.Application.startFromManifest(testAppNotFdc3.manifestUrl);
+            await fin.Application.startFromManifest(testAppNotInDirectoryNotFdc3.manifestUrl);
         }, appStartupTime);
 
         afterEach(async () => {
-            await fin.Application.wrapSync(testAppNotFdc3).quit(true);
+            await fin.Application.wrapSync(testAppNotInDirectoryNotFdc3).quit(true);
         });
 
         test('When the non-FDC3 window identity is provided, an FDC3 error is thrown', async () => {
-            await expect(fdc3Remote.getCurrentChannel(testManagerIdentity, testAppNotFdc3)).toThrowFDC3Error(
+            await expect(fdc3Remote.getCurrentChannel(testManagerIdentity, testAppNotInDirectoryNotFdc3)).toThrowFDC3Error(
                 IdentityError.WindowWithIdentityNotFound,
                 `No connection to FDC3 service found from window with identity: \
-${JSON.stringify({uuid: testAppNotFdc3.uuid, name: testAppNotFdc3.name})}`
+${JSON.stringify({uuid: testAppNotInDirectoryNotFdc3.uuid, name: testAppNotInDirectoryNotFdc3.name})}`
             );
         });
     });
@@ -115,38 +135,54 @@ ${JSON.stringify({uuid: testAppNotFdc3.uuid, name: testAppNotFdc3.name})}`
     });
 });
 
-describe('When getting the current channel of a window of a directory app', () => {
-    beforeEach(async () => {
-        await fdc3Remote.open(testManagerIdentity, testAppInDirectory1.name);
-    }, appStartupTime);
+type TestParam = [string, Identity, () => void];
+const testParams: TestParam[] = [
+    [
+        'an FDC3 app',
+        testAppInDirectory1,
+        () => setupOpenDirectoryAppBookends(testAppInDirectory1)
+    ], [
+        'a non-directory app',
+        testAppNotInDirectory1,
+        () => setupStartNonDirectoryAppBookends(testAppNotInDirectory1)
+    ]
+];
 
-    afterEach(async () => {
-        await fin.Application.wrapSync(testAppInDirectory1).quit(true);
-    });
+describe.each(testParams)('When getting the current channel of a window of %s', (titleParam: string, testApp: Identity, setupBookends: () => void) => {
+    setupBookends();
 
     test('When the window has not joined a channel, the default channel is returned', async () => {
         const defaultChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'default');
 
-        await expect(fdc3Remote.getCurrentChannel(testManagerIdentity, testAppInDirectory1)).resolves.toBe(defaultChannel);
+        await expect(fdc3Remote.getCurrentChannel(testManagerIdentity, testApp)).resolves.toBe(defaultChannel);
     });
 
     test('When the window has joined the \'purple\' channel, the purple channel is returned', async () => {
         // Join the purple channel
         const purpleChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'purple');
-        await purpleChannel.join(testAppInDirectory1);
+        await purpleChannel.join(testApp);
 
         // Check purple channel is returned
-        await expect(fdc3Remote.getCurrentChannel(testManagerIdentity, testAppInDirectory1)).resolves.toBe(purpleChannel);
+        await expect(fdc3Remote.getCurrentChannel(testManagerIdentity, testApp)).resolves.toBe(purpleChannel);
+    }, appStartupTime);
+
+    test('When the window has joined an app channel, the app channel is returned', async () => {
+        // Join a new app channel
+        const appChannel = await fdc3Remote.getOrCreateAppChannel(testManagerIdentity, fakeAppChannelName());
+        await appChannel.join(testApp);
+
+        // Check the app channel is returned
+        await expect(fdc3Remote.getCurrentChannel(testManagerIdentity, testApp)).resolves.toBe(appChannel);
     }, appStartupTime);
 
     test('Subsequent calls return the same channel object instance', async () => {
         // Join the red channel
         const redChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'red');
-        await redChannel.join(testAppInDirectory1);
+        await redChannel.join(testApp);
 
-        // Perform to calls to getCurrentChannel()
-        const returnedRedChannel1 = await fdc3Remote.getCurrentChannel(testManagerIdentity, testAppInDirectory1);
-        const returnedRedChannel2 = await fdc3Remote.getCurrentChannel(testManagerIdentity, testAppInDirectory1);
+        // Perform calls to getCurrentChannel()
+        const returnedRedChannel1 = await fdc3Remote.getCurrentChannel(testManagerIdentity, testApp);
+        const returnedRedChannel2 = await fdc3Remote.getCurrentChannel(testManagerIdentity, testApp);
 
         // Check the same instace was returned each time
         await expect(returnedRedChannel1).toBe(returnedRedChannel2);
@@ -155,45 +191,12 @@ describe('When getting the current channel of a window of a directory app', () =
     test('When no window is passed to getCurrentChannel, the current window is used', async () => {
         // Join the green channel
         const greenChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'green');
-        await greenChannel.join(testAppInDirectory1);
+        await greenChannel.join(testApp);
 
         // Perform call to getCurrentChannel in our joining window, with no target window specified
-        const currentChannel = await fdc3Remote.getCurrentChannel(testAppInDirectory1);
+        const currentChannel = await fdc3Remote.getCurrentChannel(testApp);
 
         // Check we have the green channel. Note that due to these coming from different windows, these cannot be the same instance
         await expect(currentChannel.channel).toEqual(greenChannel.channel);
     }, appStartupTime);
-});
-
-describe('When getting the current channel of a window of a non-directory app', () => {
-    beforeEach(async () => {
-        await fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl);
-    }, appStartupTime);
-
-    afterEach(async () => {
-        await fin.Application.wrapSync(testAppNotInDirectory1).quit(true);
-    });
-
-    test('When the window of has not joined a channel, the default channel is returned', async () => {
-        // Get the default channel
-        const defaultChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'default');
-
-        // Get the current channel of the non-directory app
-        const currentChannel = await fdc3Remote.getCurrentChannel(testManagerIdentity, testAppNotInDirectory1);
-
-        // Check our channels are the same
-        await expect(currentChannel).toBe(defaultChannel);
-    });
-
-    test('When the window has joined the \'red\' channel, the red channel is returned', async () => {
-        // Get the purple channel, and put our non-directory app window in this channel
-        const purpleChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'red');
-        await purpleChannel.join(testAppNotInDirectory1);
-
-        // Get the current channel of the non-directory app
-        const currentChannel = await fdc3Remote.getCurrentChannel(testManagerIdentity, testAppNotInDirectory1);
-
-        // Check our channels are the same
-        await expect(currentChannel).toBe(purpleChannel);
-    });
 });

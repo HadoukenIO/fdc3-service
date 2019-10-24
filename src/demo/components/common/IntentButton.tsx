@@ -36,7 +36,7 @@ export function IntentButton(props: IntentButtonProps): React.ReactElement {
 
     return (
         <button onClick={handleClick} className={buttonClassName}>
-            <i className={buttonState === ButtonStateType.SPIN ? 'fa fa-spinner fa-spin' : `fa ${iconClassName}`} title={title} />
+            <i className={buttonState === ButtonStateType.SPIN ? 'fa fa-spinner fa-pulse' : `fa ${iconClassName}`} title={title} />
         </button>
     );
 }

@@ -3,10 +3,10 @@ import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, IntentListenerPayload, GetDesktopChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, DesktopChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload} from '../client/internal';
-import {AppIntent, IntentResolution, Application, Context} from '../client/main';
 import {FDC3Error, OpenError, IdentityError} from '../client/errors';
-import {parseIdentity, parseContext, parseChannelId} from '../client/validation';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, GetOrCreateAppChannelPayload, AppChannelTransport, AddContextListenerPayload, RemoveContextListenerPayload} from '../client/internal';
+import {AppIntent, IntentResolution, Application, Context} from '../client/main';
+import {parseIdentity, parseContext, parseChannelId, parseAppChannelName} from '../client/validation';
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
@@ -21,6 +21,8 @@ import {AppWindow} from './model/AppWindow';
 import {Intent} from './intents';
 import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
+import {withTimeout} from './utils/async';
+import {Timeouts} from './constants';
 
 @injectable()
 export class Main {
@@ -76,9 +78,12 @@ export class Main {
             [APIFromClientTopic.RAISE_INTENT]: this.raiseIntent.bind(this),
             [APIFromClientTopic.ADD_INTENT_LISTENER]: this.addIntentListener.bind(this),
             [APIFromClientTopic.REMOVE_INTENT_LISTENER]: this.removeIntentListener.bind(this),
-            [APIFromClientTopic.GET_DESKTOP_CHANNELS]: this.getDesktopChannels.bind(this),
+            [APIFromClientTopic.ADD_CONTEXT_LISTENER]: this.addContextListener.bind(this),
+            [APIFromClientTopic.REMOVE_CONTEXT_LISTENER]: this.removeContextListener.bind(this),
+            [APIFromClientTopic.GET_SYSTEM_CHANNELS]: this.getSystemChannels.bind(this),
             [APIFromClientTopic.GET_CHANNEL_BY_ID]: this.getChannelById.bind(this),
             [APIFromClientTopic.GET_CURRENT_CHANNEL]: this.getCurrentChannel.bind(this),
+            [APIFromClientTopic.GET_OR_CREATE_APP_CHANNEL]: this.getOrCreateAppChannel.bind(this),
             [APIFromClientTopic.CHANNEL_GET_MEMBERS]: this.channelGetMembers.bind(this),
             [APIFromClientTopic.CHANNEL_JOIN]: this.channelJoin.bind(this),
             [APIFromClientTopic.CHANNEL_BROADCAST]: this.channelBroadcast.bind(this),
@@ -106,17 +111,24 @@ export class Main {
         }
 
         // This can throw FDC3Errors if app fails to open or times out
-        const appWindows = await this._model.findOrCreate(appInfo);
+        await this._model.ensureRunning(appInfo);
 
-        await Promise.all(appWindows.map(window => window.bringToFront()));
-        if (appWindows.length > 0) {
-            appWindows[appWindows.length - 1].focus();
+        // Bring-to-front all currently open windows in creation order
+        const windowsToFocus = this._model.findWindowsByAppName(appInfo.name).sort((a: AppWindow, b: AppWindow) => a.appWindowNumber - b.appWindowNumber);
+        await Promise.all(windowsToFocus.map(window => window.bringToFront()));
+        if (windowsToFocus.length > 0) {
+            windowsToFocus[windowsToFocus.length - 1].focus();
         }
 
         if (payload.context) {
-            await Promise.all(appWindows.map(window => {
-                return this._contextHandler.send(window, parseContext(payload.context!));
-            }));
+            // TODO: Revisit timeout logic [SERVICE-556]
+            await withTimeout(Timeouts.ADD_CONTEXT_LISTENER, (async () => {
+                const appWindows = await this._model.expectWindowsForApp(appInfo);
+
+                await Promise.all(appWindows.map(window => {
+                    return this._contextHandler.send(window, parseContext(payload.context!));
+                }));
+            })());
         }
     }
 
@@ -129,7 +141,7 @@ export class Main {
     private async findIntent(payload: FindIntentPayload): Promise<AppIntent> {
         let apps: Application[];
         if (payload.intent) {
-            apps = await this._model.getApplicationsForIntent(payload.intent);
+            apps = await this._model.getApplicationsForIntent(payload.intent, payload.context && parseContext(payload.context).type);
         } else {
             // This is a non-FDC3 workaround to get all directory apps by calling `findIntent` with a falsy intent.
             // Ideally the FDC3 spec would expose an API to access the directory in a more meaningful way
@@ -139,14 +151,14 @@ export class Main {
         return {
             intent: {
                 name: payload.intent,
-                displayName: payload.intent
+                displayName: AppDirectory.getIntentDisplayName(apps, payload.intent)
             },
             apps
         };
     }
 
-    private async findIntentsByContext (payload: FindIntentsByContextPayload): Promise<AppIntent[]> {
-        return this._directory.getAppIntentsByContext(parseContext(payload.context).type);
+    private async findIntentsByContext(payload: FindIntentsByContextPayload): Promise<AppIntent[]> {
+        return this._model.getAppIntentsByContext(parseContext(payload.context).type);
     }
 
     private async broadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {
@@ -165,13 +177,13 @@ export class Main {
         return this._intentHandler.raise(intent);
     }
 
-    private async addIntentListener(payload: IntentListenerPayload, source: ProviderIdentity): Promise<void> {
+    private async addIntentListener(payload: AddIntentListenerPayload, source: ProviderIdentity): Promise<void> {
         const appWindow = await this.expectWindow(source);
 
         appWindow.addIntentListener(payload.intent);
     }
 
-    private removeIntentListener(payload: IntentListenerPayload, source: ProviderIdentity): void {
+    private removeIntentListener(payload: RemoveIntentListenerPayload, source: ProviderIdentity): void {
         const appWindow = this.attemptGetWindow(source);
         if (appWindow) {
             appWindow.removeIntentListener(payload.intent);
@@ -181,8 +193,24 @@ export class Main {
         }
     }
 
-    private getDesktopChannels(payload: GetDesktopChannelsPayload, source: ProviderIdentity): ReadonlyArray<DesktopChannelTransport> {
-        return this._channelHandler.getDesktopChannels().map(channel => channel.serialize());
+    private async addContextListener(payload: AddContextListenerPayload, source: ProviderIdentity): Promise<void> {
+        const appWindow = await this.expectWindow(source);
+
+        appWindow.addContextListener();
+    }
+
+    private removeContextListener(payload: RemoveContextListenerPayload, source: ProviderIdentity): void {
+        const appWindow = this.attemptGetWindow(source);
+        if (appWindow) {
+            appWindow.removeContextListener();
+        } else {
+            // If for some odd reason the window is not in the model it's still OK to return successfully,
+            // as the caller's intention was to remove a listener and the listener is certainly not there.
+        }
+    }
+
+    private getSystemChannels(payload: GetSystemChannelsPayload, source: ProviderIdentity): ReadonlyArray<SystemChannelTransport> {
+        return this._channelHandler.getSystemChannels().map(channel => channel.serialize());
     }
 
     private getChannelById(payload: GetChannelByIdPayload, source: ProviderIdentity): ChannelTransport {
@@ -194,6 +222,12 @@ export class Main {
         const appWindow = await this.expectWindow(identity);
 
         return appWindow.channel.serialize();
+    }
+
+    private async getOrCreateAppChannel(payload: GetOrCreateAppChannelPayload, source: ProviderIdentity): Promise<AppChannelTransport> {
+        const name = parseAppChannelName(payload.name);
+
+        return this._channelHandler.getAppChannelByName(name).serialize();
     }
 
     private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): ReadonlyArray<Identity> {

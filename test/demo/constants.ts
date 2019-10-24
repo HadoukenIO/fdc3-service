@@ -9,25 +9,25 @@ export const testManagerIdentity: TestAppData = {uuid: 'test-app', name: 'test-a
 export const testAppInDirectory1: DirectoryTestAppData = {
     uuid: 'test-app-1',
     name: 'test-app-1',
-    appId: '100'
+    appId: 'test-app-1'
 };
 
 export const testAppInDirectory2: DirectoryTestAppData = {
     uuid: 'test-app-2',
     name: 'test-app-2',
-    appId: '200'
+    appId: 'unmatchingAppId'
 };
 
 export const testAppInDirectory3: DirectoryTestAppData = {
     uuid: 'test-app-3',
     name: 'test-app-3',
-    appId: '300'
+    appId: 'test-app-3'
 };
 
 export const testAppInDirectory4: DirectoryTestAppData = {
     uuid: 'test-app-4',
     name: 'test-app-4',
-    appId: '400'
+    appId: 'test-app-4'
 };
 
 /**
@@ -36,7 +36,7 @@ export const testAppInDirectory4: DirectoryTestAppData = {
 export const testAppWithPreregisteredListeners1: DirectoryTestAppData = {
     uuid: 'test-app-preregistered-1',
     name: 'test-app-preregistered-1',
-    appId: '500'
+    appId: 'test-app-preregistered-1'
 };
 
 /**
@@ -45,7 +45,16 @@ export const testAppWithPreregisteredListeners1: DirectoryTestAppData = {
 export const testAppWithPreregisteredListeners2: DirectoryTestAppData = {
     uuid: 'test-app-preregistered-2',
     name: 'test-app-preregistered-2',
-    appId: '600'
+    appId: 'test-app-preregistered-2'
+};
+
+/**
+ * Directory app that doesn't import the FDC3 library
+ */
+export const testAppNotFdc3: DirectoryTestAppData = {
+    uuid: 'test-app-not-fdc3',
+    name: 'test-app-not-fdc3',
+    appId: '1000'
 };
 
 /**
@@ -67,10 +76,10 @@ export const testAppNotInDirectory2: NonDirectoryTestAppData = {
 };
 
 /**
- * App that doesn't import the FDC3 library
+ * App not registered in directory that doesn't import the FDC3 library
  */
-export const testAppNotFdc3: NonDirectoryTestAppData = {
-    uuid: 'test-app-not-fdc3',
-    name: 'test-app-not-fdc3',
-    manifestUrl: 'http://localhost:3923/test/configs/test-app-not-fdc3.json'
+export const testAppNotInDirectoryNotFdc3: NonDirectoryTestAppData = {
+    uuid: 'test-app-not-in-directory-not-fdc3',
+    name: 'test-app-not-in-directory-not-fdc3',
+    manifestUrl: 'http://localhost:3923/test/configs/test-app-not-in-directory-not-fdc3.json'
 };

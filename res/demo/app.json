@@ -12,11 +12,10 @@
     },
     "services": [
         {
-            "name": "fdc3",
-            "manifestUrl": "http://localhost:3923/provider/app.json"
+            "name": "fdc3"
         }
     ],
     "runtime": {
-        "version": "10.66.41.18"
+        "version": "13.76.44.21"
     }
 }

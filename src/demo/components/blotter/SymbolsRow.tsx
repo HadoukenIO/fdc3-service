@@ -80,10 +80,10 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
 
     const getContext = () => {
         return {
-            type: 'fdc3.security',
+            type: 'fdc3.instrument',
             name: item.name,
             id: {
-                default: item.name
+                ticker: item.ticker
             }
         };
     };
@@ -104,7 +104,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
 
     return (
         <tr className={'symbols-row' + (selected ? ' w3-theme-l2' : '')} onClick={handleClick}>
-            <td>{item.name}</td>
+            <td><span title={item.ticker}>{item.name}</span></td>
             <td>##.##</td>
             <td>##.##</td>
             <td>##.##</td>

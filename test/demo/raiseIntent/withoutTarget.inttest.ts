@@ -22,7 +22,7 @@ const testAppWithUniqueIntent = testAppInDirectory4;
  */
 const uniqueIntent: Intent = {
     type: 'test.IntentOnlyOnApp4',
-    context: {type: 'dummyContext'}
+    context: {type: 'test.IntentOnlyOnApp4Context'}
 };
 
 /**
@@ -30,7 +30,7 @@ const uniqueIntent: Intent = {
  */
 const intentInManyApps: Intent = {
     type: 'DialCall',
-    context: {type: 'dial-call-context'}
+    context: {type: 'fdc3.contact'}
 };
 
 /**

@@ -1,54 +1,37 @@
 import {WindowEvent} from 'openfin/_v2/api/events/base';
 import {injectable} from 'inversify';
-import {Identity, Window} from 'openfin/_v2/main';
+import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {Application, ChannelId, FDC3ChannelEventType, FDC3EventType} from '../../client/main';
+import {Application} from '../../client/main';
 import {FDC3Error, OpenError} from '../../client/errors';
 import {withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
-import {IntentType} from '../intents';
 import {parseIdentity} from '../../client/validation';
-import {DeferredPromise} from '../common/DeferredPromise';
+import {Injector} from '../common/Injector';
+import {getId} from '../utils/getId';
 
-import {Environment} from './Environment';
+import {Environment, EntityType} from './Environment';
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
-import {getId} from './Model';
+import {FinAppWindow} from './FinAppWindow';
 
-interface SeenWindow {
+interface CreatedWindow {
     creationTime: number | undefined;
     index: number;
 }
 
-type IntentMap = Set<string>;
-
-type ContextMap = Set<string>;
-
-type ChannelEventMap = Map<string, Set<FDC3EventType>>;
+type CreatedWindowMap = Map<string, CreatedWindow>;
 
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
     /**
-     * Indicates that a window has been seen by the service.
-     *
-     * Unlike the `windowCreated` signal, this will be fired synchronously from the listener for the runtime window-created event,
-     * but does not provide all information provided by the `windowCreated` signal. For a given window, this will always be fired
-     * before the `windowCreated` signal.
+     * Indicates that a window has been created by the service.
      *
      * Arguments: (identity: Identity)
      */
-    public readonly windowSeen: Signal<[Identity]> = new Signal();
-
-    /**
-     * Indicates that a new window has been created.
-     *
-     * When the service first starts, this signal will also be fired for any pre-existing windows.
-     *
-     * Arguments: (identity: Identity, manifestUrl: string)
-     */
-    public readonly windowCreated: Signal<[Identity, string]> = new Signal();
+    public readonly windowCreated: Signal<[Identity]> = new Signal();
 
     /**
      * Indicates that a window has been closed.
@@ -58,7 +41,11 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public readonly windowClosed: Signal<[Identity]> = new Signal();
 
     private _windowsCreated: number = 0;
-    private readonly _seenWindows: {[id: string]: SeenWindow} = {};
+    private readonly _createdWindows: CreatedWindowMap = new Map<string, CreatedWindow>();
+
+    public async isRunning(uuid: string): Promise<boolean> {
+        return fin.Application.wrapSync({uuid}).isRunning();
+    }
 
     public async createApplication(appInfo: Application, channel: ContextChannel): Promise<void> {
         const [didTimeout] = await withTimeout(
@@ -76,7 +63,10 @@ export class FinEnvironment extends AsyncInit implements Environment {
         identity = parseIdentity(identity);
         const id = getId(identity);
 
-        const {creationTime, index} = this._seenWindows[id];
+        // If `identity` is an adapter connection, there will not be any createdWindow entry for this identity
+        // We will instead take the time at which the identity was wrapped as this "window's" creation time
+        const createdWindow = this._createdWindows.get(id) || {creationTime: Date.now(), index: this._windowsCreated++};
+        const {creationTime, index} = createdWindow;
 
         return new FinAppWindow(identity, appInfo, channel, creationTime, index);
     }
@@ -116,48 +106,55 @@ export class FinEnvironment extends AsyncInit implements Environment {
         }
     }
 
-    public isWindowSeen(identity: Identity): boolean {
-        return !!this._seenWindows[getId(identity)];
+    public async getEntityType(identity: Identity): Promise<EntityType> {
+        const entityInfo = await fin.System.getEntityInfo(identity.uuid, identity.name!);
+
+        return entityInfo.entityType as EntityType;
+    }
+
+    public isWindowCreated(identity: Identity): boolean {
+        return this._createdWindows.has(getId(identity));
     }
 
     protected async init(): Promise<void> {
-        fin.System.addListener('window-created', (event: WindowEvent<'system', 'window-created'>) => {
-            const identity = {uuid: event.uuid, name: event.name};
+        // Register windows that were running before launching the FDC3 service
+        const windowInfo = await fin.System.getAllWindows();
 
+        fin.System.addListener('window-created', async (event: WindowEvent<'system', 'window-created'>) => {
+            await Injector.initialized;
+            const identity = {uuid: event.uuid, name: event.name};
             this.registerWindow(identity, Date.now());
         });
-        fin.System.addListener('window-closed', (event: WindowEvent<'system', 'window-closed'>) => {
+        fin.System.addListener('window-closed', async (event: WindowEvent<'system', 'window-closed'>) => {
+            await Injector.initialized;
             const identity = {uuid: event.uuid, name: event.name};
 
-            delete this._seenWindows[getId(identity)];
+            this._createdWindows.delete(getId(identity));
 
             this.windowClosed.emit(identity);
         });
 
-        // Register windows that were running before launching the FDC3 service
-        const windowInfo = await fin.System.getAllWindows();
+        // No await here otherwise the injector will never properly initialize - The injector awaits this init before completion!
+        Injector.initialized.then(async () => {
+            windowInfo.forEach(info => {
+                const {uuid, mainWindow, childWindows} = info;
 
-        windowInfo.forEach(info => {
-            const {uuid, mainWindow, childWindows} = info;
-
-            this.registerWindow({uuid, name: mainWindow.name}, undefined);
-            childWindows.forEach(child => this.registerWindow({uuid, name: child.name}, undefined));
+                this.registerWindow({uuid, name: mainWindow.name}, undefined);
+                childWindows.forEach(child => this.registerWindow({uuid, name: child.name}, undefined));
+            });
         });
     }
 
     private async registerWindow(identity: Identity, creationTime: number | undefined): Promise<void> {
-        const seenWindow = {
+        const createdWindow = {
             creationTime,
             index: this._windowsCreated
         };
 
-        this._seenWindows[getId(identity)] = seenWindow;
+        this._createdWindows.set(getId(identity), createdWindow);
         this._windowsCreated++;
 
-        this.windowSeen.emit(identity);
-
-        const info = await fin.Application.wrapSync(identity).getInfo();
-        this.windowCreated.emit(identity, info.manifestUrl);
+        this.windowCreated.emit(identity);
     }
 
     private async isExternalWindow(identity: Identity): Promise<boolean> {
@@ -172,148 +169,5 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
             return entityInfo.entityType === externalWindowType;
         }
-    }
-}
-
-class FinAppWindow implements AppWindow {
-    public channel: ContextChannel;
-
-    private readonly _id: string;
-    private readonly _appInfo: Application;
-    private readonly _window: Window;
-    private readonly _appWindowNumber: number;
-
-    private readonly _creationTime: number | undefined;
-
-    private readonly _intentListeners: IntentMap;
-    private readonly _channelContextListeners: ContextMap;
-    private readonly _channelEventListeners: ChannelEventMap;
-
-    private readonly _onIntentListenerAdded: Signal<[IntentType]> = new Signal();
-
-    constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined, appWindowNumber: number) {
-        this._id = getId(identity);
-        this._window = fin.Window.wrapSync(identity);
-        this._appInfo = appInfo;
-        this._appWindowNumber = appWindowNumber;
-
-        this._creationTime = creationTime;
-
-        this._intentListeners = new Set();
-        this._channelContextListeners = new Set();
-        this._channelEventListeners = new Map();
-
-        this.channel = channel;
-    }
-
-    public get id(): string {
-        return this._id;
-    }
-
-    public get identity(): Readonly<Identity> {
-        return this._window.identity;
-    }
-
-    public get appInfo(): Readonly<Application> {
-        return this._appInfo;
-    }
-
-    public get appWindowNumber(): number {
-        return this._appWindowNumber;
-    }
-
-    public get channelContextListeners(): ReadonlyArray<ChannelId> {
-        return Object.keys(this._channelContextListeners);
-    }
-
-    public get intentListeners(): ReadonlyArray<string> {
-        return Object.keys(this._intentListeners);
-    }
-
-    public hasIntentListener(intentName: string): boolean {
-        return this._intentListeners.has(intentName);
-    }
-
-    public addIntentListener(intentName: string): void {
-        this._intentListeners.add(intentName);
-        this._onIntentListenerAdded.emit(intentName);
-    }
-
-    public removeIntentListener(intentName: string): void {
-        this._intentListeners.delete(intentName);
-    }
-
-    public hasChannelContextListener(channel: ContextChannel): boolean {
-        return this._channelContextListeners.has(channel.id);
-    }
-
-    public addChannelContextListener(channel: ContextChannel): void {
-        this._channelContextListeners.add(channel.id);
-    }
-
-    public removeChannelContextListener(channel: ContextChannel): void {
-        this._channelContextListeners.delete(channel.id);
-    }
-
-    public hasChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): boolean {
-        return this._channelEventListeners.has(channel.id) && (this._channelEventListeners.get(channel.id)!.has(eventType));
-    }
-
-    public addChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void {
-        if (!this._channelEventListeners.has(channel.id)) {
-            this._channelEventListeners.set(channel.id, new Set());
-        }
-
-        this._channelEventListeners.get(channel.id)!.add(eventType);
-    }
-
-    public removeChannelEventListener(channel: ContextChannel, eventType: FDC3ChannelEventType): void {
-        if (this._channelEventListeners.has(channel.id)) {
-            const events = this._channelEventListeners.get(channel.id)!;
-            events.delete(eventType);
-        }
-    }
-
-    public bringToFront(): Promise<void> {
-        return this._window.bringToFront();
-    }
-
-    public focus(): Promise<void> {
-        return this._window.focus();
-    }
-
-    public async isReadyToReceiveIntent(intent: IntentType): Promise<boolean> {
-        if (this.hasIntentListener(intent)) {
-            // App has already registered the intent listener
-            return true;
-        }
-
-        const age = this._creationTime === undefined ? undefined : Date.now() - this._creationTime;
-
-        if (age === undefined || age >= Timeouts.ADD_INTENT_LISTENER) {
-            // App has been running for a while
-            return false;
-        } else {
-            // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
-            const deferredPromise = new DeferredPromise();
-
-            const slot = this._onIntentListenerAdded.add(intentAdded => {
-                if (intentAdded === intent) {
-                    deferredPromise.resolve();
-                }
-            });
-
-            const [didTimeout] = await withTimeout(Timeouts.ADD_INTENT_LISTENER - age, deferredPromise.promise);
-
-            slot.remove();
-
-            return !didTimeout;
-        }
-    }
-
-    public removeAllListeners(): void {
-        this._channelContextListeners.clear();
-        this._channelEventListeners.clear();
-        this._intentListeners.clear();
     }
 }

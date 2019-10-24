@@ -22,7 +22,7 @@ export function withTimeout<T>(timeoutMs: number, promise: Promise<T>): Promise<
  */
 export function withStrictTimeout<T>(timeoutMs: number, promise: Promise<T>, rejectMessage: string): Promise<T> {
     const timeout = new Promise<T>((res, rej) => setTimeout(() => rej(new Error(rejectMessage)), timeoutMs));
-    return Promise.race([timeout, promise]);
+    return allowReject(Promise.race([timeout, promise]));
 }
 
 /**
@@ -30,13 +30,14 @@ export function withStrictTimeout<T>(timeoutMs: number, promise: Promise<T>, rej
  *
  * @param signal When this signal is fired, the predicate is revaluated
  * @param predicate The predicate to evaluate
+ * @param guard A promise. If this rejects, give up listening to the signal and reject
  */
-export function untilTrue<A extends any[]>(signal: Signal<A>, predicate: () => boolean): Promise<void> {
+export function untilTrue<A extends any[]>(signal: Signal<A>, predicate: () => boolean, guard?: Promise<void>): Promise<void> {
     if (predicate()) {
         return Promise.resolve();
     }
 
-    return untilSignal(signal, predicate);
+    return untilSignal(signal, predicate, guard);
 }
 
 /**
@@ -45,8 +46,9 @@ export function untilTrue<A extends any[]>(signal: Signal<A>, predicate: () => b
  *
  * @param signal The signal to listen to
  * @param predicate The predicate to evaluate against arguments received from the signal
+ * @param guard A promise. If this rejects, give up listening to the signal and reject
  */
-export function untilSignal<A extends any[]>(signal: Signal<A>, predicate: (...args: A) => boolean): Promise<void> {
+export function untilSignal<A extends any[]>(signal: Signal<A>, predicate: (...args: A) => boolean, guard?: Promise<void>): Promise<void> {
     const promise = new DeferredPromise();
     const slot = signal.add((...args: A) => {
         if (predicate(...args)) {
@@ -55,7 +57,14 @@ export function untilSignal<A extends any[]>(signal: Signal<A>, predicate: (...a
         }
     });
 
-    return promise.promise;
+    if (guard) {
+        guard.catch((e) => {
+            slot.remove();
+            promise.reject(e);
+        });
+    }
+
+    return allowReject(promise.promise);
 }
 
 /**
@@ -68,4 +77,24 @@ export function untilSignal<A extends any[]>(signal: Signal<A>, predicate: (...a
 export function allowReject<T>(promise: Promise<T>): Promise<T> {
     promise.catch(() => {});
     return promise;
+}
+
+export async function asyncFilter<T>(arr: T[], callback: (x: T) => Promise<boolean>): Promise<T[]> {
+    const result: T[] = [];
+
+    for (let i = 0; i < arr.length; i++) {
+        if (await callback(arr[i])) {
+            result.push(arr[i]);
+        }
+    }
+
+    return result;
+}
+
+export async function asyncMap<T, U>(arr: T[], callback: (x: T, i: number, r: T[]) => Promise<U>): Promise<U[]>;
+export async function asyncMap<T, U>(arr: T[], callback: (x: T, i: number) => Promise<U>): Promise<U[]>;
+export async function asyncMap<T, U>(arr: T[], callback: (x: T) => Promise<U>): Promise<U[]>;
+export async function asyncMap<T, U>(arr: T[], callback: () => Promise<U>): Promise<U[]>;
+export async function asyncMap<T, U>(arr: T[], callback: (...args: any[]) => any): Promise<U[]> {
+    return Promise.all<U>(arr.map(callback));
 }

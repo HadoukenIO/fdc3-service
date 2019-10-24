@@ -1,8 +1,7 @@
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 import {_Window} from 'openfin/_v2/api/window/window';
 import {Point} from 'openfin/_v2/api/system/point';
-import {Transition} from 'openfin/_v2/api/window/transition';
-import Bounds from 'openfin/_v2/api/window/bounds';
+import {Transition, Bounds} from 'openfin/_v2/shapes';
 
 const defaultWindowOptions: WindowOption = {
     url: 'about:blank',
@@ -260,7 +259,7 @@ class ContextMenu {
 
 let contextMenu: ContextMenu;
 
-window.onunload = async (event) => {
+window.onunload = async (event: Event) => {
     await contextMenu.destroy();
 };
 

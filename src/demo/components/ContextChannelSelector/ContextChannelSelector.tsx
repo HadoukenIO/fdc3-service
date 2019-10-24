@@ -1,7 +1,8 @@
 import * as React from 'react';
-import {Identity} from 'openfin/_v2/main';
 
-import {Channel, defaultChannel, getCurrentChannel, getDesktopChannels, DesktopChannel} from '../../../client/contextChannels';
+import {Channel, defaultChannel, getCurrentChannel, getSystemChannels, ChannelChangedEvent} from '../../../client/contextChannels';
+import {addEventListener, removeEventListener} from '../../../client/main';
+import {getId} from '../../../provider/utils/getId';
 
 import {ContextChannelView} from './ChannelMemberView';
 
@@ -26,10 +27,21 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
         getCurrentChannel().then(channel => {
             setCurrentChannel(channel);
         });
-        getDesktopChannels().then(channels => {
+        getSystemChannels().then(channels => {
             setChannels([defaultChannel, ...channels]);
         });
+        addEventListener('channel-changed', channelChanged);
+
+        return () => {
+            removeEventListener('channel-changed', channelChanged);
+        };
     }, []);
+
+    const channelChanged = (event: ChannelChangedEvent) => {
+        if (getId(event.identity) === getId(fin.Window.me) && event.channel !== currentChannel) {
+            setCurrentChannel(event.channel!);
+        }
+    };
 
     const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const {value: id} = event.currentTarget;
@@ -59,7 +71,7 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
                                     key={channel.id + index}
                                     value={channel.id}
                                 >
-                                    {(channel as DesktopChannel).name || 'Default'}
+                                    {channel.type === 'system' ? channel.visualIdentity.name : 'Default'}
                                 </option>
                             );
                         })

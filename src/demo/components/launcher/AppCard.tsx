@@ -1,13 +1,12 @@
 import * as React from 'react';
 
 import './AppCard.css';
-
-import {Application} from '../../../client/directory';
+import {AppLaunchData} from '../../apps/LauncherApp';
 
 interface AppCardProps {
-    app: Application;
+    app: AppLaunchData;
     isDirectoryApp: boolean;
-    handleClick?: (app: Application) => void;
+    handleClick?: (app: AppLaunchData) => void;
 }
 
 export function AppCard(props: AppCardProps): React.ReactElement {
@@ -18,13 +17,24 @@ export function AppCard(props: AppCardProps): React.ReactElement {
             handler(app);
         }
     };
+    const viewData = (app.type === 'manifest') ? {
+        title: app.data.title || app.data.appId,
+        description: app.data.description || '',
+        icon: (app.data.icons && app.data.icons[0] && app.data.icons[0].icon) || '',
+        className: isDirectoryApp ? 'w3-blue-gray' : 'w3-light-blue'
+    } : {
+        title: app.data.name || app.data.uuid,
+        description: app.data.description || '',
+        icon: app.data.icon || '',
+        className: 'w3-light-green'
+    };
 
     return (
         <div className="app-card w3-card w3-hover-shadow" onClick={handleClick}>
-            {(app.icons && app.icons.length > 0) && <img className={isDirectoryApp ? 'w3-blue-gray' : 'w3-light-blue'} src={app.icons[0].icon} />}
+            <img className={viewData.className} src={viewData.icon} />
             <div>
-                <h6><b>{app.title}</b></h6>
-                <p className="w3-small w3-text-grey">{app.description}</p>
+                <h6><b>{viewData.title}</b></h6>
+                <p className="w3-small w3-text-grey">{viewData.description}</p>
             </div>
         </div>
     );

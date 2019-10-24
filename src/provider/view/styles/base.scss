@@ -1,0 +1,45 @@
+:root {
+    /*
+        The standard left padding which everything is pushed over by.
+    */
+    --left-padding: 33px;
+}
+
+@font-face {
+    font-family: "Nunito";
+    src: url("../../../../res/provider/ui/fonts/nunito.woff2") format("woff2")
+}
+
+* {
+    padding: 0px;
+    margin: 0px;
+    -webkit-user-select: none;
+}
+
+body {
+    background: #000000;
+    overflow: hidden;
+    font-family: Nunito;
+}
+
+h1 {
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+li {
+    list-style: none;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #303038;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #45454c;
+}

@@ -2,17 +2,13 @@
  * @module Index
  */
 
-import {EventEmitter} from 'events';
-
-import {Identity} from 'openfin/_v2/main';
-
-import {tryServiceDispatch, getServicePromise} from './connection';
+import {tryServiceDispatch, getServicePromise, getEventRouter, eventEmitter} from './connection';
 import {Context} from './context';
 import {Application, AppName} from './directory';
-import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, EventTransport} from './internal';
-import {ChannelChangedEvent, getChannelObject, FDC3ChannelEvent, FDC3ChannelEventType} from './contextChannels';
+import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events} from './internal';
+import {ChannelChangedEvent, getChannelObject} from './contextChannels';
 import {parseContext, validateEnvironment} from './validation';
-import {getEventRouter} from './EventRouter';
+import {Transport, Targeted} from './EventRouter';
 
 /**
  * This file was copied from the FDC3 v1 specification.
@@ -120,28 +116,6 @@ export interface IntentListener {
      */
     unsubscribe: () => void;
 }
-
-/**
- * @hidden
- */
-export type FDC3Event = FDC3MainEvent | FDC3ChannelEvent;
-/**
- * @hidden
- */
-export type FDC3EventType = FDC3MainEventType | FDC3ChannelEventType;
-/**
- * @hidden
- */
-export type FDC3MainEvent = ChannelChangedEvent;
-/**
- * @hidden
- */
-export type FDC3MainEventType = FDC3MainEvent['type'];
-
-/**
- * The event emitter to emit events received from the service. All addEventListeners will tap into this.
- */
-const eventEmitter = new EventEmitter();
 
 const intentListeners: IntentListener[] = [];
 const contextListeners: ContextListener[] = [];
@@ -262,8 +236,8 @@ export async function findIntentsByContext(context: Context): Promise<AppIntent[
  * @throws `TypeError` if `context` is not a valid [[Context]]
  * @param context The context to broadcast.
  */
-export function broadcast(context: Context): void {
-    tryServiceDispatch(APIFromClientTopic.BROADCAST, {context: parseContext(context)});
+export async function broadcast(context: Context): Promise<void> {
+    await tryServiceDispatch(APIFromClientTopic.BROADCAST, {context: parseContext(context)});
 }
 
 /**
@@ -336,14 +310,22 @@ export function addContextListener(handler: (context: Context) => void): Context
 
             if (index >= 0) {
                 contextListeners.splice(index, 1);
+
+                if (contextListeners.length === 0) {
+                    tryServiceDispatch(APIFromClientTopic.REMOVE_CONTEXT_LISTENER, {});
+                }
             }
 
             return index >= 0;
         }
     };
 
-    // TODO: Add a handshake with the provider, similar to for intents, so provider is aware we are listening for contexts here (SERVICE-553)
+    const hasContextListenerBefore = contextListeners.length > 0;
     contextListeners.push(listener);
+
+    if (!hasContextListenerBefore) {
+        tryServiceDispatch(APIFromClientTopic.ADD_CONTEXT_LISTENER, {});
+    }
     return listener;
 }
 
@@ -358,20 +340,21 @@ export function addEventListener(eventType: 'channel-changed', handler: (event: 
  * channel change event.
  * @param eventType The event type.
  * @param handler The handler to call when the event is fired.
- * @param identity The OF window identity. Currently unused.
  */
-export function addEventListener(eventType: FDC3MainEventType, handler: (event: FDC3MainEvent) => void, identity?: Identity): void {
+export function addEventListener(eventType: MainEvents['type'], handler: (event: MainEvents) => void): void {
     validateEnvironment();
 
     eventEmitter.addListener(eventType, handler);
 }
+
+export function removeEventListener(eventType: 'channel-changed', handler: (event: ChannelChangedEvent) => void): void;
 
 /**
  * Unsubscribe from a particular event type.
  * @param eventType The type of the event to remove.
  * @param handler The handler you had previously passed into [[addEventListener]].
  */
-export function removeEventListener(eventType: FDC3MainEventType, handler: (event: FDC3MainEvent) => void): void {
+export function removeEventListener(eventType: MainEvents['type'], handler: (event: MainEvents) => void): void {
     validateEnvironment();
 
     eventEmitter.removeListener(eventType, handler);
@@ -385,11 +368,7 @@ function hasIntentListener(intent: string): boolean {
     return intentListeners.some(intentListener => intentListener.intent === intent);
 }
 
-/**
- * @hidden
- */
-
-function deserializeChannelChangedEvent(eventTransport: EventTransport<ChannelChangedEvent>): ChannelChangedEvent {
+function deserializeChannelChangedEvent(eventTransport: Transport<ChannelChangedEvent>): ChannelChangedEvent {
     const type = eventTransport.type;
     const identity = eventTransport.identity;
     const channel = eventTransport.channel ? getChannelObject(eventTransport.channel) : null;
@@ -400,7 +379,7 @@ function deserializeChannelChangedEvent(eventTransport: EventTransport<ChannelCh
 
 if (typeof fin !== 'undefined') {
     getServicePromise().then(channelClient => {
-        channelClient.register(APIToClientTopic.INTENT, (payload: RaiseIntentPayload) => {
+        channelClient.register(APIToClientTopic.RECEIVE_INTENT, (payload: RaiseIntentPayload) => {
             intentListeners.forEach((listener: IntentListener) => {
                 if (payload.intent === listener.intent) {
                     listener.handler(payload.context);
@@ -408,16 +387,15 @@ if (typeof fin !== 'undefined') {
             });
         });
 
-        // TODO: When we're ready to make a breaking change, change `payload: Context` to `payload: ContextPayload` (SERVICE-533)
-        channelClient.register(APIToClientTopic.CONTEXT, (payload: Context) => {
+        channelClient.register(APIToClientTopic.RECEIVE_CONTEXT, (payload: ReceiveContextPayload) => {
             contextListeners.forEach((listener: ContextListener) => {
-                listener.handler(payload);
+                listener.handler(payload.context);
             });
         });
 
         const eventHandler = getEventRouter();
 
-        channelClient.register('event', (eventTransport: EventTransport<FDC3Event>) => {
+        channelClient.register('event', (eventTransport: Targeted<Transport<Events>>) => {
             eventHandler.dispatchEvent(eventTransport);
         });
 

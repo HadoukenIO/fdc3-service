@@ -24,10 +24,10 @@ import {NewsApp} from './apps/NewsApp';
 function App(): React.ReactElement {
     // Note that we require demo app UUIDs to follow a 'fdc3-$NAME[-$COLOUR][-nodir]' convention
     const {uuid} = fin.Window.me;
-    let appToken = uuid.replace('fdc3-', '').replace('-nodir', '');
+    let appToken = uuid.replace('fdc3-', '').replace('-nodir', '').replace('-programmatic', '');
 
     let color = 'blue-grey';
-    const regexResult = /-(red|green|blue|grey|pink|teal)/.exec(uuid);
+    const regexResult = /-(red|green|blue|grey|pink|teal|orange|cyan|purple)/.exec(uuid);
     if (regexResult && regexResult.length > 1) {
         color = regexResult[1];
         appToken = appToken.replace(`-${color}`, '');
