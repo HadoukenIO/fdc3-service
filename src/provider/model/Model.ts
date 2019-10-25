@@ -208,7 +208,7 @@ export class Model {
             const uuid = AppDirectory.getUuidFromApp(app);
             const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
 
-            if (liveApp && liveApp.mature) {
+            if (liveApp) {
                 return false;
             }
 
@@ -249,7 +249,7 @@ export class Model {
             const uuid = AppDirectory.getUuidFromApp(app);
             const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
 
-            return !(liveApp && liveApp.mature);
+            return !(liveApp);
         });
 
         directoryApps.forEach(app => {
