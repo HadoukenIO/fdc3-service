@@ -79,32 +79,48 @@ export function allowReject<T>(promise: Promise<T>): Promise<T> {
     return promise;
 }
 
-export async function raceTilPredicate(items: any[], predicate: (v: any) => boolean): Promise<any | null> {
+export async function raceUntilTrue<T>(items: T[], predicate: (v?: T) => boolean): Promise<T | null> {
     let promisesCompleted = 0;
-    const errors: Error[] = [];
-    const valueFound = new DeferredPromise<any | null>();
+    let errors = 0;
+    const valueFound = new DeferredPromise<T | null>();
 
-    const resolveCheck = async (value?: any) => {
+    const handleResolve = async (value?: T): Promise<T | void> => {
+        if (predicate(value)) {
+            valueFound.resolve(value);
+        }
+    };
+
+    const handleReject = (): void => {
+        errors++;
+    };
+
+    const completeCheck = async (value: T | void): Promise<T | null> => {
         promisesCompleted++;
-        if (value instanceof Error) {
-            errors.push(value);
-        } else if (predicate(value)) {
-            return valueFound.resolve(value);
+        if (value) {
+            return value;
         }
         if (items.length === promisesCompleted) {
-            if (items.length === errors.length) {
-                throw new Error('Exceptions in all promises');
+            if (items.length === errors) {
+                throw new Error('All promises rejected');
             }
             valueFound.resolve(null);
         }
         await valueFound.promise;
+        return null;
     };
+
     // Wrap `item` incase it is not a Promise
-    const racePromises = items.map(item => Promise.resolve(item).then(resolveCheck, resolveCheck));
+    const racePromises: Promise<T | void | null>[] = items.map(async item => {
+        return Promise.resolve(item)
+            .then(handleResolve, handleReject)
+            .then(completeCheck);
+    });
     racePromises.push(valueFound.promise);
 
-    return Promise.race(racePromises);
+    await Promise.race(racePromises);
+    return valueFound.promise;
 }
+
 export async function asyncFilter<T>(arr: T[], callback: (x: T) => Promise<boolean>): Promise<T[]> {
     const result: T[] = [];
 

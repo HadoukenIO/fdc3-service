@@ -2,7 +2,7 @@
  * @module Index
  */
 
-import {raceTilPredicate} from '../provider/utils/async';
+import {raceUntilTrue} from '../provider/utils/async';
 
 import {tryServiceDispatch, getServicePromise, getEventRouter, eventEmitter} from './connection';
 import {Context} from './context';
@@ -307,7 +307,7 @@ function returnValuePredicate(value?: any): boolean {
 if (typeof fin !== 'undefined') {
     getServicePromise().then(channelClient => {
         channelClient.register(APIToClientTopic.RECEIVE_INTENT, async (payload: RaiseIntentPayload) => {
-            const result = await raceTilPredicate(
+            const result = await raceUntilTrue(
                 intentListeners
                     .filter(listener => listener.intent === payload.intent)
                     .map(async listener => listener.handler(payload.context)),

@@ -9,7 +9,7 @@ import {AppDirectory} from '../model/AppDirectory';
 import {AppWindow} from '../model/AppWindow';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
-import {raceTilPredicate, withTimeout} from '../utils/async';
+import {raceUntilTrue, withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
 import {Environment} from '../model/Environment';
 
@@ -129,21 +129,15 @@ export class IntentHandler {
         });
 
         let data: unknown;
+        let didTimeout = false;
         try {
             // Use the first handler return data that matches the predicate
-            const [didTimeout, result] = await withTimeout(Timeouts.INTENT_RESOLUTION, raceTilPredicate(promises, returnValuePredicate));
-            if (didTimeout) {
-                throw new Error('Race timed out');
-            }
-            data = result;
+            [didTimeout, data] = await withTimeout(Timeouts.INTENT_RESOLUTION, raceUntilTrue(promises, returnValuePredicate));
         } catch (error) {
-            if (/Exceptions in all/.test(error.message)) {
-                throw new FDC3Error(ResolveError.IntentHandlerException, `${ResolveErrorMessage[ResolveError.IntentHandlerException]} ${appInfo.name}`);
-            }
-            if (/Race/.test(error.message)) {
-                throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
-            }
-            throw error;
+            throw new FDC3Error(ResolveError.IntentHandlerException, `${ResolveErrorMessage[ResolveError.IntentHandlerException]} ${appInfo.name}`);
+        }
+        if (didTimeout) {
+            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
         }
 
         const resolution: IntentResolution = {
