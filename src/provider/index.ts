@@ -121,7 +121,7 @@ export class Main {
 
         if (payload.context) {
             // TODO: Revisit timeout logic [SERVICE-556]
-            await withTimeout(Timeouts.ADD_CONTEXT_LISTENER, (async () => {
+            await withTimeout(Timeouts.APP_MATURITY, (async () => {
                 const appWindows = await this._model.expectWindowsForApp(appInfo);
 
                 await Promise.all(appWindows.map(window => {

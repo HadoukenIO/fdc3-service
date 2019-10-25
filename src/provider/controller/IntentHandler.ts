@@ -121,7 +121,7 @@ export class IntentHandler {
 
         // TODO: Revisit timeout logic [SERVICE-556]
         let dispatchingCompleted = false;
-        const dispatchResults = await withTimeout(Timeouts.ADD_INTENT_LISTENER, (async () => {
+        const dispatchResults = await withTimeout(Timeouts.APP_MATURITY, (async () => {
             const appWindows = await this._model.expectWindowsForApp(appInfo);
 
             // Wait for windows to add intent listener, then dispatch payload

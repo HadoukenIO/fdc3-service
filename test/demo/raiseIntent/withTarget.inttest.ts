@@ -91,7 +91,7 @@ describe('Intent listeners and raising intents with a target', () => {
                             const raiseIntentPromise = raiseDelayedIntentWithTarget(
                                 validIntent,
                                 testAppInDirectory1,
-                                Timeouts.ADD_INTENT_LISTENER + 2000
+                                Timeouts.APP_MATURITY + 2000
                             );
 
                             await expect(raiseIntentPromise).toThrowFDC3Error(

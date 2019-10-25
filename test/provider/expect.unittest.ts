@@ -17,6 +17,7 @@ import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
 import {PartiallyWritable} from '../types';
 import {Timeouts} from '../../src/provider/constants';
 import {getId} from '../../src/provider/utils/getId';
+import {LiveApp} from '../../src/provider/model/LiveApp';
 
 jest.mock('../../src/provider/model/AppDirectory');
 jest.mock('../../src/provider/APIHandler');
@@ -254,11 +255,11 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
             return testWindow.appType === 'directory' ? mockApplication : null;
         });
 
-        mockEnvironment.wrapApplication.mockImplementationOnce((appInfo: Application, testIdentity: Identity, channel: ContextChannel): AppWindow => {
-            return createMockAppWindow({id: getId(testIdentity), identity: testIdentity, appInfo});
+        mockEnvironment.wrapWindow.mockImplementationOnce((liveApp: LiveApp, testIdentity: Identity, channel: ContextChannel): AppWindow => {
+            return createMockAppWindow({id: getId(testIdentity), identity: testIdentity, appInfo: liveApp.appInfo!});
         });
 
-        mockEnvironment.inferApplication.mockImplementationOnce(async (indentity: Identity): Promise<Application> => {
+        mockEnvironment.inferApplication.mockImplementationOnce(async (identity: Identity): Promise<Application> => {
             return mockApplication;
         });
 
@@ -290,7 +291,10 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
             return false;
         });
 
-        maybeSetTimeout(() => mockEnvironment.windowCreated.emit(identity), testWindow.createdTime);
+        maybeSetTimeout(() => {
+            mockEnvironment.applicationCreated.emit(identity, new LiveApp(Promise.resolve()));
+            mockEnvironment.windowCreated.emit(identity);
+        }, testWindow.createdTime);
         maybeSetTimeout(() => mockApiHandler.onConnection.emit(identity), testWindow.connectionTime);
         maybeSetTimeout(() => mockEnvironment.windowClosed.emit(identity), testWindow.closeTime);
         maybeSetTimeout(() => appDirectoryResultPromise.resolve(), appDirectoryResultTime);
