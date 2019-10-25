@@ -126,14 +126,8 @@ export class Model {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
         const windows = this._liveAppsByUuid[uuid] ? this._liveAppsByUuid[uuid].windows : [];
 
-        const result: AppWindow[] = [];
-
         // Find any windows that immediately satisfy our predicate
-        for (const window of windows) {
-            if (windowReadyNow(window)) {
-                result.push(window);
-            }
-        }
+        const result: AppWindow[] = windows.filter(windowReadyNow);
 
         if (result.length > 0) {
             // If we have any windows that immediately satisfy our predicate, return those
