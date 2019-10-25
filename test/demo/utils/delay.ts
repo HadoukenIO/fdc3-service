@@ -10,5 +10,9 @@ export async function delay(duration: number) {
 
 export enum Duration {
     PAGE_RELOAD = 500,
-    PAGE_NAVIGATE = 500
+    PAGE_NAVIGATE = 500,
+    // Certain events involve a handshake between client and service, but the API call is unawaited on the client, so we use this delay to
+    // ensure the handshake has occured
+    LISTENER_HANDSHAKE = 250,
+    WINDOW_REGISTRATION = 1000
 }
