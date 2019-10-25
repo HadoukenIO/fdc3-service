@@ -155,6 +155,56 @@ export class Model {
         return matchingWindows;
     }
 
+    /**
+     * Returns all registered windows for an app satisfying our predicate, waiting for at least one window or until the app is mature
+     */
+    public async expectWindowsForApp2(
+        appInfo: Application,
+        windowReadyNow: (window: AppWindow) => boolean,
+        waitForWindowReady: (window: AppWindow) => Promise<void>
+    ): Promise<AppWindow[]> {
+        const uuid = AppDirectory.getUuidFromApp(appInfo);
+        const windows = this._liveAppsByUuid[uuid] ? this._liveAppsByUuid[uuid].windows : [];
+
+        const result: AppWindow[] = [];
+
+        // Find any windows that immediately satisfy our predicate
+        for (const window of windows) {
+            if (windowReadyNow(window)) {
+                result.push(window);
+            }
+        }
+
+        if (result.length > 0) {
+            // If we have any windows that immediately satisfy our predicate, return those
+            return result;
+        } else {
+            // Otherwise, wait until we have a single window that satisfies our predicate
+            const deferredPromise = new DeferredPromise<AppWindow>();
+
+            // Apply the async predicate to any incoming windows
+            const slot = this._onWindowRegisteredInternal.add((window) => {
+                if (window.appInfo.appId === appInfo.appId) {
+                    waitForWindowReady(window).then(() => deferredPromise.resolve(window), () => {});
+                }
+            });
+
+            // Apply the async predicate to any existing windows
+            for (const window of windows) {
+                waitForWindowReady(window).then(() => deferredPromise.resolve(window), () => {});
+            }
+
+            // Return a window once we have one, or timeout when the application is mature
+            return Promise.race([
+                deferredPromise.promise.then((result) => [result]),
+                this.getOrCreateLiveApp(appInfo).then(liveApp => liveApp.waitForAppMature().then(() => [], () => []))
+            ]).then((result) => {
+                slot.remove();
+                return result;
+            });
+        }
+    }
+
     public async getOrCreateLiveApp(appInfo: Application): Promise<LiveApp> {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
 

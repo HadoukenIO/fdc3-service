@@ -103,32 +103,52 @@ export class Main {
     }
 
     private async open(payload: OpenPayload): Promise<void> {
+        const context = payload.context && parseContext(payload.context);
+
         const appInfo: Application|null = await this._directory.getAppByName(payload.name);
 
         if (!appInfo) {
             throw new FDC3Error(OpenError.AppNotFound, `No app in directory with name: ${payload.name}`);
         }
 
-        // This can throw FDC3Errors if app fails to open or times out
-        await this._model.ensureRunning(appInfo);
+        const promises: Promise<void>[] = [];
 
-        // Bring-to-front all currently open windows in creation order
-        const windowsToFocus = this._model.findWindowsByAppName(appInfo.name).sort((a: AppWindow, b: AppWindow) => a.appWindowNumber - b.appWindowNumber);
-        await Promise.all(windowsToFocus.map(window => window.bringToFront()));
-        if (windowsToFocus.length > 0) {
-            windowsToFocus[windowsToFocus.length - 1].focus();
+        // Start the application if not already running
+        const startedPromise = (await this._model.getOrCreateLiveApp(appInfo)).waitForAppStarted();
+
+        promises.push(startedPromise);
+
+        // If the app has open windows, bring all to front in creation order
+        const windows = this._model.findWindowsByAppName(appInfo.name);
+        if (windows.length > 0) {
+            windows.sort((a, b) => a.appWindowNumber - b.appWindowNumber);
+
+            const bringToFrontPromise = Promise.all(windows.map((window) => window.bringToFront()));
+            const focusPromise = bringToFrontPromise.then(() => windows[windows.length - 1].focus());
+
+            promises.push(focusPromise);
         }
 
-        if (payload.context) {
-            // TODO: Revisit timeout logic [SERVICE-556]
-            await withTimeout(Timeouts.APP_MATURITY, (async () => {
-                const appWindows = await this._model.expectWindowsForApp(appInfo);
+        // If a context has been provided, send to listening windows
+        if (context) {
+            const windowsPromise = this._model.expectWindowsForApp2(
+                appInfo,
+                (window) => window.hasContextListener(),
+                (window) => window.isReadyToReceiveContext().then(result => {
+                    if (!result) {
+                        throw new Error('Timed out waiting for window ready to receive context');
+                    }
+                })
+            );
 
-                await Promise.all(appWindows.map(window => {
-                    return this._contextHandler.send(window, parseContext(payload.context!));
-                }));
-            })());
+            const sendContextPromise = windowsPromise.then((windows) => {
+                return Promise.all(windows.map((window) => this._contextHandler.send(window, context)));
+            }).then(() => {});
+
+            promises.push(sendContextPromise);
         }
+
+        await Promise.all(promises);
     }
 
     /**
