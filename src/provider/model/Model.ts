@@ -98,8 +98,23 @@ export class Model {
     }
 
     public async ensureRunning(appInfo: Application): Promise<void> {
-        if (!await this._environment.isRunning(AppDirectory.getUuidFromApp(appInfo)) && !this._liveAppsByUuid[AppDirectory.getUuidFromApp(appInfo)]) {
-            await this._environment.createApplication(appInfo);
+        const uuid = AppDirectory.getUuidFromApp(appInfo);
+
+        if (this._liveAppsByUuid[uuid]) {
+            await this._liveAppsByUuid[uuid].waitForAppStarted();
+        } else {
+            const deferredPromise = new DeferredPromise<LiveApp>();
+
+            const slot = this._environment.applicationCreated.add((identity: Identity, liveApp: LiveApp) => {
+                if (identity.uuid === uuid) {
+                    slot.remove();
+                    deferredPromise.resolve(liveApp);
+                }
+            });
+
+            this._environment.createApplication(appInfo);
+
+            await deferredPromise.promise.then(app => app.waitForAppStarted());
         }
     }
 
