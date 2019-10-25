@@ -171,5 +171,5 @@ function hasTarget(intent: Intent): intent is IntentWithTarget {
 
 // Check if the intent handler return value is valid defined.
 function returnValuePredicate(value?: any) {
-    return value === false || value === '' || !!value;
+    return (value === 0 || value === false || value === '' || !!value);
 }

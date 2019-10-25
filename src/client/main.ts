@@ -301,7 +301,7 @@ function deserializeChannelChangedEvent(eventTransport: Transport<ChannelChanged
 }
 
 function returnValuePredicate(value?: any): boolean {
-    return (value === false || value === '' || !!value);
+    return (value === 0 || value === false || value === '' || !!value);
 }
 
 if (typeof fin !== 'undefined') {
