@@ -131,7 +131,7 @@ ${JSON.stringify({uuid: testAppNotInDirectoryNotFdc3.uuid, name: testAppNotInDir
     });
 
     test('When a valid identity is provided, the call resolves successfully', async () => {
-        await expect(fdc3Remote.getCurrentChannel(testManagerIdentity, testManagerIdentity)).resolves;
+        await fdc3Remote.getCurrentChannel(testManagerIdentity, testManagerIdentity);
     });
 });
 

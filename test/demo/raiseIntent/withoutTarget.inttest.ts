@@ -115,6 +115,8 @@ describe('Intent listeners and raising intents without a target', () => {
 
                 beforeEach(async () => {
                     raiseIntentPromise = raiseIntent(uniqueIntent);
+                    allowReject(raiseIntentPromise);
+
                     // Wait for app to open after raising intent
                     await waitForAppToBeRunning(testAppWithUniqueIntent);
                 });
