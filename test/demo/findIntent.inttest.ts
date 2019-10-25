@@ -3,6 +3,7 @@ import fetch from 'node-fetch';
 
 import {Application as DirectoryApp} from '../../src/client/directory';
 import {Context, AppIntent} from '../../src/client/main';
+import {Timeouts} from '../../src/provider/constants';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay} from './utils/delay';
@@ -66,24 +67,15 @@ directory applications accept the intent with specifies the given context or no 
         describe('When a directory app is running', () => {
             setupOpenDirectoryAppBookends(testAppInDirectory1);
 
-            describe('But it does not register a listener for an intent it is supposed to handle', () => {
-                test('When calling findIntent with the intent, the app is NOT returned', async () => {
-                    const appsForIntent = getDirectoryAppsForIntent(directory, validIntent);
-                    const expectedAppNames = appsForIntent.filter(app => app !== testAppInDirectory1.name);
+            describe('And it has not registered a listener for an intent it is supposed to handle, but is not mature', () => {
+                test('When calling findIntent with the intent, it is returned', async () => {
+                    const expectedAppNames = getDirectoryAppsForIntent(directory, validIntent);
 
+                    // Resolve the valid intent
                     const appIntent = await findIntent(validIntent);
 
+                    // Compare the two arrays (sorted as order doesn't matter)
                     expect(extractSortedAppNames(appIntent)).toEqual(expectedAppNames);
-                });
-
-                test('When resolving an intent with a context that the app is supposed to handle \
-the list of applications accept the intent does NOT include the app.', async () => {
-                    const context = {
-                        type: 'test.MatchingContext'
-                    };
-                    const receivedAppIntents = await findIntent('test.ContextTestIntent', context);
-
-                    expect(extractSortedAppNames(receivedAppIntents)).toEqual(['test-app-4']);
                 });
             });
 
@@ -101,6 +93,31 @@ the list of applications accept the intent does NOT include the app.', async () 
 
                     // Compare the two arrays (sorted as order doesn't matter)
                     expect(extractSortedAppNames(appIntent)).toEqual(expectedAppNames);
+                });
+            });
+
+            describe('But it matures without registering a listener for an intent it is supposed to handle', () => {
+                beforeEach(async () => {
+                    await delay(Timeouts.APP_MATURITY);
+                });
+
+                test('When calling findIntent with the intent, the app is NOT returned', async () => {
+                    const appsForIntent = getDirectoryAppsForIntent(directory, validIntent);
+                    const expectedAppNames = appsForIntent.filter(app => app !== testAppInDirectory1.name);
+
+                    const appIntent = await findIntent(validIntent);
+
+                    expect(extractSortedAppNames(appIntent)).toEqual(expectedAppNames);
+                });
+
+                test('When resolving an intent with a context that the app is supposed to handle \
+the list of applications accept the intent does NOT include the app.', async () => {
+                    const context = {
+                        type: 'test.MatchingContext'
+                    };
+                    const receivedAppIntents = await findIntent('test.ContextTestIntent', context);
+
+                    expect(extractSortedAppNames(receivedAppIntents)).toEqual(['test-app-4']);
                 });
             });
         });
