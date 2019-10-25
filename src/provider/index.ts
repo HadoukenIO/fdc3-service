@@ -131,7 +131,7 @@ export class Main {
 
         // If a context has been provided, send to listening windows
         if (context) {
-            const windowsPromise = this._model.expectWindowsForApp(
+            const windowsPromise = this._model.expectWindowsForApp2(
                 appInfo,
                 (window) => window.hasContextListener(),
                 (window) => window.isReadyToReceiveContext().then(result => {

@@ -97,6 +97,27 @@ export class Model {
         return this._windowsById[getId(identity)] || null;
     }
 
+    public async ensureRunning(appInfo: Application): Promise<void> {
+        const uuid = AppDirectory.getUuidFromApp(appInfo);
+
+        if (this._liveAppsByUuid[uuid]) {
+            await this._liveAppsByUuid[uuid].waitForAppStarted();
+        } else {
+            const deferredPromise = new DeferredPromise<LiveApp>();
+
+            const slot = this._environment.applicationCreated.add((identity: Identity, liveApp: LiveApp) => {
+                if (identity.uuid === uuid) {
+                    slot.remove();
+                    deferredPromise.resolve(liveApp);
+                }
+            });
+
+            this._environment.createApplication(appInfo);
+
+            await deferredPromise.promise.then(app => app.waitForAppStarted());
+        }
+    }
+
     public async expectWindow(identity: Identity): Promise<AppWindow> {
         const id = getId(identity);
 
@@ -115,10 +136,29 @@ export class Model {
         }
     }
 
+    public async expectWindowsForApp(appInfo: Application): Promise<AppWindow[]> {
+        // TODO: This dangerous method doesn't give proper timeouts. Will likely be changed extensively/removed when we revisit timeouts [SERVICE-556]
+        let matchingWindows = this.findWindowsByAppId(appInfo.appId);
+
+        if (matchingWindows.length === 0) {
+            const signalPromise = new Promise<AppWindow[]>(resolve => {
+                const slot = this._onWindowRegisteredInternal.add(() => {
+                    const matchingWindows = this.findWindowsByAppId(appInfo.appId);
+                    if (matchingWindows.length > 0) {
+                        slot.remove();
+                        resolve(matchingWindows);
+                    }
+                });
+            });
+            matchingWindows = await signalPromise;
+        }
+        return matchingWindows;
+    }
+
     /**
      * Returns all registered windows for an app satisfying our predicate, waiting for at least one window or until the app is mature
      */
-    public async expectWindowsForApp(
+    public async expectWindowsForApp2(
         appInfo: Application,
         windowReadyNow: (window: AppWindow) => boolean,
         waitForWindowReady: (window: AppWindow) => Promise<void>
@@ -218,7 +258,7 @@ export class Model {
             const uuid = AppDirectory.getUuidFromApp(app);
             const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
 
-            if (liveApp && liveApp.mature) {
+            if (liveApp) {
                 return false;
             }
 
