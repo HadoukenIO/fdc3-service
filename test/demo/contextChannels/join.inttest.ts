@@ -95,12 +95,12 @@ describe('When listening for channel-changed and Channel events', () => {
         [
             'an FDC3 app',
             testAppInDirectory2,
-            async () => fdc3Remote.open(testManagerIdentity, testAppInDirectory2.name)
+            () => fdc3Remote.open(testManagerIdentity, testAppInDirectory2.name)
         ],
         [
             'a non-directory app',
             testAppNotInDirectory1,
-            async () => fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl).then(() => {})
+            () => fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl).then(() => {})
         ]
     ];
 
@@ -242,11 +242,11 @@ describe('When joining a non-default channel', () => {
     const joinTestParams: JoinTestParam[] = [
         [
             'system',
-            async () => fdc3Remote.getChannelById(listeningApp, 'orange')
+            () => fdc3Remote.getChannelById(listeningApp, 'orange')
         ],
         [
             'app',
-            async () => fdc3Remote.getOrCreateAppChannel(listeningApp, fakeAppChannelName())
+            () => fdc3Remote.getOrCreateAppChannel(listeningApp, fakeAppChannelName())
         ]
     ];
 
