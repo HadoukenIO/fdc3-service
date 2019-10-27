@@ -8,8 +8,9 @@ import {Intent} from '../../../src/client/intents';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {TestAppData, setupTeardown, setupOpenDirectoryAppBookends, DirectoryTestAppData} from '../utils/common';
 import {testManagerIdentity, testAppInDirectory2, testAppUrl} from '../constants';
-import {IntentResolution, ResolveError, ResolveErrorMessage} from '../../../src/client/main';
+import {IntentResolution, ResolveError} from '../../../src/client/main';
 import {delay} from '../utils/delay';
+import {Timeouts} from '../../../src/provider/constants';
 
 /**
  * Intent registered by `testAppWithPreregisteredListeners1` right after opening
@@ -47,7 +48,7 @@ describe('Intent resolution', () => {
                 test('The expected value is resolved', async () => {
                     await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, listener);
                     const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
-                    await testExpectedResolution(resolution, expectedValue);
+                    await expect(resolution).resolves.toHaveProperty('data', expectedValue);
                 });
 
                 test('And has multiple intent handlers, the expected value is resolved', async () => {
@@ -57,7 +58,7 @@ describe('Intent resolution', () => {
                     await Promise.all(listeners);
                     await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, listener);
                     const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
-                    await testExpectedResolution(resolution, expectedValue);
+                    await expect(resolution).resolves.toHaveProperty('data', expectedValue);
                 });
             });
 
@@ -73,14 +74,14 @@ describe('Intent resolution', () => {
                     await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, listener);
                     const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
 
-                    await testExpectedResolution(resolution, expectedValue);
+                    await expect(resolution).resolves.toHaveProperty('data', expectedValue);
                 });
 
                 test('And a child window has the only intent listener, the expected value gets resolved', async () => {
                     await fdc3Remote.addIntentListener(children[1], preregisteredIntent.type, listener);
                     const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
 
-                    await testExpectedResolution(resolution, expectedValue);
+                    await expect(resolution).resolves.toHaveProperty('data', expectedValue);
                 });
 
                 test('And all the windows return a value, the first to return is the value resolved', async () => {
@@ -90,7 +91,7 @@ describe('Intent resolution', () => {
                     await Promise.all(childListeners);
                     await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, listener);
                     const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
-                    await testExpectedResolution(resolution, expectedValue);
+                    await expect(resolution).resolves.toHaveProperty('data', expectedValue);
                 });
             });
         }
@@ -102,10 +103,10 @@ describe('Intent resolution', () => {
         };
 
         describe('When there is a single window', () => {
-            test('And there is 1 intent handler that throws an error, an error is thrown', async () => {
+            test('And there is 1 intent handler that throws an error, an FDC3 IntentHandlerException is thrown', async () => {
                 await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, errorFn);
                 const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
-                await expect(resolution).rejects.toThrowError();
+                await expect(resolution).toThrowFDC3Error(ResolveError.IntentHandlerException);
             });
 
             test('And there are multiple intent handlers that do not throw an error, a value is returned', async () => {
@@ -129,13 +130,20 @@ describe('Intent resolution', () => {
                 children = await createChildWindows(appHandlingIntent, 3);
             });
 
-            test('And there is only 1 intent handler on a child window that throws, an error is thrown', async () => {
+            test('And there is 1 intent handler on a child window that throws after app maturity, an FDC3 IntentHandlerException is thrown', async () => {
+                await fdc3Remote.addIntentListener(children[0], preregisteredIntent.type, errorFn);
+                await delay(Timeouts.ADD_INTENT_LISTENER);
+                const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
+                await expect(resolution).toThrowFDC3Error(ResolveError.IntentHandlerException);
+            });
+
+            test('And the is 1 intent handler on a child window that throws while waiting for app maturity, an FDC3 error is thrown', async () => {
                 await fdc3Remote.addIntentListener(children[0], preregisteredIntent.type, errorFn);
                 const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
                 await expect(resolution).rejects.toThrowError();
             });
 
-            test('And there are an error on the main window, and a value returned on another window, the value is resolved', async () => {
+            test('And there is an error on the main window, and a value returned on another window, the value is resolved', async () => {
                 await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, errorFn);
                 await fdc3Remote.addIntentListener(children[1], preregisteredIntent.type, () => true);
                 const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
@@ -155,15 +163,6 @@ describe('Intent resolution', () => {
         });
     });
 });
-
-async function testExpectedResolution(resolution: Promise<IntentResolution>, expectedValue: any): Promise<void> {
-    if (expectedValue instanceof Error) {
-        const errorRegex = new RegExp(ResolveErrorMessage[ResolveError.IntentHandlerException]);
-        await expect(resolution).rejects.toThrowError(errorRegex);
-    } else {
-        await expect(resolution).resolves.toHaveProperty('data', expectedValue);
-    }
-}
 
 function raiseIntent(intent: Intent, target: TestAppData): Promise<IntentResolution> {
     return fdc3Remote.raiseIntent(
