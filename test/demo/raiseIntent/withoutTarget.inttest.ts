@@ -391,7 +391,7 @@ async function raiseIntentAndExpectResolverToShow(intent: Intent): Promise<Boxed
 }
 
 /**
- * Rremotely clicks the cancel button on the resolver, and checks the resolver closes
+ * Remotely clicks the cancel button on the resolver, and checks the resolver closes
  */
 async function closeResolverAndExpectToClose(): Promise<void> {
     await closeResolver();
@@ -402,7 +402,7 @@ async function closeResolverAndExpectToClose(): Promise<void> {
 }
 
 /**
- * Rremotely clicks the cancel button on the resolver
+ * Remotely clicks the cancel button on the resolver
  */
 async function closeResolver(): Promise<void> {
     const cancelClicked = await fdc3Remote.clickHTMLElement(RESOLVER_IDENTITY, '#cancel');
