@@ -8,9 +8,9 @@ import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {delay} from '../utils/delay';
 import {TestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppWithIntentListenerBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning} from '../utils/common';
-import {testManagerIdentity, testAppInDirectory4, testAppNotInDirectory1, testAppNotInDirectory2, testAppWithPreregisteredListeners1, testAppUrl} from '../constants';
+import {testManagerIdentity, testAppInDirectory4, testAppNotInDirectory1, testAppNotInDirectory2, testAppWithPreregisteredListeners1, testAppUrl, testAppWithPreregisteredListeners2} from '../constants';
 import {Boxed} from '../../../src/provider/utils/types';
-import {allowReject} from '../../../src/provider/utils/async';
+import {allowReject, withTimeout} from '../../../src/provider/utils/async';
 
 /**
  * Alias for `testAppInDirectory4`, which is only in the directory registering the intent `test.IntentOnlyOnApp4`
@@ -175,7 +175,7 @@ the app opens and receives the intent with the correct context', async () => {
 
                         test('It receives intent', async () => {
                             const raiseIntentPromise = (await raiseIntentAndExpectResolverToShow(uniqueIntent)).value;
-                            await selectResolverApp(testAppWithUniqueIntent.name);
+                            await selectResolverAppAndExpectResolverToClose(testAppWithUniqueIntent);
 
                             await waitForAppToBeRunning(testAppWithUniqueIntent);
                             await fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
@@ -203,11 +203,81 @@ the app opens and receives the intent with the correct context', async () => {
                     'Resolver closed or cancelled'
                 );
             });
+
             describe('When choosing on the resolver an app that preregisters the intent', () => {
                 setupQuitAppAfterEach(testAppWithPreregisteredListeners1);
 
                 test('It receives it', async () => {
                     await raiseIntentExpectResolverSelectApp(intentInManyApps, testAppWithPreregisteredListeners1);
+                });
+            });
+
+            describe('When calling raiseIntent multiple times', () => {
+                setupQuitAppAfterEach(testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2, testAppInDirectory4);
+
+                test('Intents statisfied by many apps are queued and are resolved in order', async () => {
+                    const order: number[] = [];
+
+                    const frontPromise = (await raiseIntentAndExpectResolverToShow(intentInManyApps)).value.then(() => order.push(1));
+                    const middlePromise = raiseIntent(intentInManyApps).then(() => order.push(2));
+                    const backPromise = raiseIntent(intentInManyApps).then(() => order.push(3));
+
+                    await selectResolverApp(testAppWithPreregisteredListeners1);
+                    await frontPromise;
+
+                    await expectResolverToShow();
+                    await selectResolverApp(testAppWithPreregisteredListeners2);
+                    await middlePromise;
+
+                    await expectResolverToShow();
+                    await selectResolverAppAndExpectResolverToClose(testAppWithPreregisteredListeners1);
+                    await backPromise;
+
+                    expect(order).toEqual([1, 2, 3]);
+                });
+
+                test('Intents statisfied by many apps are queued and are resolved in order, even when one resolution is cancelled', async () => {
+                    const order: number[] = [];
+
+                    const frontPromise = (await raiseIntentAndExpectResolverToShow(intentInManyApps)).value.then(() => order.push(1));
+                    const middlePromise = raiseIntent(intentInManyApps).catch(() => order.push(2));
+                    const backPromise = raiseIntent(intentInManyApps).then(() => order.push(3));
+
+                    await selectResolverApp(testAppWithPreregisteredListeners1);
+                    await frontPromise;
+
+                    await expectResolverToShow();
+                    await closeResolver();
+                    await middlePromise;
+
+                    await expectResolverToShow();
+                    await selectResolverAppAndExpectResolverToClose(testAppWithPreregisteredListeners2);
+                    await backPromise;
+
+                    expect(order).toEqual([1, 2, 3]);
+                });
+
+                test('An intent satisfied by a single app will not be queued, even when the resolver is showing', async () => {
+                    const order: number[] = [];
+
+                    const frontPromise = (await raiseIntentAndExpectResolverToShow(intentInManyApps)).value.then(() => order.push(1));
+                    const middlePromise = raiseIntent(uniqueIntent).then(() => order.push(2));
+                    const backPromise = raiseIntent(intentInManyApps).then(() => order.push(3));
+
+                    waitForAppToBeRunning(testAppInDirectory4).then(() => {
+                        fdc3Remote.addIntentListener(testAppInDirectory4, uniqueIntent.type);
+                    });
+
+                    await middlePromise;
+
+                    await selectResolverApp(testAppWithPreregisteredListeners1);
+                    await frontPromise;
+
+                    await expectResolverToShow();
+                    await selectResolverAppAndExpectResolverToClose(testAppWithPreregisteredListeners2);
+                    await backPromise;
+
+                    expect(order).toEqual([2, 1, 3]);
                 });
             });
         });
@@ -288,14 +358,14 @@ async function raiseIntentExpectResolverAndClose(intent: Intent): Promise<void> 
 
     allowReject(raiseIntentPromise);
 
-    await closeResolver();
+    await closeResolverAndExpectToClose();
 
     return raiseIntentPromise;
 }
 
 async function raiseIntentExpectResolverSelectApp(intent: Intent, app: TestAppData, listener?: fdc3Remote.RemoteIntentListener): Promise<void> {
     const raiseIntentPromise = (await raiseIntentAndExpectResolverToShow(intent)).value;
-    await selectResolverApp(app.name);
+    await selectResolverAppAndExpectResolverToClose(app);
     await raiseIntentPromise; // Now the intent resolves
 
     // If no intent listener provided, try to fetch it "live"
@@ -312,9 +382,7 @@ async function raiseIntentAndExpectResolverToShow(intent: Intent): Promise<Boxed
     // Raise intent but don't await - promise won't resolve until an app is selected on the resolver
     const raiseIntentPromise = raiseIntent(intent);
 
-    while (!await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing()) {
-        await delay(500);
-    }
+    await expectResolverToShow();
 
     const isResolverShowing = await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing();
     expect(isResolverShowing).toBe(true);
@@ -323,14 +391,33 @@ async function raiseIntentAndExpectResolverToShow(intent: Intent): Promise<Boxed
 }
 
 /**
- * Closes the resolver by remotely clicking the Cancel button in it
+ * Rremotely clicks the cancel button on the resolver, and checks the resolver closes
+ */
+async function closeResolverAndExpectToClose(): Promise<void> {
+    await closeResolver();
+    await delay(100); // Give the UI some time to process the click and close the window
+
+    const isResolverShowing = await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing();
+    expect(isResolverShowing).toBe(false);
+}
+
+/**
+ * Rremotely clicks the cancel button on the resolver
  */
 async function closeResolver(): Promise<void> {
     const cancelClicked = await fdc3Remote.clickHTMLElement(RESOLVER_IDENTITY, '#cancel');
     if (!cancelClicked) {
         throw new Error('Error clicking cancel button on resolver. Make sure it has id="cancel".');
     }
-    await delay(100); // Give the UI some time to process the click and close the window
+}
+
+/**
+ * Selects an app on the resolver by remotely clicking on its button and checks the resolver closes
+ * @param appName name of app to open
+ */
+async function selectResolverAppAndExpectResolverToClose(app: TestAppData): Promise<void> {
+    await selectResolverApp(app);
+    await delay(100);
 
     const isResolverShowing = await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing();
     expect(isResolverShowing).toBe(false);
@@ -340,15 +427,27 @@ async function closeResolver(): Promise<void> {
  * Selects an app on the resolver by remotely clicking on its button
  * @param appName name of app to open
  */
-async function selectResolverApp(appName: string): Promise<void> {
-    const appClicked = await fdc3Remote.clickHTMLElement(RESOLVER_IDENTITY, `.app-card[data-appname="${appName}"]`);
+async function selectResolverApp(app: TestAppData): Promise<void> {
+    const appClicked = await fdc3Remote.clickHTMLElement(RESOLVER_IDENTITY, `.app-card[data-appname="${app.name}"]`);
     if (!appClicked) {
-        throw new Error(`App with name '${appName}' not found in resolver`);
+        throw new Error(`App with name '${app.name}' not found in resolver`);
     }
-    await delay(100);
+}
 
-    const isResolverShowing = await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing();
-    expect(isResolverShowing).toBe(false);
+async function expectResolverToShow(): Promise<void> {
+    let timedOut = false;
+
+    [timedOut] = await withTimeout(3000, new Promise<void>(async (resolve) => {
+        while (!await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing() && !timedOut) {
+            await delay(100);
+        }
+
+        resolve();
+    }));
+
+    if (timedOut) {
+        throw new Error('Timeout waiting for resolver to show');
+    }
 }
 
 function raiseIntent(intent: Intent, target?: TestAppData): Promise<void> {
