@@ -250,14 +250,18 @@ app, the app opens but the promise rejects', async () => {
 
                     const frontPromise = (await raiseIntentAndExpectResolverToShow(intentInManyApps)).value.then(() => order.push(1));
                     const middlePromise = raiseIntent(intentInManyApps).then(() => order.push(2));
+                    await delay(250);
                     const backPromise = raiseIntent(intentInManyApps).then(() => order.push(3));
+                    await delay(250);
 
                     await selectResolverApp(testAppWithPreregisteredListeners1);
                     await frontPromise;
+                    await delay(250);
 
                     await expectResolverToShow();
                     await selectResolverApp(testAppWithPreregisteredListeners2);
                     await middlePromise;
+                    await delay(250);
 
                     await expectResolverToShow();
                     await selectResolverAppAndExpectResolverToClose(testAppWithPreregisteredListeners1);
@@ -271,14 +275,18 @@ app, the app opens but the promise rejects', async () => {
 
                     const frontPromise = (await raiseIntentAndExpectResolverToShow(intentInManyApps)).value.then(() => order.push(1));
                     const middlePromise = raiseIntent(intentInManyApps).catch(() => order.push(2));
+                    await delay(250);
                     const backPromise = raiseIntent(intentInManyApps).then(() => order.push(3));
+                    await delay(250);
 
                     await selectResolverApp(testAppWithPreregisteredListeners1);
                     await frontPromise;
+                    await delay(250);
 
                     await expectResolverToShow();
                     await closeResolver();
                     await middlePromise;
+                    await delay(250);
 
                     await expectResolverToShow();
                     await selectResolverAppAndExpectResolverToClose(testAppWithPreregisteredListeners2);
@@ -292,7 +300,9 @@ app, the app opens but the promise rejects', async () => {
 
                     const frontPromise = (await raiseIntentAndExpectResolverToShow(intentInManyApps)).value.then(() => order.push(1));
                     const middlePromise = raiseIntent(uniqueIntent).then(() => order.push(2));
+                    await delay(250);
                     const backPromise = raiseIntent(intentInManyApps).then(() => order.push(3));
+                    await delay(250);
 
                     waitForAppToBeRunning(testAppInDirectory4).then(() => {
                         fdc3Remote.addIntentListener(testAppInDirectory4, uniqueIntent.type);
@@ -302,6 +312,7 @@ app, the app opens but the promise rejects', async () => {
 
                     await selectResolverApp(testAppWithPreregisteredListeners1);
                     await frontPromise;
+                    await delay(250);
 
                     await expectResolverToShow();
                     await selectResolverAppAndExpectResolverToClose(testAppWithPreregisteredListeners2);
