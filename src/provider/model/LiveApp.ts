@@ -1,6 +1,7 @@
 import {Application} from '../../client/directory';
 import {DeferredPromise} from '../common/DeferredPromise';
 import {Timeouts} from '../constants';
+import {allowReject} from '../utils/async';
 
 import {AppWindow} from './AppWindow';
 
@@ -43,7 +44,7 @@ export class LiveApp {
                 this._matureDeferredPromise!.reject(new Error('App failed to start'));
             });
 
-            this._maturePromise = this._matureDeferredPromise.promise;
+            this._maturePromise = allowReject(this._matureDeferredPromise.promise);
         } else {
             this._startedPromise = Promise.resolve();
             this._maturePromise = Promise.resolve();
