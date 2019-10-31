@@ -103,24 +103,17 @@ just once, with the correct context', async () => {
                     test('When the intent listeners are added on multiple windows, the targeted app opens and the first window\'s \
 listener is triggered just once, with the correct context', async () => {
                         // Raise the intent, and wait for the app to be running
-                        console.log('*** 1', Date.now());
                         const raisePromise = raiseIntent(validIntent, testAppInDirectory1);
-                        console.log('*** 2', Date.now());
                         await waitForAppToBeRunning(testAppInDirectory1);
-                        console.log('*** 3', Date.now());
 
                         const childWindow1 = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-window-1'});
-                        console.log('*** 4', Date.now());
                         const childWindow2 = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-window-2'});
-                        console.log('*** 5', Date.now());
 
                         // Add listeners
                         const listener1 = await fdc3Remote.addIntentListener(childWindow1, validIntent.type);
                         const listener2 = await fdc3Remote.addIntentListener(childWindow2, validIntent.type);
                         const listener3 = await fdc3Remote.addIntentListener(testAppInDirectory1, validIntent.type);
-                        console.log('*** 6', Date.now());
                         await raisePromise;
-                        console.log('*** 7', Date.now());
 
                         // Check only the first listener recevied the context
                         await expect(listener1).toHaveReceivedContexts([validIntent.context]);
