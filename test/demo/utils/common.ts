@@ -133,27 +133,13 @@ export function setupTeardown(): void {
 async function isServiceClear(): Promise<boolean> {
     return fdc3Remote.ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, testManagerIdentity: Identity): string | boolean {
         if (this.model.windows.length !== 1) {
-            return `excess windows ${JSON.stringify(this.model.windows.map((window) => window.id))}, \
-apps: ${JSON.stringify(this.model.apps.map(app => (app.appInfo ? app.appInfo.appId : 'empty') + app.windows.length))}`;
-        }
-
-        if (this.model.apps.length !== 1) {
-            return 'excess apps';
+            return `excess windows ${JSON.stringify(this.model.windows.map((window) => window.id))}`;
         }
 
         const singleWindow = this.model.windows[0];
-        const singleApp = this.model.apps[0];
 
         if (singleWindow.appInfo.appId !== testManagerIdentity.uuid) {
             return 'window not test manager';
-        }
-
-        if (singleApp.appInfo!.appId !== testManagerIdentity.uuid) {
-            return 'app not test manager';
-        }
-
-        if (singleApp.windows.length !== 1 || singleApp.windows[0] !== singleWindow) {
-            return 'unexpected windows on app';
         }
 
         if (singleWindow.channelContextListeners.length !== 0 ||
