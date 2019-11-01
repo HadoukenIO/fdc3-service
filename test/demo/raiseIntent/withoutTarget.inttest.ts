@@ -256,10 +256,12 @@ app, the app opens but the promise rejects', async () => {
 
                     await selectResolverApp(testAppWithPreregisteredListeners1);
                     await frontPromise;
+                    await delay(Duration.API_CALL);
 
                     await expectResolverToShow();
                     await selectResolverApp(testAppWithPreregisteredListeners2);
                     await middlePromise;
+                    await delay(Duration.API_CALL);
 
                     await expectResolverToShow();
                     await selectResolverAppAndExpectResolverToClose(testAppWithPreregisteredListeners1);
@@ -279,10 +281,12 @@ app, the app opens but the promise rejects', async () => {
 
                     await selectResolverApp(testAppWithPreregisteredListeners1);
                     await frontPromise;
+                    await delay(Duration.API_CALL);
 
                     await expectResolverToShow();
                     await closeResolver();
                     await middlePromise;
+                    await delay(Duration.API_CALL);
 
                     await expectResolverToShow();
                     await selectResolverAppAndExpectResolverToClose(testAppWithPreregisteredListeners2);
@@ -305,9 +309,11 @@ app, the app opens but the promise rejects', async () => {
                     });
 
                     await middlePromise;
+                    await delay(Duration.API_CALL);
 
                     await selectResolverApp(testAppWithPreregisteredListeners1);
                     await frontPromise;
+                    await delay(Duration.API_CALL);
 
                     await expectResolverToShow();
                     await selectResolverAppAndExpectResolverToClose(testAppWithPreregisteredListeners2);
