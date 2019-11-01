@@ -3,7 +3,6 @@ import {Identity} from 'openfin/_v2/main';
 import {SystemChannel, DefaultChannel, ChannelError, IdentityError, ChannelId} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, appStartupTime, testAppNotInDirectoryNotFdc3} from '../constants';
-import {fin} from '../utils/fin';
 import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends} from '../utils/common';
 import {fakeAppChannelName} from '../utils/fakes';
 
@@ -113,13 +112,7 @@ describe('When attempting to get the current channel', () => {
     });
 
     describe('When a non-FDC3 app has been started', () => {
-        beforeEach(async () => {
-            await fin.Application.startFromManifest(testAppNotInDirectoryNotFdc3.manifestUrl);
-        }, appStartupTime);
-
-        afterEach(async () => {
-            await fin.Application.wrapSync(testAppNotInDirectoryNotFdc3).quit(true);
-        });
+        setupStartNonDirectoryAppBookends(testAppNotInDirectoryNotFdc3);
 
         test('When the non-FDC3 window identity is provided, an FDC3 error is thrown', async () => {
             await expect(fdc3Remote.getCurrentChannel(testManagerIdentity, testAppNotInDirectoryNotFdc3)).toThrowFDC3Error(

@@ -1,7 +1,6 @@
 import 'jest';
 import {OrganizationContext} from '../../src/client/main';
 
-import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {setupTeardown, setupOpenDirectoryAppBookends} from './utils/common';
 import {testManagerIdentity, testAppInDirectory1, testAppUrl} from './constants';
@@ -159,14 +158,8 @@ window, the listener is triggered exactly once with the correct context', async 
     describe('Broadcasting with multiple windows in the same app', () => {
         const testAppMainWindowIdentity = testAppInDirectory1;
         const testAppChildWindowName = testAppInDirectory1.name + '-child-window';
-        beforeEach(async () => {
-            await fdc3Remote.open(testManagerIdentity, testAppMainWindowIdentity.name);
-        });
 
-        afterEach(async () => {
-            // This `.quit()` closes the main window as well as any child windows
-            await fin.Application.wrapSync(testAppMainWindowIdentity).quit(true);
-        });
+        setupOpenDirectoryAppBookends(testAppMainWindowIdentity);
 
         test('When main window broadcasts context, it does not receive its own context, but child window does', async () => {
             const testAppChildWindowIdentity = await fdc3Remote.createFinWindow(testAppMainWindowIdentity, {url: testAppUrl, name: testAppChildWindowName});

@@ -7,7 +7,7 @@ import {RESOLVER_IDENTITY} from '../../../src/provider/utils/constants';
 import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {delay, Duration} from '../utils/delay';
-import {TestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppWithIntentListenerBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning} from '../utils/common';
+import {TestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppWithIntentListenerBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning, closeResolver} from '../utils/common';
 import {testManagerIdentity, testAppInDirectory4, testAppNotInDirectory1, testAppNotInDirectory2, testAppWithPreregisteredListeners1, testAppUrl, appStartupTime, testAppWithPreregisteredListeners2} from '../constants';
 import {Boxed} from '../../../src/provider/utils/types';
 import {allowReject, withTimeout} from '../../../src/provider/utils/async';
@@ -441,18 +441,6 @@ async function closeResolverAndExpectToClose(): Promise<void> {
 
     const isResolverShowing = await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing();
     expect(isResolverShowing).toBe(false);
-}
-
-/**
- * Remotely clicks the cancel button on the resolver
- */
-async function closeResolver(): Promise<void> {
-    const cancelClicked = await fdc3Remote.clickHTMLElement(RESOLVER_IDENTITY, '#cancel');
-    if (!cancelClicked) {
-        throw new Error('Error clicking cancel button on resolver. Make sure it has id="cancel".');
-    }
-
-    await delay(250); // Give the UI some time to process the click and close the window
 }
 
 /**

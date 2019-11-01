@@ -59,7 +59,7 @@ describe('When getting members of a channel', () => {
         test('After closing the app, result does not contains the app', async () => {
             const defaultChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'default');
 
-            await fin.Application.wrapSync(appIdentity).quit(true);
+            await quitApps(appIdentity);
 
             await expect(defaultChannel.getMembers()).resolves.toEqual([testManagerIdentity]);
         });
@@ -149,7 +149,7 @@ describe('When listening for channel-changed and Channel events', () => {
         // Set up our listeners then quit the app
         const channelChangedListener = await fdc3Remote.addEventListener(listeningApp, 'channel-changed');
         const windowRemovedListener = await defaultChannel.addEventListener('window-removed');
-        await fin.Application.wrapSync(testAppInDirectory2).quit(true);
+        await quitApps(testAppInDirectory2);
 
         const expectedEvent = {
             identity: {uuid: testAppInDirectory2.uuid, name: testAppInDirectory2.name},

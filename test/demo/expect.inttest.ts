@@ -5,7 +5,7 @@ import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
 import {getId} from '../../src/provider/utils/getId';
 
 import {testAppNotInDirectory1, appStartupTime, testManagerIdentity} from './constants';
-import {setupTeardown} from './utils/common';
+import {setupTeardown, quitApps} from './utils/common';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {RemoteChannel} from './utils/RemoteChannel';
 import {fin} from './utils/fin';
@@ -39,7 +39,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-    await fin.Application.wrapSync(testAppNotInDirectory1).quit(true);
+    await quitApps(testAppNotInDirectory1);
 });
 
 setupTeardown();
