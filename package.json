@@ -60,7 +60,7 @@
   },
   "precommit": {
     "run": [
-      "prepare"
+      "check"
     ]
   }
 }

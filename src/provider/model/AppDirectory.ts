@@ -24,7 +24,7 @@ export class AppDirectory extends AsyncInit {
         if (contextType === undefined || app.intents === undefined) {
             return true;
         } else {
-            const intent = app.intents.find(intent => intent.name === intentType);
+            const intent = app.intents.find((i) => i.name === intentType);
             return intent === undefined || intentSupportsContext(intent, contextType);
         }
     }
@@ -37,14 +37,14 @@ export class AppDirectory extends AsyncInit {
         if (app.intents === undefined) {
             return false;
         } else {
-            const intent = app.intents.find(intent => intent.name === intentType);
+            const intent = app.intents.find((i) => i.name === intentType);
             return intent !== undefined && (contextType === undefined || intentSupportsContext(intent, contextType));
         }
     }
 
     public static getIntentDisplayName(apps: Application[], intentType: string): string {
         for (const app of apps) {
-            const intent = app.intents && app.intents.find(intent => intent.name === intentType);
+            const intent = app.intents && app.intents.find((i) => i.name === intentType);
 
             if (intent && intent.displayName !== undefined) {
                 return intent.displayName;

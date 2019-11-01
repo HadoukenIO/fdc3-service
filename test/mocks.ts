@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {Signal} from 'openfin-service-signal';
 import {Identity} from 'openfin/_v2/main';
 

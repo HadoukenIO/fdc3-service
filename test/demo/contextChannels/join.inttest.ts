@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/await-thenable */
 import {Identity} from 'openfin/_v2/main';
 
 import {IdentityError, DEFAULT_CHANNEL_ID} from '../../../src/client/main';

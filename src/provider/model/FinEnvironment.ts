@@ -18,7 +18,6 @@ import {Environment, EntityType} from './Environment';
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
 import {FinAppWindow} from './FinAppWindow';
-import {AppDirectory} from './AppDirectory';
 
 interface CreatedWindow {
     creationTime: number | undefined;

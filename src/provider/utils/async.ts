@@ -84,9 +84,9 @@ export function allowReject<T>(promise: Promise<T>): Promise<T> {
 export async function asyncFilter<T>(arr: T[], callback: (x: T) => Promise<boolean>): Promise<T[]> {
     const result: T[] = [];
 
-    for (let i = 0; i < arr.length; i++) {
-        if (await callback(arr[i])) {
-            result.push(arr[i]);
+    for (const i of arr) {
+        if (await callback(i)) {
+            result.push(i);
         }
     }
 

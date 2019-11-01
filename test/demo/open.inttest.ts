@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/await-thenable */
 import 'jest';
 
 import {Context, OrganizationContext} from '../../src/client/main';

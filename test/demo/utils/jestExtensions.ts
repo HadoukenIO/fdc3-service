@@ -15,7 +15,7 @@ declare global {
              * @param code Assert that the FDC3Error is thrown with a given `code`
              * @param message Optionally, assert that a given error message is returned
              */
-            toThrowFDC3Error(code: string, message?: string | RegExp): R;
+            toThrowFDC3Error(code: string, message?: string | RegExp): Promise<R>;
 
             /**
              * Used to test that a RemoteChannel represents the expected client-side Channel
@@ -28,7 +28,7 @@ declare global {
              * Used to test that a remote listener has received the provided contexts
              * @param contexts The expected contexts
              */
-            toHaveReceivedContexts(contexts: FDC3Context[]): R;
+            toHaveReceivedContexts(contexts: FDC3Context[]): Promise<R>;
         }
     }
 }

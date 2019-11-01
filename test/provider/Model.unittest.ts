@@ -281,17 +281,17 @@ describe('When an app is in the directory with multiple intents', () => {
 
 function setupAppRunningWithWindowWithIntentListeners(app: Application, intents: string[]): void {
     mockEnvironment.isRunning.mockImplementation(async (uuid) => uuid === AppDirectory.getUuidFromApp(app));
-    mockEnvironment.isWindowCreated.mockImplementation(identity => identity.uuid === app.appId);
+    mockEnvironment.isWindowCreated.mockImplementation((identity) => identity.uuid === app.appId);
 
-    mockApiHandler.isClientConnection.mockImplementation(identity => identity.uuid === app.appId);
+    mockApiHandler.isClientConnection.mockImplementation((identity) => identity.uuid === app.appId);
 
     mockAppDirectory.getAppByUuid.mockImplementation(async (uuid) => uuid === app.appId ? app : null);
 
-    mockEnvironment.wrapApplication.mockImplementation((app, identity) => {
+    mockEnvironment.wrapApplication.mockImplementation((appInfo, identity) => {
         const appWindow = createMockAppWindow({
             identity,
             id: getId(identity),
-            appInfo: app
+            appInfo
         });
 
         appWindow.intentListeners = intents;

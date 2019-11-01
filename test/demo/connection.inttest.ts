@@ -211,7 +211,7 @@ async function navigateTo(target: Identity, url: string): Promise<void> {
 
 async function getIntentListeners(intentType: string): Promise<AppWindow[]> {
     return ofBrowser.executeOnWindow(SERVICE_IDENTITY, async function (this: ProviderWindow, type: string): Promise<AppWindow[]> {
-        return (await this.model.windows).filter(window => window.hasIntentListener(type));
+        return this.model.windows.filter((window) => window.hasIntentListener(type));
     }, intentType);
 }
 
