@@ -143,7 +143,7 @@ export async function closeResolver(): Promise<void> {
         throw new Error('Error clicking cancel button on resolver. Make sure it has id="cancel".');
     }
 
-    await delay(250); // Give the UI some time to process the click and close the window
+    await delay(500); // Give the UI some time to process the click and close the window
 }
 
 /**

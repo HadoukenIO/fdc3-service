@@ -457,7 +457,7 @@ async function selectResolverApp(app: TestAppData): Promise<void> {
     if (!appClicked) {
         throw new Error(`App with name '${app.name}' not found in resolver`);
     }
-    await delay(250);
+    await delay(500);
 }
 
 async function expectResolverToShow(): Promise<void> {
