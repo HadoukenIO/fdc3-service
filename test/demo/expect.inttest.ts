@@ -5,7 +5,7 @@ import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
 import {getId} from '../../src/provider/utils/getId';
 
 import {testAppNotInDirectory1, appStartupTime, testManagerIdentity} from './constants';
-import {setupTeardown, quitApps} from './utils/common';
+import {setupTeardown, quitApps, startNonDirectoryApp} from './utils/common';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {RemoteChannel} from './utils/RemoteChannel';
 import {fin} from './utils/fin';
@@ -45,7 +45,7 @@ afterEach(async () => {
 setupTeardown();
 
 test('When starting an app, the app can be interacted with as soon as a `window-created` event is received', async () => {
-    const startPromise = fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl);
+    const startPromise = startNonDirectoryApp(testAppNotInDirectory1);
 
     await channelJoinedPromise.promise;
 

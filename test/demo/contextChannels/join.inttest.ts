@@ -4,8 +4,7 @@ import {IdentityError, DEFAULT_CHANNEL_ID} from '../../../src/client/main';
 import {testManagerIdentity, appStartupTime, testAppNotInDirectory1, testAppNotInDirectoryNotFdc3, testAppInDirectory1, testAppInDirectory2} from '../constants';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel, RemoteChannelEventListener} from '../utils/RemoteChannel';
-import {fin} from '../utils/fin';
-import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, quitApps} from '../utils/common';
+import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, quitApps, startNonDirectoryApp} from '../utils/common';
 import {fakeAppChannelName} from '../utils/fakes';
 
 /*
@@ -100,7 +99,7 @@ describe('When listening for channel-changed and Channel events', () => {
         [
             'a non-directory app',
             testAppNotInDirectory1,
-            () => fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl).then(() => {})
+            () => startNonDirectoryApp(testAppNotInDirectory1).then(() => {})
         ]
     ];
 
@@ -135,7 +134,7 @@ describe('When listening for channel-changed and Channel events', () => {
         const windowAddedListener = await defaultChannel.addEventListener('window-added');
 
         // Start our non-FDC3 app
-        await fin.Application.startFromManifest(testAppNotInDirectoryNotFdc3.manifestUrl);
+        await startNonDirectoryApp(testAppNotInDirectoryNotFdc3);
 
         // Check no event is received
         await expect(channelChangedListener.getReceivedEvents()).resolves.toEqual([]);

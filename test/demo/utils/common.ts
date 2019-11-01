@@ -10,7 +10,7 @@ import {Model} from '../../../src/provider/model/Model';
 
 import {fin} from './fin';
 import * as fdc3Remote from './fdc3RemoteExecution';
-import {delay} from './delay';
+import {delay, Duration} from './delay';
 
 export interface TestAppData {
     name: string; // Note that this may be treated as a 'name' in the FDC3 app directory sense, or a 'name' in the OpenFin window Identity sense
@@ -78,12 +78,17 @@ export function setupOpenDirectoryAppBookends(app: DirectoryTestAppData): void {
  */
 export function setupStartNonDirectoryAppBookends(app: NonDirectoryTestAppData): void {
     beforeEach(async () => {
-        await fin.Application.startFromManifest(app.manifestUrl);
+        await startNonDirectoryApp(app);
     });
 
     afterEach(async () => {
         await quitApps(app);
     });
+}
+
+export async function startNonDirectoryApp(app: NonDirectoryTestAppData): Promise<void> {
+    await fin.Application.startFromManifest(app.manifestUrl);
+    await delay(Duration.API_CALL);
 }
 
 /**
