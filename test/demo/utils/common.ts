@@ -87,7 +87,7 @@ export function setupStartNonDirectoryAppBookends(app: NonDirectoryTestAppData):
 }
 
 export async function startDirectoryApp(app: DirectoryTestAppData): Promise<void> {
-    await fin.Application.startFromManifest(app.name);
+    await fdc3Remote.open(testManagerIdentity, app.name);
     await delay(Duration.API_CALL);
 }
 
