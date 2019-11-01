@@ -15,13 +15,13 @@ const testContext = {type: 'test-context', name: 'contextName1', id: {name: 'con
 
 const startedApps:Application[] = [];
 
-setupTeardown();
-
 afterEach(async () => {
     await quitApps(...startedApps.map(app => app.identity));
 
     startedApps.length = 0;
 });
+
+setupTeardown();
 
 type BroadcastTestParam = [string, ChannelDescriptor, ChannelDescriptor, ChannelDescriptor[]]
 const broadcastTestParams = [
