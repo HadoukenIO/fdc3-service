@@ -142,7 +142,8 @@ export async function closeResolver(): Promise<void> {
 async function isServiceClear(): Promise<boolean> {
     return fdc3Remote.ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, testManagerIdentity: Identity): string | boolean {
         if (this.model.windows.length !== 1) {
-            return 'excess windows';
+            return `excess windows ${JSON.stringify(this.model.windows.map((window) => window.id))}, \
+apps: ${JSON.stringify(this.model.apps.map(app => (app.appInfo ? app.appInfo.appId : 'empty') + app.windows.length))}`;
         }
 
         if (this.model.apps.length !== 1) {
