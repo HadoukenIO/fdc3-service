@@ -444,7 +444,7 @@ async function closeResolver(): Promise<void> {
     if (!cancelClicked) {
         throw new Error('Error clicking cancel button on resolver. Make sure it has id="cancel".');
     }
-    
+
     await delay(100); // Give the UI some time to process the click and close the window
 }
 
