@@ -120,6 +120,12 @@ export function setupQuitAppAfterEach(...apps: Identity[]): void {
 
 export function setupTeardown(): void {
     afterEach(async () => {
+        let resolverShowing = false;
+        while (await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing()) {
+            resolverShowing = true;
+            await closeResolver();
+        }
+
         const expectedRunningApps = ['fdc3-service', testManagerIdentity.uuid];
 
         const runningApps = (await fin.System.getAllApplications()).map(appInfo => appInfo.uuid);
@@ -127,13 +133,8 @@ export function setupTeardown(): void {
 
         await quitApps(...unexpectedRunningApps.map((uuid) => ({uuid})));
 
-        const resolverShowing = await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing();
-        if (resolverShowing) {
-            await closeResolver();
-        }
-
-        expect(runningApps.sort()).toEqual(expectedRunningApps.sort());
         expect(resolverShowing).toBe(false);
+        expect(runningApps.sort()).toEqual(expectedRunningApps.sort());
 
         await expect(isServiceClear()).resolves.toBe(true);
     });
