@@ -297,6 +297,8 @@ export class Model {
         const {uuid} = identity;
         this._liveAppsByUuid[uuid] = liveApp;
 
+        await liveApp.waitForAppStarted();
+
         // Attempt to get appInfo from the app directory, otherwise infer from environment
         const appInfoFromDirectory = await this._directory.getAppByUuid(uuid);
         const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
