@@ -4,7 +4,7 @@ import {IdentityError, DEFAULT_CHANNEL_ID} from '../../../src/client/main';
 import {testManagerIdentity, appStartupTime, testAppNotInDirectory1, testAppNotInDirectoryNotFdc3, testAppInDirectory1, testAppInDirectory2} from '../constants';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel, RemoteChannelEventListener} from '../utils/RemoteChannel';
-import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, quitApps, startNonDirectoryApp} from '../utils/common';
+import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, quitApps, startNonDirectoryApp, startDirectoryApp} from '../utils/common';
 import {fakeAppChannelName} from '../utils/fakes';
 
 /*
@@ -79,14 +79,14 @@ describe('When listening for channel-changed and Channel events', () => {
     const listeningApp = testAppInDirectory1;
     let defaultChannel: RemoteChannel;
 
-    beforeEach(async () => {
-        await fdc3Remote.open(testManagerIdentity, listeningApp.name);
+    setupOpenDirectoryAppBookends(listeningApp);
 
+    beforeEach(async () => {
         defaultChannel = await fdc3Remote.getChannelById(listeningApp, DEFAULT_CHANNEL_ID);
     }, appStartupTime);
 
     afterEach(async () => {
-        await quitApps(listeningApp, testAppInDirectory2, testAppNotInDirectory1, testAppNotInDirectoryNotFdc3);
+        await quitApps(testAppInDirectory2, testAppNotInDirectory1, testAppNotInDirectoryNotFdc3);
     });
 
     type EventTestParam = [string, Identity, () => Promise<void>];
@@ -94,12 +94,12 @@ describe('When listening for channel-changed and Channel events', () => {
         [
             'an FDC3 app',
             testAppInDirectory2,
-            () => fdc3Remote.open(testManagerIdentity, testAppInDirectory2.name)
+            () => startDirectoryApp(testAppInDirectory2)
         ],
         [
             'a non-directory app',
             testAppNotInDirectory1,
-            () => startNonDirectoryApp(testAppNotInDirectory1).then(() => {})
+            () => startNonDirectoryApp(testAppNotInDirectory1)
         ]
     ];
 
@@ -143,7 +143,7 @@ describe('When listening for channel-changed and Channel events', () => {
 
     test('Event is received when an FDC3 app quits', async () => {
         // Open our FDC3 app ahead of setting up our listener
-        await fdc3Remote.open(testManagerIdentity, testAppInDirectory2.name);
+        await startDirectoryApp(testAppInDirectory2);
 
         // Set up our listeners then quit the app
         const channelChangedListener = await fdc3Remote.addEventListener(listeningApp, 'channel-changed');

@@ -64,7 +64,7 @@ export async function waitForAppToBeRunning(app: Identity): Promise<void> {
  */
 export function setupOpenDirectoryAppBookends(app: DirectoryTestAppData): void {
     beforeEach(async () => {
-        await fdc3Remote.open(testManagerIdentity, app.name);
+        await startDirectoryApp(app);
     });
 
     afterEach(async () => {
@@ -84,6 +84,11 @@ export function setupStartNonDirectoryAppBookends(app: NonDirectoryTestAppData):
     afterEach(async () => {
         await quitApps(app);
     });
+}
+
+export async function startDirectoryApp(app: DirectoryTestAppData): Promise<void> {
+    await fin.Application.startFromManifest(app.name);
+    await delay(Duration.API_CALL);
 }
 
 export async function startNonDirectoryApp(app: NonDirectoryTestAppData): Promise<void> {
