@@ -108,12 +108,9 @@ export function setupQuitAppAfterEach(...apps: Identity[]): void {
 
 export function setupTeardown(): void {
     afterEach(async () => {
-        await delay(500);
         const expectedRunningAppIdentities = ['fdc3-service', testManagerIdentity.uuid];
 
-        const runningAppInfos = await fin.System.getAllApplications();
-
-        const runningAppIdentities = runningAppInfos.map(appInfo => appInfo.uuid);
+        const runningAppIdentities = (await fin.System.getAllApplications()).map(appInfo => appInfo.uuid);
 
         for (const identity of runningAppIdentities) {
             if (!expectedRunningAppIdentities.includes(identity)) {
@@ -122,15 +119,14 @@ export function setupTeardown(): void {
         }
 
         const resolverShowing = await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing();
-
-        await expect(isServiceClear()).resolves.toBe(true);
-
         if (resolverShowing) {
             await closeResolver();
         }
 
         expect(runningAppIdentities.sort()).toEqual(expectedRunningAppIdentities.sort());
         expect(resolverShowing).toBe(false);
+
+        await expect(isServiceClear()).resolves.toBe(true);
     });
 }
 
@@ -143,15 +139,13 @@ export async function closeResolver(): Promise<void> {
         throw new Error('Error clicking cancel button on resolver. Make sure it has id="cancel".');
     }
 }
-
+/**
+ * Checks that the service is in the expected state when no test apps are running
+ */
 async function isServiceClear(): Promise<boolean> {
     return fdc3Remote.ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, testManagerIdentity: Identity): boolean {
         if (this.model.windows.length !== 1) {
             return false;
-        }
-
-        if ((this as any)['intentHandler']['_resolvePromise'] !== null) {
-            return 'intent error' as unknown as boolean;
         }
 
         if (this.model.apps.length !== 1) {
