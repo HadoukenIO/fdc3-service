@@ -36,7 +36,7 @@ type ProviderWindow = Window & {
 export async function quitApps(...apps: Identity[]) {
     await Promise.all(apps.map(app => fin.Application.wrapSync(app).quit(true).catch(() => {})));
     // We delay here to give FDC3 a chance to process the quit, which is not captured in the returned promise
-    await delay(100);
+    await delay(250);
 }
 
 export async function waitForAppToBeRunning(app: Identity): Promise<void> {
