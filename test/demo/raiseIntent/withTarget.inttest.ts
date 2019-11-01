@@ -6,7 +6,7 @@ import {Intent} from '../../../src/client/intents';
 import {Timeouts} from '../../../src/provider/constants';
 import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
-import {delay} from '../utils/delay';
+import {delay, Duration} from '../utils/delay';
 import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning} from '../utils/common';
 import {appStartupTime, testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, testAppWithPreregisteredListeners1, testAppNotInDirectoryNotFdc3, testAppUrl} from '../constants';
 import {allowReject} from '../../../src/provider/utils/async';
@@ -91,7 +91,7 @@ just once, with the correct context', async () => {
                         await waitForAppToBeRunning(testAppInDirectory1);
 
                         // Create a child window and add a listener on it
-                        const childWindow = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-windww'});
+                        const childWindow = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-window'});
                         const listener = await fdc3Remote.addIntentListener(childWindow, validIntent.type);
 
                         await raisePromise;
@@ -127,14 +127,14 @@ listener to be added', async () => {
                         const raiseIntentPromise = raiseDelayedIntentWithTarget(
                             validIntent,
                             testAppInDirectory1,
-                            Timeouts.APP_MATURITY + 2000
+                            Duration.LONGER_THAN_APP_MATURITY
                         );
 
                         await expect(raiseIntentPromise).toThrowFDC3Error(
                             ResolveError.IntentTimeout,
                             `Timeout waiting for intent listener to be added for intent: ${validIntent.type}`
                         );
-                    }, appStartupTime + 2000);
+                    }, appStartupTime + Duration.LONGER_THAN_APP_MATURITY);
                 });
             });
         });
@@ -238,7 +238,7 @@ only the first listener is triggered', async () => {
             await listener.unsubscribe();
 
             // Wait for the app to be considered mature to ensure we get the expected error
-            await delay(Timeouts.APP_MATURITY);
+            await delay(Duration.LONGER_THAN_APP_MATURITY);
 
             const expectedRaise = expect(raiseIntent(validIntent, testAppData));
 

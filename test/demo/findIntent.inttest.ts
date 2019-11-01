@@ -6,7 +6,7 @@ import {Context, AppIntent} from '../../src/client/main';
 import {Timeouts} from '../../src/provider/constants';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
-import {delay} from './utils/delay';
+import {delay, Duration} from './utils/delay';
 import {setupStartNonDirectoryAppBookends, setupOpenDirectoryAppBookends, setupTeardown} from './utils/common';
 import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1} from './constants';
 
@@ -98,7 +98,7 @@ directory applications accept the intent with specifies the given context or no 
 
             describe('But it matures without registering a listener for an intent it is supposed to handle', () => {
                 beforeEach(async () => {
-                    await delay(Timeouts.APP_MATURITY);
+                    await delay(Duration.LONGER_THAN_APP_MATURITY);
                 });
 
                 test('When calling findIntent with the intent, the app is NOT returned', async () => {

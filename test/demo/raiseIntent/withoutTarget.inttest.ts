@@ -55,7 +55,7 @@ describe('Intent listeners and raising intents without a target', () => {
 
             describe('But the app is mature and does not have the listener registered on the model', () => {
                 beforeEach(async () => {
-                    await delay(Timeouts.APP_MATURITY);
+                    await delay(Duration.LONGER_THAN_APP_MATURITY);
                 });
 
                 // This case is equivalent to 0 apps in directory
@@ -256,12 +256,10 @@ app, the app opens but the promise rejects', async () => {
 
                     await selectResolverApp(testAppWithPreregisteredListeners1);
                     await frontPromise;
-                    await delay(Duration.API_CALL);
 
                     await expectResolverToShow();
                     await selectResolverApp(testAppWithPreregisteredListeners2);
                     await middlePromise;
-                    await delay(Duration.API_CALL);
 
                     await expectResolverToShow();
                     await selectResolverAppAndExpectResolverToClose(testAppWithPreregisteredListeners1);
@@ -281,12 +279,10 @@ app, the app opens but the promise rejects', async () => {
 
                     await selectResolverApp(testAppWithPreregisteredListeners1);
                     await frontPromise;
-                    await delay(Duration.API_CALL);
 
                     await expectResolverToShow();
                     await closeResolver();
                     await middlePromise;
-                    await delay(Duration.API_CALL);
 
                     await expectResolverToShow();
                     await selectResolverAppAndExpectResolverToClose(testAppWithPreregisteredListeners2);
@@ -310,11 +306,9 @@ app, the app opens but the promise rejects', async () => {
 
                     await middlePromise;
                     await appRunningPromise;
-                    await delay(Duration.API_CALL);
 
                     await selectResolverApp(testAppWithPreregisteredListeners1);
                     await frontPromise;
-                    await delay(Duration.API_CALL);
 
                     await expectResolverToShow();
                     await selectResolverAppAndExpectResolverToClose(testAppWithPreregisteredListeners2);

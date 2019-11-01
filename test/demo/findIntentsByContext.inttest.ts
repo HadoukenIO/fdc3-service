@@ -6,7 +6,7 @@ import {Timeouts} from '../../src/provider/constants';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {testManagerIdentity, testAppInDirectory1, testAppInDirectory4, testAppNotFdc3, testAppInDirectory3} from './constants';
 import {setupTeardown, setupOpenDirectoryAppBookends} from './utils/common';
-import {delay} from './utils/delay';
+import {delay, Duration} from './utils/delay';
 
 /**
  * A context missing the mandatory `type` field
@@ -145,7 +145,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
         setupOpenDirectoryAppBookends(testAppNotFdc3);
 
         beforeEach(async () => {
-            await delay(Timeouts.APP_MATURITY);
+            await delay(Duration.LONGER_THAN_APP_MATURITY);
         });
 
         test('The promise resolves to AppIntents for intents that take any context only', async () => {
