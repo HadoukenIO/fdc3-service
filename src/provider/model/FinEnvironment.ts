@@ -11,6 +11,7 @@ import {Timeouts} from '../constants';
 import {parseIdentity} from '../../client/validation';
 import {Injector} from '../common/Injector';
 import {getId} from '../utils/getId';
+import {SERVICE_IDENTITY} from '../../client/internal';
 
 import {Environment, EntityType} from './Environment';
 import {AppWindow} from './AppWindow';
@@ -162,33 +163,41 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     private registerWindow(identity: Identity): void {
-        const createdWindow = {index: this._windowsCreated};
+        if (identity.uuid !== SERVICE_IDENTITY.uuid) {
+            const createdWindow = {index: this._windowsCreated};
 
-        this._windows.set(getId(identity), createdWindow);
-        this._windowsCreated++;
+            this._windows.set(getId(identity), createdWindow);
+            this._windowsCreated++;
 
-        this.windowCreated.emit(identity);
+            this.windowCreated.emit(identity);
+        }
     }
 
     private deregisterWindow(identity: Identity): void {
-        this._windows.delete(getId(identity));
-        this.windowClosed.emit(identity);
+        if (identity.uuid !== SERVICE_IDENTITY.uuid) {
+            this._windows.delete(getId(identity));
+            this.windowClosed.emit(identity);
+        }
     }
 
     private registerApplication(identity: Identity, startedPromise: Promise<void> | undefined): void {
         const {uuid} = identity;
 
-        if (!this._applications.has(uuid)) {
-            this._applications.add(uuid);
-            this.applicationCreated.emit(identity, new LiveApp(startedPromise));
+        if (uuid !== SERVICE_IDENTITY.uuid) {
+            if (!this._applications.has(uuid)) {
+                this._applications.add(uuid);
+                this.applicationCreated.emit(identity, new LiveApp(startedPromise));
+            }
         }
     }
 
     private deregisterApplication(identity: Identity): void {
         const {uuid} = identity;
 
-        if (this._applications.delete(uuid)) {
-            this.applicationClosed.emit(identity);
+        if (uuid !== SERVICE_IDENTITY.uuid) {
+            if (this._applications.delete(uuid)) {
+                this.applicationClosed.emit(identity);
+            }
         }
     }
 

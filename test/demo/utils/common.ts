@@ -4,6 +4,9 @@ import {Intent} from '../../../src/client/intents';
 import {withTimeout} from '../../../src/provider/utils/async';
 import {testManagerIdentity, appStartupTime} from '../constants';
 import {Boxed} from '../../../src/provider/utils/types';
+import {RESOLVER_IDENTITY} from '../../../src/provider/utils/constants';
+import {SERVICE_IDENTITY} from '../../../src/client/internal';
+import {Model} from '../../../src/provider/model/Model';
 
 import {fin} from './fin';
 import * as fdc3Remote from './fdc3RemoteExecution';
@@ -20,6 +23,10 @@ export interface DirectoryTestAppData extends TestAppData {
 
 export interface NonDirectoryTestAppData extends TestAppData {
     manifestUrl: string;
+}
+
+type ProviderWindow = Window & {
+    model: Model;
 }
 
 /**
@@ -100,7 +107,8 @@ export function setupQuitAppAfterEach(...apps: Identity[]): void {
 }
 
 export function setupTeardown(): void {
-    afterAll(async () => {
+    afterEach(async () => {
+        await delay(500);
         const expectedRunningAppIdentities = ['fdc3-service', testManagerIdentity.uuid];
 
         const runningAppInfos = await fin.System.getAllApplications();
@@ -113,6 +121,64 @@ export function setupTeardown(): void {
             }
         }
 
+        const resolverShowing = await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing();
+
+        await expect(isServiceClear()).resolves.toBe(true);
+
+        if (resolverShowing) {
+            await closeResolver();
+        }
+
         expect(runningAppIdentities.sort()).toEqual(expectedRunningAppIdentities.sort());
+        expect(resolverShowing).toBe(false);
     });
+}
+
+/**
+ * Remotely clicks the cancel button on the resolver
+ */
+export async function closeResolver(): Promise<void> {
+    const cancelClicked = await fdc3Remote.clickHTMLElement(RESOLVER_IDENTITY, '#cancel');
+    if (!cancelClicked) {
+        throw new Error('Error clicking cancel button on resolver. Make sure it has id="cancel".');
+    }
+}
+
+async function isServiceClear(): Promise<boolean> {
+    return fdc3Remote.ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, testManagerIdentity: Identity): boolean {
+        if (this.model.windows.length !== 1) {
+            return false;
+        }
+
+        if ((this as any)['intentHandler']['_resolvePromise'] !== null) {
+            return 'intent error' as unknown as boolean;
+        }
+
+        if (this.model.apps.length !== 1) {
+            return false;
+        }
+
+        const singleWindow = this.model.windows[0];
+        const singleApp = this.model.apps[0];
+
+        if (singleWindow.appInfo.appId !== testManagerIdentity.uuid) {
+            return false;
+        }
+
+        if (singleApp.appInfo!.appId !== testManagerIdentity.uuid) {
+            return false;
+        }
+
+        if (singleApp.windows.length !== 1 || singleApp.windows[0] !== singleWindow) {
+            return false;
+        }
+
+        if (singleWindow.channelContextListeners.length !== 0 ||
+            singleWindow.intentListeners.length !== 0 ||
+            singleWindow.channelContextListeners.length !== 0) {
+            return false;
+        }
+
+        return true;
+    }, testManagerIdentity);
 }
