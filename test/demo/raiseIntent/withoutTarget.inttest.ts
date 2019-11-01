@@ -304,11 +304,12 @@ app, the app opens but the promise rejects', async () => {
                     const backPromise = raiseIntent(intentInManyApps).then(() => order.push(3));
                     await delay(Duration.API_CALL);
 
-                    waitForAppToBeRunning(testAppInDirectory4).then(() => {
-                        fdc3Remote.addIntentListener(testAppInDirectory4, uniqueIntent.type);
+                    const appRunningPromise = waitForAppToBeRunning(testAppInDirectory4).then(async () => {
+                        await fdc3Remote.addIntentListener(testAppInDirectory4, uniqueIntent.type);
                     });
 
                     await middlePromise;
+                    await appRunningPromise;
                     await delay(Duration.API_CALL);
 
                     await selectResolverApp(testAppWithPreregisteredListeners1);
