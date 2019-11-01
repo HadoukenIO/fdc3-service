@@ -12,8 +12,6 @@ import {fin} from './utils/fin';
 
 type WindowCreatedEvent = WindowEvent<'system', 'window-created'>;
 
-setupTeardown();
-
 let targetChannel: RemoteChannel;
 let channelJoinedPromise: DeferredPromise;
 let windowCreatedHandler: (event: WindowCreatedEvent) => void;
@@ -43,6 +41,8 @@ beforeEach(async () => {
 afterEach(async () => {
     await fin.Application.wrapSync(testAppNotInDirectory1).quit(true);
 });
+
+setupTeardown();
 
 test('When starting an app, the app can be interacted with as soon as a `window-created` event is received', async () => {
     const startPromise = fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl);
