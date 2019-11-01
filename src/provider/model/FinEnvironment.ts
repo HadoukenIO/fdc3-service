@@ -119,14 +119,15 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
     protected async init(): Promise<void> {
         const windowInfo = await fin.System.getAllWindows();
+        let initialized = false;
 
         fin.System.addListener('application-started', async (event: ApplicationEvent<'system', 'application-started'>) => {
-            await Injector.initialized;
+            initialized || await Injector.initialized;
             this.registerApplication({uuid: event.uuid}, Promise.resolve());
         });
 
         const appicationClosedHandler = async (event: {uuid: string}) => {
-            await Injector.initialized;
+            initialized || await Injector.initialized;
             this.deregisterApplication({uuid: event.uuid});
         };
 
@@ -136,7 +137,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         fin.System.addListener('window-created', async (event: WindowEvent<'system', 'window-created'>) => {
             const identity = {uuid: event.uuid, name: event.name};
 
-            await Injector.initialized;
+            initialized || await Injector.initialized;
             this.registerApplication({uuid: event.uuid}, Promise.resolve());
             this.registerWindow(identity);
         });
@@ -144,13 +145,14 @@ export class FinEnvironment extends AsyncInit implements Environment {
         fin.System.addListener('window-closed', async (event: WindowEvent<'system', 'window-closed'>) => {
             const identity = {uuid: event.uuid, name: event.name};
 
-            await Injector.initialized;
+            initialized || await Injector.initialized;
             this.deregisterWindow(identity);
             this.deregisterApplication({uuid: event.uuid});
         });
 
         // No await here otherwise the injector will never properly initialize - The injector awaits this init before completion!
         Injector.initialized.then(async () => {
+            initialized = true;
             // Register windows that were running before launching the FDC3 service
             windowInfo.forEach(info => {
                 const {uuid, mainWindow, childWindows} = info;
