@@ -108,24 +108,19 @@ export function setupQuitAppAfterEach(...apps: Identity[]): void {
 
 export function setupTeardown(): void {
     afterEach(async () => {
-        await delay(1000);
+        const expectedRunningApps = ['fdc3-service', testManagerIdentity.uuid];
 
-        const expectedRunningAppIdentities = ['fdc3-service', testManagerIdentity.uuid];
+        const runningApps = (await fin.System.getAllApplications()).map(appInfo => appInfo.uuid);
+        const unexpectedRunningApps = runningApps.filter((uuid) => !expectedRunningApps.includes(uuid));
 
-        const runningAppIdentities = (await fin.System.getAllApplications()).map(appInfo => appInfo.uuid);
-
-        for (const identity of runningAppIdentities) {
-            if (!expectedRunningAppIdentities.includes(identity)) {
-                await quitApps({uuid: identity});
-            }
-        }
+        await quitApps(...unexpectedRunningApps.map((uuid) => ({uuid})));
 
         const resolverShowing = await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing();
         if (resolverShowing) {
             await closeResolver();
         }
 
-        expect(runningAppIdentities.sort()).toEqual(expectedRunningAppIdentities.sort());
+        expect(runningApps.sort()).toEqual(expectedRunningApps.sort());
         expect(resolverShowing).toBe(false);
 
         await expect(isServiceClear()).resolves.toBe(true);
@@ -145,36 +140,36 @@ export async function closeResolver(): Promise<void> {
  * Checks that the service is in the expected state when no test apps are running
  */
 async function isServiceClear(): Promise<boolean> {
-    return fdc3Remote.ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, testManagerIdentity: Identity): boolean {
+    return fdc3Remote.ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, testManagerIdentity: Identity): string | boolean {
         if (this.model.windows.length !== 1) {
-            return false;
+            return 'excess windows';
         }
 
         if (this.model.apps.length !== 1) {
-            return false;
+            return 'excess apps';
         }
 
         const singleWindow = this.model.windows[0];
         const singleApp = this.model.apps[0];
 
         if (singleWindow.appInfo.appId !== testManagerIdentity.uuid) {
-            return false;
+            return 'window not test manager';
         }
 
         if (singleApp.appInfo!.appId !== testManagerIdentity.uuid) {
-            return false;
+            return 'app not test manager';
         }
 
         if (singleApp.windows.length !== 1 || singleApp.windows[0] !== singleWindow) {
-            return false;
+            return 'unexpected windows on app';
         }
 
         if (singleWindow.channelContextListeners.length !== 0 ||
             singleWindow.intentListeners.length !== 0 ||
             singleWindow.channelContextListeners.length !== 0) {
-            return false;
+            return 'unexpected listeners on window';
         }
 
         return true;
-    }, testManagerIdentity);
+    }, testManagerIdentity) as unknown as boolean;
 }
