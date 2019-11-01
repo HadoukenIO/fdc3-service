@@ -13,8 +13,8 @@ export enum Duration {
     PAGE_NAVIGATE = 500,
     SHORTER_THAN_APP_MATURITY = 2500,
     LONGER_THAN_APP_MATURITY = 7500,
-    // Should only be used when this isn't captured in the promise returned by a client-to-service API call
-    SERVICE_TO_CLIENT_API_CALL = 100,
+    // Should only be used when this isn't captured in the promise returned by an API call, or we have good reason to not await the API call
+    API_CALL = 100,
     // Certain events involve a handshake between client and service, but the API call is unawaited on the client, so we use this delay to
     // ensure the handshake has occured
     LISTENER_HANDSHAKE = 250,

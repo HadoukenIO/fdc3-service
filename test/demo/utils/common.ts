@@ -108,6 +108,8 @@ export function setupQuitAppAfterEach(...apps: Identity[]): void {
 
 export function setupTeardown(): void {
     afterEach(async () => {
+        await delay(1000);
+
         const expectedRunningAppIdentities = ['fdc3-service', testManagerIdentity.uuid];
 
         const runningAppIdentities = (await fin.System.getAllApplications()).map(appInfo => appInfo.uuid);

@@ -226,7 +226,7 @@ context', async () => {
             const listener = await listeningChannel.addContextListener();
 
             // Check our context is received
-            await delay(Duration.SERVICE_TO_CLIENT_API_CALL);
+            await delay(Duration.API_CALL);
             await expect(listener).toHaveReceivedContexts([testContext]);
         });
 
@@ -243,7 +243,7 @@ context', async () => {
             const listener = await listeningChannel.addContextListener();
 
             // Check no context is received
-            await delay(Duration.SERVICE_TO_CLIENT_API_CALL);
+            await delay(Duration.API_CALL);
             await expect(listener).toHaveReceivedContexts([]);
         });
 
@@ -262,7 +262,7 @@ with the correct context', async () => {
             const listener = await listeningChannel.addContextListener();
 
             // Check our context is received
-            await delay(Duration.SERVICE_TO_CLIENT_API_CALL);
+            await delay(Duration.API_CALL);
             await expect(listener).toHaveReceivedContexts([testContext]);
         });
     });

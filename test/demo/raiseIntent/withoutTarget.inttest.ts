@@ -250,18 +250,16 @@ app, the app opens but the promise rejects', async () => {
 
                     const frontPromise = (await raiseIntentAndExpectResolverToShow(intentInManyApps)).value.then(() => order.push(1));
                     const middlePromise = raiseIntent(intentInManyApps).then(() => order.push(2));
-                    await delay(250);
+                    await delay(Duration.API_CALL);
                     const backPromise = raiseIntent(intentInManyApps).then(() => order.push(3));
-                    await delay(250);
+                    await delay(Duration.API_CALL);
 
                     await selectResolverApp(testAppWithPreregisteredListeners1);
                     await frontPromise;
-                    await delay(250);
 
                     await expectResolverToShow();
                     await selectResolverApp(testAppWithPreregisteredListeners2);
                     await middlePromise;
-                    await delay(250);
 
                     await expectResolverToShow();
                     await selectResolverAppAndExpectResolverToClose(testAppWithPreregisteredListeners1);
@@ -275,18 +273,16 @@ app, the app opens but the promise rejects', async () => {
 
                     const frontPromise = (await raiseIntentAndExpectResolverToShow(intentInManyApps)).value.then(() => order.push(1));
                     const middlePromise = raiseIntent(intentInManyApps).catch(() => order.push(2));
-                    await delay(250);
+                    await delay(Duration.API_CALL);
                     const backPromise = raiseIntent(intentInManyApps).then(() => order.push(3));
-                    await delay(250);
+                    await delay(Duration.API_CALL);
 
                     await selectResolverApp(testAppWithPreregisteredListeners1);
                     await frontPromise;
-                    await delay(250);
 
                     await expectResolverToShow();
                     await closeResolver();
                     await middlePromise;
-                    await delay(250);
 
                     await expectResolverToShow();
                     await selectResolverAppAndExpectResolverToClose(testAppWithPreregisteredListeners2);
@@ -300,9 +296,9 @@ app, the app opens but the promise rejects', async () => {
 
                     const frontPromise = (await raiseIntentAndExpectResolverToShow(intentInManyApps)).value.then(() => order.push(1));
                     const middlePromise = raiseIntent(uniqueIntent).then(() => order.push(2));
-                    await delay(250);
+                    await delay(Duration.API_CALL);
                     const backPromise = raiseIntent(intentInManyApps).then(() => order.push(3));
-                    await delay(250);
+                    await delay(Duration.API_CALL);
 
                     waitForAppToBeRunning(testAppInDirectory4).then(() => {
                         fdc3Remote.addIntentListener(testAppInDirectory4, uniqueIntent.type);
@@ -312,7 +308,6 @@ app, the app opens but the promise rejects', async () => {
 
                     await selectResolverApp(testAppWithPreregisteredListeners1);
                     await frontPromise;
-                    await delay(250);
 
                     await expectResolverToShow();
                     await selectResolverAppAndExpectResolverToClose(testAppWithPreregisteredListeners2);
@@ -436,7 +431,6 @@ async function raiseIntentAndExpectResolverToShow(intent: Intent): Promise<Boxed
  */
 async function closeResolverAndExpectToClose(): Promise<void> {
     await closeResolver();
-    await delay(100); // Give the UI some time to process the click and close the window
 
     const isResolverShowing = await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing();
     expect(isResolverShowing).toBe(false);
@@ -450,6 +444,8 @@ async function closeResolver(): Promise<void> {
     if (!cancelClicked) {
         throw new Error('Error clicking cancel button on resolver. Make sure it has id="cancel".');
     }
+    
+    await delay(100); // Give the UI some time to process the click and close the window
 }
 
 /**
@@ -458,7 +454,6 @@ async function closeResolver(): Promise<void> {
  */
 async function selectResolverAppAndExpectResolverToClose(app: TestAppData): Promise<void> {
     await selectResolverApp(app);
-    await delay(100);
 
     const isResolverShowing = await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing();
     expect(isResolverShowing).toBe(false);
@@ -473,6 +468,7 @@ async function selectResolverApp(app: TestAppData): Promise<void> {
     if (!appClicked) {
         throw new Error(`App with name '${app.name}' not found in resolver`);
     }
+    await delay(100);
 }
 
 async function expectResolverToShow(): Promise<void> {

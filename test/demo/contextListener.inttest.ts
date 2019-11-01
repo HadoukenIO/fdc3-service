@@ -33,7 +33,7 @@ is triggered exactly once with the correct context', async () => {
                 await delay(Duration.SHORTER_THAN_APP_MATURITY);
                 const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
 
-                await delay(Duration.SERVICE_TO_CLIENT_API_CALL);
+                await delay(Duration.API_CALL);
                 await expect(listener).toHaveReceivedContexts([validContext]);
             });
 
@@ -44,7 +44,7 @@ is not triggered', async () => {
                 await delay(Duration.LONGER_THAN_APP_MATURITY);
                 const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
 
-                await delay(Duration.SERVICE_TO_CLIENT_API_CALL);
+                await delay(Duration.API_CALL);
                 await expect(listener).toHaveReceivedContexts([]);
             });
 
@@ -56,7 +56,7 @@ window, the listener is triggered exactly once with the correct context', async 
                 const childIdentity = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-window'});
                 const listener = await fdc3Remote.addContextListener(childIdentity);
 
-                await delay(Duration.SERVICE_TO_CLIENT_API_CALL);
+                await delay(Duration.API_CALL);
                 await expect(listener).toHaveReceivedContexts([validContext]);
             });
         });
