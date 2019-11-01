@@ -4,10 +4,17 @@ import {Intent} from '../../../src/client/intents';
 import {withTimeout} from '../../../src/provider/utils/async';
 import {testManagerIdentity, appStartupTime} from '../constants';
 import {Boxed} from '../../../src/provider/utils/types';
+import {RESOLVER_IDENTITY} from '../../../src/provider/utils/constants';
+import {SERVICE_IDENTITY} from '../../../src/client/internal';
+import {Model} from '../../../src/provider/model/Model';
 
 import {fin} from './fin';
 import * as fdc3Remote from './fdc3RemoteExecution';
 import {delay} from './delay';
+
+type ProviderWindow = Window & {
+    model: Model;
+}
 
 export interface TestAppData {
     name: string; // Note that this may be treated as a 'name' in the FDC3 app directory sense, or a 'name' in the OpenFin window Identity sense
@@ -100,19 +107,68 @@ export function setupQuitAppAfterEach(...apps: Identity[]): void {
 }
 
 export function setupTeardown(): void {
-    afterAll(async () => {
-        const expectedRunningAppIdentities = ['fdc3-service', testManagerIdentity.uuid];
+    afterEach(async () => {
+        const expectedRunningApps = ['fdc3-service', testManagerIdentity.uuid];
 
-        const runningAppInfos = await fin.System.getAllApplications();
+        const runningApps = (await fin.System.getAllApplications()).map(appInfo => appInfo.uuid);
+        const unexpectedRunningApps = runningApps.filter((uuid) => !expectedRunningApps.includes(uuid));
 
-        const runningAppIdentities = runningAppInfos.map(appInfo => appInfo.uuid);
+        await quitApps(...unexpectedRunningApps.map((uuid) => ({uuid})));
 
-        for (const identity of runningAppIdentities) {
-            if (!expectedRunningAppIdentities.includes(identity)) {
-                await quitApps({uuid: identity});
-            }
+        const resolverShowing = await fin.Window.wrapSync(RESOLVER_IDENTITY).isShowing();
+        if (resolverShowing) {
+            await closeResolver();
         }
 
-        expect(runningAppIdentities.sort()).toEqual(expectedRunningAppIdentities.sort());
+        expect(runningApps.sort()).toEqual(expectedRunningApps.sort());
+        expect(resolverShowing).toBe(false);
+
+        await expect(isServiceClear()).resolves.toBe(true);
     });
+}
+
+/**
+ * Checks that the service is in the expected state when no test apps are running
+ */
+async function isServiceClear(): Promise<boolean> {
+    return fdc3Remote.ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, testManagerIdentity: Identity): string | boolean {
+        if (this.model.windows.length !== 1) {
+            return `excess windows ${JSON.stringify(this.model.windows.map((window) => window.id))}, \
+apps: ${JSON.stringify(this.model.apps.map(app => (app.appInfo ? app.appInfo.appId : 'empty') + app.windows.length))}`;
+        }
+
+        if (this.model.apps.length !== 1) {
+            return 'excess apps';
+        }
+
+        const singleWindow = this.model.windows[0];
+        const singleApp = this.model.apps[0];
+
+        if (singleWindow.appInfo.appId !== testManagerIdentity.uuid) {
+            return 'window not test manager';
+        }
+
+        if (singleApp.appInfo!.appId !== testManagerIdentity.uuid) {
+            return 'app not test manager';
+        }
+
+        if (singleApp.windows.length !== 1 || singleApp.windows[0] !== singleWindow) {
+            return 'unexpected windows on app';
+        }
+
+        if (singleWindow.channelContextListeners.length !== 0 ||
+            singleWindow.intentListeners.length !== 0 ||
+            singleWindow.channelContextListeners.length !== 0) {
+            return 'unexpected listeners on window';
+        }
+
+        return true;
+    }, testManagerIdentity) as unknown as boolean;
+}
+
+async function closeResolver(): Promise<void> {
+    const cancelClicked = await fdc3Remote.clickHTMLElement(RESOLVER_IDENTITY, '#cancel');
+    if (!cancelClicked) {
+        throw new Error('Error clicking cancel button on resolver. Make sure it has id="cancel".');
+    }
 }
