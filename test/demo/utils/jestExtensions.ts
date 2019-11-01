@@ -6,15 +6,10 @@ import {ChannelId, Context as FDC3Context} from '../../../src/client/main';
 import {RemoteChannel} from './RemoteChannel';
 import {RemoteContextListener} from './fdc3RemoteExecution';
 
-interface CustomMatcherResult {
-    pass: boolean;
-    message: string | (() => string);
-}
-
 declare global {
     // eslint-disable-next-line @typescript-eslint/no-namespace
     namespace jest {
-        interface Matchers<R> {
+        interface Matchers<R, T> {
             /**
              * Used to test that an FDC3Error is thrown
              * @param code Assert that the FDC3Error is thrown with a given `code`
@@ -39,7 +34,7 @@ declare global {
 }
 
 expect.extend({
-    async toThrowFDC3Error<T>(promiseOrFunction: Promise<T> | (() => T), code: string, message?: string | RegExp): Promise<CustomMatcherResult> {
+    async toThrowFDC3Error<T>(promiseOrFunction: Promise<T> | (() => T), code: string, message?: string | RegExp): Promise<jest.CustomMatcherResult> {
         try {
             if (promiseOrFunction instanceof Promise) {
                 await promiseOrFunction;
@@ -68,7 +63,7 @@ expect.extend({
         }
     },
 
-    toBeChannel(channel: RemoteChannel, expectedChannel: {id?: ChannelId; type?: string} | ChannelId, channelType?: Function): CustomMatcherResult {
+    toBeChannel(channel: RemoteChannel, expectedChannel: {id?: ChannelId; type?: string} | ChannelId, channelType?: Function): jest.CustomMatcherResult {
         const inflatedExpectedChannel = typeof expectedChannel === 'string' ? {id: expectedChannel} : expectedChannel;
 
         let pass = true;
@@ -114,7 +109,7 @@ expect.extend({
         };
     },
 
-    async toHaveReceivedContexts(listener: RemoteContextListener, expectedContexts: FDC3Context[]): Promise<CustomMatcherResult> {
+    async toHaveReceivedContexts(listener: RemoteContextListener, expectedContexts: FDC3Context[]): Promise<jest.CustomMatcherResult> {
         const receivedContexts = await listener.getReceivedContexts();
 
         const pass = this.equals(receivedContexts, expectedContexts);

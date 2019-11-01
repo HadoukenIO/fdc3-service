@@ -77,7 +77,7 @@ export class APIHandler<T extends Enum> {
         return this._providerChannel.connections;
     }
 
-    public dispatch(to: Identity, action: string, payload: unknown): Promise<unknown> {
+    public dispatch(to: Identity, action: string, payload: any): Promise<any> {
         return this._providerChannel.dispatch(to, action, payload).catch((error) => {
             // Log and re-throw
             console.error(`Error when dispatching '${action}' to ${to.uuid}/${to.name}`, payload);

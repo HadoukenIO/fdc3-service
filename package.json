@@ -50,7 +50,7 @@
     "node-fetch": "^2.3.0",
     "openfin-service-config": "1.0.2",
     "openfin-service-signal": "^1.0.0",
-    "openfin-service-tooling": "1.0.20-alpha.75",
+    "openfin-service-tooling": "1.0.21-alpha.77",
     "pre-commit": "^1.2.2",
     "puppeteer": "~1.17.0",
     "react": "^16.8.3",
