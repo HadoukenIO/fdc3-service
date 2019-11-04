@@ -300,7 +300,7 @@ app, the app opens but the promise rejects', async () => {
                     await delay(Duration.API_CALL);
 
                     const appRunningPromise = waitForAppToBeRunning(testAppInDirectory4).then(async () => {
-                        await fdc3Remote.addIntentListener(testAppInDirectory4, uniqueIntent.type);
+                        return fdc3Remote.addIntentListener(testAppInDirectory4, uniqueIntent.type);
                     });
 
                     await middlePromise;
