@@ -156,7 +156,7 @@ export async function closeResolver(): Promise<void> {
  * Checks that the service is in the expected state when no test apps are running
  */
 async function isServiceClear(): Promise<boolean> {
-    return fdc3Remote.ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, testManagerIdentity: Identity): string | boolean {
+    return fdc3Remote.ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, testManagerIdentity: Identity): boolean {
         if (this.model.windows.length !== 1) {
             return false;
         }
@@ -189,5 +189,5 @@ async function isServiceClear(): Promise<boolean> {
         }
 
         return true;
-    }, testManagerIdentity) as unknown as boolean;
+    }, testManagerIdentity);
 }
