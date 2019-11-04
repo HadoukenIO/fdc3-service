@@ -122,7 +122,7 @@ export class IntentHandler {
 
     private async showResolver(intent: Intent, applications: Application[]): Promise<IntentResolution> {
         // Show resolver
-        const selection: ResolverResult | null = await this._resolver.handleIntent(intent, applications).catch(e => {
+        const selection: ResolverResult | null = await this._resolver.handleIntent(intent, applications).catch((e) => {
             console.warn(e);
             return null;
         });

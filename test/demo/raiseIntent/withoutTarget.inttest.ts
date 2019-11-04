@@ -413,7 +413,6 @@ async function closeResolver(): Promise<void> {
 
 /**
  * Selects an app on the resolver by remotely clicking on its button and checks the resolver closes
- * @param appName name of app to open
  */
 async function selectResolverAppAndExpectResolverToClose(app: TestAppData): Promise<void> {
     await selectResolverApp(app);
@@ -425,7 +424,6 @@ async function selectResolverAppAndExpectResolverToClose(app: TestAppData): Prom
 
 /**
  * Selects an app on the resolver by remotely clicking on its button
- * @param appName name of app to open
  */
 async function selectResolverApp(app: TestAppData): Promise<void> {
     const appClicked = await fdc3Remote.clickHTMLElement(RESOLVER_IDENTITY, `.app-card[data-appname="${app.name}"]`);

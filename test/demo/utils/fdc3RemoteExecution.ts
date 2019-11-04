@@ -297,9 +297,9 @@ export function createRemoteContextListener(executionTarget: Identity, id: numbe
         remoteIdentity: executionTarget,
         id,
         unsubscribe: async () => {
-            await ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, id: number): void {
-                this.contextListeners[id].unsubscribe();
-                delete this.contextListeners[id];
+            await ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, remoteId: number): void {
+                this.contextListeners[remoteId].unsubscribe();
+                delete this.contextListeners[remoteId];
             }, id);
             await delay(Duration.LISTENER_HANDSHAKE);
         },
@@ -328,9 +328,9 @@ function createRemoteIntentListener(executionTarget: Identity, id: number, inten
         id,
         intent,
         unsubscribe: async () => {
-            await ofBrowser.executeOnWindow(executionTarget, function(this: TestWindowContext, intent: IntentType, id: number): void {
-                this.intentListeners[intent][id].unsubscribe();
-                delete this.intentListeners[intent][id];
+            await ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, remoteIntent: IntentType, remoteId: number): void {
+                this.intentListeners[remoteIntent][remoteId].unsubscribe();
+                delete this.intentListeners[remoteIntent][remoteId];
             }, intent, id);
             await delay(Duration.LISTENER_HANDSHAKE);
         },
