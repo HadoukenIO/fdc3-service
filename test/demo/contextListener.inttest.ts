@@ -3,7 +3,7 @@ import {OrganizationContext} from '../../src/client/main';
 
 import {fin} from './utils/fin';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
-import {setupTeardown} from './utils/common';
+import {setupTeardown, setupOpenDirectoryAppBookends} from './utils/common';
 import {testManagerIdentity, testAppInDirectory1, testAppUrl} from './constants';
 
 const validContext: OrganizationContext = {type: 'fdc3.organization', name: 'OpenFin', id: {default: 'openfin'}};
@@ -18,15 +18,7 @@ describe('Context listeners and broadcasting', () => {
     });
 
     describe('Registering and unsubscribing context listeners', () => {
-        beforeEach(async () => {
-            // Open the app to be used in each test
-            await fdc3Remote.open(testManagerIdentity, testAppInDirectory1.name);
-        });
-
-        afterEach(async () => {
-            // Close down the app once done
-            await fin.Application.wrapSync(testAppInDirectory1).quit(true);
-        });
+        setupOpenDirectoryAppBookends(testAppInDirectory1);
 
         test('When calling addContextListener for the first time the promise resolves and there are no errors', async () => {
             await expect(fdc3Remote.addContextListener(testAppInDirectory1)).resolves.toBeTruthy();
@@ -46,7 +38,7 @@ describe('Context listeners and broadcasting', () => {
                 expect(listener).toHaveReceivedContexts([validContext]);
             });
 
-            test('When broadcast is called from the app that is listening, its listeners doesn\'t get triggered', async () => {
+            test('When broadcast is called from the app that is listening, its listeners don\'t get triggered', async () => {
                 await fdc3Remote.broadcast(testAppInDirectory1, validContext);
 
                 // Received contexts

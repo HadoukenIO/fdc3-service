@@ -72,6 +72,7 @@ describe('Connecting windows', () => {
             });
 
             it(`Window is ${statusAfterDisconnect === RegistrationStatus.REGISTERED ? 'registered' : 'not registered'}`, async () => {
+                await delay(Duration.WINDOW_REGISTRATION);
                 await expect(isRegistered(application)).resolves.toBe(statusAfterDisconnect === RegistrationStatus.REGISTERED);
             });
         });
@@ -168,6 +169,7 @@ describe('Disconnecting windows', () => {
             });
 
             it(`Window is ${statusAfterDisconnect === RegistrationStatus.REGISTERED ? 'registered' : 'not registered'}`, async () => {
+                await delay(Duration.WINDOW_REGISTRATION);
                 await expect(isRegistered(application)).resolves.toBe(statusAfterDisconnect === RegistrationStatus.REGISTERED);
             });
 

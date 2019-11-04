@@ -45,7 +45,7 @@ export class IntentHandler {
         if (hasTarget(intent)) {
             return this.raiseWithTarget(intent);
         } else {
-            return this.startResolve(intent);
+            return this.startResolve(intent, this.queueResolve.bind(this));
         }
     }
 
@@ -75,7 +75,10 @@ export class IntentHandler {
         }
     }
 
-    private async startResolve(intent: Intent): Promise<IntentResolution> {
+    private async startResolve(
+        intent: Intent,
+        handleAppChoice: (intent: Intent, apps: Application[]) => Promise<IntentResolution>
+    ): Promise<IntentResolution> {
         const apps: Application[] = await this._model.getApplicationsForIntent(intent.type, intent.context.type);
 
         if (apps.length === 0) {
@@ -86,9 +89,9 @@ export class IntentHandler {
             // Resolve intent immediately
             return this.fireIntent(intent, apps[0]);
         } else {
-            console.log(`${apps.length} apps found to resolve intent '${intent.type}', showing resolver'`);
+            console.log(`${apps.length} apps found to resolve intent '${intent.type}', delegating app choice'`);
 
-            return this.queueResolve(intent, apps);
+            return handleAppChoice(intent, apps);
         }
     }
 
@@ -96,24 +99,41 @@ export class IntentHandler {
         if (this._resolvePromise) {
             console.log(`Resolver showing, re-resolving intent '${intent.type}' when resolver closes'`);
 
-            this._resolvePromise = this._resolvePromise.catch(() => {}).then(() => this.startResolve(intent));
-
-            return this._resolvePromise;
+            this._resolvePromise = this._resolvePromise.catch(() => {}).then(() => this.startResolve(intent, this.showResolver.bind(this)));
         } else {
-            // Show resolver
-            const selection: ResolverResult | null = await this._resolver.handleIntent(intent, applications).catch((e) => {
-                console.warn(e);
-                return null;
-            });
-
-            if (!selection) {
-                throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Resolver closed or cancelled');
-            }
-
-            // Handle response
-            console.log(`App ${selection.app.name} selected to resolve intent '${intent.type}', firing intent`);
-            return this.fireIntent(intent, selection.app);
+            this._resolvePromise = this.showResolver(intent, applications);
         }
+
+        const resolvePromise = this._resolvePromise.then((result) => {
+            if (this._resolvePromise === resolvePromise) {
+                this._resolvePromise = null;
+            }
+            return result;
+        }, (error) => {
+            if (this._resolvePromise === resolvePromise) {
+                this._resolvePromise = null;
+            }
+            throw error;
+        });
+        this._resolvePromise = resolvePromise;
+
+        return resolvePromise;
+    }
+
+    private async showResolver(intent: Intent, applications: Application[]): Promise<IntentResolution> {
+        // Show resolver
+        const selection: ResolverResult | null = await this._resolver.handleIntent(intent, applications).catch(e => {
+            console.warn(e);
+            return null;
+        });
+
+        if (!selection) {
+            throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Resolver closed or cancelled');
+        }
+
+        // Handle response
+        console.log(`App ${selection.app.name} selected to resolve intent '${intent.type}', firing intent`);
+        return this.fireIntent(intent, selection.app);
     }
 
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {

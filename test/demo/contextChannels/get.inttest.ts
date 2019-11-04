@@ -130,9 +130,8 @@ ${JSON.stringify({uuid: testAppNotInDirectoryNotFdc3.uuid, name: testAppNotInDir
         });
     });
 
-    test('When a valid identity is provided, the call resolves successfully', () => {
-        // eslint-disable-next-line
-        expect(fdc3Remote.getCurrentChannel(testManagerIdentity, testManagerIdentity)).resolves;
+    test('When a valid identity is provided, the call resolves successfully', async () => {
+        await fdc3Remote.getCurrentChannel(testManagerIdentity, testManagerIdentity);
     });
 });
 

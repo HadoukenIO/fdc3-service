@@ -107,7 +107,7 @@ describe('Intent listeners and raising intents with a target', () => {
 
         describe('When the target is running', () => {
             setupOpenDirectoryAppBookends(testAppInDirectory1);
-            setupCommonTests(testAppInDirectory1);
+            setupCommonRunningAppTests(testAppInDirectory1);
         });
     });
 
@@ -134,12 +134,12 @@ describe('Intent listeners and raising intents with a target', () => {
 
         describe('When the target (which is an ad-hoc app) is running', () => {
             setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
-            setupCommonTests(testAppNotInDirectory1);
+            setupCommonRunningAppTests(testAppNotInDirectory1);
         });
     });
 });
 
-function setupCommonTests(testAppData: TestAppData): void {
+function setupCommonRunningAppTests(testAppData: TestAppData): void {
     describe('When the target has *not* registered listeners for the raised intent', () => {
         test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
             await expect(raiseIntent(nonExistentIntent, testAppData)).toThrowFDC3Error(
