@@ -37,6 +37,7 @@ export class ContextHandler {
     public send(window: AppWindow, context: Context): Promise<void> {
         const payload: ReceiveContextPayload = {context};
         if (window.hasContextListener()) {
+            // TODO: Make sure this will not cause problems if it never returns [SERVICE-555]
             return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload);
         } else {
             // We intentionally don't await this, as we have no expectation that windows will add a context listener
