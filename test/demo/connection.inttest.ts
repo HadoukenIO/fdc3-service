@@ -193,7 +193,7 @@ async function openDirectoryApp(app: TestAppData): Promise<void> {
 }
 
 async function openNonDirectoryApp(app: TestAppData): Promise<void> {
-    await startNonDirectoryApp(app as NonDirectoryTestAppData);
+    await fin.Application.startFromManifest((app as NonDirectoryTestAppData).manifestUrl);
 }
 
 async function reload(target: Identity): Promise<void> {
