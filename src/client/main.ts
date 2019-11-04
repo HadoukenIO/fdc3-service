@@ -58,14 +58,15 @@ export interface AppIntent {
 }
 
 /**
- * IntentResolution provides a standard format for data returned upon resolving an intent.
+ * Provides a standard format for data returned upon resolving an intent.
+ *
  * ```javascript
  * //You might fire and forget an intent
- * var intentR = await agent.raiseIntent("intentName", context);
+ * await agent.raiseIntent("intentName", context);
  *
  * //Or you might want some data to come back
- * var intentR = await agent.raiseIntent("intentName", context);
- * var dataR = intentR.data;
+ * const result = await agent.raiseIntent("intentName", context);
+ * const data = result.data;
  * ```
  */
 export interface IntentResolution {
@@ -74,17 +75,20 @@ export interface IntentResolution {
      */
     source: AppName;
     /**
-     * Any data returned by the intent.
+     * Any data returned by the target application's intent listener.
+     *
+     * If the target application registered multiple listeners, this will be the first non-`undefined` value returned
+     * by a listener.
      */
     data?: unknown;
     /**
-     * For future use. Right now always the string '1.0.0'.
+     * For future use. Right now always the string `'1.0.0'`.
      */
     version: string;
 }
 
 /**
- * Listener type alias. One of ContextListener or IntentListener.
+ * Listener type alias, generic type that can be used to refer any context or intent listener.
  */
 export type Listener = ContextListener | IntentListener | ChannelContextListener;
 
@@ -98,6 +102,9 @@ export interface ContextListener {
     handler: (context: Context) => void;
     /**
      * Unsubscribe the listener object. We will no longer receive context messages on this handler.
+     *
+     * Calling this method has no effect if the listener has already been unsubscribed. To re-subscribe, call
+     * [[addContextListener]] again to create a new listener object.
      */
     unsubscribe: () => void;
 }
@@ -115,7 +122,10 @@ export interface IntentListener {
      */
     handler: (context: Context) => void;
     /**
-     * Unsubscribe the listener object.
+     * Unsubscribe the listener object. We will no longer receive intent messages on this handler.
+     *
+     * Calling this method has no effect if the listener has already been unsubscribed. To re-subscribe, call
+     * [[addIntentListener]] again to create a new listener object.
      */
     unsubscribe: () => void;
 }
@@ -134,7 +144,7 @@ const contextListeners: ContextListener[] = [];
  */
 
 /**
- * Launches/links to an app by name.
+ * Launches/links to an app by name. The application will be started if it is not already running.
  *
  * If a [[Context]] object is passed in, this object will be provided to the opened application via a [[ContextListener]].
  *
@@ -162,12 +172,12 @@ export async function open(name: AppName, context?: Context): Promise<void> {
  *
  * If the resolution fails, the promise will return an [[FDC3Error]] with a string from the [[ResolveError]] export enumeration.
  *
- * For example, I know 'StartChat' exists as a concept, and want to know more about it.
+ * For example, I know `'StartChat'` exists as a concept, and want to know more about it.
  * ```javascript
  * const appIntent = await agent.findIntent("StartChat");
  * ```
  *
- * This returns a single [[AppIntent]]:
+ * This returns a single [[AppIntent]] (some fields omitted for brevity, see [[Application]] for full list of `apps` fields):
  * ```ts
  * {
  *      intent: { name: "StartChat", displayName: "Chat" },
@@ -189,40 +199,43 @@ export async function findIntent(intent: string, context?: Context): Promise<App
 /**
  * Find all the available intents for a particular context.
  *
- * findIntentsByContext is effectively granting programmatic access to the desktop agent's resolver.
+ * `findIntentsByContext` is effectively granting programmatic access to the desktop agent's resolver.
  * A promise resolving to all the intents, their metadata and metadata about the apps that registered it is returned,
  * based on the context export types the intents have registered.
  *
- * If the resolution fails, the promise will return an `Error` with a string from the `ResolveError` export enumeration.
+ * If the resolution fails, the promise will return an [[FDC3Error]] with a string from the `ResolveError` export
+ * enumeration.
  *
- * For example, I have a context object, and I want to know what I can do with it, hence, I look for intents...
+ * For example, I have a context object and I want to know what I can do with it, so I look for intents...
  * ```javascript
  * const appIntents = await agent.findIntentsByContext(context);
  * ```
- * This might return:
+ * This returns an array of [[AppIntent]] objects such as the following (some fields omitted for brevity, see
+ * [[Application]] for full list of `apps` fields):
  * ```ts
-* [
-*    {
-*       intent: { name: "StartCall", displayName: "Call" },
-*       apps: [{ name: "Skype" }]
-*   },
-*   {
-*       intent: { name: "StartChat", displayName: "Chat" },
-*       apps: [{ name: "Skype" }, { name: "Symphony" }, { name: "Slack" }]
-*   }
-* ]
-* ```
+ * [
+ *    {
+ *       intent: { name: "StartCall", displayName: "Call" },
+ *       apps: [{ name: "Skype" }]
+ *   },
+ *   {
+ *       intent: { name: "StartChat", displayName: "Chat" },
+ *       apps: [{ name: "Skype" }, { name: "Symphony" }, { name: "Slack" }]
+ *   }
+ * ]
+ * ```
  *
  * We could now use this by taking one of the intents, and raising it.
  *```javascript
  * // select a particular intent to raise
- * const startChat = appIntents[1];
+ * const selectedIntent = appIntents[1];
  *
- * // target a particular app
- * const selectedApp = startChat.apps[0];
+ * // raise the intent, passing the given context, letting the user select which app to use
+ * await agent.raiseIntent(selectedIntent.intent.name, context);
  *
- * // raise the intent, passing the given context, targeting the app
- * await agent.raiseIntent(startChat.intent.name, context, selectedApp.name);
+ * // raise the intent, passing the given context, targeting a particular app
+ * const selectedApp = selectedIntent.apps[0];
+ * await agent.raiseIntent(selectedIntent.intent.name, context, selectedApp.name);
  * ```
  * @param context Returned intents must support this context.
  */
@@ -236,6 +249,13 @@ export async function findIntentsByContext(context: Context): Promise<AppIntent[
  *  agent.broadcast(context);
  * ```
  *
+ * Only windows in the same [[ChannelBase|channel]] as the broadcasting window will receive the context. All windows
+ * will initially be in the same channel (referred to as the [[defaultChannel|default channel]]). See
+ * [[ContextChannels]] for more details.
+ *
+ * Note that windows do not receive their own broadcasts. If the window calling `broadcast` has also added one or more
+ * [[addContextListener|context listeners]], then those listeners will not fire as a result of this broadcast.
+ *
  * @throws `TypeError` if `context` is not a valid [[Context]]
  * @param context The context to broadcast.
  */
@@ -244,7 +264,19 @@ export async function broadcast(context: Context): Promise<void> {
 }
 
 /**
- * Raises an intent to the desktop agent to resolve.
+ * Raises an intent to the desktop agent to resolve. Intents can be either targeted or non-targeted, determined by the
+ * presence or absense of the `target` argument. For non-targeted intents, the service will search the directory and
+ * any running applications to find an application that can handle the given intent and context. If there are multiple
+ * such applications, the end user will be asked to select which application they wish to use.
+ *
+ * If the application isn't already running, it will be started by the service. The intent data will then be passed to
+ * the target application's intent listener. The promise returned by this function resolves when the service has
+ * confirmed that the target application has been started its intent listener has completed successfully.
+ *
+ * The returned [[IntentResolution]] object indicates which application handled the intent (if the intent is a targeted
+ * intent, this will always be the value passed as `target`), and contains the data returned by the target applications
+ * intent listener (if any).
+ *
  * ```javascript
  * //raise an intent to start a chat with a given contact
  * const intentR = await agent.raiseIntent("StartChat", context);
@@ -333,7 +365,7 @@ export function addContextListener(handler: (context: Context) => void): Context
 }
 
 /**
- * Event that is fired whenever a window changes from one channel to another. This captures events from all channels (including the global channel).
+ * Event that is fired whenever a window changes from one channel to another. This captures events from all channels (including the default channel).
  */
 export function addEventListener(eventType: 'channel-changed', handler: (event: ChannelChangedEvent) => void): void;
 

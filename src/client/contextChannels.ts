@@ -1,4 +1,14 @@
 /**
+ * Context channels allow end-user filtering of context broadcasts. Each window is assigned to a particular
+ * context channel, and any [[broadcast|broadcasts]] by any window in that channel will only be recevied by the other
+ * windows in that channel. The assignment of windows to channels would typically be managed by the user, through
+ * either a channel selector widget built into the window itself, or through a separate channel manager application.
+ *
+ * All windows will initially be placed in the [[defaultChannel|default channel]], and will remain so unless they
+ * explicitly [[join]] another channel.
+ *
+ * There are three types of channels: [[DefaultChannel]], [[SystemChannel]] and [[AppChannel]].
+ *
  * @module ContextChannels
  */
 
@@ -57,6 +67,8 @@ export type Channel = DefaultChannel | SystemChannel | AppChannel;
  * can only join a channel by leaving it's previous channel. The exceptions to this rule are when the window is created
  * and destroyed when there will be no previous channel or no current channel, respectively.
  *
+ * To listen for channel changes across all (or multiple) channels, there is also a top-level {@link ChannelChangedEvent}.
+ *
  * @event
  */
 export interface ChannelWindowAddedEvent {
@@ -88,7 +100,7 @@ export interface ChannelWindowAddedEvent {
  * can only join a channel by leaving it's previous channel. The exceptions to this rule are when the window is created
  * and destroyed when there will be no previous channel or no current channel, respectively.
  *
- * To listen for channel changes across all (or multiple) channel, there is also a top-level {@link ChannelChangedEvent}.
+ * To listen for channel changes across all (or multiple) channels, there is also a top-level {@link ChannelChangedEvent}.
  *
  * @event
  */
@@ -162,8 +174,8 @@ export interface ChannelContextListener extends ContextListener {
 /**
  * Class representing a context channel. All interactions with a context channel happen through the methods on here.
  *
- * When users wish to generically handle both {@link SystemChannel}s and the {@link DefaultChannel}, generally the
- * {@link Channel} type should be used instead of {@link ChannelBase}.
+ * When users wish to generically handle both {@link SystemChannel}s, {@link AppChannel}s and the
+ * {@link DefaultChannel}, generally the {@link Channel} type should be used instead of {@link ChannelBase}.
  */
 export abstract class ChannelBase {
     /**
@@ -290,7 +302,7 @@ export abstract class ChannelBase {
     }
 
     /**
-     * Event that is fired whenever a window changes joins this channel. This includes switching to/from the default
+     * Event that is fired whenever a window joins this channel. This includes switching to/from the default
      * channel.
      *
      * The event also includes which channel the window was in previously. The `channel` property within the
@@ -299,7 +311,7 @@ export abstract class ChannelBase {
     public async addEventListener(eventType: 'window-added', listener: (event: ChannelWindowAddedEvent) => void): Promise<void>;
 
     /**
-     * Event that is fired whenever a window changes leaves this channel. This includes switching to/from the default
+     * Event that is fired whenever a window leaves this channel. This includes switching to/from the default
      * channel.
      *
      * The event also includes which channel the window is being added to. The `previousChannel` property within the
@@ -405,7 +417,7 @@ export class SystemChannel extends ChannelBase {
  * Applications can create these for specialised use-cases.  These channels should be obtained by name by calling
  * {@link getOrCreateAppChannel} and it is up to your organization to decide how applications are aware of this name.
  * As with organization defined contexts, app channel names should have a prefix specific to your organization to avoid
- * name collisions, e.g. 'company-name.channel-name'.
+ * name collisions, e.g. `'company-name.channel-name'`.
  *
  * App channels can be joined by any window, but are only indirectly discoverable if the name is not known.
  */
@@ -468,7 +480,7 @@ export async function getSystemChannels(): Promise<SystemChannel[]> {
  * Fetches a channel object for a given channel identifier. The `channelId` property maps to the {@link ChannelBase.id} field.
  *
  * @param channelId The ID of the channel to return
- * @throws `TypeError`: If `channelId` is not a valid ChannelId
+ * @throws `TypeError`: If `channelId` is not of the correct type
  * @throws `FDC3Error`: If the channel specified by `channelId` does not exist
  */
 export async function getChannelById(channelId: ChannelId): Promise<Channel> {
@@ -496,14 +508,13 @@ export async function getCurrentChannel(identity?: Identity): Promise<Channel> {
  *
  * It is up to your organization to decide how to share knowledge of these custom channels. As with organization
  * defined contexts, app channel names should have a prefix specific to your organization to avoid name collisions,
- * e.g. 'company-name.channel-name'.
+ * e.g. `'company-name.channel-name'`.
  *
  * The service will assign a unique ID when creating a new app channel, but no particular mapping of name to ID should
  * be assumed.
  *
- * @param name The name of the channel. May not be an empty string
+ * @param name The name of the channel. Must not be an empty string.
  */
-
 export async function getOrCreateAppChannel(name: string): Promise<AppChannel> {
     const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_OR_CREATE_APP_CHANNEL, {name: parseAppChannelName(name)});
 

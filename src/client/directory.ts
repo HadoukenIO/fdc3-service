@@ -12,7 +12,8 @@
  * are described [here](https://fdc3.finos.org/docs/1.0/appd-discovery#application-identifier).
  *
  * In the OpenFin implementation of FDC3, we expect this to be the same as the
- * [UUID in the manifest](https://developers.openfin.co/docs/application-configuration), but please see [[Application]].
+ * [UUID in the manifest](https://developers.openfin.co/docs/application-configuration), but this can be configured
+ * using [[Application.customConfig]].
  *
  * This type alias exists to disambiguate the raw string app identity from the [[AppName]].
  */
@@ -32,7 +33,9 @@ export interface Application {
     /**
      * The Application Identifier. Please see https://fdc3.finos.org/docs/1.0/appd-discovery#application-identifier.
      * By convention this should be the same as your [OpenFin UUID](https://developers.openfin.co/docs/application-configuration).
-     * If you can't do that, then add a field into the [[customConfig]] member to indicate your UUID.
+     *
+     * If you can't use your OpenFin UUID as the appId, then instead specify your application's UUID by adding an
+     * `appUuid` property to the [[customConfig]] field.
      */
     appId: AppId;
     /**
@@ -46,7 +49,7 @@ export interface Application {
      */
     manifest: string;
     /**
-     * The manifest type. Always 'openfin'.
+     * The manifest type. Always `'openfin'`.
      */
     manifestType: string;
     /**
@@ -54,7 +57,7 @@ export interface Application {
      */
     version?: string;
     /**
-     * The human-readable title of the app, typically used by the launcher UI. If not provided, the name is used.
+     * The human-readable title of the app, typically used by the launcher UI. If not provided, [[name]] is used.
      */
     title?: string;
     /**
@@ -67,7 +70,7 @@ export interface Application {
     description?: string;
     /**
      * Images that can be displayed as part of the app directory entry. Use these for screenshots, previews or similar. These are not the
-     * application icons: use 'icons' for that.
+     * application icons: use [[icons]] for that.
      */
     images?: AppImage[];
     /**
@@ -87,7 +90,15 @@ export interface Application {
      */
     icons?: Icon[];
     /**
-     * Additional config. Currently unused by the OpenFin implementation.
+     * Additional config.
+     *
+     * The OpenFin FDC3 service supports the following configuration values:
+     * * `appUuid`: Informs the service that the application launched by this [[manifest]] will have this UUID. By
+     * default, the service will expect the UUID of the application to match the [[appId]], this configuration value
+     * can be used to override this.
+     *
+     * Any additional fields will still be accessible to applications (via APIs such as [[findIntent]]), but will not
+     * have any impact on the operation of the service.
      */
     customConfig?: NameValuePair[];
     /**
@@ -140,7 +151,7 @@ export interface AppDirIntent {
      */
     name: string;
     /**
-     * The human-readable name to display.
+     * A short, human-readable description of this intent.
      */
     displayName?: string;
     /**
