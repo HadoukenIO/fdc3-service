@@ -3,7 +3,6 @@ import 'reflect-metadata';
 
 import {ResolveError} from '../../../src/client/errors';
 import {Intent} from '../../../src/client/intents';
-import {Timeouts} from '../../../src/provider/constants';
 import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {delay, Duration} from '../utils/delay';

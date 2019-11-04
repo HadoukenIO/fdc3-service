@@ -2,7 +2,6 @@ import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
 import {Application, IntentType, ChannelId} from '../../client/main';
-import {DeferredPromise} from '../common/DeferredPromise';
 import {Events, ChannelEvents} from '../../client/internal';
 import {getId} from '../utils/getId';
 import {untilTrue, allowReject} from '../utils/async';

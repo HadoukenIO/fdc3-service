@@ -8,7 +8,7 @@ import {ChannelId, DEFAULT_CHANNEL_ID, AppIntent} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {SYSTEM_CHANNELS, Timeouts} from '../constants';
-import {withStrictTimeout, untilTrue, allowReject, untilSignal, asyncFilter, asyncMap} from '../utils/async';
+import {withStrictTimeout, untilTrue, allowReject, untilSignal, asyncFilter} from '../utils/async';
 import {Boxed} from '../utils/types';
 import {getId} from '../utils/getId';
 import {DeferredPromise} from '../common/DeferredPromise';

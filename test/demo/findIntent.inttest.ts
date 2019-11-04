@@ -3,7 +3,6 @@ import fetch from 'node-fetch';
 
 import {Application as DirectoryApp} from '../../src/client/directory';
 import {Context, AppIntent} from '../../src/client/main';
-import {Timeouts} from '../../src/provider/constants';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay, Duration} from './utils/delay';
