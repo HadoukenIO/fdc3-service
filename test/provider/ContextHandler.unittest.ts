@@ -5,8 +5,6 @@ import {AppWindow} from '../../src/provider/model/AppWindow';
 import {APIToClientTopic, ReceiveContextPayload} from '../../src/client/internal';
 import {createMockAppWindow, createMockChannel, createMockChannelHandler, createMockModel, createMockApiHandler, getterMock} from '../mocks';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
-import {testAppUrl} from '../demo/constants';
-import {delay} from '../demo/utils/delay';
 
 let contextHandler: ContextHandler;
 
