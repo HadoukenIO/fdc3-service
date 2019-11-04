@@ -45,11 +45,11 @@ describe.each(broadcastTestParams)(
             await fdc3Remote.broadcast(broadcastingWindow, testContext);
 
             // Check our listening window received our test context
-            expect(listener).toHaveReceivedContexts([testContext]);
+            await expect(listener).toHaveReceivedContexts([testContext]);
 
             // Check the other windows received no context
             for (const otherListener of otherListeners) {
-                expect(otherListener).toHaveReceivedContexts([]);
+                await expect(otherListener).toHaveReceivedContexts([]);
             }
         }, appStartupTime * 4);
 
@@ -66,7 +66,7 @@ describe.each(broadcastTestParams)(
             await fdc3Remote.broadcast(broadcastingWindow, testContext);
 
             // Check our blue window received our test context
-            expect(channelChangingWindowListener).toHaveReceivedContexts([testContext]);
+            await expect(channelChangingWindowListener).toHaveReceivedContexts([testContext]);
         }, appStartupTime * 2);
 
         test('Context is not received by broadcasting window', async () => {
@@ -78,7 +78,7 @@ describe.each(broadcastTestParams)(
             await fdc3Remote.broadcast(broadcastingWindow, testContext);
 
             // Check the default window did not received our test context
-            expect(listener).toHaveReceivedContexts([]);
+            await expect(listener).toHaveReceivedContexts([]);
         }, appStartupTime * 2);
     }
 );
@@ -97,7 +97,7 @@ describe('When adding a context listener to the default channel', () => {
         await joinChannel(channelChangingWindow, 'default');
 
         // Check our now-default window received no context
-        expect(channelChangingWindowListener).toHaveReceivedContexts([]);
+        await expect(channelChangingWindowListener).toHaveReceivedContexts([]);
     }, appStartupTime * 2);
 });
 
@@ -122,7 +122,7 @@ describe.each(contextListenerTestParams)('When adding a context listener to %s c
         await joinChannel(channelChangingWindow, broadcastChannel);
 
         // Check our previously-default window received our test context
-        expect(channelChangingListener).toHaveReceivedContexts([testContext]);
+        await expect(channelChangingListener).toHaveReceivedContexts([testContext]);
     }, appStartupTime * 2);
 
     test('When the channel that has been emptied since last being broadcast on, no context is received when joining', async () => {
@@ -139,7 +139,7 @@ describe.each(contextListenerTestParams)('When adding a context listener to %s c
         await joinChannel(listeningWindow, broadcastChannel);
 
         // Check no cached context has been received, given that the green channel has been emptied
-        expect(listener).toHaveReceivedContexts([]);
+        await expect(listener).toHaveReceivedContexts([]);
     }, appStartupTime * 2);
 });
 

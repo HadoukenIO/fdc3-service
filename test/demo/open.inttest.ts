@@ -99,7 +99,7 @@ describe('Opening applications with the FDC3 client', () => {
                 const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
 
                 // Check that the app received the context passed in open and nothing else
-                expect(preregisteredListener).toHaveReceivedContexts([validContext]);
+                await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
             });
 
             test('When passing a known app name but invalid context, the service returns an FDC3Error', async () => {
@@ -137,7 +137,7 @@ describe('Opening applications with the FDC3 client', () => {
                 const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
 
                 // Check that the app received the context passed in open and nothing else
-                expect(preregisteredListener).toHaveReceivedContexts([validContext]);
+                await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
             });
 
             test('When an app is already running, opening a second app with context works as expected \
@@ -212,7 +212,7 @@ and does not trigger the context listener of the already open app', async () => 
 
             await delay(1000);
             const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppDelayedPreregisterShort);
-            expect(preregisteredListener).toHaveReceivedContexts([validContext]);
+            await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
         });
     });
 
@@ -240,7 +240,7 @@ and does not trigger the context listener of the already open app', async () => 
 
             await delay(10000);
             const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppDelayedPreregisterLong);
-            expect(preregisteredListener).toHaveReceivedContexts([]);
+            await expect(preregisteredListener).toHaveReceivedContexts([]);
         });
     });
 });

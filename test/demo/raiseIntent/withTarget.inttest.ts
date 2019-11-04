@@ -68,7 +68,7 @@ describe('Intent listeners and raising intents with a target', () => {
 
                         const listener = await fdc3Remote.getRemoteIntentListener(testAppWithPreregisteredListeners1, preregisteredIntent.type);
 
-                        expect(listener).toHaveReceivedContexts([preregisteredIntent.context]);
+                        await expect(listener).toHaveReceivedContexts([preregisteredIntent.context]);
                     });
                 });
 
@@ -82,7 +82,7 @@ describe('Intent listeners and raising intents with a target', () => {
 
                             // Since the time is under the listener handshake timeout, intent should be triggered correctly
                             const listener = await fdc3Remote.getRemoteIntentListener(testAppInDirectory1, validIntent.type);
-                            expect(listener).toHaveReceivedContexts([validIntent.context]);
+                            await expect(listener).toHaveReceivedContexts([validIntent.context]);
                         }, appStartupTime + 1500);
                     });
 
@@ -157,7 +157,7 @@ the child listener is triggered exactly once with the correct context', async ()
 
             await raiseIntent(validIntent, testAppData);
 
-            expect(childListener).toHaveReceivedContexts([validIntent.context]);
+            await expect(childListener).toHaveReceivedContexts([validIntent.context]);
         });
     });
 
@@ -176,7 +176,7 @@ the child listener is triggered exactly once with the correct context', async ()
         test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
             await raiseIntent(validIntent, testAppData);
 
-            expect(listener).toHaveReceivedContexts([validIntent.context]);
+            await expect(listener).toHaveReceivedContexts([validIntent.context]);
         });
 
         test('When registering a duplicate intent listener, then calling raiseIntent from another app, \
@@ -185,9 +185,9 @@ both listeners are triggered exactly once with the correct context', async () =>
 
             await raiseIntent(validIntent, testAppData);
 
-            expect(listener).toHaveReceivedContexts([validIntent.context]);
+            await expect(listener).toHaveReceivedContexts([validIntent.context]);
 
-            expect(duplicateListener).toHaveReceivedContexts([validIntent.context]);
+            await expect(duplicateListener).toHaveReceivedContexts([validIntent.context]);
         });
 
         test('When adding a distinct intent listener, then calling raiseIntent from another app, \
@@ -196,9 +196,9 @@ only the first listener is triggered', async () => {
 
             await raiseIntent(validIntent, testAppData);
 
-            expect(listener).toHaveReceivedContexts([validIntent.context]);
+            await expect(listener).toHaveReceivedContexts([validIntent.context]);
 
-            expect(distinctListener).toHaveReceivedContexts([]);
+            await expect(distinctListener).toHaveReceivedContexts([]);
         });
 
         test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it errors', async () => {
@@ -217,9 +217,9 @@ the first listener is triggered exactly once with the correct context, and the s
 
             await raiseIntent(validIntent, testAppData);
 
-            expect(listener).toHaveReceivedContexts([validIntent.context]);
+            await expect(listener).toHaveReceivedContexts([validIntent.context]);
 
-            expect(shortLivedListener).toHaveReceivedContexts([]);
+            await expect(shortLivedListener).toHaveReceivedContexts([]);
         });
 
         type TestParam = [string, number];
@@ -247,9 +247,9 @@ all listeners are triggered exactly once with the correct context', async (title
             await raiseIntent(validIntent, testAppData);
 
             for (const childListener of childListeners) {
-                expect(childListener).toHaveReceivedContexts([validIntent.context]);
+                await expect(childListener).toHaveReceivedContexts([validIntent.context]);
             }
-            expect(listener).toHaveReceivedContexts([validIntent.context]);
+            await expect(listener).toHaveReceivedContexts([validIntent.context]);
         });
     });
 }
