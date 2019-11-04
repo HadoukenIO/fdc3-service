@@ -457,7 +457,7 @@ async function selectResolverApp(app: TestAppData): Promise<void> {
     if (!appClicked) {
         throw new Error(`App with name '${app.name}' not found in resolver`);
     }
-    await delay(500);
+    await delay(Duration.API_CALL);
 }
 
 async function expectResolverToShow(): Promise<void> {
@@ -474,6 +474,9 @@ async function expectResolverToShow(): Promise<void> {
     if (timedOut) {
         throw new Error('Timeout waiting for resolver to show');
     }
+
+    // Ensure that the resolver has received latest app data from service
+    await delay(Duration.API_CALL);
 }
 
 function raiseIntent(intent: Intent, target?: TestAppData): Promise<void> {
