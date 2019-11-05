@@ -29,7 +29,7 @@ export interface Context {
      * An optional map of any equivalent identifiers for the
      * context type, e.g. ISIN, CUSIP, etc. for an instrument.
      */
-    id?: {[key: string]: string|undefined;};
+    id?: {[key: string]: string|undefined};
 
     /**
      * @hidden

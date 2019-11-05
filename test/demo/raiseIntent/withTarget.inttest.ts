@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/await-thenable */
 import 'jest';
 import 'reflect-metadata';
 
@@ -9,7 +10,7 @@ import {delay} from '../utils/delay';
 import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning} from '../utils/common';
 import {appStartupTime, testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, testAppWithPreregisteredListeners1, testAppNotInDirectoryNotFdc3, testAppUrl} from '../constants';
 import {allowReject} from '../../../src/provider/utils/async';
-import {AppDirIntent, Context} from '../../../src/client/main';
+import {Context} from '../../../src/client/main';
 import {IntentType} from '../../../src/provider/intents';
 
 interface Intent {
@@ -112,7 +113,7 @@ describe('Intent listeners and raising intents with a target', () => {
 
         describe('When the target is running', () => {
             setupOpenDirectoryAppBookends(testAppInDirectory1);
-            setupCommonTests(testAppInDirectory1);
+            setupCommonRunningAppTests(testAppInDirectory1);
         });
     });
 
@@ -139,12 +140,12 @@ describe('Intent listeners and raising intents with a target', () => {
 
         describe('When the target (which is an ad-hoc app) is running', () => {
             setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
-            setupCommonTests(testAppNotInDirectory1);
+            setupCommonRunningAppTests(testAppNotInDirectory1);
         });
     });
 });
 
-function setupCommonTests(testAppData: TestAppData): void {
+function setupCommonRunningAppTests(testAppData: TestAppData): void {
     describe('When the target has *not* registered listeners for the raised intent', () => {
         test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
             await expect(raiseIntent(nonExistentIntent, testAppData)).toThrowFDC3Error(
@@ -155,7 +156,7 @@ function setupCommonTests(testAppData: TestAppData): void {
 
         test('When the target has a child window with an intent listener, when calling raiseIntent from another app, \
 the child listener is triggered exactly once with the correct context', async () => {
-            const childIdentity = {uuid: testAppData.uuid, name: testAppData.name + '-child-window'};
+            const childIdentity = {uuid: testAppData.uuid, name: `${testAppData.name}-child-window`};
 
             await fdc3Remote.createFinWindow(testAppData, {name: childIdentity.name, url: testAppUrl});
             const childListener = await fdc3Remote.addIntentListener(childIdentity, validIntent.type);
@@ -167,6 +168,7 @@ the child listener is triggered exactly once with the correct context', async ()
     });
 
     test('When calling addIntentListener for the first time, the promise resolves and there are no errors', async () => {
+        // eslint-disable-next-line
         await expect(fdc3Remote.addIntentListener(testAppData, validIntent.type)).resolves.not.toThrow();
     });
 
@@ -196,7 +198,7 @@ both listeners are triggered exactly once with the correct context', async () =>
 
         test('When adding a distinct intent listener, then calling raiseIntent from another app, \
 only the first listener is triggered', async () => {
-            const distinctListener = await fdc3Remote.addIntentListener(testAppData, validIntent.type + 'distinguisher');
+            const distinctListener = await fdc3Remote.addIntentListener(testAppData, `${validIntent.type}distinguisher`);
 
             await raiseIntent(validIntent, testAppData);
 
@@ -242,7 +244,7 @@ all listeners are triggered exactly once with the correct context', async (title
             const childListeners: fdc3Remote.RemoteContextListener[] = [];
 
             for (let i = 0; i < childWindowCount; i++) {
-                const childIdentity = {uuid: testAppData.uuid, name: testAppData.name + `-child-window-${i}`};
+                const childIdentity = {uuid: testAppData.uuid, name: `${testAppData.name}-child-window-${i}`};
 
                 await fdc3Remote.createFinWindow(testAppData, {name: childIdentity.name, url: testAppUrl});
                 childListeners.push(await fdc3Remote.addIntentListener(childIdentity, validIntent.type));

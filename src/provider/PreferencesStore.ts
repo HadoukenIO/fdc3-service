@@ -9,9 +9,9 @@ type ApplicationID = string;
  * Maps an intent ID to the ID of the user's preferred application for handling
  * that intent.
  */
-type IntentPreferences = {
-    [intentType: string]: ApplicationID
-};
+interface IntentPreferences {
+    [intentType: string]: ApplicationID;
+}
 
 /**
  * This store holds user preferences, and tracks the preferred app for handling

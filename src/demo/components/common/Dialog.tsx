@@ -24,7 +24,7 @@ export function Dialog(props: DialogProps): React.ReactElement {
     }
 
     return (
-        <div className={'dialog w3-modal' + (show ? ' w3-show' : '')}>
+        <div className={`dialog w3-modal${show ? ' w3-show' : ''}`}>
             <div className="w3-modal-content w3-center w3-round-xlarge">
                 {title && <h2>{title}</h2>}
                 {body && <p>{body}</p>}

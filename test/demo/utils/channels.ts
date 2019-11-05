@@ -5,14 +5,14 @@ import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel} from './RemoteChannel';
 
 export type ChannelDescriptor = {
-    type: 'default'
- } | {
-     type: 'system',
-     id: SystemChannelId
- } | {
-     type: 'app',
-     name: string
- } | SystemChannelId | 'default';
+    type: 'default';
+} | {
+    type: 'system';
+    id: SystemChannelId;
+} | {
+    type: 'app';
+    name: string;
+} | SystemChannelId | 'default';
 
 type SystemChannelId = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple';
 

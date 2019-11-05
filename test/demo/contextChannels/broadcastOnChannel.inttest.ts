@@ -34,7 +34,7 @@ describe('When attempting to broadcast on a channel object', () => {
     });
 
     test('If a valid context is provided, the broadcast() resolves successfully', async () => {
-        await expect(channel.broadcast(testContext)).resolves;
+        await channel.broadcast(testContext);
     });
 });
 
@@ -53,7 +53,7 @@ describe('When broadcasting on a channel', () => {
     ] as ReceieveTestParam[];
 
     describe.each(receiveTestParams)('When the channel is %s channel', (titleParam: string, channelDescriptor: ChannelDescriptor) => {
-        test('Context is not received by the same channel in the broadcasting window', async() => {
+        test('Context is not received by the same channel in the broadcasting window', async () => {
             // Get our channel and set up a listener in the same window
             const channel = await getChannel(broadcastingApp, channelDescriptor);
             const listener = await channel.addContextListener();
@@ -119,7 +119,7 @@ describe('When broadcasting on a channel', () => {
 
             test(`And the broadcasting window is in ${titleParam2} context is not received by that channel`, async () => {
                 // Place our broadcasting window in our listening channel
-                listeningChannel.join(broadcastingApp);
+                await listeningChannel.join(broadcastingApp);
 
                 // Broadcast
                 await broadcastingChannel.broadcast(testContext);
@@ -175,7 +175,7 @@ describe('When adding a context listener to a channel', () => {
 
             test('When two context listeners are added then one is unsubscribed, only the still-subscribed listener is triggered', async () => {
                 // Unsubscribe our first listener
-                listener1.unsubscribe();
+                await listener1.unsubscribe();
 
                 // Broadcast
                 await broadcastingChannel.broadcast(testContext);

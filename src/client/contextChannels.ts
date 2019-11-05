@@ -308,7 +308,7 @@ export abstract class ChannelBase {
      * The event also includes which channel the window was in previously. The `channel` property within the
      * event will always be this channel instance.
      */
-    public async addEventListener(eventType: 'window-added', listener: (event: ChannelWindowAddedEvent) => void): Promise<void>;
+    public async addEventListener(eventType: 'window-added', handler: (event: ChannelWindowAddedEvent) => void): Promise<void>;
 
     /**
      * Event that is fired whenever a window leaves this channel. This includes switching to/from the default
@@ -317,7 +317,7 @@ export abstract class ChannelBase {
      * The event also includes which channel the window is being added to. The `previousChannel` property within the
      * event will always be this channel instance.
      */
-    public async addEventListener(eventType: 'window-removed', listener: (event: ChannelWindowRemovedEvent) => void): Promise<void>;
+    public async addEventListener(eventType: 'window-removed', handler: (event: ChannelWindowRemovedEvent) => void): Promise<void>;
 
     /**
      * Subscribes to a particular event. This is not for subscribing to context updates on this channel, use [[addContextListener]] to receive broadcasts.
@@ -328,32 +328,32 @@ export abstract class ChannelBase {
      * @param eventType The event type.
      * @param handler The handler to call when the event is fired.
      */
-    public async addEventListener<E extends ChannelEvents>(eventType: E['type'], listener: (event: E) => void): Promise<void> {
+    public async addEventListener<E extends ChannelEvents>(eventType: E['type'], handler: (event: E) => void): Promise<void> {
         validateEnvironment();
 
         const hasEventListenerBefore = channelEventEmitters[this.id].listenerCount(eventType) > 0;
-        channelEventEmitters[this.id].addListener(eventType, listener);
+        channelEventEmitters[this.id].addListener(eventType, handler);
 
         if (!hasEventListenerBefore) {
             await tryServiceDispatch(APIFromClientTopic.CHANNEL_ADD_EVENT_LISTENER, {id: this.id, eventType});
         }
     }
 
-    public async removeEventListener(eventType: 'window-added', listener: (event: ChannelWindowAddedEvent) => void): Promise<void>;
-    public async removeEventListener(eventType: 'window-removed', listener: (event: ChannelWindowRemovedEvent) => void): Promise<void>;
+    public async removeEventListener(eventType: 'window-added', handler: (event: ChannelWindowAddedEvent) => void): Promise<void>;
+    public async removeEventListener(eventType: 'window-removed', handler: (event: ChannelWindowRemovedEvent) => void): Promise<void>;
 
     /**
      * Unsubscribes from a particular event.
      *
-     * Has no effect if `eventType` isn't a valid event, or `listener` isn't a callback registered against `eventType`.
+     * Has no effect if `eventType` isn't a valid event, or `handler` isn't a callback registered against `eventType`.
      *
      * @param eventType The event being unsubscribed from.
-     * @param listener The callback function to remove.
+     * @param handler The callback function to remove.
      */
-    public async removeEventListener<E extends ChannelEvents>(eventType: E['type'], listener: (event: E) => void): Promise<void> {
+    public async removeEventListener<E extends ChannelEvents>(eventType: E['type'], handler: (event: E) => void): Promise<void> {
         validateEnvironment();
 
-        channelEventEmitters[this.id].removeListener(eventType, listener);
+        channelEventEmitters[this.id].removeListener(eventType, handler);
 
         if (channelEventEmitters[this.id].listenerCount(eventType) === 0) {
             await tryServiceDispatch(APIFromClientTopic.CHANNEL_REMOVE_EVENT_LISTENER, {id: this.id, eventType});
@@ -547,12 +547,12 @@ export function getChannelObject<T extends Channel = Channel>(channelTransport: 
 }
 
 function hasChannelContextListener(id: ChannelId): boolean {
-    return channelContextListeners.some(listener => listener.channel.id === id);
+    return channelContextListeners.some((listener) => listener.channel.id === id);
 }
 
 function deserializeWindowAddedEvent(eventTransport: Transport<ChannelWindowAddedEvent>): ChannelWindowAddedEvent {
     const identity = eventTransport.identity;
-    const channel = getChannelObject(eventTransport.channel!);
+    const channel = getChannelObject(eventTransport.channel);
     const previousChannel = eventTransport.previousChannel ? getChannelObject(eventTransport.previousChannel) : null;
 
     return {type: 'window-added', identity, channel, previousChannel};
@@ -561,13 +561,13 @@ function deserializeWindowAddedEvent(eventTransport: Transport<ChannelWindowAdde
 function deserializeWindowRemovedEvent(eventTransport: Transport<ChannelWindowRemovedEvent>): ChannelWindowRemovedEvent {
     const identity = eventTransport.identity;
     const channel = eventTransport.channel ? getChannelObject(eventTransport.channel) : null;
-    const previousChannel = getChannelObject(eventTransport.previousChannel!);
+    const previousChannel = getChannelObject(eventTransport.previousChannel);
 
     return {type: 'window-removed', identity, channel, previousChannel};
 }
 
 if (typeof fin !== 'undefined') {
-    getServicePromise().then(channelClient => {
+    getServicePromise().then((channelClient) => {
         channelClient.register(APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, (payload: ChannelReceiveContextPayload) => {
             channelContextListeners.forEach((listener: ChannelContextListener) => {
                 if (listener.channel.id === payload.channel) {
@@ -584,7 +584,7 @@ if (typeof fin !== 'undefined') {
 
         eventHandler.registerDeserializer('window-added', deserializeWindowAddedEvent);
         eventHandler.registerDeserializer('window-removed', deserializeWindowRemovedEvent);
-    }, reason => {
+    }, (reason) => {
         console.warn('Unable to register client channel context handlers. getServicePromise() rejected with reason:', reason);
     });
 }

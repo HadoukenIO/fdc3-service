@@ -406,7 +406,7 @@ export function removeEventListener(eventType: MainEvents['type'], handler: (eve
  * @param intent The intent.
  */
 function hasIntentListener(intent: string): boolean {
-    return intentListeners.some(intentListener => intentListener.intent === intent);
+    return intentListeners.some((intentListener) => intentListener.intent === intent);
 }
 
 function deserializeChannelChangedEvent(eventTransport: Transport<ChannelChangedEvent>): ChannelChangedEvent {
@@ -419,7 +419,7 @@ function deserializeChannelChangedEvent(eventTransport: Transport<ChannelChanged
 }
 
 if (typeof fin !== 'undefined') {
-    getServicePromise().then(channelClient => {
+    getServicePromise().then((channelClient) => {
         channelClient.register(APIToClientTopic.RECEIVE_INTENT, (payload: RaiseIntentPayload) => {
             intentListeners.forEach((listener: IntentListener) => {
                 if (payload.intent === listener.intent) {
@@ -442,7 +442,7 @@ if (typeof fin !== 'undefined') {
 
         eventHandler.registerEmitterProvider('main', () => eventEmitter);
         eventHandler.registerDeserializer('channel-changed', deserializeChannelChangedEvent);
-    }, reason => {
+    }, (reason) => {
         console.warn('Unable to register client Context and Intent handlers. getServicePromise() rejected with reason:', reason);
     });
 }

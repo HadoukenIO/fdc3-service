@@ -1,5 +1,4 @@
 import {injectable, inject} from 'inversify';
-import _WindowModule from 'openfin/_v2/api/window/window';
 
 import {AppWindow} from '../model/AppWindow';
 import {Context} from '../../client/main';
@@ -70,13 +69,13 @@ export class ContextHandler {
 
         promises.push(...memberWindows
             // Sender window should not receive its own broadcasts
-            .filter(window => getId(window.identity) !== sourceId)
-            .map(window => this.send(window, context)));
+            .filter((window) => getId(window.identity) !== sourceId)
+            .map((window) => this.send(window, context)));
 
         promises.push(...listeningWindows
             // Sender window should not receive its own broadcasts
-            .filter(window => getId(window.identity) !== sourceId)
-            .map(window => this.sendOnChannel(window, context, channel)));
+            .filter((window) => getId(window.identity) !== sourceId)
+            .map((window) => this.sendOnChannel(window, context, channel)));
 
         return Promise.all(promises).then(() => {});
     }

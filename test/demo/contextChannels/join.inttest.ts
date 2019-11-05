@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/await-thenable */
 import {Identity} from 'openfin/_v2/main';
 
 import {IdentityError, DEFAULT_CHANNEL_ID} from '../../../src/client/main';
@@ -83,7 +84,7 @@ describe('When listening for channel-changed and Channel events', () => {
     beforeEach(async () => {
         await fdc3Remote.open(testManagerIdentity, listeningApp.name);
 
-        defaultChannel = await fdc3Remote.getChannelById(testManagerIdentity, DEFAULT_CHANNEL_ID);
+        defaultChannel = await fdc3Remote.getChannelById(listeningApp, DEFAULT_CHANNEL_ID);
     }, appStartupTime);
 
     afterEach(async () => {
@@ -95,12 +96,12 @@ describe('When listening for channel-changed and Channel events', () => {
         [
             'an FDC3 app',
             testAppInDirectory2,
-            async () => fdc3Remote.open(testManagerIdentity, testAppInDirectory2.name)
+            () => fdc3Remote.open(testManagerIdentity, testAppInDirectory2.name)
         ],
         [
             'a non-directory app',
             testAppNotInDirectory1,
-            async () => fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl).then()
+            () => fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl).then(() => {})
         ]
     ];
 
@@ -211,7 +212,7 @@ ${JSON.stringify({uuid: testAppNotInDirectoryNotFdc3.uuid, name: testAppNotInDir
         setupOpenDirectoryAppBookends(testAppInDirectory1);
 
         test('If the FDC3 app identity is provided, join resolves successfully', async () => {
-            await expect(blueChannel.join(testAppInDirectory1)).resolves;
+            await blueChannel.join(testAppInDirectory1);
         });
     });
 });
@@ -231,8 +232,8 @@ describe('When joining a non-default channel', () => {
 
     beforeEach(async () => {
         // Set up our listeners and default channel
-        channelChangedListener = await fdc3Remote.addEventListener(joiningApp, 'channel-changed');
-        defaultChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'default');
+        channelChangedListener = await fdc3Remote.addEventListener(listeningApp, 'channel-changed');
+        defaultChannel = await fdc3Remote.getChannelById(listeningApp, 'default');
 
         defaultChannelWindowAddedListener = await defaultChannel.addEventListener('window-added');
         defaultChannelWindowRemovedListener = await defaultChannel.addEventListener('window-removed');
@@ -242,11 +243,11 @@ describe('When joining a non-default channel', () => {
     const joinTestParams: JoinTestParam[] = [
         [
             'system',
-            async () => fdc3Remote.getChannelById(testManagerIdentity, 'orange')
+            () => fdc3Remote.getChannelById(listeningApp, 'orange')
         ],
         [
             'app',
-            async () => fdc3Remote.getOrCreateAppChannel(testManagerIdentity, fakeAppChannelName())
+            () => fdc3Remote.getOrCreateAppChannel(listeningApp, fakeAppChannelName())
         ]
     ];
 
@@ -319,7 +320,7 @@ describe('When joining a non-default channel', () => {
         let blueChannel: RemoteChannel;
 
         beforeEach(async () => {
-            blueChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'blue');
+            blueChannel = await fdc3Remote.getChannelById(listeningApp, 'blue');
         });
 
         test('The window is present only once when querying the members of the \'blue\'', async () => {
@@ -359,7 +360,7 @@ describe('When joining a non-default channel', () => {
         let purpleChannel: RemoteChannel;
 
         beforeEach(async () => {
-            purpleChannel = await fdc3Remote.getChannelById(testManagerIdentity, 'purple');
+            purpleChannel = await fdc3Remote.getChannelById(listeningApp, 'purple');
         });
 
         test('The correct channel is returned when querying the current channel', async () => {
