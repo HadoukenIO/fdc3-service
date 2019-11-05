@@ -158,12 +158,12 @@ export interface AppDirIntent {
      * The context types that this intent supports. A context type is a namespaced name;
      * examples are given [here](https://fdc3.finos.org/docs/1.0/context-spec).
      */
-    contexts: string[];
+    contexts?: string[];
 
     // Specification is ambiguous on type of customConfig, so leaving as 'any'
     /* tslint:disable:no-any */
     /**
      * Custom configuration for the intent. Currently unused, reserved for future use.
      */
-    customConfig: any;
+    customConfig?: any;
 }

@@ -243,16 +243,6 @@ export interface ChannelReceiveContextPayload {
     context: Context
 }
 
-export interface Intent {
-    name: string;
-    displayName?: string;
-    contexts?: string[];
-
-    // Specification is ambiguous on type of customConfig, so leaving as 'any'
-    /* tslint:disable:no-any */
-    customConfig: any;
-}
-
 /**
  * If error is a type we explicitly handle (e.g., `TypeError`, `FDC3Error`) so it can be identified as the correct type at the client's end
  * Otherwise return the error itself

@@ -2,7 +2,6 @@ import 'jest';
 import 'reflect-metadata';
 
 import {ResolveError} from '../../../src/client/errors';
-import {Intent} from '../../../src/client/intents';
 import {Timeouts} from '../../../src/provider/constants';
 import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
@@ -10,6 +9,13 @@ import {delay} from '../utils/delay';
 import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning} from '../utils/common';
 import {appStartupTime, testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, testAppWithPreregisteredListeners1, testAppNotInDirectoryNotFdc3, testAppUrl} from '../constants';
 import {allowReject} from '../../../src/provider/utils/async';
+import {AppDirIntent, Context} from '../../../src/client/main';
+import {IntentType} from '../../../src/provider/intents';
+
+interface Intent {
+    type: IntentType;
+    context: Context;
+}
 
 /**
  * Intent registered by `testAppWithPreregisteredListeners1` right after opening
