@@ -67,7 +67,7 @@ describe('Intent listeners and raising intents without a target', () => {
                     return fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
                 }],
                 ['the app\'s child window', async () => {
-                    const childIdentity = {uuid: testAppWithUniqueIntent.uuid, name: testAppWithUniqueIntent.name + '-child-window'};
+                    const childIdentity = {uuid: testAppWithUniqueIntent.uuid, name: `${testAppWithUniqueIntent.name}-child-window`};
 
                     await fdc3Remote.createFinWindow(testAppWithUniqueIntent, {name: childIdentity.name, url: testAppUrl});
 
@@ -438,7 +438,6 @@ async function closeResolverAndExpectToClose(): Promise<void> {
 
 /**
  * Selects an app on the resolver by remotely clicking on its button and checks the resolver closes
- * @param appName name of app to open
  */
 async function selectResolverAppAndExpectResolverToClose(app: TestAppData): Promise<void> {
     await selectResolverApp(app);
@@ -449,7 +448,6 @@ async function selectResolverAppAndExpectResolverToClose(app: TestAppData): Prom
 
 /**
  * Selects an app on the resolver by remotely clicking on its button
- * @param appName name of app to open
  */
 async function selectResolverApp(app: TestAppData): Promise<void> {
     const appClicked = await fdc3Remote.clickHTMLElement(RESOLVER_IDENTITY, `.app-card[data-appname="${app.name}"]`);

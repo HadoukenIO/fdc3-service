@@ -34,7 +34,7 @@ afterAll(async () => {
     await fin.System.removeListener('window-created', windowCreatedHandler);
 });
 
-beforeEach(async () => {
+beforeEach(() => {
     channelJoinedPromise = new DeferredPromise();
 });
 

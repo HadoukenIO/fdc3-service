@@ -76,10 +76,6 @@ type ContextMap = Set<string>;
 type ChannelEventMap = Map<string, Set<Events['type']>>;
 
 export abstract class AbstractAppWindow implements AppWindow {
-    public abstract identity: Readonly<Identity>
-    public abstract bringToFront(): Promise<void>;
-    public abstract focus(): Promise<void>;
-
     public channel: ContextChannel;
 
     private readonly _id: string;
@@ -210,6 +206,10 @@ export abstract class AbstractAppWindow implements AppWindow {
         this._intentListeners.clear();
         this._contextListener = false;
     }
+
+    public abstract identity: Readonly<Identity>;
+    public abstract bringToFront(): Promise<void>;
+    public abstract focus(): Promise<void>;
 
     private waitForListener<A extends any[]>(listenerAddedSignal: Signal<A>, hasListenerPredicate: () => boolean): Promise<void> {
         const rejectOnMaturePromise = allowReject(this._maturePromise.then(() => Promise.reject(new Error('Timeout waiting for listener'))));

@@ -27,14 +27,14 @@ export interface NonDirectoryTestAppData extends TestAppData {
 
 type ProviderWindow = Window & {
     model: Model;
-}
+};
 
 /**
  * Quits an OpenFin app (or multiple in parallel) using `force=true` and swallowing errors
  * @param apps Identities of the apps to quit
  */
 export async function quitApps(...apps: Identity[]) {
-    await Promise.all(apps.map(app => fin.Application.wrapSync(app).quit(true).catch(() => {})));
+    await Promise.all(apps.map((app) => fin.Application.wrapSync(app).quit(true).catch(() => {})));
     // We delay here to give FDC3 a chance to process the quit, which is not captured in the returned promise
     await delay(250);
 }
@@ -128,7 +128,7 @@ export function setupTeardown(): void {
 
         const expectedRunningApps = ['fdc3-service', testManagerIdentity.uuid];
 
-        const runningApps = (await fin.System.getAllApplications()).map(appInfo => appInfo.uuid);
+        const runningApps = (await fin.System.getAllApplications()).map((appInfo) => appInfo.uuid);
         const unexpectedRunningApps = runningApps.filter((uuid) => !expectedRunningApps.includes(uuid));
 
         await quitApps(...unexpectedRunningApps.map((uuid) => ({uuid})));
@@ -156,7 +156,7 @@ export async function closeResolver(): Promise<void> {
  * Checks that the service is in the expected state when no test apps are running
  */
 async function isServiceClear(): Promise<boolean> {
-    return fdc3Remote.ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, testManagerIdentity: Identity): boolean {
+    return fdc3Remote.ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, expectedWindowIdentity: Identity): boolean {
         if (this.model.windows.length !== 1) {
             return false;
         }
@@ -168,11 +168,11 @@ async function isServiceClear(): Promise<boolean> {
         const singleWindow = this.model.windows[0];
         const singleApp = this.model.apps[0];
 
-        if (singleWindow.appInfo.appId !== testManagerIdentity.uuid) {
+        if (singleWindow.appInfo.appId !== expectedWindowIdentity.uuid) {
             return false;
         }
 
-        if (singleApp.appInfo!.appId !== testManagerIdentity.uuid) {
+        if (singleApp.appInfo!.appId !== expectedWindowIdentity.uuid) {
             return false;
         }
 

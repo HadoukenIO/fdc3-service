@@ -196,7 +196,7 @@ function createCustomMockAppWindow(name: string, listensForContext: boolean): je
 }
 
 function setWindowsListeningToChannel(windows: jest.Mocked<AppWindow>[], channel: ContextChannel): void {
-    mockGetWindowsListeningForContextsOnChannel.mockImplementation((testChannel => testChannel.id === channel.id ? windows : []));
+    mockGetWindowsListeningForContextsOnChannel.mockImplementation(((testChannel) => testChannel.id === channel.id ? windows : []));
 
     for (const window of windows) {
         window.waitForReadyToReceiveContextOnChannel.mockImplementation((testChannel) => {

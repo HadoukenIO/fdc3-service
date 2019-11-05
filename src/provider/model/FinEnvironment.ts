@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/camelcase, camelcase */
+
 import {WindowEvent, ApplicationEvent} from 'openfin/_v2/api/events/base';
 import {injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
@@ -45,7 +47,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
         const startPromise = withTimeout(
             Timeouts.APP_START_FROM_MANIFEST,
-            fin.Application.startFromManifest(appInfo.manifest).catch(e => {
+            fin.Application.startFromManifest(appInfo.manifest).catch((e) => {
                 this.deregisterApplication({uuid});
 
                 throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
@@ -73,7 +75,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     public async inferApplication(identity: Identity): Promise<Application> {
-        if (this.isExternalWindow(identity)) {
+        if (await this.isExternalWindow(identity)) {
             const application = fin.ExternalApplication.wrapSync(identity.uuid);
 
             return {
@@ -83,10 +85,10 @@ export class FinEnvironment extends AsyncInit implements Environment {
                 manifest: ''
             };
         } else {
-            type OFManifest = {
-                shortcut?: {name?: string, icon: string},
-                startup_app: {uuid: string, name?: string, icon?: string}
-            };
+            interface OFManifest {
+                shortcut?: {name?: string; icon: string};
+                startup_app: {uuid: string; name?: string; icon?: string};
+            }
 
             const application = fin.Application.wrapSync(identity);
             const applicationInfo = await application.getInfo();
@@ -99,7 +101,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             return {
                 appId: application.identity.uuid,
                 name: application.identity.uuid,
-                title: title,
+                title,
                 icons: icon ? [{icon}] : undefined,
                 manifestType: 'openfin',
                 manifest: applicationInfo.manifestUrl
@@ -152,12 +154,12 @@ export class FinEnvironment extends AsyncInit implements Environment {
         // No await here otherwise the injector will never properly initialize - The injector awaits this init before completion!
         Injector.initialized.then(async () => {
             // Register windows that were running before launching the FDC3 service
-            windowInfo.forEach(info => {
+            windowInfo.forEach((info) => {
                 const {uuid, mainWindow, childWindows} = info;
                 this.registerApplication({uuid: info.uuid}, undefined);
 
                 this.registerWindow({uuid, name: mainWindow.name});
-                childWindows.forEach(child => this.registerWindow({uuid, name: child.name}));
+                childWindows.forEach((child) => this.registerWindow({uuid, name: child.name}));
             });
         });
     }

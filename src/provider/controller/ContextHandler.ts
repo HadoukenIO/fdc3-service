@@ -1,5 +1,4 @@
 import {injectable, inject} from 'inversify';
-import _WindowModule from 'openfin/_v2/api/window/window';
 
 import {AppWindow} from '../model/AppWindow';
 import {Context} from '../../client/main';
@@ -22,7 +21,7 @@ export class ContextHandler {
     constructor(
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
         @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
-        @inject(Inject.MODEL) model: Model,
+        @inject(Inject.MODEL) model: Model
     ) {
         this._apiHandler = apiHandler;
         this._channelHandler = channelHandler;
@@ -82,14 +81,14 @@ export class ContextHandler {
 
         promises.push(...memberWindows
             .filter(notSender)
-            .map(window => this.send(window, context)));
+            .map((window) => this.send(window, context)));
 
         promises.push(...listeningWindows
             .filter(notSender)
-            .map(window => this.sendOnChannel(window, context, channel)));
+            .map((window) => this.sendOnChannel(window, context, channel)));
 
         // We intentionally don't await this, as we have no expectation that windows will add a context listener
-        for (const app of this._model.apps.filter((app: LiveApp) => app.started)) {
+        for (const app of this._model.apps.filter((testApp: LiveApp) => testApp.started)) {
             app.waitForAppInfo().then((appInfo) => {
                 this._model.expectWindowsForApp(
                     appInfo,
@@ -98,9 +97,9 @@ export class ContextHandler {
                 ).then((windows) => {
                     windows
                         .filter(notSender)
-                        .filter(window => !memberWindows.includes(window))
-                        .filter(window => window.channel.id === channel.id)
-                        .forEach(window => this.send(window, context));
+                        .filter((window) => !memberWindows.includes(window))
+                        .filter((window) => window.channel.id === channel.id)
+                        .forEach((window) => this.send(window, context));
                 });
 
                 this._model.expectWindowsForApp(
@@ -110,8 +109,8 @@ export class ContextHandler {
                 ).then((windows) => {
                     windows
                         .filter(notSender)
-                        .filter(window => !listeningWindows.includes(window))
-                        .forEach(window => this.sendOnChannel(window, context, channel));
+                        .filter((window) => !listeningWindows.includes(window))
+                        .forEach((window) => this.sendOnChannel(window, context, channel));
                 });
             });
         }

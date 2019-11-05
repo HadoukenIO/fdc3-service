@@ -11,6 +11,9 @@ import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
 import {Timeouts} from '../../src/provider/constants';
 
 class TestAppWindow extends AbstractAppWindow {
+    public bringToFront: jest.Mock<Promise<void>, []> = jest.fn<Promise<void>, []>();
+    public focus: jest.Mock<Promise<void>, []> = jest.fn<Promise<void>, []>();
+
     private readonly _identity: Readonly<Identity>;
 
     constructor(identity: Identity, appInfo: Application, maturityPromise: Promise<void>, channel: ContextChannel, appWindowNumber: number) {
@@ -22,9 +25,6 @@ class TestAppWindow extends AbstractAppWindow {
     public get identity() {
         return this._identity;
     }
-
-    public bringToFront = jest.fn<Promise<void>, []>();
-    public focus = jest.fn<Promise<void>, []>();
 }
 
 const mockChannel = createMockChannel();

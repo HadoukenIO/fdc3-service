@@ -27,7 +27,7 @@ export class Main {
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
     private readonly _directory: AppDirectory;
     private readonly _channelHandler: ChannelHandler;
-    private readonly _configStore: ConfigStoreBinding
+    private readonly _configStore: ConfigStoreBinding;
     private readonly _contextHandler: ContextHandler;
     private readonly _environment: Environment;
     private readonly _eventHandler: EventHandler;
@@ -142,8 +142,8 @@ export class Main {
                 (window) => window.waitForReadyToReceiveContext()
             );
 
-            const sendContextPromise = windowsPromise.then((windows) => {
-                return Promise.all(windows.map((window) => this._contextHandler.send(window, context)));
+            const sendContextPromise = windowsPromise.then((expectedWindows) => {
+                return Promise.all(expectedWindows.map((window) => this._contextHandler.send(window, context)));
             }).then(() => {});
 
             promises.push(sendContextPromise);
@@ -230,7 +230,7 @@ export class Main {
     }
 
     private getSystemChannels(payload: GetSystemChannelsPayload, source: ProviderIdentity): ReadonlyArray<SystemChannelTransport> {
-        return this._channelHandler.getSystemChannels().map(channel => channel.serialize());
+        return this._channelHandler.getSystemChannels().map((channel) => channel.serialize());
     }
 
     private getChannelById(payload: GetChannelByIdPayload, source: ProviderIdentity): ChannelTransport {
@@ -244,7 +244,7 @@ export class Main {
         return appWindow.channel.serialize();
     }
 
-    private async getOrCreateAppChannel(payload: GetOrCreateAppChannelPayload, source: ProviderIdentity): Promise<AppChannelTransport> {
+    private getOrCreateAppChannel(payload: GetOrCreateAppChannelPayload, source: ProviderIdentity): AppChannelTransport {
         const name = parseAppChannelName(payload.name);
 
         return this._channelHandler.getAppChannelByName(name).serialize();
@@ -253,7 +253,7 @@ export class Main {
     private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): ReadonlyArray<Identity> {
         const channel = this._channelHandler.getChannelById(payload.id);
 
-        return this._channelHandler.getChannelMembers(channel).map(appWindow => parseIdentity(appWindow.identity));
+        return this._channelHandler.getChannelMembers(channel).map((appWindow) => parseIdentity(appWindow.identity));
     }
 
     private async channelJoin(payload: ChannelJoinPayload, source: ProviderIdentity): Promise<void> {

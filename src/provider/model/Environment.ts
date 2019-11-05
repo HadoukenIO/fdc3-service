@@ -37,15 +37,13 @@ export interface Environment {
     windowCreated: Signal<[Identity]>;
 
     /**
-     * Indicates that a window has been closed.
-     *
-     * Arguments: (identity: Identity)
+     * Checks if an application is running, given an App Directory entry.
      */
     windowClosed: Signal<[Identity]>;
 
     /**
      * Creates a new application, given an App Directory entry.
-     * @throws:
+     * @throws
      * * FDC3Error if app fails to start
      * * FDC3Error if timeout trying to start app
      */

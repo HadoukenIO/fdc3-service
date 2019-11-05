@@ -24,7 +24,7 @@ describe('When getting a channel by ID', () => {
         async (channelId: ChannelId) => {
             const channel = await fdc3Remote.getChannelById(testManagerIdentity, channelId);
 
-            await expect(channel).toBeChannel({id: channelId, type: 'system'}, SystemChannel);
+            expect(channel).toBeChannel({id: channelId, type: 'system'}, SystemChannel);
         }
     );
 
@@ -178,7 +178,7 @@ describe.each(testParams)('When getting the current channel of a window of %s', 
         const returnedRedChannel2 = await fdc3Remote.getCurrentChannel(testManagerIdentity, testApp);
 
         // Check the same instace was returned each time
-        await expect(returnedRedChannel1).toBe(returnedRedChannel2);
+        expect(returnedRedChannel1).toBe(returnedRedChannel2);
     }, appStartupTime);
 
     test('When no window is passed to getCurrentChannel, the current window is used', async () => {
@@ -190,6 +190,6 @@ describe.each(testParams)('When getting the current channel of a window of %s', 
         const currentChannel = await fdc3Remote.getCurrentChannel(testApp);
 
         // Check we have the green channel. Note that due to these coming from different windows, these cannot be the same instance
-        await expect(currentChannel.channel).toEqual(greenChannel.channel);
+        expect(currentChannel.channel).toEqual(greenChannel.channel);
     }, appStartupTime);
 });

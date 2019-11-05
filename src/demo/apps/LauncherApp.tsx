@@ -7,23 +7,23 @@ import {AppCard} from '../components/launcher/AppCard';
 
 import '../../../res/demo/css/w3.css';
 
-type ManifestAppLaunchData = {
+interface ManifestAppLaunchData {
     type: 'manifest';
     data: Application;
-};
+}
 
-type ProgrammaticAppLaunchData = {
+interface ProgrammaticAppLaunchData {
     type: 'programmatic';
     data: ApplicationOption & {description: string};
-};
+}
 
-type AppData = {
+interface AppData {
     id: string;
     icon: string;
     title: string;
     description: string;
-    extraOptions?: {resizable: boolean, defaultWidth: number, defaultHeight: number, saveWindowState: boolean};
-};
+    extraOptions?: {resizable: boolean; defaultWidth: number; defaultHeight: number; saveWindowState: boolean};
+}
 
 export type AppLaunchData = ManifestAppLaunchData | ProgrammaticAppLaunchData;
 
@@ -36,7 +36,7 @@ export function LauncherApp(): React.ReactElement {
 
     React.useEffect(() => {
         fdc3.findIntent(null!)
-            .then(async (appIntent) => setApplications(appIntent.apps.map((app) => {
+            .then((appIntent) => setApplications(appIntent.apps.map((app) => {
                 return {
                     type: 'manifest',
                     data: app
@@ -54,7 +54,7 @@ export function LauncherApp(): React.ReactElement {
             console.log(`Opened app ${title}`);
         } catch (e) {
             // Stringifying an `Error` omits the message!
-            const error: any = {
+            const error: Error = {
                 message: e.message,
                 ...e
             };
@@ -85,7 +85,7 @@ export function LauncherApp(): React.ReactElement {
             }
         } catch (e) {
             // Stringifying an `Error` omits the message!
-            const error: any = {
+            const error = {
                 message: e.message,
                 ...e
             };
@@ -96,18 +96,18 @@ export function LauncherApp(): React.ReactElement {
     return (
         <div>
             <h1>Launcher</h1>
-            {applications.map((app, index) => <AppCard key={app.data.appId + index} app={app} handleClick={openApp} isDirectoryApp={true} />)}
+            {applications.map((app, index) => <AppCard key={`${app.data.appId}${index}`} app={app} handleClick={openApp} isDirectoryApp={true} />)}
             <hr/>
             <h2>Non-directory apps</h2>
-            {NON_DIRECTORY_APPS.map((app, index) => <AppCard key={app.data.appId + index} app={app} handleClick={launchApp} isDirectoryApp={false} />)}
+            {NON_DIRECTORY_APPS.map((app, index) => <AppCard key={`${app.data.appId}${index}`} app={app} handleClick={launchApp} isDirectoryApp={false} />)}
             <hr/>
             <h2>Programmatic apps</h2>
-            {PROGRAMMATIC_APPS.map((app, index) => <AppCard key={app.data.uuid + index} app={app} handleClick={launchApp} isDirectoryApp={false} />)}
+            {PROGRAMMATIC_APPS.map((app, index) => <AppCard key={`${app.data.uuid}${index}`} app={app} handleClick={launchApp} isDirectoryApp={false} />)}
         </div>
     );
 }
 
-const APP_DATA: Array<AppData> = [
+const APP_DATA: AppData[] = [
     {id: 'blotter', icon: 'blotter', title: 'Blotter', description: 'blotter app'},
     {id: 'contacts', icon: 'contacts', title: 'Contacts', description: 'contacts app'},
     {id: 'dialer', icon: 'dialer', title: 'Dialer', description: 'dialer app',
@@ -129,7 +129,7 @@ const NON_DIRECTORY_APPS: ManifestAppLaunchData[] = APP_DATA.map(({id, icon, tit
             {icon: `http://localhost:3923/demo/img/app-icons/${icon}.svg`}
         ],
         title: title || id,
-        description: 'Sample Non-Directory ' + description
+        description: `Sample Non-Directory ${description}`
     }
 }));
 
@@ -137,7 +137,7 @@ const PROGRAMMATIC_APPS: ProgrammaticAppLaunchData[] = APP_DATA.map(({id, icon, 
     type: 'programmatic',
     data: {
         name: title.replace('Pink', 'Orange').replace('Grey', 'Cyan').replace('Teal', 'Purple'),
-        description: 'Sample Programmatic ' + description,
+        description: `Sample Programmatic ${description}`,
         url: 'http://localhost:3923/demo/index.html',
         icon: `http://localhost:3923/demo/img/app-icons/${icon}.svg`,
         uuid: `fdc3-${id.replace('pink', 'orange').replace('grey', 'cyan').replace('teal', 'purple')}-programmatic`,

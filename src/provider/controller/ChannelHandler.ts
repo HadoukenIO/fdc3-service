@@ -55,15 +55,15 @@ export class ChannelHandler {
     }
 
     public getChannelMembers(channel: ContextChannel): AppWindow[] {
-        return this._model.windows.filter(window => window.channel === channel);
+        return this._model.windows.filter((window) => window.channel === channel);
     }
 
     public getWindowsListeningForContextsOnChannel(channel: ContextChannel): AppWindow[] {
-        return this._model.windows.filter(window => window.hasChannelContextListener(channel));
+        return this._model.windows.filter((window) => window.hasChannelContextListener(channel));
     }
 
     public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: ChannelEvents['type']): AppWindow[] {
-        return this._model.windows.filter(window => window.hasChannelEventListener(channel, eventType));
+        return this._model.windows.filter((window) => window.hasChannelEventListener(channel, eventType));
     }
 
     public joinChannel(appWindow: AppWindow, channel: ContextChannel): void {
@@ -81,7 +81,7 @@ export class ChannelHandler {
     }
 
     public setLastBroadcastOnChannel(channel: ContextChannel, context: Context): void {
-        if (this._model.windows.some(window => window.channel === channel)) {
+        if (this._model.windows.some((window) => window.channel === channel)) {
             channel.setLastBroadcastContext(context);
         }
     }
@@ -99,7 +99,7 @@ export class ChannelHandler {
     }
 
     private isChannelEmpty(channel: ContextChannel): boolean {
-        return !this._model.windows.some(window => window.channel === channel);
+        return !this._model.windows.some((window) => window.channel === channel);
     }
 
     private validateChannelId(channelId: ChannelId): void {

@@ -50,7 +50,7 @@ export class Model {
     private readonly _channelsById: {[id: string]: ContextChannel};
     private readonly _expectedWindowsById: {[id: string]: ExpectedWindow};
 
-    private readonly _onWindowRegisteredInternal = new Signal<[AppWindow]>();
+    private readonly _onWindowRegisteredInternal: Signal<[AppWindow]> = new Signal();
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
@@ -149,11 +149,11 @@ export class Model {
 
             // Return a window once we have one, or timeout when the application is mature
             return Promise.race([
-                deferredPromise.promise.then((result) => [result]),
-                this.getOrCreateLiveApp(appInfo).then(liveApp => liveApp.waitForAppMature().then(() => [], () => []))
-            ]).then((result) => {
+                deferredPromise.promise.then((window) => [window]),
+                this.getOrCreateLiveApp(appInfo).then((liveApp) => liveApp.waitForAppMature().then(() => [], () => []))
+            ]).then((window) => {
                 slot.remove();
-                return result;
+                return window;
             });
         }
     }
@@ -201,10 +201,10 @@ export class Model {
         const liveAppsForIntent = (await asyncFilter(liveApps, async (liveApp: LiveApp) => {
             const {appInfo, windows} = liveApp;
 
-            const hasIntentListener = windows.some(window => window.hasIntentListener(intentType));
+            const hasIntentListener = windows.some((window) => window.hasIntentListener(intentType));
 
             return hasIntentListener && appInfo !== undefined && AppDirectory.mightAppSupportIntent(appInfo, intentType, contextType);
-        })).map(liveApp => liveApp.appInfo!);
+        })).map((liveApp) => liveApp.appInfo!);
 
         // Get all directory apps that support the given intent and context
         const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
@@ -215,14 +215,14 @@ export class Model {
                 return false;
             }
 
-            if (liveAppsForIntent.find(liveApp => liveApp.appId === app.appId)) {
+            if (liveAppsForIntent.find((testLiveApp) => testLiveApp.appId === app.appId)) {
                 return false;
             }
 
             return true;
         });
 
-        const directoryAppsForIntent = directoryApps.filter(app => AppDirectory.shouldAppSupportIntent(app, intentType, contextType));
+        const directoryAppsForIntent = directoryApps.filter((app) => AppDirectory.shouldAppSupportIntent(app, intentType, contextType));
 
         // Return apps in consistent order
         return [...liveAppsForIntent, ...directoryAppsForIntent].sort((a, b) => this.compareAppsForIntent(a, b, intentType, contextType));
@@ -238,11 +238,11 @@ export class Model {
         const appIntentsBuilder = new AppIntentsBuilder();
 
         // Populate appIntentsBuilder from running apps
-        this.windows.forEach(window => {
+        this.windows.forEach((window) => {
             const intentTypes = window.intentListeners;
             const app = window.appInfo;
 
-            intentTypes.filter(intentType => AppDirectory.mightAppSupportIntent(app, intentType, contextType)).forEach(intentType => {
+            intentTypes.filter((intentType) => AppDirectory.mightAppSupportIntent(app, intentType, contextType)).forEach((intentType) => {
                 appIntentsBuilder.addApplicationForIntent(intentType, window.appInfo);
             });
         });
@@ -255,10 +255,10 @@ export class Model {
             return !(liveApp && liveApp.mature);
         });
 
-        directoryApps.forEach(app => {
+        directoryApps.forEach((app) => {
             const intents = app.intents || [];
 
-            intents.filter(intent => AppDirectory.shouldAppSupportIntent(app, intent.name, contextType)).forEach(intent => {
+            intents.filter((intent) => AppDirectory.shouldAppSupportIntent(app, intent.name, contextType)).forEach((intent) => {
                 appIntentsBuilder.addApplicationForIntent(intent.name, app);
             });
         });
@@ -267,7 +267,7 @@ export class Model {
         const appIntents = appIntentsBuilder.build();
 
         // Normalize result and set display names
-        appIntents.forEach(appIntent => {
+        appIntents.forEach((appIntent) => {
             appIntent.apps.sort((a, b) => this.compareAppsForIntent(a, b, appIntent.intent.name, contextType));
             appIntent.intent.displayName = AppDirectory.getIntentDisplayName(appIntent.apps, appIntent.intent.name);
         });
@@ -278,7 +278,7 @@ export class Model {
     }
 
     public findWindowsByAppName(name: AppName): AppWindow[] {
-        const liveApp = Object.values(this._liveAppsByUuid).find(liveApp => !!liveApp.appInfo && liveApp.appInfo.name === name);
+        const liveApp = Object.values(this._liveAppsByUuid).find((testLiveApp) => !!testLiveApp.appInfo && testLiveApp.appInfo.name === name);
 
         return liveApp ? liveApp.windows : [];
     }
@@ -471,7 +471,7 @@ export class Model {
 }
 
 class AppIntentsBuilder {
-    private _appsByIntentType: Map<string, Set<Application>> = new Map();
+    private readonly _appsByIntentType: Map<string, Set<Application>> = new Map();
 
     public addApplicationForIntent(intentType: string, app: Application): void {
         const appsSet = this._appsByIntentType.get(intentType) || new Set<Application>();

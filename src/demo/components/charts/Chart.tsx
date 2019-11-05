@@ -42,7 +42,8 @@ export function Chart(): React.ReactElement {
 function createData(): ChartItem[] {
     const data: ChartItem[] = [];
     let y: number = (Math.random() * 0.3) + 0.3;
-    let height: number, delta: number;
+    let height: number;
+    let delta: number;
 
     for (let i = 0; i < 100; i++) {
         delta = (Math.random() * 0.2) - 0.1;

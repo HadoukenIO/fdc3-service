@@ -1,13 +1,12 @@
 import * as React from 'react';
 
 import * as fdc3 from '../../../client/main';
-import {Symbol} from '../../apps/BlotterApp';
-import {Application} from '../../../client/main';
+import {Instrument} from '../../apps/BlotterApp';
 
 import {SymbolsRow} from './SymbolsRow';
 
 interface SymbolsTableProps {
-    items?: Symbol[];
+    items?: Instrument[];
 }
 
 async function loadCharts() {
@@ -16,14 +15,14 @@ async function loadCharts() {
 
 export function SymbolsTable(props: SymbolsTableProps): React.ReactElement {
     const {items} = props;
-    const [chartApps, setChartApps] = React.useState<Application[]>([]);
-    const [selectedItem, setSelectedItem] = React.useState<Symbol | null>(null);
-    const handleSelect = (item: Symbol | null) => {
+    const [chartApps, setChartApps] = React.useState<fdc3.Application[]>([]);
+    const [selectedItem, setSelectedItem] = React.useState<Instrument | null>(null);
+    const handleSelect = (item: Instrument | null) => {
         setSelectedItem(item);
     };
 
     React.useEffect(() => {
-        loadCharts().then(appIntent => {
+        loadCharts().then((appIntent) => {
             setChartApps(appIntent.apps);
         });
     }, []);

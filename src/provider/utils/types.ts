@@ -1,1 +1,1 @@
-export type Boxed<T> = {value: T};
+export interface Boxed<T> {value: T}

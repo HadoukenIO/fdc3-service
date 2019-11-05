@@ -81,9 +81,9 @@ window, the listener is triggered exactly once with the correct context', async 
                 await expect(listener).toHaveReceivedContexts([]);
             });
 
-            test('When calling addContextListener a second time there are no errors', async () => {
+            test('When calling addContextListener a second time there are no errors', () => {
                 // Add second listener
-                await fdc3Remote.addContextListener(testAppInDirectory1);
+                fdc3Remote.addContextListener(testAppInDirectory1);
             });
 
             test('When calling unsubsribe on the listener no errors are seen and the listener is no longer triggered when broadcast is called', async () => {
@@ -108,7 +108,7 @@ window, the listener is triggered exactly once with the correct context', async 
                 // Send the context
                 await fdc3Remote.broadcast(testManagerIdentity, validContext);
 
-                const receivedContexts = await Promise.all(listeners.map(listener => listener.getReceivedContexts()));
+                const receivedContexts = await Promise.all(listeners.map((listener) => listener.getReceivedContexts()));
                 for (const contextList of receivedContexts) {
                     expect(contextList).toEqual([validContext]);
                 }
@@ -117,7 +117,7 @@ window, the listener is triggered exactly once with the correct context', async 
             test('When calling broadcast from the first app, none of its own listeners will be triggered', async () => {
                 await fdc3Remote.broadcast(testAppInDirectory1, validContext);
 
-                const receivedContexts = await Promise.all(listeners.map(listener => listener.getReceivedContexts()));
+                const receivedContexts = await Promise.all(listeners.map((listener) => listener.getReceivedContexts()));
                 expect(receivedContexts).toEqual([[], []]);
             });
 
@@ -134,7 +134,7 @@ window, the listener is triggered exactly once with the correct context', async 
                 test('When calling broadcast, only the still-registered listener is triggered', async () => {
                     // Send the context
                     await fdc3Remote.broadcast(testManagerIdentity, validContext);
-                    const receivedContexts = await Promise.all(listeners.map(listener => listener.getReceivedContexts()));
+                    const receivedContexts = await Promise.all(listeners.map((listener) => listener.getReceivedContexts()));
 
                     // First listener not triggered
                     expect(receivedContexts[0]).toEqual([]);
@@ -157,7 +157,7 @@ window, the listener is triggered exactly once with the correct context', async 
 
     describe('Broadcasting with multiple windows in the same app', () => {
         const testAppMainWindowIdentity = testAppInDirectory1;
-        const testAppChildWindowName = testAppInDirectory1.name + '-child-window';
+        const testAppChildWindowName = `${testAppInDirectory1.name}-child-window`;
 
         setupOpenDirectoryAppBookends(testAppMainWindowIdentity);
 

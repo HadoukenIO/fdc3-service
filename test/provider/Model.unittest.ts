@@ -371,8 +371,8 @@ async function setupAppRunningWithoutFdc3Connection(app: Application): Promise<v
 }
 
 async function setupAppRunningWithWindowWithIntentListeners(app: Application, intents: string[]): Promise<void> {
-    mockEnvironment.isWindowCreated.mockImplementation(identity => identity.uuid === app.appId);
-    mockApiHandler.isClientConnection.mockImplementation(identity => identity.uuid === app.appId);
+    mockEnvironment.isWindowCreated.mockImplementation((identity) => identity.uuid === app.appId);
+    mockApiHandler.isClientConnection.mockImplementation((identity) => identity.uuid === app.appId);
     mockAppDirectory.getAppByUuid.mockImplementation(async (uuid) => uuid === app.appId ? app : null);
 
     mockEnvironment.wrapWindow.mockImplementation((liveApp, identity) => {

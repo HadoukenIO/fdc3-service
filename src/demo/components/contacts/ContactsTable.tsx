@@ -7,7 +7,7 @@ import {ContactsRow} from './ContactsRow';
 
 interface ContactTableProps {
     items?: Contact[];
-    appIntents: AppIntent[]
+    appIntents: AppIntent[];
 }
 
 export function ContactsTable(props: ContactTableProps): React.ReactElement {

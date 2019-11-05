@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/await-thenable */
 import 'jest';
 
 import {Context, OrganizationContext} from '../../src/client/main';
@@ -59,7 +60,7 @@ describe('Opening applications with the FDC3 client', () => {
                 // Check that the app is still running
                 await expect(fin.Application.wrapSync(testAppInDirectory1).isRunning()).resolves.toBe(true);
                 // And that the app is focused
-                await expect(fin.System.getFocusedWindow().then(w => w.uuid)).resolves.toBe(testAppInDirectory1.uuid);
+                await expect(fin.System.getFocusedWindow().then((w) => w.uuid)).resolves.toBe(testAppInDirectory1.uuid);
             });
 
             test('When opening an app, the running-state of other apps has no effect', async () => {
@@ -205,7 +206,7 @@ triggered with the correct data', async () => {
                 // Check that the app is still running
                 await expect(fin.Application.wrapSync({uuid: testAppWithPreregisteredListeners1.uuid}).isRunning()).resolves.toBe(true);
                 // And that the app is focused
-                await expect(fin.System.getFocusedWindow().then(w => w.uuid)).resolves.toBe(testAppWithPreregisteredListeners1.uuid);
+                await expect(fin.System.getFocusedWindow().then((w) => w.uuid)).resolves.toBe(testAppWithPreregisteredListeners1.uuid);
 
                 const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
 
@@ -242,7 +243,7 @@ the promise resolves', async () => {
                 // Check that the app is still running
                 await expect(fin.Application.wrapSync({uuid: testAppWithPreregisteredListeners1.uuid}).isRunning()).resolves.toBe(true);
                 // And that the app is focused
-                await expect(fin.System.getFocusedWindow().then(w => w.uuid)).resolves.toBe(testAppWithPreregisteredListeners1.uuid);
+                await expect(fin.System.getFocusedWindow().then((w) => w.uuid)).resolves.toBe(testAppWithPreregisteredListeners1.uuid);
 
                 const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
 
@@ -303,7 +304,7 @@ and does not trigger the context listener of the already open app', async () => 
 
         let openPromise: Promise<void>;
 
-        beforeEach(async () => {
+        beforeEach(() => {
             openPromise = open(testAppDelayedPreregisterShort.name, validContext);
         });
 
@@ -311,13 +312,13 @@ and does not trigger the context listener of the already open app', async () => 
             await quitApps(testAppDelayedPreregisterShort);
         });
 
-        test('The promise resolves and the app opens', async () =>{
+        test('The promise resolves and the app opens', async () => {
             await openPromise;
 
             await expect(fin.Application.wrapSync(testAppDelayedPreregisterShort).isRunning()).resolves.toBe(true);
         });
 
-        test('The context is received by the listener', async () =>{
+        test('The context is received by the listener', async () => {
             await openPromise;
 
             await delay(1000);
@@ -332,7 +333,7 @@ and does not trigger the context listener of the already open app', async () => 
 
         let openPromise: Promise<void>;
 
-        beforeEach(async () => {
+        beforeEach(() => {
             openPromise = open(testAppDelayedPreregisterLong.name, validContext);
         });
 
@@ -340,12 +341,12 @@ and does not trigger the context listener of the already open app', async () => 
             await quitApps(testAppDelayedPreregisterLong);
         });
 
-        test('The promise resolves and the app opens', async () =>{
+        test('The promise resolves and the app opens', async () => {
             await openPromise;
             await expect(fin.Application.wrapSync(testAppDelayedPreregisterLong).isRunning()).resolves.toBe(true);
         });
 
-        test('The context is not received by the listener', async () =>{
+        test('The context is not received by the listener', async () => {
             await openPromise;
 
             await delay(10000);

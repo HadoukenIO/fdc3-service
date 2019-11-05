@@ -22,17 +22,17 @@ abstract class ContextChannelBase implements ContextChannel {
         this.type = type;
     }
 
-    public abstract get storedContext(): Context | null;
-
-    public abstract setLastBroadcastContext(context: Context): void;
-    public abstract clearStoredContext(): void;
-
     public serialize(): Readonly<Transport<ChannelBase>> {
         return {
             id: this.id,
             type: this.type
         };
     }
+
+    public abstract get storedContext(): Context | null;
+
+    public abstract setLastBroadcastContext(context: Context): void;
+    public abstract clearStoredContext(): void;
 }
 
 abstract class ContextStoringContextChannel extends ContextChannelBase {

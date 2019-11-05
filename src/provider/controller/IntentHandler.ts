@@ -40,24 +40,23 @@ export class IntentHandler {
 
     private async raiseWithTarget(intent: IntentWithTarget): Promise<IntentResolution> {
         const apps = await this._model.getApplicationsForIntent(intent.type, intent.context.type);
-        const targetApp = apps.find(app => app.name === intent.target);
+        const targetApp = apps.find((app) => app.name === intent.target);
 
         if (targetApp !== undefined) {
             // Target intent handles intent with given context, so fire
             return this.fireIntent(intent, targetApp);
+        } else if (await this._model.existsAppForName(intent.target)) {
+            // Target exists but does not handle intent with given context
+            throw new FDC3Error(
+                ResolveError.TargetAppDoesNotHandleIntent,
+                `App '${intent.target}' does not handle intent '${intent.type}' with context '${intent.context.type}'`
+            );
         } else {
-            // Target intent does not handles intent with given, so determine why and throw an error
-            if (await this._model.existsAppForName(intent.target)) {
-                throw new FDC3Error(
-                    ResolveError.TargetAppDoesNotHandleIntent,
-                    `App '${intent.target}' does not handle intent '${intent.type}' with context '${intent.context.type}'`
-                );
-            } else {
-                throw new FDC3Error(
-                    ResolveError.TargetAppNotAvailable,
-                    `Couldn't resolve intent target '${intent.target}'. No matching app in directory or currently running.`
-                );
-            }
+            // Target does not exist
+            throw new FDC3Error(
+                ResolveError.TargetAppNotAvailable,
+                `Couldn't resolve intent target '${intent.target}'. No matching app in directory or currently running.`
+            );
         }
     }
 
@@ -108,7 +107,7 @@ export class IntentHandler {
 
     private async showResolver(intent: Intent, applications: Application[]): Promise<IntentResolution> {
         // Show resolver
-        const selection: ResolverResult | null = await this._resolver.handleIntent(intent, applications).catch(e => {
+        const selection: ResolverResult | null = await this._resolver.handleIntent(intent, applications).catch((e) => {
             console.warn(e);
             return null;
         });
