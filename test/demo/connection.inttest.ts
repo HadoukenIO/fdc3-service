@@ -188,11 +188,11 @@ describe('Disconnecting windows', () => {
     });
 });
 
-async function openDirectoryApp(app: TestAppData) {
+async function openDirectoryApp(app: TestAppData): Promise<void> {
     await fdc3Remote.open(testManagerIdentity, app.name);
 }
 
-async function openNonDirectoryApp(app: TestAppData) {
+async function openNonDirectoryApp(app: TestAppData): Promise<void> {
     await fin.Application.startFromManifest((app as NonDirectoryTestAppData).manifestUrl);
 }
 

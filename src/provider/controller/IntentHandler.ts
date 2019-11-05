@@ -5,20 +5,13 @@ import {Intent} from '../../client/intents';
 import {IntentResolution, Application} from '../../client/main';
 import {FDC3Error, ResolveError} from '../../client/errors';
 import {Model} from '../model/Model';
-import {AppDirectory} from '../model/AppDirectory';
-import {AppWindow} from '../model/AppWindow';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
-import {withTimeout} from '../utils/async';
-import {Timeouts} from '../constants';
-import {Environment} from '../model/Environment';
 
 import {ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
 @injectable()
 export class IntentHandler {
-    private readonly _directory: AppDirectory;
-    private readonly _environment: Environment;
     private readonly _model: Model;
     private readonly _resolver: ResolverHandlerBinding;
     private readonly _apiHandler: APIHandler<APIToClientTopic>;
@@ -26,14 +19,10 @@ export class IntentHandler {
     private _resolvePromise: Promise<IntentResolution>|null;
 
     constructor(
-        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
-        @inject(Inject.ENVIRONMENT) environment: Environment,
         @inject(Inject.MODEL) model: Model,
         @inject(Inject.RESOLVER) resolver: ResolverHandlerBinding,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIToClientTopic>
     ) {
-        this._directory = directory;
-        this._environment = environment;
         this._model = model;
         this._resolver = resolver;
         this._apiHandler = apiHandler;
@@ -56,22 +45,18 @@ export class IntentHandler {
         if (targetApp !== undefined) {
             // Target intent handles intent with given context, so fire
             return this.fireIntent(intent, targetApp);
+        } else if (await this._model.existsAppForName(intent.target)) {
+            // Target exists but does not handle intent with given context
+            throw new FDC3Error(
+                ResolveError.TargetAppDoesNotHandleIntent,
+                `App '${intent.target}' does not handle intent '${intent.type}' with context '${intent.context.type}'`
+            );
         } else {
-            // Target intent does not handles intent with given, so determine why and throw an error
-            const targetInDirectory = await this._directory.getAppByName(intent.target);
-            const targetRunning = await this._environment.isRunning(targetInDirectory ? AppDirectory.getUuidFromApp(targetInDirectory) : intent.target);
-
-            if (!targetInDirectory && !targetRunning) {
-                throw new FDC3Error(
-                    ResolveError.TargetAppNotAvailable,
-                    `Couldn't resolve intent target '${intent.target}'. No matching app in directory or currently running.`
-                );
-            } else {
-                throw new FDC3Error(
-                    ResolveError.TargetAppDoesNotHandleIntent,
-                    `App '${intent.target}' does not handle intent '${intent.type}' with context '${intent.context.type}'`
-                );
-            }
+            // Target does not exist
+            throw new FDC3Error(
+                ResolveError.TargetAppNotAvailable,
+                `Couldn't resolve intent target '${intent.target}'. No matching app in directory or currently running.`
+            );
         }
     }
 
@@ -137,31 +122,17 @@ export class IntentHandler {
     }
 
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
-        await this._model.ensureRunning(appInfo);
+        const listeningWindows = await this._model.expectWindowsForApp(
+            appInfo,
+            (window) => window.hasIntentListener(intent.type),
+            (window) => window.waitForReadyToReceiveIntent(intent.type)
+        );
 
-        // TODO: Revisit timeout logic [SERVICE-556]
-        let dispatchingCompleted = false;
-        const dispatchResults = await withTimeout(Timeouts.ADD_INTENT_LISTENER, (async () => {
-            const appWindows = await this._model.expectWindowsForApp(appInfo);
+        if (listeningWindows.length > 0) {
+            const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
 
-            // Wait for windows to add intent listener, then dispatch payload
-            return Promise.all(appWindows.map(async (window: AppWindow): Promise<boolean> => {
-                if (await window.isReadyToReceiveIntent(intent.type)) {
-                    const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
-
-                    // TODO: Implement a timeout so a misbehaving intent handler can't block the intent raiser [SERVICE-555]
-                    if (!dispatchingCompleted) {
-                        await this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
-                        return true;
-                    }
-                }
-                return false;
-            }));
-        })());
-
-        dispatchingCompleted = true;
-
-        if (dispatchResults[0] || !dispatchResults[1]!.includes(true)) {
+            await Promise.all(listeningWindows.map((window) => this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload)));
+        } else {
             throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
         }
 

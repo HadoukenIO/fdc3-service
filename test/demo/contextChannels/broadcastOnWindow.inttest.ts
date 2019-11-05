@@ -5,7 +5,7 @@ import {Identity, Application} from 'hadouken-js-adapter';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {appStartupTime, testManagerIdentity, testAppNotInDirectory1, testAppInDirectory1, testAppInDirectory2, testAppInDirectory3, testAppInDirectory4, testAppWithPreregisteredListeners1} from '../constants';
 import {fin} from '../utils/fin';
-import {setupTeardown, quitApps} from '../utils/common';
+import {setupTeardown, quitApps, setupStartNonDirectoryAppBookends} from '../utils/common';
 import {ChannelDescriptor, getChannel} from '../utils/channels';
 import {fakeAppChannelDescriptor} from '../utils/fakes';
 
@@ -16,13 +16,13 @@ const testContext = {type: 'test-context', name: 'contextName1', id: {name: 'con
 
 const startedApps: Application[] = [];
 
-setupTeardown();
-
 afterEach(async () => {
     await quitApps(...startedApps.map((app) => app.identity));
 
     startedApps.length = 0;
 });
+
+setupTeardown();
 
 type BroadcastTestParam = [string, ChannelDescriptor, ChannelDescriptor, ChannelDescriptor[]];
 const broadcastTestParams = [
@@ -144,13 +144,7 @@ describe.each(contextListenerTestParams)('When adding a context listener to %s c
 });
 
 describe('When using a non-directory app', () => {
-    beforeEach(async () => {
-        await fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl);
-    }, appStartupTime * 2);
-
-    afterEach(async () => {
-        await fin.Application.wrapSync(testAppNotInDirectory1).quit(true);
-    });
+    setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
 
     test('When broadcasting from the non-directory app, contexts are received as expected', async () => {
         const [orangeWindow] = await setupWindows('orange');
