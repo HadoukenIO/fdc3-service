@@ -96,9 +96,7 @@ export class ContextHandler {
                     async (window: AppWindow) => window.waitForReadyToReceiveContext()
                 ).then((windows) => {
                     windows
-                        .filter(notSender)
-                        .filter((window) => !memberWindows.includes(window))
-                        .filter((window) => window.channel.id === channel.id)
+                        .filter((window) => notSender(window) && !memberWindows.includes(window) && window.channel.id === channel.id)
                         .forEach((window) => this.send(window, context));
                 });
 
@@ -108,8 +106,7 @@ export class ContextHandler {
                     async (window: AppWindow) => window.waitForReadyToReceiveContextOnChannel(channel)
                 ).then((windows) => {
                     windows
-                        .filter(notSender)
-                        .filter((window) => !listeningWindows.includes(window))
+                        .filter((window) => notSender(window) && !listeningWindows.includes(window))
                         .forEach((window) => this.sendOnChannel(window, context, channel));
                 });
             });
