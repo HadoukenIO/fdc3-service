@@ -45,6 +45,7 @@
     "hadouken-js-adapter": "^1.44.1",
     "inversify": "^5.0.1",
     "inversify-inject-decorators": "^3.1.0",
+    "jest": "^24.9.0",
     "mkdirp": "^0.5.1",
     "moment": "^2.22.1",
     "node-fetch": "^2.3.0",
