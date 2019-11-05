@@ -142,9 +142,9 @@ export class Main {
                 (window) => window.waitForReadyToReceiveContext()
             );
 
-            const sendContextPromise = windowsPromise.then((windows) => {
-                return Promise.all(windows.map((window) => this._contextHandler.send(window, context)));
-            }).then(() => {});
+            const sendContextPromise = windowsPromise.then(async (windows) => {
+                await Promise.all(windows.map((window) => this._contextHandler.send(window, context)));
+            });
 
             promises.push(sendContextPromise);
         }
