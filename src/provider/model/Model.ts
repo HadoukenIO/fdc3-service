@@ -52,7 +52,7 @@ export class Model {
     private readonly _channelsById: {[id: string]: ContextChannel};
     private readonly _expectedWindowsById: {[id: string]: ExpectedWindow};
 
-    private readonly _onWindowRegisteredInternal = new Signal<[]>();
+    private readonly _onWindowRegisteredInternal: Signal<[], void, void> = new Signal<[]>();
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
@@ -125,12 +125,12 @@ export class Model {
         let matchingWindows = this.findWindowsByAppId(appInfo.appId);
 
         if (matchingWindows.length === 0) {
-            const signalPromise = new Promise<AppWindow[]>(resolve => {
+            const signalPromise = new Promise<AppWindow[]>((resolve) => {
                 const slot = this._onWindowRegisteredInternal.add(() => {
-                    const matchingWindows = this.findWindowsByAppId(appInfo.appId);
-                    if (matchingWindows.length > 0) {
+                    const matchingWindowsAfter = this.findWindowsByAppId(appInfo.appId);
+                    if (matchingWindowsAfter.length > 0) {
                         slot.remove();
-                        resolve(matchingWindows);
+                        resolve(matchingWindowsAfter);
                     }
                 });
             });
@@ -160,17 +160,17 @@ export class Model {
         const liveAppsForIntent = (await asyncFilter(liveApps, async (group: LiveApp) => {
             const {application, windows} = group;
 
-            const hasIntentListener = windows.some(window => window.hasIntentListener(intentType));
+            const hasIntentListener = windows.some((window) => window.hasIntentListener(intentType));
 
             return hasIntentListener && AppDirectory.mightAppSupportIntent(application, intentType, contextType);
-        })).map(group => group.application);
+        })).map((group) => group.application);
 
         // Get all directory apps that support the given intent and context
         const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
             return !await this._environment.isRunning(AppDirectory.getUuidFromApp(app));
         });
 
-        const directoryAppsForIntent = directoryApps.filter(app => AppDirectory.shouldAppSupportIntent(app, intentType, contextType));
+        const directoryAppsForIntent = directoryApps.filter((app) => AppDirectory.shouldAppSupportIntent(app, intentType, contextType));
 
         // Return apps in consistent order
         return [...liveAppsForIntent, ...directoryAppsForIntent].sort((a, b) => this.compareAppsForIntent(a, b, intentType, contextType));
@@ -187,11 +187,11 @@ export class Model {
 
         // Populate appIntentsBuilder from running apps
         // TODO: Include apps that should add a listener but haven't yet, where the timeout has not expired (may have no registered windows) [SERVICE-556]
-        this.windows.forEach(window => {
+        this.windows.forEach((window) => {
             const intentTypes = window.intentListeners;
             const app = window.appInfo;
 
-            intentTypes.filter(intentType => AppDirectory.mightAppSupportIntent(app, intentType, contextType)).forEach(intentType => {
+            intentTypes.filter((intentType) => AppDirectory.mightAppSupportIntent(app, intentType, contextType)).forEach((intentType) => {
                 appIntentsBuilder.addApplicationForIntent(intentType, window.appInfo);
             });
         });
@@ -201,10 +201,10 @@ export class Model {
             return !await this._environment.isRunning(AppDirectory.getUuidFromApp(app));
         });
 
-        directoryApps.forEach(app => {
+        directoryApps.forEach((app) => {
             const intents = app.intents || [];
 
-            intents.filter(intent => AppDirectory.shouldAppSupportIntent(app, intent.name, contextType)).forEach(intent => {
+            intents.filter((intent) => AppDirectory.shouldAppSupportIntent(app, intent.name, contextType)).forEach((intent) => {
                 appIntentsBuilder.addApplicationForIntent(intent.name, app);
             });
         });
@@ -213,7 +213,7 @@ export class Model {
         const appIntents = appIntentsBuilder.build();
 
         // Normalize result and set display names
-        appIntents.forEach(appIntent => {
+        appIntents.forEach((appIntent) => {
             appIntent.apps.sort((a, b) => this.compareAppsForIntent(a, b, appIntent.intent.name, contextType));
             appIntent.intent.displayName = AppDirectory.getIntentDisplayName(appIntent.apps, appIntent.intent.name);
         });
@@ -224,7 +224,7 @@ export class Model {
     }
 
     public findWindowsByAppName(name: AppName): AppWindow[] {
-        return this.findWindows(appWindow => appWindow.appInfo.name === name);
+        return this.findWindows((appWindow) => appWindow.appInfo.name === name);
     }
 
     private onWindowCreated(identity: Identity): void {
@@ -316,7 +316,7 @@ export class Model {
     }
 
     private findWindowsByAppId(appId: AppId): AppWindow[] {
-        return this.findWindows(appWindow => appWindow.appInfo.appId === appId);
+        return this.findWindows((appWindow) => appWindow.appInfo.appId === appId);
     }
 
     private findWindows(predicate: (appWindow: AppWindow) => boolean): AppWindow[] {
@@ -395,7 +395,7 @@ export class Model {
 
 function getLiveApps(windows: AppWindow[]): LiveApp[] {
     return windows.reduce((liveApps: LiveApp[], appWindow: AppWindow) => {
-        const liveApp = liveApps.find(liveApp => liveApp.application.appId === appWindow.appInfo.appId);
+        const liveApp = liveApps.find((app) => app.application.appId === appWindow.appInfo.appId);
         if (liveApp) {
             liveApp.windows.push(appWindow);
         } else {
@@ -407,7 +407,7 @@ function getLiveApps(windows: AppWindow[]): LiveApp[] {
 }
 
 class AppIntentsBuilder {
-    private _appsByIntentType: Map<string, Set<Application>> = new Map();
+    private readonly _appsByIntentType: Map<string, Set<Application>> = new Map();
 
     public addApplicationForIntent(intentType: string, app: Application): void {
         const appsSet = this._appsByIntentType.get(intentType) || new Set<Application>();

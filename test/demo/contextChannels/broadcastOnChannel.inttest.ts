@@ -53,7 +53,7 @@ describe('When broadcasting on a channel', () => {
     ] as ReceieveTestParam[];
 
     describe.each(receiveTestParams)('When the channel is %s channel', (titleParam: string, channelDescriptor: ChannelDescriptor) => {
-        test('Context is not received by the same channel in the broadcasting window', async() => {
+        test('Context is not received by the same channel in the broadcasting window', async () => {
             // Get our channel and set up a listener in the same window
             const channel = await getChannel(broadcastingApp, channelDescriptor);
             const listener = await channel.addContextListener();

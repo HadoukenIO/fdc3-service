@@ -21,7 +21,7 @@ describe('Resolving applications by intent', () => {
     beforeAll(async () => {
         // TODO: Replace this hard-coded string once possible (SERVICE-392?)
         // Fecth and store the current app directory
-        directory = await fetch('http://localhost:3923/test/sample-app-directory.json').then(response => response.json());
+        directory = await fetch('http://localhost:3923/test/sample-app-directory.json').then((response) => response.json());
     });
 
     describe('Without ad-hoc apps running', () => {
@@ -69,7 +69,7 @@ directory applications accept the intent with specifies the given context or no 
             describe('But it does not register a listener for an intent it is supposed to handle', () => {
                 test('When calling findIntent with the intent, the app is NOT returned', async () => {
                     const appsForIntent = getDirectoryAppsForIntent(directory, validIntent);
-                    const expectedAppNames = appsForIntent.filter(app => app !== testAppInDirectory1.name);
+                    const expectedAppNames = appsForIntent.filter((app) => app !== testAppInDirectory1.name);
 
                     const appIntent = await findIntent(validIntent);
 
@@ -140,11 +140,11 @@ the list of applications accept the intent does NOT include the app.', async () 
 });
 
 function getDirectoryAppsForIntent(directory: DirectoryApp[], targetIntent: string) {
-    return directory.filter(app => app.intents && app.intents.some(intent => intent.name === targetIntent)).map(app => app.name).sort();
+    return directory.filter((app) => app.intents && app.intents.some((intent) => intent.name === targetIntent)).map((app) => app.name).sort();
 }
 
 function extractSortedAppNames(appIntent: AppIntent): string[] {
-    return appIntent.apps.map(app => app.name).sort();
+    return appIntent.apps.map((app) => app.name).sort();
 }
 
 function findIntent(intent: string, context?: Context | undefined): Promise<AppIntent> {

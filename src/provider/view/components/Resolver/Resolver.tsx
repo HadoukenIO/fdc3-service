@@ -8,11 +8,10 @@ import '../../styles/_main.scss';
 import './Resolver.scss';
 
 let sendSuccess: (result: {app: Application}) => void;
-let sendError: (result: string) => void;
 
 export function Resolver(): React.ReactElement {
     const [applications, setApplications] = React.useState<Application[]>([]);
-    const [intent, setIntent] = React.useState<String>();
+    const [intent, setIntent] = React.useState<string>();
 
     const handleAppOpen = (app: Application) => sendSuccess({app});
     const handleCancel = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -21,7 +20,7 @@ export function Resolver(): React.ReactElement {
     };
 
     React.useEffect(() => {
-        fin.InterApplicationBus.Channel.create('resolver').then(channel => {
+        fin.InterApplicationBus.Channel.create('resolver').then((channel) => {
             Object.assign(window, {channel});
 
             channel.register('resolve', async (args: ResolverArgs) => {
@@ -30,7 +29,6 @@ export function Resolver(): React.ReactElement {
 
                 return new Promise<ResolverResult>((resolve, reject) => {
                     sendSuccess = resolve;
-                    sendError = reject;
                 });
             });
         });

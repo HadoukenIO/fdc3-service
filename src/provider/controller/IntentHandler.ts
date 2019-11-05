@@ -51,7 +51,7 @@ export class IntentHandler {
 
     private async raiseWithTarget(intent: IntentWithTarget): Promise<IntentResolution> {
         const apps = await this._model.getApplicationsForIntent(intent.type, intent.context.type);
-        const targetApp = apps.find(app => app.name === intent.target);
+        const targetApp = apps.find((app) => app.name === intent.target);
 
         if (targetApp !== undefined) {
             // Target intent handles intent with given context, so fire
@@ -122,7 +122,7 @@ export class IntentHandler {
 
     private async showResolver(intent: Intent, applications: Application[]): Promise<IntentResolution> {
         // Show resolver
-        const selection: ResolverResult | null = await this._resolver.handleIntent(intent, applications).catch(e => {
+        const selection: ResolverResult | null = await this._resolver.handleIntent(intent, applications).catch((e) => {
             console.warn(e);
             return null;
         });

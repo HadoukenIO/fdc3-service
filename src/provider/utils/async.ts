@@ -9,8 +9,8 @@ import {DeferredPromise} from '../common/DeferredPromise';
  * @param promise Promise to race against the timeout
  */
 export function withTimeout<T>(timeoutMs: number, promise: Promise<T>): Promise<[boolean, T | undefined]> {
-    const timeout = new Promise<[boolean, undefined]>(res => setTimeout(() => res([true, undefined]), timeoutMs));
-    const p = promise.then(value => ([false, value] as [boolean, T]));
+    const timeout = new Promise<[boolean, undefined]>((res) => setTimeout(() => res([true, undefined]), timeoutMs));
+    const p = promise.then((value) => ([false, value] as [boolean, T]));
     return Promise.race([timeout, p]);
 }
 
@@ -32,6 +32,7 @@ export function withStrictTimeout<T>(timeoutMs: number, promise: Promise<T>, rej
  * @param predicate The predicate to evaluate
  * @param guard A promise. If this rejects, give up listening to the signal and reject
  */
+// eslint-disable-next-line
 export function untilTrue<A extends any[]>(signal: Signal<A>, predicate: () => boolean, guard?: Promise<void>): Promise<void> {
     if (predicate()) {
         return Promise.resolve();
@@ -48,6 +49,7 @@ export function untilTrue<A extends any[]>(signal: Signal<A>, predicate: () => b
  * @param predicate The predicate to evaluate against arguments received from the signal
  * @param guard A promise. If this rejects, give up listening to the signal and reject
  */
+// eslint-disable-next-line
 export function untilSignal<A extends any[]>(signal: Signal<A>, predicate: (...args: A) => boolean, guard?: Promise<void>): Promise<void> {
     const promise = new DeferredPromise();
     const slot = signal.add((...args: A) => {
@@ -82,9 +84,9 @@ export function allowReject<T>(promise: Promise<T>): Promise<T> {
 export async function asyncFilter<T>(arr: T[], callback: (x: T) => Promise<boolean>): Promise<T[]> {
     const result: T[] = [];
 
-    for (let i = 0; i < arr.length; i++) {
-        if (await callback(arr[i])) {
-            result.push(arr[i]);
+    for (const i of arr) {
+        if (await callback(i)) {
+            result.push(i);
         }
     }
 

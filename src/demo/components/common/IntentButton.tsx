@@ -1,17 +1,15 @@
 import * as React from 'react';
 
-import {IntentResolution} from '../../../client/main';
-
 interface IntentButtonProps {
-  title?: string;
-  iconClassName?: string;
-  action: () => Promise<void>;
+    title?: string;
+    iconClassName?: string;
+    action: () => Promise<void>;
 }
 
 enum ButtonStateType {
-  DEFAULT,
-  SPIN,
-  ERROR
+    DEFAULT,
+    SPIN,
+    ERROR
 }
 
 export function IntentButton(props: IntentButtonProps): React.ReactElement {
@@ -26,7 +24,7 @@ export function IntentButton(props: IntentButtonProps): React.ReactElement {
             .then(() => {
                 setButtonState(ButtonStateType.DEFAULT);
             })
-            .catch(err => {
+            .catch((err) => {
                 setButtonState(ButtonStateType.ERROR);
             });
     };

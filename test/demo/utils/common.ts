@@ -27,7 +27,7 @@ export interface NonDirectoryTestAppData extends TestAppData {
  * @param apps Identities of the apps to quit
  */
 export async function quitApps(...apps: Identity[]) {
-    await Promise.all(apps.map(app => fin.Application.wrapSync(app).quit(true).catch(() => {})));
+    await Promise.all(apps.map((app) => fin.Application.wrapSync(app).quit(true).catch(() => {})));
 }
 
 export async function waitForAppToBeRunning(app: Identity): Promise<void> {
@@ -105,7 +105,7 @@ export function setupTeardown(): void {
 
         const runningAppInfos = await fin.System.getAllApplications();
 
-        const runningAppIdentities = runningAppInfos.map(appInfo => appInfo.uuid);
+        const runningAppIdentities = runningAppInfos.map((appInfo) => appInfo.uuid);
 
         for (const identity of runningAppIdentities) {
             if (!expectedRunningAppIdentities.includes(identity)) {

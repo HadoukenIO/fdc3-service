@@ -63,7 +63,7 @@ describe('Intent listeners and raising intents without a target', () => {
                     return fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
                 }],
                 ['the app\'s child window', async () => {
-                    const childIdentity = {uuid: testAppWithUniqueIntent.uuid, name: testAppWithUniqueIntent.name + '-child-window'};
+                    const childIdentity = {uuid: testAppWithUniqueIntent.uuid, name: `${testAppWithUniqueIntent.name}-child-window`};
 
                     await fdc3Remote.createFinWindow(testAppWithUniqueIntent, {name: childIdentity.name, url: testAppUrl});
 
@@ -146,7 +146,7 @@ the app opens and receives the intent with the correct context', async () => {
                     // TODO: Re-enable once we have at timeout to allow apps to add intent listeners on mulitple windows on startup (SERVICE-556)
                     test.skip('When the listener is registered on the child window, when calling raiseIntent from another app \
 the app opens and receives the intent with the correct context', async () => {
-                        const childIdentity = {uuid: testAppWithUniqueIntent.uuid, name: testAppWithUniqueIntent.name + '-child-window'};
+                        const childIdentity = {uuid: testAppWithUniqueIntent.uuid, name: `${testAppWithUniqueIntent.name}-child-window`};
 
                         await fdc3Remote.createFinWindow(testAppWithUniqueIntent, {name: childIdentity.name, url: testAppUrl});
                         await fdc3Remote.addIntentListener(childIdentity, uniqueIntent.type);
@@ -413,7 +413,6 @@ async function closeResolver(): Promise<void> {
 
 /**
  * Selects an app on the resolver by remotely clicking on its button and checks the resolver closes
- * @param appName name of app to open
  */
 async function selectResolverAppAndExpectResolverToClose(app: TestAppData): Promise<void> {
     await selectResolverApp(app);
@@ -425,7 +424,6 @@ async function selectResolverAppAndExpectResolverToClose(app: TestAppData): Prom
 
 /**
  * Selects an app on the resolver by remotely clicking on its button
- * @param appName name of app to open
  */
 async function selectResolverApp(app: TestAppData): Promise<void> {
     const appClicked = await fdc3Remote.clickHTMLElement(RESOLVER_IDENTITY, `.app-card[data-appname="${app.name}"]`);

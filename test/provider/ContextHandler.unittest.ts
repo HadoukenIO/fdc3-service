@@ -1,6 +1,5 @@
 import 'reflect-metadata';
 
-import {Identity} from 'openfin/_v2/main';
 import {ChannelProvider} from 'openfin/_v2/api/interappbus/channel/provider';
 
 import {ContextHandler} from '../../src/provider/controller/ContextHandler';
@@ -13,8 +12,10 @@ import {ContextChannel} from '../../src/provider/model/ContextChannel';
 
 jest.mock('../../src/provider/controller/ChannelHandler');
 
+type Dispatch = typeof ChannelProvider.prototype.dispatch;
+
 const testContext = {type: 'test-context-payload'};
-const mockDispatch = jest.fn<Promise<any>, [Identity, string, any]>();
+const mockDispatch = jest.fn<ReturnType<Dispatch>, Parameters<Dispatch>>();
 
 let contextHandler: ContextHandler;
 
@@ -66,6 +67,7 @@ describe('When sending a Context using ContextHandler', () => {
         it('The send call resolves', async () => {
             const targetAppWindow = createCustomMockAppWindow('target', false);
 
+            // eslint-disable-next-line @typescript-eslint/await-thenable
             await expect(contextHandler.send(targetAppWindow, testContext)).resolves;
         });
 

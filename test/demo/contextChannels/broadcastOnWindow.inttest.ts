@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/await-thenable */
 import 'jest';
 import {Identity, Application} from 'hadouken-js-adapter';
 
@@ -13,17 +14,17 @@ import {fakeAppChannelDescriptor} from '../utils/fakes';
  */
 const testContext = {type: 'test-context', name: 'contextName1', id: {name: 'contextID1'}};
 
-const startedApps:Application[] = [];
+const startedApps: Application[] = [];
 
 setupTeardown();
 
 afterEach(async () => {
-    await quitApps(...startedApps.map(app => app.identity));
+    await quitApps(...startedApps.map((app) => app.identity));
 
     startedApps.length = 0;
 });
 
-type BroadcastTestParam = [string, ChannelDescriptor, ChannelDescriptor, ChannelDescriptor[]]
+type BroadcastTestParam = [string, ChannelDescriptor, ChannelDescriptor, ChannelDescriptor[]];
 const broadcastTestParams = [
     ['the default', 'default', 'blue', ['orange', fakeAppChannelDescriptor()]],
     ['a system', 'yellow', 'default', ['green', 'default', fakeAppChannelDescriptor()]],
@@ -38,7 +39,7 @@ describe.each(broadcastTestParams)(
 
             const listener = await fdc3Remote.addContextListener(listeningWindow);
 
-            const otherListeners = await Promise.all(otherWindows.map(window => fdc3Remote.addContextListener(window)));
+            const otherListeners = await Promise.all(otherWindows.map((window) => fdc3Remote.addContextListener(window)));
 
             // Broadcast our context on the broadcast channel
             await fdc3Remote.broadcast(broadcastingWindow, testContext);
@@ -100,7 +101,8 @@ describe('When adding a context listener to the default channel', () => {
     }, appStartupTime * 2);
 });
 
-type ContextListenerTestParam = [string, ChannelDescriptor]
+type ContextListenerTestParam = [string, ChannelDescriptor];
+
 const contextListenerTestParams = [
     ['a system', 'blue'],
     ['an app', fakeAppChannelDescriptor()]

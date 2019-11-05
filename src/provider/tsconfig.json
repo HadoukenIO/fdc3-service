@@ -5,6 +5,7 @@
         "emitDecoratorMetadata": true
     },
     "include": [
-        "./*.ts"
+        "./*.ts",
+        "./**/*.tsx"
     ]
 }

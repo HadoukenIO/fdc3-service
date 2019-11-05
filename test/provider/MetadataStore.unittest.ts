@@ -5,12 +5,12 @@ import {Application} from 'openfin/_v2/main';
 import {Application as DirectoryApplication} from '../../src/client/directory';
 import {AppMetadata, MetadataStore} from '../../src/provider/MetadataStore';
 
-const fakeApps: {appData: DirectoryApplication, app: Application}[] = [
+const fakeApps: {appData: DirectoryApplication; app: Application}[] = [
     {appData: {appId: '1'}, app: {identity: {uuid: 'test-app-1'}}},
     {appData: {appId: '2'}, app: {identity: {uuid: 'test-app-2'}}},
     {appData: {appId: '3'}, app: {identity: {uuid: 'test-app-3'}}},
     {appData: {appId: '4'}, app: {identity: {uuid: 'test-app-4'}}}
-] as {appData: DirectoryApplication, app: Application}[];  // Do an explicit cast for TS. Only need very small sub-set for this test.
+] as {appData: DirectoryApplication; app: Application}[];  // Do an explicit cast for TS. Only need very small sub-set for this test.
 
 beforeEach(() => {
     jest.restoreAllMocks();
@@ -46,7 +46,8 @@ describe('Given an empty MetadataStore', () => {
         // Empty store to be used in update tests
         const store = new MetadataStore();
         // Parameters for the call
-        const appData = {} as DirectoryApplication, app = {identity: {uuid: 'some-uuid'}} as Application;
+        const appData = {} as DirectoryApplication;
+        const app = {identity: {uuid: 'some-uuid'}} as Application;
 
         it('The method throws an error', () => {
             expect(() => store.update(appData, app)).toThrowError(TypeError);

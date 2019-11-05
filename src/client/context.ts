@@ -32,7 +32,7 @@ export interface Context {
      * An optional map of any equivalent identifiers for the
      * context type, e.g. ISIN, CUSIP, etc. for an instrument.
      */
-    id?: {[key: string]: string|undefined;};
+    id?: {[key: string]: string|undefined};
 
     /**
      * A context object is open for extension with any custom properties/metadata.
@@ -53,7 +53,7 @@ export interface InstrumentContext extends Context {
         ticker?: string;
         ISIN?: string;
         CUSIP?: string;
-    }
+    };
 }
 export interface OrganizationContext extends Context {
     type: 'fdc3.organization';
