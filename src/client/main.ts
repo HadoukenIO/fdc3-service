@@ -293,7 +293,7 @@ export async function raiseIntent(intent: string, context: Context, target?: App
 }
 
 /**
- * Adds a listener for incoming Intents from the Agent.
+ * Adds a listener for incoming intents from the Agent.
  *
  * To unsubscribe, use the returned [[IntentListener]].
  * @param intent The name of the intent to listen for.
@@ -330,10 +330,10 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
 }
 
 /**
- * Adds a listener for incoming context broadcast from the desktop agent.
+ * Adds a listener for incoming context broadcasts from the desktop agent.
  *
  * To unsubscribe, use the returned [[ContextListener]].
- * @param handler The callback function to call when we receive a broadcast context.
+ * @param handler The handler function to call when we receive a broadcast context.
  */
 export function addContextListener(handler: (context: Context) => void): ContextListener {
     validateEnvironment();
