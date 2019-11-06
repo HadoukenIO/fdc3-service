@@ -118,7 +118,7 @@ export interface IntentListener {
      */
     intent: string;
     /**
-     * The callback for when this listener receives an intent.
+     * The handler for when this listener receives an intent.
      */
     handler: (context: Context) => void;
     /**
@@ -390,7 +390,7 @@ export function removeEventListener(eventType: 'channel-changed', handler: (even
 /**
  * Unsubscribes from a particular event.
  *
- * Has no effect if `eventType` isn't a valid event, or `listener` isn't a callback registered against `eventType`.
+ * Has no effect if `eventType` isn't a valid event, or `listener` isn't a handler registered against `eventType`.
  *
  * @param eventType The type of the event to remove.
  * @param handler The handler previously passed into [[addEventListener]].

@@ -10,13 +10,7 @@ import {TestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppWit
 import {testManagerIdentity, testAppInDirectory4, testAppNotInDirectory1, testAppNotInDirectory2, testAppWithPreregisteredListeners1, testAppUrl, appStartupTime, testAppWithPreregisteredListeners2} from '../constants';
 import {Boxed} from '../../../src/provider/utils/types';
 import {allowReject, withTimeout} from '../../../src/provider/utils/async';
-import {Context} from '../../../src/client/main';
-import {IntentType} from '../../../src/provider/intents';
-
-interface Intent {
-    type: IntentType;
-    context: Context;
-}
+import {Intent} from '../../../src/provider/intents';
 
 /**
  * Alias for `testAppInDirectory4`, which is only in the directory registering the intent `test.IntentOnlyOnApp4`

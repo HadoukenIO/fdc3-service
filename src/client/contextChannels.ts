@@ -345,10 +345,10 @@ export abstract class ChannelBase {
     /**
      * Unsubscribes from a particular event.
      *
-     * Has no effect if `eventType` isn't a valid event, or `handler` isn't a callback registered against `eventType`.
+     * Has no effect if `eventType` isn't a valid event, or `handler` isn't a handler registered against `eventType`.
      *
      * @param eventType The event being unsubscribed from.
-     * @param handler The callback function to remove.
+     * @param handler The handler function to remove.
      */
     public async removeEventListener<E extends ChannelEvents>(eventType: E['type'], handler: (event: E) => void): Promise<void> {
         validateEnvironment();

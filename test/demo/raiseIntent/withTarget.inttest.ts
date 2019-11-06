@@ -9,13 +9,7 @@ import {delay, Duration} from '../utils/delay';
 import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning} from '../utils/common';
 import {appStartupTime, testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, testAppWithPreregisteredListeners1, testAppNotInDirectoryNotFdc3, testAppUrl} from '../constants';
 import {allowReject} from '../../../src/provider/utils/async';
-import {Context} from '../../../src/client/main';
-import {IntentType} from '../../../src/provider/intents';
-
-interface Intent {
-    type: IntentType;
-    context: Context;
-}
+import {Intent} from '../../../src/provider/intents';
 
 /**
  * Intent registered by `testAppWithPreregisteredListeners1` right after opening

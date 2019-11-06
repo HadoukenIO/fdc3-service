@@ -1,11 +1,5 @@
-import {Context, ContactContext} from '../client/context';
+import {Context} from '../client/context';
 import {Intents} from '../client/intents';
-
-/**
- * TypeScript definitions for FDC3-defined intents.
- *
- * These structures are defined by the Intents FDC3 working group.
- */
 
 /**
  * General-purpose intent type
@@ -15,10 +9,6 @@ export interface Intent<T=string, C extends Context=Context> {
     context: C;
     target?: string;
 }
-
-// Built-in intents
-export type DialCallIntent = Intent<typeof Intents.DIAL_CALL, ContactContext>;
-export type SaveContactIntent = Intent<typeof Intents.SAVE_CONTACT, ContactContext>;
 
 /**
  * Type definition that is used wherever the API expects the name of an intent to be passed.
