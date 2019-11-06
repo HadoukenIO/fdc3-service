@@ -22,7 +22,7 @@ export type AppId = string;
  * App Name is the machine-readable name of the app, but it may well be sufficiently
  * human-readable that it can be used in user interfaces. If it's not, please use the title.
  *
- * This type alias exists to disambiguate raw string app name from the [[AppId]].
+ * This type alias exists to disambiguate the raw string app name from the [[AppId]].
  */
 export type AppName = string;
 
@@ -45,7 +45,7 @@ export interface Application {
      */
     name: AppName;
     /**
-     * An application manifest, used to launch the app. This should be a URL that points to an OpenFin json manifest.
+     * An application manifest, used to launch the app. This should be a URL that points to an OpenFin JSON manifest.
      */
     manifest: string;
     /**
@@ -61,7 +61,7 @@ export interface Application {
      */
     title?: string;
     /**
-     * A short explanatory text string. For use in tooltips used by any UIs that display app information.
+     * A short explanatory text string. For use in tooltips shown by any UIs that display app information.
      */
     tooltip?: string;
     /**
@@ -70,7 +70,7 @@ export interface Application {
     description?: string;
     /**
      * Images that can be displayed as part of the app directory entry. Use these for screenshots, previews or similar. These are not the
-     * application icons: use [[icons]] for that.
+     * application icons - use [[icons]] for that.
      */
     images?: AppImage[];
     /**
@@ -94,7 +94,7 @@ export interface Application {
      *
      * The OpenFin FDC3 service supports the following configuration values:
      * * `appUuid`: Informs the service that the application launched by this [[manifest]] will have this UUID. By
-     * default, the service will expect the UUID of the application to match the [[appId]], this configuration value
+     * default, the service will expect the UUID of the application to match the [[appId]]. This configuration value
      * can be used to override this.
      *
      * Any additional fields will still be accessible to applications (via APIs such as [[findIntent]]), but will not

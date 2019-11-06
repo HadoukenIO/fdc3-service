@@ -42,7 +42,8 @@ export enum ResolveError {
      */
     TargetAppDoesNotHandleIntent = 'TargetAppDoesNotHandleIntent',
     /**
-     * Indicates that the provider has started an app to receive an intent, and that it has timed out waiting that app.
+     * Indicates that the provider has started an app to receive an intent, and that it has timed out whilst waiting
+     * for that app to handle the intent.
      */
     IntentTimeout = 'IntentTimeout',
     /**
@@ -64,7 +65,7 @@ export enum ResolveError {
  */
 export enum ChannelError {
     /**
-     * Indicates that [[getChannelById]] has failed because no such channel exists to broadcast on.
+     * Indicates that [[getChannelById]] has failed because no such channel exists to with the given ID.
      */
     ChannelDoesNotExist = 'ChannelDoesNotExist'
 }
@@ -90,7 +91,7 @@ export class FDC3Error extends Error {
     /**
      * A string from one of [[OpenError]], [[ResolveError]], [[ChannelError]] or [[IdentityError]].
      *
-     * Future versions of the service may add additional error codes, applications should allow for the possibility of
+     * Future versions of the service may add additional error codes. Applications should allow for the possibility of
      * error codes that do not exist in the above enumerations.
      */
     public code: string;
@@ -104,7 +105,7 @@ export class FDC3Error extends Error {
      * Description of the error that occurred.
      *
      * These messages are not intended to be user-friendly, we do not advise displaying them to end users. If
-     * error-specific user messaging is required, use [[code]] to determine which message should be displayed.
+     * error-specific user messaging is required, use [[code]] to determine what message should be displayed.
      */
     public message!: string;
 

@@ -1,8 +1,9 @@
 /**
- * TypeScript definitions for envelope and context objects.
+ * TypeScript definitions for context objects.
  *
  * These structures are defined by the Contexts FDC3 working group. This contains the Context interface for you to create your own
- * contexts, as well as a set of standard contexts agreed by the WG.
+ * contexts, as well as a set of standard contexts agreed by the FDC3 working group.
+ *
  * @module Contexts
  */
 
@@ -26,8 +27,7 @@ export interface Context {
     name?: string;
 
     /**
-     * An optional map of any equivalent identifiers for the
-     * context type, e.g. ISIN, CUSIP, etc. for an instrument.
+     * An optional map of any equivalent identifiers for the context type, e.g. ISIN, CUSIP, etc. for an instrument.
      */
     id?: {[key: string]: string|undefined};
 

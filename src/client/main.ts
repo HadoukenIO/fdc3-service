@@ -61,10 +61,10 @@ export interface AppIntent {
  * Provides a standard format for data returned upon resolving an intent.
  *
  * ```javascript
- * //You might fire and forget an intent
+ * // You might fire and forget an intent
  * await agent.raiseIntent("intentName", context);
  *
- * //Or you might want some data to come back
+ * // Or you might want some data to come back
  * const result = await agent.raiseIntent("intentName", context);
  * const data = result.data;
  * ```
@@ -151,9 +151,9 @@ const contextListeners: ContextListener[] = [];
  * If opening errors, it returns an [[FDC3Error]] with a string from the [[OpenError]] export enumeration.
  *
  *  ```javascript
- *     //no context
+ *     // No context
  *     agent.open('myApp');
- *     //with context
+ *     // With context
  *     agent.open('myApp', context);
  * ```
  * @param name The [[AppName]] to launch.
@@ -167,7 +167,7 @@ export async function open(name: AppName, context?: Context): Promise<void> {
  * Find out more information about a particular intent by passing its name, and optionally its context.
  *
  * `findIntent` is effectively granting programmatic access to the desktop agent's resolver.
- * A promise resolving to the intent, its metadata and metadata about the apps that registered it is returned.
+ * A promise resolving to the intent, its metadata and metadata about the apps registered to handle it is returned.
  * This can be used to raise the intent against a specific app.
  *
  * If the resolution fails, the promise will return an [[FDC3Error]] with a string from the [[ResolveError]] export enumeration.
@@ -200,8 +200,8 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  * Find all the available intents for a particular context.
  *
  * `findIntentsByContext` is effectively granting programmatic access to the desktop agent's resolver.
- * A promise resolving to all the intents, their metadata and metadata about the apps that registered it is returned,
- * based on the context export types the intents have registered.
+ * A promise resolving to all the intents, their metadata and metadata about the apps registered to handle it is
+ * returned, based on the context export types the intents have registered.
  *
  * If the resolution fails, the promise will return an [[FDC3Error]] with a string from the `ResolveError` export
  * enumeration.
@@ -227,13 +227,13 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  *
  * We could now use this by taking one of the intents, and raising it.
  *```javascript
- * // select a particular intent to raise
+ * // Select a particular intent to raise
  * const selectedIntent = appIntents[1];
  *
- * // raise the intent, passing the given context, letting the user select which app to use
+ * // Raise the intent, passing the given context, letting the user select which app to use
  * await agent.raiseIntent(selectedIntent.intent.name, context);
  *
- * // raise the intent, passing the given context, targeting a particular app
+ * // Raise the intent, passing the given context, targeting a particular app
  * const selectedApp = selectedIntent.apps[0];
  * await agent.raiseIntent(selectedIntent.intent.name, context, selectedApp.name);
  * ```
@@ -278,9 +278,9 @@ export async function broadcast(context: Context): Promise<void> {
  * intent listener (if any).
  *
  * ```javascript
- * //raise an intent to start a chat with a given contact
+ * // Raise an intent to start a chat with a given contact
  * const intentR = await agent.raiseIntent("StartChat", context);
- * //use the IntentResolution object to target the same chat app with a new context
+ * // Use the IntentResolution object to target the same chat app with a new context
  * agent.raiseIntent("StartChat", newContext, intentR.source);
  * ```
  * @param intent The intent name to raise.

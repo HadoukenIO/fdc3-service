@@ -4,7 +4,7 @@
  * windows in that channel. The assignment of windows to channels would typically be managed by the user, through
  * either a channel selector widget built into the window itself, or through a separate channel manager application.
  *
- * All windows will initially be placed in the [[defaultChannel|default channel]], and will remain so unless they
+ * All windows will initially be placed in the [[defaultChannel|default channel]], and will remain there unless they
  * explicitly [[join]] another channel.
  *
  * There are three types of channels: [[DefaultChannel]], [[SystemChannel]] and [[AppChannel]].
@@ -40,12 +40,12 @@ export type ChannelId = string;
  */
 export interface DisplayMetadata {
     /**
-     * A user-readable name for this channel, e.g: `"Red"`
+     * A user-readable name for this channel, e.g. `"Red"`
      */
     name: string;
 
     /**
-     * The color that should be associated within this channel when displaying this channel in a UI, e.g: `#FF0000`.
+     * The color that should be associated with this channel when displaying this channel in a UI, e.g. `#FF0000`.
      */
     color: string;
 
@@ -64,7 +64,7 @@ export type Channel = DefaultChannel | SystemChannel | AppChannel;
  * Event fired when a window is added to a channel. See {@link ChannelBase.addEventListener}.
  *
  * Note that this event will typically fire as part of a pair - since windows must always belong to a channel, a window
- * can only join a channel by leaving it's previous channel. The exceptions to this rule are when the window is created
+ * can only join a channel by leaving its previous channel. The exceptions to this rule are when the window is created
  * and destroyed when there will be no previous channel or no current channel, respectively.
  *
  * To listen for channel changes across all (or multiple) channels, there is also a top-level {@link ChannelChangedEvent}.
@@ -108,7 +108,7 @@ export interface ChannelWindowRemovedEvent {
     type: 'window-removed';
 
     /**
-     * The window that has just been added to the channel.
+     * The window that has just been removed from the channel.
      */
     identity: Identity;
 
@@ -215,7 +215,7 @@ export abstract class ChannelBase {
     /**
      * Returns the last context that was broadcast on this channel. All channels initially have no context, until a
      * window is added to the channel and then broadcasts. If there is not yet any context on the channel, this method
-     * will return `null`. The context is also reset back into it's initial context-less state whenever a channel is
+     * will return `null`. The context is also reset back into its initial context-less state whenever a channel is
      * cleared of all windows.
      *
      * The context of a channel will be captured regardless of how the context is broadcasted on this channel - whether
@@ -320,8 +320,8 @@ export abstract class ChannelBase {
     public async addEventListener(eventType: 'window-removed', handler: (event: ChannelWindowRemovedEvent) => void): Promise<void>;
 
     /**
-     * Subscribes to a particular event. This is not for subscribing to context updates on this channel, use [[addContextListener]] to receive broadcasts.
-     * This is used for events that are raised from a specific channel.
+     * Subscribes to a particular event. This is not for subscribing to context updates on this channel. Instead, use
+     * [[addContextListener]] to receive broadcasts. This is used for events that are raised from a specific channel.
      *
      * See also [[main#addEventListener]], for subscribing to "global" events that are not related to a specific channel.
      *
@@ -395,7 +395,7 @@ export class SystemChannel extends ChannelBase {
     public readonly type!: 'system';
 
     /**
-     * How a client application should present this channel in any UI
+     * How a client application should present this channel in any UI.
      */
     public readonly visualIdentity: DisplayMetadata;
 
