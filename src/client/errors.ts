@@ -22,6 +22,10 @@ export enum OpenError {
      * Currently unused.
      */
     ResolverUnavailable = 'ResolverUnavailable',
+
+    SendContextError = 'SendContextError',
+    SendContextTimeout = 'SendContextTimeout',
+    SendContextNoHandler = 'SendContextNoHandler'
 }
 
 /**
@@ -57,7 +61,7 @@ export enum ResolveError {
     /**
      * The intent resolver UI was dismissed by the user, so the intent has been cancelled.
      */
-    ResolverClosedOrCancelled = 'ResolverClosedOrCancelled',
+    ResolverClosedOrCancelled = 'ResolverClosedOrCancelled'
 }
 
 /**

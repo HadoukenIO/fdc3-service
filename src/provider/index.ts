@@ -22,6 +22,7 @@ import {Intent} from './intents';
 import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
 import {Environment} from './model/Environment';
+import {collateResults} from './utils/async';
 
 @injectable()
 export class Main {
@@ -144,7 +145,17 @@ export class Main {
             );
 
             const sendContextPromise = windowsPromise.then(async (expectedWindows) => {
-                await Promise.all(expectedWindows.map((window) => this._contextHandler.send(window, context)));
+                if (expectedWindows.length === 0) {
+                    throw new FDC3Error(OpenError.SendContextNoHandler, '');
+                }
+
+                const [result] = await collateResults(5000, expectedWindows.map((window) => this._contextHandler.send(window, context)));
+
+                if (result === 'error') {
+                    throw new FDC3Error(OpenError.SendContextError, '');
+                } else if (result === 'timeout') {
+                    throw new FDC3Error(OpenError.SendContextTimeout, '');
+                }
             });
 
             promises.push(sendContextPromise);

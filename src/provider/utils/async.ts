@@ -81,6 +81,30 @@ export function allowReject<T>(promise: Promise<T>): Promise<T> {
     return promise;
 }
 
+export async function collateResults<T = void>(timeout: number, promises: Promise<T>[]): Promise<['success' | 'error' | 'timeout', T | undefined]> {
+    let errors = 0;
+    let successes = 0;
+
+    let result: T;
+
+    await Promise.all(promises.map((promise) => withTimeout(5000, promise.then((promiseResult) => {
+        if (successes === 0) {
+            result = promiseResult;
+        }
+        successes++;
+    }, () => {
+        errors++;
+    }))));
+
+    if (successes > 0) {
+        return ['success', result!];
+    } else if (errors > 0) {
+        return ['error', undefined];
+    } else {
+        return ['timeout', undefined];
+    }
+}
+
 export async function asyncFilter<T>(arr: T[], callback: (x: T) => Promise<boolean>): Promise<T[]> {
     const result: T[] = [];
 
