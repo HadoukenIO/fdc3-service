@@ -1,3 +1,4 @@
+/* eslint-disable */
 export class DeferredPromise<T = void> {
     private readonly _promise: Promise<T>;
     private _resolve!: (value?: T) => void;

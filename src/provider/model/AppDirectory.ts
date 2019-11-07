@@ -1,11 +1,10 @@
 import {injectable, inject} from 'inversify';
 
 import {Inject} from '../common/Injectables';
-import {Application, AppName} from '../../client/directory';
+import {Application, AppName, AppDirIntent} from '../../client/directory';
 import {AsyncInit} from '../controller/AsyncInit';
 import {CustomConfigFields} from '../constants';
 import {checkCustomConfigField} from '../utils/helpers';
-import {Intent} from '../../client/internal';
 
 import {ConfigStoreBinding} from './ConfigStore';
 
@@ -24,7 +23,7 @@ export class AppDirectory extends AsyncInit {
         if (contextType === undefined || app.intents === undefined) {
             return true;
         } else {
-            const intent = app.intents.find(intent => intent.name === intentType);
+            const intent = app.intents.find((i) => i.name === intentType);
             return intent === undefined || intentSupportsContext(intent, contextType);
         }
     }
@@ -37,14 +36,14 @@ export class AppDirectory extends AsyncInit {
         if (app.intents === undefined) {
             return false;
         } else {
-            const intent = app.intents.find(intent => intent.name === intentType);
+            const intent = app.intents.find((i) => i.name === intentType);
             return intent !== undefined && (contextType === undefined || intentSupportsContext(intent, contextType));
         }
     }
 
     public static getIntentDisplayName(apps: Application[], intentType: string): string {
         for (const app of apps) {
-            const intent = app.intents && app.intents.find(intent => intent.name === intentType);
+            const intent = app.intents && app.intents.find((i) => i.name === intentType);
 
             if (intent && intent.displayName !== undefined) {
                 return intent.displayName;
@@ -69,26 +68,26 @@ export class AppDirectory extends AsyncInit {
         this._configStore = configStore;
     }
 
-    protected async init(): Promise<void> {
-        await this._configStore.initialized;
-        await this.initializeDirectoryData();
-    }
-
-    public async getAppByName(name: AppName): Promise<Application | null> {
-        return this._directory.find((app: Application) => {
+    public getAppByName(name: AppName): Promise<Application | null> {
+        return Promise.resolve(this._directory.find((app: Application) => {
             return app.name === name;
-        }) || null;
+        }) || null);
     }
 
-    public async getAppByUuid(uuid: string): Promise<Application | null> {
-        return this._directory.find(app => AppDirectory.getUuidFromApp(app) === uuid) || null;
+    public getAppByUuid(uuid: string): Promise<Application | null> {
+        return Promise.resolve(this._directory.find((app) => AppDirectory.getUuidFromApp(app) === uuid) || null);
     }
 
     /**
      * Retrieves all of the applications in the Application Directory.
      */
-    public async getAllApps(): Promise<Application[]> {
-        return this._directory;
+    public getAllApps(): Promise<Application[]> {
+        return Promise.resolve(this._directory);
+    }
+
+    protected async init(): Promise<void> {
+        await this._configStore.initialized;
+        await this.initializeDirectoryData();
     }
 
     private async initializeDirectoryData(): Promise<void> {
@@ -150,6 +149,6 @@ export class AppDirectory extends AsyncInit {
     }
 }
 
-function intentSupportsContext(intent: Intent, contextType: string): boolean {
+function intentSupportsContext(intent: AppDirIntent, contextType: string): boolean {
     return intent.contexts === undefined || intent.contexts.length === 0 || intent.contexts.includes(contextType);
 }

@@ -106,23 +106,6 @@ it('When getting channel members, ChannelHandler returns expected AppWindows', (
     expect(channelHandler.getChannelMembers(testChannel)).toEqual([testWindows[0], testWindows[2]]);
 });
 
-it('When querying which windows are listening for contexts on a channel, ChannelHander returns the expected AppWindows', () => {
-    const testWindows = [
-        createMockAppWindow({id: 'test-1'}),
-        createMockAppWindow({id: 'test-2'}),
-        createMockAppWindow({id: 'test-3'})
-    ];
-
-    const testChannel = createMockChannel();
-
-    testWindows[0].hasChannelContextListener.mockImplementation((channel) => true);
-    testWindows[2].hasChannelContextListener.mockImplementation((channel) => true);
-
-    setModelWindows(testWindows);
-
-    expect(channelHandler.getWindowsListeningForContextsOnChannel(testChannel)).toEqual([testWindows[0], testWindows[2]]);
-});
-
 it('When querying which windows are listening for events on a channel, ChannelHander returns the expected AppWindows', () => {
     const testWindows = [
         createMockAppWindow({id: 'test-1'}),

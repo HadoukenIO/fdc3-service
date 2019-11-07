@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/await-thenable */
 import 'jest';
 
 import {Context, OrganizationContext} from '../../src/client/main';
@@ -6,12 +7,9 @@ import {Timeouts} from '../../src/provider/constants';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
-import {quitApps, setupOpenDirectoryAppBookends, setupTeardown} from './utils/common';
-import {
-    testManagerIdentity, testAppInDirectory1, testAppInDirectory2,
-    testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2, testAppNotFdc3
-} from './constants';
-import {delay} from './utils/delay';
+import {quitApps, setupOpenDirectoryAppBookends, setupTeardown, waitForAppToBeRunning} from './utils/common';
+import {testManagerIdentity, testAppInDirectory1, testAppInDirectory2, testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2, testAppNotFdc3, testAppUrl, appStartupTime} from './constants';
+import {delay, Duration} from './utils/delay';
 
 setupTeardown();
 
@@ -62,7 +60,7 @@ describe('Opening applications with the FDC3 client', () => {
                 // Check that the app is still running
                 await expect(fin.Application.wrapSync(testAppInDirectory1).isRunning()).resolves.toBe(true);
                 // And that the app is focused
-                await expect(fin.System.getFocusedWindow().then(w => w.uuid)).resolves.toBe(testAppInDirectory1.uuid);
+                await expect(fin.System.getFocusedWindow().then((w) => w.uuid)).resolves.toBe(testAppInDirectory1.uuid);
             });
 
             test('When opening an app, the running-state of other apps has no effect', async () => {
@@ -84,21 +82,98 @@ describe('Opening applications with the FDC3 client', () => {
 
         afterEach(async () => {
             // Close all test apps and suppress any errors since the apps may not be running
-            await quitApps(testAppWithPreregisteredListeners1);
+            await quitApps(testAppWithPreregisteredListeners1, testAppInDirectory1);
         });
 
         describe('With the app not running', () => {
-            test('When passing a valid app name and a valid context, the app opens and its context listener is triggered with the correct data', async () => {
-                // From the launcher app, call fdc3.open with a valid name and context
-                await open(testAppWithPreregisteredListeners1.name, validContext);
+            describe('When passing a valid app name and a valid context', () => {
+                test('When the app adds its listeners on startup, the app opens and its context listener is triggered with the correct data', async () => {
+                    // From the launcher app, call fdc3.open with a valid name and context
+                    await open(testAppWithPreregisteredListeners1.name, validContext);
 
-                // Check that the app is now running
-                await expect(fin.Application.wrapSync(testAppWithPreregisteredListeners1).isRunning()).resolves.toBe(true);
+                    // Check that the app is now running
+                    await expect(fin.Application.wrapSync(testAppWithPreregisteredListeners1).isRunning()).resolves.toBe(true);
 
-                const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
+                    const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
 
-                // Check that the app received the context passed in open and nothing else
-                await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
+                    // Check that the app received the context passed in open and nothing else
+                    await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
+                });
+
+                test('When the app adds its listener after a short delay, the app opens and its context listener is triggered with the \
+correct data', async () => {
+                    // From the launcher app, call fdc3.open with a valid name and context
+                    const openPromise = open(testAppInDirectory1.name, validContext);
+
+                    // Wait a short delay after the app is running
+                    await waitForAppToBeRunning(testAppInDirectory1);
+                    await delay(Duration.SHORTER_THAN_APP_MATURITY);
+
+                    // Add a listener
+                    const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
+
+                    await openPromise;
+
+                    // Check that the app received the context passed in open and nothing else
+                    await expect(listener).toHaveReceivedContexts([validContext]);
+                });
+
+                test('When the app adds its listener on a child window, the app opens and its context listener is triggered with the \
+correct data', async () => {
+                    // From the launcher app, call fdc3.open with a valid name and context
+                    const openPromise = open(testAppInDirectory1.name, validContext);
+
+                    await waitForAppToBeRunning(testAppInDirectory1);
+
+                    // Create a child window and add a listener on it
+                    const childWindow = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-window'});
+                    const listener = await fdc3Remote.addContextListener(childWindow);
+
+                    await openPromise;
+
+                    // Check that the app received the context passed in open and nothing else
+                    await expect(listener).toHaveReceivedContexts([validContext]);
+                });
+
+                test('When the app adds listeners on multiple windows, the app opens and the first window\'s context listener is \
+triggered with the correct data', async () => {
+                    // From the launcher app, call fdc3.open with a valid name and context
+                    const openPromise = open(testAppInDirectory1.name, validContext);
+
+                    await waitForAppToBeRunning(testAppInDirectory1);
+
+                    const childWindow1 = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-window-1'});
+                    const childWindow2 = await fdc3Remote.createFinWindow(testAppInDirectory1, {url: testAppUrl, name: 'child-window-2'});
+
+                    // Add listeners
+                    const listener1 = await fdc3Remote.addContextListener(childWindow1);
+                    const listener2 = await fdc3Remote.addContextListener(childWindow2);
+                    const listener3 = await fdc3Remote.addContextListener(testAppInDirectory1);
+
+                    await openPromise;
+
+                    // Check that only the first listener received the context passed in open
+                    await expect(listener1).toHaveReceivedContexts([validContext]);
+                    await expect(listener2).toHaveReceivedContexts([]);
+                    await expect(listener3).toHaveReceivedContexts([]);
+                });
+
+                test('When the app adds its listener after a long delay, the app opens but its context listener is not triggered', async () => {
+                    // From the launcher app, call fdc3.open with a valid name and context
+                    const openPromise = open(testAppInDirectory1.name, validContext);
+
+                    // Wait a long delay after the app is running
+                    await waitForAppToBeRunning(testAppInDirectory1);
+                    await delay(Duration.LONGER_THAN_APP_MATURITY);
+
+                    // Add a listener
+                    const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
+
+                    await openPromise;
+
+                    // Check the listener did not receive the context in open
+                    await expect(listener).toHaveReceivedContexts([]);
+                }, appStartupTime + Duration.LONGER_THAN_APP_MATURITY);
             });
 
             test('When passing a known app name but invalid context, the service returns an FDC3Error', async () => {
@@ -125,13 +200,50 @@ describe('Opening applications with the FDC3 client', () => {
                 // Focus another window so we do not get false positives from the first open focusing
                 await fin.Window.wrapSync(testManagerIdentity).focus();
 
+                // From the launcher app, call fdc3.open with the name of the running app
+                await open(testAppWithPreregisteredListeners1.name, validContext);
+
+                // Check that the app is still running
+                await expect(fin.Application.wrapSync({uuid: testAppWithPreregisteredListeners1.uuid}).isRunning()).resolves.toBe(true);
+                // And that the app is focused
+                await expect(fin.System.getFocusedWindow().then((w) => w.uuid)).resolves.toBe(testAppWithPreregisteredListeners1.uuid);
+
+                const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
+
+                // Check that the app received the context passed in open and nothing else
+                await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
+            });
+
+            test('When the running app has multiple listeners registered, its context listeners are triggered with the correct data, and \
+the promise resolves', async () => {
+                // Create/get our listeners
+                const listener1 = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
+                const listener2 = await fdc3Remote.addContextListener(testAppWithPreregisteredListeners1);
+
+                const childWindow = await fdc3Remote.createFinWindow(testAppWithPreregisteredListeners1, {url: testAppUrl, name: 'child-window'});
+
+                const listener3 = await fdc3Remote.addContextListener(childWindow);
+
+                // From the launcher app, call fdc3.open the name of the running app
+                await open(testAppWithPreregisteredListeners1.name, validContext);
+
+                // Check that the each listener received the context passed in open and nothing else
+                await expect(listener1).toHaveReceivedContexts([validContext]);
+                await expect(listener2).toHaveReceivedContexts([validContext]);
+                await expect(listener3).toHaveReceivedContexts([validContext]);
+            });
+
+            test('When opening the running app it is focused, its context listener is triggered with the correct data, and the promise resolves', async () => {
+                // Focus another window so we do not get false positives from the first open focusing
+                await fin.Window.wrapSync(testManagerIdentity).focus();
+
                 // From the launcher app, call fdc3.open the name of the running app
                 await open(testAppWithPreregisteredListeners1.name, validContext);
 
                 // Check that the app is still running
                 await expect(fin.Application.wrapSync({uuid: testAppWithPreregisteredListeners1.uuid}).isRunning()).resolves.toBe(true);
                 // And that the app is focused
-                await expect(fin.System.getFocusedWindow().then(w => w.uuid)).resolves.toBe(testAppWithPreregisteredListeners1.uuid);
+                await expect(fin.System.getFocusedWindow().then((w) => w.uuid)).resolves.toBe(testAppWithPreregisteredListeners1.uuid);
 
                 const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
 
@@ -192,7 +304,7 @@ and does not trigger the context listener of the already open app', async () => 
 
         let openPromise: Promise<void>;
 
-        beforeEach(async () => {
+        beforeEach(() => {
             openPromise = open(testAppDelayedPreregisterShort.name, validContext);
         });
 
@@ -200,13 +312,13 @@ and does not trigger the context listener of the already open app', async () => 
             await quitApps(testAppDelayedPreregisterShort);
         });
 
-        test('The promise resolves and the app opens', async () =>{
+        test('The promise resolves and the app opens', async () => {
             await openPromise;
 
             await expect(fin.Application.wrapSync(testAppDelayedPreregisterShort).isRunning()).resolves.toBe(true);
         });
 
-        test('The context is received by the listener', async () =>{
+        test('The context is received by the listener', async () => {
             await openPromise;
 
             await delay(1000);
@@ -221,7 +333,7 @@ and does not trigger the context listener of the already open app', async () => 
 
         let openPromise: Promise<void>;
 
-        beforeEach(async () => {
+        beforeEach(() => {
             openPromise = open(testAppDelayedPreregisterLong.name, validContext);
         });
 
@@ -229,12 +341,12 @@ and does not trigger the context listener of the already open app', async () => 
             await quitApps(testAppDelayedPreregisterLong);
         });
 
-        test('The promise resolves and the app opens', async () =>{
+        test('The promise resolves and the app opens', async () => {
             await openPromise;
             await expect(fin.Application.wrapSync(testAppDelayedPreregisterLong).isRunning()).resolves.toBe(true);
         });
 
-        test('The context is not received by the listener', async () =>{
+        test('The context is not received by the listener', async () => {
             await openPromise;
 
             await delay(10000);

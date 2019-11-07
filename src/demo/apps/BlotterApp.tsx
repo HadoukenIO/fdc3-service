@@ -4,12 +4,12 @@ import {SymbolsTable} from '../components/blotter/SymbolsTable';
 import '../../../res/demo/css/w3.css';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
 
-export interface Symbol {
+export interface Instrument {
     name: string;
     ticker: string;
 }
 
-const symbols: Symbol[] = [
+const symbols: Instrument[] = [
     {ticker: 'AAPL', name: 'Apple'},
     {ticker: 'AMD', name: 'Advanced Micro Devices'},
     {ticker: 'AMZN', name: 'Amazon.com'},

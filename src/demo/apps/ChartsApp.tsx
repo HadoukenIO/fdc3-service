@@ -5,7 +5,6 @@ import {Chart} from '../components/charts/Chart';
 import {InstrumentContext, Context} from '../../client/context';
 import '../../../res/demo/css/w3.css';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
-import {getCurrentChannel} from '../../client/main';
 
 interface AppProps {
     symbolName?: string;
@@ -31,7 +30,7 @@ export function ChartsApp(props: AppProps): React.ReactElement {
     }, []);
 
     React.useEffect(() => {
-        getCurrentChannel().then(async channel => {
+        fdc3.getCurrentChannel().then(async (channel) => {
             const context = await channel.getCurrentContext();
             if (context && context.type === 'fdc3.instrument') {
                 handleIntent(context as InstrumentContext);

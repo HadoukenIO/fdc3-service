@@ -80,7 +80,7 @@ async function createAppDirectory(url: string): Promise<void> {
     await appDirectory.delayedInit();
 }
 
-beforeEach(async () => {
+beforeEach(() => {
     jest.restoreAllMocks();
 
     global.localStorage = {
@@ -98,7 +98,7 @@ beforeEach(async () => {
     };
 
     // Replace the fetch result with our mocked directory
-    (global as any).fetch = jest.fn().mockResolvedValue({
+    global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: mockFetchReturnJson
     });

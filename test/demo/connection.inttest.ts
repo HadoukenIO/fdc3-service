@@ -23,7 +23,7 @@ type ProviderWindow = Window & {
     intentHandler: IntentHandler;
     channelHandler: ChannelHandler;
     eventHandler: EventHandler;
-}
+};
 
 enum RegistrationStatus {
     REGISTERED,
@@ -61,7 +61,7 @@ describe('Connecting windows', () => {
             testTitle: string,
             application: TestAppData,
             statusAfterDisconnect: RegistrationStatus,
-            openFunction: (app: TestAppData) => Promise<void>,
+            openFunction: (app: TestAppData) => Promise<void>
         ) => {
             beforeEach(async () => {
                 await openFunction(application);
@@ -72,6 +72,7 @@ describe('Connecting windows', () => {
             });
 
             it(`Window is ${statusAfterDisconnect === RegistrationStatus.REGISTERED ? 'registered' : 'not registered'}`, async () => {
+                await delay(Duration.WINDOW_REGISTRATION);
                 await expect(isRegistered(application)).resolves.toBe(statusAfterDisconnect === RegistrationStatus.REGISTERED);
             });
         });
@@ -168,6 +169,7 @@ describe('Disconnecting windows', () => {
             });
 
             it(`Window is ${statusAfterDisconnect === RegistrationStatus.REGISTERED ? 'registered' : 'not registered'}`, async () => {
+                await delay(Duration.WINDOW_REGISTRATION);
                 await expect(isRegistered(application)).resolves.toBe(statusAfterDisconnect === RegistrationStatus.REGISTERED);
             });
 
@@ -186,11 +188,11 @@ describe('Disconnecting windows', () => {
     });
 });
 
-async function openDirectoryApp(app: TestAppData) {
+async function openDirectoryApp(app: TestAppData): Promise<void> {
     await fdc3Remote.open(testManagerIdentity, app.name);
 }
 
-async function openNonDirectoryApp(app: TestAppData) {
+async function openNonDirectoryApp(app: TestAppData): Promise<void> {
     await fin.Application.startFromManifest((app as NonDirectoryTestAppData).manifestUrl);
 }
 
@@ -211,11 +213,11 @@ async function navigateTo(target: Identity, url: string): Promise<void> {
 
 async function getIntentListeners(intentType: string): Promise<AppWindow[]> {
     return ofBrowser.executeOnWindow(SERVICE_IDENTITY, async function (this: ProviderWindow, type: string): Promise<AppWindow[]> {
-        return (await this.model.windows).filter(window => window.hasIntentListener(type));
+        return this.model.windows.filter((window) => window.hasIntentListener(type));
     }, intentType);
 }
 
-async function getChannelContextListeners(remoteChannel: RemoteChannel): Promise<AppWindow[]> {
+function getChannelContextListeners(remoteChannel: RemoteChannel): Promise<AppWindow[]> {
     return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, id: string): AppWindow[] {
         const channel = this.channelHandler.getChannelById(id);
         return this.channelHandler.getWindowsListeningForContextsOnChannel(channel);
@@ -225,15 +227,15 @@ async function getChannelContextListeners(remoteChannel: RemoteChannel): Promise
 async function hasEventListeners(identity: Identity, eventType: ChannelEvents['type']): Promise<boolean> {
     const identities = await ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, event: ChannelEvents['type']): Identity[] {
         // Check that the window identity is on any channel.
-        return this.model.channels.map(channel => {
-            return this.channelHandler.getWindowsListeningForEventsOnChannel(channel, event).map(appWindow => appWindow.identity);
+        return this.model.channels.map((channel) => {
+            return this.channelHandler.getWindowsListeningForEventsOnChannel(channel, event).map((appWindow) => appWindow.identity);
         }).reduce((acc, current) => [...acc, ...current], []);
     }, eventType);
-    return identities.some(id => id.name === identity.name && id.uuid === identity.uuid);
+    return identities.some((id) => id.name === identity.name && id.uuid === identity.uuid);
 }
 
-async function isRegistered(identity: Identity): Promise<boolean> {
-    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, identity: Identity): boolean {
-        return this.model.getWindow(identity) !== null;
+function isRegistered(identity: Identity): Promise<boolean> {
+    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, identityRemote: Identity): boolean {
+        return this.model.getWindow(identityRemote) !== null;
     }, identity);
 }

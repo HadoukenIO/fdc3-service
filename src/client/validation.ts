@@ -90,7 +90,7 @@ export function validateEnvironment(): void {
     }
 }
 
-function safeStringify(value: any, fallback: string): string {
+function safeStringify(value: {}, fallback: string): string {
     // Provided object may not be stringify-able (e.g., due to circular references), so we need to try-catch
     let result: string;
     try {

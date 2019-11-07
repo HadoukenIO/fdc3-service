@@ -2,17 +2,17 @@ import * as React from 'react';
 
 import * as fdc3 from '../../../client/main';
 import {Application, AppName} from '../../../client/directory';
-import {Symbol} from '../../apps/BlotterApp';
+import {Instrument} from '../../apps/BlotterApp';
 import {IntentButton} from '../common/IntentButton';
 import {showContextMenu, ContextMenuItem} from '../common/ContextMenu';
 
 import './SymbolsRow.css';
 
 interface SymbolsRowProps {
-    item: Symbol;
+    item: Instrument;
     chartApps: Application[];
     selected?: boolean;
-    handleSelect?: (item: Symbol | null) => void;
+    handleSelect?: (item: Instrument | null) => void;
 }
 
 interface Payload {
@@ -50,9 +50,9 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     const {item, chartApps, selected, handleSelect} = props;
 
     React.useEffect(() => {
-        const appItems = chartApps.map(app => {
+        const appItems = chartApps.map((app) => {
             return {
-                text: 'View ' + app.title,
+                text: `View ${app.title}`,
                 payload: {
                     intent: fdc3.Intents.VIEW_CHART,
                     appName: app.name
@@ -103,7 +103,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     };
 
     return (
-        <tr className={'symbols-row' + (selected ? ' w3-theme-l2' : '')} onClick={handleClick}>
+        <tr className={`symbols-row${selected ? ' w3-theme-l2' : ''}`} onClick={handleClick}>
             <td><span title={item.ticker}>{item.name}</span></td>
             <td>##.##</td>
             <td>##.##</td>

@@ -1,15 +1,14 @@
 import {Identity, Window} from 'openfin/_v2/main';
 
-import {Application} from '../../client/main';
-
 import {AbstractAppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
+import {LiveApp} from './LiveApp';
 
 export class FinAppWindow extends AbstractAppWindow {
     private readonly _window: Window;
 
-    constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined, appWindowNumber: number) {
-        super(identity, appInfo, channel, creationTime, appWindowNumber);
+    constructor(identity: Identity, liveApp: LiveApp, channel: ContextChannel, appWindowNumber: number) {
+        super(identity, liveApp.appInfo!, liveApp.waitForAppMature(), channel, appWindowNumber);
 
         this._window = fin.Window.wrapSync(identity);
     }

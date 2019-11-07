@@ -64,7 +64,7 @@ export enum APIToClientTopic {
     CHANNEL_RECEIVE_CONTEXT = 'CHANNEL-RECEIVE-CONTEXT'
 }
 
-export type APIFromClient = {
+export interface APIFromClient {
     [APIFromClientTopic.OPEN]: [OpenPayload, void];
     [APIFromClientTopic.FIND_INTENT]: [FindIntentPayload, AppIntent];
     [APIFromClientTopic.FIND_INTENTS_BY_CONTEXT]: [FindIntentsByContextPayload, AppIntent[]];
@@ -88,7 +88,7 @@ export type APIFromClient = {
     [APIFromClientTopic.CHANNEL_REMOVE_EVENT_LISTENER]: [ChannelRemoveEventListenerPayload, void];
 }
 
-export type APIToClient = {
+export interface APIToClient {
     [APIToClientTopic.RECEIVE_CONTEXT]: [ReceiveContextPayload, void];
     [APIToClientTopic.RECEIVE_INTENT]: [ReceiveIntentPayload, void];
     [APIToClientTopic.CHANNEL_RECEIVE_CONTEXT]: [ChannelReceiveContextPayload, void];
@@ -111,16 +111,16 @@ export type ChannelEvents = ChannelWindowAddedEvent | ChannelWindowRemovedEvent;
 
 export type TransportMappings<T> =
     T extends DefaultChannel ? ChannelTransport :
-    T extends SystemChannel ? SystemChannelTransport :
-    T extends AppChannel ? AppChannelTransport :
-    T extends ChannelBase ? ChannelTransport :
-    never;
+        T extends SystemChannel ? SystemChannelTransport :
+            T extends AppChannel ? AppChannelTransport :
+                T extends ChannelBase ? ChannelTransport :
+                    never;
 export type TransportMemberMappings<T> =
     T extends DefaultChannel ? ChannelTransport :
-    T extends SystemChannel ? SystemChannelTransport :
-    T extends AppChannel ? AppChannelTransport :
-    T extends ChannelBase ? ChannelTransport :
-    T;
+        T extends SystemChannel ? SystemChannelTransport :
+            T extends AppChannel ? AppChannelTransport :
+                T extends ChannelBase ? ChannelTransport :
+                    T;
 
 export interface ChannelTransport {
     id: ChannelId;
@@ -187,12 +187,12 @@ export interface ChannelJoinPayload {
 }
 
 export interface ChannelBroadcastPayload {
-    id: ChannelId,
-    context: Context
+    id: ChannelId;
+    context: Context;
 }
 
 export interface ChannelGetCurrentContextPayload {
-    id: ChannelId,
+    id: ChannelId;
 }
 
 export interface ChannelAddContextListenerPayload {
@@ -239,18 +239,8 @@ export interface ReceiveIntentPayload {
 }
 
 export interface ChannelReceiveContextPayload {
-    channel: ChannelId,
-    context: Context
-}
-
-export interface Intent {
-    name: string;
-    displayName?: string;
-    contexts?: string[];
-
-    // Specification is ambiguous on type of customConfig, so leaving as 'any'
-    /* tslint:disable:no-any */
-    customConfig: any;
+    channel: ChannelId;
+    context: Context;
 }
 
 /**

@@ -5,6 +5,7 @@ import {Application} from '../../client/main';
 
 import {AppWindow} from './AppWindow';
 import {ContextChannel} from './ContextChannel';
+import {LiveApp} from './LiveApp';
 
 export enum EntityType {
     WINDOW = 'window',
@@ -14,27 +15,45 @@ export enum EntityType {
 }
 
 export interface Environment {
+    /**
+     * Indicates that an application has been created by the service.
+     *
+     * Arguments: (identity: Identity)
+     */
+    applicationCreated: Signal<[Identity, LiveApp]>;
+
+    /**
+     * Indicates that an application has been closed.
+     *
+     * Arguments: (identity: Identity)
+     */
+    applicationClosed: Signal<[Identity]>;
+
+    /**
+     * Indicates that a window has been created by the service.
+     *
+     * Arguments: (identity: Identity)
+     */
     windowCreated: Signal<[Identity]>;
-    windowClosed: Signal<[Identity]>;
 
     /**
      * Checks if an application is running, given an App Directory entry.
      */
-    isRunning: (uuid: string) => Promise<boolean>;
+    windowClosed: Signal<[Identity]>;
 
     /**
      * Creates a new application, given an App Directory entry.
-     * @throws:
+     * @throws
      * * FDC3Error if app fails to start
      * * FDC3Error if timeout trying to start app
      */
-    createApplication: (appInfo: Application, channel: ContextChannel) => Promise<void>;
+    createApplication: (appInfo: Application) => void;
 
     /**
      * Creates an `AppWindow` object for an existing window. Should only be called once per window, after the `windowCreated` signal has
      * been fired for that window
      */
-    wrapApplication: (appInfo: Application, identity: Identity, channel: ContextChannel) => AppWindow;
+    wrapWindow: (liveApp: LiveApp, identity: Identity, channel: ContextChannel) => AppWindow;
 
     /**
      * Examines a running window, and returns a best-effort Application description
