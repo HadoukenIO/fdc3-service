@@ -7,6 +7,7 @@ import {FDC3Error, ResolveError} from '../../client/errors';
 import {Model} from '../model/Model';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
+import {collateResults} from '../utils/async';
 
 import {ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
@@ -131,9 +132,17 @@ export class IntentHandler {
         if (listeningWindows.length > 0) {
             const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
 
-            await Promise.all(listeningWindows.map((window) => this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload)));
+            const [result] = await collateResults(5000, listeningWindows.map((window) => {
+                return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
+            }));
+
+            if (result === 'error') {
+                throw new FDC3Error(ResolveError.SendIntentError, '');
+            } else if (result === 'timeout') {
+                throw new FDC3Error(ResolveError.SendIntentTimeout, '');
+            }
         } else {
-            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
+            throw new FDC3Error(ResolveError.SendIntentNoHandler, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
         }
 
         const result: IntentResolution = {
