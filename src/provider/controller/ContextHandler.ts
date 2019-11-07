@@ -9,6 +9,7 @@ import {getId} from '../utils/getId';
 import {ContextChannel} from '../model/ContextChannel';
 import {Model} from '../model/Model';
 import {LiveApp} from '../model/LiveApp';
+import {withTimeout} from '../utils/async';
 
 import {ChannelHandler} from './ChannelHandler';
 
@@ -124,6 +125,6 @@ export class ContextHandler {
     private async sendOnChannel(window: AppWindow, context: Context, channel: ContextChannel): Promise<void> {
         const payload: ChannelReceiveContextPayload = {channel: channel.id, context};
 
-        await this._apiHandler.dispatch(window.identity, APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, payload);
+        await withTimeout(5000, this._apiHandler.dispatch(window.identity, APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, payload)).catch(() => {});
     }
 }

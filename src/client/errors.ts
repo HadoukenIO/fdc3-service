@@ -78,11 +78,6 @@ export enum ChannelError {
     ChannelDoesNotExist = 'ChannelDoesNotExist'
 }
 
-export enum JoinError {
-    SendContextError = 'SendContextError',
-    SendContextTimeout = 'SendContextTimeout',
-}
-
 /**
  * Error codes returned when attempting to find specific OpenFin windows.
  */
