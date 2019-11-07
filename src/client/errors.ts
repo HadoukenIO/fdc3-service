@@ -65,7 +65,7 @@ export enum ResolveError {
  */
 export enum ChannelError {
     /**
-     * Indicates that [[getChannelById]] has failed because no such channel exists to with the given ID.
+     * Indicates that [[getChannelById]] has failed because no such channel exists with the given ID.
      */
     ChannelDoesNotExist = 'ChannelDoesNotExist'
 }
