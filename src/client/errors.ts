@@ -61,7 +61,11 @@ export enum ResolveError {
     /**
      * The intent resolver UI was dismissed by the user, so the intent has been cancelled.
      */
-    ResolverClosedOrCancelled = 'ResolverClosedOrCancelled'
+    ResolverClosedOrCancelled = 'ResolverClosedOrCancelled',
+
+    SendIntentError = 'SendIntentError',
+    SendIntentTimeout = 'SendIntentTimeout',
+    SendIntentNoHandler = 'SendContextNoHandler'
 }
 
 /**
@@ -72,6 +76,11 @@ export enum ChannelError {
      * Indicates that [[getChannelById]] has failed because no such channel exists with the given ID.
      */
     ChannelDoesNotExist = 'ChannelDoesNotExist'
+}
+
+export enum JoinError {
+    SendContextError = 'SendContextError',
+    SendContextTimeout = 'SendContextTimeout',
 }
 
 /**
