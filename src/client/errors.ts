@@ -10,14 +10,7 @@ export enum OpenError {
      * Indicates that an application cannot be found in the application directory.
      */
     AppNotFound = 'AppNotFound',
-    /**
-     * Indicates that an application cannot be started from an OpenFin manifest.
-     */
-    ErrorOnLaunch = 'ErrorOnLaunch',
-    /**
-     * Indicates that an application was not created in a timely manner, and the provider timed out.
-     */
-    AppTimeout = 'AppTimeout',
+
     /**
      * Currently unused.
      */
@@ -66,6 +59,17 @@ export enum ResolveError {
     SendIntentError = 'SendIntentError',
     SendIntentTimeout = 'SendIntentTimeout',
     SendIntentNoHandler = 'SendContextNoHandler'
+}
+
+export enum LaunchError {
+    /**
+     * Indicates that an application cannot be started from an OpenFin manifest.
+     */
+    ErrorOnLaunch = 'ErrorOnLaunch',
+    /**
+     * Indicates that an application was not created in a timely manner, and the provider timed out.
+     */
+    AppTimeout = 'AppTimeout',
 }
 
 /**

@@ -2,7 +2,7 @@
 import 'jest';
 
 import {Context, OrganizationContext} from '../../src/client/main';
-import {OpenError} from '../../src/client/errors';
+import {OpenError, LaunchError} from '../../src/client/errors';
 import {Timeouts} from '../../src/provider/constants';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
@@ -282,7 +282,7 @@ and does not trigger the context listener of the already open app', async () => 
 
         // fin.Application.startFromManifest errors with this message when providing an inexistent manifest URL
         await expect(openPromise).toThrowFDC3Error(
-            OpenError.ErrorOnLaunch,
+            LaunchError.ErrorOnLaunch,
             /Failed to download resource\. Status code: 404/
         );
     });
@@ -293,7 +293,7 @@ and does not trigger the context listener of the already open app', async () => 
 
         // fin.Application.startFromManifest errors with this message when it times out trying to open an app
         await expect(openPromise).toThrowFDC3Error(
-            OpenError.AppTimeout,
+            LaunchError.AppTimeout,
             `Timeout waiting for app '${appName}' to start from manifest`
         );
     }, Timeouts.APP_START_FROM_MANIFEST + 2000);
