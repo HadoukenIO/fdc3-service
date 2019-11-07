@@ -5,7 +5,7 @@ import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
 import {FDC3Error, OpenError, IdentityError} from '../client/errors';
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, GetOrCreateAppChannelPayload, AppChannelTransport, AddContextListenerPayload, RemoveContextListenerPayload} from '../client/internal';
-import {AppIntent, IntentResolution, Application, Intent, Context} from '../client/main';
+import {AppIntent, IntentResolution, Application, Context} from '../client/main';
 import {parseIdentity, parseContext, parseChannelId, parseAppChannelName} from '../client/validation';
 
 import {Inject} from './common/Injectables';
@@ -18,6 +18,7 @@ import {EventHandler} from './controller/EventHandler';
 import {Injector} from './common/Injector';
 import {ChannelHandler} from './controller/ChannelHandler';
 import {AppWindow} from './model/AppWindow';
+import {Intent} from './intents';
 import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
 import {Environment} from './model/Environment';

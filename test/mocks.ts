@@ -3,13 +3,14 @@ import {Signal} from 'openfin-service-signal';
 import {Identity} from 'openfin/_v2/main';
 
 import {AppWindow} from '../src/provider/model/AppWindow';
-import {IntentType, Context, Application} from '../src/client/main';
+import {Context, Application} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
 import {ChannelTransport, ChannelEvents, APIFromClientTopic} from '../src/client/internal';
 import {Environment, EntityType} from '../src/provider/model/Environment';
 import {AppDirectory} from '../src/provider/model/AppDirectory';
 import {APIHandler} from '../src/provider/APIHandler';
 import {getId} from '../src/provider/utils/getId';
+import {IntentType} from '../src/provider/intents';
 import {LiveApp} from '../src/provider/model/LiveApp';
 import {Model} from '../src/provider/model/Model';
 import {ChannelHandler} from '../src/provider/controller/ChannelHandler';

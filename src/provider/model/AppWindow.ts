@@ -1,9 +1,10 @@
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
-import {Application, IntentType, ChannelId} from '../../client/main';
 import {Events, ChannelEvents} from '../../client/internal';
 import {getId} from '../utils/getId';
+import {IntentType} from '../intents';
+import {Application, ChannelId} from '../../client/main';
 import {untilTrue, allowReject} from '../utils/async';
 
 import {ContextChannel} from './ContextChannel';

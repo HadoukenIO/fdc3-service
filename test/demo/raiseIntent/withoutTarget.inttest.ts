@@ -2,7 +2,6 @@ import 'jest';
 import 'reflect-metadata';
 
 import {ResolveError} from '../../../src/client/errors';
-import {Intent} from '../../../src/client/intents';
 import {RESOLVER_IDENTITY} from '../../../src/provider/utils/constants';
 import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
@@ -11,6 +10,7 @@ import {TestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppWit
 import {testManagerIdentity, testAppInDirectory4, testAppNotInDirectory1, testAppNotInDirectory2, testAppWithPreregisteredListeners1, testAppUrl, appStartupTime, testAppWithPreregisteredListeners2} from '../constants';
 import {Boxed} from '../../../src/provider/utils/types';
 import {allowReject, withTimeout} from '../../../src/provider/utils/async';
+import {Intent} from '../../../src/provider/intents';
 
 /**
  * Alias for `testAppInDirectory4`, which is only in the directory registering the intent `test.IntentOnlyOnApp4`

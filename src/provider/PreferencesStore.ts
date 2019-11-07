@@ -1,4 +1,4 @@
-import {IntentType} from '../client/main';
+import {IntentType} from './intents';
 
 /**
  * The type given to application identifiers

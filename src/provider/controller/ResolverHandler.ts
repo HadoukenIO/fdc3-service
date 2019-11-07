@@ -3,8 +3,9 @@ import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 import {injectable} from 'inversify';
 
-import {Intent, Application} from '../../client/main';
+import {Application} from '../../client/main';
 import {RESOLVER_IDENTITY} from '../utils/constants';
+import {Intent} from '../intents';
 
 import {AsyncInit} from './AsyncInit';
 

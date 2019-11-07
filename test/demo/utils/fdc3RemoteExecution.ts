@@ -13,7 +13,8 @@
 import {Identity} from 'openfin/_v2/main';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 
-import {Context, IntentType, AppIntent, ChannelId} from '../../../src/client/main';
+import {IntentType} from '../../../src/provider/intents';
+import {Context, AppIntent, ChannelId} from '../../../src/client/main';
 import {RaiseIntentPayload, deserializeError, Events, MainEvents, FindIntentPayload, OpenPayload, BroadcastPayload} from '../../../src/client/internal';
 
 import {OFPuppeteerBrowser, TestWindowContext, TestChannelTransport} from './ofPuppeteer';

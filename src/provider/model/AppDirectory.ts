@@ -1,11 +1,10 @@
 import {injectable, inject} from 'inversify';
 
 import {Inject} from '../common/Injectables';
-import {Application, AppName} from '../../client/directory';
+import {Application, AppName, AppDirIntent} from '../../client/directory';
 import {AsyncInit} from '../controller/AsyncInit';
 import {CustomConfigFields} from '../constants';
 import {checkCustomConfigField} from '../utils/helpers';
-import {Intent} from '../../client/internal';
 
 import {ConfigStoreBinding} from './ConfigStore';
 
@@ -150,6 +149,6 @@ export class AppDirectory extends AsyncInit {
     }
 }
 
-function intentSupportsContext(intent: Intent, contextType: string): boolean {
+function intentSupportsContext(intent: AppDirIntent, contextType: string): boolean {
     return intent.contexts === undefined || intent.contexts.length === 0 || intent.contexts.includes(contextType);
 }
