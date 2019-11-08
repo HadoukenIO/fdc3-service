@@ -132,7 +132,7 @@ export class IntentHandler {
         if (listeningWindows.length > 0) {
             const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
 
-            const [result] = await collateResults(5000, listeningWindows.map((window) => {
+            const [result] = await collateResults(listeningWindows.map((window) => {
                 return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
             }));
 

@@ -7,6 +7,7 @@ import {Inject} from '../common/Injectables';
 import {ContextChannel} from '../model/ContextChannel';
 import {ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent} from '../../client/main';
 import {Transport, Targeted} from '../../client/EventRouter';
+import {collateResults} from '../utils/async';
 
 import {ChannelHandler} from './ChannelHandler';
 
@@ -70,10 +71,22 @@ export class EventHandler {
     }
 
     private dispatchEvent<T extends Events>(targetWindow: AppWindow, eventTransport: Targeted<Transport<T>>): Promise<void> {
-        return this._apiHandler.dispatch(targetWindow.identity, 'event', eventTransport);
+        return collateResults([this._apiHandler.dispatch(targetWindow.identity, 'event', eventTransport)]).then(([result]) => {
+            if (result === 'error') {
+                console.warn('Error publishing to client');
+            } else if (result === 'timeout') {
+                console.warn('Timeout publishing to client');
+            }
+        });
     }
 
     private publishEvent<T extends Events>(eventTransport: Targeted<Transport<T>>): Promise<void> {
-        return Promise.all(this._apiHandler.publish('event', eventTransport)).then(() => {});
+        return collateResults(this._apiHandler.publish('event', eventTransport)).then(([result]) => {
+            if (result === 'error') {
+                console.warn('Error publishing to client');
+            } else if (result === 'timeout') {
+                console.warn('Timeout publishing to client');
+            }
+        });
     }
 }

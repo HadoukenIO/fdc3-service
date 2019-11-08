@@ -81,7 +81,7 @@ export function allowReject<T>(promise: Promise<T>): Promise<T> {
     return promise;
 }
 
-export async function collateResults<T = void>(timeout: number, promises: Promise<T>[]): Promise<['success' | 'error' | 'timeout', T | undefined]> {
+export async function collateResults<T = void>(promises: Promise<T>[]): Promise<['success' | 'error' | 'timeout', T | undefined]> {
     let errors = 0;
     let successes = 0;
 

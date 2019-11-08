@@ -22,7 +22,7 @@ import {Intent} from './intents';
 import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
 import {Environment} from './model/Environment';
-import {collateResults, withTimeout} from './utils/async';
+import {collateResults} from './utils/async';
 
 @injectable()
 export class Main {
@@ -105,8 +105,9 @@ export class Main {
         console.log('Service Initialised');
     }
 
-    private async onChannelChangedHandler(appWindow: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null): Promise<void> {
-        return this._eventHandler.dispatchEventOnChannelChanged(appWindow, channel, previousChannel);
+    private onChannelChangedHandler(appWindow: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null): void {
+        // Intentionally unawaited
+        this._eventHandler.dispatchEventOnChannelChanged(appWindow, channel, previousChannel);
     }
 
     private async open(payload: OpenPayload): Promise<void> {
@@ -149,7 +150,7 @@ export class Main {
                     throw new FDC3Error(OpenError.SendContextNoHandler, '');
                 }
 
-                const [result] = await collateResults(5000, expectedWindows.map((window) => this._contextHandler.send(window, context)));
+                const [result] = await collateResults(expectedWindows.map((window) => this._contextHandler.send(window, context)));
 
                 if (result === 'error') {
                     throw new FDC3Error(OpenError.SendContextError, '');
@@ -277,7 +278,13 @@ export class Main {
         const context = this._channelHandler.getChannelContext(channel);
 
         if (context) {
-            await withTimeout(5000, this._contextHandler.send(appWindow, context).catch(() => {}));
+            await collateResults([this._contextHandler.send(appWindow, context)]).then(([result]) => {
+                if (result === 'error') {
+                    console.warn('Error from client sending context to window on join, swallowing');
+                } else if (result === 'timeout') {
+                    console.warn('Timeout from client sending context to window on join, swallowing');
+                }
+            });
         }
     }
 
