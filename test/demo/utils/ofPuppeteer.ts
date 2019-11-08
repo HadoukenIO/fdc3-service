@@ -2,12 +2,54 @@ import {Fin, Identity} from 'openfin/_v2/main';
 import {Browser, Page, JSHandle} from 'puppeteer';
 import {connect} from 'hadouken-js-adapter';
 
+import {Context, ContextListener, IntentListener, Channel} from '../../../src/client/main';
+import {Events, ChannelEvents} from '../../../src/client/internal';
+import {IntentType} from '../../../src/provider/intents';
+
 import {uuidv4} from './uuidv4';
 
 declare const global: NodeJS.Global & {__BROWSER__: Browser};
 
+export interface TestWindowEventListener {
+    // eslint-disable-next-line
+    handler: (payload: any) => void;
+    unsubscribe: () => void;
+}
+
+export interface TestWindowChannelEventListener {
+    // eslint-disable-next-line
+    handler: (payload: any) => void;
+    unsubscribe: () => void;
+}
+
+export type TestWindowContext = Window&{
+    fin: Fin;
+    fdc3: typeof import('../../../src/client/main');
+
+    contextListeners: ContextListener[];
+    intentListeners: {[intent: string]: IntentListener[]};
+    eventListeners: TestWindowEventListener[];
+    channelEventListeners: TestWindowChannelEventListener[];
+
+    channelTransports: {[id: string]: TestChannelTransport};
+
+    receivedContexts: {listenerID: number; context: Context}[];
+    receivedEvents: {listenerID: number; payload: Events}[];
+    receivedIntents: {listenerID: number; intent: IntentType; context: Context}[];
+    receivedChannelEvents: {listenerID: number; payload: ChannelEvents}[];
+
+    errorHandler(error: Error): never;
+    serializeChannel(channel: Channel): TestChannelTransport;
+};
+
 // Helper type. Works better with puppeteer than the builtin Function type
 type AnyFunction = (...args: any[]) => any;
+
+export interface TestChannelTransport {
+    id: string;
+    channel: Channel;
+    constructor: string;
+}
 
 export type BaseWindowContext = Window & {fin: Fin};
 
