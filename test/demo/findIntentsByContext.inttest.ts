@@ -181,8 +181,8 @@ describe('Resolving intents by context, findIntentsByContext', () => {
             expect(receivedAppIntents).toEqual([
                 {
                     intent: {
-                        displayName: 'test.ContextTestIntent',
-                        name: 'test.ContextTestIntent'
+                        displayName: 'ContextTestIntent',
+                        name: 'ContextTestIntent'
                     },
                     apps: [
                         expect.objectContaining({
@@ -194,7 +194,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
                 {
                     intent: {
                         displayName: 'Test Intent',
-                        name: 'test.IntentOnlyOnTestAppNotFdc3'
+                        name: 'IntentOnlyOnTestAppNotFdc3'
                     },
                     apps: [
                         expect.objectContaining({

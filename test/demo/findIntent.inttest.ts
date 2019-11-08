@@ -76,16 +76,6 @@ directory applications accept the intent with specifies the given context or no 
                     // Compare the two arrays (sorted as order doesn't matter)
                     expect(extractSortedAppNames(appIntent)).toEqual(expectedAppNames);
                 });
-
-                test('When resolving an intent with a context that the app is supposed to handle \
-the list of applications accept the intent does NOT include the app.', async () => {
-                    const context = {
-                        type: 'test.MatchingContext'
-                    };
-                    const receivedAppIntents = await findIntent('ContextTestIntent', context);
-
-                    expect(extractSortedAppNames(receivedAppIntents)).toEqual(['test-app-4']);
-                });
             });
 
             describe('And it has registered a listener for an intent it is supposed to handle', () => {
@@ -124,7 +114,7 @@ the list of applications accept the intent does NOT include the app.', async () 
                     const context = {
                         type: 'test.MatchingContext'
                     };
-                    const receivedAppIntents = await findIntent('test.ContextTestIntent', context);
+                    const receivedAppIntents = await findIntent('ContextTestIntent', context);
 
                     expect(extractSortedAppNames(receivedAppIntents)).toEqual(['test-app-4']);
                 });
