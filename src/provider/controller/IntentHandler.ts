@@ -7,7 +7,7 @@ import {FDC3Error, ResolveError} from '../../client/errors';
 import {Model} from '../model/Model';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
-import {collateResults} from '../utils/async';
+import {collateApiCallResults, CollateApiCallResultsResult} from '../utils/async';
 
 import {ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
@@ -132,17 +132,17 @@ export class IntentHandler {
         if (listeningWindows.length > 0) {
             const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
 
-            const [result] = await collateResults(listeningWindows.map((window) => {
+            const [result] = await collateApiCallResults(listeningWindows.map((window) => {
                 return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
             }));
 
-            if (result === 'error') {
-                throw new FDC3Error(ResolveError.SendIntentError, '');
-            } else if (result === 'timeout') {
-                throw new FDC3Error(ResolveError.SendIntentTimeout, '');
+            if (result === CollateApiCallResultsResult.AllFailure) {
+                throw new FDC3Error(ResolveError.SendIntentError, 'Error(s) thrown by client attempting to handle intent');
+            } else if (result === CollateApiCallResultsResult.Timeout) {
+                throw new FDC3Error(ResolveError.SendIntentTimeout, 'Timeout waiting for client to handle intent');
             }
         } else {
-            throw new FDC3Error(ResolveError.SendIntentNoHandler, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
+            throw new FDC3Error(ResolveError.SendIntentNoHandler, `No intent handler added for intent: ${intent.type}`);
         }
 
         const result: IntentResolution = {

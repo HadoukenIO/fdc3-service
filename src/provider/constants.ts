@@ -20,7 +20,12 @@ export const Timeouts = {
     /**
      * Time service allows for a window to go from first created to being fully registered with the model
      */
-    WINDOW_CREATED_TO_REGISTERED: 5000
+    WINDOW_CREATED_TO_REGISTERED: 5000,
+
+    /**
+     * Time service allows for an API call to a client to resolve
+     */
+    SERVICE_TO_CLIENT_API_CALL: 5000
 };
 
 export const CustomConfigFields = {

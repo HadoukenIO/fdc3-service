@@ -9,7 +9,7 @@ import {getId} from '../utils/getId';
 import {ContextChannel} from '../model/ContextChannel';
 import {Model} from '../model/Model';
 import {LiveApp} from '../model/LiveApp';
-import {collateResults} from '../utils/async';
+import {collateApiCallResults, CollateApiCallResultsResult} from '../utils/async';
 
 import {ChannelHandler} from './ChannelHandler';
 
@@ -41,11 +41,11 @@ export class ContextHandler {
         } else {
             // We intentionally don't await this, as we have no expectation that windows will add a context listener
             window.waitForReadyToReceiveContext().then(() => {
-                collateResults([this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload)]).then(([result]) => {
-                    if (result === 'error') {
-                        console.warn('Error from client sending, swallowing');
-                    } else if (result === 'timeout') {
-                        console.warn('Timeout from client sending, swallowing');
+                collateApiCallResults([this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload)]).then(([result]) => {
+                    if (result === CollateApiCallResultsResult.AllFailure) {
+                        console.warn('Error thrown by client attempting to handle context, swallowing error');
+                    } else if (result === CollateApiCallResultsResult.Timeout) {
+                        console.warn('Timeout waiting for client to handle context, swallowing error');
                     }
                 });
             }, () => {});
@@ -121,11 +121,11 @@ export class ContextHandler {
     }
 
     private async sendForBroadcast(window: AppWindow, context: Context): Promise<void> {
-        await collateResults([this.send(window, context)]).then(([result]) => {
-            if (result === 'error') {
-                console.warn('Error from client sending on channel, swallowing');
-            } else if (result === 'timeout') {
-                console.warn('Timeout from client sending on channel, swallowing');
+        await collateApiCallResults([this.send(window, context)]).then(([result]) => {
+            if (result === CollateApiCallResultsResult.AllFailure) {
+                console.warn('Error thrown by client attempting to handle broadcast, swallowing error');
+            } else if (result === CollateApiCallResultsResult.Timeout) {
+                console.warn('Timeout waiting for client to handle broadcast, swallowing error');
             }
         });
     }
@@ -139,11 +139,11 @@ export class ContextHandler {
     private async sendOnChannelForBroadcast(window: AppWindow, context: Context, channel: ContextChannel): Promise<void> {
         const payload: ChannelReceiveContextPayload = {channel: channel.id, context};
 
-        await collateResults([this._apiHandler.dispatch(window.identity, APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, payload)]).then(([result]) => {
-            if (result === 'error') {
-                console.warn('Error from client sending on channel, swallowing');
-            } else if (result === 'timeout') {
-                console.warn('Timeout from client sending on channel, swallowing');
+        await collateApiCallResults([this._apiHandler.dispatch(window.identity, APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, payload)]).then(([result]) => {
+            if (result === CollateApiCallResultsResult.AllFailure) {
+                console.warn('Error thrown by client attempting to handle broadcast on channel, swallowing error');
+            } else if (result === CollateApiCallResultsResult.Timeout) {
+                console.warn('Timeout waiting for client to handle broadcast on channel, swallowing error');
             }
         });
     }

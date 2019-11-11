@@ -22,7 +22,7 @@ import {Intent} from './intents';
 import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
 import {Environment} from './model/Environment';
-import {collateResults} from './utils/async';
+import {collateApiCallResults, CollateApiCallResultsResult} from './utils/async';
 
 @injectable()
 export class Main {
@@ -150,12 +150,12 @@ export class Main {
                     throw new FDC3Error(OpenError.SendContextNoHandler, '');
                 }
 
-                const [result] = await collateResults(expectedWindows.map((window) => this._contextHandler.send(window, context)));
+                const [result] = await collateApiCallResults(expectedWindows.map((window) => this._contextHandler.send(window, context)));
 
-                if (result === 'error') {
-                    throw new FDC3Error(OpenError.SendContextError, '');
-                } else if (result === 'timeout') {
-                    throw new FDC3Error(OpenError.SendContextTimeout, '');
+                if (result === CollateApiCallResultsResult.AllFailure) {
+                    throw new FDC3Error(OpenError.SendContextError, 'Error(s) thrown by client attempting to handle context on app starting');
+                } else if (result === CollateApiCallResultsResult.Timeout) {
+                    throw new FDC3Error(OpenError.SendContextTimeout, 'Timeout waiting for client to handle context on app starting');
                 }
             });
 
@@ -278,11 +278,11 @@ export class Main {
         const context = this._channelHandler.getChannelContext(channel);
 
         if (context) {
-            await collateResults([this._contextHandler.send(appWindow, context)]).then(([result]) => {
-                if (result === 'error') {
-                    console.warn('Error from client sending context to window on join, swallowing');
-                } else if (result === 'timeout') {
-                    console.warn('Timeout from client sending context to window on join, swallowing');
+            await collateApiCallResults([this._contextHandler.send(appWindow, context)]).then(([result]) => {
+                if (result === CollateApiCallResultsResult.AllFailure) {
+                    console.warn('Error thrown by client attempting to handle context on window joining channel, swallowing error');
+                } else if (result === CollateApiCallResultsResult.Timeout) {
+                    console.warn('Timeout waiting for client to handle context on window joining channel, swallowing error');
                 }
             });
         }

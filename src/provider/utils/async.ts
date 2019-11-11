@@ -1,6 +1,14 @@
 import {Signal} from 'openfin-service-signal';
 
 import {DeferredPromise} from '../common/DeferredPromise';
+import {Timeouts} from '../constants';
+
+export enum CollateApiCallResultsResult {
+    AnySuccess,
+    AllFailure,
+    Timeout,
+    NoCalls
+}
 
 /**
  * Races a given promise against a timeout, and resolves to a `[didTimeout, value?]` tuple indicating
@@ -81,13 +89,20 @@ export function allowReject<T>(promise: Promise<T>): Promise<T> {
     return promise;
 }
 
-export async function collateResults<T = void>(promises: Promise<T>[]): Promise<['success' | 'error' | 'timeout', T | undefined]> {
+/**
+ * Takes multiple promises representing API calls, and reduces them to a single result. In the case that more than one promise resolves to
+ * a result, the first to result will be used. Intented to be used when calling a client from the provider, to protect against a
+ * misbehaving client
+ *
+ * @param promises An array of promises
+ */
+export async function collateApiCallResults<T = void>(promises: Promise<T>[]): Promise<[CollateApiCallResultsResult, T | undefined]> {
     let errors = 0;
     let successes = 0;
 
     let result: T;
 
-    await Promise.all(promises.map((promise) => withTimeout(5000, promise.then((promiseResult) => {
+    await Promise.all(promises.map((promise) => withTimeout(Timeouts.SERVICE_TO_CLIENT_API_CALL, promise.then((promiseResult) => {
         if (successes === 0) {
             result = promiseResult;
         }
@@ -96,12 +111,14 @@ export async function collateResults<T = void>(promises: Promise<T>[]): Promise<
         errors++;
     }))));
 
-    if (successes > 0) {
-        return ['success', result!];
+    if (promises.length === 0) {
+        return [CollateApiCallResultsResult.NoCalls, undefined];
+    } else if (successes > 0) {
+        return [CollateApiCallResultsResult.AnySuccess, result!];
     } else if (errors > 0) {
-        return ['error', undefined];
+        return [CollateApiCallResultsResult.AllFailure, undefined];
     } else {
-        return ['timeout', undefined];
+        return [CollateApiCallResultsResult.Timeout, undefined];
     }
 }
 

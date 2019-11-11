@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/await-thenable */
 import 'jest';
 
+import {EventEmitter} from 'events';
+
 import {Context, OrganizationContext} from '../../src/client/main';
 import {OpenError, LaunchError} from '../../src/client/errors';
 import {Timeouts} from '../../src/provider/constants';
@@ -359,3 +361,21 @@ and does not trigger the context listener of the already open app', async () => 
 function open(appName: string, context?: Context | undefined): Promise<void> {
     return fdc3Remote.open(testManagerIdentity, appName, context);
 }
+
+test.only('wafrwefaesfesfe', async () => {
+    const emitter = new EventEmitter();
+
+    emitter.addListener('foo', () => {
+        throw new Error('waaaaa');
+    });
+
+    emitter.addListener('foo', () => {
+        throw new Error('baaaaaa');
+    });
+
+    try {
+        emitter.emit('foo');
+    } catch (e) {
+        console.log(e);
+    }
+});
