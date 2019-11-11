@@ -120,7 +120,7 @@ export interface IntentListener {
     /**
      * The handler for when this listener receives an intent.
      */
-    handler: (context: Context) => void;
+    handler: (context: Context) => void | Promise<void>;
     /**
      * Unsubscribe the listener object. We will no longer receive intent messages on this handler.
      *
@@ -299,7 +299,7 @@ export async function raiseIntent(intent: string, context: Context, target?: App
  * @param intent The name of the intent to listen for.
  * @param handler The handler to call when we get sent an intent.
  */
-export function addIntentListener(intent: string, handler: (context: Context) => void): IntentListener {
+export function addIntentListener(intent: string, handler: (context: Context) => void | Promise<void>): IntentListener {
     validateEnvironment();
 
     const listener: IntentListener = {
@@ -420,17 +420,23 @@ function deserializeChannelChangedEvent(eventTransport: Transport<ChannelChanged
 
 if (typeof fin !== 'undefined') {
     getServicePromise().then((channelClient) => {
-        channelClient.register(APIToClientTopic.RECEIVE_INTENT, (payload: RaiseIntentPayload) => {
-            intentListeners.forEach((listener: IntentListener) => {
-                if (payload.intent === listener.intent) {
-                    try {
-                        listener.handler(payload.context);
-                    } catch (e) {
-                        // / TODO: Really?!
-                        console.warn('');
-                    }
+        channelClient.register(APIToClientTopic.RECEIVE_INTENT, async (payload: RaiseIntentPayload) => {
+            let successes = 0;
+            let failures = 0;
+
+            await Promise.all(intentListeners.filter((listener) => payload.intent === listener.intent).map(async (listener) => {
+                try {
+                    await listener.handler(payload.context);
+                    successes++;
+                } catch (e) {
+                    failures++;
+                    console.warn(`Error thrown by ${payload.intent} intent handler, swallowing error. Error message: ${e.message}`);
                 }
-            });
+            }));
+
+            if (failures > 0 && successes === 0) {
+                throw new Error(`All ${payload.intent} intent handlers failed`);
+            }
         });
 
         channelClient.register(APIToClientTopic.RECEIVE_CONTEXT, (payload: ReceiveContextPayload) => {
