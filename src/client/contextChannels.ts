@@ -569,11 +569,11 @@ function deserializeWindowRemovedEvent(eventTransport: Transport<ChannelWindowRe
 if (typeof fin !== 'undefined') {
     getServicePromise().then((channelClient) => {
         channelClient.register(APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, (payload: ChannelReceiveContextPayload) => {
+            let successes = 0;
+            let failures = 0;
+
             channelContextListeners.forEach((listener: ChannelContextListener) => {
                 if (listener.channel.id === payload.channel) {
-                    let successes = 0;
-                    let failures = 0;
-
                     try {
                         listener.handler(payload.context);
                         successes++;
@@ -581,12 +581,12 @@ if (typeof fin !== 'undefined') {
                         failures++;
                         console.warn(`Error thrown by channel context handler, swallowing error. Error message: ${e.message}`);
                     }
-
-                    if (failures > 0 && successes === 0) {
-                        throw new Error('All channel context handlers failed');
-                    }
                 }
             });
+
+            if (failures > 0 && successes === 0) {
+                throw new Error('All channel context handlers failed');
+            }
         });
 
         const eventHandler = getEventRouter();

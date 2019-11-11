@@ -11,6 +11,7 @@ import {fin} from './utils/fin';
 import {quitApps, setupOpenDirectoryAppBookends, setupTeardown, waitForAppToBeRunning} from './utils/common';
 import {testManagerIdentity, testAppInDirectory1, testAppInDirectory2, testAppWithPreregisteredListeners1, testAppWithPreregisteredListeners2, testAppNotFdc3, testAppUrl, appStartupTime} from './constants';
 import {delay, Duration} from './utils/delay';
+import {TestWindowContext} from './utils/ofPuppeteer';
 
 setupTeardown();
 
@@ -100,6 +101,46 @@ describe('Opening applications with the FDC3 client', () => {
                     // Check that the app received the context passed in open and nothing else
                     await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
                 });
+
+                test('When the app adds a listener that throws an error, the service returns an FDC3 error', async () => {
+                    // From the launcher app, call fdc3.open with a valid name and context
+                    const promise = allowReject(open(testAppInDirectory1.name, validContext));
+                    await waitForAppToBeRunning(testAppInDirectory1);
+
+                    await fdc3Remote.ofBrowser.executeOnWindow(testAppInDirectory1, function (this: TestWindowContext): void {
+                        this.fdc3.addContextListener(() => {
+                            throw new Error('Context listening throwing error');
+                        });
+                    });
+
+                    await expect(promise).toThrowFDC3Error(
+                        OpenError.SendContextError,
+                        'Error(s) thrown by client attempting to handle context on app starting'
+                    );
+                });
+
+                test(
+                    'When the app adds a mix of erroring and non-erroring listeners, all listeners recieve the context, and the service returns without error',
+                    async () => {
+                        // From the launcher app, call fdc3.open with a valid name and context
+                        const promise = allowReject(open(testAppInDirectory1.name, validContext));
+                        await waitForAppToBeRunning(testAppInDirectory1);
+
+                        await fdc3Remote.ofBrowser.executeOnWindow(testAppInDirectory1, function (this: TestWindowContext): void {
+                            this.contextListeners[0] = this.fdc3.addContextListener((context) => {
+                                this.receivedContexts.push({listenerID: 0, context});
+                            });
+
+                            this.fdc3.addContextListener(() => {
+                                throw new Error('Context listening throwing error');
+                            });
+                        });
+
+                        await promise;
+
+                        await expect(await fdc3Remote.getRemoteContextListener(testAppInDirectory1)).toHaveReceivedContexts([validContext]);
+                    }
+                );
 
                 test('When the app adds its listener after a short delay, the app opens and its context listener is triggered with the \
 correct data', async () => {
@@ -250,6 +291,28 @@ the promise resolves', async () => {
 
                 // Check that the app received the context passed in open and nothing else
                 await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
+            });
+
+            test('When the running app has a mix of erroring and non-erroring listeners across multiple windows, all listeners recieve \
+the context, and the service returns without error', async () => {
+                const listener1 = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
+
+                const childWindow1 = await fdc3Remote.createFinWindow(testAppWithPreregisteredListeners1, {url: testAppUrl, name: 'child-window-1'});
+                const childWindow2 = await fdc3Remote.createFinWindow(testAppWithPreregisteredListeners1, {url: testAppUrl, name: 'child-window-2'});
+
+                const listener2 = await fdc3Remote.addContextListener(childWindow1);
+
+                await fdc3Remote.ofBrowser.executeOnWindow(childWindow2, function (this: TestWindowContext): void {
+                    this.fdc3.addContextListener(() => {
+                        throw new Error('Context listening throwing error');
+                    });
+                });
+
+                // From the launcher app, call fdc3.open with a valid name and context
+                await open(testAppWithPreregisteredListeners1.name, validContext);
+
+                await expect(listener1).toHaveReceivedContexts([validContext]);
+                await expect(listener2).toHaveReceivedContexts([validContext]);
             });
 
             test('When an app is already running, opening a second app with context works as expected \
