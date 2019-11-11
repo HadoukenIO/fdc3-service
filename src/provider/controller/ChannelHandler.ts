@@ -106,7 +106,7 @@ export class ChannelHandler {
         const channel = this._model.getChannel(channelId);
 
         if (!channel) {
-            throw new FDC3Error(ChannelError.ChannelDoesNotExist, `No channel with channelId: ${channelId}`);
+            throw new FDC3Error(ChannelError.ChannelWithIdDoesNotExist, `No channel with channelId: ${channelId}`);
         }
     }
 

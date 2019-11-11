@@ -3,65 +3,72 @@
  */
 
 /**
- * Error codes returned by actions involving creating applications.
+ * Error codes specific to the [[open]] function
  */
 export enum OpenError {
     /**
-     * Indicates that an application cannot be found in the application directory.
+     * Indicates that the an application of the provided name cannot be found in the application directory.
      */
     AppNotFound = 'AppNotFound',
 
     /**
-     * Currently unused.
+     * In the case where the optional `context` argument is provided, indicates that the provided application was started, but threw an
+     * error when attempting to handle the provided context.
      */
-    ResolverUnavailable = 'ResolverUnavailable',
-
     SendContextError = 'SendContextError',
+
+    /**
+     * In the case where the optional `context` argument is provided, indicates that the given application was started, but a timeout was
+     * reached waiting for it to handle the provided context.
+     */
     SendContextTimeout = 'SendContextTimeout',
+
+    /**
+     * In the case where the optional `context` argument is provided, indicates that the given application was started, but did not add a
+     * context handler.
+     */
     SendContextNoHandler = 'SendContextNoHandler'
 }
 
 /**
- * Error codes returned after failure to fire intents to applications.
+ * Error codes specific to the [[raiseIntent]] function
  */
-export enum ResolveError {
+export enum RaiseIntentError {
     /**
-     * Indicates that no apps could be found for a particular intent.
+     * Indicates that no apps could be found to handle the provided intent and context.
      */
     NoAppsFound = 'NoAppsFound',
     /**
-     * Indicates that, in the case when a 'target' argument is passed to [[raiseIntent]], no
-     * such app either exists in the application directory or is currently running.
+     * In the case when a the optional 'target' argument is provided, no such app either exists in the application directory or is
+     * currently running.
      */
     TargetAppNotAvailable = 'TargetAppNotAvailable',
     /**
-     * Indicates that, in the case when a 'target' argument is passed to [[raiseIntent]], the app is not able to handle this intent.
+     * In the case when a the optional 'target' argument is provided, indicates that the app is not able to handle this intent and context.
      */
     TargetAppDoesNotHandleIntent = 'TargetAppDoesNotHandleIntent',
-    /**
-     * Indicates that the provider has started an app to receive an intent, and that it has timed out whilst waiting
-     * for that app to handle the intent.
-     */
-    IntentTimeout = 'IntentTimeout',
-    /**
-     * Currently unused.
-     */
-    ResolverUnavailable = 'ResolverUnavailable',
-    /**
-     * Currently unused.
-     */
-    ResolverTimeout = 'ResolverTimeout',
     /**
      * The intent resolver UI was dismissed by the user, so the intent has been cancelled.
      */
     ResolverClosedOrCancelled = 'ResolverClosedOrCancelled',
-
+    /**
+     * Indicates that an application was started, but threw an error when attempting to handle the provided intent and context.
+     */
     SendIntentError = 'SendIntentError',
+    /**
+     * Indicates that an application was started, but a timeout was reached waiting for it to handle the provided intent and context.
+     */
     SendIntentTimeout = 'SendIntentTimeout',
+    /**
+     * Indicates that an application was started, but did not add a handler for the provided intent.
+     */
     SendIntentNoHandler = 'SendContextNoHandler'
 }
 
-export enum LaunchError {
+/**
+ * Error codes relating to launching applications
+ */
+export enum ApplicationError {
     /**
      * Indicates that an application cannot be started from an OpenFin manifest.
      */
@@ -73,21 +80,21 @@ export enum LaunchError {
 }
 
 /**
- * Error codes returned by the context channel system.
+ * Error codes relating to the context channel system
  */
 export enum ChannelError {
     /**
-     * Indicates that [[getChannelById]] has failed because no such channel exists with the given ID.
+     * Indicates that a channel of a provided ID does not exist.
      */
-    ChannelDoesNotExist = 'ChannelDoesNotExist'
+    ChannelWithIdDoesNotExist = 'ChannelDoesNotExist'
 }
 
 /**
- * Error codes returned when attempting to find specific OpenFin windows.
+ * Error codes relating to OpenFin windows.
  */
 export enum IdentityError {
     /**
-     * Indicates that a window with a particular OpenFin Identity cannot be found.
+     * Indicates that a window with a provided OpenFin Identity cannot be found.
      */
     WindowWithIdentityNotFound = 'WindowWithIdentityNotFound'
 }

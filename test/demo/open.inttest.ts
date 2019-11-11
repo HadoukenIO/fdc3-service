@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/await-thenable */
 import 'jest';
 
-import {EventEmitter} from 'events';
-
 import {Context, OrganizationContext} from '../../src/client/main';
-import {OpenError, LaunchError} from '../../src/client/errors';
+import {OpenError, ApplicationError} from '../../src/client/errors';
 import {Timeouts} from '../../src/provider/constants';
+import {allowReject} from '../../src/provider/utils/async';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
@@ -162,7 +161,7 @@ triggered with the correct data', async () => {
 
                 test('When the app adds its listener after a long delay, the app opens but its context listener is not triggered', async () => {
                     // From the launcher app, call fdc3.open with a valid name and context
-                    const openPromise = open(testAppInDirectory1.name, validContext);
+                    const openPromise = allowReject(open(testAppInDirectory1.name, validContext));
 
                     // Wait a long delay after the app is running
                     await waitForAppToBeRunning(testAppInDirectory1);
@@ -171,7 +170,7 @@ triggered with the correct data', async () => {
                     // Add a listener
                     const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
 
-                    await openPromise;
+                    await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'No context handler added');
 
                     // Check the listener did not receive the context in open
                     await expect(listener).toHaveReceivedContexts([]);
@@ -284,7 +283,7 @@ and does not trigger the context listener of the already open app', async () => 
 
         // fin.Application.startFromManifest errors with this message when providing an inexistent manifest URL
         await expect(openPromise).toThrowFDC3Error(
-            LaunchError.ErrorOnLaunch,
+            ApplicationError.ErrorOnLaunch,
             /Failed to download resource\. Status code: 404/
         );
     });
@@ -295,7 +294,7 @@ and does not trigger the context listener of the already open app', async () => 
 
         // fin.Application.startFromManifest errors with this message when it times out trying to open an app
         await expect(openPromise).toThrowFDC3Error(
-            LaunchError.AppTimeout,
+            ApplicationError.AppTimeout,
             `Timeout waiting for app '${appName}' to start from manifest`
         );
     }, Timeouts.APP_START_FROM_MANIFEST + 2000);
@@ -323,7 +322,7 @@ and does not trigger the context listener of the already open app', async () => 
         test('The context is received by the listener', async () => {
             await openPromise;
 
-            await delay(1000);
+            await delay(Duration.SHORTER_THAN_APP_MATURITY);
             const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppDelayedPreregisterShort);
             await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
         });
@@ -344,14 +343,14 @@ and does not trigger the context listener of the already open app', async () => 
         });
 
         test('The promise resolves and the app opens', async () => {
-            await openPromise;
+            await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'No context handler added');
             await expect(fin.Application.wrapSync(testAppDelayedPreregisterLong).isRunning()).resolves.toBe(true);
         });
 
         test('The context is not received by the listener', async () => {
-            await openPromise;
+            await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'No context handler added');
 
-            await delay(10000);
+            await delay(Duration.LONGER_THAN_APP_MATURITY);
             const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppDelayedPreregisterLong);
             await expect(preregisteredListener).toHaveReceivedContexts([]);
         });
@@ -361,21 +360,3 @@ and does not trigger the context listener of the already open app', async () => 
 function open(appName: string, context?: Context | undefined): Promise<void> {
     return fdc3Remote.open(testManagerIdentity, appName, context);
 }
-
-test.only('wafrwefaesfesfe', async () => {
-    const emitter = new EventEmitter();
-
-    emitter.addListener('foo', () => {
-        throw new Error('waaaaa');
-    });
-
-    emitter.addListener('foo', () => {
-        throw new Error('baaaaaa');
-    });
-
-    try {
-        emitter.emit('foo');
-    } catch (e) {
-        console.log(e);
-    }
-});

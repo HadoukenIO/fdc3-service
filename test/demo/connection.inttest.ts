@@ -10,7 +10,7 @@ import {IntentHandler} from '../../src/provider/controller/IntentHandler';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {fin} from './utils/fin';
-import {OFPuppeteerBrowser} from './utils/ofPuppeteer';
+import {OFPuppeteerBrowser, BaseWindowContext} from './utils/ofPuppeteer';
 import {setupTeardown, quitApps, TestAppData, NonDirectoryTestAppData} from './utils/common';
 import {testManagerIdentity, testAppInDirectory1, testAppWithPreregisteredListeners1, testAppNotInDirectory1, testAppNotInDirectoryNotFdc3, testAppNotFdc3} from './constants';
 import {RemoteChannel} from './utils/RemoteChannel';
@@ -18,7 +18,7 @@ import {delay, Duration} from './utils/delay';
 
 setupTeardown();
 
-type ProviderWindow = Window & {
+type ProviderWindow = BaseWindowContext & {
     model: Model;
     intentHandler: IntentHandler;
     channelHandler: ChannelHandler;

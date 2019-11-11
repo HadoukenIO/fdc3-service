@@ -147,7 +147,7 @@ export class Main {
 
             const sendContextPromise = windowsPromise.then(async (expectedWindows) => {
                 if (expectedWindows.length === 0) {
-                    throw new FDC3Error(OpenError.SendContextNoHandler, '');
+                    throw new FDC3Error(OpenError.SendContextNoHandler, 'No context handler added');
                 }
 
                 const [result] = await collateApiCallResults(expectedWindows.map((window) => this._contextHandler.send(window, context)));
