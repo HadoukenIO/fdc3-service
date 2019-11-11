@@ -11,6 +11,7 @@ import {Model} from '../../../src/provider/model/Model';
 import {fin} from './fin';
 import * as fdc3Remote from './fdc3RemoteExecution';
 import {delay, Duration} from './delay';
+import {BaseWindowContext} from './ofPuppeteer';
 
 export interface TestAppData {
     name: string; // Note that this may be treated as a 'name' in the FDC3 app directory sense, or a 'name' in the OpenFin window Identity sense
@@ -25,7 +26,7 @@ export interface NonDirectoryTestAppData extends TestAppData {
     manifestUrl: string;
 }
 
-type ProviderWindow = Window & {
+type ProviderWindow = BaseWindowContext & {
     model: Model;
 };
 
@@ -156,38 +157,41 @@ export async function closeResolver(): Promise<void> {
  * Checks that the service is in the expected state when no test apps are running
  */
 async function isServiceClear(): Promise<boolean> {
-    return fdc3Remote.ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, expectedWindowIdentity: Identity): boolean {
-        if (this.model.windows.length !== 1) {
-            return false;
-        }
+    return fdc3Remote.ofBrowser.executeOnWindow<[TestAppData], boolean, ProviderWindow>(
+        SERVICE_IDENTITY,
+        function (this: ProviderWindow, expectedWindowIdentity: Identity): boolean {
+            if (this.model.windows.length !== 1) {
+                return false;
+            }
 
-        if (this.model.apps.length !== 1) {
-            return false;
-        }
+            if (this.model.apps.length !== 1) {
+                return false;
+            }
 
-        const singleWindow = this.model.windows[0];
-        const singleApp = this.model.apps[0];
+            const singleWindow = this.model.windows[0];
+            const singleApp = this.model.apps[0];
 
-        if (singleWindow.appInfo.appId !== expectedWindowIdentity.uuid) {
-            return false;
-        }
+            if (singleWindow.appInfo.appId !== expectedWindowIdentity.uuid) {
+                return false;
+            }
 
-        if (singleApp.appInfo!.appId !== expectedWindowIdentity.uuid) {
-            return false;
-        }
+            if (singleApp.appInfo!.appId !== expectedWindowIdentity.uuid) {
+                return false;
+            }
 
-        if (singleApp.windows.length !== 1 || singleApp.windows[0] !== singleWindow) {
-            return false;
-        }
+            if (singleApp.windows.length !== 1 || singleApp.windows[0] !== singleWindow) {
+                return false;
+            }
 
-        if (singleWindow.hasContextListener() || singleWindow.channelContextListeners.length !== 0) {
-            return false;
-        }
+            if (singleWindow.hasContextListener() || singleWindow.channelContextListeners.length !== 0) {
+                return false;
+            }
 
-        if (singleWindow.intentListeners.length !== 0) {
-            return false;
-        }
+            if (singleWindow.intentListeners.length !== 0) {
+                return false;
+            }
 
-        return true;
-    }, testManagerIdentity);
+            return true;
+        }, testManagerIdentity
+    );
 }
