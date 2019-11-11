@@ -423,14 +423,23 @@ if (typeof fin !== 'undefined') {
         channelClient.register(APIToClientTopic.RECEIVE_INTENT, (payload: RaiseIntentPayload) => {
             intentListeners.forEach((listener: IntentListener) => {
                 if (payload.intent === listener.intent) {
-                    listener.handler(payload.context);
+                    try {
+                        listener.handler(payload.context);
+                    } catch (e) {
+                        // / TODO: Really?!
+                        console.warn('');
+                    }
                 }
             });
         });
 
         channelClient.register(APIToClientTopic.RECEIVE_CONTEXT, (payload: ReceiveContextPayload) => {
             contextListeners.forEach((listener: ContextListener) => {
-                listener.handler(payload.context);
+                try {
+                    listener.handler(payload.context);
+                } catch (e) {
+                    console.warn(`Error thrown by context handler, swallowing error. Error message: ${e.message}`);
+                }
             });
         });
 

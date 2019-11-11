@@ -571,7 +571,11 @@ if (typeof fin !== 'undefined') {
         channelClient.register(APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, (payload: ChannelReceiveContextPayload) => {
             channelContextListeners.forEach((listener: ChannelContextListener) => {
                 if (listener.channel.id === payload.channel) {
-                    listener.handler(payload.context);
+                    try {
+                        listener.handler(payload.context);
+                    } catch (e) {
+                        console.warn(`Error thrown by channel context handler, swallowing error. Error message: ${e.message}`);
+                    }
                 }
             });
         });
