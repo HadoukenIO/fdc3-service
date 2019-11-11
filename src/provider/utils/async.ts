@@ -97,7 +97,7 @@ export function allowReject<T>(promise: Promise<T>): Promise<T> {
  * @param promises An array of promises
  */
 export async function collateApiCallResults<T = void>(promises: Promise<T>[]): Promise<[CollateApiCallResultsResult, T | undefined]> {
-    let errors = 0;
+    let failures = 0;
     let successes = 0;
 
     let result: T;
@@ -108,14 +108,14 @@ export async function collateApiCallResults<T = void>(promises: Promise<T>[]): P
         }
         successes++;
     }, () => {
-        errors++;
+        failures++;
     }))));
 
     if (promises.length === 0) {
         return [CollateApiCallResultsResult.NoCalls, undefined];
     } else if (successes > 0) {
         return [CollateApiCallResultsResult.AnySuccess, result!];
-    } else if (errors > 0) {
+    } else if (failures > 0) {
         return [CollateApiCallResultsResult.AllFailure, undefined];
     } else {
         return [CollateApiCallResultsResult.Timeout, undefined];
