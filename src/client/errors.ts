@@ -3,7 +3,7 @@
  */
 
 /**
- * Error codes specific to the [[open]] function
+ * Error codes specific to the [[open]] function.
  */
 export enum OpenError {
     /**
@@ -31,7 +31,7 @@ export enum OpenError {
 }
 
 /**
- * Error codes specific to the [[raiseIntent]] function
+ * Error codes specific to the [[raiseIntent]] function.
  */
 export enum RaiseIntentError {
     /**
@@ -62,11 +62,11 @@ export enum RaiseIntentError {
     /**
      * Indicates that an application was started, but did not add a handler for the provided intent.
      */
-    SendIntentNoHandler = 'SendContextNoHandler'
+    SendIntentNoHandler = 'SendIntentNoHandler'
 }
 
 /**
- * Error codes relating to launching applications
+ * Error codes relating to launching applications.
  */
 export enum ApplicationError {
     /**
@@ -80,13 +80,13 @@ export enum ApplicationError {
 }
 
 /**
- * Error codes relating to the context channel system
+ * Error codes relating to the context channel system.
  */
 export enum ChannelError {
     /**
      * Indicates that a channel of a provided ID does not exist.
      */
-    ChannelWithIdDoesNotExist = 'ChannelDoesNotExist'
+    ChannelWithIdDoesNotExist = 'ChannelWithIdDoesNotExist'
 }
 
 /**
