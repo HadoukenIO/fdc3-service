@@ -106,7 +106,7 @@ export class Main {
     }
 
     private onChannelChangedHandler(appWindow: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null): void {
-        // Intentionally unawaited
+        // Events are 'fire-and-forget', so this is intentionally unawaited
         this._eventHandler.dispatchEventOnChannelChanged(appWindow, channel, previousChannel);
     }
 
@@ -147,7 +147,7 @@ export class Main {
 
             const sendContextPromise = windowsPromise.then(async (expectedWindows) => {
                 if (expectedWindows.length === 0) {
-                    throw new FDC3Error(OpenError.SendContextNoHandler, 'No context handler added');
+                    throw new FDC3Error(OpenError.SendContextNoHandler, 'Context provided, but no context handler added');
                 }
 
                 const [result] = await collateApiCallResults(expectedWindows.map((window) => this._contextHandler.send(window, context)));
@@ -280,9 +280,9 @@ export class Main {
         if (context) {
             await collateApiCallResults([this._contextHandler.send(appWindow, context)]).then(([result]) => {
                 if (result === CollateApiCallResultsResult.AllFailure) {
-                    console.warn('Error thrown by client attempting to handle context on window joining channel, swallowing error');
+                    console.warn(`Error thrown by client window ${appWindow.id} attempting to handle context on joining channel, swallowing error`);
                 } else if (result === CollateApiCallResultsResult.Timeout) {
-                    console.warn('Timeout waiting for client to handle context on window joining channel, swallowing error');
+                    console.warn(`Timeout waiting for client window ${appWindow.id} to handle context on joining channel, swallowing error`);
                 }
             });
         }

@@ -211,7 +211,7 @@ triggered with the correct data', async () => {
                     // Add a listener
                     const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
 
-                    await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'No context handler added');
+                    await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'Context provided, but no context handler added');
 
                     // Check the listener did not receive the context in open
                     await expect(listener).toHaveReceivedContexts([]);
@@ -406,12 +406,12 @@ and does not trigger the context listener of the already open app', async () => 
         });
 
         test('The promise resolves and the app opens', async () => {
-            await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'No context handler added');
+            await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'Context provided, but no context handler added');
             await expect(fin.Application.wrapSync(testAppDelayedPreregisterLong).isRunning()).resolves.toBe(true);
         });
 
         test('The context is not received by the listener', async () => {
-            await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'No context handler added');
+            await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'Context provided, but no context handler added');
 
             await delay(Duration.LONGER_THAN_APP_MATURITY);
             const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppDelayedPreregisterLong);
