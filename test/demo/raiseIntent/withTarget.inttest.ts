@@ -211,21 +211,19 @@ FDC3Error', async () => {
             );
         });
 
-        test(
-            'When an intent listener is added that throws and error, when calling raiseIntent from another app, the promise rejects with an FDC3Error',
-            async () => {
-                await fdc3Remote.ofBrowser.executeOnWindow(testAppData, function (this: TestWindowContext, intentRemote: IntentType): void {
-                    this.fdc3.addIntentListener(intentRemote, async () => {
-                        throw new Error('Intent listener throwing error');
-                    });
-                }, validIntent.type);
+        test('When an intent listener is added that throws and error, when calling raiseIntent from another app, the promise rejects with \
+an FDC3Error', async () => {
+            await fdc3Remote.ofBrowser.executeOnWindow(testAppData, function (this: TestWindowContext, intentRemote: IntentType): void {
+                this.fdc3.addIntentListener(intentRemote, async () => {
+                    throw new Error('Intent listener throwing error');
+                });
+            }, validIntent.type);
 
-                await expect(raiseIntent(validIntent, testAppData)).toThrowFDC3Error(
-                    RaiseIntentError.SendIntentError,
-                    'Error(s) thrown by client attempting to handle intent'
-                );
-            }
-        );
+            await expect(raiseIntent(validIntent, testAppData)).toThrowFDC3Error(
+                RaiseIntentError.SendIntentError,
+                'Error(s) thrown by client attempting to handle intent'
+            );
+        });
 
         test('When a mix of erroring and non-erroring intent listeners are added, when calling raiseIntent from another app, all listeners are triggered with \
 the correct context and the promise resolves', async () => {
@@ -243,19 +241,19 @@ the correct context and the promise resolves', async () => {
         });
 
         test('When a mix of erroring and non-erroring intent listeners are added across multiple windows, when calling raiseIntent from another app, all \
-listeners are triggered with the correct context and the promise resolve', async () => {
+listeners are triggered with the correct context and the promise resolves', async () => {
             const listener1 = await fdc3Remote.addIntentListener(testAppData, validIntent.type);
 
             const childWindow1 = await fdc3Remote.createFinWindow(testAppData, {url: testAppUrl, name: 'child-window-1'});
             const childWindow2 = await fdc3Remote.createFinWindow(testAppData, {url: testAppUrl, name: 'child-window-2'});
 
-            const listener2 = await fdc3Remote.addIntentListener(childWindow1, validIntent.type);
-
-            await fdc3Remote.ofBrowser.executeOnWindow(childWindow2, function (this: TestWindowContext, intentRemote: IntentType): void {
+            await fdc3Remote.ofBrowser.executeOnWindow(childWindow1, function (this: TestWindowContext, intentRemote: IntentType): void {
                 this.fdc3.addIntentListener(intentRemote, () => {
                     throw new Error('Intent listener throwing error');
                 });
             }, validIntent.type);
+
+            const listener2 = await fdc3Remote.addIntentListener(childWindow2, validIntent.type);
 
             await raiseIntent(validIntent, testAppData);
 
