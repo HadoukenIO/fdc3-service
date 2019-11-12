@@ -76,7 +76,7 @@ export enum ApplicationError {
     /**
      * Indicates that an application was not created in a timely manner, and the provider timed out.
      */
-    AppTimeout = 'AppTimeout',
+    AppTimeout = 'AppTimeout'
 }
 
 /**
