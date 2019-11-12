@@ -263,7 +263,6 @@ listeners are triggered with the correct context and the promise resolves', asyn
     });
 
     test('When calling addIntentListener for the first time, the promise resolves and there are no errors', async () => {
-        // eslint-disable-next-line
         await expect(fdc3Remote.addIntentListener(testAppData, validIntent.type)).resolves.not.toThrow();
     });
 
