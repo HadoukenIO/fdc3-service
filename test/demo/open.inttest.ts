@@ -200,22 +200,25 @@ triggered with the correct data', async () => {
                     await expect(listener3).toHaveReceivedContexts([]);
                 });
 
-                test('When the app adds its listener after a long delay, the app opens but its context listener is not triggered', async () => {
+                test(
+                    'When the app adds its listener after a long delay, the app opens but the promise rejects and its context listener is not triggered',
+                    async () => {
                     // From the launcher app, call fdc3.open with a valid name and context
-                    const openPromise = allowReject(open(testAppInDirectory1.name, validContext));
+                        const openPromise = allowReject(open(testAppInDirectory1.name, validContext));
 
-                    // Wait a long delay after the app is running
-                    await waitForAppToBeRunning(testAppInDirectory1);
-                    await delay(Duration.LONGER_THAN_APP_MATURITY);
+                        // Wait a long delay after the app is running
+                        await waitForAppToBeRunning(testAppInDirectory1);
+                        await delay(Duration.LONGER_THAN_APP_MATURITY);
 
-                    // Add a listener
-                    const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
+                        // Add a listener
+                        const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
 
-                    await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'Context provided, but no context handler added');
+                        await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'Context provided, but no context handler added');
 
-                    // Check the listener did not receive the context in open
-                    await expect(listener).toHaveReceivedContexts([]);
-                }, appStartupTime + Duration.LONGER_THAN_APP_MATURITY);
+                        // Check the listener did not receive the context in open
+                        await expect(listener).toHaveReceivedContexts([]);
+                    }, appStartupTime + Duration.LONGER_THAN_APP_MATURITY
+                );
             });
 
             test('When passing a known app name but invalid context, the service returns an FDC3Error', async () => {
