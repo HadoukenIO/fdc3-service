@@ -78,12 +78,12 @@ describe('Intent listeners and raising intents with a target', () => {
                     test('When the intent listener is added after a short delay, the targeted app opens and its listener is triggered \
 just once, with the correct context', async () => {
                         // Raise the intent but only add the intent listener after the some time
-                        await raiseDelayedIntentWithTarget(validIntent, testAppInDirectory1, 1500);
+                        await raiseDelayedIntentWithTarget(validIntent, testAppInDirectory1, Duration.SHORTER_THAN_APP_MATURITY);
 
                         // Since we are within listener handshake timeout, intent should be triggered correctly
                         const listener = await fdc3Remote.getRemoteIntentListener(testAppInDirectory1, validIntent.type);
                         await expect(listener).toHaveReceivedContexts([validIntent.context]);
-                    }, appStartupTime + 1500);
+                    }, appStartupTime + Duration.SHORTER_THAN_APP_MATURITY);
 
                     test('When the intent listener is added on a child window, the targeted app opens and its listener is triggered \
 just once, with the correct context', async () => {
