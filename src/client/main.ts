@@ -461,7 +461,12 @@ if (typeof fin !== 'undefined') {
         const eventHandler = getEventRouter();
 
         channelClient.register('event', (eventTransport: Targeted<Transport<Events>>) => {
-            eventHandler.dispatchEvent(eventTransport);
+            try {
+                eventHandler.dispatchEvent(eventTransport);
+            } catch (e) {
+                console.warn(`Error thrown dispatching event, rethrowing error. Error message: ${e.message}`);
+                throw e;
+            }
         });
 
         eventHandler.registerEmitterProvider('main', () => eventEmitter);

@@ -109,7 +109,7 @@ describe('Opening applications with the FDC3 client', () => {
 
                     await fdc3Remote.ofBrowser.executeOnWindow(testAppInDirectory1, function (this: TestWindowContext): void {
                         this.fdc3.addContextListener(() => {
-                            throw new Error('Context listening throwing error');
+                            throw new Error('Context listener throwing error');
                         });
                     });
 
@@ -132,7 +132,7 @@ describe('Opening applications with the FDC3 client', () => {
                             });
 
                             this.fdc3.addContextListener(() => {
-                                throw new Error('Context listening throwing error');
+                                throw new Error('Context listener throwing error');
                             });
                         });
 
@@ -304,7 +304,7 @@ the context, and the service returns without error', async () => {
 
                 await fdc3Remote.ofBrowser.executeOnWindow(childWindow2, function (this: TestWindowContext): void {
                     this.fdc3.addContextListener(() => {
-                        throw new Error('Context listening throwing error');
+                        throw new Error('Context listener throwing error');
                     });
                 });
 
