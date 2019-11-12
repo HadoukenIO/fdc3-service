@@ -119,28 +119,26 @@ describe('Opening applications with the FDC3 client', () => {
                     );
                 });
 
-                test(
-                    'When the app adds a mix of erroring and non-erroring listeners, all listeners recieve the context, and the promise resolves',
-                    async () => {
-                        // From the launcher app, call fdc3.open with a valid name and context
-                        const promise = allowReject(open(testAppInDirectory1.name, validContext));
-                        await waitForAppToBeRunning(testAppInDirectory1);
+                test('When the app adds a mix of erroring and non-erroring listeners, all listeners recieve the context, and the promise \
+resolves', async () => {
+                    // From the launcher app, call fdc3.open with a valid name and context
+                    const promise = allowReject(open(testAppInDirectory1.name, validContext));
+                    await waitForAppToBeRunning(testAppInDirectory1);
 
-                        await fdc3Remote.ofBrowser.executeOnWindow(testAppInDirectory1, function (this: TestWindowContext): void {
-                            this.contextListeners[0] = this.fdc3.addContextListener((context) => {
-                                this.receivedContexts.push({listenerID: 0, context});
-                            });
-
-                            this.fdc3.addContextListener(() => {
-                                throw new Error('Context listener throwing error');
-                            });
+                    await fdc3Remote.ofBrowser.executeOnWindow(testAppInDirectory1, function (this: TestWindowContext): void {
+                        this.contextListeners[0] = this.fdc3.addContextListener((context) => {
+                            this.receivedContexts.push({listenerID: 0, context});
                         });
 
-                        await promise;
+                        this.fdc3.addContextListener(() => {
+                            throw new Error('Context listener throwing error');
+                        });
+                    });
 
-                        await expect(await fdc3Remote.getRemoteContextListener(testAppInDirectory1)).toHaveReceivedContexts([validContext]);
-                    }
-                );
+                    await promise;
+
+                    await expect(await fdc3Remote.getRemoteContextListener(testAppInDirectory1)).toHaveReceivedContexts([validContext]);
+                });
 
                 test('When the app adds its listener after a short delay, the app opens and its context listener is triggered with the \
 correct data', async () => {
@@ -200,25 +198,23 @@ triggered with the correct data', async () => {
                     await expect(listener3).toHaveReceivedContexts([]);
                 });
 
-                test(
-                    'When the app adds its listener after a long delay, the app opens but the promise rejects and its context listener is not triggered',
-                    async () => {
+                test('When the app adds its listener after a long delay, the app opens but the promise rejects and its context listener \
+is not triggered', async () => {
                     // From the launcher app, call fdc3.open with a valid name and context
-                        const openPromise = allowReject(open(testAppInDirectory1.name, validContext));
+                    const openPromise = allowReject(open(testAppInDirectory1.name, validContext));
 
-                        // Wait a long delay after the app is running
-                        await waitForAppToBeRunning(testAppInDirectory1);
-                        await delay(Duration.LONGER_THAN_APP_MATURITY);
+                    // Wait a long delay after the app is running
+                    await waitForAppToBeRunning(testAppInDirectory1);
+                    await delay(Duration.LONGER_THAN_APP_MATURITY);
 
-                        // Add a listener
-                        const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
+                    // Add a listener
+                    const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
 
-                        await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'Context provided, but no context handler added');
+                    await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'Context provided, but no context handler added');
 
-                        // Check the listener did not receive the context in open
-                        await expect(listener).toHaveReceivedContexts([]);
-                    }, appStartupTime + Duration.LONGER_THAN_APP_MATURITY
-                );
+                    // Check the listener did not receive the context in open
+                    await expect(listener).toHaveReceivedContexts([]);
+                }, appStartupTime + Duration.LONGER_THAN_APP_MATURITY);
             });
 
             test('When passing a known app name but invalid context, the promise rejects with an FDC3Error', async () => {
@@ -296,24 +292,28 @@ the promise resolves', async () => {
                 await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
             });
 
-            test('When the running app has a mix of erroring and non-erroring listeners across multiple windows, all listeners recieve \
-the context, and the promise resolves', async () => {
+            test('When the running app has a mix of erroring and non-erroring listeners across multiple windows, all listeners are \
+triggered, and the promise resolves', async () => {
+                // Setup our first non-erroring listener
                 const listener1 = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
 
+                // Create child windows and setup an erroring listening
                 const childWindow1 = await fdc3Remote.createFinWindow(testAppWithPreregisteredListeners1, {url: testAppUrl, name: 'child-window-1'});
                 const childWindow2 = await fdc3Remote.createFinWindow(testAppWithPreregisteredListeners1, {url: testAppUrl, name: 'child-window-2'});
 
-                const listener2 = await fdc3Remote.addContextListener(childWindow1);
-
-                await fdc3Remote.ofBrowser.executeOnWindow(childWindow2, function (this: TestWindowContext): void {
+                await fdc3Remote.ofBrowser.executeOnWindow(childWindow1, function (this: TestWindowContext): void {
                     this.fdc3.addContextListener(() => {
                         throw new Error('Context listener throwing error');
                     });
                 });
 
+                // Setup our final non-erroring listener
+                const listener2 = await fdc3Remote.addContextListener(childWindow2);
+
                 // From the launcher app, call fdc3.open with a valid name and context
                 await open(testAppWithPreregisteredListeners1.name, validContext);
 
+                // Check that our listeners recieved the expected context
                 await expect(listener1).toHaveReceivedContexts([validContext]);
                 await expect(listener2).toHaveReceivedContexts([validContext]);
             });
