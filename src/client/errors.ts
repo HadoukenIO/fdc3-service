@@ -7,7 +7,7 @@
  */
 export enum OpenError {
     /**
-     * Indicates that the an application of the provided name cannot be found in the application directory.
+     * Indicates that an application of the provided name cannot be found in the application directory.
      */
     AppNotFound = 'AppNotFound',
 
@@ -18,14 +18,14 @@ export enum OpenError {
     SendContextError = 'SendContextError',
 
     /**
-     * In the case where the optional `context` argument is provided, indicates that the given application was started, but a timeout was
-     * reached waiting for it to handle the provided context.
+     * In the case where the optional `context` argument is provided, indicates that the provided application was started, but a timeout
+     * was reached waiting for it to handle the provided context.
      */
     SendContextTimeout = 'SendContextTimeout',
 
     /**
-     * In the case where the optional `context` argument is provided, indicates that the given application was started, but did not add a
-     * context handler.
+     * In the case where the optional `context` argument is provided, indicates that the provided application was started, but did not add
+     * a context handler.
      */
     SendContextNoHandler = 'SendContextNoHandler'
 }
@@ -35,11 +35,11 @@ export enum OpenError {
  */
 export enum RaiseIntentError {
     /**
-     * Indicates that no apps could be found to handle the provided intent and context.
+     * Indicates that no application could be found to handle the provided intent and context.
      */
     NoAppsFound = 'NoAppsFound',
     /**
-     * In the case when a the optional 'target' argument is provided, no such app either exists in the application directory or is
+     * In the case when a the optional 'target' argument is provided, no such application either exists in the application directory or is
      * currently running.
      */
     TargetAppNotAvailable = 'TargetAppNotAvailable',
@@ -70,11 +70,11 @@ export enum RaiseIntentError {
  */
 export enum ApplicationError {
     /**
-     * Indicates that an application cannot be started from an OpenFin manifest.
+     * Indicates that an application could not be started from an OpenFin manifest.
      */
     ErrorOnLaunch = 'ErrorOnLaunch',
     /**
-     * Indicates that an application was not created in a timely manner, and the provider timed out.
+     * Indicates that a timeout was reached before the application was started.
      */
     AppTimeout = 'AppTimeout'
 }
