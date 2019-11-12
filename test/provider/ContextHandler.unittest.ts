@@ -31,7 +31,6 @@ beforeEach(() => {
     getterMock(mockModel, 'apps').mockReturnValue([]);
 
     mockApiHandler.dispatch.mockReturnValue(Promise.resolve());
-    mockApiHandler.publish.mockReturnValue([Promise.resolve()]);
 
     contextHandler = new ContextHandler(mockApiHandler, mockChannelHandler, mockModel);
 });
