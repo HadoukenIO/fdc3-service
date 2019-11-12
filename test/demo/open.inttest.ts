@@ -391,7 +391,7 @@ and does not trigger the context listener of the already open app', async () => 
         });
     });
 
-    describe('When opening an app that takes longer than the timeout to register a listener', () => {
+    describe('When opening an app that takes longer than the timeout to register a context listener', () => {
         const testAppDelayedPreregisterLong = {uuid: 'test-app-delayed-preregister-long', name: 'test-app-delayed-preregister-long'};
         const validContext: OrganizationContext = {type: 'fdc3.organization', name: 'OpenFin', id: {default: 'openfin'}};
 
@@ -405,7 +405,7 @@ and does not trigger the context listener of the already open app', async () => 
             await quitApps(testAppDelayedPreregisterLong);
         });
 
-        test('The promise resolves and the app opens', async () => {
+        test('The promise rejects and the app opens', async () => {
             await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'Context provided, but no context handler added');
             await expect(fin.Application.wrapSync(testAppDelayedPreregisterLong).isRunning()).resolves.toBe(true);
         });
