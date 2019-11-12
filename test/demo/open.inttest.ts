@@ -38,7 +38,7 @@ describe('Opening applications with the FDC3 client', () => {
                 await quitApps(testAppNotFdc3);
             });
 
-            test('When passing an unknown app name the service returns an FDC3Error', async () => {
+            test('When passing an unknown app name the promise rejects with an FDC3Error', async () => {
                 // From the launcher app, call fdc3.open with an unregistered name
                 const openPromise = open('invalid-app-name');
 
@@ -102,7 +102,7 @@ describe('Opening applications with the FDC3 client', () => {
                     await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
                 });
 
-                test('When the app adds a listener that throws an error, the service returns an FDC3 error', async () => {
+                test('When the app adds a listener that throws an error, the promise rejects with an FDC3 error', async () => {
                     // From the launcher app, call fdc3.open with a valid name and context
                     const promise = allowReject(open(testAppInDirectory1.name, validContext));
                     await waitForAppToBeRunning(testAppInDirectory1);
@@ -120,7 +120,7 @@ describe('Opening applications with the FDC3 client', () => {
                 });
 
                 test(
-                    'When the app adds a mix of erroring and non-erroring listeners, all listeners recieve the context, and the service returns without error',
+                    'When the app adds a mix of erroring and non-erroring listeners, all listeners recieve the context, and the promise resolves',
                     async () => {
                         // From the launcher app, call fdc3.open with a valid name and context
                         const promise = allowReject(open(testAppInDirectory1.name, validContext));
@@ -221,13 +221,13 @@ triggered with the correct data', async () => {
                 );
             });
 
-            test('When passing a known app name but invalid context, the service returns an FDC3Error', async () => {
+            test('When passing a known app name but invalid context, the promise rejects with an FDC3Error', async () => {
                 const openPromise = open(testAppWithPreregisteredListeners1.name, invalidContext);
 
                 await expect(openPromise).rejects.toThrowError(new TypeError(`${JSON.stringify(invalidContext)} is not a valid Context`));
             });
 
-            test('When passing an unknown app name with any context the service returns an FDC3Error', async () => {
+            test('When passing an unknown app name with any context the promise rejects with an FDC3Error', async () => {
                 // From the launcher app, call fdc3.open with an invalid name and valid context
                 const openPromise = open('invalid-app-name', validContext);
 
@@ -297,7 +297,7 @@ the promise resolves', async () => {
             });
 
             test('When the running app has a mix of erroring and non-erroring listeners across multiple windows, all listeners recieve \
-the context, and the service returns without error', async () => {
+the context, and the promise resolves', async () => {
                 const listener1 = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
 
                 const childWindow1 = await fdc3Remote.createFinWindow(testAppWithPreregisteredListeners1, {url: testAppUrl, name: 'child-window-1'});
