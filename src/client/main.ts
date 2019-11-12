@@ -464,7 +464,7 @@ if (typeof fin !== 'undefined') {
             try {
                 eventHandler.dispatchEvent(eventTransport);
             } catch (e) {
-                console.warn(`Error thrown dispatching event, rethrowing error. Error message: ${e.message}`);
+                console.warn(`Error thrown dispatching ${eventTransport.type} event, rethrowing error. Error message: ${e.message}`);
                 throw e;
             }
         });
