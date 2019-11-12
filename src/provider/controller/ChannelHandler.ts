@@ -1,5 +1,5 @@
 import {injectable, inject} from 'inversify';
-import {Signal} from 'openfin-service-signal';
+import {Signal, Aggregators} from 'openfin-service-signal';
 
 import {Model} from '../model/Model';
 import {Inject} from '../common/Injectables';
@@ -15,14 +15,14 @@ export class ChannelHandler {
      *
      * Arguments: (window: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null)
      */
-    public readonly onChannelChanged: Signal<[AppWindow, ContextChannel | null, ContextChannel | null]>;
+    public readonly onChannelChanged: Signal<[AppWindow, ContextChannel | null, ContextChannel | null], Promise<void>>;
 
     private readonly _model: Model;
 
     constructor(@inject(Inject.MODEL) model: Model) {
         this._model = model;
 
-        this.onChannelChanged = new Signal();
+        this.onChannelChanged = new Signal(Aggregators.AWAIT_VOID);
 
         this._model.onWindowAdded.add(this.onModelWindowAdded, this);
         this._model.onWindowRemoved.add(this.onModelWindowRemoved, this);
@@ -66,7 +66,7 @@ export class ChannelHandler {
         return this._model.windows.filter((window) => window.hasChannelEventListener(channel, eventType));
     }
 
-    public joinChannel(appWindow: AppWindow, channel: ContextChannel): void {
+    public async joinChannel(appWindow: AppWindow, channel: ContextChannel): Promise<void> {
         const previousChannel = appWindow.channel;
 
         if (previousChannel !== channel) {
@@ -76,7 +76,7 @@ export class ChannelHandler {
                 previousChannel.clearStoredContext();
             }
 
-            this.onChannelChanged.emit(appWindow, channel, previousChannel);
+            await this.onChannelChanged.emit(appWindow, channel, previousChannel);
         }
     }
 

@@ -105,9 +105,8 @@ export class Main {
         console.log('Service Initialised');
     }
 
-    private onChannelChangedHandler(appWindow: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null): void {
-        // Events are 'fire-and-forget', so this is intentionally unawaited
-        this._eventHandler.dispatchEventOnChannelChanged(appWindow, channel, previousChannel);
+    private async onChannelChangedHandler(appWindow: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null): Promise<void> {
+        await this._eventHandler.dispatchEventOnChannelChanged(appWindow, channel, previousChannel);
     }
 
     private async open(payload: OpenPayload): Promise<void> {
@@ -274,7 +273,7 @@ export class Main {
 
         const channel = this._channelHandler.getChannelById(payload.id);
 
-        this._channelHandler.joinChannel(appWindow, channel);
+        await this._channelHandler.joinChannel(appWindow, channel);
         const context = this._channelHandler.getChannelContext(channel);
 
         if (context) {

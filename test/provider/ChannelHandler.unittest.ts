@@ -26,7 +26,7 @@ beforeEach(() => {
     (mockModel as PartiallyWritable<typeof mockModel, 'onWindowRemoved'>).onWindowRemoved = new Signal<[AppWindow]>();
 
     channelHandler = new ChannelHandler(mockModel);
-    channelHandler.onChannelChanged.add((appWindow: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null) => {
+    channelHandler.onChannelChanged.add(async (appWindow: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null) => {
         mockOnChannelChanged(appWindow, channel, previousChannel);
     });
 });
@@ -151,54 +151,54 @@ describe('When setting the last broadcast context for a channel', () => {
 });
 
 describe('When joining a channel', () => {
-    it('ChannelHandler sets the channel of the window', () => {
+    it('ChannelHandler sets the channel of the window', async () => {
         const testChannel1 = createMockChannel({id: 'test-1'});
         const testChannel2 = createMockChannel({id: 'test-2'});
 
         const testWindow = createMockAppWindow({channel: testChannel1});
         setModelWindows([testWindow]);
 
-        channelHandler.joinChannel(testWindow, testChannel2);
+        await channelHandler.joinChannel(testWindow, testChannel2);
 
         expect(testWindow.channel).toEqual(testChannel2);
     });
 
-    it('If changing channel, ChannelHandler fires it onChannelChanged signal', () => {
+    it('If changing channel, ChannelHandler fires it onChannelChanged signal', async () => {
         const testChannel1 = createMockChannel({id: 'test-1'});
         const testChannel2 = createMockChannel({id: 'test-2'});
 
         const testWindow = createMockAppWindow({channel: testChannel1});
         setModelWindows([testWindow]);
 
-        channelHandler.joinChannel(testWindow, testChannel2);
+        await channelHandler.joinChannel(testWindow, testChannel2);
 
         expect(mockOnChannelChanged.mock.calls).toEqual([[testWindow, testChannel2, testChannel1]]);
     });
 
-    it('If not changing channel, ChannelHandler fires a onChannelChanged signal', () => {
+    it('If not changing channel, ChannelHandler fires a onChannelChanged signal', async () => {
         const testChannel = createMockChannel();
 
         const testWindow = createMockAppWindow({channel: testChannel});
         setModelWindows([testWindow]);
 
-        channelHandler.joinChannel(testWindow, testChannel);
+        await channelHandler.joinChannel(testWindow, testChannel);
 
         expect(mockOnChannelChanged).toBeCalledTimes(0);
     });
 
-    it('If the previous channel is now empty, ChannelHandler clears the context of the previous channel', () => {
+    it('If the previous channel is now empty, ChannelHandler clears the context of the previous channel', async () => {
         const testChannel1 = createMockChannel();
         const testChannel2 = createMockChannel();
 
         const testWindow = createMockAppWindow({channel: testChannel1});
         setModelWindows([testWindow]);
 
-        channelHandler.joinChannel(testWindow, testChannel2);
+        await channelHandler.joinChannel(testWindow, testChannel2);
 
         expect(testChannel1.clearStoredContext).toBeCalledTimes(1);
     });
 
-    it('If the previous channel is still populated, ChannelHandler does not clear the context of the previous channel', () => {
+    it('If the previous channel is still populated, ChannelHandler does not clear the context of the previous channel', async () => {
         const testChannel1 = createMockChannel();
         const testChannel2 = createMockChannel();
 
@@ -207,7 +207,7 @@ describe('When joining a channel', () => {
 
         setModelWindows([testWindow1, testWindow2]);
 
-        channelHandler.joinChannel(testWindow1, testChannel2);
+        await channelHandler.joinChannel(testWindow1, testChannel2);
 
         expect(testChannel1.clearStoredContext).toBeCalledTimes(0);
     });
