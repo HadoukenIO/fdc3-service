@@ -30,7 +30,9 @@ export class ContextHandler {
     }
 
     /**
-     * Send a context to a specific app
+     * Send a context to a specific window. The promise returned may reject if provided window throws an error, so caller should take
+     * responsibility for error handling.
+     *
      * @param window Window to send the context to
      * @param context Context to be sent
      */
@@ -43,9 +45,9 @@ export class ContextHandler {
             window.waitForReadyToReceiveContext().then(() => {
                 collateApiCallResults([this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload)]).then(([result]) => {
                     if (result === CollateApiCallResultsResult.AllFailure) {
-                        console.warn('Error thrown by client attempting to handle context, swallowing error');
+                        console.warn(`Error thrown by client window ${window.id} attempting to handle context, swallowing error`);
                     } else if (result === CollateApiCallResultsResult.Timeout) {
-                        console.warn('Timeout waiting for client to handle context, swallowing error');
+                        console.warn(`Timeout waiting for client window ${window.id} to handle context, swallowing error`);
                     }
                 });
             }, () => {});
@@ -56,7 +58,7 @@ export class ContextHandler {
 
     /**
      * Broadcast context onto the channel the source window is a member of. The context will be received by all
-     * windows in the channel, or listening to the channel, except for the sender itself
+     * windows in the channel, or listening to the channel, except for the sender itself.
      *
      * @param context Context to send
      * @param source Window sending the context. It won't receive the broadcast
@@ -67,7 +69,7 @@ export class ContextHandler {
 
     /**
      * Broadcast context onto the provided channel. The context will be received by all windows in the channel, or
-     * listening to the channel, except for the sender itself
+     * listening to the channel, except for the sender itself.
      *
      * @param context Context to send
      * @param source Window sending the context. It won't receive the broadcast
@@ -123,15 +125,16 @@ export class ContextHandler {
     private async sendForBroadcast(window: AppWindow, context: Context): Promise<void> {
         await collateApiCallResults([this.send(window, context)]).then(([result]) => {
             if (result === CollateApiCallResultsResult.AllFailure) {
-                console.warn('Error thrown by client attempting to handle broadcast, swallowing error');
+                console.warn(`Error thrown by client window ${window.id} attempting to handle broadcast, swallowing error`);
             } else if (result === CollateApiCallResultsResult.Timeout) {
-                console.warn('Timeout waiting for client to handle broadcast, swallowing error');
+                console.warn(`Timeout waiting for client window ${window.id} to handle broadcast, swallowing error`);
             }
         });
     }
 
     /**
-     * Send a context to a specific app on a specific channel
+     * Send a context to a specific app on a specific channel.
+     *
      * @param window Window to send the context to
      * @param context Context to be sent
      * @param channel Channel context is to be sent on
@@ -141,9 +144,9 @@ export class ContextHandler {
 
         await collateApiCallResults([this._apiHandler.dispatch(window.identity, APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, payload)]).then(([result]) => {
             if (result === CollateApiCallResultsResult.AllFailure) {
-                console.warn('Error thrown by client attempting to handle broadcast on channel, swallowing error');
+                console.warn(`Error thrown by client window ${window.id} attempting to handle broadcast on channel, swallowing error`);
             } else if (result === CollateApiCallResultsResult.Timeout) {
-                console.warn('Timeout waiting for client to handle broadcast on channel, swallowing error');
+                console.warn(`Timeout waiting for client window ${window.id} to handle broadcast on channel, swallowing error`);
             }
         });
     }
