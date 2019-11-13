@@ -3,7 +3,8 @@
  */
 
 /**
- * Error codes specific to the [[open]] function.
+ * Error codes specific to the [[open]] function. Note that this is not an exhaustive list of error codes that can be returned by [[open]],
+ * which may return any of the generic error codes, such as ApplicationError.
  */
 export enum OpenError {
     /**
@@ -31,7 +32,8 @@ export enum OpenError {
 }
 
 /**
- * Error codes specific to the [[raiseIntent]] function.
+ * Error codes specific to the [[raiseIntent]] function. Note that this is not an exhaustive list of error codes that can be returned by
+ * [[raiseIntent]], which may return any of the generic error codes, such as ApplicationError.
  */
 export enum RaiseIntentError {
     /**
