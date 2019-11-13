@@ -129,25 +129,26 @@ export class IntentHandler {
             (window) => window.hasIntentListener(intent.type),
             (window) => window.waitForReadyToReceiveIntent(intent.type)
         );
-
         let promises = [];
+
         if (listeningWindows.length > 0) {
             const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
             promises = listeningWindows.map((window) => this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload));
         } else {
-            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
+            throw new FDC3Error(ResolveError.IntentHandlerTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
         }
 
         let data: unknown;
         let didTimeout = false;
         try {
             // Use the first handler return data that matches the predicate
-            [didTimeout, data] = await withTimeout(Timeouts.INTENT_RESOLUTION, raceUntilTrue(promises, returnValuePredicate));
+            [didTimeout, data] = await withTimeout(Timeouts.INTENT_RESOLUTION, raceUntilTrue(promises, (value) => value !== undefined));
         } catch (error) {
             throw new FDC3Error(ResolveError.IntentHandlerException, `${ResolveErrorMessage[ResolveError.IntentHandlerException]} ${appInfo.name}`);
         }
+
         if (didTimeout) {
-            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener return for intent: ${intent.type}`);
+            throw new FDC3Error(ResolveError.IntentHandlerTimeout, `${ResolveErrorMessage[ResolveError.IntentHandlerTimeout]} ${intent.type}`);
         }
 
         const resolution: IntentResolution = {
@@ -171,9 +172,4 @@ interface IntentWithTarget extends Intent {
 // Guard to help narrow down Intent into IntentWithTarget
 function hasTarget(intent: Intent): intent is IntentWithTarget {
     return !!intent.target;
-}
-
-// Check if the intent handler return value is valid defined.
-function returnValuePredicate(value?: any) {
-    return value !== undefined;
 }
