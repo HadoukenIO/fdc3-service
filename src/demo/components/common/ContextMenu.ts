@@ -31,31 +31,54 @@ interface ContextMenuParameters {
     isRoot?: boolean;
 }
 
-// tslint:disable-next-line:no-any
+// eslint-disable-next-line
 type clickCallback<T extends {}={}> = (payload: T) => any;
 
 class ContextMenu {
-    private _windowV1: fin.OpenFinWindow;
-    private _window: _Window;
-    private _nativeWindow: Window;
+    /**
+     * Factory function for creating context menus.
+     *
+     * @static
+     * @memberof ContextMenu
+     */
+    public static async create(name?: string, isRoot: boolean = false) {
+        name = name || (Math.random() * 1000).toString();
+        const win: fin.OpenFinWindow = await this.createWindow({...defaultWindowOptions, name});
+        return new ContextMenu({win, isRoot});
+    }
+
+    // Promise based v1 window creation
+    private static async createWindow(options: WindowOption): Promise<fin.OpenFinWindow> {
+        return new Promise<fin.OpenFinWindow>((resolve, reject) => {
+            const win = new fin.desktop.Window(options, () => {
+                resolve(win);
+            }, (err) => {
+                reject(err);
+            });
+        });
+    }
+
+    private readonly _windowV1: fin.OpenFinWindow;
+    private readonly _window: _Window;
+    private readonly _nativeWindow: Window;
     private _isShowing: boolean = false;
     private _child!: ContextMenu;
 
-    private transitionOut: Transition = {
+    private readonly transitionOut: Transition = {
         opacity: {
             opacity: 0,
             duration: 100
         }
     };
 
-    private transitionIn: Transition = {
+    private readonly transitionIn: Transition = {
         opacity: {
             opacity: 1,
             duration: 100
         }
     };
 
-    private _isRoot: boolean;
+    private readonly _isRoot: boolean;
 
     public get isRoot() {
         return this._isRoot;
@@ -75,69 +98,29 @@ class ContextMenu {
 
         // Add blur to the root context menu only
         if (isRoot) {
-            this._windowV1.addEventListener('blurred', async () => {
+            this._windowV1.addEventListener('blurred', () => {
                 this.hide();
             });
         }
     }
 
-    private outerHeight(element: HTMLElement) {
-        let height: number = element.offsetHeight;
-        const style = getComputedStyle(element);
-        // tslint:disable-next-line:ban
-        height += parseInt(style.marginTop!, 10) + parseInt(style.marginBottom!, 10);
-        return height;
-    }
-
-    // Promise based v1 window creation
-    private static async createWindow(options: WindowOption): Promise<fin.OpenFinWindow> {
-        return new Promise<fin.OpenFinWindow>((resolve, reject) => {
-            const win = new fin.desktop.Window(options, () => {
-                resolve(win);
-            }, (err) => {
-                reject(err);
-            });
-        });
-    }
-
-    /**
-     * Factory function for creating context menus.
-     *
-     * @static
-     * @param {string} [name]
-     * @param {boolean} [isRoot=false]
-     * @returns
-     * @memberof ContextMenu
-     */
-    public static async create(name?: string, isRoot: boolean = false) {
-        name = name || (Math.random() * 1000).toString();
-        const win: fin.OpenFinWindow = await this.createWindow({...defaultWindowOptions, name});
-        return new ContextMenu({win, isRoot});
-    }
-
     /**
      * Check if [menuItems] has an children.
-     *
-     * @param {ContextMenuItem[]} menuItems
-     * @returns
      * @memberof ContextMenu
      */
     public childCheck(menuItems: ContextMenuItem[]) {
-        return menuItems.some(item => item.children !== undefined);
+        return menuItems.some((item) => item.children !== undefined);
     }
 
     /**
      * Set the context on the context menu.
-     *
-     * @param {ContextMenuItem[]} menuItems
-     * @param {clickCallback} clickCallback The function that will be called when an item has been clicked.
      * @memberof ContextMenu
      */
     public async setContent<T extends {}={}>(menuItems: ContextMenuItem[], clickCallback: clickCallback<T>) {
         // Check that there is any children if so make a child node
-        let child = await this._child;
+        let child = this._child;
         if (this.childCheck(menuItems) && child === undefined) {
-            child = await ContextMenu.create(this._window.identity.name + ':child', false);
+            child = await ContextMenu.create(`${this._window.identity.name}:child`, false);
             this._child = child;
         }
         const document = this._nativeWindow.document;
@@ -167,16 +150,16 @@ class ContextMenu {
                 if (item.children && item.children.length > 0) {
                     // Show next window
                     const bounds = await this._window.getBounds();
-                    const position = {x: bounds.left + bounds.width, y: bounds.top + itemHeight * index};
-                    await child.setContent(item.children!, clickCallback);
+                    const position = {x: bounds.left + bounds.width, y: bounds.top + (itemHeight * index)};
+                    await child.setContent(item.children, clickCallback);
                     child.showAt(position);
                 }
             });
 
-            li.addEventListener('click', async () => {
+            li.addEventListener('click', () => {
                 if (!item.children && item.payload) {
                     contextMenu.hide();
-                    // tslint:disable-next-line:no-any
+                    // eslint-disable-next-line
                     clickCallback(item.payload as any);
                 }
             });
@@ -191,7 +174,6 @@ class ContextMenu {
     /**
      * Set the bounds of the window.
      *
-     * @param {Partial<Bounds>} newBounds
      * @memberof ContextMenu
      */
     public async setBounds(newBounds: Partial<Bounds>) {
@@ -222,7 +204,7 @@ class ContextMenu {
             tween: 'ease-out'
         };
         if (this._child) {
-            (await this._child).hide();
+            await this._child.hide();
         }
         this._isShowing = false;
         this._window.animate(this.transitionOut, animateOptions);
@@ -231,11 +213,9 @@ class ContextMenu {
     /**
      * Show the window at the given [point].
      *
-     * @param {Point} point
-     * @param {boolean} [focus]
      * @memberof ContextMenu
      */
-    public async showAt(point: Point, focus?: boolean) {
+    public showAt(point: Point, focus?: boolean) {
         const animateOptions = {
             interrupt: true,
             tween: 'ease-in'
@@ -249,11 +229,19 @@ class ContextMenu {
         this._window.animate(this.transitionIn, animateOptions);
     }
 
-    public async setStyle(css?: string) {
+    public setStyle(css?: string) {
         const style = this._nativeWindow.document.createElement('link');
         style.rel = 'stylesheet';
-        style.href = location.origin + '/demo/css/context-menu.css';
-        this._nativeWindow.document.head!.appendChild(style);
+        style.href = `${location.origin}/demo/css/context-menu.css`;
+        this._nativeWindow.document.head.appendChild(style);
+    }
+
+    private outerHeight(element: HTMLElement) {
+        let height: number = element.offsetHeight;
+        const style = getComputedStyle(element);
+        // tslint:disable-next-line:ban
+        height += parseInt(style.marginTop!, 10) + parseInt(style.marginBottom!, 10);
+        return height;
     }
 }
 

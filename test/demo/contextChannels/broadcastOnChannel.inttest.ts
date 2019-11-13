@@ -1,12 +1,13 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {testAppInDirectory1, testManagerIdentity, testAppInDirectory2, testAppNotInDirectory1} from '../constants';
+import {testAppInDirectory1, testManagerIdentity, testAppInDirectory2, testAppNotInDirectory1, testAppUrl} from '../constants';
 import {Context} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel} from '../utils/RemoteChannel';
 import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends} from '../utils/common';
 import {getChannel, ChannelDescriptor} from '../utils/channels';
 import {fakeAppChannelDescriptor} from '../utils/fakes';
+import {delay, Duration} from '../utils/delay';
 
 /**
  * Tests Channel.broadcast(), its interaction with Channel.getCurrentContext(), and Channel.addContextListener
@@ -34,7 +35,7 @@ describe('When attempting to broadcast on a channel object', () => {
     });
 
     test('If a valid context is provided, the broadcast() resolves successfully', async () => {
-        await expect(channel.broadcast(testContext)).resolves;
+        await channel.broadcast(testContext);
     });
 });
 
@@ -53,7 +54,7 @@ describe('When broadcasting on a channel', () => {
     ] as ReceieveTestParam[];
 
     describe.each(receiveTestParams)('When the channel is %s channel', (titleParam: string, channelDescriptor: ChannelDescriptor) => {
-        test('Context is not received by the same channel in the broadcasting window', async() => {
+        test('Context is not received by the same channel in the broadcasting window', async () => {
             // Get our channel and set up a listener in the same window
             const channel = await getChannel(broadcastingApp, channelDescriptor);
             const listener = await channel.addContextListener();
@@ -119,7 +120,7 @@ describe('When broadcasting on a channel', () => {
 
             test(`And the broadcasting window is in ${titleParam2} context is not received by that channel`, async () => {
                 // Place our broadcasting window in our listening channel
-                listeningChannel.join(broadcastingApp);
+                await listeningChannel.join(broadcastingApp);
 
                 // Broadcast
                 await broadcastingChannel.broadcast(testContext);
@@ -175,7 +176,7 @@ describe('When adding a context listener to a channel', () => {
 
             test('When two context listeners are added then one is unsubscribed, only the still-subscribed listener is triggered', async () => {
                 // Unsubscribe our first listener
-                listener1.unsubscribe();
+                await listener1.unsubscribe();
 
                 // Broadcast
                 await broadcastingChannel.broadcast(testContext);
@@ -192,21 +193,78 @@ describe('When adding a context listener to a channel', () => {
         const broadcastingChannel = await fdc3Remote.getChannelById(broadcastingApp, 'orange');
         const listeningChannel = await fdc3Remote.getChannelById(listeningApp, 'orange');
 
+        // Set up our listener
+        const listener = await listeningChannel.addContextListener();
+
         // Set up a cached context in our system channel
         await broadcastingChannel.join();
         await broadcastingChannel.broadcast(testContext);
-        // Check the context had been cached
+        // Check the context has been cached and received as expected
         await expect(broadcastingChannel.getCurrentContext()).resolves.toEqual(testContext);
         await expect(listeningChannel.getCurrentContext()).resolves.toEqual(testContext);
-
-        // Set up our listener
-        const listener = await listeningChannel.addContextListener();
+        await expect(listener.getReceivedContexts()).resolves.toEqual([testContext]);
 
         // Have our listening window join our system channel
         await listeningChannel.join();
 
-        // Check no context is received, contrary to 'flat' API behaviour
-        await expect(listener.getReceivedContexts()).resolves.toEqual([]);
+        // Check no additional context is received, contrary to 'flat' API behaviour
+        await expect(listener.getReceivedContexts()).resolves.toEqual([testContext]);
+    });
+
+    describe('When the context listener is added after broadcast', () => {
+        test('When a listener is added after a short delay, the listener is triggered exactly once with the correct \
+context', async () => {
+            // Set up our broadcasting and listening channels
+            const broadcastingChannel = await getChannel(broadcastingApp, 'green');
+            const listeningChannel = await getChannel(listeningApp, 'green');
+
+            // Broadcast
+            await broadcastingChannel.broadcast(testContext);
+
+            // Setup listener after a short delay
+            await delay(Duration.SHORTER_THAN_APP_MATURITY);
+            const listener = await listeningChannel.addContextListener();
+
+            // Check our context is received
+            await delay(Duration.API_CALL);
+            await expect(listener).toHaveReceivedContexts([testContext]);
+        });
+
+        test('When a listener is added after a long delay, the listener is not triggered', async () => {
+            // Set up our broadcasting and listening channels
+            const broadcastingChannel = await getChannel(broadcastingApp, 'yellow');
+            const listeningChannel = await getChannel(listeningApp, 'yellow');
+
+            // Broadcast
+            await broadcastingChannel.broadcast(testContext);
+
+            // Setup listener after a long delay
+            await delay(Duration.LONGER_THAN_APP_MATURITY);
+            const listener = await listeningChannel.addContextListener();
+
+            // Check no context is received
+            await delay(Duration.API_CALL);
+            await expect(listener).toHaveReceivedContexts([]);
+        });
+
+        test('When a listener is added after a short delay on a child window, the listener is triggered exactly once \
+with the correct context', async () => {
+            // Set up our broadcasting channel
+            const broadcastingChannel = await getChannel(broadcastingApp, 'orange');
+
+            // Broadcast
+            await broadcastingChannel.broadcast(testContext);
+
+            // Setup listener after a short delay
+            await delay(Duration.SHORTER_THAN_APP_MATURITY);
+            const childIdentity = await fdc3Remote.createFinWindow(listeningApp, {url: testAppUrl, name: 'child-window'});
+            const listeningChannel = await getChannel(childIdentity, 'orange');
+            const listener = await listeningChannel.addContextListener();
+
+            // Check our context is received
+            await delay(Duration.API_CALL);
+            await expect(listener).toHaveReceivedContexts([testContext]);
+        });
     });
 });
 

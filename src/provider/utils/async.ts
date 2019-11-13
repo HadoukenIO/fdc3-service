@@ -9,8 +9,8 @@ import {DeferredPromise} from '../common/DeferredPromise';
  * @param promise Promise to race against the timeout
  */
 export function withTimeout<T>(timeoutMs: number, promise: Promise<T>): Promise<[boolean, T | undefined]> {
-    const timeout = new Promise<[boolean, undefined]>(res => setTimeout(() => res([true, undefined]), timeoutMs));
-    const p = promise.then(value => ([false, value] as [boolean, T]));
+    const timeout = new Promise<[boolean, undefined]>((res) => setTimeout(() => res([true, undefined]), timeoutMs));
+    const p = promise.then((value) => ([false, value] as [boolean, T]));
     return Promise.race([timeout, p]);
 }
 
@@ -32,6 +32,7 @@ export function withStrictTimeout<T>(timeoutMs: number, promise: Promise<T>, rej
  * @param predicate The predicate to evaluate
  * @param guard A promise. If this rejects, give up listening to the signal and reject
  */
+// eslint-disable-next-line
 export function untilTrue<A extends any[]>(signal: Signal<A>, predicate: () => boolean, guard?: Promise<void>): Promise<void> {
     if (predicate()) {
         return Promise.resolve();
@@ -48,6 +49,7 @@ export function untilTrue<A extends any[]>(signal: Signal<A>, predicate: () => b
  * @param predicate The predicate to evaluate against arguments received from the signal
  * @param guard A promise. If this rejects, give up listening to the signal and reject
  */
+// eslint-disable-next-line
 export function untilSignal<A extends any[]>(signal: Signal<A>, predicate: (...args: A) => boolean, guard?: Promise<void>): Promise<void> {
     const promise = new DeferredPromise();
     const slot = signal.add((...args: A) => {
@@ -79,12 +81,18 @@ export function allowReject<T>(promise: Promise<T>): Promise<T> {
     return promise;
 }
 
-export async function raceUntilTrue<T>(items: T[], predicate: (v?: T) => boolean): Promise<T | null> {
-    let promisesCompleted = 0;
-    let errors = 0;
-    const valueFound = new DeferredPromise<T | null>();
+/**
+ * Race `items` until one matches the `predicate` given or return undefined if all fail to pass.
+ * An error is thrown if all `items` throw exceptions or reject.
+ * @param items Promises or values to test against the `predicate`
+ * @param predicate Test against `items`
+ */
+export async function raceUntilTrue<T>(items: T[], predicate: (v?: T) => boolean): Promise<T | undefined> {
+    let promisesCompleted: number = 0;
+    let errors: number = 0;
+    const valueFound = new DeferredPromise<T | undefined>();
 
-    const handleResolve = async (value?: T): Promise<T | void> => {
+    const handleResolve = async (value?: T): Promise<void> => {
         if (predicate(value)) {
             valueFound.resolve(value);
         }
@@ -94,23 +102,20 @@ export async function raceUntilTrue<T>(items: T[], predicate: (v?: T) => boolean
         errors++;
     };
 
-    const completeCheck = async (value: T | void): Promise<T | null> => {
+    const completeCheck = async (): Promise<void> => {
         promisesCompleted++;
-        if (value) {
-            return value;
-        }
         if (items.length === promisesCompleted) {
-            if (items.length === errors) {
+            if (items.length === errors && items.length !== 0) {
                 throw new Error('All promises rejected');
+            } else {
+                valueFound.resolve(undefined);
             }
-            valueFound.resolve(null);
         }
         await valueFound.promise;
-        return null;
     };
 
     // Wrap `item` incase it is not a Promise
-    const racePromises: Promise<T | void | null>[] = items.map(async item => {
+    const racePromises: Promise<T | void>[] = items.map(async (item) => {
         return Promise.resolve(item)
             .then(handleResolve, handleReject)
             .then(completeCheck);
@@ -124,9 +129,9 @@ export async function raceUntilTrue<T>(items: T[], predicate: (v?: T) => boolean
 export async function asyncFilter<T>(arr: T[], callback: (x: T) => Promise<boolean>): Promise<T[]> {
     const result: T[] = [];
 
-    for (let i = 0; i < arr.length; i++) {
-        if (await callback(arr[i])) {
-            result.push(arr[i]);
+    for (const i of arr) {
+        if (await callback(i)) {
+            result.push(i);
         }
     }
 

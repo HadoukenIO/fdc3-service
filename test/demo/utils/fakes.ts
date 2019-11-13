@@ -1,8 +1,7 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {Application} from '../../../src/client/directory';
+import {Application, AppDirIntent} from '../../../src/client/directory';
 import {ChannelId} from '../../../src/client/main';
-import {Intent} from '../../../src/client/internal';
 
 import {ChannelDescriptor} from './channels';
 
@@ -27,7 +26,7 @@ export function createFakeApp(options: Partial<Application> = {}): Application {
     };
 }
 
-export function createFakeIntent(options: Partial<Intent> = {}): Intent {
+export function createFakeIntent(options: Partial<AppDirIntent> = {}): AppDirIntent {
     return {
         name: `intent-name-${idString()}`,
         customConfig: [],

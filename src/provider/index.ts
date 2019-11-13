@@ -5,7 +5,7 @@ import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
 import {FDC3Error, OpenError, IdentityError} from '../client/errors';
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, GetOrCreateAppChannelPayload, AppChannelTransport, AddContextListenerPayload, RemoveContextListenerPayload} from '../client/internal';
-import {AppIntent, IntentResolution, Application, Intent, Context} from '../client/main';
+import {AppIntent, IntentResolution, Application, Context} from '../client/main';
 import {parseIdentity, parseContext, parseChannelId, parseAppChannelName} from '../client/validation';
 
 import {Inject} from './common/Injectables';
@@ -18,51 +18,57 @@ import {EventHandler} from './controller/EventHandler';
 import {Injector} from './common/Injector';
 import {ChannelHandler} from './controller/ChannelHandler';
 import {AppWindow} from './model/AppWindow';
+import {Intent} from './intents';
 import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
-import {withTimeout} from './utils/async';
-import {Timeouts} from './constants';
+import {Environment} from './model/Environment';
 
 @injectable()
 export class Main {
-    private readonly _directory: AppDirectory;
-    private readonly _model: Model;
-    private readonly _contextHandler: ContextHandler;
-    private readonly _intentHandler: IntentHandler;
-    private readonly _channelHandler: ChannelHandler;
-    private readonly _eventHandler: EventHandler;
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
-    private readonly _configStore: ConfigStoreBinding
+    private readonly _directory: AppDirectory;
+    private readonly _channelHandler: ChannelHandler;
+    private readonly _configStore: ConfigStoreBinding;
+    private readonly _contextHandler: ContextHandler;
+    private readonly _environment: Environment;
+    private readonly _eventHandler: EventHandler;
+    private readonly _intentHandler: IntentHandler;
+    private readonly _model: Model;
 
     constructor(
-        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
-        @inject(Inject.MODEL) model: Model,
-        @inject(Inject.CONTEXT_HANDLER) contextHandler: ContextHandler,
-        @inject(Inject.INTENT_HANDLER) intentHandler: IntentHandler,
-        @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
-        @inject(Inject.EVENT_HANDLER) eventHandler: EventHandler,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
-        @inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding
+        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
+        @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
+        @inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding,
+        @inject(Inject.CONTEXT_HANDLER) contextHandler: ContextHandler,
+        @inject(Inject.ENVIRONMENT) environment: Environment,
+        @inject(Inject.EVENT_HANDLER) eventHandler: EventHandler,
+        @inject(Inject.INTENT_HANDLER) intentHandler: IntentHandler,
+        @inject(Inject.MODEL) model: Model
     ) {
-        this._directory = directory;
-        this._model = model;
-        this._contextHandler = contextHandler;
-        this._intentHandler = intentHandler;
-        this._channelHandler = channelHandler;
-        this._eventHandler = eventHandler;
         this._apiHandler = apiHandler;
+        this._directory = directory;
+        this._channelHandler = channelHandler;
         this._configStore = configStore;
+        this._contextHandler = contextHandler;
+        this._environment = environment;
+        this._eventHandler = eventHandler;
+        this._intentHandler = intentHandler;
+        this._model = model;
     }
 
     public async register(): Promise<void> {
         Object.assign(window, {
             main: this,
+            apiHandler: this._apiHandler,
             directory: this._directory,
-            model: this._model,
-            contextHandler: this._contextHandler,
-            intentHandler: this._intentHandler,
             channelHandler: this._channelHandler,
-            configStore: this._configStore
+            configStore: this._configStore,
+            contextHandler: this._contextHandler,
+            environment: this._environment,
+            eventHandler: this._eventHandler,
+            intentHandler: this._intentHandler,
+            model: this._model
         });
 
         // Wait for creation of any injected components that require async initialization
@@ -103,32 +109,48 @@ export class Main {
     }
 
     private async open(payload: OpenPayload): Promise<void> {
+        const context = payload.context && parseContext(payload.context);
+
         const appInfo: Application|null = await this._directory.getAppByName(payload.name);
 
         if (!appInfo) {
             throw new FDC3Error(OpenError.AppNotFound, `No app in directory with name: ${payload.name}`);
         }
 
-        // This can throw FDC3Errors if app fails to open or times out
-        await this._model.ensureRunning(appInfo);
+        const promises: Promise<void>[] = [];
 
-        // Bring-to-front all currently open windows in creation order
-        const windowsToFocus = this._model.findWindowsByAppName(appInfo.name).sort((a: AppWindow, b: AppWindow) => a.appWindowNumber - b.appWindowNumber);
-        await Promise.all(windowsToFocus.map(window => window.bringToFront()));
-        if (windowsToFocus.length > 0) {
-            windowsToFocus[windowsToFocus.length - 1].focus();
+        // Start the application if not already running
+        const startedPromise = (await this._model.getOrCreateLiveApp(appInfo)).waitForAppStarted();
+
+        promises.push(startedPromise);
+
+        // If the app has open windows, bring all to front in creation order
+        const windows = this._model.findWindowsByAppName(appInfo.name);
+        if (windows.length > 0) {
+            windows.sort((a, b) => a.appWindowNumber - b.appWindowNumber);
+
+            const bringToFrontPromise = Promise.all(windows.map((window) => window.bringToFront()));
+            const focusPromise = bringToFrontPromise.then(() => windows[windows.length - 1].focus());
+
+            promises.push(focusPromise);
         }
 
-        if (payload.context) {
-            // TODO: Revisit timeout logic [SERVICE-556]
-            await withTimeout(Timeouts.ADD_CONTEXT_LISTENER, (async () => {
-                const appWindows = await this._model.expectWindowsForApp(appInfo);
+        // If a context has been provided, send to listening windows
+        if (context) {
+            const windowsPromise = this._model.expectWindowsForApp(
+                appInfo,
+                (window) => window.hasContextListener(),
+                (window) => window.waitForReadyToReceiveContext()
+            );
 
-                await Promise.all(appWindows.map(window => {
-                    return this._contextHandler.send(window, parseContext(payload.context!));
-                }));
-            })());
+            const sendContextPromise = windowsPromise.then(async (expectedWindows) => {
+                await Promise.all(expectedWindows.map((window) => this._contextHandler.send(window, context)));
+            });
+
+            promises.push(sendContextPromise);
         }
+
+        await Promise.all(promises);
     }
 
     /**
@@ -209,7 +231,7 @@ export class Main {
     }
 
     private getSystemChannels(payload: GetSystemChannelsPayload, source: ProviderIdentity): ReadonlyArray<SystemChannelTransport> {
-        return this._channelHandler.getSystemChannels().map(channel => channel.serialize());
+        return this._channelHandler.getSystemChannels().map((channel) => channel.serialize());
     }
 
     private getChannelById(payload: GetChannelByIdPayload, source: ProviderIdentity): ChannelTransport {
@@ -223,7 +245,7 @@ export class Main {
         return appWindow.channel.serialize();
     }
 
-    private async getOrCreateAppChannel(payload: GetOrCreateAppChannelPayload, source: ProviderIdentity): Promise<AppChannelTransport> {
+    private getOrCreateAppChannel(payload: GetOrCreateAppChannelPayload, source: ProviderIdentity): AppChannelTransport {
         const name = parseAppChannelName(payload.name);
 
         return this._channelHandler.getAppChannelByName(name).serialize();
@@ -232,7 +254,7 @@ export class Main {
     private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): ReadonlyArray<Identity> {
         const channel = this._channelHandler.getChannelById(payload.id);
 
-        return this._channelHandler.getChannelMembers(channel).map(appWindow => parseIdentity(appWindow.identity));
+        return this._channelHandler.getChannelMembers(channel).map((appWindow) => parseIdentity(appWindow.identity));
     }
 
     private async channelJoin(payload: ChannelJoinPayload, source: ProviderIdentity): Promise<void> {

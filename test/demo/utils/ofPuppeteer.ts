@@ -2,8 +2,9 @@ import {Fin, Identity} from 'openfin/_v2/main';
 import {Browser, Page, JSHandle} from 'puppeteer';
 import {connect} from 'hadouken-js-adapter';
 
-import {Context, IntentType, ContextListener, IntentListener, Channel} from '../../../src/client/main';
+import {Context, ContextListener, IntentListener, Channel} from '../../../src/client/main';
 import {Events, ChannelEvents} from '../../../src/client/internal';
+import {IntentType} from '../../../src/provider/intents';
 
 import {uuidv4} from './uuidv4';
 
@@ -13,11 +14,13 @@ declare const global: NodeJS.Global & {__BROWSER__: Browser};
 type AnyFunction = (...args: any[]) => any;
 
 export interface TestWindowEventListener {
+    // eslint-disable-next-line
     handler: (payload: any) => void;
     unsubscribe: () => void;
 }
 
 export interface TestWindowChannelEventListener {
+    // eslint-disable-next-line
     handler: (payload: any) => void;
     unsubscribe: () => void;
 }
@@ -25,8 +28,6 @@ export interface TestWindowChannelEventListener {
 export type TestWindowContext = Window & {
     fin: Fin;
     fdc3: typeof import('../../../src/client/main');
-    errorHandler(error: Error): never;
-    serializeChannel(channel: Channel): TestChannelTransport;
 
     contextListeners: ContextListener[];
     intentListeners: {[intent: string]: IntentListener[]};
@@ -35,10 +36,13 @@ export type TestWindowContext = Window & {
 
     channelTransports: {[id: string]: TestChannelTransport};
 
-    receivedContexts: {listenerID: number, context: Context}[];
-    receivedEvents: {listenerID: number, payload: Events}[];
-    receivedIntents: {listenerID: number, intent: IntentType, context: Context}[];
-    receivedChannelEvents: {listenerID: number, payload: ChannelEvents}[];
+    receivedContexts: {listenerID: number; context: Context}[];
+    receivedEvents: {listenerID: number; payload: Events}[];
+    receivedIntents: {listenerID: number; intent: IntentType; context: Context}[];
+    receivedChannelEvents: {listenerID: number; payload: ChannelEvents}[];
+
+    errorHandler(error: Error): never;
+    serializeChannel(channel: Channel): TestChannelTransport;
 };
 
 export interface TestChannelTransport {
@@ -48,13 +52,13 @@ export interface TestChannelTransport {
 }
 
 export class OFPuppeteerBrowser {
-    private _pageIdentityCache: Map<Page, Identity>;
-    private _identityPageCache: Map<string, Page>;
-    private _mountedFunctionCache: Map<Page, Map<Function, JSHandle>>;
+    private readonly _pageIdentityCache: Map<Page, Identity>;
+    private readonly _identityPageCache: Map<string, Page>;
+    private readonly _mountedFunctionCache: Map<Page, Map<Function, JSHandle>>;
 
-    private _browser: Browser;
+    private readonly _browser: Browser;
 
-    private _ready: Promise<void>;
+    private readonly _ready: Promise<void>;
 
     constructor() {
         this._pageIdentityCache = new Map<Page, Identity>();
@@ -65,8 +69,8 @@ export class OFPuppeteerBrowser {
     }
 
     private async registerCleanupListener() {
-        const fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-puppeteer-' + Math.random().toString()});
-        fin.System.addListener('window-closing', win => {
+        const fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: `TEST-puppeteer-${Math.random().toString()}`});
+        fin.System.addListener('window-closing', (win) => {
             const page = this._identityPageCache.get(getIdString(win));
             if (page) {
                 this._identityPageCache.delete(getIdString(win));
@@ -105,7 +109,7 @@ export class OFPuppeteerBrowser {
             return this._pageIdentityCache.get(page);
         }
 
-        const identity: Identity | undefined = await page.evaluate(function(this: TestWindowContext): Identity | undefined {
+        const identity: Identity | undefined = await page.evaluate(function (this: TestWindowContext): Identity | undefined {
             // Could be devtools or other non-fin-enabled windows so need a guard
             if (!fin) {
                 return undefined;
@@ -126,7 +130,7 @@ export class OFPuppeteerBrowser {
     public async getOrMountRemoteFunction(executionTarget: Identity, fn: AnyFunction): Promise<JSHandle> {
         const page = await this.getPage(executionTarget);
         if (!page) {
-            throw new Error('could not find specified executionTarget: ' + JSON.stringify(executionTarget));
+            throw new Error(`could not find specified executionTarget: ${JSON.stringify(executionTarget)}`);
         }
         const cachedHandle = this.getRemoteFunctionHandle(page, fn);
         if (cachedHandle) {
@@ -134,7 +138,7 @@ export class OFPuppeteerBrowser {
         } else {
             const name = uuidv4();
             await page.exposeFunction(name, fn);
-            const newHandle = await page.evaluateHandle(function(this: {[k: string]: AnyFunction}, remoteName) {
+            const newHandle = await page.evaluateHandle(function (this: {[k: string]: AnyFunction}, remoteName) {
                 return this[remoteName];
             }, name);
             if (!this._mountedFunctionCache.get(page)) {
@@ -150,7 +154,7 @@ export class OFPuppeteerBrowser {
     }
 
     public async executeOnWindow<T extends any[], R, C = TestWindowContext>(executionTarget: Identity, fn: (this: C, ...args: T) => R, ...args: T):
-        Promise<R> {
+    Promise<R> {
         const page = await this.getPage(executionTarget);
         if (!page) {
             throw new Error('could not find specified executionTarget');

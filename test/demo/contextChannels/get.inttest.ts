@@ -3,7 +3,6 @@ import {Identity} from 'openfin/_v2/main';
 import {SystemChannel, DefaultChannel, ChannelError, IdentityError, ChannelId} from '../../../src/client/main';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, appStartupTime, testAppNotInDirectoryNotFdc3} from '../constants';
-import {fin} from '../utils/fin';
 import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends} from '../utils/common';
 import {fakeAppChannelName} from '../utils/fakes';
 
@@ -25,7 +24,7 @@ describe('When getting a channel by ID', () => {
         async (channelId: ChannelId) => {
             const channel = await fdc3Remote.getChannelById(testManagerIdentity, channelId);
 
-            await expect(channel).toBeChannel({id: channelId, type: 'system'}, SystemChannel);
+            expect(channel).toBeChannel({id: channelId, type: 'system'}, SystemChannel);
         }
     );
 
@@ -113,13 +112,7 @@ describe('When attempting to get the current channel', () => {
     });
 
     describe('When a non-FDC3 app has been started', () => {
-        beforeEach(async () => {
-            await fin.Application.startFromManifest(testAppNotInDirectoryNotFdc3.manifestUrl);
-        }, appStartupTime);
-
-        afterEach(async () => {
-            await fin.Application.wrapSync(testAppNotInDirectoryNotFdc3).quit(true);
-        });
+        setupStartNonDirectoryAppBookends(testAppNotInDirectoryNotFdc3);
 
         test('When the non-FDC3 window identity is provided, an FDC3 error is thrown', async () => {
             await expect(fdc3Remote.getCurrentChannel(testManagerIdentity, testAppNotInDirectoryNotFdc3)).toThrowFDC3Error(
@@ -131,7 +124,7 @@ ${JSON.stringify({uuid: testAppNotInDirectoryNotFdc3.uuid, name: testAppNotInDir
     });
 
     test('When a valid identity is provided, the call resolves successfully', async () => {
-        await expect(fdc3Remote.getCurrentChannel(testManagerIdentity, testManagerIdentity)).resolves;
+        await fdc3Remote.getCurrentChannel(testManagerIdentity, testManagerIdentity);
     });
 });
 
@@ -185,7 +178,7 @@ describe.each(testParams)('When getting the current channel of a window of %s', 
         const returnedRedChannel2 = await fdc3Remote.getCurrentChannel(testManagerIdentity, testApp);
 
         // Check the same instace was returned each time
-        await expect(returnedRedChannel1).toBe(returnedRedChannel2);
+        expect(returnedRedChannel1).toBe(returnedRedChannel2);
     }, appStartupTime);
 
     test('When no window is passed to getCurrentChannel, the current window is used', async () => {
@@ -197,6 +190,6 @@ describe.each(testParams)('When getting the current channel of a window of %s', 
         const currentChannel = await fdc3Remote.getCurrentChannel(testApp);
 
         // Check we have the green channel. Note that due to these coming from different windows, these cannot be the same instance
-        await expect(currentChannel.channel).toEqual(greenChannel.channel);
+        expect(currentChannel.channel).toEqual(greenChannel.channel);
     }, appStartupTime);
 });

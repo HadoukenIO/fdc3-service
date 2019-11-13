@@ -5,7 +5,6 @@ import {NewsFeed} from '../components/news/NewsFeed';
 import {InstrumentContext, Context} from '../../client/context';
 import '../../../res/demo/css/w3.css';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
-import {getCurrentChannel} from '../../client/main';
 
 export function NewsApp(): React.ReactElement {
     const [title, setTitle] = React.useState('Apple (AAPL)');
@@ -27,7 +26,7 @@ export function NewsApp(): React.ReactElement {
     }, [title]);
 
     React.useEffect(() => {
-        getCurrentChannel().then(async channel => {
+        fdc3.getCurrentChannel().then(async (channel) => {
             const context = await channel.getCurrentContext();
             if (context && context.type === 'fdc3.instrument') {
                 handleIntent(context as InstrumentContext);

@@ -7,3 +7,4 @@ dist
 gen
 node_modules
 test/coverage
+.eslintcache

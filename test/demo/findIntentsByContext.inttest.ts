@@ -5,6 +5,7 @@ import {Context, AppIntent} from '../../src/client/main';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {testManagerIdentity, testAppInDirectory1, testAppInDirectory4, testAppNotFdc3, testAppInDirectory3} from './constants';
 import {setupTeardown, setupOpenDirectoryAppBookends} from './utils/common';
+import {delay, Duration} from './utils/delay';
 
 /**
  * A context missing the mandatory `type` field
@@ -134,13 +135,17 @@ describe('Resolving intents by context, findIntentsByContext', () => {
         });
     });
 
-    describe('When calling findIntentsByContext with a context type only explicitly accepted by a running app that has not registered any listeners', () => {
+    describe('When calling findIntentsByContext with a context type only explicitly accepted by a mature app that has not registered any listeners', () => {
         const context = {
             type: 'test.IntentOnlyOnTestAppNotFdc3Context',
             name: 'Test Name'
         };
 
         setupOpenDirectoryAppBookends(testAppNotFdc3);
+
+        beforeEach(async () => {
+            await delay(Duration.LONGER_THAN_APP_MATURITY);
+        });
 
         test('The promise resolves to AppIntents for intents that take any context only', async () => {
             const receivedAppIntents = await findIntentsByContext(context);
@@ -155,6 +160,46 @@ describe('Resolving intents by context, findIntentsByContext', () => {
                         expect.objectContaining({
                             appId: 'test-app-4',
                             name: testAppInDirectory4.name
+                        })
+                    ]
+                }
+            ]);
+        });
+    });
+
+    describe('When calling findIntentsByContext with a context type only explicitly accepted by an immature app that has not registered any listeners', () => {
+        const context = {
+            type: 'test.IntentOnlyOnTestAppNotFdc3Context',
+            name: 'Test Name'
+        };
+
+        setupOpenDirectoryAppBookends(testAppNotFdc3);
+
+        test('The promise resolves to AppIntents for intents that include the immature app', async () => {
+            const receivedAppIntents = await findIntentsByContext(context);
+
+            expect(receivedAppIntents).toEqual([
+                {
+                    intent: {
+                        displayName: 'test.ContextTestIntent',
+                        name: 'test.ContextTestIntent'
+                    },
+                    apps: [
+                        expect.objectContaining({
+                            appId: 'test-app-4',
+                            name: testAppInDirectory4.name
+                        })
+                    ]
+                },
+                {
+                    intent: {
+                        displayName: 'Test Intent',
+                        name: 'test.IntentOnlyOnTestAppNotFdc3'
+                    },
+                    apps: [
+                        expect.objectContaining({
+                            appId: 'test-app-not-fdc3',
+                            name: testAppNotFdc3.name
                         })
                     ]
                 }

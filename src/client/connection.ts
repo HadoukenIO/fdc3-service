@@ -59,7 +59,7 @@ export function getServicePromise(): Promise<ChannelClient> {
         } else {
             channelPromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}}).then((channel: ChannelClient) => {
                 // Register service listeners
-                channel.register('WARN', (payload: any) => console.warn(payload));  // tslint:disable-line:no-any
+                channel.register('WARN', (payload: unknown) => console.warn(payload));  // tslint:disable-line:no-any
 
                 // Any unregistered action will simply return false
                 channel.setDefaultAction(() => false);
@@ -81,7 +81,7 @@ export function getServicePromise(): Promise<ChannelClient> {
 export async function tryServiceDispatch<T extends APIFromClientTopic>(action: T, payload: APIFromClient[T][0]): Promise<APIFromClient[T][1]> {
     const channel: ChannelClient = await getServicePromise();
     return (channel.dispatch(action, payload) as Promise<APIFromClient[T][1]>)
-        .catch(error => {
+        .catch((error) => {
             throw deserializeError(error);
         });
 }

@@ -2,15 +2,14 @@ import 'jest';
 import 'reflect-metadata';
 
 import {Identity} from 'hadouken-js-adapter';
-import {_Window} from 'hadouken-js-adapter/out/types/src/api/window/window';
 
-import {Intent} from '../../../src/client/intents';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {TestAppData, setupTeardown, setupOpenDirectoryAppBookends, DirectoryTestAppData} from '../utils/common';
 import {testManagerIdentity, testAppInDirectory2, testAppUrl} from '../constants';
 import {IntentResolution, ResolveError} from '../../../src/client/main';
 import {delay} from '../utils/delay';
 import {Timeouts} from '../../../src/provider/constants';
+import {Intent} from '../../../src/provider/intents';
 
 /**
  * Intent registered by `testAppWithPreregisteredListeners1` right after opening
@@ -23,27 +22,26 @@ const appHandlingIntent: DirectoryTestAppData = testAppInDirectory2;
 
 setupTeardown();
 
-type ContextListener = jest.Mock | (() => any);
-
 type TestParam = [
     string,
-    ContextListener | undefined,
+    () => any,
     any // The value IntentResolution.data should resolve to
 ];
 
 const resolutionTestParams: TestParam[] = [
     ['a delayed value', async () => {
         await delay(1000);
-        return 1;
-    }, 1],
-    ['a literal', () => 1, 1]
+        return 'intent-result';
+    }, 'intent-result'],
+    ['a literal', () => 'intent-result', 'intent-result'],
+    ['undefined', () => undefined, undefined]
 ];
 describe('Intent resolution', () => {
     setupOpenDirectoryAppBookends(appHandlingIntent);
 
     describe.each(resolutionTestParams)(
         'When an intent handler returns %s',
-        (testTitle: string, listener: ContextListener | undefined, expectedValue: any) => {
+        (testTitle: string, listener: () => any, expectedValue: any) => {
             describe('When an app has 1 window', () => {
                 test('The expected value is resolved', async () => {
                     await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, listener);
@@ -58,7 +56,11 @@ describe('Intent resolution', () => {
                     await Promise.all(listeners);
                     await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, listener);
                     const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
-                    await expect(resolution).resolves.toHaveProperty('data', expectedValue);
+                    let expected = expectedValue;
+                    if (expected === undefined) {
+                        expected = 0;
+                    }
+                    await expect(resolution).resolves.toHaveProperty('data', expected);
                 });
             });
 
@@ -73,14 +75,12 @@ describe('Intent resolution', () => {
                 test('The expected value is resolved', async () => {
                     await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, listener);
                     const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
-
                     await expect(resolution).resolves.toHaveProperty('data', expectedValue);
                 });
 
                 test('And a child window has the only intent listener, the expected value gets resolved', async () => {
                     await fdc3Remote.addIntentListener(children[1], preregisteredIntent.type, listener);
                     const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
-
                     await expect(resolution).resolves.toHaveProperty('data', expectedValue);
                 });
 
@@ -91,7 +91,11 @@ describe('Intent resolution', () => {
                     await Promise.all(childListeners);
                     await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, listener);
                     const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
-                    await expect(resolution).resolves.toHaveProperty('data', expectedValue);
+                    let expected = expectedValue;
+                    if (expected === undefined) {
+                        expected = 0;
+                    }
+                    await expect(resolution).resolves.toHaveProperty('data', expected);
                 });
             });
         }
@@ -116,11 +120,11 @@ describe('Intent resolution', () => {
                 await expect(resolution).resolves.toHaveProperty('data', true);
             });
 
-            test('And there are multiple intent handlers that return void, null is returned', async () => {
+            test('And there are multiple intent handlers that return void, undefined is returned', async () => {
                 await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, errorFn);
                 await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, () => {});
                 const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
-                await expect(resolution).resolves.toHaveProperty('data', null);
+                await expect(resolution).resolves.toHaveProperty('data', undefined);
             });
         });
 
@@ -132,7 +136,7 @@ describe('Intent resolution', () => {
 
             test('And there is 1 intent handler on a child window that throws after app maturity, an FDC3 IntentHandlerException is thrown', async () => {
                 await fdc3Remote.addIntentListener(children[0], preregisteredIntent.type, errorFn);
-                await delay(Timeouts.ADD_INTENT_LISTENER);
+                await delay(Timeouts.APP_MATURITY);
                 const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
                 await expect(resolution).toThrowFDC3Error(ResolveError.IntentHandlerException);
             });
@@ -150,7 +154,7 @@ describe('Intent resolution', () => {
                 await expect(resolution).resolves.toHaveProperty('data', true);
             });
 
-            test('And there are multiple listeners across windows that error and only 1 returns void, null is resolved', async () => {
+            test('And there are multiple listeners across windows that error and only 1 returns void, undefined is resolved', async () => {
                 await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, errorFn);
                 await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, errorFn);
                 await fdc3Remote.addIntentListener(children[0], preregisteredIntent.type, errorFn);
@@ -158,7 +162,7 @@ describe('Intent resolution', () => {
                 await fdc3Remote.addIntentListener(children[2], preregisteredIntent.type, errorFn);
                 await fdc3Remote.addIntentListener(children[2], preregisteredIntent.type, () => {});
                 const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
-                await expect(resolution).resolves.toHaveProperty('data', null);
+                await expect(resolution).resolves.toHaveProperty('data', undefined);
             });
         });
     });

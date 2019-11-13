@@ -1,24 +1,19 @@
 import {injectable, inject} from 'inversify';
 
 import {Inject} from '../common/Injectables';
-import {Intent} from '../../client/intents';
+import {Intent} from '../intents';
 import {IntentResolution, Application} from '../../client/main';
 import {FDC3Error, ResolveError, ResolveErrorMessage} from '../../client/errors';
 import {Model} from '../model/Model';
-import {AppDirectory} from '../model/AppDirectory';
-import {AppWindow} from '../model/AppWindow';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
 import {raceUntilTrue, withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
-import {Environment} from '../model/Environment';
 
 import {ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
 @injectable()
 export class IntentHandler {
-    private readonly _directory: AppDirectory;
-    private readonly _environment: Environment;
     private readonly _model: Model;
     private readonly _resolver: ResolverHandlerBinding;
     private readonly _apiHandler: APIHandler<APIToClientTopic>;
@@ -26,14 +21,10 @@ export class IntentHandler {
     private _resolvePromise: Promise<IntentResolution> | null;
 
     constructor(
-        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
-        @inject(Inject.ENVIRONMENT) environment: Environment,
         @inject(Inject.MODEL) model: Model,
         @inject(Inject.RESOLVER) resolver: ResolverHandlerBinding,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIToClientTopic>
     ) {
-        this._directory = directory;
-        this._environment = environment;
         this._model = model;
         this._resolver = resolver;
         this._apiHandler = apiHandler;
@@ -45,37 +36,36 @@ export class IntentHandler {
         if (hasTarget(intent)) {
             return this.raiseWithTarget(intent);
         } else {
-            return this.startResolve(intent);
+            return this.startResolve(intent, this.queueResolve.bind(this));
         }
     }
 
     private async raiseWithTarget(intent: IntentWithTarget): Promise<IntentResolution> {
         const apps = await this._model.getApplicationsForIntent(intent.type, intent.context.type);
-        const targetApp = apps.find(app => app.name === intent.target);
+        const targetApp = apps.find((app) => app.name === intent.target);
 
         if (targetApp !== undefined) {
             // Target intent handles intent with given context, so fire
             return this.fireIntent(intent, targetApp);
+        } else if (await this._model.existsAppForName(intent.target)) {
+            // Target exists but does not handle intent with given context
+            throw new FDC3Error(
+                ResolveError.TargetAppDoesNotHandleIntent,
+                `App '${intent.target}' does not handle intent '${intent.type}' with context '${intent.context.type}'`
+            );
         } else {
-            // Target intent does not handles intent with given, so determine why and throw an error
-            const targetInDirectory = await this._directory.getAppByName(intent.target);
-            const targetRunning = await this._environment.isRunning(targetInDirectory ? AppDirectory.getUuidFromApp(targetInDirectory) : intent.target);
-
-            if (!targetInDirectory && !targetRunning) {
-                throw new FDC3Error(
-                    ResolveError.TargetAppNotAvailable,
-                    `Couldn't resolve intent target '${intent.target}'. No matching app in directory or currently running.`
-                );
-            } else {
-                throw new FDC3Error(
-                    ResolveError.TargetAppDoesNotHandleIntent,
-                    `App '${intent.target}' does not handle intent '${intent.type}' with context '${intent.context.type}'`
-                );
-            }
+            // Target does not exist
+            throw new FDC3Error(
+                ResolveError.TargetAppNotAvailable,
+                `Couldn't resolve intent target '${intent.target}'. No matching app in directory or currently running.`
+            );
         }
     }
 
-    private async startResolve(intent: Intent): Promise<IntentResolution> {
+    private async startResolve(
+        intent: Intent,
+        handleAppChoice: (intent: Intent, apps: Application[]) => Promise<IntentResolution>
+    ): Promise<IntentResolution> {
         const apps: Application[] = await this._model.getApplicationsForIntent(intent.type, intent.context.type);
 
         if (apps.length === 0) {
@@ -86,9 +76,9 @@ export class IntentHandler {
             // Resolve intent immediately
             return this.fireIntent(intent, apps[0]);
         } else {
-            console.log(`${apps.length} apps found to resolve intent '${intent.type}', showing resolver'`);
+            console.log(`${apps.length} apps found to resolve intent '${intent.type}', delegating app choice'`);
 
-            return this.queueResolve(intent, apps);
+            return handleAppChoice(intent, apps);
         }
     }
 
@@ -96,37 +86,57 @@ export class IntentHandler {
         if (this._resolvePromise) {
             console.log(`Resolver showing, re-resolving intent '${intent.type}' when resolver closes'`);
 
-            this._resolvePromise = this._resolvePromise.catch(() => {}).then(() => this.startResolve(intent));
-
-            return this._resolvePromise;
+            this._resolvePromise = this._resolvePromise.catch(() => {}).then(() => this.startResolve(intent, this.showResolver.bind(this)));
         } else {
-            // Show resolver
-            const selection: ResolverResult | null = await this._resolver.handleIntent(intent, applications).catch(e => {
-                console.warn(e);
-                return null;
-            });
-
-            if (!selection) {
-                throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Resolver closed or cancelled');
-            }
-
-            // Handle response
-            console.log(`App ${selection.app.name} selected to resolve intent '${intent.type}', firing intent`);
-            return this.fireIntent(intent, selection.app);
+            this._resolvePromise = this.showResolver(intent, applications);
         }
+
+        const resolvePromise = this._resolvePromise.then((result) => {
+            if (this._resolvePromise === resolvePromise) {
+                this._resolvePromise = null;
+            }
+            return result;
+        }, (error) => {
+            if (this._resolvePromise === resolvePromise) {
+                this._resolvePromise = null;
+            }
+            throw error;
+        });
+        this._resolvePromise = resolvePromise;
+
+        return resolvePromise;
+    }
+
+    private async showResolver(intent: Intent, applications: Application[]): Promise<IntentResolution> {
+        // Show resolver
+        const selection: ResolverResult | null = await this._resolver.handleIntent(intent, applications).catch((e) => {
+            console.warn(e);
+            return null;
+        });
+
+        if (!selection) {
+            throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Resolver closed or cancelled');
+        }
+
+        // Handle response
+        console.log(`App ${selection.app.name} selected to resolve intent '${intent.type}', firing intent`);
+        return this.fireIntent(intent, selection.app);
     }
 
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
-        await this._model.ensureRunning(appInfo);
-        const appWindows = await this._model.expectWindowsForApp(appInfo);
-        const promises = appWindows.map(async (window: AppWindow): Promise<any> => {
-            if (await window.isReadyToReceiveIntent(intent.type)) {
-                const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
-                return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
-            } else {
-                throw new Error(`${appInfo.name} not ready to recieve intents.`);
-            }
-        });
+        const listeningWindows = await this._model.expectWindowsForApp(
+            appInfo,
+            (window) => window.hasIntentListener(intent.type),
+            (window) => window.waitForReadyToReceiveIntent(intent.type)
+        );
+
+        let promises = [];
+        if (listeningWindows.length > 0) {
+            const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
+            promises = listeningWindows.map((window) => this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload));
+        } else {
+            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
+        }
 
         let data: unknown;
         let didTimeout = false;
@@ -137,7 +147,7 @@ export class IntentHandler {
             throw new FDC3Error(ResolveError.IntentHandlerException, `${ResolveErrorMessage[ResolveError.IntentHandlerException]} ${appInfo.name}`);
         }
         if (didTimeout) {
-            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
+            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener return for intent: ${intent.type}`);
         }
 
         const resolution: IntentResolution = {
@@ -165,5 +175,5 @@ function hasTarget(intent: Intent): intent is IntentWithTarget {
 
 // Check if the intent handler return value is valid defined.
 function returnValuePredicate(value?: any) {
-    return (value === 0 || value === false || value === '' || !!value);
+    return value !== undefined;
 }
