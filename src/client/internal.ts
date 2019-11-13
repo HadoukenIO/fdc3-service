@@ -249,7 +249,7 @@ export interface ChannelReceiveContextPayload {
  *
  * @param listeners An array of listeners to invoke
  * @param context The context to invoke the listeners with
- * @param singleFailureHandler A function that will be called when a single listener has thrown an exception
+ * @param singleFailureHandler A function that will be called each time a listener throws an exception
  * @param createAllFailuresError A function that will be called if all (and more than one) listeners fail. Should return an error, which
  * `invokeListeners` will then throw
  */
