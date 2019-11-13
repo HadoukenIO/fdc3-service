@@ -14,13 +14,11 @@ declare const global: NodeJS.Global & {__BROWSER__: Browser};
 type AnyFunction = (...args: any[]) => any;
 
 export interface TestWindowEventListener {
-    // eslint-disable-next-line
     handler: (payload: any) => void;
     unsubscribe: () => void;
 }
 
 export interface TestWindowChannelEventListener {
-    // eslint-disable-next-line
     handler: (payload: any) => void;
     unsubscribe: () => void;
 }
@@ -162,7 +160,6 @@ export class OFPuppeteerBrowser {
 
         // Explicit cast needed to appease typescript. Puppeteer types make liberal
         // use of the any type, which confuses things here.
-        // tslint:disable-next-line: no-any
         return page.evaluate(fn as (...args: any[]) => R, ...args);
     }
 }
