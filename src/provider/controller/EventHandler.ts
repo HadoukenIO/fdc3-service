@@ -7,7 +7,7 @@ import {Inject} from '../common/Injectables';
 import {ContextChannel} from '../model/ContextChannel';
 import {ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent} from '../../client/main';
 import {Transport, Targeted} from '../../client/EventRouter';
-import {collateClientCalls, CollateClientCallsResult} from '../utils/helpers';
+import {collateClientCalls, ClientCallsResult} from '../utils/helpers';
 
 import {ChannelHandler} from './ChannelHandler';
 
@@ -72,9 +72,9 @@ export class EventHandler {
 
     private dispatchEvent<T extends Events>(targetWindow: AppWindow, eventTransport: Targeted<Transport<T>>): Promise<void> {
         return collateClientCalls([this._apiHandler.dispatch(targetWindow.identity, 'event', eventTransport)]).then(([result]) => {
-            if (result === CollateClientCallsResult.ALL_FAILURE) {
+            if (result === ClientCallsResult.ALL_FAILURE) {
                 console.warn(`Error thrown by client attempting to handle event ${eventTransport.type}, swallowing error`);
-            } else if (result === CollateClientCallsResult.TIMEOUT) {
+            } else if (result === ClientCallsResult.TIMEOUT) {
                 console.warn(`Timeout waiting for client to handle event ${eventTransport.type}, swallowing error`);
             }
         });
@@ -82,9 +82,9 @@ export class EventHandler {
 
     private publishEvent<T extends Events>(eventTransport: Targeted<Transport<T>>): Promise<void> {
         return collateClientCalls(this._apiHandler.publish('event', eventTransport)).then(([result]) => {
-            if (result === CollateClientCallsResult.ALL_FAILURE) {
+            if (result === ClientCallsResult.ALL_FAILURE) {
                 console.warn(`Error(s) thrown by client attempting to handle event ${eventTransport.type}, swallowing error(s)`);
-            } else if (result === CollateClientCallsResult.TIMEOUT) {
+            } else if (result === ClientCallsResult.TIMEOUT) {
                 console.warn(`Timeout waiting for client to handle event ${eventTransport.type}, swallowing error`);
             }
         });

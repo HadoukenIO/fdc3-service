@@ -3,7 +3,7 @@ import {Timeouts} from '../constants';
 
 import {withTimeout} from './async';
 
-export enum CollateClientCallsResult {
+export enum ClientCallsResult {
     ANY_SUCCESS,
     ALL_FAILURE,
     TIMEOUT,
@@ -27,7 +27,7 @@ export function checkCustomConfigField(app: Application, name: string): string |
  *
  * @param promises An array of promises
  */
-export async function collateClientCalls<T = void>(promises: Promise<T>[]): Promise<[CollateClientCallsResult, T | undefined]> {
+export async function collateClientCalls<T = void>(promises: Promise<T>[]): Promise<[ClientCallsResult, T | undefined]> {
     let successes = 0;
     let failures = 0;
 
@@ -43,12 +43,12 @@ export async function collateClientCalls<T = void>(promises: Promise<T>[]): Prom
     }))));
 
     if (promises.length === 0) {
-        return [CollateClientCallsResult.NO_CALLS, undefined];
+        return [ClientCallsResult.NO_CALLS, undefined];
     } else if (successes > 0) {
-        return [CollateClientCallsResult.ANY_SUCCESS, result!];
+        return [ClientCallsResult.ANY_SUCCESS, result!];
     } else if (failures > 0) {
-        return [CollateClientCallsResult.ALL_FAILURE, undefined];
+        return [ClientCallsResult.ALL_FAILURE, undefined];
     } else {
-        return [CollateClientCallsResult.TIMEOUT, undefined];
+        return [ClientCallsResult.TIMEOUT, undefined];
     }
 }

@@ -7,7 +7,7 @@ import {FDC3Error, RaiseIntentError} from '../../client/errors';
 import {Model} from '../model/Model';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
-import {collateClientCalls, CollateClientCallsResult} from '../utils/helpers';
+import {collateClientCalls, ClientCallsResult} from '../utils/helpers';
 
 import {ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
@@ -136,9 +136,9 @@ export class IntentHandler {
                 return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
             }));
 
-            if (result === CollateClientCallsResult.ALL_FAILURE) {
+            if (result === ClientCallsResult.ALL_FAILURE) {
                 throw new FDC3Error(RaiseIntentError.SendIntentError, 'Error(s) thrown by client attempting to handle intent');
-            } else if (result === CollateClientCallsResult.TIMEOUT) {
+            } else if (result === ClientCallsResult.TIMEOUT) {
                 throw new FDC3Error(RaiseIntentError.SendIntentTimeout, 'Timeout waiting for client to handle intent');
             }
         } else {

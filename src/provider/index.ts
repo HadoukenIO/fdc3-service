@@ -22,7 +22,7 @@ import {Intent} from './intents';
 import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
 import {Environment} from './model/Environment';
-import {collateClientCalls, CollateClientCallsResult} from './utils/helpers';
+import {collateClientCalls, ClientCallsResult} from './utils/helpers';
 
 @injectable()
 export class Main {
@@ -151,9 +151,9 @@ export class Main {
 
                 const [result] = await collateClientCalls(expectedWindows.map((window) => this._contextHandler.send(window, context)));
 
-                if (result === CollateClientCallsResult.ALL_FAILURE) {
+                if (result === ClientCallsResult.ALL_FAILURE) {
                     throw new FDC3Error(OpenError.SendContextError, 'Error(s) thrown by client attempting to handle context on app starting');
-                } else if (result === CollateClientCallsResult.TIMEOUT) {
+                } else if (result === ClientCallsResult.TIMEOUT) {
                     throw new FDC3Error(OpenError.SendContextTimeout, 'Timeout waiting for client to handle context on app starting');
                 }
             });
@@ -278,9 +278,9 @@ export class Main {
 
         if (context) {
             await collateClientCalls([this._contextHandler.send(appWindow, context)]).then(([result]) => {
-                if (result === CollateClientCallsResult.ALL_FAILURE) {
+                if (result === ClientCallsResult.ALL_FAILURE) {
                     console.warn(`Error thrown by client window ${appWindow.id} attempting to handle context on joining channel, swallowing error`);
-                } else if (result === CollateClientCallsResult.TIMEOUT) {
+                } else if (result === ClientCallsResult.TIMEOUT) {
                     console.warn(`Timeout waiting for client window ${appWindow.id} to handle context on joining channel, swallowing error`);
                 }
             });
