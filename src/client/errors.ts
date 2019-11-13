@@ -39,12 +39,12 @@ export enum RaiseIntentError {
      */
     NoAppsFound = 'NoAppsFound',
     /**
-     * In the case when a the optional 'target' argument is provided, no such application either exists in the application directory or is
+     * In the case where the optional 'target' argument is provided, no such application either exists in the application directory or is
      * currently running.
      */
     TargetAppNotAvailable = 'TargetAppNotAvailable',
     /**
-     * In the case when a the optional 'target' argument is provided, indicates that the app is not able to handle this intent and context.
+     * In the case where the optional 'target' argument is provided, indicates that the app is not able to handle this intent and context.
      */
     TargetAppDoesNotHandleIntent = 'TargetAppDoesNotHandleIntent',
     /**
