@@ -335,19 +335,19 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
  * To unsubscribe, use the returned [[ContextListener]].
  * @param handler The handler function to call when we receive a broadcast context.
  */
-export function addContextListener(handler: (context: Context) => void): ContextListener {
+export async function addContextListener(handler: (context: Context) => void): Promise<ContextListener> {
     validateEnvironment();
 
     const listener: ContextListener = {
         handler,
-        unsubscribe: () => {
+        unsubscribe: async () => {
             const index: number = contextListeners.indexOf(listener);
 
             if (index >= 0) {
                 contextListeners.splice(index, 1);
 
                 if (contextListeners.length === 0) {
-                    tryServiceDispatch(APIFromClientTopic.REMOVE_CONTEXT_LISTENER, {});
+                    await tryServiceDispatch(APIFromClientTopic.REMOVE_CONTEXT_LISTENER, {});
                 }
             }
 
@@ -359,7 +359,7 @@ export function addContextListener(handler: (context: Context) => void): Context
     contextListeners.push(listener);
 
     if (!hasContextListenerBefore) {
-        tryServiceDispatch(APIFromClientTopic.ADD_CONTEXT_LISTENER, {});
+        await tryServiceDispatch(APIFromClientTopic.ADD_CONTEXT_LISTENER, {});
     }
     return listener;
 }
