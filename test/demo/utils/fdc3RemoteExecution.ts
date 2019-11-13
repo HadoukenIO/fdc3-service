@@ -114,7 +114,7 @@ export async function addIntentListener(executionTarget: Identity, intent: Inten
                 ? await listenerRemote(context).catch((error: Error) => {
                     throw error;
                 })
-                : null;
+                : undefined;
             return result;
         });
         return listenerID;
