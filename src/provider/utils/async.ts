@@ -4,10 +4,10 @@ import {DeferredPromise} from '../common/DeferredPromise';
 import {Timeouts} from '../constants';
 
 export enum CollateApiCallResultsResult {
-    AnySuccess,
-    AllFailure,
-    Timeout,
-    NoCalls
+    ANY_SUCCESS,
+    ALL_FAILURE,
+    TIMEOUT,
+    NO_CALLS
 }
 
 /**
@@ -114,13 +114,13 @@ export async function collateApiCallResults<T = void>(promises: Promise<T>[]): P
     }))));
 
     if (promises.length === 0) {
-        return [CollateApiCallResultsResult.NoCalls, undefined];
+        return [CollateApiCallResultsResult.NO_CALLS, undefined];
     } else if (successes > 0) {
-        return [CollateApiCallResultsResult.AnySuccess, result!];
+        return [CollateApiCallResultsResult.ANY_SUCCESS, result!];
     } else if (failures > 0) {
-        return [CollateApiCallResultsResult.AllFailure, undefined];
+        return [CollateApiCallResultsResult.ALL_FAILURE, undefined];
     } else {
-        return [CollateApiCallResultsResult.Timeout, undefined];
+        return [CollateApiCallResultsResult.TIMEOUT, undefined];
     }
 }
 

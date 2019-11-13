@@ -136,9 +136,9 @@ export class IntentHandler {
                 return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
             }));
 
-            if (result === CollateApiCallResultsResult.AllFailure) {
+            if (result === CollateApiCallResultsResult.ALL_FAILURE) {
                 throw new FDC3Error(RaiseIntentError.SendIntentError, 'Error(s) thrown by client attempting to handle intent');
-            } else if (result === CollateApiCallResultsResult.Timeout) {
+            } else if (result === CollateApiCallResultsResult.TIMEOUT) {
                 throw new FDC3Error(RaiseIntentError.SendIntentTimeout, 'Timeout waiting for client to handle intent');
             }
         } else {

@@ -72,9 +72,9 @@ export class EventHandler {
 
     private dispatchEvent<T extends Events>(targetWindow: AppWindow, eventTransport: Targeted<Transport<T>>): Promise<void> {
         return collateApiCallResults([this._apiHandler.dispatch(targetWindow.identity, 'event', eventTransport)]).then(([result]) => {
-            if (result === CollateApiCallResultsResult.AllFailure) {
+            if (result === CollateApiCallResultsResult.ALL_FAILURE) {
                 console.warn(`Error thrown by client attempting to handle event ${eventTransport.type}, swallowing error`);
-            } else if (result === CollateApiCallResultsResult.Timeout) {
+            } else if (result === CollateApiCallResultsResult.TIMEOUT) {
                 console.warn(`Timeout waiting for client to handle event ${eventTransport.type}, swallowing error`);
             }
         });
@@ -82,9 +82,9 @@ export class EventHandler {
 
     private publishEvent<T extends Events>(eventTransport: Targeted<Transport<T>>): Promise<void> {
         return collateApiCallResults(this._apiHandler.publish('event', eventTransport)).then(([result]) => {
-            if (result === CollateApiCallResultsResult.AllFailure) {
+            if (result === CollateApiCallResultsResult.ALL_FAILURE) {
                 console.warn(`Error(s) thrown by client attempting to handle event ${eventTransport.type}, swallowing error(s)`);
-            } else if (result === CollateApiCallResultsResult.Timeout) {
+            } else if (result === CollateApiCallResultsResult.TIMEOUT) {
                 console.warn(`Timeout waiting for client to handle event ${eventTransport.type}, swallowing error`);
             }
         });
