@@ -287,8 +287,6 @@ export abstract class ChannelBase {
                         await tryServiceDispatch(APIFromClientTopic.CHANNEL_REMOVE_CONTEXT_LISTENER, {id: this.id});
                     }
                 }
-
-                return index >= 0;
             }
         };
 

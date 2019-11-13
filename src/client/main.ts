@@ -106,7 +106,7 @@ export interface ContextListener {
      * Calling this method has no effect if the listener has already been unsubscribed. To re-subscribe, call
      * [[addContextListener]] again to create a new listener object.
      */
-    unsubscribe: () => void;
+    unsubscribe: () => Promise<void>;
 }
 
 /**
@@ -120,14 +120,14 @@ export interface IntentListener {
     /**
      * The handler for when this listener receives an intent.
      */
-    handler: (context: Context) => void;
+    handler: (context: Context) => void | Promise<void>;
     /**
      * Unsubscribe the listener object. We will no longer receive intent messages on this handler.
      *
      * Calling this method has no effect if the listener has already been unsubscribed. To re-subscribe, call
      * [[addIntentListener]] again to create a new listener object.
      */
-    unsubscribe: () => void;
+    unsubscribe: () => Promise<void>;
 }
 
 const intentListeners: IntentListener[] = [];
@@ -299,24 +299,22 @@ export async function raiseIntent(intent: string, context: Context, target?: App
  * @param intent The name of the intent to listen for.
  * @param handler The handler to call when we get sent an intent.
  */
-export function addIntentListener(intent: string, handler: (context: Context) => void): IntentListener {
+export async function addIntentListener(intent: string, handler: (context: Context) => void): Promise<IntentListener> {
     validateEnvironment();
 
     const listener: IntentListener = {
         intent,
         handler,
-        unsubscribe: () => {
+        unsubscribe: async () => {
             const index: number = intentListeners.indexOf(listener);
 
             if (index >= 0) {
                 intentListeners.splice(index, 1);
 
                 if (!hasIntentListener(intent)) {
-                    tryServiceDispatch(APIFromClientTopic.REMOVE_INTENT_LISTENER, {intent});
+                    await tryServiceDispatch(APIFromClientTopic.REMOVE_INTENT_LISTENER, {intent});
                 }
             }
-
-            return index >= 0;
         }
     };
 
@@ -324,7 +322,7 @@ export function addIntentListener(intent: string, handler: (context: Context) =>
     intentListeners.push(listener);
 
     if (!hasIntentListenerBefore) {
-        tryServiceDispatch(APIFromClientTopic.ADD_INTENT_LISTENER, {intent});
+        await tryServiceDispatch(APIFromClientTopic.ADD_INTENT_LISTENER, {intent});
     }
     return listener;
 }
@@ -350,8 +348,6 @@ export async function addContextListener(handler: (context: Context) => void): P
                     await tryServiceDispatch(APIFromClientTopic.REMOVE_CONTEXT_LISTENER, {});
                 }
             }
-
-            return index >= 0;
         }
     };
 
