@@ -8,7 +8,7 @@
 import {tryServiceDispatch, getServicePromise, getEventRouter, eventEmitter} from './connection';
 import {Context} from './context';
 import {Application, AppName} from './directory';
-import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events} from './internal';
+import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners} from './internal';
 import {ChannelChangedEvent, getChannelObject, ChannelContextListener} from './contextChannels';
 import {parseContext, validateEnvironment} from './validation';
 import {Transport, Targeted} from './EventRouter';
@@ -421,41 +421,21 @@ function deserializeChannelChangedEvent(eventTransport: Transport<ChannelChanged
 if (typeof fin !== 'undefined') {
     getServicePromise().then((channelClient) => {
         channelClient.register(APIToClientTopic.RECEIVE_INTENT, async (payload: RaiseIntentPayload) => {
-            let successes = 0;
-            let failures = 0;
-
-            await Promise.all(intentListeners.filter((listener) => payload.intent === listener.intent).map(async (listener) => {
-                try {
-                    await listener.handler(payload.context);
-                    successes++;
-                } catch (e) {
-                    failures++;
-                    console.warn(`Error thrown by ${payload.intent} intent handler, swallowing error. Error message: ${e.message}`);
-                }
-            }));
-
-            if (failures > 0 && successes === 0) {
-                throw new Error(`All ${payload.intent} intent handlers failed`);
-            }
+            await invokeListeners(
+                intentListeners.filter((listener) => payload.intent === listener.intent),
+                payload.context,
+                (e) => console.warn(`Error thrown by ${payload.intent} intent handler, swallowing error. Error message: ${e.message}`),
+                () => new Error(`All ${payload.intent} intent handlers failed`)
+            );
         });
 
-        channelClient.register(APIToClientTopic.RECEIVE_CONTEXT, (payload: ReceiveContextPayload) => {
-            let successes = 0;
-            let failures = 0;
-
-            contextListeners.forEach((listener: ContextListener) => {
-                try {
-                    listener.handler(payload.context);
-                    successes++;
-                } catch (e) {
-                    failures++;
-                    console.warn(`Error thrown by context handler, swallowing error. Error message: ${e.message}`);
-                }
-            });
-
-            if (failures > 0 && successes === 0) {
-                throw new Error('All context handlers failed');
-            }
+        channelClient.register(APIToClientTopic.RECEIVE_CONTEXT, async (payload: ReceiveContextPayload) => {
+            await invokeListeners(
+                contextListeners,
+                payload.context,
+                (e) => console.warn(`Error thrown by context handler, swallowing error. Error message: ${e.message}`),
+                () => new Error('All context handlers failed')
+            );
         });
 
         const eventHandler = getEventRouter();

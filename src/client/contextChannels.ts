@@ -24,7 +24,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {parseIdentity, parseContext, validateEnvironment, parseChannelId, parseAppChannelName} from './validation';
 import {tryServiceDispatch, getEventRouter, getServicePromise} from './connection';
-import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport} from './internal';
+import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport, invokeListeners} from './internal';
 import {Context} from './context';
 import {ContextListener} from './main';
 import {Transport} from './EventRouter';
@@ -568,25 +568,13 @@ function deserializeWindowRemovedEvent(eventTransport: Transport<ChannelWindowRe
 
 if (typeof fin !== 'undefined') {
     getServicePromise().then((channelClient) => {
-        channelClient.register(APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, (payload: ChannelReceiveContextPayload) => {
-            let successes = 0;
-            let failures = 0;
-
-            channelContextListeners.forEach((listener: ChannelContextListener) => {
-                if (listener.channel.id === payload.channel) {
-                    try {
-                        listener.handler(payload.context);
-                        successes++;
-                    } catch (e) {
-                        failures++;
-                        console.warn(`Error thrown by channel context handler, swallowing error. Error message: ${e.message}`);
-                    }
-                }
-            });
-
-            if (failures > 0 && successes === 0) {
-                throw new Error('All channel context handlers failed');
-            }
+        channelClient.register(APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, async (payload: ChannelReceiveContextPayload) => {
+            await invokeListeners(
+                channelContextListeners.filter((listener) => listener.channel.id === payload.channel),
+                payload.context,
+                (e) => console.warn(`Error thrown by channel context handler, swallowing error. Error message: ${e.message}`),
+                () => new Error('All channel context handlers failed')
+            );
         });
 
         const eventHandler = getEventRouter();
