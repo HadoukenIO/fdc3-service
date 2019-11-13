@@ -7,7 +7,7 @@ import {Inject} from '../common/Injectables';
 import {ContextChannel} from '../model/ContextChannel';
 import {ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent} from '../../client/main';
 import {Transport, Targeted} from '../../client/EventRouter';
-import {collateApiCallResults, CollateApiCallResultsResult} from '../utils/async';
+import {collateClientCalls, CollateClientCallsResult} from '../utils/helpers';
 
 import {ChannelHandler} from './ChannelHandler';
 
@@ -71,20 +71,20 @@ export class EventHandler {
     }
 
     private dispatchEvent<T extends Events>(targetWindow: AppWindow, eventTransport: Targeted<Transport<T>>): Promise<void> {
-        return collateApiCallResults([this._apiHandler.dispatch(targetWindow.identity, 'event', eventTransport)]).then(([result]) => {
-            if (result === CollateApiCallResultsResult.ALL_FAILURE) {
+        return collateClientCalls([this._apiHandler.dispatch(targetWindow.identity, 'event', eventTransport)]).then(([result]) => {
+            if (result === CollateClientCallsResult.ALL_FAILURE) {
                 console.warn(`Error thrown by client attempting to handle event ${eventTransport.type}, swallowing error`);
-            } else if (result === CollateApiCallResultsResult.TIMEOUT) {
+            } else if (result === CollateClientCallsResult.TIMEOUT) {
                 console.warn(`Timeout waiting for client to handle event ${eventTransport.type}, swallowing error`);
             }
         });
     }
 
     private publishEvent<T extends Events>(eventTransport: Targeted<Transport<T>>): Promise<void> {
-        return collateApiCallResults(this._apiHandler.publish('event', eventTransport)).then(([result]) => {
-            if (result === CollateApiCallResultsResult.ALL_FAILURE) {
+        return collateClientCalls(this._apiHandler.publish('event', eventTransport)).then(([result]) => {
+            if (result === CollateClientCallsResult.ALL_FAILURE) {
                 console.warn(`Error(s) thrown by client attempting to handle event ${eventTransport.type}, swallowing error(s)`);
-            } else if (result === CollateApiCallResultsResult.TIMEOUT) {
+            } else if (result === CollateClientCallsResult.TIMEOUT) {
                 console.warn(`Timeout waiting for client to handle event ${eventTransport.type}, swallowing error`);
             }
         });

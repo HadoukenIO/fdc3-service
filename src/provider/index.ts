@@ -22,7 +22,7 @@ import {Intent} from './intents';
 import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
 import {Environment} from './model/Environment';
-import {collateApiCallResults, CollateApiCallResultsResult} from './utils/async';
+import {collateClientCalls, CollateClientCallsResult} from './utils/helpers';
 
 @injectable()
 export class Main {
@@ -149,11 +149,11 @@ export class Main {
                     throw new FDC3Error(OpenError.SendContextNoHandler, 'Context provided, but no context handler added');
                 }
 
-                const [result] = await collateApiCallResults(expectedWindows.map((window) => this._contextHandler.send(window, context)));
+                const [result] = await collateClientCalls(expectedWindows.map((window) => this._contextHandler.send(window, context)));
 
-                if (result === CollateApiCallResultsResult.ALL_FAILURE) {
+                if (result === CollateClientCallsResult.ALL_FAILURE) {
                     throw new FDC3Error(OpenError.SendContextError, 'Error(s) thrown by client attempting to handle context on app starting');
-                } else if (result === CollateApiCallResultsResult.TIMEOUT) {
+                } else if (result === CollateClientCallsResult.TIMEOUT) {
                     throw new FDC3Error(OpenError.SendContextTimeout, 'Timeout waiting for client to handle context on app starting');
                 }
             });
@@ -277,10 +277,10 @@ export class Main {
         const context = this._channelHandler.getChannelContext(channel);
 
         if (context) {
-            await collateApiCallResults([this._contextHandler.send(appWindow, context)]).then(([result]) => {
-                if (result === CollateApiCallResultsResult.ALL_FAILURE) {
+            await collateClientCalls([this._contextHandler.send(appWindow, context)]).then(([result]) => {
+                if (result === CollateClientCallsResult.ALL_FAILURE) {
                     console.warn(`Error thrown by client window ${appWindow.id} attempting to handle context on joining channel, swallowing error`);
-                } else if (result === CollateApiCallResultsResult.TIMEOUT) {
+                } else if (result === CollateClientCallsResult.TIMEOUT) {
                     console.warn(`Timeout waiting for client window ${appWindow.id} to handle context on joining channel, swallowing error`);
                 }
             });

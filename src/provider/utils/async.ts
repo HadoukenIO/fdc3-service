@@ -1,14 +1,6 @@
 import {Signal} from 'openfin-service-signal';
 
 import {DeferredPromise} from '../common/DeferredPromise';
-import {Timeouts} from '../constants';
-
-export enum CollateApiCallResultsResult {
-    ANY_SUCCESS,
-    ALL_FAILURE,
-    TIMEOUT,
-    NO_CALLS
-}
 
 /**
  * Races a given promise against a timeout, and resolves to a `[didTimeout, value?]` tuple indicating
@@ -89,39 +81,6 @@ export function untilSignal<A extends any[]>(signal: Signal<A>, predicate: (...a
 export function allowReject<T>(promise: Promise<T>): Promise<T> {
     promise.catch(() => {});
     return promise;
-}
-
-/**
- * Takes multiple promises representing API calls, and reduces them to a single result. In the case that more than one promise resolves to
- * a result, the first to result will be used. Intented to be used when calling a client from the provider, to protect against a
- * misbehaving client.
- *
- * @param promises An array of promises
- */
-export async function collateApiCallResults<T = void>(promises: Promise<T>[]): Promise<[CollateApiCallResultsResult, T | undefined]> {
-    let successes = 0;
-    let failures = 0;
-
-    let result: T;
-
-    await Promise.all(promises.map((promise) => withTimeout(Timeouts.SERVICE_TO_CLIENT_API_CALL, promise.then((promiseResult) => {
-        if (successes === 0) {
-            result = promiseResult;
-        }
-        successes++;
-    }, () => {
-        failures++;
-    }))));
-
-    if (promises.length === 0) {
-        return [CollateApiCallResultsResult.NO_CALLS, undefined];
-    } else if (successes > 0) {
-        return [CollateApiCallResultsResult.ANY_SUCCESS, result!];
-    } else if (failures > 0) {
-        return [CollateApiCallResultsResult.ALL_FAILURE, undefined];
-    } else {
-        return [CollateApiCallResultsResult.TIMEOUT, undefined];
-    }
 }
 
 export async function asyncFilter<T>(arr: T[], callback: (x: T) => Promise<boolean>): Promise<T[]> {

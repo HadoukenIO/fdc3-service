@@ -7,7 +7,7 @@ import {FDC3Error, RaiseIntentError} from '../../client/errors';
 import {Model} from '../model/Model';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
-import {collateApiCallResults, CollateApiCallResultsResult} from '../utils/async';
+import {collateClientCalls, CollateClientCallsResult} from '../utils/helpers';
 
 import {ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
@@ -132,13 +132,13 @@ export class IntentHandler {
         if (listeningWindows.length > 0) {
             const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
 
-            const [result] = await collateApiCallResults(listeningWindows.map((window) => {
+            const [result] = await collateClientCalls(listeningWindows.map((window) => {
                 return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
             }));
 
-            if (result === CollateApiCallResultsResult.ALL_FAILURE) {
+            if (result === CollateClientCallsResult.ALL_FAILURE) {
                 throw new FDC3Error(RaiseIntentError.SendIntentError, 'Error(s) thrown by client attempting to handle intent');
-            } else if (result === CollateApiCallResultsResult.TIMEOUT) {
+            } else if (result === CollateClientCallsResult.TIMEOUT) {
                 throw new FDC3Error(RaiseIntentError.SendIntentTimeout, 'Timeout waiting for client to handle intent');
             }
         } else {
