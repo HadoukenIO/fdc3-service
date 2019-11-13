@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Generates a random uuid based on math.random and the system time
  */
