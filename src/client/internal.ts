@@ -257,7 +257,7 @@ export async function invokeListeners(
     listeners: Listener[],
     context: Context,
     singleFailureHandler: (e: any) => void,
-    createAllFailuresError: () => any
+    createAllFailuresError: () => Error
 ): Promise<void> {
     let successes = 0;
     let failures = 0;
