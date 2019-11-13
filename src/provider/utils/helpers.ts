@@ -38,7 +38,8 @@ export async function collateClientCalls<T = void>(promises: Promise<T>[]): Prom
             result = promiseResult;
         }
         successes++;
-    }, () => {
+    }, (e) => {
+        console.warn(`API call failed with error ${e.message}`);
         failures++;
     }))));
 
