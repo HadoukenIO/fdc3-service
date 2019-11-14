@@ -51,14 +51,18 @@ describe('Intent resolution', () => {
 
                 test('And has multiple intent handlers, the expected value is resolved', async () => {
                     const listeners = new Array(4).fill(null).map(async (_, i) => {
-                        return fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, createDelayedFunction(() => i, 2000 * (i + 1)));
+                        return fdc3Remote.addIntentListener(
+                            appHandlingIntent,
+                            preregisteredIntent.type,
+                            createDelayedFunction(() => `delayed-value-${i}`, 2000 * (i + 1))
+                        );
                     });
                     await Promise.all(listeners);
                     await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, listener);
                     const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
                     let expected = expectedValue;
                     if (expected === undefined) {
-                        expected = 0;
+                        expected = 'delayed-value-0';
                     }
                     await expect(resolution).resolves.toHaveProperty('data', expected);
                 });
@@ -86,14 +90,14 @@ describe('Intent resolution', () => {
 
                 test('And all the windows return a value, the first to return is the value resolved', async () => {
                     const childListeners = children.map(async (id, i) => {
-                        return fdc3Remote.addIntentListener(id, preregisteredIntent.type, createDelayedFunction(() => i, 2000 * (i + 1)));
+                        return fdc3Remote.addIntentListener(id, preregisteredIntent.type, createDelayedFunction(() => `delayed-value-${i}`, 2000 * (i + 1)));
                     });
                     await Promise.all(childListeners);
                     await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, listener);
                     const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
                     let expected = expectedValue;
                     if (expected === undefined) {
-                        expected = 0;
+                        expected = 'delayed-value-0';
                     }
                     await expect(resolution).resolves.toHaveProperty('data', expected);
                 });
