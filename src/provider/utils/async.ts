@@ -83,51 +83,6 @@ export function allowReject<T>(promise: Promise<T>): Promise<T> {
     return promise;
 }
 
-/**
- * Race `items` until one matches the `predicate` given or return undefined if all fail to pass.
- * An error is thrown if all `items` throw exceptions or reject.
- * @param items Promises or values to test against the `predicate`
- * @param predicate Test against `items`
- */
-export async function raceUntilTrue<T>(items: T[], predicate: (v?: T) => boolean): Promise<T | undefined> {
-    let promisesCompleted: number = 0;
-    let errors: number = 0;
-    const valueFound = new DeferredPromise<T | undefined>();
-
-    const handleResolve = async (value?: T): Promise<void> => {
-        if (predicate(value)) {
-            valueFound.resolve(value);
-        }
-    };
-
-    const handleReject = (): void => {
-        errors++;
-    };
-
-    const completeCheck = async (): Promise<void> => {
-        promisesCompleted++;
-        if (items.length === promisesCompleted) {
-            if (items.length === errors && items.length !== 0) {
-                throw new Error('All promises rejected');
-            } else {
-                valueFound.resolve(undefined);
-            }
-        }
-        await valueFound.promise;
-    };
-
-    // Wrap `item` incase it is not a Promise
-    const racePromises: Promise<T | void>[] = items.map(async (item) => {
-        return Promise.resolve(item)
-            .then(handleResolve, handleReject)
-            .then(completeCheck);
-    });
-    racePromises.push(valueFound.promise);
-
-    await Promise.race(racePromises);
-    return valueFound.promise;
-}
-
 export async function asyncFilter<T>(arr: T[], callback: (x: T) => Promise<boolean>): Promise<T[]> {
     const result: T[] = [];
 
