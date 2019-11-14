@@ -109,10 +109,7 @@ expect.extend({
         };
     },
 
-    async toHaveReceivedContexts(
-        listener: RemoteContextListener,
-        expectedContexts: FDC3Context[]
-    ) {
+    async toHaveReceivedContexts(listener: RemoteContextListener, expectedContexts: FDC3Context[]): Promise<jest.CustomMatcherResult> {
         const receivedContexts: FDC3Context[] = await listener.getReceivedContexts();
         const pass = this.equals(receivedContexts, expectedContexts);
 
