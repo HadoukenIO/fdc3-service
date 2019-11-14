@@ -5,8 +5,6 @@
 /**
  * Main entry point
  */
-// import {raceUntilTrue} from '../provider/utils/async';
-
 import {tryServiceDispatch, getServicePromise, getEventRouter, eventEmitter} from './connection';
 import {Context} from './context';
 import {Application, AppName} from './directory';
