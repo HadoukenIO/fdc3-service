@@ -45,11 +45,15 @@ export enum ResolveError {
      * Indicates that the provider has started an app to receive an intent, and that it has timed out whilst waiting
      * for that app to handle the intent.
      */
-    IntentHandlerTimeout = 'IntentTimeout',
+    IntentTimeout = 'IntentTimeout',
     /**
      * Indicates that the app handling the intent has thrown an exception.
      */
     IntentHandlerException = 'IntentHandlerException',
+    /**
+     * Indicates that the app handling the an intent has taken to long to complete.
+     */
+    IntentHandlerTimeout = 'IntentHandlerTimeout',
     /**
      * Currently unused.
      */
