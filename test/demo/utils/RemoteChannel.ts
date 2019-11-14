@@ -5,7 +5,6 @@ import {ChannelEvents} from '../../../src/client/internal';
 
 import {RemoteContextListener, ofBrowser, handlePuppeteerError, createRemoteContextListener} from './fdc3RemoteExecution';
 import {TestChannelTransport, TestWindowContext} from './ofPuppeteer';
-import {delay, Duration} from './delay';
 
 export interface RemoteChannelEventListener {
     remoteIdentity: Identity;
@@ -92,8 +91,6 @@ export class RemoteChannel {
             }, this.id
         );
 
-        await delay(Duration.LISTENER_HANDSHAKE);
-
         return createRemoteContextListener(this.executionTarget, id);
     }
 
@@ -125,8 +122,8 @@ export class RemoteChannel {
         return {
             remoteIdentity: this.executionTarget,
             id,
-            unsubscribe: async () => {
-                return ofBrowser.executeOnWindow(this.executionTarget, async function (this: TestWindowContext, idRemote: number): Promise<void> {
+            unsubscribe: () => {
+                return ofBrowser.executeOnWindow(this.executionTarget, function (this: TestWindowContext, idRemote: number): void {
                     this.channelEventListeners[idRemote].unsubscribe();
                 }, id);
             },

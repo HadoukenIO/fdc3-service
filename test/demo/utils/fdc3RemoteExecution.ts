@@ -293,8 +293,8 @@ export function createRemoteContextListener(executionTarget: Identity, id: numbe
         remoteIdentity: executionTarget,
         id,
         unsubscribe: async () => {
-            await ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, remoteId: number): void {
-                this.contextListeners[remoteId].unsubscribe();
+            await ofBrowser.executeOnWindow(executionTarget, async function (this: TestWindowContext, remoteId: number): Promise<void> {
+                await this.contextListeners[remoteId].unsubscribe();
                 delete this.contextListeners[remoteId];
             }, id);
         },
