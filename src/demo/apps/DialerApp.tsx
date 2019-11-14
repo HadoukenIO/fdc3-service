@@ -54,9 +54,9 @@ export function DialerApp(props: AppProps): React.ReactElement {
                 handleIntent(context as ContactContext, false);
             }
         });
-        let dialListener: IntentListener;
+        let dialListenerPromise: Promise<IntentListener>;
         setTimeout(() => {
-            dialListener = addIntentListener(Intents.DIAL_CALL, (context: Context) => {
+            dialListenerPromise = addIntentListener(Intents.DIAL_CALL, (context: Context) => {
                 if (!inCall) {
                     handleIntent(context as ContactContext, false);
                 } else if (context.id && context.id.phone) {
@@ -64,14 +64,14 @@ export function DialerApp(props: AppProps): React.ReactElement {
                 }
             });
         }, 2000);
-        const callListener = addIntentListener(Intents.START_CALL, (context: Context) => {
+        const callListenerPromise = addIntentListener(Intents.START_CALL, (context: Context) => {
             if (!inCall) {
                 handleIntent(context as ContactContext, true);
             } else if (context.id && context.id.phone) {
                 setPendingCall(context as ContactContext);
             }
         });
-        const contextListener = addContextListener((context: Context) => {
+        const contextListenerPromise = addContextListener((context: Context) => {
             if (context.type === 'fdc3.contact') {
                 if (!inCall) {
                     handleIntent(context as ContactContext, false);
@@ -80,11 +80,11 @@ export function DialerApp(props: AppProps): React.ReactElement {
         });
         // Cleanup
         return () => {
-            if (dialListener) {
-                dialListener.unsubscribe();
+            if (dialListenerPromise) {
+                dialListenerPromise.then((dialListener) => dialListener.unsubscribe());
             }
-            callListener.unsubscribe();
-            contextListener.unsubscribe();
+            callListenerPromise.then((callListener) => callListener.unsubscribe());
+            contextListenerPromise.then((contextListener) => contextListener.unsubscribe());
         };
     }, []);
 
