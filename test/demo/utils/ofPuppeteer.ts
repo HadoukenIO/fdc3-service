@@ -49,13 +49,13 @@ export interface TestChannelTransport {
     constructor: string;
 }
 
-export class OFPuppeteerBrowser {
+export type BaseWindowContext = Window & {fin: Fin};
+
+export class OFPuppeteerBrowser<WindowContext extends BaseWindowContext = BaseWindowContext> {
     private readonly _pageIdentityCache: Map<Page, Identity>;
     private readonly _identityPageCache: Map<string, Page>;
     private readonly _mountedFunctionCache: Map<Page, Map<Function, JSHandle>>;
-
     private readonly _browser: Browser;
-
     private readonly _ready: Promise<void>;
 
     constructor() {
@@ -66,33 +66,11 @@ export class OFPuppeteerBrowser {
         this._ready = this.registerCleanupListener();
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public async executeOnWindow<T extends any[], R, C = TestWindowContext>(executionTarget: Identity, fn: (this: C, ...args: T) => R, ...args: T):
-    Promise<R> {
-        const page = await this.getPage(executionTarget);
-        if (!page) {
-            throw new Error('could not find specified executionTarget');
-        }
-
-        // Explicit cast needed to appease typescript. Puppeteer types make liberal
-        // use of the any type, which confuses things here.
-        // tslint:disable-next-line: no-any
-        return page.evaluate(fn as (...args: any[]) => R, ...args);
+    public get browser() {
+        return this._browser;
     }
 
-    private async registerCleanupListener() {
-        const fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: `TEST-puppeteer-${Math.random().toString()}`});
-        fin.System.addListener('window-closing', (win) => {
-            const page = this._identityPageCache.get(getIdString(win));
-            if (page) {
-                this._identityPageCache.delete(getIdString(win));
-                this._pageIdentityCache.delete(page);
-            }
-        });
-        return;
-    }
-
-    private async getPage(identity: Identity): Promise<Page | undefined> {
+    private async getPage(identity: Identity): Promise<Page|undefined> {
         await this._ready;
         const idString = getIdString(identity);
 
@@ -114,29 +92,16 @@ export class OFPuppeteerBrowser {
         return undefined;
     }
 
-    private async getIdentity(page: Page): Promise<Identity | undefined> {
-        await this._ready;
-        // Return cached value when available
-        if (this._pageIdentityCache.has(page)) {
-            return this._pageIdentityCache.get(page);
+    public async executeOnWindow<T extends any[], R, C extends WindowContext = WindowContext>(
+        executionTarget: Identity,
+        fn: (this: C, ...args: T) => R,
+        ...args: T
+    ): Promise<R> {
+        const page = await this.getPage(executionTarget);
+        if (!page) {
+            throw new Error(`could not find specified executionTarget: ${JSON.stringify(executionTarget)}`);
         }
-
-        const identity: Identity|undefined = await page.evaluate(function (this: TestWindowContext): Identity|undefined {
-            // Could be devtools or other non-fin-enabled windows so need a guard
-            if (!fin) {
-                return undefined;
-            } else {
-                return this.fin.Window.me;
-            }
-        });
-
-        if (identity !== undefined) {
-            // Update both forward and reverse maps
-            this._pageIdentityCache.set(page, identity);
-            this._identityPageCache.set(getIdString(identity), page);
-        }
-
-        return identity;
+        return page.evaluate(fn as AnyFunction, ...args);
     }
 
     public async getOrMountRemoteFunction(executionTarget: Identity, fn: AnyFunction): Promise<JSHandle> {
@@ -159,6 +124,44 @@ export class OFPuppeteerBrowser {
             this._mountedFunctionCache.get(page)!.set(fn, newHandle);
             return newHandle;
         }
+    }
+
+    private async getIdentity(page: Page): Promise<Identity|undefined> {
+        await this._ready;
+        // Return cached value when available
+        if (this._pageIdentityCache.has(page)) {
+            return this._pageIdentityCache.get(page);
+        }
+
+        const identity: Identity|undefined = await page.evaluate(function (this: BaseWindowContext): Identity|undefined {
+            // Could be devtools or other non-fin-enabled windows so need a guard
+            if (!this.fin) {
+                return undefined;
+            } else {
+                return this.fin.Window.me;
+            }
+        });
+
+        if (identity !== undefined) {
+            // Update both forward and reverse maps
+            this._pageIdentityCache.set(page, identity);
+            this._identityPageCache.set(getIdString(identity), page);
+        }
+
+        return identity;
+    }
+
+    private async registerCleanupListener() {
+        const fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: `TEST-puppeteer-${Math.random().toString()}`});
+        fin.System.addListener('window-closing', (win) => {
+            const page = this._identityPageCache.get(getIdString(win));
+            if (page) {
+                this._identityPageCache.delete(getIdString(win));
+                this._pageIdentityCache.delete(page);
+                this._mountedFunctionCache.delete(page);
+            }
+        });
+        return;
     }
 
     private getRemoteFunctionHandle(page: Page, localFunction: AnyFunction) {

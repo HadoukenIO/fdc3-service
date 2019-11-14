@@ -2,14 +2,15 @@
 import 'jest';
 import 'reflect-metadata';
 
-import {ResolveError} from '../../../src/client/errors';
+import {RaiseIntentError} from '../../../src/client/errors';
 import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {delay, Duration} from '../utils/delay';
 import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning} from '../utils/common';
 import {appStartupTime, testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, testAppWithPreregisteredListeners1, testAppNotInDirectoryNotFdc3, testAppUrl} from '../constants';
 import {allowReject} from '../../../src/provider/utils/async';
-import {Intent} from '../../../src/provider/intents';
+import {Intent, IntentType} from '../../../src/provider/intents';
+import {TestWindowContext} from '../utils/ofPuppeteer';
 
 /**
  * Intent registered by `testAppWithPreregisteredListeners1` right after opening
@@ -49,7 +50,7 @@ describe('Intent listeners and raising intents with a target', () => {
             describe('When the target is *not* registered to accept the raised intent', () => {
                 test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
                     await expect(raiseIntent(nonExistentIntent, testAppInDirectory1)).toThrowFDC3Error(
-                        ResolveError.TargetAppDoesNotHandleIntent,
+                        RaiseIntentError.TargetAppDoesNotHandleIntent,
                         `App '${testAppInDirectory1.name}' does not handle intent '${nonExistentIntent.type}' with context '${nonExistentIntent.context.type}'`
                     );
                 });
@@ -77,12 +78,12 @@ describe('Intent listeners and raising intents with a target', () => {
                     test('When the intent listener is added after a short delay, the targeted app opens and its listener is triggered \
 just once, with the correct context', async () => {
                         // Raise the intent but only add the intent listener after the some time
-                        await raiseDelayedIntentWithTarget(validIntent, testAppInDirectory1, 1500);
+                        await raiseDelayedIntentWithTarget(validIntent, testAppInDirectory1, Duration.SHORTER_THAN_APP_MATURITY);
 
                         // Since we are within listener handshake timeout, intent should be triggered correctly
                         const listener = await fdc3Remote.getRemoteIntentListener(testAppInDirectory1, validIntent.type);
                         await expect(listener).toHaveReceivedContexts([validIntent.context]);
-                    }, appStartupTime + 1500);
+                    }, appStartupTime + Duration.SHORTER_THAN_APP_MATURITY);
 
                     test('When the intent listener is added on a child window, the targeted app opens and its listener is triggered \
 just once, with the correct context', async () => {
@@ -131,8 +132,8 @@ listener to be added', async () => {
                         );
 
                         await expect(raiseIntentPromise).toThrowFDC3Error(
-                            ResolveError.IntentTimeout,
-                            `Timeout waiting for intent listener to be added for intent: ${validIntent.type}`
+                            RaiseIntentError.SendIntentNoHandler,
+                            `No intent handler added for intent: ${validIntent.type}`
                         );
                     }, appStartupTime + Duration.LONGER_THAN_APP_MATURITY);
                 });
@@ -149,7 +150,7 @@ listener to be added', async () => {
         describe('When the target is not running', () => {
             test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
                 await expect(raiseIntent(validIntent, testAppNotInDirectory1)).toThrowFDC3Error(
-                    ResolveError.TargetAppNotAvailable,
+                    RaiseIntentError.TargetAppNotAvailable,
                     `Couldn't resolve intent target '${testAppNotInDirectory1.name}'. No matching app in directory or currently running.`
                 );
             });
@@ -160,7 +161,7 @@ listener to be added', async () => {
 
             test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
                 await expect(raiseIntent(validIntent, testAppNotInDirectoryNotFdc3)).toThrowFDC3Error(
-                    ResolveError.TargetAppDoesNotHandleIntent,
+                    RaiseIntentError.TargetAppDoesNotHandleIntent,
                     `App '${testAppNotInDirectoryNotFdc3.name}' does not handle intent '${validIntent.type}' with context '${validIntent.context.type}'`
                 );
             });
@@ -177,7 +178,7 @@ function setupCommonRunningAppTests(testAppData: TestAppData): void {
     describe('When the target has *not* registered listeners for the raised intent', () => {
         test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
             await expect(raiseIntent(nonExistentIntent, testAppData)).toThrowFDC3Error(
-                ResolveError.TargetAppDoesNotHandleIntent,
+                RaiseIntentError.TargetAppDoesNotHandleIntent,
                 `App '${testAppData.name}' does not handle intent '${nonExistentIntent.type}' with context '${nonExistentIntent.context.type}'`
             );
         });
@@ -193,10 +194,75 @@ the child listener is triggered exactly once with the correct context', async ()
 
             await expect(childListener).toHaveReceivedContexts([validIntent.context]);
         });
+
+        test('When an intent listener is added that takes a long time to resolve, when calling raiseIntent from another app, the promise rejects with an \
+FDC3Error', async () => {
+            await fdc3Remote.ofBrowser.executeOnWindow(testAppData, function (this: TestWindowContext, intentRemote: IntentType, delayRemote: number): void {
+                this.fdc3.addIntentListener(intentRemote, async () => {
+                    await new Promise((res) => {
+                        this.setTimeout(res, delayRemote);
+                    });
+                });
+            }, validIntent.type, Duration.LONGER_THAN_SERVICE_TO_CLIENT_API_CALL_TIMEOUT);
+
+            await expect(raiseIntent(validIntent, testAppData)).toThrowFDC3Error(
+                RaiseIntentError.SendIntentTimeout,
+                'Timeout waiting for client to handle intent'
+            );
+        });
+
+        test('When an intent listener is added that throws and error, when calling raiseIntent from another app, the promise rejects with \
+an FDC3Error', async () => {
+            await fdc3Remote.ofBrowser.executeOnWindow(testAppData, function (this: TestWindowContext, intentRemote: IntentType): void {
+                this.fdc3.addIntentListener(intentRemote, async () => {
+                    throw new Error('Intent listener throwing error');
+                });
+            }, validIntent.type);
+
+            await expect(raiseIntent(validIntent, testAppData)).toThrowFDC3Error(
+                RaiseIntentError.SendIntentError,
+                'Error(s) thrown by client attempting to handle intent'
+            );
+        });
+
+        test('When a mix of erroring and non-erroring intent listeners are added, when calling raiseIntent from another app, all listeners are triggered with \
+the correct context and the promise resolves', async () => {
+            await fdc3Remote.ofBrowser.executeOnWindow(testAppData, function (this: TestWindowContext, intentRemote: IntentType): void {
+                this.fdc3.addIntentListener(intentRemote, async () => {
+                    throw new Error('Intent listener throwing error');
+                });
+            }, validIntent.type);
+
+            const listener = await fdc3Remote.addIntentListener(testAppData, validIntent.type);
+
+            await raiseIntent(validIntent, testAppData);
+
+            await expect(listener).toHaveReceivedContexts([validIntent.context]);
+        });
+
+        test('When a mix of erroring and non-erroring intent listeners are added across multiple windows, when calling raiseIntent from another app, all \
+listeners are triggered with the correct context and the promise resolves', async () => {
+            const listener1 = await fdc3Remote.addIntentListener(testAppData, validIntent.type);
+
+            const childWindow1 = await fdc3Remote.createFinWindow(testAppData, {url: testAppUrl, name: 'child-window-1'});
+            const childWindow2 = await fdc3Remote.createFinWindow(testAppData, {url: testAppUrl, name: 'child-window-2'});
+
+            await fdc3Remote.ofBrowser.executeOnWindow(childWindow1, function (this: TestWindowContext, intentRemote: IntentType): void {
+                this.fdc3.addIntentListener(intentRemote, () => {
+                    throw new Error('Intent listener throwing error');
+                });
+            }, validIntent.type);
+
+            const listener2 = await fdc3Remote.addIntentListener(childWindow2, validIntent.type);
+
+            await raiseIntent(validIntent, testAppData);
+
+            await expect(listener1).toHaveReceivedContexts([validIntent.context]);
+            await expect(listener2).toHaveReceivedContexts([validIntent.context]);
+        });
     });
 
     test('When calling addIntentListener for the first time, the promise resolves and there are no errors', async () => {
-        // eslint-disable-next-line
         await expect(fdc3Remote.addIntentListener(testAppData, validIntent.type)).resolves.not.toThrow();
     });
 
@@ -244,7 +310,7 @@ only the first listener is triggered', async () => {
             const expectedRaise = expect(raiseIntent(validIntent, testAppData));
 
             await expectedRaise.toThrowFDC3Error(
-                ResolveError.TargetAppDoesNotHandleIntent,
+                RaiseIntentError.TargetAppDoesNotHandleIntent,
                 `App '${testAppData.name}' does not handle intent '${validIntent.type}' with context '${validIntent.context.type}'`
             );
 

@@ -11,7 +11,7 @@
 import {Identity} from 'openfin/_v2/main';
 
 import {AppName} from './directory';
-import {AppIntent, Context, IntentResolution} from './main';
+import {AppIntent, Context, IntentResolution, Listener} from './main';
 import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel} from './contextChannels';
 import {FDC3Error} from './errors';
 
@@ -241,6 +241,48 @@ export interface ReceiveIntentPayload {
 export interface ChannelReceiveContextPayload {
     channel: ChannelId;
     context: Context;
+}
+
+/**
+ * Invokes an array of listeners with a given context, allowing us to apply consistent error handling. Will throw an error if > 0 listeners
+ * are given, and all fail
+ * The first only *defined* return value is returned
+ *
+ * @param listeners An array of listeners to invoke
+ * @param context The context to invoke the listeners with
+ * @param singleFailureHandler A function that will be called each time a listener throws an exception
+ * @param createAllFailuresError A function that will be called if all (and more than one) listeners fail. Should return an error, which
+ * `invokeListeners` will then throw
+ */
+export async function invokeListeners<T = unknown>(
+    listeners: Listener[],
+    context: Context,
+    singleFailureHandler: (e: any) => void,
+    createAllFailuresError: () => Error
+): Promise<T> {
+    let successes = 0;
+    let failures = 0;
+
+    const result: T = await new Promise<T>(async (resolve) => {
+        await Promise.all(listeners.map(async (listener) => {
+            try {
+                const value = await listener.handler(context);
+                successes++;
+                if (value !== undefined) {
+                    resolve(value as T);
+                }
+            } catch (e) {
+                failures++;
+                singleFailureHandler(e);
+            }
+        }));
+        resolve(undefined);
+    });
+
+    if (failures > 0 && successes === 0) {
+        throw createAllFailuresError();
+    }
+    return result;
 }
 
 /**

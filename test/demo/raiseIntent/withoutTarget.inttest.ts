@@ -1,7 +1,7 @@
 import 'jest';
 import 'reflect-metadata';
 
-import {ResolveError} from '../../../src/client/errors';
+import {RaiseIntentError} from '../../../src/client/errors';
 import {RESOLVER_IDENTITY} from '../../../src/provider/utils/constants';
 import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
@@ -97,7 +97,7 @@ describe('Intent listeners and raising intents without a target', () => {
                         describe('When calling raiseIntent from another app, the resolver is displayed with both apps.', () => {
                             test('When closing the resolver, an error is thrown', async () => {
                                 await expect(raiseIntentExpectResolverAndClose(uniqueIntent)).toThrowFDC3Error(
-                                    ResolveError.ResolverClosedOrCancelled,
+                                    RaiseIntentError.ResolverClosedOrCancelled,
                                     'Resolver closed or cancelled'
                                 );
                             });
@@ -130,8 +130,8 @@ describe('Intent listeners and raising intents without a target', () => {
                 describe('When the directory app does not register the intent listener after opening', () => {
                     test('When calling raiseIntent from another app, the app opens but it times out waiting for the listener to be added', async () => {
                         await expect(raiseIntentPromise).toThrowFDC3Error(
-                            ResolveError.IntentTimeout,
-                            `Timeout waiting for intent listener to be added for intent: ${uniqueIntent.type}`
+                            RaiseIntentError.SendIntentNoHandler,
+                            `No intent handler added for intent: ${uniqueIntent.type}`
                         );
                     });
                 });
@@ -180,8 +180,8 @@ app, the app opens but the promise rejects', async () => {
                         const listener = await fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
 
                         await expect(raiseIntentPromise).toThrowFDC3Error(
-                            ResolveError.IntentTimeout,
-                            `Timeout waiting for intent listener to be added for intent: ${uniqueIntent.type}`
+                            RaiseIntentError.SendIntentNoHandler,
+                            `No intent handler added for intent: ${uniqueIntent.type}`
                         );
 
                         await expect(listener).toHaveReceivedContexts([]);
@@ -195,7 +195,7 @@ app, the app opens but the promise rejects', async () => {
                 describe('When calling raiseIntent from another app, the resolver is displayed with the directory + ad-hoc app', () => {
                     test('When closing the resolver, an error is thrown', async () => {
                         await expect(raiseIntentExpectResolverAndClose(uniqueIntent)).toThrowFDC3Error(
-                            ResolveError.ResolverClosedOrCancelled,
+                            RaiseIntentError.ResolverClosedOrCancelled,
                             'Resolver closed or cancelled'
                         );
                     });
@@ -228,7 +228,7 @@ app, the app opens but the promise rejects', async () => {
         describe('When calling raiseIntent from another app, the resolver is displayed with multiple apps', () => {
             test('When closing the resolver, an error is thrown', async () => {
                 await expect(raiseIntentExpectResolverAndClose(intentInManyApps)).toThrowFDC3Error(
-                    ResolveError.ResolverClosedOrCancelled,
+                    RaiseIntentError.ResolverClosedOrCancelled,
                     'Resolver closed or cancelled'
                 );
             });
@@ -330,7 +330,7 @@ function setupNoDirectoryAppCanHandleIntentTests(intent: Intent): void {
     describe('And no running ad-hoc apps with listeners registered for the raised intent', () => {
         test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
             await expect(raiseIntent(intent)).toThrowFDC3Error(
-                ResolveError.NoAppsFound,
+                RaiseIntentError.NoAppsFound,
                 'No applications available to handle this intent'
             );
         });
@@ -350,7 +350,7 @@ function setupNoDirectoryAppCanHandleIntentTests(intent: Intent): void {
             test('When calling unsubscribe from the intent listener, then calling raiseIntent from another app, it errors', async () => {
                 await listener1.value.unsubscribe();
                 await expect(raiseIntent(intent)).toThrowFDC3Error(
-                    ResolveError.NoAppsFound,
+                    RaiseIntentError.NoAppsFound,
                     'No applications available to handle this intent'
                 );
             });
@@ -362,7 +362,7 @@ function setupNoDirectoryAppCanHandleIntentTests(intent: Intent): void {
             describe('When calling raiseIntent, the resolver is displayed with both apps', () => {
                 test('When closing the resolver, an error is thrown', async () => {
                     await expect(raiseIntentExpectResolverAndClose(intent)).toThrowFDC3Error(
-                        ResolveError.ResolverClosedOrCancelled,
+                        RaiseIntentError.ResolverClosedOrCancelled,
                         'Resolver closed or cancelled'
                     );
                 });

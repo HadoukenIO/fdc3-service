@@ -6,7 +6,7 @@ import {Identity} from 'hadouken-js-adapter';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {TestAppData, setupTeardown, setupOpenDirectoryAppBookends, DirectoryTestAppData} from '../utils/common';
 import {testManagerIdentity, testAppInDirectory2, testAppUrl} from '../constants';
-import {IntentResolution, ResolveError} from '../../../src/client/main';
+import {IntentResolution, RaiseIntentError} from '../../../src/client/main';
 import {delay} from '../utils/delay';
 import {Timeouts} from '../../../src/provider/constants';
 import {Intent} from '../../../src/provider/intents';
@@ -111,10 +111,10 @@ describe('Intent resolution', () => {
         };
 
         describe('When there is a single window', () => {
-            test('And there is 1 intent handler that throws an error, an FDC3 IntentHandlerException is thrown', async () => {
+            test('And there is 1 intent handler that throws an error, an FDC3 SendIntentError is thrown', async () => {
                 await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, errorFn);
                 const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
-                await expect(resolution).toThrowFDC3Error(ResolveError.IntentHandlerException);
+                await expect(resolution).toThrowFDC3Error(RaiseIntentError.SendIntentError);
             });
 
             test('And there are multiple intent handlers that do not throw an error, a value is returned', async () => {
@@ -138,14 +138,14 @@ describe('Intent resolution', () => {
                 children = await createChildWindows(appHandlingIntent, 3);
             });
 
-            test('And there is 1 intent handler on a child window that throws after app maturity, an FDC3 IntentHandlerException is thrown', async () => {
+            test('And there is 1 intent handler on a child window that throws after app maturity, an FDC3 SendIntentError is thrown', async () => {
                 await fdc3Remote.addIntentListener(children[0], preregisteredIntent.type, errorFn);
                 await delay(Timeouts.APP_MATURITY);
                 const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
-                await expect(resolution).toThrowFDC3Error(ResolveError.IntentHandlerException);
+                await expect(resolution).toThrowFDC3Error(RaiseIntentError.SendIntentError);
             });
 
-            test('And the is 1 intent handler on a child window that throws while waiting for app maturity, an FDC3 error is thrown', async () => {
+            test('And there is 1 intent handler on a child window that throws while waiting for app maturity, an FDC3 error is thrown', async () => {
                 await fdc3Remote.addIntentListener(children[0], preregisteredIntent.type, errorFn);
                 const resolution = raiseIntent(preregisteredIntent, appHandlingIntent);
                 await expect(resolution).rejects.toThrowError();
@@ -158,7 +158,7 @@ describe('Intent resolution', () => {
                 await expect(resolution).resolves.toHaveProperty('data', true);
             });
 
-            test('And there are multiple listeners across windows that error and only 1 returns void, undefined is resolved', async () => {
+            test('And there are multiple listeners across windows that throw errors and only 1 returns void, undefined is resolved', async () => {
                 await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, errorFn);
                 await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, errorFn);
                 await fdc3Remote.addIntentListener(children[0], preregisteredIntent.type, errorFn);

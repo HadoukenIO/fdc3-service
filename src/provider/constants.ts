@@ -1,31 +1,31 @@
 /**
- * Timeouts, in milliseconds, for the different FDC3 actions
+ * Timeouts, in milliseconds, for the different FDC3 actions.
  */
 export const Timeouts = {
     /**
-     * Time before we consider an app 'mature', i.e., has had chance to register any listeners
+     * Time before we consider an app 'mature', i.e., has had chance to register any listeners.
      */
     APP_MATURITY: 5000,
 
     /**
-     * Time for an OpenFin app to start by calling `fin.Application.startFromManifest`
+     * Time for an OpenFin app to start by calling `fin.Application.startFromManifest`.
      */
     APP_START_FROM_MANIFEST: 30000,
 
     /**
-     * Time service allows for an application's intent handler to resolve and return a value for the data field on an {@link IntentResolution}.
-     */
-    INTENT_RESOLUTION: 5000,
-
-    /**
-     * Time service allows for a `window-created` event after a client expects the window to exist
+     * Time service allows for a `window-created` event after a client expects the window to exist.
      */
     WINDOW_EXPECT_TO_CREATED: 250,
 
     /**
-     * Time service allows for a window to go from first created to being fully registered with the model
+     * Time service allows for a window to go from first created to being fully registered with the model.
      */
-    WINDOW_CREATED_TO_REGISTERED: 5000
+    WINDOW_CREATED_TO_REGISTERED: 5000,
+
+    /**
+     * Time service allows for an API call to a client to resolve.
+     */
+    SERVICE_TO_CLIENT_API_CALL: 5000
 };
 
 export const CustomConfigFields = {
