@@ -110,18 +110,10 @@ expect.extend({
     },
 
     async toHaveReceivedContexts(
-        listener: RemoteContextListener | jest.Mock<any, FDC3Context[]>,
+        listener: RemoteContextListener,
         expectedContexts: FDC3Context[]
     ) {
-        let receivedContexts: FDC3Context[] = [];
-        if ('mock' in listener) {
-            receivedContexts = (listener as jest.Mock<any, FDC3Context[]>).mock.calls.reduce((prev, current) => {
-                return [...prev, ...current];
-            }, []);
-        } else {
-            receivedContexts = await (listener as RemoteContextListener).getReceivedContexts();
-        }
-
+        const receivedContexts: FDC3Context[] = await listener.getReceivedContexts();
         const pass = this.equals(receivedContexts, expectedContexts);
 
         const message = () => {

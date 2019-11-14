@@ -25,7 +25,7 @@ export const ofBrowser = new OFPuppeteerBrowser();
 
 const remoteChannels: {[id: string]: RemoteChannel} = {};
 
-export interface RemoteListener {
+interface RemoteListener {
     remoteIdentity: Identity;
     id: number;
     unsubscribe: () => Promise<void>;
