@@ -43,6 +43,9 @@ export type TestWindowContext = Window & {
     serializeChannel(channel: Channel): TestChannelTransport;
 };
 
+// Helper type. Works better with puppeteer than the builtin Function type
+type AnyFunction = (...args: any[]) => any;
+
 export interface TestChannelTransport {
     id: string;
     channel: Channel;
