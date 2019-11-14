@@ -10,9 +10,6 @@ import {uuidv4} from './uuidv4';
 
 declare const global: NodeJS.Global & {__BROWSER__: Browser};
 
-// Helper type. Works better with puppeteer than the builtin Function type
-type AnyFunction = (...args: any[]) => any;
-
 export interface TestWindowEventListener {
     handler: (payload: any) => void;
     unsubscribe: () => void;
