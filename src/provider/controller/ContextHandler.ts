@@ -9,6 +9,7 @@ import {getId} from '../utils/getId';
 import {ContextChannel} from '../model/ContextChannel';
 import {Model} from '../model/Model';
 import {LiveApp} from '../model/LiveApp';
+import {collateClientCalls, ClientCallsResult} from '../utils/helpers';
 
 import {ChannelHandler} from './ChannelHandler';
 
@@ -29,20 +30,26 @@ export class ContextHandler {
     }
 
     /**
-     * Send a context to a specific app
+     * Send a context to a specific window. The promise returned may reject if provided window throws an error, so caller should take
+     * responsibility for error handling.
+     *
      * @param window Window to send the context to
      * @param context Context to be sent
      */
     public send(window: AppWindow, context: Context): Promise<void> {
         const payload: ReceiveContextPayload = {context};
         if (window.hasContextListener()) {
-            // TODO: Make sure this will not cause problems if it never returns [SERVICE-555]
             return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload);
         } else {
             // We intentionally don't await this, as we have no expectation that windows will add a context listener
             window.waitForReadyToReceiveContext().then(() => {
-                // TODO: Make sure this will not cause problems if it never returns [SERVICE-555]
-                return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload);
+                collateClientCalls([this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_CONTEXT, payload)]).then(([result]) => {
+                    if (result === ClientCallsResult.ALL_FAILURE) {
+                        console.warn(`Error thrown by client window ${window.id} attempting to handle context, swallowing error`);
+                    } else if (result === ClientCallsResult.TIMEOUT) {
+                        console.warn(`Timeout waiting for client window ${window.id} to handle context, swallowing error`);
+                    }
+                });
             }, () => {});
 
             return Promise.resolve();
@@ -51,7 +58,7 @@ export class ContextHandler {
 
     /**
      * Broadcast context onto the channel the source window is a member of. The context will be received by all
-     * windows in the channel, or listening to the channel, except for the sender itself
+     * windows in the channel, or listening to the channel, except for the sender itself.
      *
      * @param context Context to send
      * @param source Window sending the context. It won't receive the broadcast
@@ -62,7 +69,7 @@ export class ContextHandler {
 
     /**
      * Broadcast context onto the provided channel. The context will be received by all windows in the channel, or
-     * listening to the channel, except for the sender itself
+     * listening to the channel, except for the sender itself.
      *
      * @param context Context to send
      * @param source Window sending the context. It won't receive the broadcast
@@ -81,11 +88,11 @@ export class ContextHandler {
 
         promises.push(...memberWindows
             .filter(notSender)
-            .map((window) => this.send(window, context)));
+            .map((window) => this.sendForBroadcast(window, context)));
 
         promises.push(...listeningWindows
             .filter(notSender)
-            .map((window) => this.sendOnChannel(window, context, channel)));
+            .map((window) => this.sendOnChannelForBroadcast(window, context, channel)));
 
         // We intentionally don't await this, as we have no expectation that windows will add a context listener
         for (const app of this._model.apps.filter((testApp: LiveApp) => testApp.started)) {
@@ -97,7 +104,7 @@ export class ContextHandler {
                 ).then((windows) => {
                     windows
                         .filter((window) => notSender(window) && !memberWindows.includes(window) && window.channel.id === channel.id)
-                        .forEach((window) => this.send(window, context));
+                        .forEach((window) => this.sendForBroadcast(window, context));
                 });
 
                 this._model.expectWindowsForApp(
@@ -107,7 +114,7 @@ export class ContextHandler {
                 ).then((windows) => {
                     windows
                         .filter((window) => notSender(window) && !listeningWindows.includes(window))
-                        .forEach((window) => this.sendOnChannel(window, context, channel));
+                        .forEach((window) => this.sendOnChannelForBroadcast(window, context, channel));
                 });
             });
         }
@@ -115,15 +122,32 @@ export class ContextHandler {
         return Promise.all(promises).then(() => {});
     }
 
+    private async sendForBroadcast(window: AppWindow, context: Context): Promise<void> {
+        await collateClientCalls([this.send(window, context)]).then(([result]) => {
+            if (result === ClientCallsResult.ALL_FAILURE) {
+                console.warn(`Error thrown by client window ${window.id} attempting to handle broadcast, swallowing error`);
+            } else if (result === ClientCallsResult.TIMEOUT) {
+                console.warn(`Timeout waiting for client window ${window.id} to handle broadcast, swallowing error`);
+            }
+        });
+    }
+
     /**
-     * Send a context to a specific app on a specific channel
+     * Send a context to a specific app on a specific channel.
+     *
      * @param window Window to send the context to
      * @param context Context to be sent
      * @param channel Channel context is to be sent on
      */
-    private async sendOnChannel(window: AppWindow, context: Context, channel: ContextChannel): Promise<void> {
+    private async sendOnChannelForBroadcast(window: AppWindow, context: Context, channel: ContextChannel): Promise<void> {
         const payload: ChannelReceiveContextPayload = {channel: channel.id, context};
 
-        await this._apiHandler.dispatch(window.identity, APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, payload);
+        await collateClientCalls([this._apiHandler.dispatch(window.identity, APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, payload)]).then(([result]) => {
+            if (result === ClientCallsResult.ALL_FAILURE) {
+                console.warn(`Error thrown by client window ${window.id} attempting to handle broadcast on channel, swallowing error`);
+            } else if (result === ClientCallsResult.TIMEOUT) {
+                console.warn(`Timeout waiting for client window ${window.id} to handle broadcast on channel, swallowing error`);
+            }
+        });
     }
 }

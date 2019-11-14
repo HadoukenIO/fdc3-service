@@ -7,7 +7,7 @@ import {Signal} from 'openfin-service-signal';
 
 import {AsyncInit} from '../controller/AsyncInit';
 import {Application} from '../../client/main';
-import {FDC3Error, OpenError} from '../../client/errors';
+import {FDC3Error, ApplicationError} from '../../client/errors';
 import {withTimeout} from '../utils/async';
 import {Timeouts} from '../constants';
 import {parseIdentity} from '../../client/validation';
@@ -50,14 +50,14 @@ export class FinEnvironment extends AsyncInit implements Environment {
             fin.Application.startFromManifest(appInfo.manifest).catch((e) => {
                 this.deregisterApplication({uuid});
 
-                throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
+                throw new FDC3Error(ApplicationError.ErrorOnLaunch, (e as Error).message);
             })
         ).then((result) => {
             const [didTimeout] = result;
 
             if (didTimeout) {
                 this.deregisterApplication({uuid});
-                throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
+                throw new FDC3Error(ApplicationError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
             }
         });
 
