@@ -135,7 +135,7 @@ export class IntentHandler {
             const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
             promises = listeningWindows.map((window) => this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload));
         } else {
-            throw new FDC3Error(ResolveError.IntentHandlerTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
+            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
         }
 
         let data: unknown;
