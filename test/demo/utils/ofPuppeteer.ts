@@ -66,6 +66,20 @@ export class OFPuppeteerBrowser {
         this._ready = this.registerCleanupListener();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public async executeOnWindow<T extends any[], R, C = TestWindowContext>(executionTarget: Identity, fn: (this: C, ...args: T) => R, ...args: T):
+    Promise<R> {
+        const page = await this.getPage(executionTarget);
+        if (!page) {
+            throw new Error('could not find specified executionTarget');
+        }
+
+        // Explicit cast needed to appease typescript. Puppeteer types make liberal
+        // use of the any type, which confuses things here.
+        // tslint:disable-next-line: no-any
+        return page.evaluate(fn as (...args: any[]) => R, ...args);
+    }
+
     private async registerCleanupListener() {
         const fin = await connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: `TEST-puppeteer-${Math.random().toString()}`});
         fin.System.addListener('window-closing', (win) => {
@@ -107,7 +121,7 @@ export class OFPuppeteerBrowser {
             return this._pageIdentityCache.get(page);
         }
 
-        const identity: Identity | undefined = await page.evaluate(function (this: TestWindowContext): Identity | undefined {
+        const identity: Identity|undefined = await page.evaluate(function (this: TestWindowContext): Identity|undefined {
             // Could be devtools or other non-fin-enabled windows so need a guard
             if (!fin) {
                 return undefined;
@@ -149,18 +163,6 @@ export class OFPuppeteerBrowser {
 
     private getRemoteFunctionHandle(page: Page, localFunction: AnyFunction) {
         return this._mountedFunctionCache.has(page) && this._mountedFunctionCache.get(page)!.get(localFunction);
-    }
-
-    public async executeOnWindow<T extends any[], R, C = TestWindowContext>(executionTarget: Identity, fn: (this: C, ...args: T) => R, ...args: T):
-    Promise<R> {
-        const page = await this.getPage(executionTarget);
-        if (!page) {
-            throw new Error('could not find specified executionTarget');
-        }
-
-        // Explicit cast needed to appease typescript. Puppeteer types make liberal
-        // use of the any type, which confuses things here.
-        return page.evaluate(fn as (...args: any[]) => R, ...args);
     }
 }
 
