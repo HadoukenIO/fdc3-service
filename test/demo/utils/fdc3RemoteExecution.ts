@@ -122,7 +122,7 @@ export async function addIntentListener(executionTarget: Identity, intent: Inten
 
     await delay(Duration.LISTENER_HANDSHAKE);
 
-    return createRemoteIntentListener(executionTarget, id, intent, listener);
+    return createRemoteIntentListener(executionTarget, id, intent);
 }
 
 export async function getRemoteContextListener(executionTarget: Identity, listenerID: number = 0): Promise<RemoteContextListener> {
@@ -328,12 +328,7 @@ function deserializeChannel(executionTarget: Identity, transport: TestChannelTra
     return remoteChannel;
 }
 
-function createRemoteIntentListener(
-    executionTarget: Identity,
-    id: number,
-    intent: string,
-    listener?: (context: Context) => any | jest.Mock<any, Context[]>
-) {
+function createRemoteIntentListener(executionTarget: Identity, id: number, intent: string) {
     return {
         remoteIdentity: executionTarget,
         id,
@@ -346,14 +341,9 @@ function createRemoteIntentListener(
             await delay(Duration.LISTENER_HANDSHAKE);
         },
         getReceivedContexts: async (): Promise<Context[]> => {
-            if (!listener || !('mock' in listener)) {
-                return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, remoteIntent: IntentType, remoteId: number): Context[] {
-                    return this.receivedIntents.filter((entry) => entry.listenerID === remoteId && entry.intent === remoteIntent).map((entry) => entry.context);
-                }, intent, id);
-            }
-            return (listener as jest.Mock<any, Context[]>).mock.calls.reduce((prev, current) => {
-                return [...prev, ...current];
-            }, []);
+            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, remoteIntent: IntentType, remoteId: number): Context[] {
+                return this.receivedIntents.filter((entry) => entry.listenerID === remoteId && entry.intent === remoteIntent).map((entry) => entry.context);
+            }, intent, id);
         }
     };
 }
