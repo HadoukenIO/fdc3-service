@@ -301,7 +301,7 @@ export async function raiseIntent(intent: string, context: Context, target?: App
  * @param intent The name of the intent to listen for.
  * @param handler The handler to call when we get sent an intent.
  */
-export function addIntentListener(intent: string, handler: (context: Context) => void | Promise<void>): IntentListener {
+export function addIntentListener(intent: string, handler: (context: Context) => any | Promise<any>): IntentListener {
     validateEnvironment();
 
     const listener: IntentListener = {

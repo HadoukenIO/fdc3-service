@@ -25,6 +25,8 @@ export const ofBrowser = new OFPuppeteerBrowser();
 
 const remoteChannels: {[id: string]: RemoteChannel} = {};
 
+type ContextListener = (context: Context) => Promise<any>;
+
 interface RemoteListener {
     remoteIdentity: Identity;
     id: number;
@@ -100,25 +102,31 @@ export async function addContextListener(executionTarget: Identity): Promise<Rem
     return createRemoteContextListener(executionTarget, id);
 }
 
-export async function addIntentListener(executionTarget: Identity, intent: IntentType, listener?: (context: Context) => any): Promise<RemoteIntentListener> {
-    const remoteFn = listener ? await ofBrowser.getOrMountRemoteFunction(executionTarget, listener) : undefined;
-    const id = await ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, intentRemote: IntentType, listenerRemote?: any): number {
-        if (this.intentListeners[intentRemote] === undefined) {
-            this.intentListeners[intentRemote] = [];
-        }
-        const listenerID = this.intentListeners[intentRemote].length;
-        this.intentListeners[intentRemote][listenerID] = this.fdc3.addIntentListener(intentRemote, async (context) => {
-            this.receivedIntents.push({listenerID, intent: intentRemote, context});
-            // Catch and throw so it rejects correctly client side
-            const result = listenerRemote
-                ? await listenerRemote(context).catch((error: Error) => {
-                    throw error;
-                })
-                : undefined;
-            return result;
-        });
-        return listenerID;
-    }, intent, remoteFn);
+export async function addIntentListener(executionTarget: Identity, intent: IntentType, listener?: ContextListener): Promise<RemoteIntentListener> {
+    const remoteFn = (listener && await ofBrowser.getOrMountRemoteFunction(executionTarget, listener)) as unknown as ContextListener || undefined;
+
+    const id = await ofBrowser.executeOnWindow(
+        executionTarget,
+        function (this: TestWindowContext, intentRemote: IntentType, listenerRemote?: ContextListener): number {
+            if (this.intentListeners[intentRemote] === undefined) {
+                this.intentListeners[intentRemote] = [];
+            }
+            const listenerID = this.intentListeners[intentRemote].length;
+            this.intentListeners[intentRemote][listenerID] = this.fdc3.addIntentListener(intentRemote, async (context: Context): Promise<any> => {
+                this.receivedIntents.push({listenerID, intent: intentRemote, context});
+                // Catch and throw so it rejects correctly client side
+                const result: unknown = listenerRemote
+                    ? await listenerRemote(context).catch((error: Error) => {
+                        throw error;
+                    })
+                    : undefined;
+                return result;
+            });
+            return listenerID;
+        },
+        intent,
+        remoteFn
+    );
 
     await delay(Duration.LISTENER_HANDSHAKE);
 
