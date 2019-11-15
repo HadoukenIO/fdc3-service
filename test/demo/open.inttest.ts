@@ -2,7 +2,7 @@
 import 'jest';
 
 import {Context, OrganizationContext} from '../../src/client/main';
-import {ApplicationError, SendError} from '../../src/client/errors';
+import {ApplicationError, SendContextError} from '../../src/client/errors';
 import {Timeouts} from '../../src/provider/constants';
 import {allowReject} from '../../src/provider/utils/async';
 
@@ -172,7 +172,7 @@ is not triggered', async () => {
                     // Add a listener
                     const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
 
-                    await expect(openPromise).toThrowFDC3Error(SendError.NoHandler, 'Context provided, but no context handler added');
+                    await expect(openPromise).toThrowFDC3Error(SendContextError.NoHandler, 'Context provided, but no context handler added');
 
                     // Check the listener did not receive the context in open
                     await expect(listener).toHaveReceivedContexts([]);
@@ -190,7 +190,7 @@ is not triggered', async () => {
                 const openPromise = open('invalid-app-name', validContext);
 
                 await expect(openPromise).toThrowFDC3Error(
-                    ApplicationError.AppNotFound,
+                    ApplicationError.NotFound,
                     /No app in directory with name/
                 );
             });
@@ -271,7 +271,7 @@ the promise resolves', async () => {
 
                 // Check the promise rejects as expected
                 await expect(promise).toThrowFDC3Error(
-                    SendError.AppError,
+                    SendContextError.HandlerError,
                     'Error(s) thrown by client attempting to handle context on app starting'
                 );
             });
@@ -356,7 +356,7 @@ and does not trigger the context listener of the already open app', async () => 
 
         // fin.Application.startFromManifest errors with this message when providing an inexistent manifest URL
         await expect(openPromise).toThrowFDC3Error(
-            ApplicationError.ErrorOnLaunch,
+            ApplicationError.LaunchError,
             /Failed to download resource\. Status code: 404/
         );
     });
@@ -367,7 +367,7 @@ and does not trigger the context listener of the already open app', async () => 
 
         // fin.Application.startFromManifest errors with this message when it times out trying to open an app
         await expect(openPromise).toThrowFDC3Error(
-            ApplicationError.AppTimeout,
+            ApplicationError.LaunchTimeout,
             `Timeout waiting for app '${appName}' to start from manifest`
         );
     }, Timeouts.APP_START_FROM_MANIFEST + 2000);
@@ -416,12 +416,12 @@ and does not trigger the context listener of the already open app', async () => 
         });
 
         test('The promise rejects and the app opens', async () => {
-            await expect(openPromise).toThrowFDC3Error(SendError.NoHandler, 'Context provided, but no context handler added');
+            await expect(openPromise).toThrowFDC3Error(SendContextError.NoHandler, 'Context provided, but no context handler added');
             await expect(fin.Application.wrapSync(testAppDelayedPreregisterLong).isRunning()).resolves.toBe(true);
         });
 
         test('The context is not received by the listener', async () => {
-            await expect(openPromise).toThrowFDC3Error(SendError.NoHandler, 'Context provided, but no context handler added');
+            await expect(openPromise).toThrowFDC3Error(SendContextError.NoHandler, 'Context provided, but no context handler added');
 
             await delay(Duration.LONGER_THAN_APP_MATURITY);
             const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppDelayedPreregisterLong);

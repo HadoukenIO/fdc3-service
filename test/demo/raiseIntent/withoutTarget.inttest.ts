@@ -1,7 +1,7 @@
 import 'jest';
 import 'reflect-metadata';
 
-import {ResolveError, SendError} from '../../../src/client/errors';
+import {ResolveError, SendContextError} from '../../../src/client/errors';
 import {RESOLVER_IDENTITY} from '../../../src/provider/utils/constants';
 import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
@@ -130,7 +130,7 @@ describe('Intent listeners and raising intents without a target', () => {
                 describe('When the directory app does not register the intent listener after opening', () => {
                     test('When calling raiseIntent from another app, the app opens but it times out waiting for the listener to be added', async () => {
                         await expect(raiseIntentPromise).toThrowFDC3Error(
-                            SendError.NoHandler,
+                            SendContextError.NoHandler,
                             `No intent handler added for intent: ${uniqueIntent.type}`
                         );
                     });
@@ -180,7 +180,7 @@ app, the app opens but the promise rejects', async () => {
                         const listener = await fdc3Remote.addIntentListener(testAppWithUniqueIntent, uniqueIntent.type);
 
                         await expect(raiseIntentPromise).toThrowFDC3Error(
-                            SendError.NoHandler,
+                            SendContextError.NoHandler,
                             `No intent handler added for intent: ${uniqueIntent.type}`
                         );
 
