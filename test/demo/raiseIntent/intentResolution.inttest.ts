@@ -88,7 +88,7 @@ describe('Intent resolution', () => {
                     await expect(resolution).resolves.toHaveProperty('data', expectedValue);
                 });
 
-                test('And all the windows return a value, the first to return is the value resolved', async () => {
+                test('And all the windows return a value, the first to return a defined value is the value resolved', async () => {
                     const childListeners = children.map(async (id, i) => {
                         return fdc3Remote.addIntentListener(id, preregisteredIntent.type, createDelayedFunction(() => `delayed-value-${i}`, 2000 * (i + 1)));
                     });
