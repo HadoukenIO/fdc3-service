@@ -33,19 +33,19 @@ export function NewsApp(): React.ReactElement {
             }
         });
 
-        const intentListenerPromise = fdc3.addIntentListener(fdc3.Intents.VIEW_NEWS, (context: Context): void => {
+        const intentListener = fdc3.addIntentListener(fdc3.Intents.VIEW_NEWS, (context: Context): void => {
             handleIntent(context as InstrumentContext);
         });
 
-        const contextListenerPromise = fdc3.addContextListener((context: Context): void => {
+        const contextListener = fdc3.addContextListener((context: Context): void => {
             if (context.type === 'fdc3.instrument') {
                 handleIntent(context as InstrumentContext);
             }
         });
 
         return function cleanUp() {
-            intentListenerPromise.then((intentListener) => intentListener.unsubscribe());
-            contextListenerPromise.then((contextListener) => contextListener.unsubscribe());
+            intentListener.unsubscribe();
+            contextListener.unsubscribe();
         };
     }, []);
 

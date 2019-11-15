@@ -72,15 +72,15 @@
                 'channel-changed'
             ];
     
-            fdc3.addContextListener((context) => {
+            window.contextListeners[0] = fdc3.addContextListener((context) => {
                 receivedContexts.push({listenerID: 0, context});
-            }).then((contextListener) => window.contextListeners[0] = contextListener);
+            });
     
             for (const intent of intents) {
                 window.intentListeners[intent] = [];
-                fdc3.addIntentListener(intent, (context) => {
+                window.intentListeners[intent][0] = fdc3.addIntentListener(intent, (context) => {
                     receivedIntents.push({listenerID: 0, intent, context});
-                }).then((intentListener) => window.intentListeners[intent][0] = intentListener);
+                });
             }
 
             for (const eventType of eventTypes) {

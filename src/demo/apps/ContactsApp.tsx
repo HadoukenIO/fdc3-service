@@ -74,7 +74,7 @@ export function ContactsApp(): React.ReactElement {
                 handleIntent(context as fdc3.ContactContext);
             }
         });
-        const intentListenerPromise = fdc3.addIntentListener(fdc3.Intents.SAVE_CONTACT, (context: fdc3.Context): void => {
+        const intentListener = fdc3.addIntentListener(fdc3.Intents.SAVE_CONTACT, (context: fdc3.Context): void => {
             try {
                 handleIntent(context as fdc3.ContactContext);
             } catch (e) {
@@ -83,7 +83,7 @@ export function ContactsApp(): React.ReactElement {
         });
         // Cleanup
         return () => {
-            intentListenerPromise.then((intentListener) => intentListener.unsubscribe());
+            intentListener.unsubscribe();
         };
     }, []);
 

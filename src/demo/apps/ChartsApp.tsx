@@ -36,19 +36,19 @@ export function ChartsApp(props: AppProps): React.ReactElement {
                 handleIntent(context as InstrumentContext);
             }
         });
-        const intentListenerPromise = fdc3.addIntentListener(fdc3.Intents.VIEW_CHART, (context: Context): void => {
+        const intentListener = fdc3.addIntentListener(fdc3.Intents.VIEW_CHART, (context: Context): void => {
             handleIntent(context as InstrumentContext);
         });
 
-        const contextListenerPromise = fdc3.addContextListener((context: Context): void => {
+        const contextListener = fdc3.addContextListener((context: Context): void => {
             if (context.type === 'fdc3.instrument') {
                 handleIntent(context as InstrumentContext);
             }
         });
 
         return function cleanUp() {
-            intentListenerPromise.then((intentListener) => intentListener.unsubscribe());
-            contextListenerPromise.then((contextListener) => contextListener.unsubscribe());
+            intentListener.unsubscribe();
+            contextListener.unsubscribe();
         };
     }, []);
 
