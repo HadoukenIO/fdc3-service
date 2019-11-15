@@ -46,7 +46,7 @@ describe('When getting a channel by ID', () => {
 
         await expect(getChannelByIdPromise).toThrowFDC3Error(
             ChannelError.ChannelWithIdDoesNotExist,
-            'No channel with channelId: non-existent-channel'
+            'No channel \'non-existent-channel\' found'
         );
     });
 
