@@ -33,15 +33,8 @@ export function NewsApp(): React.ReactElement {
             }
         });
 
-        const intentListenerPromise = fdc3.addIntentListener(fdc3.Intents.VIEW_NEWS, (context: Context): Promise<void> => {
-            return new Promise((resolve, reject) => {
-                try {
-                    handleIntent(context as InstrumentContext);
-                    resolve();
-                } catch (e) {
-                    reject(e);
-                }
-            });
+        const intentListenerPromise = fdc3.addIntentListener(fdc3.Intents.VIEW_NEWS, (context: Context): void => {
+            handleIntent(context as InstrumentContext);
         });
 
         const contextListenerPromise = fdc3.addContextListener((context: Context): void => {
