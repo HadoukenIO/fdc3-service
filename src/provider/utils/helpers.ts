@@ -35,10 +35,7 @@ export async function collateClientCalls<T = void>(promises: Promise<T>[]): Prom
     let result: T | undefined = undefined;
 
     await Promise.all(promises.map((promise) => withTimeout(Timeouts.SERVICE_TO_CLIENT_API_CALL, promise.then((promiseResult) => {
-        if (successes === 0) {
-            result = promiseResult;
-        }
-        if (promiseResult !== undefined) {
+        if (result === undefined && promiseResult !== undefined) {
             result = promiseResult;
         }
         successes++;
