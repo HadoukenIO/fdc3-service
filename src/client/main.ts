@@ -120,7 +120,7 @@ export interface IntentListener {
     /**
      * The handler for when this listener receives an intent.
      */
-    handler: (context: Context) => void;
+    handler: (context: Context) => void | Promise<void>;
     /**
      * Unsubscribe the listener object. We will no longer receive intent messages on this handler.
      *

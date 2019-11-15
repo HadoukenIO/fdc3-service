@@ -67,8 +67,7 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
                 return this.fdc3.broadcast(payload.context);
             },
             {context}
-        )
-        .then(() => new Promise<void>((res) => setTimeout(res, 100))); // Broadcast is fire-and-forget. Slight delay to allow for service to handle
+        ).catch(handlePuppeteerError);
 }
 
 export async function raiseIntent(executionTarget: Identity, intent: IntentType, context: Context, target?: string): Promise<void> {
