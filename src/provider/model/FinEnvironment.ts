@@ -50,14 +50,14 @@ export class FinEnvironment extends AsyncInit implements Environment {
             fin.Application.startFromManifest(appInfo.manifest).catch((e) => {
                 this.deregisterApplication({uuid});
 
-                throw new FDC3Error(ApplicationError.ErrorOnLaunch, (e as Error).message);
+                throw new FDC3Error(ApplicationError.LaunchError, (e as Error).message);
             })
         ).then((result) => {
             const [didTimeout] = result;
 
             if (didTimeout) {
                 this.deregisterApplication({uuid});
-                throw new FDC3Error(ApplicationError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
+                throw new FDC3Error(ApplicationError.LaunchTimeout, `Timeout waiting for application '${appInfo.name}' to start from manifest`);
             }
         });
 

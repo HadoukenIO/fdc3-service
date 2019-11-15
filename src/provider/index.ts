@@ -3,7 +3,7 @@ import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {FDC3Error, IdentityError, ApplicationError, SendError} from '../client/errors';
+import {FDC3Error, IdentityError, ApplicationError, SendContextError} from '../client/errors';
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, GetOrCreateAppChannelPayload, AppChannelTransport, AddContextListenerPayload, RemoveContextListenerPayload} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Context} from '../client/main';
 import {parseIdentity, parseContext, parseChannelId, parseAppChannelName} from '../client/validation';
@@ -115,7 +115,7 @@ export class Main {
         const appInfo: Application|null = await this._directory.getAppByName(payload.name);
 
         if (!appInfo) {
-            throw new FDC3Error(ApplicationError.AppNotFound, `No app in directory with name: ${payload.name}`);
+            throw new FDC3Error(ApplicationError.NotFound, `No application '${payload.name}' found running or in directory`);
         }
 
         const promises: Promise<void>[] = [];
@@ -146,15 +146,15 @@ export class Main {
 
             const sendContextPromise = windowsPromise.then(async (expectedWindows) => {
                 if (expectedWindows.length === 0) {
-                    throw new FDC3Error(SendError.NoHandler, 'Context provided, but no context handler added');
+                    throw new FDC3Error(SendContextError.NoHandler, 'Context provided, but application has no handler for context');
                 }
 
                 const [result] = await collateClientCalls(expectedWindows.map((window) => this._contextHandler.send(window, context)));
 
                 if (result === ClientCallsResult.ALL_FAILURE) {
-                    throw new FDC3Error(SendError.AppError, 'Error(s) thrown by client attempting to handle context on app starting');
+                    throw new FDC3Error(SendContextError.HandlerError, 'Error(s) thrown by application attempting to handle context');
                 } else if (result === ClientCallsResult.TIMEOUT) {
-                    throw new FDC3Error(SendError.Timeout, 'Timeout waiting for client to handle context on app starting');
+                    throw new FDC3Error(SendContextError.HandlerTimeout, 'Timeout waiting for application to handle context');
                 }
             });
 

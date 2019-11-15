@@ -2,49 +2,58 @@
  * @module Errors
  */
 
+/**
+  * Errors related to resolving an application to handle an intent and context.
+  */
 export enum ResolveError {
     /**
      * Indicates that no application could be found to handle the provided intent and context.
      */
-    NoAppsFound = 'NoAppsFound',
+    NoAppsFound = 'ResolveError:NoAppsFound',
     /**
-     * In the case where the optional 'target' argument is provided, indicates that the app is not able to handle this intent and context.
+     * Indicates that a provided application does not handle the provided intent and context.
      */
-    TargetAppDoesNotHandleIntent = 'TargetAppDoesNotHandleIntent',
+    AppDoesNotHandleIntent = 'ResolveError:AppDoesNotHandleIntent',
     /**
-     * The intent resolver UI was dismissed by the user, so the intent has been cancelled.
+     * Indicates that intent resolution has been cancelled because the user dismissed the intent resolver UI.
      */
-    ResolverClosedOrCancelled = 'ResolverClosedOrCancelled'
+    ResolverClosedOrCancelled = 'ResolveError:ResolverClosedOrCancelled'
 }
 
+/**
+ * Errors related to launching or interacting with a particular application.
+ */
 export enum ApplicationError {
     /**
-     * Indicates that an application of the provided name cannot be found in the application directory.
+     * Indicates that an application of the provided name could not be found, either running or in the application directory.
      */
-    AppNotFound = 'AppNotFound',
+    NotFound = 'ApplicationError:NotFound',
     /**
      * Indicates that an application could not be started from an OpenFin manifest.
      */
-    ErrorOnLaunch = 'ErrorOnLaunch',
+    LaunchError = 'ApplicationError:LaunchError',
     /**
      * Indicates that a timeout was reached before the application was started.
      */
-    AppTimeout = 'AppTimeout'
+    LaunchTimeout = 'ApplicationError:LaunchTimeout'
 }
 
-export enum SendError {
+/**
+ * Errors related to sending a context, possibly as part of an intent, to another application registered with the FDC3 service
+ */
+export enum SendContextError {
     /**
-     * Indicates that an application was started, but threw an error when attempting to handle the provided intent and context.
+     * Indicates that the target application has no windows that have a relevant handler for the given context.
      */
-    AppError = 'SendIntentError',
+    NoHandler = 'SendContextError:SendContextError:NoHandler',
     /**
-     * Indicates that an application was started, but a timeout was reached waiting for it to handle the provided intent and context.
+     * Indicates that all handlers for the given context threw an error when invoked.
      */
-    Timeout = 'SendIntentTimeout',
+    HandlerError = 'SendContextError:SendContextError:HandlerError',
     /**
-     * Indicates that an application was started, but did not add a handler for the provided intent.
+     * Indicates that all handers for the given context failed to completed before a timeout was reached
      */
-    NoHandler = 'SendIntentNoHandler'
+    HandlerTimeout = 'SendContextError:SendIntentTimeout'
 }
 
 /**
@@ -54,7 +63,7 @@ export enum ChannelError {
     /**
      * Indicates that a channel of a provided ID does not exist.
      */
-    ChannelWithIdDoesNotExist = 'ChannelWithIdDoesNotExist'
+    ChannelWithIdDoesNotExist = 'ChannelError:ChannelWithIdDoesNotExist'
 }
 
 /**
@@ -62,9 +71,9 @@ export enum ChannelError {
  */
 export enum IdentityError {
     /**
-     * Indicates that a window with a provided OpenFin Identity cannot be found.
+     * Indicates that no window with a provided OpenFin Identity is registered with the FDC3 service.
      */
-    WindowWithIdentityNotFound = 'WindowWithIdentityNotFound'
+    WindowWithIdentityNotFound = 'IdentityError:WindowWithIdentityNotFound'
 }
 
 /**

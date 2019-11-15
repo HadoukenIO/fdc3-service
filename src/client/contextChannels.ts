@@ -239,9 +239,9 @@ export abstract class ChannelBase {
      * the only way to do so is to join another channel. A window may rejoin the default channel by calling `channels.defaultChannel.join()`.
      *
      * @param identity The window that should be added to this channel. If omitted, will use the window that calls this method.
-     * @throws `TypeError`: If `identity` is not a valid {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}
-     * @throws `FDC3Error`: If the window specified by `identity` does not exist
-     * @throws `FDC3Error`: If the window specified by `identity` does not integrate FDC3 (determined by inclusion of the client API module)
+     * @throws If `identity` is passed, [[FDC3Error]] with an [[IdentityError]] code.
+     * @throws If `identity` is passed, `TypeError` if `identity` is not a valid
+     * {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}.
      */
     public async join(identity?: Identity): Promise<void> {
         return tryServiceDispatch(APIFromClientTopic.CHANNEL_JOIN, {id: this.id, identity: identity && parseIdentity(identity)});
@@ -256,8 +256,8 @@ export abstract class ChannelBase {
      * This broadcast will be received by all windows that are members of this channel, *except* for the window that
      * makes the broadcast. This matches the behavior of the top-level FDC3 `broadcast` function.
      *
-     * @param context The context to broadcast to all windows on this channel
-     * @throws `TypeError`: If `context` is not a valid {@link Context}
+     * @param context The context to broadcast to all windows on this channel.
+     * @throws `TypeError` if `context` is not a valid [[Context]].
      */
     public broadcast(context: Context): void {
         tryServiceDispatch(APIFromClientTopic.CHANNEL_BROADCAST, {id: this.id, context: parseContext(context)});
@@ -269,7 +269,7 @@ export abstract class ChannelBase {
      * This can be triggered by a window belonging to the channel calling the top-level FDC3 `broadcast` function, or by
      * any window calling this channel's {@link broadcast} method.
      *
-     * @param handler Function that should be called whenever a context is broadcast on this channel
+     * @param handler Function that should be called whenever a context is broadcast on this channel.
      */
     public async addContextListener(handler: (context: Context) => void): Promise<ChannelContextListener> {
         validateEnvironment();
@@ -480,8 +480,7 @@ export async function getSystemChannels(): Promise<SystemChannel[]> {
  * Fetches a channel object for a given channel identifier. The `channelId` property maps to the {@link ChannelBase.id} field.
  *
  * @param channelId The ID of the channel to return
- * @throws `TypeError`: If `channelId` is not of the correct type
- * @throws `FDC3Error`: If the channel specified by `channelId` does not exist
+ * @throws [[FDC3Error]] with an [[ChannelError]] code.
  */
 export async function getChannelById(channelId: ChannelId): Promise<Channel> {
     const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_CHANNEL_BY_ID, {id: parseChannelId(channelId)});
@@ -493,9 +492,9 @@ export async function getChannelById(channelId: ChannelId): Promise<Channel> {
  * Returns the channel that the current window is assigned to.
  *
  * @param identity The window to query. If omitted, will use the window that calls this method.
- * @throws `TypeError`: If `identity` is not a valid {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}
- * @throws `FDC3Error`: If the window specified by `identity` does not exist
- * @throws `FDC3Error`: If the window specified by `identity` does not integrate FDC3 (determined by inclusion of the client API module)
+ * @throws If `identity` is passed, [[FDC3Error]] with an [[IdentityError]] code.
+ * @throws If `identity` is passed, `TypeError` if `identity` is not a valid
+ * {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}.
  */
 export async function getCurrentChannel(identity?: Identity): Promise<Channel> {
     const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_CURRENT_CHANNEL, {identity: identity && parseIdentity(identity)});
@@ -514,6 +513,7 @@ export async function getCurrentChannel(identity?: Identity): Promise<Channel> {
  * be assumed.
  *
  * @param name The name of the channel. Must not be an empty string.
+ * @throws `TypeError` if `name` is not a valid app channel name, i.e., a non-empty string.
  */
 export async function getOrCreateAppChannel(name: string): Promise<AppChannel> {
     const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_OR_CREATE_APP_CHANNEL, {name: parseAppChannelName(name)});
