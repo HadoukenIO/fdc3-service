@@ -24,7 +24,7 @@ setupTeardown();
 
 type TestParam = [
     string,
-    () => any,
+    fdc3Remote.IntentHandler,
     any // The value IntentResolution.data should resolve to
 ];
 
@@ -41,7 +41,7 @@ describe('Intent resolution', () => {
 
     describe.each(resolutionTestParams)(
         'When an intent handler returns %s',
-        (testTitle: string, listener: () => any, expectedValue: any) => {
+        (testTitle: string, listener: fdc3Remote.IntentHandler, expectedValue: any) => {
             describe('When an app has 1 window', () => {
                 test('The expected value is resolved', async () => {
                     await fdc3Remote.addIntentListener(appHandlingIntent, preregisteredIntent.type, listener);

@@ -25,7 +25,7 @@ export const ofBrowser = new OFPuppeteerBrowser();
 
 const remoteChannels: {[id: string]: RemoteChannel} = {};
 
-type ContextListener = (context: Context) => Promise<any>;
+export type IntentHandler = (context: Context) => any | Promise<any>;
 
 interface RemoteListener {
     remoteIdentity: Identity;
@@ -102,12 +102,12 @@ export async function addContextListener(executionTarget: Identity): Promise<Rem
     return createRemoteContextListener(executionTarget, id);
 }
 
-export async function addIntentListener(executionTarget: Identity, intent: IntentType, listener?: ContextListener): Promise<RemoteIntentListener> {
-    const remoteFn = (listener && await ofBrowser.getOrMountRemoteFunction(executionTarget, listener)) as unknown as ContextListener || undefined;
+export async function addIntentListener(executionTarget: Identity, intent: IntentType, listener?: IntentHandler): Promise<RemoteIntentListener> {
+    const remoteFn = (listener && await ofBrowser.getOrMountRemoteFunction(executionTarget, listener)) as unknown as IntentHandler || undefined;
 
     const id = await ofBrowser.executeOnWindow(
         executionTarget,
-        function (this: TestWindowContext, intentRemote: IntentType, listenerRemote?: ContextListener): number {
+        function (this: TestWindowContext, intentRemote: IntentType, listenerRemote?: IntentHandler): number {
             if (this.intentListeners[intentRemote] === undefined) {
                 this.intentListeners[intentRemote] = [];
             }
