@@ -2,7 +2,7 @@
 import 'jest';
 import 'reflect-metadata';
 
-import {RaiseIntentError} from '../../../src/client/errors';
+import {ResolveError, ApplicationError, SendError} from '../../../src/client/errors';
 import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {delay, Duration} from '../utils/delay';
@@ -50,7 +50,7 @@ describe('Intent listeners and raising intents with a target', () => {
             describe('When the target is *not* registered to accept the raised intent', () => {
                 test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
                     await expect(raiseIntent(nonExistentIntent, testAppInDirectory1)).toThrowFDC3Error(
-                        RaiseIntentError.TargetAppDoesNotHandleIntent,
+                        ResolveError.TargetAppDoesNotHandleIntent,
                         `App '${testAppInDirectory1.name}' does not handle intent '${nonExistentIntent.type}' with context '${nonExistentIntent.context.type}'`
                     );
                 });
@@ -132,7 +132,7 @@ listener to be added', async () => {
                         );
 
                         await expect(raiseIntentPromise).toThrowFDC3Error(
-                            RaiseIntentError.SendIntentNoHandler,
+                            SendError.NoHandler,
                             `No intent handler added for intent: ${validIntent.type}`
                         );
                     }, appStartupTime + Duration.LONGER_THAN_APP_MATURITY);
@@ -150,7 +150,7 @@ listener to be added', async () => {
         describe('When the target is not running', () => {
             test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
                 await expect(raiseIntent(validIntent, testAppNotInDirectory1)).toThrowFDC3Error(
-                    RaiseIntentError.TargetAppNotAvailable,
+                    ApplicationError.AppNotFound,
                     `Couldn't resolve intent target '${testAppNotInDirectory1.name}'. No matching app in directory or currently running.`
                 );
             });
@@ -161,7 +161,7 @@ listener to be added', async () => {
 
             test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
                 await expect(raiseIntent(validIntent, testAppNotInDirectoryNotFdc3)).toThrowFDC3Error(
-                    RaiseIntentError.TargetAppDoesNotHandleIntent,
+                    ResolveError.TargetAppDoesNotHandleIntent,
                     `App '${testAppNotInDirectoryNotFdc3.name}' does not handle intent '${validIntent.type}' with context '${validIntent.context.type}'`
                 );
             });
@@ -178,7 +178,7 @@ function setupCommonRunningAppTests(testAppData: TestAppData): void {
     describe('When the target has *not* registered listeners for the raised intent', () => {
         test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
             await expect(raiseIntent(nonExistentIntent, testAppData)).toThrowFDC3Error(
-                RaiseIntentError.TargetAppDoesNotHandleIntent,
+                ResolveError.TargetAppDoesNotHandleIntent,
                 `App '${testAppData.name}' does not handle intent '${nonExistentIntent.type}' with context '${nonExistentIntent.context.type}'`
             );
         });
@@ -206,7 +206,7 @@ FDC3Error', async () => {
             }, validIntent.type, Duration.LONGER_THAN_SERVICE_TO_CLIENT_API_CALL_TIMEOUT);
 
             await expect(raiseIntent(validIntent, testAppData)).toThrowFDC3Error(
-                RaiseIntentError.SendIntentTimeout,
+                SendError.Timeout,
                 'Timeout waiting for client to handle intent'
             );
         });
@@ -220,7 +220,7 @@ an FDC3Error', async () => {
             }, validIntent.type);
 
             await expect(raiseIntent(validIntent, testAppData)).toThrowFDC3Error(
-                RaiseIntentError.SendIntentError,
+                SendError.AppError,
                 'Error(s) thrown by client attempting to handle intent'
             );
         });
@@ -310,7 +310,7 @@ only the first listener is triggered', async () => {
             const expectedRaise = expect(raiseIntent(validIntent, testAppData));
 
             await expectedRaise.toThrowFDC3Error(
-                RaiseIntentError.TargetAppDoesNotHandleIntent,
+                ResolveError.TargetAppDoesNotHandleIntent,
                 `App '${testAppData.name}' does not handle intent '${validIntent.type}' with context '${validIntent.context.type}'`
             );
 

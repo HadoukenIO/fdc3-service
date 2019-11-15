@@ -2,49 +2,11 @@
  * @module Errors
  */
 
-/**
- * Error codes specific to the [[open]] function. Note that this is not an exhaustive list of error codes that can be returned by [[open]],
- * which may return any of the generic error codes, such as ApplicationError.
- */
-export enum OpenError {
-    /**
-     * Indicates that an application of the provided name cannot be found in the application directory.
-     */
-    AppNotFound = 'AppNotFound',
-
-    /**
-     * In the case where the optional `context` argument is provided, indicates that the provided application was started, but threw an
-     * error when attempting to handle the provided context.
-     */
-    SendContextError = 'SendContextError',
-
-    /**
-     * In the case where the optional `context` argument is provided, indicates that the provided application was started, but a timeout
-     * was reached waiting for it to handle the provided context.
-     */
-    SendContextTimeout = 'SendContextTimeout',
-
-    /**
-     * In the case where the optional `context` argument is provided, indicates that the provided application was started, but did not add
-     * a context handler.
-     */
-    SendContextNoHandler = 'SendContextNoHandler'
-}
-
-/**
- * Error codes specific to the [[raiseIntent]] function. Note that this is not an exhaustive list of error codes that can be returned by
- * [[raiseIntent]], which may return any of the generic error codes, such as ApplicationError.
- */
-export enum RaiseIntentError {
+export enum ResolveError {
     /**
      * Indicates that no application could be found to handle the provided intent and context.
      */
     NoAppsFound = 'NoAppsFound',
-    /**
-     * In the case where the optional 'target' argument is provided, no such application either exists in the application directory or is
-     * currently running.
-     */
-    TargetAppNotAvailable = 'TargetAppNotAvailable',
     /**
      * In the case where the optional 'target' argument is provided, indicates that the app is not able to handle this intent and context.
      */
@@ -52,25 +14,14 @@ export enum RaiseIntentError {
     /**
      * The intent resolver UI was dismissed by the user, so the intent has been cancelled.
      */
-    ResolverClosedOrCancelled = 'ResolverClosedOrCancelled',
-    /**
-     * Indicates that an application was started, but threw an error when attempting to handle the provided intent and context.
-     */
-    SendIntentError = 'SendIntentError',
-    /**
-     * Indicates that an application was started, but a timeout was reached waiting for it to handle the provided intent and context.
-     */
-    SendIntentTimeout = 'SendIntentTimeout',
-    /**
-     * Indicates that an application was started, but did not add a handler for the provided intent.
-     */
-    SendIntentNoHandler = 'SendIntentNoHandler'
+    ResolverClosedOrCancelled = 'ResolverClosedOrCancelled'
 }
 
-/**
- * Error codes relating to launching applications.
- */
 export enum ApplicationError {
+    /**
+     * Indicates that an application of the provided name cannot be found in the application directory.
+     */
+    AppNotFound = 'AppNotFound',
     /**
      * Indicates that an application could not be started from an OpenFin manifest.
      */
@@ -79,6 +30,21 @@ export enum ApplicationError {
      * Indicates that a timeout was reached before the application was started.
      */
     AppTimeout = 'AppTimeout'
+}
+
+export enum SendError {
+    /**
+     * Indicates that an application was started, but threw an error when attempting to handle the provided intent and context.
+     */
+    AppError = 'SendIntentError',
+    /**
+     * Indicates that an application was started, but a timeout was reached waiting for it to handle the provided intent and context.
+     */
+    Timeout = 'SendIntentTimeout',
+    /**
+     * Indicates that an application was started, but did not add a handler for the provided intent.
+     */
+    NoHandler = 'SendIntentNoHandler'
 }
 
 /**
