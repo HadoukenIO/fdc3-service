@@ -131,7 +131,7 @@ describe('Intent listeners and raising intents without a target', () => {
                     test('When calling raiseIntent from another app, the app opens but it times out waiting for the listener to be added', async () => {
                         await expect(raiseIntentPromise).toThrowFDC3Error(
                             SendContextError.NoHandler,
-                            `No intent handler added for intent: ${uniqueIntent.type}`
+                            `Application has no handler for intent '${uniqueIntent.type}'`
                         );
                     });
                 });
@@ -181,7 +181,7 @@ app, the app opens but the promise rejects', async () => {
 
                         await expect(raiseIntentPromise).toThrowFDC3Error(
                             SendContextError.NoHandler,
-                            `No intent handler added for intent: ${uniqueIntent.type}`
+                            `Application has no handler for intent '${uniqueIntent.type}'`
                         );
 
                         await expect(listener).toHaveReceivedContexts([]);
@@ -331,7 +331,7 @@ function setupNoDirectoryAppCanHandleIntentTests(intent: Intent): void {
         test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
             await expect(raiseIntent(intent)).toThrowFDC3Error(
                 ResolveError.NoAppsFound,
-                'No applications available to handle this intent'
+                `No applications available to handle intent '${intent.type}' with context '${intent.context.type}'`
             );
         });
     });
@@ -351,7 +351,7 @@ function setupNoDirectoryAppCanHandleIntentTests(intent: Intent): void {
                 await listener1.value.unsubscribe();
                 await expect(raiseIntent(intent)).toThrowFDC3Error(
                     ResolveError.NoAppsFound,
-                    'No applications available to handle this intent'
+                    `No applications available to handle intent '${intent.type}' with context '${intent.context.type}'`
                 );
             });
         });

@@ -43,7 +43,7 @@ describe('Opening applications with the FDC3 client', () => {
                 const openPromise = open('invalid-app-name');
 
                 await expect(openPromise).toThrowFDC3Error(
-                    ApplicationError.AppNotFound,
+                    ApplicationError.NotFound,
                     /No app in directory with name/
                 );
             });
