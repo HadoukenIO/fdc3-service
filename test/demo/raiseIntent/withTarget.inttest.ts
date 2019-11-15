@@ -152,7 +152,7 @@ listener to be added', async () => {
             test('When calling raiseIntent the promise rejects with an FDC3Error', async () => {
                 await expect(raiseIntent(validIntent, testAppNotInDirectory1)).toThrowFDC3Error(
                     ApplicationError.NotFound,
-                    `No application ''${testAppNotInDirectory1.name}' found running or in directory`
+                    `No application '${testAppNotInDirectory1.name}' found running or in directory`
                 );
             });
         });
