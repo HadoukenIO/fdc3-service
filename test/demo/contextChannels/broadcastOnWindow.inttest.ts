@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/await-thenable */
 import 'jest';
 import {Identity, Application} from 'hadouken-js-adapter';
 
