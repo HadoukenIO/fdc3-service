@@ -21,9 +21,10 @@ export function checkCustomConfigField(app: Application, name: string): string |
 }
 
 /**
- * Takes multiple promises representing API calls, and reduces them to a single result. In the case that more than one promise resolves to
- * a result, the first to result will be used. Intented to be used when calling a client from the provider, to protect against a
- * misbehaving client.
+ * Takes multiple promises representing API calls, and reduces them to a single result.
+ * In the case that more than one promise resolves to a result,
+ * the first to return will be used. Intended to be used when calling a client from the provider,
+ * to protect against a misbehaving client.
  *
  * @param promises An array of promises
  */
@@ -31,13 +32,13 @@ export async function collateClientCalls<T = void>(promises: Promise<T>[]): Prom
     let successes = 0;
     let failures = 0;
 
-    let result: T;
+    let result: T | undefined = undefined;
 
     await Promise.all(promises.map((promise) => withTimeout(Timeouts.SERVICE_TO_CLIENT_API_CALL, promise.then((promiseResult) => {
         if (successes === 0) {
             result = promiseResult;
         }
-        if (result === undefined && promiseResult !== undefined) {
+        if (promiseResult !== undefined) {
             result = promiseResult;
         }
         successes++;

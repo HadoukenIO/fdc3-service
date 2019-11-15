@@ -244,15 +244,16 @@ export interface ChannelReceiveContextPayload {
 }
 
 /**
- * Invokes an array of listeners with a given context, allowing us to apply consistent error handling. Will throw an error if > 0 listeners
- * are given, and all fail
- * The first only *defined* return value is returned
+ * Invokes an array of listeners with a given context, allowing us to apply consistent error handling.
+ * Will throw an error if > 0 listeners are given, and all fail.
+ * Otherwise the first *defined* value returned is returned,
+ * or undefined is no defined values are returned.
  *
  * @param listeners An array of listeners to invoke
  * @param context The context to invoke the listeners with
  * @param singleFailureHandler A function that will be called each time a listener throws an exception
- * @param createAllFailuresError A function that will be called if all (and more than one) listeners fail. Should return an error, which
- * `invokeListeners` will then throw
+ * @param createAllFailuresError A function that will be called if all (and more than one) listeners fail.
+ * Should return an error, which `invokeListeners` will then throw.
  */
 export async function invokeListeners<T = unknown>(
     listeners: Listener[],
@@ -286,7 +287,8 @@ export async function invokeListeners<T = unknown>(
 }
 
 /**
- * If error is a type we explicitly handle (e.g., `TypeError`, `FDC3Error`) so it can be identified as the correct type at the client's end
+ * If error is a type we explicitly handle (e.g., `TypeError`, `FDC3Error`)
+ * so it can be identified as the correct type at the client's end.
  * Otherwise return the error itself
  * @param error The error
  */
