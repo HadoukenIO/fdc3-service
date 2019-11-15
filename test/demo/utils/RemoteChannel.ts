@@ -125,9 +125,9 @@ export class RemoteChannel {
         return {
             remoteIdentity: this.executionTarget,
             id,
-            unsubscribe: async () => {
+            unsubscribe: () => {
                 return ofBrowser.executeOnWindow(this.executionTarget, async function (this: TestWindowContext, idRemote: number): Promise<void> {
-                    this.channelEventListeners[idRemote].unsubscribe();
+                    await this.channelEventListeners[idRemote].unsubscribe();
                 }, id);
             },
             getReceivedEvents: (): Promise<ChannelEvents[]> => {

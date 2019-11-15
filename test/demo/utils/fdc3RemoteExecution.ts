@@ -19,6 +19,7 @@ import {RaiseIntentPayload, deserializeError, Events, MainEvents, FindIntentPayl
 
 import {OFPuppeteerBrowser, TestWindowContext, TestChannelTransport} from './ofPuppeteer';
 import {RemoteChannel} from './RemoteChannel';
+import {delay, Duration} from './delay';
 
 export const ofBrowser = new OFPuppeteerBrowser();
 
@@ -162,8 +163,8 @@ export async function addEventListener(executionTarget: Identity, eventType: Mai
         remoteIdentity: executionTarget,
         id,
         unsubscribe: () => {
-            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, idRemote: number): void {
-                this.eventListeners[idRemote].unsubscribe();
+            return ofBrowser.executeOnWindow(executionTarget, async function (this: TestWindowContext, idRemote: number): Promise<void> {
+                await this.eventListeners[idRemote].unsubscribe();
             }, id);
         },
         getReceivedEvents: (): Promise<Events[]> => {
@@ -187,8 +188,8 @@ export async function getRemoteEventListener(executionTarget: Identity, listener
             remoteIdentity: executionTarget,
             id: listenerID,
             unsubscribe: () => {
-                return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, id: number): void {
-                    this.eventListeners[id].unsubscribe();
+                return ofBrowser.executeOnWindow(executionTarget, async function (this: TestWindowContext, id: number): Promise<void> {
+                    await this.eventListeners[id].unsubscribe();
                     delete this.eventListeners[id];
                 }, listenerID);
             },
@@ -323,13 +324,10 @@ function createRemoteIntentListener(executionTarget: Identity, id: number, inten
         id,
         intent,
         unsubscribe: async () => {
-            await ofBrowser.executeOnWindow(
-                executionTarget,
-                async function (this: TestWindowContext, remoteIntent: IntentType, remoteId: number): Promise<void> {
-                    await this.intentListeners[remoteIntent][remoteId].unsubscribe();
-                    delete this.intentListeners[remoteIntent][remoteId];
-                }, intent, id
-            );
+            await ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, remoteIntent: IntentType, remoteId: number): void {
+                this.intentListeners[remoteIntent][remoteId].unsubscribe();
+                delete this.intentListeners[remoteIntent][remoteId];
+            }, intent, id);
         },
         getReceivedContexts: (): Promise<Context[]> => {
             return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, intentRemote: IntentType, idRemote: number): Context[] {
