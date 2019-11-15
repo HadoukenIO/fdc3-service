@@ -90,28 +90,32 @@ export async function createFinWindow(executionTarget: Identity, windowOptions: 
 }
 
 export async function addContextListener(executionTarget: Identity): Promise<RemoteContextListener> {
-    const id = await ofBrowser.executeOnWindow(executionTarget, async function (this: TestWindowContext): Promise<number> {
+    const id = await ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext): number {
         const listenerID = this.contextListeners.length;
-        this.contextListeners[listenerID] = await this.fdc3.addContextListener((context) => {
+        this.contextListeners[listenerID] = this.fdc3.addContextListener((context) => {
             this.receivedContexts.push({listenerID, context});
         });
         return listenerID;
     });
 
+    await delay(Duration.LISTENER_HANDSHAKE);
+
     return createRemoteContextListener(executionTarget, id);
 }
 
 export async function addIntentListener(executionTarget: Identity, intent: IntentType): Promise<RemoteIntentListener> {
-    const id = await ofBrowser.executeOnWindow(executionTarget, async function (this: TestWindowContext, intentRemote: IntentType): Promise<number> {
+    const id = await ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, intentRemote: IntentType): number {
         if (this.intentListeners[intentRemote] === undefined) {
             this.intentListeners[intentRemote] = [];
         }
         const listenerID = this.intentListeners[intentRemote].length;
-        this.intentListeners[intentRemote][listenerID] = await this.fdc3.addIntentListener(intentRemote, (context) => {
+        this.intentListeners[intentRemote][listenerID] = this.fdc3.addIntentListener(intentRemote, (context) => {
             this.receivedIntents.push({listenerID, intent: intentRemote, context});
         });
         return listenerID;
     }, intent);
+
+    await delay(Duration.LISTENER_HANDSHAKE);
 
     return createRemoteIntentListener(executionTarget, id, intent);
 }
@@ -163,8 +167,8 @@ export async function addEventListener(executionTarget: Identity, eventType: Mai
         remoteIdentity: executionTarget,
         id,
         unsubscribe: () => {
-            return ofBrowser.executeOnWindow(executionTarget, async function (this: TestWindowContext, idRemote: number): Promise<void> {
-                await this.eventListeners[idRemote].unsubscribe();
+            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, idRemote: number): void {
+                this.eventListeners[idRemote].unsubscribe();
             }, id);
         },
         getReceivedEvents: (): Promise<Events[]> => {
@@ -188,8 +192,8 @@ export async function getRemoteEventListener(executionTarget: Identity, listener
             remoteIdentity: executionTarget,
             id: listenerID,
             unsubscribe: () => {
-                return ofBrowser.executeOnWindow(executionTarget, async function (this: TestWindowContext, id: number): Promise<void> {
-                    await this.eventListeners[id].unsubscribe();
+                return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, id: number): void {
+                    this.eventListeners[id].unsubscribe();
                     delete this.eventListeners[id];
                 }, listenerID);
             },
@@ -298,6 +302,7 @@ export function createRemoteContextListener(executionTarget: Identity, id: numbe
                 this.contextListeners[remoteId].unsubscribe();
                 delete this.contextListeners[remoteId];
             }, id);
+            await delay(Duration.LISTENER_HANDSHAKE);
         },
         getReceivedContexts: (): Promise<Context[]> => {
             return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, idRemote: number): Context[] {
@@ -328,6 +333,7 @@ function createRemoteIntentListener(executionTarget: Identity, id: number, inten
                 this.intentListeners[remoteIntent][remoteId].unsubscribe();
                 delete this.intentListeners[remoteIntent][remoteId];
             }, intent, id);
+            await delay(Duration.LISTENER_HANDSHAKE);
         },
         getReceivedContexts: (): Promise<Context[]> => {
             return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, intentRemote: IntentType, idRemote: number): Context[] {
