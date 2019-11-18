@@ -246,8 +246,7 @@ export interface ChannelReceiveContextPayload {
 /**
  * Invokes an array of listeners with a given context, allowing us to apply consistent error handling.
  * Will throw an error if > 0 listeners are given, and all fail.
- * Otherwise the first *defined* value returned is returned,
- * or undefined is no defined values are returned.
+ * Otherwise the first *defined* value returned is returned, or undefined is no defined values are returned.
  *
  * @param listeners An array of listeners to invoke
  * @param context The context to invoke the listeners with
@@ -287,9 +286,8 @@ export async function invokeListeners<T = unknown>(
 }
 
 /**
- * If error is a type we explicitly handle (e.g., `TypeError`, `FDC3Error`)
- * so it can be identified as the correct type at the client's end.
- * Otherwise return the error itself
+ * If error is a type we explicitly handle (e.g., `TypeError`, `FDC3Error`) so it can be identified as the correct type at the client's end.
+ * Otherwise return the error itself.
  * @param error The error
  */
 export function serializeError(error: Error | FDC3Error): Error {
@@ -310,8 +308,7 @@ export function serializeError(error: Error | FDC3Error): Error {
 }
 
 /**
- * Check if the error was a serialized error, and if so reconstruct as the correct type
- * Otherwise return the error itself
+ * Check if the error was a serialized error, and if so reconstruct as the correct type. Otherwise return the error itself.
  * @param error The error
  */
 export function deserializeError(error: Error): Error | FDC3Error {

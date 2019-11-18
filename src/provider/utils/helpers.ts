@@ -22,9 +22,8 @@ export function checkCustomConfigField(app: Application, name: string): string |
 
 /**
  * Takes multiple promises representing API calls, and reduces them to a single result.
- * In the case that more than one promise resolves to a result,
- * the first to return will be used. Intended to be used when calling a client from the provider,
- * to protect against a misbehaving client.
+ * In the case that more than one promise resolves to a result, the first to return will be used.
+ * Intended to be used when calling a client from the provider, to protect against a misbehaving client.
  *
  * @param promises An array of promises
  */
