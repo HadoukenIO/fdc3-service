@@ -15,7 +15,7 @@ import {EventEmitter} from 'events';
 
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
-import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient, deserializeError, Events} from './internal';
+import {APIFromClientTopic, SERVICE_CHANNEL, setServiceChannel, SERVICE_IDENTITY, APIFromClient, deserializeError, Events} from './internal';
 import {EventRouter} from './EventRouter';
 
 /**
@@ -57,14 +57,27 @@ export function getServicePromise(): Promise<ChannelClient> {
             // that includes this, but for now it is easier to put a guard in place.
             channelPromise = Promise.reject<ChannelClient>(new Error('Trying to connect to provider from provider'));
         } else {
-            channelPromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}}).then((channel: ChannelClient) => {
-                // Register service listeners
-                channel.register('WARN', (payload: unknown) => console.warn(payload));  // tslint:disable-line:no-any
+            channelPromise = new Promise<ChannelClient>((resolve, reject) => {
+                fin.System.getRuntimeInfo().then((info: any) => {
+                    if (info.fdc3AppUuid && info.fdc3ChannelName) {
+                        SERVICE_IDENTITY.uuid = info.fdc3AppUuid;
+                        SERVICE_IDENTITY.name = info.fdc3AppUuid;
+                        setServiceChannel(info.fdc3ChannelName);
+                    }
+                    if (fin.Window.me.uuid === SERVICE_IDENTITY.uuid && fin.Window.me.name === SERVICE_IDENTITY.name) {
+                        reject(new Error('Trying to connect to provider from provider'));
+                    } else {
+                        fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}}).then((channel: ChannelClient) => {
+                            // Register service listeners
+                            channel.register('WARN', (payload: unknown) => console.warn(payload));  // tslint:disable-line:no-any
 
-                // Any unregistered action will simply return false
-                channel.setDefaultAction(() => false);
+                            // Any unregistered action will simply return false
+                            channel.setDefaultAction(() => false);
 
-                return channel;
+                            resolve(channel);
+                        });
+                    }
+                });
             });
         }
     }

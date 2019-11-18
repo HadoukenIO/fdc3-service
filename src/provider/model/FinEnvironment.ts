@@ -93,10 +93,10 @@ export class FinEnvironment extends AsyncInit implements Environment {
             const application = fin.Application.wrapSync(identity);
             const applicationInfo = await application.getInfo();
 
-            const {shortcut, startup_app} = applicationInfo.manifest as OFManifest;
+            const {shortcut, startup_app} = (applicationInfo.manifest || {}) as OFManifest;
 
-            const title = (shortcut && shortcut.name) || startup_app.name || startup_app.uuid;
-            const icon = (shortcut && shortcut.icon) || startup_app.icon;
+            const title = (shortcut && shortcut.name) || (startup_app && (startup_app.name || startup_app.uuid));
+            const icon = (shortcut && shortcut.icon) || (startup_app && startup_app.icon);
 
             return {
                 appId: application.identity.uuid,
