@@ -49,7 +49,7 @@ describe('Intent resolution', () => {
                     await expect(resolution).resolves.toHaveProperty('data', expectedValue);
                 });
 
-                test('And has multiple intent handlers, the expected value is resolved', async () => {
+                test('And has multiple intent handlers, the first to return a defined value is the value resolved', async () => {
                     const listeners = new Array(4).fill(null).map(async (_, i) => {
                         return fdc3Remote.addIntentListener(
                             appHandlingIntent,
