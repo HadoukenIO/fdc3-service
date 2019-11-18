@@ -57,7 +57,8 @@
     "react": "^16.8.3",
     "react-dom": "^16.8.3",
     "reflect-metadata": "^0.1.13",
-    "typescript": "^3.1.1"
+    "typescript": "^3.1.1",
+    "openfin-async-utils": "../async-utils/dist/openfin-async-utils-0.0.2.tgz"
   },
   "precommit": {
     "run": [

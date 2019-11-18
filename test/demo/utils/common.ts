@@ -1,7 +1,7 @@
 import {Identity} from 'openfin/_v2/main';
+import {withTimeout} from 'openfin-async-utils';
 
 import {Intent} from '../../../src/provider/intents';
-import {withTimeout} from '../../../src/provider/utils/async';
 import {testManagerIdentity, appStartupTime} from '../constants';
 import {Boxed} from '../../../src/provider/utils/types';
 import {RESOLVER_IDENTITY} from '../../../src/provider/utils/constants';

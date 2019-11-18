@@ -1,7 +1,7 @@
+import {DeferredPromise, allowReject} from 'openfin-async-utils';
+
 import {Application} from '../../client/directory';
-import {DeferredPromise} from '../common/DeferredPromise';
 import {Timeouts} from '../constants';
-import {allowReject} from '../utils/async';
 
 import {AppWindow} from './AppWindow';
 
