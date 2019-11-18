@@ -64,7 +64,7 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
         .executeOnWindow(
             executionTarget,
             async function (this: TestWindowContext, payload: BroadcastPayload): Promise<void> {
-                return this.fdc3.broadcast(payload.context);
+                return this.fdc3.broadcast(payload.context).catch(this.errorHandler);
             },
             {context}
         ).catch(handlePuppeteerError);

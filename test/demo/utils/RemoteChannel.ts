@@ -68,7 +68,7 @@ export class RemoteChannel {
         return ofBrowser.executeOnWindow(
             this.executionTarget,
             async function (this: TestWindowContext, channelInstanceId: string, contextRemote: Context): Promise<void> {
-                return this.channelTransports[channelInstanceId].channel.broadcast(contextRemote);
+                return this.channelTransports[channelInstanceId].channel.broadcast(contextRemote).catch(this.errorHandler);
             },
             this.id,
             context
