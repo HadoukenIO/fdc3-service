@@ -11,18 +11,16 @@ import {uuidv4} from './uuidv4';
 declare const global: NodeJS.Global & {__BROWSER__: Browser};
 
 export interface TestWindowEventListener {
-    // eslint-disable-next-line
     handler: (payload: any) => void;
     unsubscribe: () => void;
 }
 
 export interface TestWindowChannelEventListener {
-    // eslint-disable-next-line
     handler: (payload: any) => void;
     unsubscribe: () => void;
 }
 
-export type TestWindowContext = Window&{
+export type TestWindowContext = Window & {
     fin: Fin;
     fdc3: typeof import('../../../src/client/main');
 
@@ -72,7 +70,7 @@ export class OFPuppeteerBrowser<WindowContext extends BaseWindowContext = BaseWi
         return this._browser;
     }
 
-    public async getPage(identity: Identity): Promise<Page|undefined> {
+    private async getPage(identity: Identity): Promise<Page|undefined> {
         await this._ready;
         const idString = getIdString(identity);
 
@@ -103,7 +101,7 @@ export class OFPuppeteerBrowser<WindowContext extends BaseWindowContext = BaseWi
         if (!page) {
             throw new Error(`could not find specified executionTarget: ${JSON.stringify(executionTarget)}`);
         }
-        return page.evaluate(fn, ...args);
+        return page.evaluate(fn as AnyFunction, ...args);
     }
 
     public async getOrMountRemoteFunction(executionTarget: Identity, fn: AnyFunction): Promise<JSHandle> {

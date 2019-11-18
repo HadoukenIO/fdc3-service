@@ -476,8 +476,8 @@ async function expectResolverToShow(): Promise<void> {
     await delay(Duration.API_CALL);
 }
 
-function raiseIntent(intent: Intent, target?: TestAppData): Promise<void> {
-    return fdc3Remote.raiseIntent(
+async function raiseIntent(intent: Intent, target?: TestAppData): Promise<void> {
+    await fdc3Remote.raiseIntent(
         testManagerIdentity,
         intent.type,
         intent.context,

@@ -391,8 +391,8 @@ async function raiseDelayedIntentWithTarget(intent: Intent, targetApp: Directory
     return raiseIntentPromise;
 }
 
-function raiseIntent(intent: Intent, target?: TestAppData): Promise<void> {
-    return fdc3Remote.raiseIntent(
+async function raiseIntent(intent: Intent, target?: TestAppData): Promise<void> {
+    await fdc3Remote.raiseIntent(
         testManagerIdentity,
         intent.type,
         intent.context,
