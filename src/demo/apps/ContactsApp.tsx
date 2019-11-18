@@ -74,15 +74,12 @@ export function ContactsApp(): React.ReactElement {
                 handleIntent(context as fdc3.ContactContext);
             }
         });
-        const intentListener = fdc3.addIntentListener(fdc3.Intents.SAVE_CONTACT, (context: fdc3.Context): Promise<void> => {
-            return new Promise((resolve: () => void, reject: (reason?: Error) => void) => {
-                try {
-                    handleIntent(context as fdc3.ContactContext);
-                    resolve();
-                } catch (e) {
-                    reject(new Error('SAVE_CONTACT intent requires a valid contact context'));
-                }
-            });
+        const intentListener = fdc3.addIntentListener(fdc3.Intents.SAVE_CONTACT, (context: fdc3.Context): void => {
+            try {
+                handleIntent(context as fdc3.ContactContext);
+            } catch (e) {
+                throw new Error('SAVE_CONTACT intent requires a valid contact context');
+            }
         });
         // Cleanup
         return () => {

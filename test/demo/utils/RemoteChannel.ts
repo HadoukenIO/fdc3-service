@@ -64,20 +64,15 @@ export class RemoteChannel {
         ).catch(handlePuppeteerError);
     }
 
-    public broadcast(context: Context): Promise<void> {
+    public async broadcast(context: Context): Promise<void> {
         return ofBrowser.executeOnWindow(
             this.executionTarget,
-            function (this: TestWindowContext, channelInstanceId: string, contextRemote: Context): void {
-                try {
-                    return this.channelTransports[channelInstanceId].channel.broadcast(contextRemote);
-                } catch (error) {
-                    this.errorHandler(error);
-                }
+            async function (this: TestWindowContext, channelInstanceId: string, contextRemote: Context): Promise<void> {
+                return this.channelTransports[channelInstanceId].channel.broadcast(contextRemote).catch(this.errorHandler);
             },
             this.id,
             context
-        ).then(() => new Promise<void>((res) => setTimeout(res, 100))) // Broadcast is fire-and-forget. Slight delay to allow for service to handle
-            .catch(handlePuppeteerError);
+        ).catch(handlePuppeteerError);
     }
 
     public async addContextListener(): Promise<RemoteContextListener> {
@@ -85,7 +80,7 @@ export class RemoteChannel {
             this.executionTarget,
             async function (this: TestWindowContext, channelInstanceId: string): Promise<number> {
                 const listenerID = this.contextListeners.length;
-                this.contextListeners[listenerID] = await this.channelTransports[channelInstanceId].channel.addContextListener((context) => {
+                this.contextListeners[listenerID] = this.channelTransports[channelInstanceId].channel.addContextListener((context) => {
                     this.receivedContexts.push({listenerID, context});
                 });
                 return listenerID;
@@ -122,13 +117,16 @@ export class RemoteChannel {
             eventType
         );
 
+        await delay(Duration.LISTENER_HANDSHAKE);
+
         return {
             remoteIdentity: this.executionTarget,
             id,
-            unsubscribe: () => {
-                return ofBrowser.executeOnWindow(this.executionTarget, function (this: TestWindowContext, idRemote: number): void {
+            unsubscribe: async () => {
+                await ofBrowser.executeOnWindow(this.executionTarget, function (this: TestWindowContext, idRemote: number): void {
                     this.channelEventListeners[idRemote].unsubscribe();
                 }, id);
+                await delay(Duration.LISTENER_HANDSHAKE);
             },
             getReceivedEvents: (): Promise<ChannelEvents[]> => {
                 return ofBrowser.executeOnWindow(this.executionTarget, function (this: TestWindowContext, idRemote: number): ChannelEvents[] {
