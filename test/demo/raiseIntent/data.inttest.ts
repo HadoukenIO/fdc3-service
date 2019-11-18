@@ -36,7 +36,7 @@ const resolutionTestParams: TestParam[] = [
     ['a literal', () => 'intent-result', 'intent-result'],
     ['undefined', () => undefined, undefined]
 ];
-describe('Intent resolution', () => {
+describe('Intent resolution data', () => {
     setupOpenDirectoryAppBookends(appHandlingIntent);
 
     describe.each(resolutionTestParams)(
