@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/await-thenable */
 import 'jest';
 import 'reflect-metadata';
 
