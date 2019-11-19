@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import {WindowEvent} from 'openfin/_v2/api/events/base';
+import {DeferredPromise} from 'openfin-async-utils';
 
-import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
 import {getId} from '../../src/provider/utils/getId';
 
 import {testAppNotInDirectory1, appStartupTime, testManagerIdentity} from './constants';

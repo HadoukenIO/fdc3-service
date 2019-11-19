@@ -1,6 +1,5 @@
 import {injectable} from 'inversify';
-
-import {DeferredPromise} from '../common/DeferredPromise';
+import {DeferredPromise} from 'openfin-async-utils';
 
 /**
  * Base class for any objects that initialise asynchronously.
