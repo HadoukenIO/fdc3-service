@@ -49,6 +49,7 @@
     "mkdirp": "^0.5.1",
     "moment": "^2.22.1",
     "node-fetch": "^2.3.0",
+    "openfin-service-async": "^1.0.0",
     "openfin-service-config": "1.0.2",
     "openfin-service-signal": "^1.0.0",
     "openfin-service-tooling": "1.0.21",
@@ -58,7 +59,6 @@
     "react-dom": "^16.8.3",
     "reflect-metadata": "^0.1.13",
     "typescript": "^3.1.1",
-    "openfin-async-utils": "../async-utils/dist/openfin-async-utils-0.0.2.tgz"
   },
   "precommit": {
     "run": [
