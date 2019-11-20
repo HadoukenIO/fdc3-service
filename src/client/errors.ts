@@ -45,11 +45,11 @@ export enum SendContextError {
     /**
      * Indicates that the target application has no windows that have a relevant handler for the given context.
      */
-    NoHandler = 'SendContextError:SendContextError:NoHandler',
+    NoHandler = 'SendContextError:NoHandler',
     /**
      * Indicates that all handlers for the given context threw an error when invoked.
      */
-    HandlerError = 'SendContextError:SendContextError:HandlerError',
+    HandlerError = 'SendContextError:HandlerError',
     /**
      * Indicates that all handers for the given context failed to completed before a timeout was reached
      */
