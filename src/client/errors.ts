@@ -3,8 +3,8 @@
  */
 
 /**
-  * Errors related to resolving an application to handle an intent and context.
-  */
+ * Errors related to resolving an application to handle an intent and context.
+ */
 export enum ResolveError {
     /**
      * Indicates that no application could be found to handle the provided intent and context.
