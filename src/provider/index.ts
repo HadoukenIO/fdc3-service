@@ -3,7 +3,7 @@ import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {FDC3Error, IdentityError, ApplicationError, SendContextError} from '../client/errors';
+import {FDC3Error, ConnectionError, ApplicationError, SendContextError} from '../client/errors';
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, GetOrCreateAppChannelPayload, AppChannelTransport, AddContextListenerPayload, RemoveContextListenerPayload} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Context} from '../client/main';
 import {parseIdentity, parseContext, parseChannelId, parseAppChannelName} from '../client/validation';
@@ -346,8 +346,8 @@ export class Main {
             return await windowPromise;
         } catch {
             throw new FDC3Error(
-                IdentityError.WindowWithIdentityNotFound,
-                `No connection to FDC3 service found from window with identity: ${JSON.stringify(identity)}`
+                ConnectionError.ConnectionWithIdentityNotFound,
+                `No connection to FDC3 service found with identity: ${JSON.stringify(identity)}`
             );
         }
     }

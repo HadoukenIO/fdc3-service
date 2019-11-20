@@ -67,13 +67,13 @@ export enum ChannelError {
 }
 
 /**
- * Error codes relating to OpenFin windows.
+ * Error codes relating to connections to the FDC3 service, from OpenFin windows or otherwise.
  */
-export enum IdentityError {
+export enum ConnectionError {
     /**
-     * Indicates that no window with a provided OpenFin Identity is registered with the FDC3 service.
+     * Indicates that no connection with a provided OpenFin Identity is registered with the FDC3 service.
      */
-    WindowWithIdentityNotFound = 'IdentityError:WindowWithIdentityNotFound'
+    ConnectionWithIdentityNotFound = 'ConnectionError:ConnectionWithIdentityNotFound'
 }
 
 /**
@@ -85,7 +85,7 @@ export enum IdentityError {
  */
 export class FDC3Error extends Error {
     /**
-     * A string from one of [[OpenError]], [[ResolveError]], [[ChannelError]] or [[IdentityError]].
+     * A string from one of [[OpenError]], [[ResolveError]], [[ChannelError]] or [[ConnectionError]].
      *
      * Future versions of the service may add additional error codes. Applications should allow for the possibility of
      * error codes that do not exist in the above enumerations.

@@ -239,7 +239,7 @@ export abstract class ChannelBase {
      * the only way to do so is to join another channel. A window may rejoin the default channel by calling `channels.defaultChannel.join()`.
      *
      * @param identity The window that should be added to this channel. If omitted, will use the window that calls this method.
-     * @throws If `identity` is passed, [[FDC3Error]] with an [[IdentityError]] code.
+     * @throws If `identity` is passed, [[FDC3Error]] with an [[ConnectionError]] code.
      * @throws If `identity` is passed, `TypeError` if `identity` is not a valid
      * {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}.
      */
@@ -492,7 +492,7 @@ export async function getChannelById(channelId: ChannelId): Promise<Channel> {
  * Returns the channel that the current window is assigned to.
  *
  * @param identity The window to query. If omitted, will use the window that calls this method.
- * @throws If `identity` is passed, [[FDC3Error]] with an [[IdentityError]] code.
+ * @throws If `identity` is passed, [[FDC3Error]] with an [[ConnectionError]] code.
  * @throws If `identity` is passed, `TypeError` if `identity` is not a valid
  * {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}.
  */
