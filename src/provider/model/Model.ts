@@ -1,7 +1,7 @@
 import {injectable, inject} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
-import {withStrictTimeout, serialFilter, allowReject, untilSignal, untilTrue, DeferredPromise} from 'openfin-async-utils';
+import {withStrictTimeout, serialFilter, allowReject, untilSignal, untilTrue, DeferredPromise} from 'openfin-service-async';
 
 import {Application, AppName} from '../../client/directory';
 import {Inject} from '../common/Injectables';

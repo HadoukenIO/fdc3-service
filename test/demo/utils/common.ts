@@ -1,5 +1,5 @@
 import {Identity} from 'openfin/_v2/main';
-import {withTimeout} from 'openfin-async-utils';
+import {withTimeout} from 'openfin-service-async';
 
 import {Intent} from '../../../src/provider/intents';
 import {testManagerIdentity, appStartupTime} from '../constants';

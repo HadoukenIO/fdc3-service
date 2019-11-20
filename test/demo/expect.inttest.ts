@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import {WindowEvent} from 'openfin/_v2/api/events/base';
-import {DeferredPromise} from 'openfin-async-utils';
+import {DeferredPromise} from 'openfin-service-async';
 
 import {getId} from '../../src/provider/utils/getId';
 

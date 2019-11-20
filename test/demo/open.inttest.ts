@@ -1,6 +1,6 @@
 import 'jest';
 
-import {allowReject} from 'openfin-async-utils';
+import {allowReject} from 'openfin-service-async';
 
 import {Context, OrganizationContext} from '../../src/client/main';
 import {OpenError, ApplicationError} from '../../src/client/errors';

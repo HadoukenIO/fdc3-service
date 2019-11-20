@@ -1,6 +1,6 @@
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
-import {allowReject, untilTrue} from 'openfin-async-utils';
+import {allowReject, untilTrue} from 'openfin-service-async';
 
 import {Events, ChannelEvents} from '../../client/internal';
 import {getId} from '../utils/getId';

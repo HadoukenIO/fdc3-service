@@ -4,7 +4,7 @@ import {WindowEvent, ApplicationEvent} from 'openfin/_v2/api/events/base';
 import {injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
-import {withTimeout} from 'openfin-async-utils';
+import {withTimeout} from 'openfin-service-async';
 
 import {AsyncInit} from '../controller/AsyncInit';
 import {Application} from '../../client/main';

@@ -2,7 +2,7 @@ import 'reflect-metadata';
 
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
-import {DeferredPromise} from 'openfin-async-utils';
+import {DeferredPromise} from 'openfin-service-async';
 
 import {Model} from '../../src/provider/model/Model';
 import {APIHandler} from '../../src/provider/APIHandler';

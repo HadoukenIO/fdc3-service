@@ -1,7 +1,7 @@
 import 'jest';
 import 'reflect-metadata';
 
-import {allowReject} from 'openfin-async-utils';
+import {allowReject} from 'openfin-service-async';
 
 import {RaiseIntentError} from '../../../src/client/errors';
 import {fin} from '../utils/fin';

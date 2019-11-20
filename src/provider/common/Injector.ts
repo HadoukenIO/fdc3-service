@@ -1,6 +1,6 @@
 import {Container} from 'inversify';
 import {interfaces as inversify} from 'inversify/dts/interfaces/interfaces';
-import {DeferredPromise} from 'openfin-async-utils';
+import {DeferredPromise} from 'openfin-service-async';
 
 import {ConfigStore, ConfigStoreBinding} from '../model/ConfigStore';
 import {AppDirectory} from '../model/AppDirectory';

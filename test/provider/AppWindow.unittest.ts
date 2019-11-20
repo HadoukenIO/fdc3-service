@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 
 import {Identity} from 'openfin/_v2/main';
-import {DeferredPromise} from 'openfin-async-utils';
+import {DeferredPromise} from 'openfin-service-async';
 
 import {createMockChannel} from '../mocks';
 import {Application} from '../../src/client/main';
