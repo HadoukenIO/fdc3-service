@@ -36,14 +36,14 @@ export interface Environment {
      *
      * Arguments: (identity: Identity)
      */
-    applicationCreated: Signal<[Identity, LiveApp]>;
+    onApplicationCreated: Signal<[Identity, LiveApp]>;
 
     /**
      * Indicates that an application has been closed.
      *
      * Arguments: (identity: Identity)
      */
-    applicationClosed: Signal<[Identity]>;
+    onApplicationClosed: Signal<[Identity]>;
 
     /**
      * Creates a new application, given an App Directory entry.

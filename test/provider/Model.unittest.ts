@@ -364,7 +364,7 @@ async function setupAppRunningWithoutFdc3Connection(app: Application): Promise<v
     });
 
     mockEnvironment.isKnownEntity.mockImplementation((identity) => identity.uuid === app.appId);
-    mockEnvironment.applicationCreated.emit({uuid: app.appId}, new LiveApp(Promise.resolve()));
+    mockEnvironment.onApplicationCreated.emit({uuid: app.appId}, new LiveApp(Promise.resolve()));
     mockEnvironment.onWindowCreated.emit(createFakeIdentity({uuid: app.appId}));
 
     await resolvePromiseChain();
@@ -392,7 +392,7 @@ async function setupAppRunningWithWindowWithIntentListeners(app: Application, in
         return appWindow;
     });
 
-    mockEnvironment.applicationCreated.emit({uuid: app.appId}, new LiveApp(Promise.resolve()));
+    mockEnvironment.onApplicationCreated.emit({uuid: app.appId}, new LiveApp(Promise.resolve()));
     mockEnvironment.onWindowCreated.emit(createFakeIdentity({uuid: app.appId}));
 
     await resolvePromiseChain();

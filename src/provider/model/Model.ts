@@ -80,8 +80,8 @@ export class Model {
         this._environment = environment;
         this._apiHandler = apiHandler;
 
-        this._environment.applicationCreated.add(this.onApplicationCreated, this);
-        this._environment.applicationClosed.add(this.onApplicationClosed, this);
+        this._environment.onApplicationCreated.add(this.onApplicationCreated, this);
+        this._environment.onApplicationClosed.add(this.onApplicationClosed, this);
 
         this._environment.onWindowCreated.add(this.onWindowCreated, this);
         this._environment.onWindowClosed.add(this.onWindowClosed, this);
@@ -180,7 +180,7 @@ export class Model {
         } else {
             const deferredPromise = new DeferredPromise<LiveApp>();
 
-            const slot = this._environment.applicationCreated.add((identity: Identity, liveApp: LiveApp) => {
+            const slot = this._environment.onApplicationCreated.add((identity: Identity, liveApp: LiveApp) => {
                 if (identity.uuid === uuid) {
                     slot.remove();
                     deferredPromise.resolve(liveApp);

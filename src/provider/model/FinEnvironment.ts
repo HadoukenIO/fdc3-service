@@ -33,8 +33,8 @@ type EnvironmentApplicationSet = Set<string>;
 
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
-    public readonly applicationCreated: Signal<[Identity, LiveApp]> = new Signal();
-    public readonly applicationClosed: Signal<[Identity]> = new Signal();
+    public readonly onApplicationCreated: Signal<[Identity, LiveApp]> = new Signal();
+    public readonly onApplicationClosed: Signal<[Identity]> = new Signal();
 
     public readonly onWindowCreated: Signal<[Identity]> = new Signal();
     public readonly onWindowClosed: Signal<[Identity]> = new Signal();
@@ -256,7 +256,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         if (uuid !== SERVICE_IDENTITY.uuid) {
             if (!this._applications.has(uuid)) {
                 this._applications.add(uuid);
-                this.applicationCreated.emit(identity, new LiveApp(startedPromise));
+                this.onApplicationCreated.emit(identity, new LiveApp(startedPromise));
             }
         }
     }
@@ -266,7 +266,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
         if (uuid !== SERVICE_IDENTITY.uuid) {
             if (this._applications.delete(uuid)) {
-                this.applicationClosed.emit(identity);
+                this.onApplicationClosed.emit(identity);
             }
         }
     }
