@@ -45,7 +45,7 @@ describe('When getting a channel by ID', () => {
         const getChannelByIdPromise = fdc3Remote.getChannelById(testManagerIdentity, 'non-existent-channel');
 
         await expect(getChannelByIdPromise).toThrowFDC3Error(
-            ChannelError.ChannelDoesNotExist,
+            ChannelError.ChannelWithIdDoesNotExist,
             'No channel with channelId: non-existent-channel'
         );
     });

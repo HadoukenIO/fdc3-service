@@ -3,10 +3,11 @@ import {injectable, inject} from 'inversify';
 import {Inject} from '../common/Injectables';
 import {Intent} from '../intents';
 import {IntentResolution, Application} from '../../client/main';
-import {FDC3Error, ResolveError} from '../../client/errors';
+import {FDC3Error, RaiseIntentError} from '../../client/errors';
 import {Model} from '../model/Model';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
+import {collateClientCalls, ClientCallsResult} from '../utils/helpers';
 
 import {ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
@@ -16,7 +17,7 @@ export class IntentHandler {
     private readonly _resolver: ResolverHandlerBinding;
     private readonly _apiHandler: APIHandler<APIToClientTopic>;
 
-    private _resolvePromise: Promise<IntentResolution>|null;
+    private _resolvePromise: Promise<IntentResolution> | null;
 
     constructor(
         @inject(Inject.MODEL) model: Model,
@@ -48,13 +49,13 @@ export class IntentHandler {
         } else if (await this._model.existsAppForName(intent.target)) {
             // Target exists but does not handle intent with given context
             throw new FDC3Error(
-                ResolveError.TargetAppDoesNotHandleIntent,
+                RaiseIntentError.TargetAppDoesNotHandleIntent,
                 `App '${intent.target}' does not handle intent '${intent.type}' with context '${intent.context.type}'`
             );
         } else {
             // Target does not exist
             throw new FDC3Error(
-                ResolveError.TargetAppNotAvailable,
+                RaiseIntentError.TargetAppNotAvailable,
                 `Couldn't resolve intent target '${intent.target}'. No matching app in directory or currently running.`
             );
         }
@@ -67,7 +68,7 @@ export class IntentHandler {
         const apps: Application[] = await this._model.getApplicationsForIntent(intent.type, intent.context.type);
 
         if (apps.length === 0) {
-            throw new FDC3Error(ResolveError.NoAppsFound, 'No applications available to handle this intent');
+            throw new FDC3Error(RaiseIntentError.NoAppsFound, 'No applications available to handle this intent');
         } else if (apps.length === 1) {
             console.log(`App '${apps[0].name}' found to resolve intent '${intent.type}, firing intent'`);
 
@@ -113,7 +114,7 @@ export class IntentHandler {
         });
 
         if (!selection) {
-            throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Resolver closed or cancelled');
+            throw new FDC3Error(RaiseIntentError.ResolverClosedOrCancelled, 'Resolver closed or cancelled');
         }
 
         // Handle response
@@ -128,23 +129,35 @@ export class IntentHandler {
             (window) => window.waitForReadyToReceiveIntent(intent.type)
         );
 
+        let data: unknown = undefined;
+
         if (listeningWindows.length > 0) {
             const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
 
-            await Promise.all(listeningWindows.map((window) => this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload)));
+            const [result, returnData] = await collateClientCalls(listeningWindows.map((window) => {
+                return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
+            }));
+            data = returnData;
+
+            if (result === ClientCallsResult.ALL_FAILURE) {
+                throw new FDC3Error(RaiseIntentError.SendIntentError, 'Error(s) thrown by client attempting to handle intent');
+            } else if (result === ClientCallsResult.TIMEOUT) {
+                throw new FDC3Error(RaiseIntentError.SendIntentTimeout, 'Timeout waiting for client to handle intent');
+            }
         } else {
-            throw new FDC3Error(ResolveError.IntentTimeout, `Timeout waiting for intent listener to be added for intent: ${intent.type}`);
+            throw new FDC3Error(RaiseIntentError.SendIntentNoHandler, `No intent handler added for intent: ${intent.type}`);
         }
 
-        const result: IntentResolution = {
+        const resolution: IntentResolution = {
             source: appInfo.name,
-            version: '1.0.0'
+            version: '1.0.0',
+            data
         };
 
         // Handle next queued intent
-        console.log('Finished intent', intent.type);
+        console.log(`Finished intent: ${intent.type}`, resolution);
 
-        return result;
+        return resolution;
     }
 }
 

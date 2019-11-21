@@ -1,12 +1,12 @@
-/* eslint-disable @typescript-eslint/await-thenable */
 import {Identity} from 'openfin/_v2/main';
 
 import {IdentityError, DEFAULT_CHANNEL_ID} from '../../../src/client/main';
-import {testManagerIdentity, appStartupTime, testAppNotInDirectory1, testAppNotInDirectoryNotFdc3, testAppInDirectory1, testAppInDirectory2} from '../constants';
+import {testManagerIdentity, appStartupTime, testAppNotInDirectory1, testAppNotInDirectoryNotFdc3, testAppInDirectory1, testAppInDirectory2, testAppUrl} from '../constants';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel, RemoteChannelEventListener} from '../utils/RemoteChannel';
 import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, quitApps, startNonDirectoryApp, startDirectoryApp} from '../utils/common';
-import {fakeAppChannelName} from '../utils/fakes';
+import {fakeAppChannelName, createFakeContext} from '../utils/fakes';
+import {TestWindowContext} from '../utils/ofPuppeteer';
 
 /*
  * Tests simple behaviour of Channel.getMembers() and the channel-changed and Channel events, before testing how they and getCurrentChannel()
@@ -263,6 +263,47 @@ describe('When joining a non-default channel', () => {
 
             // Check the joining window has the expected current channel
             await expect(fdc3Remote.getCurrentChannel(joiningApp)).resolves.toHaveProperty('channel', channel.channel);
+        });
+
+        test('When the channel has stored context, and the app has an erroring context listener, the promise resolves without error', async () => {
+            // Broadcast on our channel while populated to set a context
+            const childWindow = await fdc3Remote.createFinWindow(joiningApp, {url: testAppUrl, name: 'child-window'});
+            await channel.join(childWindow);
+            await channel.broadcast(createFakeContext());
+
+            // Setup an erroring listener
+            await fdc3Remote.ofBrowser.executeOnWindow(joiningApp, function (this: TestWindowContext): void {
+                this.fdc3.addContextListener(() => {
+                    throw new Error('Context listener throwing error');
+                });
+            });
+
+            // Join our channel
+            await channel.join(joiningApp);
+        });
+
+        test('When the channel has stored context, and the app has a mix of error and non-erroring context listeners, all listeners are \
+triggered, and the promise resolves without error', async () => {
+            // Broadcast on our channel while populated to set a context
+            const context = createFakeContext();
+            const childWindow = await fdc3Remote.createFinWindow(joiningApp, {url: testAppUrl, name: 'child-window'});
+            await channel.join(childWindow);
+            await channel.broadcast(context);
+
+            // Setup an erroring listener
+            await fdc3Remote.ofBrowser.executeOnWindow(joiningApp, function (this: TestWindowContext): void {
+                this.fdc3.addContextListener(() => {
+                    throw new Error('Context listener throwing error');
+                });
+            });
+
+            const listener = await fdc3Remote.addContextListener(joiningApp);
+
+            // Join our channel
+            await channel.join(joiningApp);
+
+            // Check the non-erroring listener received the context
+            await expect(listener).toHaveReceivedContexts([context]);
         });
 
         test(`The window is present when querying the members of the ${titleParam} channel and not the default channel`, async () => {

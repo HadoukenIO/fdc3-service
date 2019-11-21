@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/await-thenable */
 import 'jest';
 import {Identity, Application} from 'hadouken-js-adapter';
 
@@ -8,6 +7,7 @@ import {fin} from '../utils/fin';
 import {setupTeardown, quitApps, setupStartNonDirectoryAppBookends} from '../utils/common';
 import {ChannelDescriptor, getChannel} from '../utils/channels';
 import {fakeAppChannelDescriptor} from '../utils/fakes';
+import {TestWindowContext} from '../utils/ofPuppeteer';
 
 /*
  * Tests top-level broadcast(), and addContextListener() calls, and how they interact with Channel.join()
@@ -62,10 +62,10 @@ describe.each(broadcastTestParams)(
 
             const channelChangingWindowListener = await fdc3Remote.addContextListener(channelChangingWindow);
 
-            // Broadcast our context on the blue channel
+            // Broadcast our context on the broadcast channel
             await fdc3Remote.broadcast(broadcastingWindow, testContext);
 
-            // Check our blue window received our test context
+            // Check our listening window received our test context
             await expect(channelChangingWindowListener).toHaveReceivedContexts([testContext]);
         }, appStartupTime * 2);
 
@@ -79,6 +79,40 @@ describe.each(broadcastTestParams)(
 
             // Check the default window did not received our test context
             await expect(listener).toHaveReceivedContexts([]);
+        }, appStartupTime * 2);
+
+        test('Broadcast resolves successfully even when a listener errors', async () => {
+            const [broadcastingWindow, listeningWindow] = await setupWindows(broadcastChannel, broadcastChannel);
+
+            // Setup an erroring listener
+            await fdc3Remote.ofBrowser.executeOnWindow(listeningWindow, function (this: TestWindowContext): void {
+                this.fdc3.addContextListener(() => {
+                    throw new Error('Context listener throwing error');
+                });
+            });
+
+            // Broadcast our context on the broadcast channel
+            await fdc3Remote.broadcast(broadcastingWindow, testContext);
+        }, appStartupTime * 2);
+
+        test('Context is recieved by listening window, even when a listener errors', async () => {
+            const [broadcastingWindow, listeningWindow] = await setupWindows(broadcastChannel, broadcastChannel);
+
+            // Setup an erroring listener
+            await fdc3Remote.ofBrowser.executeOnWindow(listeningWindow, function (this: TestWindowContext): void {
+                this.fdc3.addContextListener(() => {
+                    throw new Error('Context listener throwing error');
+                });
+            });
+
+            // Setup non-erroring listener
+            const listener = await fdc3Remote.addContextListener(listeningWindow);
+
+            // Broadcast our context on the broadcast channel
+            await fdc3Remote.broadcast(broadcastingWindow, testContext);
+
+            // Check the listening window received our test context
+            await expect(listener).toHaveReceivedContexts([testContext]);
         }, appStartupTime * 2);
     }
 );
@@ -109,7 +143,7 @@ const contextListenerTestParams = [
 ] as ContextListenerTestParam[];
 
 describe.each(contextListenerTestParams)('When adding a context listener to %s channel', (titleParam: string, broadcastChannel: ChannelDescriptor) => {
-    test('When the channel, has been broadcast on and has remained occupied, a context is received when joining', async () => {
+    test('When the channel has been broadcast on and has remained occupied, a context is received when joining', async () => {
         const [broadcastWindow, channelChangingWindow] = await setupWindows(broadcastChannel, 'default');
 
         // Broadcast our test context our channel to give the channel a cached context

@@ -22,6 +22,7 @@ import {Intent} from './intents';
 import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
 import {Environment} from './model/Environment';
+import {collateClientCalls, ClientCallsResult} from './utils/helpers';
 
 @injectable()
 export class Main {
@@ -105,7 +106,7 @@ export class Main {
     }
 
     private async onChannelChangedHandler(appWindow: AppConnection, channel: ContextChannel | null, previousChannel: ContextChannel | null): Promise<void> {
-        return this._eventHandler.dispatchEventOnChannelChanged(appWindow, channel, previousChannel);
+        await this._eventHandler.dispatchEventOnChannelChanged(appWindow, channel, previousChannel);
     }
 
     private async open(payload: OpenPayload): Promise<void> {
@@ -144,7 +145,17 @@ export class Main {
             );
 
             const sendContextPromise = windowsPromise.then(async (expectedWindows) => {
-                await Promise.all(expectedWindows.map((window) => this._contextHandler.send(window, context)));
+                if (expectedWindows.length === 0) {
+                    throw new FDC3Error(OpenError.SendContextNoHandler, 'Context provided, but no context handler added');
+                }
+
+                const [result] = await collateClientCalls(expectedWindows.map((window) => this._contextHandler.send(window, context)));
+
+                if (result === ClientCallsResult.ALL_FAILURE) {
+                    throw new FDC3Error(OpenError.SendContextError, 'Error(s) thrown by client attempting to handle context on app starting');
+                } else if (result === ClientCallsResult.TIMEOUT) {
+                    throw new FDC3Error(OpenError.SendContextTimeout, 'Timeout waiting for client to handle context on app starting');
+                }
             });
 
             promises.push(sendContextPromise);
@@ -262,11 +273,17 @@ export class Main {
 
         const channel = this._channelHandler.getChannelById(payload.id);
 
-        this._channelHandler.joinChannel(appWindow, channel);
+        await this._channelHandler.joinChannel(appWindow, channel);
         const context = this._channelHandler.getChannelContext(channel);
 
         if (context) {
-            return this._contextHandler.send(appWindow, context);
+            await collateClientCalls([this._contextHandler.send(appWindow, context)]).then(([result]) => {
+                if (result === ClientCallsResult.ALL_FAILURE) {
+                    console.warn(`Error thrown by client window ${appWindow.id} attempting to handle context on joining channel, swallowing error`);
+                } else if (result === ClientCallsResult.TIMEOUT) {
+                    console.warn(`Timeout waiting for client window ${appWindow.id} to handle context on joining channel, swallowing error`);
+                }
+            });
         }
     }
 

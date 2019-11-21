@@ -2,14 +2,14 @@ import {injectable, inject} from 'inversify';
 import {WindowEvent, ApplicationEvent} from 'openfin/_v2/api/events/base';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
+import {withTimeout} from 'openfin-service-async';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {FDC3Error, OpenError} from '../../client/errors';
+import {FDC3Error, ApplicationError} from '../../client/errors';
 import {APIFromClientTopic, SERVICE_IDENTITY} from '../../client/internal';
 import {Application} from '../../client/main';
-import {withTimeout} from '../utils/async';
-import {Timeouts} from '../constants';
 import {parseIdentity} from '../../client/validation';
+import {Timeouts} from '../constants';
 import {Injector} from '../common/Injector';
 import {getId} from '../utils/getId';
 import {Inject} from '../common/Injectables';
@@ -62,14 +62,14 @@ export class FinEnvironment extends AsyncInit implements Environment {
             fin.Application.startFromManifest(appInfo.manifest).catch((e) => {
                 this.deregisterApplication({uuid});
 
-                throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
+                throw new FDC3Error(ApplicationError.ErrorOnLaunch, (e as Error).message);
             })
         ).then((result) => {
             const [didTimeout] = result;
 
             if (didTimeout) {
                 this.deregisterApplication({uuid});
-                throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
+                throw new FDC3Error(ApplicationError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
             }
         });
 

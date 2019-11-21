@@ -1,5 +1,5 @@
 import {injectable, inject} from 'inversify';
-import {Signal} from 'openfin-service-signal';
+import {Signal, Aggregators} from 'openfin-service-signal';
 
 import {Model} from '../model/Model';
 import {Inject} from '../common/Injectables';
@@ -15,14 +15,14 @@ export class ChannelHandler {
      *
      * Arguments: (connection: AppConnection, channel: ContextChannel | null, previousChannel: ContextChannel | null)
      */
-    public readonly onChannelChanged: Signal<[AppConnection, ContextChannel | null, ContextChannel | null]>;
+    public readonly onChannelChanged: Signal<[AppConnection, ContextChannel | null, ContextChannel | null], Promise<void>>;
 
     private readonly _model: Model;
 
     constructor(@inject(Inject.MODEL) model: Model) {
         this._model = model;
 
-        this.onChannelChanged = new Signal();
+        this.onChannelChanged = new Signal(Aggregators.AWAIT_VOID);
 
         this._model.onConnectionAdded.add(this.onModelWindowAdded, this);
         this._model.onConnectionRemoved.add(this.onModelWindowRemoved, this);
@@ -66,7 +66,7 @@ export class ChannelHandler {
         return this._model.connections.filter((connection) => connection.hasChannelEventListener(channel, eventType));
     }
 
-    public joinChannel(appWindow: AppConnection, channel: ContextChannel): void {
+    public async joinChannel(appWindow: AppConnection, channel: ContextChannel): Promise<void> {
         const previousChannel = appWindow.channel;
 
         if (previousChannel !== channel) {
@@ -76,7 +76,7 @@ export class ChannelHandler {
                 previousChannel.clearStoredContext();
             }
 
-            this.onChannelChanged.emit(appWindow, channel, previousChannel);
+            await this.onChannelChanged.emit(appWindow, channel, previousChannel);
         }
     }
 
@@ -106,7 +106,7 @@ export class ChannelHandler {
         const channel = this._model.getChannel(channelId);
 
         if (!channel) {
-            throw new FDC3Error(ChannelError.ChannelDoesNotExist, `No channel with channelId: ${channelId}`);
+            throw new FDC3Error(ChannelError.ChannelWithIdDoesNotExist, `No channel with channelId: ${channelId}`);
         }
     }
 

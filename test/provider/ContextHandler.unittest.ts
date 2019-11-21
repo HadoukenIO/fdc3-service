@@ -30,6 +30,8 @@ beforeEach(() => {
     getterMock(mockModel, 'connections').mockReturnValue(mockConnections);
     getterMock(mockModel, 'apps').mockReturnValue([]);
 
+    mockApiHandler.dispatch.mockReturnValue(Promise.resolve());
+
     contextHandler = new ContextHandler(mockApiHandler, mockChannelHandler, mockModel);
 });
 

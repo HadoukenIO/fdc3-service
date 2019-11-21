@@ -26,8 +26,8 @@ beforeEach(() => {
     (mockModel as PartiallyWritable<typeof mockModel, 'onConnectionRemoved'>).onConnectionRemoved = new Signal<[AppConnection]>();
 
     channelHandler = new ChannelHandler(mockModel);
-    channelHandler.onChannelChanged.add((appWindow: AppConnection, channel: ContextChannel | null, previousChannel: ContextChannel | null) => {
-        mockOnChannelChanged(appWindow, channel, previousChannel);
+    channelHandler.onChannelChanged.add(async (connection: AppConnection, channel: ContextChannel | null, previousChannel: ContextChannel | null) => {
+        mockOnChannelChanged(connection, channel, previousChannel);
     });
 });
 
@@ -79,7 +79,7 @@ describe('When geting channel by ID', () => {
 
         expect(() => {
             channelHandler.getChannelById('test');
-        }).toThrowFDC3Error(ChannelError.ChannelDoesNotExist, 'No channel with channelId: test');
+        }).toThrowFDC3Error(ChannelError.ChannelWithIdDoesNotExist, 'No channel with channelId: test');
     });
 });
 
@@ -168,54 +168,54 @@ describe('When setting the last broadcast context for a channel', () => {
 });
 
 describe('When joining a channel', () => {
-    it('ChannelHandler sets the channel of the window', () => {
+    it('ChannelHandler sets the channel of the window', async () => {
         const testChannel1 = createMockChannel({id: 'test-1'});
         const testChannel2 = createMockChannel({id: 'test-2'});
 
         const testWindow = createMockAppConnection({channel: testChannel1});
         setModelConnections([testWindow]);
 
-        channelHandler.joinChannel(testWindow, testChannel2);
+        await channelHandler.joinChannel(testWindow, testChannel2);
 
         expect(testWindow.channel).toEqual(testChannel2);
     });
 
-    it('If changing channel, ChannelHandler fires it onChannelChanged signal', () => {
+    it('If changing channel, ChannelHandler fires it onChannelChanged signal', async () => {
         const testChannel1 = createMockChannel({id: 'test-1'});
         const testChannel2 = createMockChannel({id: 'test-2'});
 
         const testWindow = createMockAppConnection({channel: testChannel1});
         setModelConnections([testWindow]);
 
-        channelHandler.joinChannel(testWindow, testChannel2);
+        await channelHandler.joinChannel(testWindow, testChannel2);
 
         expect(mockOnChannelChanged.mock.calls).toEqual([[testWindow, testChannel2, testChannel1]]);
     });
 
-    it('If not changing channel, ChannelHandler fires a onChannelChanged signal', () => {
+    it('If not changing channel, ChannelHandler fires a onChannelChanged signal', async () => {
         const testChannel = createMockChannel();
 
         const testWindow = createMockAppConnection({channel: testChannel});
         setModelConnections([testWindow]);
 
-        channelHandler.joinChannel(testWindow, testChannel);
+        await channelHandler.joinChannel(testWindow, testChannel);
 
         expect(mockOnChannelChanged).toBeCalledTimes(0);
     });
 
-    it('If the previous channel is now empty, ChannelHandler clears the context of the previous channel', () => {
+    it('If the previous channel is now empty, ChannelHandler clears the context of the previous channel', async () => {
         const testChannel1 = createMockChannel();
         const testChannel2 = createMockChannel();
 
         const testWindow = createMockAppConnection({channel: testChannel1});
         setModelConnections([testWindow]);
 
-        channelHandler.joinChannel(testWindow, testChannel2);
+        await channelHandler.joinChannel(testWindow, testChannel2);
 
         expect(testChannel1.clearStoredContext).toBeCalledTimes(1);
     });
 
-    it('If the previous channel is still populated, ChannelHandler does not clear the context of the previous channel', () => {
+    it('If the previous channel is still populated, ChannelHandler does not clear the context of the previous channel', async () => {
         const testChannel1 = createMockChannel();
         const testChannel2 = createMockChannel();
 
@@ -224,7 +224,7 @@ describe('When joining a channel', () => {
 
         setModelConnections([testWindow1, testWindow2]);
 
-        channelHandler.joinChannel(testWindow1, testChannel2);
+        await channelHandler.joinChannel(testWindow1, testChannel2);
 
         expect(testChannel1.clearStoredContext).toBeCalledTimes(0);
     });
