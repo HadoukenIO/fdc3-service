@@ -16,7 +16,7 @@ import {TestWindowContext} from '../utils/ofPuppeteer';
  * Intent registered by `testAppWithPreregisteredListeners1` right after opening
  */
 const preregisteredIntent: Intent = {
-    type: 'test.IntentNamePreregistered',
+    type: 'IntentNamePreregistered',
     context: {type: 'test.IntentNamePreregisteredContext'}
 };
 
@@ -24,7 +24,7 @@ const preregisteredIntent: Intent = {
  * An intent registered by `testAppInDirectory`
  */
 const validIntent: Intent = {
-    type: 'test.IntentName',
+    type: 'IntentName',
     context: {
         type: 'test.IntentNameContext',
         name: 'Test Name',
