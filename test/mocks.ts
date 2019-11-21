@@ -1,4 +1,4 @@
-/* eslint-disable */
+/* eslint-disable @typescript-eslint/no-unused-vars, no-shadow */
 import {Signal} from 'openfin-service-signal';
 import {Identity} from 'openfin/_v2/main';
 

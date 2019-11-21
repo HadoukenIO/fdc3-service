@@ -330,37 +330,6 @@ export class Model {
         }
     }
 
-    // private onWindowCreated(identity: Identity): void {
-    //     const connection = this.getOrCreateExpectedConnection(identity);
-
-    //     // Only register windows once they are connected to the service
-    //     allowReject(connection.connected.then(async () => {
-    //         // Attempt to copy appInfo from another appWindow in the model from the same app
-    //         let registered = false;
-    //         let appWindowsFromSameApp: AppConnection[];
-
-    //         allowReject(untilTrue(this._onConnectionRegisteredInternal, () => {
-    //             appWindowsFromSameApp = this.findConnectionsByAppId(identity.uuid);
-    //             return appWindowsFromSameApp.length > 0;
-    //         }, connection.closed).then(() => {
-    //             if (!registered) {
-    //                 this.registerConnection(appWindowsFromSameApp[0].appInfo, identity, EntityType.WINDOW);
-    //                 registered = true;
-    //             }
-    //         }));
-
-    //         // If we're unable to copy appInfo from another window, attempt to use the app directory, or infer from environment
-    //         const appInfoFromDirectory = await this._directory.getAppByUuid(identity.uuid);
-
-    //         const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
-
-    //         if (!registered) {
-    //             this.registerConnection(appInfo, identity, EntityType.WINDOW);
-    //             registered = true;
-    //         }
-    //     }));
-    // }
-
     private onWindowCreated(identity: Identity): void {
         const expectedWindow = this.getOrCreateExpectedConnection(identity);
 
@@ -381,7 +350,7 @@ export class Model {
         if (entityType === EntityType.EXTERNAL_CONNECTION) {
             // Any connections to the service from adapters should be immediately registered
             const appInfo = await this._environment.inferApplication(identity);
-            const liveApp = new LiveApp(Promise.resolve());
+            const liveApp = new LiveApp(undefined);
 
             liveApp.setAppInfo(appInfo);
             this._liveAppsByUuid[identity.uuid] = liveApp;

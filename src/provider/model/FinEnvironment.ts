@@ -28,9 +28,6 @@ interface KnownEntity {
     entityType: EntityType;
 }
 
-type KnownEntityMap = Map<string, KnownEntity>;
-type EnvironmentApplicationSet = Set<string>;
-
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
     public readonly onApplicationCreated: Signal<[Identity, LiveApp]> = new Signal();
@@ -44,8 +41,9 @@ export class FinEnvironment extends AsyncInit implements Environment {
      *
      * Will include all OpenFin windows currently open, plus all active external connections to the service.
      */
-    private readonly _knownEntities: KnownEntityMap = new Map<string, KnownEntity>();
-    private readonly _applications: EnvironmentApplicationSet = new Set<string>();
+    private readonly _knownEntities: Map<string, KnownEntity> = new Map<string, KnownEntity>();
+    private readonly _applications: Set<string> = new Set<string>();
+
     private _entityCount: number = 0;
 
     constructor(@inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>) {
@@ -81,30 +79,24 @@ export class FinEnvironment extends AsyncInit implements Environment {
         const id = getId(identity);
 
         // If `identity` is an adapter connection that hasn't yet connected to the service, there will not be a KnownEntity for this identity
-        // We will instead take the time at which the identity was wrapped as this connection's creation time
-        const knownEntity: KnownEntity = this._knownEntities.get(id) || this.registerEntity(identity, entityType)!;
-        const {index} = knownEntity;
+        // In these cases, we will register the entity now
+        const knownEntity: KnownEntity|undefined = this._knownEntities.get(id) || this.registerEntity(identity, entityType);
 
-        if (entityType === EntityType.EXTERNAL_CONNECTION || entityType === EntityType.IFRAME) {
-            return new FinAppConnection(identity, entityType, liveApp, channel, index);
-        } else {
-            if (entityType !== EntityType.WINDOW) {
-                console.warn(`Unexpected entity type: ${entityType}. Treating as a regular OpenFin window.`);
+        if (knownEntity) {
+            const {index} = knownEntity;
+
+            if (entityType === EntityType.EXTERNAL_CONNECTION || entityType === EntityType.IFRAME) {
+                return new FinAppConnection(identity, entityType, liveApp, channel, index);
+            } else {
+                if (entityType !== EntityType.WINDOW) {
+                    console.warn(`Unexpected entity type: ${entityType}. Treating as a regular OpenFin window.`);
+                }
+
+                return new FinAppWindow(identity, entityType, liveApp, channel, index);
             }
-
-            return new FinAppWindow(identity, entityType, liveApp, channel, index);
+        } else {
+            throw new Error('Cannot wrap entities belonging to the provider');
         }
-    }
-
-    public wrapWindow(liveApp: LiveApp, identity: Identity, channel: ContextChannel): AppConnection {
-        identity = parseIdentity(identity);
-        const id = getId(identity);
-
-        // If `identity` is an adapter connection, there will not be any `_windows` entry for this identity
-        const window: KnownEntity = this._knownEntities.get(id) || {index: this._entityCount++, entityType: EntityType.WINDOW};
-        // const window = this._windows.get(id) || {index: this._windowsCreated++};
-
-        return new FinAppWindow(identity, EntityType.WINDOW, liveApp, channel, window.index);
     }
 
     public async inferApplication(identity: Identity): Promise<Application> {

@@ -124,7 +124,7 @@ export class APIHandler<T extends Enum> {
     }
 
     // TODO?: Remove the need for this any by defining connection payload type?
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private onConnectionHandler(identity: Identity, payload?: any): void {
         if (payload && payload.version && payload.version.length > 0) {
             console.log(`connection from client: ${identity.name}, version: ${payload.version}`);
