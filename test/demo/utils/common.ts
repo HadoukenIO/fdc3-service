@@ -179,7 +179,7 @@ async function isServiceClear(): Promise<boolean> {
                 return false;
             }
 
-            if (singleApp.windows.length !== 1 || singleApp.windows[0] !== singleWindow) {
+            if (singleApp.connections.length !== 1 || singleApp.connections[0] !== singleWindow) {
                 return false;
             }
 

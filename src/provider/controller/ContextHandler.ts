@@ -30,7 +30,7 @@ export class ContextHandler {
     }
 
     /**
-     * Send a context to a specific window. The promise returned may reject if provided window throws an error, so caller should take
+     * Send a context to a specific connection. The promise returned may reject if provided client throws an error, so caller should take
      * responsibility for error handling.
      *
      * @param connection Entity to send the context to
@@ -41,7 +41,7 @@ export class ContextHandler {
         if (connection.hasContextListener()) {
             return this._apiHandler.dispatch(connection.identity, APIToClientTopic.RECEIVE_CONTEXT, payload);
         } else {
-            // We intentionally don't await this, as we have no expectation that windows will add a context listener
+            // We intentionally don't await this, as we have no expectation that connected will add a context listener
             connection.waitForReadyToReceiveContext().then(() => {
                 collateClientCalls([this._apiHandler.dispatch(connection.identity, APIToClientTopic.RECEIVE_CONTEXT, payload)]).then(([result]) => {
                     if (result === ClientCallsResult.ALL_FAILURE) {
@@ -57,64 +57,64 @@ export class ContextHandler {
     }
 
     /**
-     * Broadcast context onto the channel the source window is a member of. The context will be received by all
-     * windows in the channel, or listening to the channel, except for the sender itself.
+     * Broadcast context onto the channel the source entity is a member of. The context will be received by all
+     * connections in the channel, or listening to the channel, except for the sender itself.
      *
      * @param context Context to send
-     * @param source Window sending the context. It won't receive the broadcast
+     * @param source Entity sending the context. It won't receive the broadcast
      */
     public broadcast(context: Context, source: AppConnection): Promise<void> {
         return this.broadcastOnChannel(context, source, source.channel);
     }
 
     /**
-     * Broadcast context onto the provided channel. The context will be received by all windows in the channel, or
+     * Broadcast context onto the provided channel. The context will be received by all entities in the channel, or
      * listening to the channel, except for the sender itself.
      *
      * @param context Context to send
-     * @param source Window sending the context. It won't receive the broadcast
+     * @param source Entity sending the context. It won't receive the broadcast
      * @param channel ContextChannel to broadcast on
      */
     public broadcastOnChannel(context: Context, source: AppConnection, channel: ContextChannel): Promise<void> {
-        const memberWindows = this._channelHandler.getChannelMembers(channel);
-        const listeningWindows = this._channelHandler.getWindowsListeningForContextsOnChannel(channel);
+        const members = this._channelHandler.getChannelMembers(channel);
+        const listeners = this._channelHandler.getConnectionsListeningForContextsOnChannel(channel);
 
         this._channelHandler.setLastBroadcastOnChannel(channel, context);
 
         const sourceId = getId(source.identity);
-        const notSender = (window: AppConnection) => getId(window.identity) !== sourceId;
+        const notSender = (connection: AppConnection) => getId(connection.identity) !== sourceId;
 
         const promises: Promise<void>[] = [];
 
-        promises.push(...memberWindows
+        promises.push(...members
             .filter(notSender)
-            .map((window) => this.sendForBroadcast(window, context)));
+            .map((connection) => this.sendForBroadcast(connection, context)));
 
-        promises.push(...listeningWindows
+        promises.push(...listeners
             .filter(notSender)
-            .map((window) => this.sendOnChannelForBroadcast(window, context, channel)));
+            .map((connection) => this.sendOnChannelForBroadcast(connection, context, channel)));
 
-        // We intentionally don't await this, as we have no expectation that windows will add a context listener
+        // We intentionally don't await this, as we have no expectation that entities will add a context listener
         for (const app of this._model.apps.filter((testApp: LiveApp) => testApp.started)) {
             app.waitForAppInfo().then((appInfo) => {
                 this._model.expectConnectionsForApp(
                     appInfo,
-                    (window: AppConnection) => window.hasContextListener(),
-                    async (window: AppConnection) => window.waitForReadyToReceiveContext()
-                ).then((windows) => {
-                    windows
-                        .filter((window) => notSender(window) && !memberWindows.includes(window) && window.channel.id === channel.id)
-                        .forEach((window) => this.sendForBroadcast(window, context));
+                    (connection: AppConnection) => connection.hasContextListener(),
+                    async (connection: AppConnection) => connection.waitForReadyToReceiveContext()
+                ).then((connections) => {
+                    connections
+                        .filter((connection) => notSender(connection) && !members.includes(connection) && connection.channel.id === channel.id)
+                        .forEach((connection) => this.sendForBroadcast(connection, context));
                 });
 
                 this._model.expectConnectionsForApp(
                     appInfo,
-                    (window: AppConnection) => window.hasChannelContextListener(channel),
-                    async (window: AppConnection) => window.waitForReadyToReceiveContextOnChannel(channel)
-                ).then((windows) => {
-                    windows
-                        .filter((window) => notSender(window) && !listeningWindows.includes(window))
-                        .forEach((window) => this.sendOnChannelForBroadcast(window, context, channel));
+                    (connection: AppConnection) => connection.hasChannelContextListener(channel),
+                    async (connection: AppConnection) => connection.waitForReadyToReceiveContextOnChannel(channel)
+                ).then((connections) => {
+                    connections
+                        .filter((connection) => notSender(connection) && !listeners.includes(connection))
+                        .forEach((connection) => this.sendOnChannelForBroadcast(connection, context, channel));
                 });
             });
         }
@@ -122,12 +122,12 @@ export class ContextHandler {
         return Promise.all(promises).then(() => {});
     }
 
-    private async sendForBroadcast(window: AppConnection, context: Context): Promise<void> {
-        await collateClientCalls([this.send(window, context)]).then(([result]) => {
+    private async sendForBroadcast(connection: AppConnection, context: Context): Promise<void> {
+        await collateClientCalls([this.send(connection, context)]).then(([result]) => {
             if (result === ClientCallsResult.ALL_FAILURE) {
-                console.warn(`Error thrown by client window ${window.id} attempting to handle broadcast, swallowing error`);
+                console.warn(`Error thrown by client window ${connection.id} attempting to handle broadcast, swallowing error`);
             } else if (result === ClientCallsResult.TIMEOUT) {
-                console.warn(`Timeout waiting for client window ${window.id} to handle broadcast, swallowing error`);
+                console.warn(`Timeout waiting for client window ${connection.id} to handle broadcast, swallowing error`);
             }
         });
     }

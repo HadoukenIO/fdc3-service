@@ -125,8 +125,8 @@ export class IntentHandler {
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
         const listeningWindows = await this._model.expectConnectionsForApp(
             appInfo,
-            (window) => window.hasIntentListener(intent.type),
-            (window) => window.waitForReadyToReceiveIntent(intent.type)
+            (connection) => connection.hasIntentListener(intent.type),
+            (connection) => connection.waitForReadyToReceiveIntent(intent.type)
         );
 
         let data: unknown = undefined;
@@ -134,8 +134,8 @@ export class IntentHandler {
         if (listeningWindows.length > 0) {
             const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
 
-            const [result, returnData] = await collateClientCalls(listeningWindows.map((window) => {
-                return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
+            const [result, returnData] = await collateClientCalls(listeningWindows.map((connection) => {
+                return this._apiHandler.dispatch(connection.identity, APIToClientTopic.RECEIVE_INTENT, payload);
             }));
             data = returnData;
 

@@ -129,44 +129,45 @@ export class Model {
     }
 
     /**
-     * Returns all registered windows for an app satisfying our predicate, waiting for at least one window or until the app is mature
+     * Returns all registered connections for an app satisfying our predicate, waiting for at least one connection or
+     * until the app is mature.
      */
     public async expectConnectionsForApp(
         appInfo: Application,
-        windowReadyNow: (window: AppConnection) => boolean,
-        waitForWindowReady: (window: AppConnection) => Promise<void>
+        isReadyNow: (connection: AppConnection) => boolean,
+        waitForReady: (connection: AppConnection) => Promise<void>
     ): Promise<AppConnection[]> {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
-        const windows = this._liveAppsByUuid[uuid] ? this._liveAppsByUuid[uuid].windows : [];
+        const connections = this._liveAppsByUuid[uuid] ? this._liveAppsByUuid[uuid].connections : [];
 
-        const result: AppConnection[] = windows.filter(windowReadyNow);
+        const result: AppConnection[] = connections.filter(isReadyNow);
 
         if (result.length > 0) {
-            // If we have any windows that immediately satisfy our predicate, return those
+            // If we have any connections that immediately satisfy our predicate, return those
             return result;
         } else {
-            // Otherwise, wait until we have a single window that satisfies our predicate
+            // Otherwise, wait until we have a single connection that satisfies our predicate
             const deferredPromise = new DeferredPromise<AppConnection>();
 
-            // Apply the async predicate to any incoming windows
-            const slot = this._onConnectionRegisteredInternal.add((window) => {
-                if (window.appInfo.appId === appInfo.appId) {
-                    waitForWindowReady(window).then(() => deferredPromise.resolve(window), () => {});
+            // Apply the async predicate to any incoming connections
+            const slot = this._onConnectionRegisteredInternal.add((connection) => {
+                if (connection.appInfo.appId === appInfo.appId) {
+                    waitForReady(connection).then(() => deferredPromise.resolve(connection), () => {});
                 }
             });
 
-            // Apply the async predicate to any existing windows
-            for (const window of windows) {
-                waitForWindowReady(window).then(() => deferredPromise.resolve(window), () => {});
+            // Apply the async predicate to any existing connections
+            for (const connection of connections) {
+                waitForReady(connection).then(() => deferredPromise.resolve(connection), () => {});
             }
 
-            // Return a window once we have one, or timeout when the application is mature
+            // Return a connection once we have one, or timeout when the application is mature
             return Promise.race([
-                deferredPromise.promise.then((window) => [window]),
+                deferredPromise.promise.then((connection) => [connection]),
                 this.getOrCreateLiveApp(appInfo).then((liveApp) => liveApp.waitForAppMature().then(() => [], () => []))
-            ]).then((window) => {
+            ]).then((connection) => {
                 slot.remove();
-                return window;
+                return connection;
             });
         }
     }
@@ -213,9 +214,9 @@ export class Model {
         const liveApps = Object.values(this._liveAppsByUuid);
 
         const liveAppsForIntent = (await serialFilter(liveApps, async (liveApp: LiveApp) => {
-            const {appInfo, windows} = liveApp;
+            const {appInfo, connections} = liveApp;
 
-            const hasIntentListener = windows.some((window) => window.hasIntentListener(intentType));
+            const hasIntentListener = connections.some((connection) => connection.hasIntentListener(intentType));
 
             return hasIntentListener && appInfo !== undefined && AppDirectory.mightAppSupportIntent(appInfo, intentType, contextType);
         })).map((liveApp) => liveApp.appInfo!);
@@ -294,7 +295,7 @@ export class Model {
     public findConnectionsByAppName(name: AppName): AppConnection[] {
         const liveApp = Object.values(this._liveAppsByUuid).find((testLiveApp) => !!testLiveApp.appInfo && testLiveApp.appInfo.name === name);
 
-        return liveApp ? liveApp.windows : [];
+        return liveApp ? liveApp.connections : [];
     }
 
     public async existsAppForName(name: AppName): Promise<boolean> {
@@ -400,7 +401,7 @@ export class Model {
         this._connectionsById[connection.id] = connection;
         delete this._expectedConnectionsById[connection.id];
 
-        liveApp.addWindow(connection);
+        liveApp.addConnection(connection);
 
         this.onConnectionAdded.emit(connection);
         this._onConnectionRegisteredInternal.emit(connection);
@@ -413,7 +414,7 @@ export class Model {
         if (connection) {
             const liveApp: LiveApp | undefined = this._liveAppsByUuid[identity.uuid];
             if (liveApp) {
-                liveApp.removeWindow(connection);
+                liveApp.removeConnection(connection);
             }
 
             delete this._connectionsById[id];

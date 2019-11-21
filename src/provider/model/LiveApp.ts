@@ -9,7 +9,7 @@ import {AppConnection} from './AppConnection';
  * Represents a running application
  */
 export class LiveApp {
-    private readonly _windowsById: Map<string, AppConnection> = new Map();
+    private readonly _connectionsById: Map<string, AppConnection> = new Map();
     private readonly _appInfoDeferredPromise: DeferredPromise<Application> = new DeferredPromise();
 
     private readonly _startedPromise: Promise<void>;
@@ -51,8 +51,8 @@ export class LiveApp {
         }
     }
 
-    public get windows(): AppConnection[] {
-        return Array.from(this._windowsById.values());
+    public get connections(): AppConnection[] {
+        return Array.from(this._connectionsById.values());
     }
 
     public get appInfo(): Application | undefined {
@@ -86,16 +86,16 @@ export class LiveApp {
         }
     }
 
-    public addWindow(window: AppConnection): void {
-        this._windowsById.set(window.id, window);
+    public addConnection(connection: AppConnection): void {
+        this._connectionsById.set(connection.id, connection);
     }
 
-    public removeWindow(window: AppConnection): void {
-        this._windowsById.delete(window.id);
+    public removeConnection(connection: AppConnection): void {
+        this._connectionsById.delete(connection.id);
     }
 
-    public hasWindow(window: AppConnection): boolean {
-        return this._windowsById.has(window.id);
+    public hasConnection(connection: AppConnection): boolean {
+        return this._connectionsById.has(connection.id);
     }
 
     public setClosed(): void {

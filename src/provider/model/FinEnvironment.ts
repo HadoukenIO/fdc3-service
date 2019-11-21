@@ -203,7 +203,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         // Only retain knowledge of the entity if it's a window.
         // Windows are removed when they are closed, all other entity types are removed when they disconnect.
         if (connection && connection.entityType !== EntityType.WINDOW) {
-            this._knownEntities.delete(id);
+            this.deregisterEntity(identity);
         }
     }
 

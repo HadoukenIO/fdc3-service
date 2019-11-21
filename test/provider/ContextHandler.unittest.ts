@@ -15,7 +15,7 @@ const mockModel = createMockModel();
 const mockApiHandler = createMockApiHandler();
 
 const mockGetChannelMembers = mockChannelHandler.getChannelMembers;
-const mockGetWindowsListeningForContextsOnChannel = mockChannelHandler.getWindowsListeningForContextsOnChannel;
+const mockGetWindowsListeningForContextsOnChannel = mockChannelHandler.getConnectionsListeningForContextsOnChannel;
 const mockDispatch = mockApiHandler.dispatch;
 
 const mockConnections: AppConnection[] = [];

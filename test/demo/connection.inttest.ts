@@ -220,7 +220,7 @@ async function getIntentListeners(intentType: string): Promise<AppConnection[]> 
 async function getChannelContextListeners(remoteChannel: RemoteChannel): Promise<AppConnection[]> {
     return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, id: string): AppConnection[] {
         const channel = this.channelHandler.getChannelById(id);
-        return this.channelHandler.getWindowsListeningForContextsOnChannel(channel);
+        return this.channelHandler.getConnectionsListeningForContextsOnChannel(channel);
     }, remoteChannel.channel.id);
 }
 
@@ -228,7 +228,7 @@ async function hasEventListeners(identity: Identity, eventType: ChannelEvents['t
     const identities = await ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, event: ChannelEvents['type']): Identity[] {
         // Check that the window identity is on any channel.
         return this.model.channels.map((channel) => {
-            return this.channelHandler.getWindowsListeningForEventsOnChannel(channel, event).map((appWindow) => appWindow.identity);
+            return this.channelHandler.getConnectionsListeningForEventsOnChannel(channel, event).map((appWindow) => appWindow.identity);
         }).reduce((acc, current) => [...acc, ...current], []);
     }, eventType);
     return identities.some((id) => id.name === identity.name && id.uuid === identity.uuid);

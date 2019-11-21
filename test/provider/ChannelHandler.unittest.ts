@@ -120,7 +120,7 @@ it('When querying which windows are listening for contexts on a channel, Channel
 
     setModelConnections(testWindows);
 
-    expect(channelHandler.getWindowsListeningForContextsOnChannel(testChannel)).toEqual([testWindows[0], testWindows[2]]);
+    expect(channelHandler.getConnectionsListeningForContextsOnChannel(testChannel)).toEqual([testWindows[0], testWindows[2]]);
 });
 
 it('When querying which windows are listening for events on a channel, ChannelHander returns the expected AppWindows', () => {
@@ -137,7 +137,7 @@ it('When querying which windows are listening for events on a channel, ChannelHa
 
     setModelConnections(testWindows);
 
-    expect(channelHandler.getWindowsListeningForEventsOnChannel(testChannel, 'window-added')).toEqual([testWindows[0], testWindows[2]]);
+    expect(channelHandler.getConnectionsListeningForEventsOnChannel(testChannel, 'window-added')).toEqual([testWindows[0], testWindows[2]]);
 });
 
 describe('When setting the last broadcast context for a channel', () => {
