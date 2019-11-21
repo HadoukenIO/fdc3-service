@@ -43,7 +43,7 @@ export enum ApplicationError {
  */
 export enum SendContextError {
     /**
-     * Indicates that the target application has no windows that have a relevant handler for the given context.
+     * Indicates that the target application has no connections that have a relevant handler for the given context.
      */
     NoHandler = 'SendContextError:NoHandler',
     /**
