@@ -148,7 +148,7 @@ const contextListeners: ContextListener[] = [];
  *
  * If a [[Context]] object is passed in, this object will be provided to the opened application via a [[ContextListener]].
  *
- * If opening errors, it returns an [[FDC3Error]] with a string from the [[OpenError]] export enumeration.
+ * If opening errors, it returns an [[FDC3Error]] with a string from the [[ApplicationError]] export enumeration.
  *
  *  ```javascript
  *     // No context
