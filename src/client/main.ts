@@ -120,7 +120,7 @@ export interface IntentListener {
     /**
      * The handler for when this listener receives an intent.
      */
-    handler: (context: Context) => void | Promise<void>;
+    handler: (context: Context) => unknown | Promise<unknown>;
     /**
      * Unsubscribe the listener object. We will no longer receive intent messages on this handler.
      *
@@ -306,7 +306,7 @@ export async function raiseIntent(intent: string, context: Context, target?: App
  * @param intent The name of the intent to listen for.
  * @param handler The handler to call when we get sent an intent.
  */
-export function addIntentListener(intent: string, handler: (context: Context) => void | Promise<void>): IntentListener {
+export function addIntentListener(intent: string, handler: (context: Context) => any | Promise<any>): IntentListener {
     validateEnvironment();
 
     const listener: IntentListener = {
@@ -428,12 +428,13 @@ function deserializeChannelChangedEvent(eventTransport: Transport<ChannelChanged
 if (typeof fin !== 'undefined') {
     getServicePromise().then((channelClient) => {
         channelClient.register(APIToClientTopic.RECEIVE_INTENT, async (payload: RaiseIntentPayload) => {
-            await invokeListeners(
+            const result = await invokeListeners(
                 intentListeners.filter((listener) => payload.intent === listener.intent),
                 payload.context,
                 (e) => console.warn(`Error thrown by ${payload.intent} intent handler, swallowing error. Error message: ${e.message}`),
                 () => new Error(`All ${payload.intent} intent handlers failed`)
             );
+            return result;
         });
 
         channelClient.register(APIToClientTopic.RECEIVE_CONTEXT, async (payload: ReceiveContextPayload) => {

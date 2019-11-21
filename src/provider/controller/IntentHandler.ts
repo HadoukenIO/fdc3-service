@@ -17,7 +17,7 @@ export class IntentHandler {
     private readonly _resolver: ResolverHandlerBinding;
     private readonly _apiHandler: APIHandler<APIToClientTopic>;
 
-    private _resolvePromise: Promise<IntentResolution>|null;
+    private _resolvePromise: Promise<IntentResolution> | null;
 
     constructor(
         @inject(Inject.MODEL) model: Model,
@@ -129,12 +129,15 @@ export class IntentHandler {
             (window) => window.waitForReadyToReceiveIntent(intent.type)
         );
 
+        let data: unknown = undefined;
+
         if (listeningWindows.length > 0) {
             const payload: ReceiveIntentPayload = {context: intent.context, intent: intent.type};
 
-            const [result] = await collateClientCalls(listeningWindows.map((window) => {
+            const [result, returnData] = await collateClientCalls(listeningWindows.map((window) => {
                 return this._apiHandler.dispatch(window.identity, APIToClientTopic.RECEIVE_INTENT, payload);
             }));
+            data = returnData;
 
             if (result === ClientCallsResult.ALL_FAILURE) {
                 throw new FDC3Error(SendContextError.HandlerError, 'Error(s) thrown by application attempting to handle intent');
@@ -145,15 +148,16 @@ export class IntentHandler {
             throw new FDC3Error(SendContextError.NoHandler, `Application has no handler for intent '${intent.type}'`);
         }
 
-        const result: IntentResolution = {
+        const resolution: IntentResolution = {
             source: appInfo.name,
-            version: '1.0.0'
+            version: '1.0.0',
+            data
         };
 
         // Handle next queued intent
-        console.log('Finished intent', intent.type);
+        console.log(`Finished intent: ${intent.type}`, resolution);
 
-        return result;
+        return resolution;
     }
 }
 

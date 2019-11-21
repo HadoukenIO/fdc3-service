@@ -5,7 +5,7 @@
  * Most of call signatures are identical to the client API, but with an
  * additional "executionTarget" parameter as the first argument.
  *
- * The Listner classes have been replaced with functions which will create the
+ * The Listener classes have been replaced with functions which will create the
  * listeners and when triggered will invoke the provided callback in the test's
  * context (i.e. in node, not the window);
  */
@@ -14,7 +14,7 @@ import {Identity} from 'openfin/_v2/main';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 
 import {IntentType} from '../../../src/provider/intents';
-import {Context, AppIntent, ChannelId} from '../../../src/client/main';
+import {Context, AppIntent, ChannelId, IntentResolution} from '../../../src/client/main';
 import {RaiseIntentPayload, deserializeError, Events, MainEvents, FindIntentPayload, OpenPayload, BroadcastPayload} from '../../../src/client/internal';
 
 import {OFPuppeteerBrowser, TestWindowContext, TestChannelTransport} from './ofPuppeteer';
@@ -25,26 +25,25 @@ export const ofBrowser = new OFPuppeteerBrowser();
 
 const remoteChannels: {[id: string]: RemoteChannel} = {};
 
-export interface RemoteContextListener {
+export type IntentHandler = (context: Context) => any | Promise<any>;
+
+interface RemoteListener {
     remoteIdentity: Identity;
     id: number;
     unsubscribe: () => Promise<void>;
+}
+
+export interface RemoteContextListener extends RemoteListener {
     getReceivedContexts: () => Promise<Context[]>;
 }
 
-export interface RemoteIntentListener {
-    remoteIdentity: Identity;
-    id: number;
+export interface RemoteIntentListener extends RemoteListener {
     intent: IntentType;
-    unsubscribe: () => Promise<void>;
     getReceivedContexts: () => Promise<Context[]>;
 }
 
-export interface RemoteEventListener {
-    remoteIdentity: Identity;
-    id: number;
+export interface RemoteEventListener extends RemoteListener {
     getReceivedEvents: () => Promise<Events[]>;
-    unsubscribe: () => Promise<void>;
 }
 
 export async function open(executionTarget: Identity, name: string, context?: Context): Promise<void> {
@@ -64,16 +63,15 @@ export async function broadcast(executionTarget: Identity, context: Context): Pr
         .executeOnWindow(
             executionTarget,
             async function (this: TestWindowContext, payload: BroadcastPayload): Promise<void> {
-                return this.fdc3.broadcast(payload.context);
+                return this.fdc3.broadcast(payload.context).catch(this.errorHandler);
             },
             {context}
-        )
-        .then(() => new Promise<void>((res) => setTimeout(res, 100))); // Broadcast is fire-and-forget. Slight delay to allow for service to handle
+        ).catch(handlePuppeteerError);
 }
 
-export async function raiseIntent(executionTarget: Identity, intent: IntentType, context: Context, target?: string): Promise<void> {
-    return ofBrowser.executeOnWindow(executionTarget, async function (this: TestWindowContext, payload: RaiseIntentPayload): Promise<void> {
-        await this.fdc3.raiseIntent(payload.intent, payload.context, payload.target).catch(this.errorHandler);
+export async function raiseIntent(executionTarget: Identity, intent: IntentType, context: Context, target?: string): Promise<IntentResolution> {
+    return ofBrowser.executeOnWindow(executionTarget, async function (this: TestWindowContext, payload: RaiseIntentPayload): Promise<IntentResolution> {
+        return this.fdc3.raiseIntent(payload.intent, payload.context, payload.target).catch(this.errorHandler);
     }, {intent, context, target}).catch(handlePuppeteerError);
 }
 
@@ -103,17 +101,31 @@ export async function addContextListener(executionTarget: Identity): Promise<Rem
     return createRemoteContextListener(executionTarget, id);
 }
 
-export async function addIntentListener(executionTarget: Identity, intent: IntentType): Promise<RemoteIntentListener> {
-    const id = await ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, intentRemote: IntentType): number {
-        if (this.intentListeners[intentRemote] === undefined) {
-            this.intentListeners[intentRemote] = [];
-        }
-        const listenerID = this.intentListeners[intentRemote].length;
-        this.intentListeners[intentRemote][listenerID] = this.fdc3.addIntentListener(intentRemote, (context) => {
-            this.receivedIntents.push({listenerID, intent: intentRemote, context});
-        });
-        return listenerID;
-    }, intent);
+export async function addIntentListener(executionTarget: Identity, intent: IntentType, listener?: IntentHandler): Promise<RemoteIntentListener> {
+    const remoteFn = (listener && await ofBrowser.getOrMountRemoteFunction(executionTarget, listener)) as unknown as IntentHandler || undefined;
+
+    const id = await ofBrowser.executeOnWindow(
+        executionTarget,
+        function (this: TestWindowContext, intentRemote: IntentType, listenerRemote?: IntentHandler): number {
+            if (this.intentListeners[intentRemote] === undefined) {
+                this.intentListeners[intentRemote] = [];
+            }
+            const listenerID = this.intentListeners[intentRemote].length;
+            this.intentListeners[intentRemote][listenerID] = this.fdc3.addIntentListener(intentRemote, async (context: Context): Promise<any> => {
+                this.receivedIntents.push({listenerID, intent: intentRemote, context});
+                // Catch and throw so it rejects correctly client side
+                const result: unknown = listenerRemote
+                    ? await listenerRemote(context).catch((error: Error) => {
+                        throw error;
+                    })
+                    : undefined;
+                return result;
+            });
+            return listenerID;
+        },
+        intent,
+        remoteFn
+    );
 
     await delay(Duration.LISTENER_HANDSHAKE);
 
@@ -335,9 +347,9 @@ function createRemoteIntentListener(executionTarget: Identity, id: number, inten
             }, intent, id);
             await delay(Duration.LISTENER_HANDSHAKE);
         },
-        getReceivedContexts: (): Promise<Context[]> => {
-            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, intentRemote: IntentType, idRemote: number): Context[] {
-                return this.receivedIntents.filter((entry) => entry.listenerID === idRemote && entry.intent === intentRemote).map((entry) => entry.context);
+        getReceivedContexts: async (): Promise<Context[]> => {
+            return ofBrowser.executeOnWindow(executionTarget, function (this: TestWindowContext, remoteIntent: IntentType, remoteId: number): Context[] {
+                return this.receivedIntents.filter((entry) => entry.listenerID === remoteId && entry.intent === remoteIntent).map((entry) => entry.context);
             }, intent, id);
         }
     };
