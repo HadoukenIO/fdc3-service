@@ -15,7 +15,7 @@ module.exports = async () => {
     // Get the devtools port of the currently running openfin instance
     const fin = await jsAdapter.connect({address: `ws://localhost:${process.env.OF_PORT}`, uuid: 'TEST-jest-global-setup'});
     const cliArgs = await fin.System.getCommandLineArguments();
-    const devToolsPortArgs = cliArgs.split(' ').filter(arg => arg.startsWith('--remote-debugging-port'));
+    const devToolsPortArgs = cliArgs.split(' ').filter((arg) => arg.startsWith('--remote-debugging-port'));
     if (devToolsPortArgs.length !== 1) {
         throw new Error('Could not get devtools port for runtime');
     }
@@ -24,7 +24,7 @@ module.exports = async () => {
     // Get the browser process devtools endpoint and connect to it with puppeteer to check it works
     const fetchResponse = await fetch(`http://localhost:${devToolsPort}/json/version`).catch(async () => {
         console.log('Initial fetch failed. Trying again in 1 second.');
-        await new Promise(res => setTimeout(res, 1000));
+        await new Promise((res) => setTimeout(res, 1000));
         return fetch(`http://localhost:${devToolsPort}/json/version`);
     });
     const browserWSEndpoint = (await fetchResponse.json()).webSocketDebuggerUrl;

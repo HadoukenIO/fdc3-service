@@ -30,7 +30,7 @@ export async function advanceTime(duration: number): Promise<void> {
             jest.advanceTimersByTime(1);
         }
     } else {
-        await new Promise(res => setTimeout(res, duration));
+        await new Promise((res) => setTimeout(res, duration));
     }
 }
 

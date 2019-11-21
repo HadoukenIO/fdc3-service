@@ -78,16 +78,16 @@ export class APIHandler<T extends Enum> {
     }
 
     public dispatch(to: Identity, action: string, payload: any): Promise<any> {
-        return this._providerChannel.dispatch(to, action, payload).catch(error => {
+        return this._providerChannel.dispatch(to, action, payload).catch((error) => {
             // Log and re-throw
             console.error(`Error when dispatching '${action}' to ${to.uuid}/${to.name}`, payload);
             throw error;
         });
     }
 
-    public publish(action: string, payload: any): Promise<any>[] {
+    public publish(action: string, payload: unknown): Promise<unknown>[] {
         const connections = this._providerChannel.connections.slice();
-        return this._providerChannel.publish(action, payload).map((promise, index) => promise.catch(error => {
+        return this._providerChannel.publish(action, payload).map((promise, index) => promise.catch((error) => {
             const {message, stack} = error;
 
             // We don't know which connection had the error, but assume that the indices of the promises match the indices of the channel connections.
@@ -100,10 +100,10 @@ export class APIHandler<T extends Enum> {
     }
 
     public async registerListeners<S extends APISpecification<T>>(actionHandlerMap: APIImplementation<T, S>): Promise<void> {
-        const providerChannel: ChannelProvider = this._providerChannel = await fin.InterApplicationBus.Channel.create(SERVICE_CHANNEL);
+        this._providerChannel = await fin.InterApplicationBus.Channel.create(SERVICE_CHANNEL);
 
-        providerChannel.onConnection(this.onConnectionHandler.bind(this));
-        providerChannel.onDisconnection(this.onDisconnectionHandler.bind(this));
+        this._providerChannel.onConnection(this.onConnectionHandler.bind(this));
+        this._providerChannel.onDisconnection(this.onDisconnectionHandler.bind(this));
 
         for (const action in actionHandlerMap) {
             if (actionHandlerMap.hasOwnProperty(action)) {
@@ -124,7 +124,7 @@ export class APIHandler<T extends Enum> {
     }
 
     // TODO?: Remove the need for this any by defining connection payload type?
-    // tslint:disable-next-line:no-any
+    // eslint-disable-next-line
     private onConnectionHandler(identity: Identity, payload?: any): void {
         if (payload && payload.version && payload.version.length > 0) {
             console.log(`connection from client: ${identity.name}, version: ${payload.version}`);
@@ -139,7 +139,7 @@ export class APIHandler<T extends Enum> {
         });
     }
 
-    private onDisconnectionHandler(app:Identity): void {
+    private onDisconnectionHandler(app: Identity): void {
         this.onDisconnection.emit(app);
     }
 }

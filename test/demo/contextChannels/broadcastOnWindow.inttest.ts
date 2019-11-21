@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/await-thenable */
 import 'jest';
 import {Identity, Application} from 'hadouken-js-adapter';
 
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {appStartupTime, testManagerIdentity, testAppNotInDirectory1, testAppInDirectory1, testAppInDirectory2, testAppInDirectory3, testAppInDirectory4, testAppWithPreregisteredListeners1} from '../constants';
 import {fin} from '../utils/fin';
-import {setupTeardown, quitApps} from '../utils/common';
+import {setupTeardown, quitApps, setupStartNonDirectoryAppBookends} from '../utils/common';
 import {ChannelDescriptor, getChannel} from '../utils/channels';
 import {fakeAppChannelDescriptor} from '../utils/fakes';
 
@@ -13,17 +14,17 @@ import {fakeAppChannelDescriptor} from '../utils/fakes';
  */
 const testContext = {type: 'test-context', name: 'contextName1', id: {name: 'contextID1'}};
 
-const startedApps:Application[] = [];
-
-setupTeardown();
+const startedApps: Application[] = [];
 
 afterEach(async () => {
-    await quitApps(...startedApps.map(app => app.identity));
+    await quitApps(...startedApps.map((app) => app.identity));
 
     startedApps.length = 0;
 });
 
-type BroadcastTestParam = [string, ChannelDescriptor, ChannelDescriptor, ChannelDescriptor[]]
+setupTeardown();
+
+type BroadcastTestParam = [string, ChannelDescriptor, ChannelDescriptor, ChannelDescriptor[]];
 const broadcastTestParams = [
     ['the default', 'default', 'blue', ['orange', fakeAppChannelDescriptor()]],
     ['a system', 'yellow', 'default', ['green', 'default', fakeAppChannelDescriptor()]],
@@ -38,7 +39,7 @@ describe.each(broadcastTestParams)(
 
             const listener = await fdc3Remote.addContextListener(listeningWindow);
 
-            const otherListeners = await Promise.all(otherWindows.map(window => fdc3Remote.addContextListener(window)));
+            const otherListeners = await Promise.all(otherWindows.map((window) => fdc3Remote.addContextListener(window)));
 
             // Broadcast our context on the broadcast channel
             await fdc3Remote.broadcast(broadcastingWindow, testContext);
@@ -100,7 +101,8 @@ describe('When adding a context listener to the default channel', () => {
     }, appStartupTime * 2);
 });
 
-type ContextListenerTestParam = [string, ChannelDescriptor]
+type ContextListenerTestParam = [string, ChannelDescriptor];
+
 const contextListenerTestParams = [
     ['a system', 'blue'],
     ['an app', fakeAppChannelDescriptor()]
@@ -142,13 +144,7 @@ describe.each(contextListenerTestParams)('When adding a context listener to %s c
 });
 
 describe('When using a non-directory app', () => {
-    beforeEach(async () => {
-        await fin.Application.startFromManifest(testAppNotInDirectory1.manifestUrl);
-    }, appStartupTime * 2);
-
-    afterEach(async () => {
-        await fin.Application.wrapSync(testAppNotInDirectory1).quit(true);
-    });
+    setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
 
     test('When broadcasting from the non-directory app, contexts are received as expected', async () => {
         const [orangeWindow] = await setupWindows('orange');

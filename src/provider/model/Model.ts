@@ -2,7 +2,7 @@ import {injectable, inject} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
-import {Application, AppName, AppId} from '../../client/directory';
+import {Application, AppName} from '../../client/directory';
 import {Inject} from '../common/Injectables';
 import {ChannelId, DEFAULT_CHANNEL_ID, AppIntent} from '../../client/main';
 import {APIHandler} from '../APIHandler';
@@ -11,8 +11,10 @@ import {SYSTEM_CHANNELS, Timeouts} from '../constants';
 import {withStrictTimeout, untilTrue, allowReject, untilSignal, asyncFilter} from '../utils/async';
 import {Boxed} from '../utils/types';
 import {getId} from '../utils/getId';
+import {DeferredPromise} from '../common/DeferredPromise';
 
 import {AppConnection} from './AppConnection';
+import {LiveApp} from './LiveApp';
 import {ContextChannel, DefaultContextChannel, SystemContextChannel} from './ContextChannel';
 import {Environment, EntityType} from './Environment';
 import {AppDirectory} from './AppDirectory';
@@ -30,11 +32,6 @@ interface ExpectedConnection {
 
     // Rejects when the window is closed
     closed: Promise<void>;
-}
-
-interface LiveApp {
-    application: Application;
-    connections: AppConnection[];
 }
 
 const EXPECT_TIMEOUT_MESSAGE = 'Timeout on window registration exceeded';
@@ -62,24 +59,29 @@ export class Model {
     private readonly _environment: Environment;
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
 
+    private readonly _liveAppsByUuid: {[id: string]: LiveApp};
     private readonly _connectionsById: {[id: string]: AppConnection};
     private readonly _channelsById: {[id: string]: ContextChannel};
     private readonly _expectedConnectionsById: {[id: string]: ExpectedConnection};
 
-    private readonly _onConnectionRegisteredInternal = new Signal<[]>();
+    private readonly _onConnectionRegisteredInternal: Signal<[AppConnection]> = new Signal();
 
     constructor(
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
         @inject(Inject.ENVIRONMENT) environment: Environment,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>
     ) {
-        this._connectionsById = {};
         this._channelsById = {};
+        this._connectionsById = {};
         this._expectedConnectionsById = {};
+        this._liveAppsByUuid = {};
 
         this._directory = directory;
         this._environment = environment;
         this._apiHandler = apiHandler;
+
+        this._environment.applicationCreated.add(this.onApplicationCreated, this);
+        this._environment.applicationClosed.add(this.onApplicationClosed, this);
 
         this._environment.onWindowCreated.add(this.onWindowCreated, this);
         this._environment.onWindowClosed.add(this.onWindowClosed, this);
@@ -91,6 +93,10 @@ export class Model {
         for (const channel of SYSTEM_CHANNELS) {
             this._channelsById[channel.id] = new SystemContextChannel(channel.id, channel.visualIdentity);
         }
+    }
+
+    public get apps(): LiveApp[] {
+        return Object.values(this._liveAppsByUuid);
     }
 
     public get connections(): AppConnection[] {
@@ -123,40 +129,76 @@ export class Model {
         }
     }
 
+    /**
+     * Returns all registered windows for an app satisfying our predicate, waiting for at least one window or until the app is mature
+     */
+    public async expectConnectionsForApp(
+        appInfo: Application,
+        windowReadyNow: (window: AppConnection) => boolean,
+        waitForWindowReady: (window: AppConnection) => Promise<void>
+    ): Promise<AppConnection[]> {
+        const uuid = AppDirectory.getUuidFromApp(appInfo);
+        const windows = this._liveAppsByUuid[uuid] ? this._liveAppsByUuid[uuid].windows : [];
+
+        const result: AppConnection[] = windows.filter(windowReadyNow);
+
+        if (result.length > 0) {
+            // If we have any windows that immediately satisfy our predicate, return those
+            return result;
+        } else {
+            // Otherwise, wait until we have a single window that satisfies our predicate
+            const deferredPromise = new DeferredPromise<AppConnection>();
+
+            // Apply the async predicate to any incoming windows
+            const slot = this._onConnectionRegisteredInternal.add((window) => {
+                if (window.appInfo.appId === appInfo.appId) {
+                    waitForWindowReady(window).then(() => deferredPromise.resolve(window), () => {});
+                }
+            });
+
+            // Apply the async predicate to any existing windows
+            for (const window of windows) {
+                waitForWindowReady(window).then(() => deferredPromise.resolve(window), () => {});
+            }
+
+            // Return a window once we have one, or timeout when the application is mature
+            return Promise.race([
+                deferredPromise.promise.then((window) => [window]),
+                this.getOrCreateLiveApp(appInfo).then((liveApp) => liveApp.waitForAppMature().then(() => [], () => []))
+            ]).then((window) => {
+                slot.remove();
+                return window;
+            });
+        }
+    }
+
+    public async getOrCreateLiveApp(appInfo: Application): Promise<LiveApp> {
+        const uuid = AppDirectory.getUuidFromApp(appInfo);
+
+        if (this._liveAppsByUuid[uuid]) {
+            return this._liveAppsByUuid[uuid];
+        } else {
+            const deferredPromise = new DeferredPromise<LiveApp>();
+
+            const slot = this._environment.applicationCreated.add((identity: Identity, liveApp: LiveApp) => {
+                if (identity.uuid === uuid) {
+                    slot.remove();
+                    deferredPromise.resolve(liveApp);
+                }
+            });
+
+            this._environment.createApplication(appInfo);
+
+            return deferredPromise.promise;
+        }
+    }
+
     public getChannel(id: ChannelId): ContextChannel|null {
         return this._channelsById[id] || null;
     }
 
     public setChannel(channel: ContextChannel): void {
         this._channelsById[channel.id] = channel;
-    }
-
-    /**
-     * Returns all registered connections for an app, waiting for at least one entity
-     */
-    public async expectConnectionsForApp(appInfo: Application): Promise<AppConnection[]> {
-        // TODO: This dangerous method doesn't give proper timeouts. Will likely be changed extensively/removed when we revisit timeouts [SERVICE-556]
-        let connections = this.findConnectionsByAppId(appInfo.appId);
-
-        if (connections.length === 0) {
-            const signalPromise = new Promise<AppConnection[]>(resolve => {
-                const slot = this._onConnectionRegisteredInternal.add(() => {
-                    const matchingConnections = this.findConnectionsByAppId(appInfo.appId);
-                    if (matchingConnections.length > 0) {
-                        slot.remove();
-                        resolve(matchingConnections);
-                    }
-                });
-            });
-            connections = await signalPromise;
-        }
-        return connections;
-    }
-
-    public async ensureRunning(appInfo: Application): Promise<void> {
-        if (!await this._environment.isRunning(AppDirectory.getUuidFromApp(appInfo))) {
-            await this._environment.createApplication(appInfo, this._channelsById[DEFAULT_CHANNEL_ID]);
-        }
     }
 
     /**
@@ -169,23 +211,33 @@ export class Model {
      */
     public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
         // Get all live apps that support the given intent and context
-        // TODO: Include apps that should add a listener but haven't yet, where the timeout has not expired (may have no registered windows) [SERVICE-556]
-        const liveApps = getLiveApps(this.connections);
+        const liveApps = Object.values(this._liveAppsByUuid);
 
-        const liveAppsForIntent = (await asyncFilter(liveApps, async (group: LiveApp) => {
-            const {application, connections} = group;
+        const liveAppsForIntent = (await asyncFilter(liveApps, async (liveApp: LiveApp) => {
+            const {appInfo, windows} = liveApp;
 
-            const hasIntentListener = connections.some(connection => connection.hasIntentListener(intentType));
+            const hasIntentListener = windows.some((window) => window.hasIntentListener(intentType));
 
-            return hasIntentListener && AppDirectory.mightAppSupportIntent(application, intentType, contextType);
-        })).map(group => group.application);
+            return hasIntentListener && appInfo !== undefined && AppDirectory.mightAppSupportIntent(appInfo, intentType, contextType);
+        })).map((liveApp) => liveApp.appInfo!);
 
         // Get all directory apps that support the given intent and context
         const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
-            return !await this._environment.isRunning(AppDirectory.getUuidFromApp(app));
+            const uuid = AppDirectory.getUuidFromApp(app);
+            const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
+
+            if (liveApp && liveApp.mature) {
+                return false;
+            }
+
+            if (liveAppsForIntent.find((testLiveApp) => testLiveApp.appId === app.appId)) {
+                return false;
+            }
+
+            return true;
         });
 
-        const directoryAppsForIntent = directoryApps.filter(app => AppDirectory.shouldAppSupportIntent(app, intentType, contextType));
+        const directoryAppsForIntent = directoryApps.filter((app) => AppDirectory.shouldAppSupportIntent(app, intentType, contextType));
 
         // Return apps in consistent order
         return [...liveAppsForIntent, ...directoryAppsForIntent].sort((a, b) => this.compareAppsForIntent(a, b, intentType, contextType));
@@ -201,25 +253,27 @@ export class Model {
         const appIntentsBuilder = new AppIntentsBuilder();
 
         // Populate appIntentsBuilder from running apps
-        // TODO: Include apps that should add a listener but haven't yet, where the timeout has not expired (may have no registered windows) [SERVICE-556]
-        this.connections.forEach(connection => {
+        this.connections.forEach((connection) => {
             const intentTypes = connection.intentListeners;
             const app = connection.appInfo;
 
-            intentTypes.filter(intentType => AppDirectory.mightAppSupportIntent(app, intentType, contextType)).forEach(intentType => {
+            intentTypes.filter((intentType) => AppDirectory.mightAppSupportIntent(app, intentType, contextType)).forEach((intentType) => {
                 appIntentsBuilder.addApplicationForIntent(intentType, connection.appInfo);
             });
         });
 
-        // Populate appIntentsBuilder from non-running directory apps
+        // Populate appIntentsBuilder from non-mature directory apps
         const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
-            return !await this._environment.isRunning(AppDirectory.getUuidFromApp(app));
+            const uuid = AppDirectory.getUuidFromApp(app);
+            const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
+
+            return !(liveApp && liveApp.mature);
         });
 
-        directoryApps.forEach(app => {
+        directoryApps.forEach((app) => {
             const intents = app.intents || [];
 
-            intents.filter(intent => AppDirectory.shouldAppSupportIntent(app, intent.name, contextType)).forEach(intent => {
+            intents.filter((intent) => AppDirectory.shouldAppSupportIntent(app, intent.name, contextType)).forEach((intent) => {
                 appIntentsBuilder.addApplicationForIntent(intent.name, app);
             });
         });
@@ -228,7 +282,7 @@ export class Model {
         const appIntents = appIntentsBuilder.build();
 
         // Normalize result and set display names
-        appIntents.forEach(appIntent => {
+        appIntents.forEach((appIntent) => {
             appIntent.apps.sort((a, b) => this.compareAppsForIntent(a, b, appIntent.intent.name, contextType));
             appIntent.intent.displayName = AppDirectory.getIntentDisplayName(appIntent.apps, appIntent.intent.name);
         });
@@ -239,38 +293,83 @@ export class Model {
     }
 
     public findConnectionsByAppName(name: AppName): AppConnection[] {
-        return this.findConnections(connection => connection.appInfo.name === name);
+        const liveApp = Object.values(this._liveAppsByUuid).find((testLiveApp) => !!testLiveApp.appInfo && testLiveApp.appInfo.name === name);
+
+        return liveApp ? liveApp.windows : [];
     }
 
+    public async existsAppForName(name: AppName): Promise<boolean> {
+        const directoryApp = await this._directory.getAppByName(name);
+
+        if (directoryApp) {
+            return true;
+        } else {
+            return !!this._liveAppsByUuid[name];
+        }
+    }
+
+    private async onApplicationCreated(identity: Identity, liveApp: LiveApp): Promise<void> {
+        const {uuid} = identity;
+        this._liveAppsByUuid[uuid] = liveApp;
+
+        await liveApp.waitForAppStarted();
+
+        // Attempt to get appInfo from the app directory, otherwise infer from environment
+        const appInfoFromDirectory = await this._directory.getAppByUuid(uuid);
+        const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
+
+        liveApp.setAppInfo(appInfo);
+    }
+
+    private onApplicationClosed(identity: Identity): void {
+        const {uuid} = identity;
+        const app = this._liveAppsByUuid[uuid];
+
+        if (app) {
+            app.setClosed();
+            delete this._liveAppsByUuid[uuid];
+        }
+    }
+
+    // private onWindowCreated(identity: Identity): void {
+    //     const connection = this.getOrCreateExpectedConnection(identity);
+
+    //     // Only register windows once they are connected to the service
+    //     allowReject(connection.connected.then(async () => {
+    //         // Attempt to copy appInfo from another appWindow in the model from the same app
+    //         let registered = false;
+    //         let appWindowsFromSameApp: AppConnection[];
+
+    //         allowReject(untilTrue(this._onConnectionRegisteredInternal, () => {
+    //             appWindowsFromSameApp = this.findConnectionsByAppId(identity.uuid);
+    //             return appWindowsFromSameApp.length > 0;
+    //         }, connection.closed).then(() => {
+    //             if (!registered) {
+    //                 this.registerConnection(appWindowsFromSameApp[0].appInfo, identity, EntityType.WINDOW);
+    //                 registered = true;
+    //             }
+    //         }));
+
+    //         // If we're unable to copy appInfo from another window, attempt to use the app directory, or infer from environment
+    //         const appInfoFromDirectory = await this._directory.getAppByUuid(identity.uuid);
+
+    //         const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
+
+    //         if (!registered) {
+    //             this.registerConnection(appInfo, identity, EntityType.WINDOW);
+    //             registered = true;
+    //         }
+    //     }));
+    // }
+
     private onWindowCreated(identity: Identity): void {
-        const connection = this.getOrCreateExpectedConnection(identity);
+        const expectedWindow = this.getOrCreateExpectedConnection(identity);
+
+        const {uuid} = identity;
+        const liveApp = this._liveAppsByUuid[uuid];
 
         // Only register windows once they are connected to the service
-        allowReject(connection.connected.then(async () => {
-            // Attempt to copy appInfo from another appWindow in the model from the same app
-            let registered = false;
-            let appWindowsFromSameApp: AppConnection[];
-
-            allowReject(untilTrue(this._onConnectionRegisteredInternal, () => {
-                appWindowsFromSameApp = this.findConnectionsByAppId(identity.uuid);
-                return appWindowsFromSameApp.length > 0;
-            }, connection.closed).then(() => {
-                if (!registered) {
-                    this.registerConnection(appWindowsFromSameApp[0].appInfo, identity, EntityType.WINDOW);
-                    registered = true;
-                }
-            }));
-
-            // If we're unable to copy appInfo from another window, attempt to use the app directory, or infer from environment
-            const appInfoFromDirectory = await this._directory.getAppByUuid(identity.uuid);
-
-            const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
-
-            if (!registered) {
-                this.registerConnection(appInfo, identity, EntityType.WINDOW);
-                registered = true;
-            }
-        }));
+        allowReject(expectedWindow.connected.then(() => this.registerConnection(liveApp, identity, EntityType.WINDOW)));
     }
 
     private onWindowClosed(identity: Identity): void {
@@ -279,10 +378,16 @@ export class Model {
 
     private async onApiHandlerConnection(identity: Identity): Promise<void> {
         const entityType: EntityType = await this._environment.getEntityType(identity);
-        // console.log('onconnection handler', identity, entityType);
+
         if (entityType === EntityType.EXTERNAL_CONNECTION) {
             // Any connections to the service from adapters should be immediately registered
-            this.registerConnection(await this._environment.inferApplication(identity), identity, entityType);
+            const appInfo = await this._environment.inferApplication(identity);
+            const liveApp = new LiveApp(Promise.resolve());
+
+            liveApp.setAppInfo(appInfo);
+            this._liveAppsByUuid[identity.uuid] = liveApp;
+
+            this.registerConnection(liveApp, identity, entityType);
         }
     }
 
@@ -312,20 +417,25 @@ export class Model {
     /**
      * Registers an entity in the model
      *
-     * @param appInfo Application info, either from the app directory, or 'crafted' for a non-registered app
+     * @param liveApp Details of the application that the connection belongs to
      * @param identity Window/connection identity
      * @param entityType Indicates the type of entity that is connecting to the service
      */
-    private registerConnection(appInfo: Application, identity: Identity, entityType: EntityType): void {
-        const connection = this._environment.wrapApplication(appInfo, identity, entityType, this._channelsById[DEFAULT_CHANNEL_ID]);
+    private async registerConnection(liveApp: LiveApp, identity: Identity, entityType: EntityType): Promise<void> {
+        // Don't register connections for any app until the app's info is known
+        await liveApp.waitForAppInfo();
+
+        const connection: AppConnection = this._environment.wrapConnection(liveApp, identity, entityType, this._channelsById[DEFAULT_CHANNEL_ID]);
 
         console.info(`Registering connection ${connection.id}`);
 
         this._connectionsById[connection.id] = connection;
         delete this._expectedConnectionsById[connection.id];
 
+        liveApp.addWindow(connection);
+
         this.onConnectionAdded.emit(connection);
-        this._onConnectionRegisteredInternal.emit();
+        this._onConnectionRegisteredInternal.emit(connection);
     }
 
     private removeConnection(identity: Identity): void {
@@ -333,6 +443,11 @@ export class Model {
         const connection: AppConnection = this._connectionsById[id];
 
         if (connection) {
+            const liveApp: LiveApp | undefined = this._liveAppsByUuid[identity.uuid];
+            if (liveApp) {
+                liveApp.removeWindow(connection);
+            }
+
             delete this._connectionsById[id];
             this.onConnectionRemoved.emit(connection);
         } else if (this._expectedConnectionsById[id]) {
@@ -340,9 +455,9 @@ export class Model {
         }
     }
 
-    private findConnectionsByAppId(appId: AppId): AppConnection[] {
-        return this.findConnections(connection => connection.appInfo.appId === appId);
-    }
+    // private findConnectionsByAppId(appId: AppId): AppConnection[] {
+    //     return this.findConnections((connection) => connection.appInfo.appId === appId);
+    // }
 
     private findConnections(predicate: (connection: AppConnection) => boolean): AppConnection[] {
         return this.connections.filter(predicate);
@@ -409,8 +524,8 @@ export class Model {
             return 1;
         }
 
-        const running1 = this._environment.isRunning(AppDirectory.getUuidFromApp(app1));
-        const running2 = this._environment.isRunning(AppDirectory.getUuidFromApp(app2));
+        const running1 = this._liveAppsByUuid[AppDirectory.getUuidFromApp(app1)] !== undefined;
+        const running2 = this._liveAppsByUuid[AppDirectory.getUuidFromApp(app2)] !== undefined;
 
         if (running1 && !running2) {
             return -1;
@@ -422,21 +537,8 @@ export class Model {
     }
 }
 
-function getLiveApps(connections: AppConnection[]): LiveApp[] {
-    return connections.reduce((liveApps: LiveApp[], connection: AppConnection) => {
-        const liveApp = liveApps.find(liveApp => liveApp.application.appId === connection.appInfo.appId);
-        if (liveApp) {
-            liveApp.connections.push(connection);
-        } else {
-            liveApps.push({application: connection.appInfo, connections: [connection]});
-        }
-
-        return liveApps;
-    }, []);
-}
-
 class AppIntentsBuilder {
-    private _appsByIntentType: Map<string, Set<Application>> = new Map();
+    private readonly _appsByIntentType: Map<string, Set<Application>> = new Map();
 
     public addApplicationForIntent(intentType: string, app: Application): void {
         const appsSet = this._appsByIntentType.get(intentType) || new Set<Application>();

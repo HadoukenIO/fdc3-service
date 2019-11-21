@@ -8,5 +8,13 @@
         "javascriptreact",
         "typescript",
         "typescriptreact"
+    ],
+    "cSpell.words": [
+        "bloomberg",
+        "cusip",
+        "figi",
+        "isin",
+        "permid",
+        "sedol"
     ]
 }

@@ -1,23 +1,15 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {Application} from '../../client/main';
-
 import {AppConnectionBase} from './AppConnection';
 import {ContextChannel} from './ContextChannel';
 import {EntityType} from './Environment';
+import {LiveApp} from './LiveApp';
 
 export class FinAppConnection extends AppConnectionBase {
     private readonly _identity: Identity;
 
-    constructor(
-        identity: Identity,
-        entityType: EntityType,
-        appInfo: Application,
-        channel: ContextChannel,
-        creationTime: number | undefined,
-        appWindowNumber: number
-    ) {
-        super(identity, entityType, appInfo, channel, creationTime, appWindowNumber);
+    constructor(identity: Identity, entityType: EntityType, liveApp: LiveApp, channel: ContextChannel, appWindowNumber: number) {
+        super(identity, entityType, liveApp.appInfo!, liveApp.waitForAppMature(), channel, appWindowNumber);
 
         this._identity = identity;
     }

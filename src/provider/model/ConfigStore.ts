@@ -12,8 +12,8 @@ export interface ConfigStoreBinding {
 
 @injectable()
 export class ConfigStore extends AsyncInit implements ConfigStoreBinding {
-    private _store: Store<ConfigurationObject>;
-    private _loader: Loader<ConfigStoreBinding>;
+    private readonly _store: Store<ConfigurationObject>;
+    private readonly _loader: Loader<ConfigStoreBinding>;
 
     constructor() {
         super();

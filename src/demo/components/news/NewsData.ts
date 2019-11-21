@@ -1,10 +1,10 @@
 import {NewsItem} from './NewsCard';
 
 export function fetchNews(symbol: string) {
-    return new Promise<NewsItem[]>(resolve => {
+    return new Promise<NewsItem[]>((resolve) => {
         setTimeout(() => {
             resolve([symbol, symbol, symbol].map(getNewsItem).sort(byDate));
-        }, 100 + Math.random() * 500);
+        }, 100 + (Math.random() * 500));
     });
 }
 
@@ -16,7 +16,7 @@ function getNewsItem(symbol: string): NewsItem {
 }
 
 function getRandomDate() {
-    return new Date(new Date().valueOf() - Math.random() * 1e9);
+    return new Date((new Date().valueOf() - Math.random()) * 1e9);
 }
 
 function getRandomHeadline(symbol: string) {

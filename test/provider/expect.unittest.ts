@@ -17,35 +17,34 @@ import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
 import {PartiallyWritable} from '../types';
 import {Timeouts} from '../../src/provider/constants';
 import {getId} from '../../src/provider/utils/getId';
+import {LiveApp} from '../../src/provider/model/LiveApp';
 
 jest.mock('../../src/provider/model/AppDirectory');
 jest.mock('../../src/provider/APIHandler');
 
-type TestWindow = {
+interface TestWindow {
     createdTime?: number;
     connectionTime?: number;
     closeTime?: number;
     appType: 'directory' | 'non-directory' | 'non-directory-external';
-};
+}
 
-type ExpectCall = {
+interface ExpectCall {
     callTime: number;
     finalizeTime: number;
     result: 'resolve' | 'reject-timeout' | 'reject-closed';
-};
+}
 
-type ExpectCallResult = {
+interface ExpectCallResult {
     promise: Promise<AppConnection>;
     time: number;
     call: ExpectCall;
-};
+}
 
 type ResultParam = [string, ExpectCall];
 
 type TestParam = [
     string,
-    TestWindow,
-    number,
     ExpectCall[]
 ];
 
@@ -57,7 +56,7 @@ let mockAppDirectory: jest.Mocked<AppDirectory>;
 let mockEnvironment: jest.Mocked<Environment>;
 let mockApiHandler: jest.Mocked<APIHandler<APIFromClientTopic>>;
 
-beforeEach(async () => {
+beforeEach(() => {
     mockAppDirectory = new AppDirectory(null!) as jest.Mocked<AppDirectory>;
     mockEnvironment = createMockEnvironmnent();
     mockApiHandler = new APIHandler<APIFromClientTopic>() as jest.Mocked<APIHandler<APIFromClientTopic>>;
@@ -307,9 +306,9 @@ describe('When creating an external connection', () => {
 });
 
 function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resultParams: ResultParam[]): void {
-    const testParams = buildTestParams(testWindow, appDirectoryResultTime, resultParams);
+    const testParams = buildTestParams(testWindow, resultParams);
 
-    it.each(testParams)('%s', async (titleParam: string, testWindow: TestWindow, appDirectoryResultTime: number, expectCalls: ExpectCall[]) => {
+    it.each(testParams)('%s', async (titleParam: string, expectCalls: ExpectCall[]) => {
         // Setup our environment
         const identity = {uuid: 'test-window', name: 'test-window'};
         const manifestUrl = testWindow.appType !== 'non-directory-external' ? 'test-manifest-url' : '';
@@ -322,13 +321,13 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
             return testWindow.appType === 'directory' ? mockApplication : null;
         });
 
-        mockEnvironment.wrapApplication.mockImplementationOnce((
-            appInfo: Application,
+        mockEnvironment.wrapConnection.mockImplementationOnce((
+            liveApp: LiveApp,
             testIdentity: Identity,
             entityType: EntityType,
             channel: ContextChannel
         ): AppConnection => {
-            return createMockAppConnection({id: getId(testIdentity), identity: testIdentity, entityType, appInfo});
+            return createMockAppConnection({id: getId(testIdentity), identity: testIdentity, entityType, channel, appInfo: liveApp.appInfo!});
         });
 
         mockEnvironment.getEntityType.mockImplementationOnce(async (entityIdentity: Identity): Promise<EntityType> => {
@@ -341,7 +340,8 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
             }
         });
 
-        mockEnvironment.inferApplication.mockImplementationOnce(async (identity: Identity): Promise<Application> => {
+        // eslint-disable-next-line @typescript-eslint/require-await
+        mockEnvironment.inferApplication.mockImplementationOnce(async (identityToInfer: Identity): Promise<Application> => {
             return mockApplication;
         });
 
@@ -373,7 +373,10 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
             return false;
         });
 
-        maybeSetTimeout(() => mockEnvironment.onWindowCreated.emit(identity), testWindow.createdTime);
+        maybeSetTimeout(() => {
+            mockEnvironment.applicationCreated.emit(identity, new LiveApp(Promise.resolve()));
+            mockEnvironment.onWindowCreated.emit(identity);
+        }, testWindow.createdTime);
         maybeSetTimeout(() => mockApiHandler.onConnection.emit(identity), testWindow.connectionTime);
         maybeSetTimeout(() => mockEnvironment.onWindowClosed.emit(identity), testWindow.closeTime);
         maybeSetTimeout(() => appDirectoryResultPromise.resolve(), appDirectoryResultTime);
@@ -386,7 +389,7 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
     });
 }
 
-function buildTestParams(testWindow: TestWindow, appDirectoryResultTime: number, resultParams: ResultParam[]): TestParam[] {
+function buildTestParams(testWindow: TestWindow, resultParams: ResultParam[]): TestParam[] {
     if (testWindow.closeTime === undefined && ![testWindow.createdTime, testWindow.connectionTime].includes(undefined)) {
         resultParams.push([
             'When a window is expected after the window has been registered, the window promise resolves',
@@ -394,14 +397,12 @@ function buildTestParams(testWindow: TestWindow, appDirectoryResultTime: number,
         ]);
     }
 
-    const testParams: TestParam[] = resultParams.map(resultParam => ([resultParam[0], testWindow, appDirectoryResultTime, [resultParam[1]]] as TestParam));
+    const testParams: TestParam[] = resultParams.map((resultParam) => ([resultParam[0], [resultParam[1]]] as TestParam));
 
     if (testParams.length > 1) {
         testParams.push([
             'When a window is expected multiple times, window promises resolve and reject independently',
-            testWindow,
-            appDirectoryResultTime,
-            resultParams.map(resultParam => resultParam[1])
+            resultParams.map((resultParam) => resultParam[1])
         ] as TestParam);
     }
 
@@ -416,13 +417,13 @@ function maybeSetTimeout(fn: (() => void), time: number | undefined): void {
 
 function setupExpectCalls(identity: Identity, expectCalls: ExpectCall[]): ExpectCallResult[] {
     const results: ExpectCallResult[] = [];
-    for (const call of expectCalls) {
+    expectCalls.forEach((call: ExpectCall) => {
         setTimeout(async () => {
             const promise = model.expectConnection(identity);
             await promise.catch(() => {});
             results.push({promise, time: Date.now(), call});
         }, call.callTime);
-    }
+    });
 
     return results;
 }

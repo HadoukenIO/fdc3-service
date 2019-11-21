@@ -17,17 +17,19 @@ export function AppCard(props: AppCardProps): React.ReactElement {
             handler(app);
         }
     };
-    const viewData = (app.type === 'manifest') ? {
-        title: app.data.title || app.data.appId,
-        description: app.data.description || '',
-        icon: (app.data.icons && app.data.icons[0] && app.data.icons[0].icon) || '',
-        className: isDirectoryApp ? 'w3-blue-gray' : 'w3-light-blue'
-    } : {
-        title: app.data.name || app.data.uuid,
-        description: app.data.description || '',
-        icon: app.data.icon || '',
-        className: 'w3-light-green'
-    };
+    const viewData = (app.type === 'manifest')
+        ? {
+            title: app.data.title || app.data.appId,
+            description: app.data.description || '',
+            icon: (app.data.icons && app.data.icons[0] && app.data.icons[0].icon) || '',
+            className: isDirectoryApp ? 'w3-blue-gray' : 'w3-light-blue'
+        }
+        : {
+            title: app.data.name || app.data.uuid,
+            description: app.data.description || '',
+            icon: app.data.icon || '',
+            className: 'w3-light-green'
+        };
 
     return (
         <div className="app-card w3-card w3-hover-shadow" onClick={handleClick}>

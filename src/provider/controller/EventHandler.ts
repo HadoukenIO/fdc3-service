@@ -1,5 +1,4 @@
 import {injectable, inject} from 'inversify';
-import _WindowModule from 'openfin/_v2/api/window/window';
 
 import {AppConnection} from '../model/AppConnection';
 import {APIHandler} from '../APIHandler';
@@ -47,7 +46,7 @@ export class EventHandler {
 
             const addedListeningWindows = this._channelHandler.getWindowsListeningForEventsOnChannel(channel, 'window-added');
 
-            promises.push(...addedListeningWindows.map(window => this.dispatchEvent(window, windowAddedEvent)));
+            promises.push(...addedListeningWindows.map((window) => this.dispatchEvent(window, windowAddedEvent)));
         }
 
         if (previousChannel) {
@@ -60,7 +59,7 @@ export class EventHandler {
 
             const removedListeningWindows = this._channelHandler.getWindowsListeningForEventsOnChannel(previousChannel, 'window-removed');
 
-            promises.push(...removedListeningWindows.map(window => this.dispatchEvent(window, windowRemovedEvent)));
+            promises.push(...removedListeningWindows.map((window) => this.dispatchEvent(window, windowRemovedEvent)));
         }
 
         const channelChangedEvent: Targeted<Transport<ChannelChangedEvent>> = {

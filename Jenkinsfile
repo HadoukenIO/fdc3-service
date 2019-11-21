@@ -24,7 +24,7 @@ pipeline {
                     steps {
                         sh "npm install"
                         sh "npm run test:unit -- --noColor -x \"--no-cache --verbose\""
-                        sh "npm run check"
+                        sh "npm run check -- --noCache"
                     }
                     post {
                         always {

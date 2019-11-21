@@ -1,12 +1,11 @@
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
-import {Application, IntentType, ChannelId} from '../../client/main';
-import {withTimeout} from '../utils/async';
-import {Timeouts} from '../constants';
-import {DeferredPromise} from '../common/DeferredPromise';
 import {Events, ChannelEvents} from '../../client/internal';
 import {getId} from '../utils/getId';
+import {IntentType} from '../intents';
+import {Application, ChannelId} from '../../client/main';
+import {untilTrue, allowReject} from '../utils/async';
 
 import {ContextChannel} from './ContextChannel';
 import {EntityType} from './Environment';
@@ -47,8 +46,9 @@ export interface AppConnection {
     bringToFront(): Promise<void>;
     focus(): Promise<void>;
 
-    isReadyToReceiveIntent(intent: IntentType): Promise<boolean>;
-    isReadyToReceiveContext(): Promise<boolean>;
+    waitForReadyToReceiveIntent(intent: IntentType): Promise<void>;
+    waitForReadyToReceiveContext(): Promise<void>;
+    waitForReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<void>;
 
     removeAllListeners(): void;
 }
@@ -60,10 +60,6 @@ type ContextMap = Set<string>;
 type ChannelEventMap = Map<string, Set<Events['type']>>;
 
 export abstract class AppConnectionBase implements AppConnection {
-    public abstract identity: Readonly<Identity>
-    public abstract bringToFront(): Promise<void>;
-    public abstract focus(): Promise<void>;
-
     public channel: ContextChannel;
 
     private readonly _id: string;
@@ -71,7 +67,7 @@ export abstract class AppConnectionBase implements AppConnection {
     private readonly _appInfo: Application;
     private readonly _appWindowNumber: number;
 
-    private readonly _creationTime: number | undefined;
+    private readonly _maturePromise: Promise<void>;
 
     private readonly _intentListeners: IntentMap;
     private readonly _channelContextListeners: ContextMap;
@@ -81,13 +77,14 @@ export abstract class AppConnectionBase implements AppConnection {
 
     private readonly _onIntentListenerAdded: Signal<[IntentType]> = new Signal();
     private readonly _onContextListenerAdded: Signal<[]> = new Signal();
+    private readonly _onChannelContextListenerAdded: Signal<[ContextChannel]> = new Signal();
 
     constructor(
         identity: Identity,
         entityType: EntityType,
         appInfo: Application,
+        maturePromise: Promise<void>,
         channel: ContextChannel,
-        creationTime: number | undefined,
         appWindowNumber: number
     ) {
         this._id = getId(identity);
@@ -95,7 +92,7 @@ export abstract class AppConnectionBase implements AppConnection {
         this._appInfo = appInfo;
         this._appWindowNumber = appWindowNumber;
 
-        this._creationTime = creationTime;
+        this._maturePromise = maturePromise;
 
         this._intentListeners = new Set();
         this._channelContextListeners = new Set();
@@ -162,6 +159,7 @@ export abstract class AppConnectionBase implements AppConnection {
 
     public addChannelContextListener(channel: ContextChannel): void {
         this._channelContextListeners.add(channel.id);
+        this._onChannelContextListenerAdded.emit(channel);
     }
 
     public removeChannelContextListener(channel: ContextChannel): void {
@@ -187,60 +185,16 @@ export abstract class AppConnectionBase implements AppConnection {
         }
     }
 
-    public async isReadyToReceiveIntent(intent: IntentType): Promise<boolean> {
-        if (this.hasIntentListener(intent)) {
-            // App has already registered the intent listener
-            return true;
-        }
-
-        const age = this._creationTime === undefined ? undefined : Date.now() - this._creationTime;
-
-        if (age === undefined || age >= Timeouts.ADD_INTENT_LISTENER) {
-            // App has been running for a while
-            return false;
-        } else {
-            // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
-            const deferredPromise = new DeferredPromise();
-
-            const slot = this._onIntentListenerAdded.add(intentAdded => {
-                if (intentAdded === intent) {
-                    deferredPromise.resolve();
-                }
-            });
-
-            const [didTimeout] = await withTimeout(Timeouts.ADD_INTENT_LISTENER - age, deferredPromise.promise);
-
-            slot.remove();
-
-            return !didTimeout;
-        }
+    public waitForReadyToReceiveIntent(intent: IntentType): Promise<void> {
+        return this.waitForListener(this._onIntentListenerAdded, () => this.hasIntentListener(intent));
     }
 
-    public async isReadyToReceiveContext(): Promise<boolean> {
-        if (this.hasContextListener()) {
-            // App has already registered the context listener
-            return true;
-        }
+    public waitForReadyToReceiveContext(): Promise<void> {
+        return this.waitForListener(this._onContextListenerAdded, () => this.hasContextListener());
+    }
 
-        const age = this._creationTime === undefined ? undefined : Date.now() - this._creationTime;
-
-        if (age === undefined || age >= Timeouts.ADD_CONTEXT_LISTENER) {
-            // App has been running for a while
-            return false;
-        } else {
-            // App may be starting - Give it some time to initialize and call `addContextListener()`, otherwise timeout
-            const deferredPromise = new DeferredPromise();
-
-            const slot = this._onContextListenerAdded.add(() => {
-                deferredPromise.resolve();
-            });
-
-            const [didTimeout] = await withTimeout(Timeouts.ADD_CONTEXT_LISTENER - age, deferredPromise.promise);
-
-            slot.remove();
-
-            return !didTimeout;
-        }
+    public waitForReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<void> {
+        return this.waitForListener(this._onChannelContextListenerAdded, () => this.hasChannelContextListener(channel));
     }
 
     public removeAllListeners(): void {
@@ -248,5 +202,15 @@ export abstract class AppConnectionBase implements AppConnection {
         this._channelEventListeners.clear();
         this._intentListeners.clear();
         this._hasContextListener = false;
+    }
+
+    public abstract identity: Readonly<Identity>;
+    public abstract bringToFront(): Promise<void>;
+    public abstract focus(): Promise<void>;
+
+    private waitForListener<A extends any[]>(listenerAddedSignal: Signal<A>, hasListenerPredicate: () => boolean): Promise<void> {
+        const rejectOnMaturePromise = allowReject(this._maturePromise.then(() => Promise.reject(new Error('Timeout waiting for listener'))));
+
+        return untilTrue(listenerAddedSignal, hasListenerPredicate, rejectOnMaturePromise);
     }
 }

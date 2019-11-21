@@ -5,6 +5,7 @@ import {Application} from '../../client/main';
 
 import {AppConnection} from './AppConnection';
 import {ContextChannel} from './ContextChannel';
+import {LiveApp} from './LiveApp';
 
 export enum EntityType {
     WINDOW = 'window',
@@ -31,24 +32,33 @@ export interface Environment {
     onWindowClosed: Signal<[Identity]>;
 
     /**
-     * Checks if an application is running, given an App Directory entry.
+     * Indicates that an application has been created by the service.
+     *
+     * Arguments: (identity: Identity)
      */
-    isRunning(uuid: string): Promise<boolean>;
+    applicationCreated: Signal<[Identity, LiveApp]>;
+
+    /**
+     * Indicates that an application has been closed.
+     *
+     * Arguments: (identity: Identity)
+     */
+    applicationClosed: Signal<[Identity]>;
 
     /**
      * Creates a new application, given an App Directory entry.
-     *
-     * @throws `FDC3Error`: If app fails to start
-     * @throws `FDC3Error`: If timeout trying to start app
+     * @throws
+     * * FDC3Error if app fails to start
+     * * FDC3Error if timeout trying to start app
      */
-    createApplication(appInfo: Application, channel: ContextChannel): Promise<void>;
+    createApplication: (appInfo: Application) => void;
 
     /**
      * Creates an `AppConnection` object for an existing identity, should only be called once per identity.
      *
      * Should be called after the `onWindowCreated` signal for windows, and the `APIHandler.onConnection` signal for external connections.
      */
-    wrapApplication(appInfo: Application, identity: Identity, entityType: EntityType, channel: ContextChannel): AppConnection;
+    wrapConnection: (liveApp: LiveApp, identity: Identity, entityType: EntityType, channel: ContextChannel) => AppConnection;
 
     /**
      * Examines a running window or external connection, and returns a best-effort Application description

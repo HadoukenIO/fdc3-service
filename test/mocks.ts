@@ -1,14 +1,19 @@
+/* eslint-disable */
 import {Signal} from 'openfin-service-signal';
 import {Identity} from 'openfin/_v2/main';
 
 import {AppConnection} from '../src/provider/model/AppConnection';
-import {IntentType, Context, Application} from '../src/client/main';
+import {Context, Application} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
 import {ChannelTransport, ChannelEvents, APIFromClientTopic} from '../src/client/internal';
 import {Environment, EntityType} from '../src/provider/model/Environment';
 import {AppDirectory} from '../src/provider/model/AppDirectory';
 import {APIHandler} from '../src/provider/APIHandler';
 import {getId} from '../src/provider/utils/getId';
+import {IntentType} from '../src/provider/intents';
+import {LiveApp} from '../src/provider/model/LiveApp';
+import {Model} from '../src/provider/model/Model';
+import {ChannelHandler} from '../src/provider/controller/ChannelHandler';
 
 import {createFakeIdentity, createFakeApp} from './demo/utils/fakes';
 
@@ -22,11 +27,11 @@ export function createMockAppConnection(options: Partial<jest.Mocked<AppConnecti
         id: getId(identity),
         identity,
         entityType: EntityType.WINDOW,
-        appInfo: createFakeApp({appId: identity.uuid}),
         appWindowNumber: 0,
+        appInfo: createFakeApp({appId: identity.uuid}),
         channel: createMockChannel(),
-        channelContextListeners: [],
         intentListeners: [],
+        channelContextListeners: [],
         hasIntentListener: jest.fn<boolean, [string]>(),
         addIntentListener: jest.fn<void, [string]>(),
         removeIntentListener: jest.fn<void, [string]>(),
@@ -41,8 +46,9 @@ export function createMockAppConnection(options: Partial<jest.Mocked<AppConnecti
         removeChannelEventListener: jest.fn<void, [ContextChannel, ChannelEvents['type']]>(),
         bringToFront: jest.fn<Promise<void>, []>(),
         focus: jest.fn<Promise<void>, []>(),
-        isReadyToReceiveIntent: jest.fn<Promise<boolean>, [IntentType]>(),
-        isReadyToReceiveContext: jest.fn<Promise<boolean>, []>(),
+        waitForReadyToReceiveIntent: jest.fn<Promise<void>, [IntentType]>(),
+        waitForReadyToReceiveContext: jest.fn<Promise<void>, []>(),
+        waitForReadyToReceiveContextOnChannel: jest.fn<Promise<void>, [ContextChannel]>(),
         removeAllListeners: jest.fn<void, []>(),
         // Apply any custom overrides
         ...options
@@ -64,11 +70,12 @@ export function createMockChannel(options: Partial<jest.Mocked<ContextChannel>> 
 
 export function createMockEnvironmnent(options: Partial<jest.Mocked<Environment>> = {}): jest.Mocked<Environment> {
     return {
+        applicationCreated: new Signal<[Identity, LiveApp]>(),
+        applicationClosed: new Signal<[Identity]>(),
         onWindowCreated: new Signal<[Identity]>(),
         onWindowClosed: new Signal<[Identity]>(),
-        isRunning: jest.fn<Promise<boolean>, [string]>(),
-        createApplication: jest.fn<Promise<void>, [Application, ContextChannel]>(),
-        wrapApplication: jest.fn<AppConnection, [Application, Identity, EntityType, ContextChannel]>(),
+        createApplication: jest.fn<void, [Application]>(),
+        wrapConnection: jest.fn<AppConnection, [LiveApp, Identity, EntityType, ContextChannel]>(),
         inferApplication: jest.fn<Promise<Application>, [Identity]>(),
         getEntityType: jest.fn<Promise<EntityType>, [Identity]>(),
         isKnownEntity: jest.fn<boolean, [Identity]>(),
@@ -77,20 +84,35 @@ export function createMockEnvironmnent(options: Partial<jest.Mocked<Environment>
     };
 }
 
-export function createMockAppDirectory(): jest.Mocked<AppDirectory> {
-    const {AppDirectory} = jest.requireMock('../src/provider/model/AppDirectory');
-    return new AppDirectory();
-}
-
 export function createMockApiHandler(): jest.Mocked<APIHandler<APIFromClientTopic>> {
     const {APIHandler} = jest.requireMock('../src/provider/APIHandler');
 
-    const apiHandler = new APIHandler() as jest.Mocked<APIHandler<APIFromClientTopic>>;
+    const apiHandler: jest.Mocked<APIHandler<APIFromClientTopic>> = new APIHandler();
 
     assignMockGetter(apiHandler, 'onConnection');
     assignMockGetter(apiHandler, 'onDisconnection');
 
     return apiHandler;
+}
+
+export function createMockAppDirectory(): jest.Mocked<AppDirectory> {
+    const {AppDirectory} = jest.requireMock('../src/provider/model/AppDirectory');
+    return new AppDirectory();
+}
+
+export function createMockModel(): jest.Mocked<Model> {
+    const {Model} = jest.requireMock('../src/provider/model/Model');
+    const model: jest.Mocked<Model> = new Model();
+
+    assignMockGetter(model, 'connections');
+    assignMockGetter(model, 'apps');
+
+    return model;
+}
+
+export function createMockChannelHandler(): jest.Mocked<ChannelHandler> {
+    const {ChannelHandler} = jest.requireMock('../src/provider/controller/ChannelHandler');
+    return new ChannelHandler();
 }
 
 /**
