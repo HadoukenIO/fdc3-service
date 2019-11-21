@@ -2,6 +2,7 @@ import 'reflect-metadata';
 
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
+import {DeferredPromise} from 'openfin-service-async';
 
 import {Model} from '../../src/provider/model/Model';
 import {APIHandler} from '../../src/provider/APIHandler';
@@ -13,7 +14,6 @@ import {Application} from '../../src/client/main';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
 import {AppWindow} from '../../src/provider/model/AppWindow';
 import {advanceTime, useMockTime} from '../utils/unit/time';
-import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
 import {PartiallyWritable} from '../types';
 import {Timeouts} from '../../src/provider/constants';
 import {getId} from '../../src/provider/utils/getId';
