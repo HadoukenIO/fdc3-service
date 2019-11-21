@@ -1,13 +1,13 @@
 import 'reflect-metadata';
 
 import {Identity} from 'openfin/_v2/main';
+import {DeferredPromise} from 'openfin-service-async';
 
 import {createMockChannel} from '../mocks';
 import {Application} from '../../src/client/main';
 import {AbstractAppWindow} from '../../src/provider/model/AppWindow';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
 import {useMockTime, unmockTime, advanceTime, resolvePromiseChain} from '../utils/unit/time';
-import {DeferredPromise} from '../../src/provider/common/DeferredPromise';
 import {Timeouts} from '../../src/provider/constants';
 
 class TestAppWindow extends AbstractAppWindow {

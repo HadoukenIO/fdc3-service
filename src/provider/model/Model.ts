@@ -1,6 +1,7 @@
 import {injectable, inject} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
+import {withStrictTimeout, serialFilter, allowReject, untilSignal, untilTrue, DeferredPromise} from 'openfin-service-async';
 
 import {Application, AppName} from '../../client/directory';
 import {Inject} from '../common/Injectables';
@@ -8,10 +9,8 @@ import {ChannelId, DEFAULT_CHANNEL_ID, AppIntent} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {SYSTEM_CHANNELS, Timeouts} from '../constants';
-import {withStrictTimeout, untilTrue, allowReject, untilSignal, asyncFilter} from '../utils/async';
 import {Boxed} from '../utils/types';
 import {getId} from '../utils/getId';
-import {DeferredPromise} from '../common/DeferredPromise';
 
 import {LiveApp} from './LiveApp';
 import {AppWindow} from './AppWindow';
@@ -198,7 +197,7 @@ export class Model {
         // Get all live apps that support the given intent and context
         const liveApps = Object.values(this._liveAppsByUuid);
 
-        const liveAppsForIntent = (await asyncFilter(liveApps, async (liveApp: LiveApp) => {
+        const liveAppsForIntent = (await serialFilter(liveApps, async (liveApp: LiveApp) => {
             const {appInfo, windows} = liveApp;
 
             const hasIntentListener = windows.some((window) => window.hasIntentListener(intentType));
@@ -207,7 +206,7 @@ export class Model {
         })).map((liveApp) => liveApp.appInfo!);
 
         // Get all directory apps that support the given intent and context
-        const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
+        const directoryApps = await serialFilter(await this._directory.getAllApps(), async (app) => {
             const uuid = AppDirectory.getUuidFromApp(app);
             const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
 
@@ -248,7 +247,7 @@ export class Model {
         });
 
         // Populate appIntentsBuilder from non-mature directory apps
-        const directoryApps = await asyncFilter(await this._directory.getAllApps(), async (app) => {
+        const directoryApps = await serialFilter(await this._directory.getAllApps(), async (app) => {
             const uuid = AppDirectory.getUuidFromApp(app);
             const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
 

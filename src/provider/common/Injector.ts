@@ -1,5 +1,6 @@
 import {Container} from 'inversify';
 import {interfaces as inversify} from 'inversify/dts/interfaces/interfaces';
+import {DeferredPromise} from 'openfin-service-async';
 
 import {ConfigStore, ConfigStoreBinding} from '../model/ConfigStore';
 import {AppDirectory} from '../model/AppDirectory';
@@ -16,7 +17,6 @@ import {EventHandler} from '../controller/EventHandler';
 import {Environment} from '../model/Environment';
 
 import {Inject} from './Injectables';
-import {DeferredPromise} from './DeferredPromise';
 
 /**
  * For each entry in `Inject`, defines the type that will be injected for that key.

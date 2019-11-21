@@ -1,6 +1,8 @@
 import 'jest';
 import 'reflect-metadata';
 
+import {allowReject, withTimeout} from 'openfin-service-async';
+
 import {RaiseIntentError} from '../../../src/client/errors';
 import {RESOLVER_IDENTITY} from '../../../src/provider/utils/constants';
 import {fin} from '../utils/fin';
@@ -9,7 +11,6 @@ import {delay, Duration} from '../utils/delay';
 import {TestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppWithIntentListenerBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning, closeResolver} from '../utils/common';
 import {testManagerIdentity, testAppInDirectory4, testAppNotInDirectory1, testAppNotInDirectory2, testAppWithPreregisteredListeners1, testAppUrl, appStartupTime, testAppWithPreregisteredListeners2} from '../constants';
 import {Boxed} from '../../../src/provider/utils/types';
-import {allowReject, withTimeout} from '../../../src/provider/utils/async';
 import {Intent} from '../../../src/provider/intents';
 
 /**

@@ -1,13 +1,14 @@
 import 'jest';
 import 'reflect-metadata';
 
+import {allowReject} from 'openfin-service-async';
+
 import {RaiseIntentError} from '../../../src/client/errors';
 import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {delay, Duration} from '../utils/delay';
 import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning} from '../utils/common';
 import {appStartupTime, testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, testAppWithPreregisteredListeners1, testAppNotInDirectoryNotFdc3, testAppUrl} from '../constants';
-import {allowReject} from '../../../src/provider/utils/async';
 import {Intent, IntentType} from '../../../src/provider/intents';
 import {TestWindowContext} from '../utils/ofPuppeteer';
 
