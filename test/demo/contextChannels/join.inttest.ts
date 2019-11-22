@@ -189,8 +189,8 @@ describe('When attempting to join a channel', () => {
 
         await expect(blueChannel.join(nonExistentWindowIdentity)).
             toThrowFDC3Error(
-                ConnectionError.ConnectionWithIdentityNotFound,
-                `No connection to FDC3 service found with identity: ${JSON.stringify(nonExistentWindowIdentity)}`
+                ConnectionError.WindowWithIdentityNotFound,
+                `No connection to FDC3 service found from window with identity: ${JSON.stringify(nonExistentWindowIdentity)}`
             );
     });
 
@@ -200,8 +200,8 @@ describe('When attempting to join a channel', () => {
         test('If the non-FDC3 app identity is provided, an FDC3 error is thrown', async () => {
             await expect(blueChannel.join(testAppNotInDirectoryNotFdc3)).
                 toThrowFDC3Error(
-                    ConnectionError.ConnectionWithIdentityNotFound,
-                    `No connection to FDC3 service found with identity: \
+                    ConnectionError.WindowWithIdentityNotFound,
+                    `No connection to FDC3 service found from window with identity: \
 ${JSON.stringify({uuid: testAppNotInDirectoryNotFdc3.uuid, name: testAppNotInDirectoryNotFdc3.name})}`
                 );
         });

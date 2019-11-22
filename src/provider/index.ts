@@ -346,8 +346,8 @@ export class Main {
             return await windowPromise;
         } catch {
             throw new FDC3Error(
-                ConnectionError.ConnectionWithIdentityNotFound,
-                `No connection to FDC3 service found with identity: ${JSON.stringify(identity)}`
+                ConnectionError.WindowWithIdentityNotFound,
+                `No connection to FDC3 service found from window with identity: ${JSON.stringify(identity)}`
             );
         }
     }
