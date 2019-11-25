@@ -204,6 +204,7 @@ FDC3Error', async () => {
                     });
                 });
             }, validIntent.type, Duration.LONGER_THAN_SERVICE_TO_CLIENT_API_CALL_TIMEOUT);
+            await delay(Duration.LISTENER_HANDSHAKE);
 
             await expect(raiseIntent(validIntent, testAppData)).toThrowFDC3Error(
                 RaiseIntentError.SendIntentTimeout,
@@ -218,6 +219,7 @@ an FDC3Error', async () => {
                     throw new Error('Intent listener throwing error');
                 });
             }, validIntent.type);
+            await delay(Duration.LISTENER_HANDSHAKE);
 
             await expect(raiseIntent(validIntent, testAppData)).toThrowFDC3Error(
                 RaiseIntentError.SendIntentError,
@@ -232,6 +234,7 @@ the correct context and the promise resolves', async () => {
                     throw new Error('Intent listener throwing error');
                 });
             }, validIntent.type);
+            await delay(Duration.LISTENER_HANDSHAKE);
 
             const listener = await fdc3Remote.addIntentListener(testAppData, validIntent.type);
 
@@ -252,6 +255,7 @@ listeners are triggered with the correct context and the promise resolves', asyn
                     throw new Error('Intent listener throwing error');
                 });
             }, validIntent.type);
+            await delay(Duration.LISTENER_HANDSHAKE);
 
             const listener2 = await fdc3Remote.addIntentListener(childWindow2, validIntent.type);
 
