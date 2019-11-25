@@ -53,7 +53,7 @@ export class Model {
     private readonly _onWindowRegisteredInternal: Signal<[AppWindow]> = new Signal();
 
     constructor(
-        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
+    @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
         @inject(Inject.ENVIRONMENT) environment: Environment,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>
     ) {
