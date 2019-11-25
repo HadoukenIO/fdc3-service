@@ -8,8 +8,8 @@ import {LiveApp} from './LiveApp';
 export class FinAppConnection extends AppConnectionBase {
     private readonly _identity: Identity;
 
-    constructor(identity: Identity, entityType: EntityType, liveApp: LiveApp, channel: ContextChannel, appWindowNumber: number) {
-        super(identity, entityType, liveApp.appInfo!, liveApp.waitForAppMature(), channel, appWindowNumber);
+    constructor(identity: Identity, entityType: EntityType, liveApp: LiveApp, channel: ContextChannel, entityIndex: number) {
+        super(identity, entityType, liveApp.appInfo!, liveApp.waitForAppMature(), channel, entityIndex);
 
         this._identity = identity;
     }

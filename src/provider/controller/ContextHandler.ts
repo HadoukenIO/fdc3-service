@@ -45,9 +45,9 @@ export class ContextHandler {
             connection.waitForReadyToReceiveContext().then(() => {
                 collateClientCalls([this._apiHandler.dispatch(connection.identity, APIToClientTopic.RECEIVE_CONTEXT, payload)]).then(([result]) => {
                     if (result === ClientCallsResult.ALL_FAILURE) {
-                        console.warn(`Error thrown by client window ${connection.id} attempting to handle context, swallowing error`);
+                        console.warn(`Error thrown by client connection ${connection.id} attempting to handle context, swallowing error`);
                     } else if (result === ClientCallsResult.TIMEOUT) {
-                        console.warn(`Timeout waiting for client window ${connection.id} to handle context, swallowing error`);
+                        console.warn(`Timeout waiting for client connection ${connection.id} to handle context, swallowing error`);
                     }
                 });
             }, () => {});
@@ -125,9 +125,9 @@ export class ContextHandler {
     private async sendForBroadcast(connection: AppConnection, context: Context): Promise<void> {
         await collateClientCalls([this.send(connection, context)]).then(([result]) => {
             if (result === ClientCallsResult.ALL_FAILURE) {
-                console.warn(`Error thrown by client window ${connection.id} attempting to handle broadcast, swallowing error`);
+                console.warn(`Error thrown by client connection ${connection.id} attempting to handle broadcast, swallowing error`);
             } else if (result === ClientCallsResult.TIMEOUT) {
-                console.warn(`Timeout waiting for client window ${connection.id} to handle broadcast, swallowing error`);
+                console.warn(`Timeout waiting for client connection ${connection.id} to handle broadcast, swallowing error`);
             }
         });
     }
@@ -144,9 +144,9 @@ export class ContextHandler {
 
         await collateClientCalls([this._apiHandler.dispatch(connection.identity, APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, payload)]).then(([result]) => {
             if (result === ClientCallsResult.ALL_FAILURE) {
-                console.warn(`Error thrown by client window ${connection.id} attempting to handle broadcast on channel, swallowing error`);
+                console.warn(`Error thrown by client connection ${connection.id} attempting to handle broadcast on channel, swallowing error`);
             } else if (result === ClientCallsResult.TIMEOUT) {
-                console.warn(`Timeout waiting for client window ${connection.id} to handle broadcast on channel, swallowing error`);
+                console.warn(`Timeout waiting for client connection ${connection.id} to handle broadcast on channel, swallowing error`);
             }
         });
     }

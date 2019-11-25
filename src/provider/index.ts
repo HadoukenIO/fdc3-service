@@ -128,7 +128,7 @@ export class Main {
         // If the app has open windows, bring all to front in creation order
         const connections = this._model.findConnectionsByAppName(appInfo.name);
         if (connections.length > 0) {
-            connections.sort((a, b) => a.appWindowNumber - b.appWindowNumber);
+            connections.sort((a, b) => a.entityIndex - b.entityIndex);
 
             // Some connections may not be windows. Calling bringToFront on these entities is a no-op.
             const bringToFrontPromise = Promise.all(connections.map((connection) => connection.bringToFront()));
@@ -280,9 +280,9 @@ export class Main {
         if (context) {
             await collateClientCalls([this._contextHandler.send(connection, context)]).then(([result]) => {
                 if (result === ClientCallsResult.ALL_FAILURE) {
-                    console.warn(`Error thrown by client window ${connection.id} attempting to handle context on joining channel, swallowing error`);
+                    console.warn(`Error thrown by client connection ${connection.id} attempting to handle context on joining channel, swallowing error`);
                 } else if (result === ClientCallsResult.TIMEOUT) {
-                    console.warn(`Timeout waiting for client window ${connection.id} to handle context on joining channel, swallowing error`);
+                    console.warn(`Timeout waiting for client connection ${connection.id} to handle context on joining channel, swallowing error`);
                 }
             });
         }

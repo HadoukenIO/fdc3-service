@@ -80,7 +80,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
         // If `identity` is an adapter connection that hasn't yet connected to the service, there will not be a KnownEntity for this identity
         // In these cases, we will register the entity now
-        const knownEntity: KnownEntity|undefined = this._knownEntities.get(id) || this.registerEntity(identity, entityType);
+        const knownEntity: KnownEntity | undefined = this._knownEntities.get(id) || this.registerEntity(identity, entityType);
 
         if (knownEntity) {
             const {index} = knownEntity;

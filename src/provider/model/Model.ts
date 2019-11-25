@@ -351,7 +351,7 @@ export class Model {
         if (entityType === EntityType.EXTERNAL_CONNECTION) {
             // Any connections to the service from adapters should be immediately registered
             const appInfo = await this._environment.inferApplication(identity);
-            const liveApp = new LiveApp(undefined);
+            const liveApp = this._liveAppsByUuid[identity.uuid] || new LiveApp(undefined);
 
             liveApp.setAppInfo(appInfo);
             this._liveAppsByUuid[identity.uuid] = liveApp;
@@ -379,6 +379,12 @@ export class Model {
             // There is no `window-closed` equivilant for external connections, so we will do our full clean-up of state here
             if (connection.entityType !== EntityType.WINDOW) {
                 this.removeConnection(connection.identity);
+
+                const liveApp: LiveApp|undefined = this._liveAppsByUuid[identity.uuid];
+                if (liveApp && liveApp.connections.length === 0) {
+                    liveApp.setClosed();
+                    delete this._liveAppsByUuid[identity.uuid];
+                }
             }
         }
     }
@@ -422,14 +428,6 @@ export class Model {
         } else if (this._expectedConnectionsById[id]) {
             delete this._expectedConnectionsById[id];
         }
-    }
-
-    // private findConnectionsByAppId(appId: AppId): AppConnection[] {
-    //     return this.findConnections((connection) => connection.appInfo.appId === appId);
-    // }
-
-    private findConnections(predicate: (connection: AppConnection) => boolean): AppConnection[] {
-        return this.connections.filter(predicate);
     }
 
     private getOrCreateExpectedConnection(identity: Identity): ExpectedConnection {

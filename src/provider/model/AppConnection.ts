@@ -13,13 +13,14 @@ import {EntityType} from './Environment';
 /**
  * Model interface, representing an entity that has connected to the service.
  *
- * Since an IAB connection is required for an `AppConnection` object to be created, these will only ever refer to FDC3-enabled windows/applications/etc.
+ * Since an IAB connection is required for an `AppConnection` object to be created, these will only ever refer to FDC3-enabled
+ * entities (windows/applications/etc).
  */
 export interface AppConnection {
     id: string;
     identity: Identity;
     entityType: EntityType;
-    appWindowNumber: number;
+    entityIndex: number;
 
     appInfo: Readonly<Application>;
     channel: ContextChannel;
@@ -65,7 +66,7 @@ export abstract class AppConnectionBase implements AppConnection {
     private readonly _id: string;
     private readonly _entityType: EntityType;
     private readonly _appInfo: Application;
-    private readonly _appWindowNumber: number;
+    private readonly _entityIndex: number;
 
     private readonly _maturePromise: Promise<void>;
 
@@ -85,12 +86,12 @@ export abstract class AppConnectionBase implements AppConnection {
         appInfo: Application,
         maturePromise: Promise<void>,
         channel: ContextChannel,
-        appWindowNumber: number
+        entityIndex: number
     ) {
         this._id = getId(identity);
         this._entityType = entityType;
         this._appInfo = appInfo;
-        this._appWindowNumber = appWindowNumber;
+        this._entityIndex = entityIndex;
 
         this._maturePromise = maturePromise;
 
@@ -115,8 +116,8 @@ export abstract class AppConnectionBase implements AppConnection {
         return this._appInfo;
     }
 
-    public get appWindowNumber(): number {
-        return this._appWindowNumber;
+    public get entityIndex(): number {
+        return this._entityIndex;
     }
 
     public get channelContextListeners(): ReadonlyArray<ChannelId> {
