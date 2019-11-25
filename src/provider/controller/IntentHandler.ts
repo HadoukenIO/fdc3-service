@@ -20,7 +20,7 @@ export class IntentHandler {
     private _resolvePromise: Promise<IntentResolution> | null;
 
     constructor(
-        @inject(Inject.MODEL) model: Model,
+    @inject(Inject.MODEL) model: Model,
         @inject(Inject.RESOLVER) resolver: ResolverHandlerBinding,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIToClientTopic>
     ) {

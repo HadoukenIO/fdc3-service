@@ -66,7 +66,7 @@ export class Model {
     private readonly _onConnectionRegisteredInternal: Signal<[AppConnection]> = new Signal();
 
     constructor(
-        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
+    @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
         @inject(Inject.ENVIRONMENT) environment: Environment,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>
     ) {

@@ -37,7 +37,7 @@ export class Main {
     private readonly _model: Model;
 
     constructor(
-        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
+    @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
         @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
         @inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding,
