@@ -119,7 +119,7 @@ export class Model {
             const expectedConnection = this.getOrCreateExpectedConnection(identity);
 
             // Allow a short time between the `expectConnection` call and the window being created
-            const createdWithinTimeout = withStrictTimeout(Timeouts.WINDOW_EXPECT_TO_CREATED, expectedConnection.created, EXPECT_TIMEOUT_MESSAGE);
+            const createdWithinTimeout = withStrictTimeout(Timeouts.ENTITY_INITIALIZE, expectedConnection.created, EXPECT_TIMEOUT_MESSAGE);
 
             const registeredWithinTimeout = (await createdWithinTimeout).value;
             const connection = await registeredWithinTimeout;

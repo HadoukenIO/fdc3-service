@@ -80,7 +80,7 @@ describe('When creating a directory FDC3 app', () => {
         expectTest(testWindow, 3000, [
             [
                 'When a window is expected long before it is created, the window promise rejects',
-                {callTime: 500, finalizeTime: 500 + Timeouts.WINDOW_EXPECT_TO_CREATED, result: 'reject-timeout'}
+                {callTime: 500, finalizeTime: 500 + Timeouts.ENTITY_INITIALIZE, result: 'reject-timeout'}
             ],
             [
                 'When a window is expected shortly before it is created, the window promise resolves',
@@ -166,7 +166,7 @@ describe('When creating a directory FDC3 app', () => {
         expectTest(slowCloseWindow, 3000, [
             [
                 'When a window is expected after being closed, the promise rejects',
-                {callTime: 5000, finalizeTime: 5000 + Timeouts.WINDOW_EXPECT_TO_CREATED, result: 'reject-timeout'}
+                {callTime: 5000, finalizeTime: 5000 + Timeouts.ENTITY_INITIALIZE, result: 'reject-timeout'}
             ]
         ]);
     });
@@ -291,15 +291,15 @@ describe('When creating an external connection', () => {
         expectTest(slowConnectWindow, 3000, [
             [
                 'When a window is expected before the app directory has returned, the window promise rejects',
-                {callTime: 2500, finalizeTime: 2500 + Timeouts.WINDOW_EXPECT_TO_CREATED, result: 'reject-timeout'}
+                {callTime: 2500, finalizeTime: 2500 + Timeouts.ENTITY_INITIALIZE, result: 'reject-timeout'}
             ],
             [
                 'When a window is expected after the app directory has returned but before it is registered, the window promise rejects',
-                {callTime: 3500, finalizeTime: 3500 + Timeouts.WINDOW_EXPECT_TO_CREATED, result: 'reject-timeout'}
+                {callTime: 3500, finalizeTime: 3500 + Timeouts.ENTITY_INITIALIZE, result: 'reject-timeout'}
             ],
             [
                 'When a window is expected shortly before the window is registered, the window promise rejects',
-                {callTime: 6500, finalizeTime: 6500 + Timeouts.WINDOW_EXPECT_TO_CREATED, result: 'reject-timeout'}
+                {callTime: 6500, finalizeTime: 6500 + Timeouts.ENTITY_INITIALIZE, result: 'reject-timeout'}
             ]
         ]);
     });
