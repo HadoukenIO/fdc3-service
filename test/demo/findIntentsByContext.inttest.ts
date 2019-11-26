@@ -38,8 +38,8 @@ describe('Resolving intents by context, findIntentsByContext', () => {
             expect(receivedAppIntents).toEqual([
                 {
                     intent: {
-                        displayName: 'test.ContextTestIntent',
-                        name: 'test.ContextTestIntent'
+                        displayName: 'ContextTestIntent',
+                        name: 'ContextTestIntent'
                     },
                     apps: [
                         expect.objectContaining({
@@ -65,8 +65,8 @@ describe('Resolving intents by context, findIntentsByContext', () => {
                 expect(receivedAppIntents).toEqual([
                     {
                         intent: {
-                            name: 'test.ContextTestIntent',
-                            displayName: 'test.ContextTestIntent'
+                            name: 'ContextTestIntent',
+                            displayName: 'ContextTestIntent'
                         },
                         apps: [
                             expect.objectContaining({
@@ -77,7 +77,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
                     },
                     {
                         intent: {
-                            name: 'test.IntentName',
+                            name: 'IntentName',
                             displayName: 'Test Intent'
                         },
                         apps: [
@@ -95,7 +95,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
             setupOpenDirectoryAppBookends(testAppInDirectory3);
 
             beforeEach(async () => {
-                await fdc3Remote.addIntentListener(testAppInDirectory3, 'test.IntentName');
+                await fdc3Remote.addIntentListener(testAppInDirectory3, 'IntentName');
             });
 
             test('The promise resolves to AppIntents that include the running app', async () => {
@@ -104,8 +104,8 @@ describe('Resolving intents by context, findIntentsByContext', () => {
                 expect(receivedAppIntents).toEqual([
                     {
                         intent: {
-                            name: 'test.ContextTestIntent',
-                            displayName: 'test.ContextTestIntent'
+                            name: 'ContextTestIntent',
+                            displayName: 'ContextTestIntent'
                         },
                         apps: [
                             expect.objectContaining({
@@ -116,7 +116,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
                     },
                     {
                         intent: {
-                            name: 'test.IntentName',
+                            name: 'IntentName',
                             displayName: 'Test Intent'
                         },
                         apps: [
@@ -153,8 +153,8 @@ describe('Resolving intents by context, findIntentsByContext', () => {
             expect(receivedAppIntents).toEqual([
                 {
                     intent: {
-                        displayName: 'test.ContextTestIntent',
-                        name: 'test.ContextTestIntent'
+                        displayName: 'ContextTestIntent',
+                        name: 'ContextTestIntent'
                     },
                     apps: [
                         expect.objectContaining({
@@ -181,8 +181,8 @@ describe('Resolving intents by context, findIntentsByContext', () => {
             expect(receivedAppIntents).toEqual([
                 {
                     intent: {
-                        displayName: 'test.ContextTestIntent',
-                        name: 'test.ContextTestIntent'
+                        displayName: 'ContextTestIntent',
+                        name: 'ContextTestIntent'
                     },
                     apps: [
                         expect.objectContaining({
@@ -194,7 +194,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
                 {
                     intent: {
                         displayName: 'Test Intent',
-                        name: 'test.IntentOnlyOnTestAppNotFdc3'
+                        name: 'IntentOnlyOnTestAppNotFdc3'
                     },
                     apps: [
                         expect.objectContaining({
@@ -216,7 +216,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
         setupOpenDirectoryAppBookends(testAppInDirectory3);
 
         beforeEach(async () => {
-            await fdc3Remote.addIntentListener(testAppInDirectory3, 'test.IntentName');
+            await fdc3Remote.addIntentListener(testAppInDirectory3, 'IntentName');
         });
 
         test('The promise resolves to AppIntents that include the running app', async () => {
@@ -225,8 +225,8 @@ describe('Resolving intents by context, findIntentsByContext', () => {
             expect(receivedAppIntents).toEqual([
                 {
                     intent: {
-                        name: 'test.ContextTestIntent',
-                        displayName: 'test.ContextTestIntent'
+                        name: 'ContextTestIntent',
+                        displayName: 'ContextTestIntent'
                     },
                     apps: [
                         expect.objectContaining({
@@ -237,7 +237,7 @@ describe('Resolving intents by context, findIntentsByContext', () => {
                 },
                 {
                     intent: {
-                        name: 'test.IntentName',
+                        name: 'IntentName',
                         displayName: 'Test Intent'
                     },
                     apps: [

@@ -148,7 +148,7 @@ const contextListeners: ContextListener[] = [];
  *
  * If a [[Context]] object is passed in, this object will be provided to the opened application via a [[ContextListener]].
  *
- * If opening errors, it returns an [[FDC3Error]] with a string from the [[OpenError]] export enumeration.
+ * If opening errors, it returns an [[FDC3Error]] with a string from the [[ApplicationError]] export enumeration.
  *
  *  ```javascript
  *     // No context
@@ -158,6 +158,9 @@ const contextListeners: ContextListener[] = [];
  * ```
  * @param name The [[AppName]] to launch.
  * @param context A context to pass to the app post-launch.
+ * @throws [[FDC3Error]] with an [[ApplicationError]] code.
+ * @throws If `context` is passed, [[FDC3Error]] with a [[SendContextError]] code.
+ * @throws If `context` is passed, `TypeError` if `context` is not a valid [[Context]].
  */
 export async function open(name: AppName, context?: Context): Promise<void> {
     return tryServiceDispatch(APIFromClientTopic.OPEN, {name, context: context && parseContext(context)});
@@ -169,8 +172,6 @@ export async function open(name: AppName, context?: Context): Promise<void> {
  * `findIntent` is effectively granting programmatic access to the desktop agent's resolver.
  * A promise resolving to the intent, its metadata and metadata about the apps registered to handle it is returned.
  * This can be used to raise the intent against a specific app.
- *
- * If the resolution fails, the promise will return an [[FDC3Error]] with a string from the [[ResolveError]] export enumeration.
  *
  * For example, I know `'StartChat'` exists as a concept, and want to know more about it.
  * ```javascript
@@ -191,6 +192,8 @@ export async function open(name: AppName, context?: Context): Promise<void> {
  * ```
  * @param intent The intent name to find.
  * @param context An optional context to send to find the intent.
+ * @throws If `context` is passed, an [[FDC3Error]] with a [[SendContextError]] code.
+ * @throws If `context` is passed, `TypeError` if `context` is not a valid [[Context]].
  */
 export async function findIntent(intent: string, context?: Context): Promise<AppIntent> {
     return tryServiceDispatch(APIFromClientTopic.FIND_INTENT, {intent, context: context && parseContext(context)});
@@ -203,8 +206,7 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  * A promise resolving to all the intents, their metadata and metadata about the apps registered to handle it is
  * returned, based on the context export types the intents have registered.
  *
- * If the resolution fails, the promise will return an [[FDC3Error]] with a string from the `ResolveError` export
- * enumeration.
+ * An empty array will be returned if there are no available intents for the given context.
  *
  * For example, I have a context object and I want to know what I can do with it, so I look for intents...
  * ```javascript
@@ -238,6 +240,8 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  * await agent.raiseIntent(selectedIntent.intent.name, context, selectedApp.name);
  * ```
  * @param context Returned intents must support this context.
+ * @throws [[FDC3Error]] with a [[SendContextError]] code.
+ * @throws `TypeError` if `context` is not a valid [[Context]].
  */
 export async function findIntentsByContext(context: Context): Promise<AppIntent[]> {
     return tryServiceDispatch(APIFromClientTopic.FIND_INTENTS_BY_CONTEXT, {context: parseContext(context)});
@@ -256,8 +260,8 @@ export async function findIntentsByContext(context: Context): Promise<AppIntent[
  * Note that windows do not receive their own broadcasts. If the window calling `broadcast` has also added one or more
  * [[addContextListener|context listeners]], then those listeners will not fire as a result of this broadcast.
  *
- * @throws `TypeError` if `context` is not a valid [[Context]]
  * @param context The context to broadcast.
+ * @throws `TypeError` if `context` is not a valid [[Context]].
  */
 export async function broadcast(context: Context): Promise<void> {
     await tryServiceDispatch(APIFromClientTopic.BROADCAST, {context: parseContext(context)});
@@ -286,8 +290,11 @@ export async function broadcast(context: Context): Promise<void> {
  * @param intent The intent name to raise.
  * @param context The context that will be sent with this intent.
  * @param target An optional [[AppName]] to send the intent to.
- * @throws [[FDC3Error]]. Also see [[ResolveError]].
- */
+ * @throws [[FDC3Error]] with a [[ResolveError]] code.
+ * @throws [[FDC3Error]] with an [[ApplicationError]] code.
+ * @throws [[FDC3Error]] with a [[SendContextError]] code.
+ * @throws `TypeError` if `context` is not a valid [[Context]].
+ **/
 export async function raiseIntent(intent: string, context: Context, target?: AppName): Promise<IntentResolution> {
     return tryServiceDispatch(APIFromClientTopic.RAISE_INTENT, {intent, context: parseContext(context), target});
 }

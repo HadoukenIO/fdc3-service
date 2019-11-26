@@ -30,7 +30,7 @@
     ],
     "intents": [
         {
-            "name": "fdc3.SaveContact",
+            "name": "SaveContact",
             "contexts": ["fdc3.contact"],
             "displayName": "Save"
         }
@@ -58,7 +58,7 @@
     ],
     "intents": [
         {
-            "name": "fdc3.StartCall",
+            "name": "StartCall",
             "displayName": "Call",
             "contexts": ["fdc3.contact"],
             "customConfig": {
@@ -66,7 +66,7 @@
             }
         },
         {
-            "name": "fdc3.DialCall",
+            "name": "DialCall",
             "displayName": "Dial",
             "contexts": ["fdc3.contact"],
             "customConfig": {
@@ -91,7 +91,7 @@
     ],
     "intents": [
         {
-            "name": "fdc3.ViewChart",
+            "name": "ViewChart",
             "contexts": ["fdc3.instrument"],
             "displayName": "View Chart"
         }
@@ -113,7 +113,7 @@
     ],
     "intents": [
         {
-            "name": "fdc3.ViewChart",
+            "name": "ViewChart",
             "contexts": ["fdc3.instrument"],
             "displayName": "View Chart"
         }
@@ -135,7 +135,7 @@
     ],
     "intents": [
         {
-            "name": "fdc3.ViewChart",
+            "name": "ViewChart",
             "contexts": ["fdc3.instrument"],
             "displayName": "View Chart"
         }

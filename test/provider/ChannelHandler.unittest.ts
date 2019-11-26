@@ -79,7 +79,7 @@ describe('When geting channel by ID', () => {
 
         expect(() => {
             channelHandler.getChannelById('test');
-        }).toThrowFDC3Error(ChannelError.ChannelWithIdDoesNotExist, 'No channel with channelId: test');
+        }).toThrowFDC3Error(ChannelError.ChannelWithIdDoesNotExist, 'No channel \'test\' found');
     });
 });
 
