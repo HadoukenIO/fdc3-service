@@ -10,8 +10,13 @@ import {Context} from './context';
 import {Application, AppName} from './directory';
 import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners} from './internal';
 import {ChannelChangedEvent, getChannelObject, ChannelContextListener} from './contextChannels';
-import {parseContext, validateEnvironment} from './validation';
+import {parseContext, validateEnvironment, parseApplicationsParameter} from './validation';
 import {Transport, Targeted} from './EventRouter';
+
+// eslint-disable-next-line @typescript-eslint/no-namespace
+declare namespace fin {
+    const Storage: any;
+}
 
 /**
  * This file was copied from the FDC3 v1 specification.
@@ -297,6 +302,23 @@ export async function broadcast(context: Context): Promise<void> {
  **/
 export async function raiseIntent(intent: string, context: Context, target?: AppName): Promise<IntentResolution> {
     return tryServiceDispatch(APIFromClientTopic.RAISE_INTENT, {intent, context: parseContext(context), target});
+}
+
+export async function setApplications(applications: Application[]): Promise<void>;
+export async function setApplications(applications: string): Promise<void>;
+
+export async function setApplications(applications: Application[] | string): Promise<void> {
+    applications = parseApplicationsParameter(applications);
+
+    if (typeof applications === 'string') {
+        await fin.Storage.setItem('fdc3.applications', JSON.stringify({url: applications}));
+    } else {
+        await fin.Storage.setItem('fdc3.applications', JSON.stringify({applications}));
+    }
+}
+
+export async function clearApplications(): Promise<void> {
+    await fin.Storage.removeItem('fdc3.applications');
 }
 
 /**

@@ -9,6 +9,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {Context} from './context';
 import {ChannelId} from './contextChannels';
+import {Application} from './directory';
 
 /**
  * Validates the provided Identity and returns an Identity stripped of any extraneous properties
@@ -79,6 +80,17 @@ export function parseAppChannelName(name: string): ChannelId {
     }
 
     return name;
+}
+
+/**
+ * Validates the provided applications value - can be either a URL or an array of Applications
+ */
+export function parseApplicationsParameter(applications: string | Application[]): string | Application[] {
+    if (!((typeof applications === 'string' && applications !== '') || (applications instanceof Array))) {
+        throw new TypeError(`${safeStringify(applications, 'The provided applications parameter')} is not a valid applications parameter`);
+    }
+
+    return applications;
 }
 
 /**
