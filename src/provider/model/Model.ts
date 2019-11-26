@@ -350,11 +350,15 @@ export class Model {
 
         if (entityType === EntityType.EXTERNAL_CONNECTION) {
             // Any connections to the service from adapters should be immediately registered
-            const appInfo = await this._environment.inferApplication(identity);
-            const liveApp = this._liveAppsByUuid[identity.uuid] || new LiveApp(undefined);
+            let liveApp = this._liveAppsByUuid[identity.uuid];
 
-            liveApp.setAppInfo(appInfo);
-            this._liveAppsByUuid[identity.uuid] = liveApp;
+            if (!liveApp) {
+                const appInfo = await this._environment.inferApplication(identity);
+
+                liveApp = new LiveApp(undefined);
+                liveApp.setAppInfo(appInfo);
+                this._liveAppsByUuid[identity.uuid] = liveApp;
+            }
 
             this.registerConnection(liveApp, identity, entityType);
         }
@@ -377,10 +381,10 @@ export class Model {
 
             // For non-window connections, also treat this as the entity being destroyed
             // There is no `window-closed` equivilant for external connections, so we will do our full clean-up of state here
-            if (connection.entityType !== EntityType.WINDOW) {
+            if (connection.entityType === EntityType.EXTERNAL_CONNECTION) {
                 this.removeConnection(connection.identity);
 
-                const liveApp: LiveApp|undefined = this._liveAppsByUuid[identity.uuid];
+                const liveApp: LiveApp | undefined = this._liveAppsByUuid[identity.uuid];
                 if (liveApp && liveApp.connections.length === 0) {
                     liveApp.setClosed();
                     delete this._liveAppsByUuid[identity.uuid];

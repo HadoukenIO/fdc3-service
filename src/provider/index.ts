@@ -128,7 +128,7 @@ export class Main {
         // If the app has open windows, bring all to front in creation order
         const connections = this._model.findConnectionsByAppName(appInfo.name);
         if (connections.length > 0) {
-            connections.sort((a, b) => a.entityIndex - b.entityIndex);
+            connections.sort((a, b) => a.entityCounter - b.entityCounter);
 
             // Some connections may not be windows. Calling bringToFront on these entities is a no-op.
             const bringToFrontPromise = Promise.all(connections.map((connection) => connection.bringToFront()));

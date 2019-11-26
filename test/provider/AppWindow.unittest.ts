@@ -17,8 +17,8 @@ class TestAppWindow extends AppConnectionBase {
 
     private readonly _identity: Readonly<Identity>;
 
-    constructor(identity: Identity, appInfo: Application, maturityPromise: Promise<void>, channel: ContextChannel, entityIndex: number) {
-        super(identity, EntityType.WINDOW, appInfo, maturityPromise, channel, entityIndex);
+    constructor(identity: Identity, appInfo: Application, maturityPromise: Promise<void>, channel: ContextChannel, entityCounter: number) {
+        super(identity, EntityType.WINDOW, appInfo, maturityPromise, channel, entityCounter);
 
         this._identity = identity;
     }

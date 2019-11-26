@@ -85,7 +85,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         if (knownEntity) {
             const {index} = knownEntity;
 
-            if (entityType === EntityType.EXTERNAL_CONNECTION || entityType === EntityType.IFRAME) {
+            if (entityType === EntityType.EXTERNAL_CONNECTION) {
                 return new FinAppConnection(identity, entityType, liveApp, channel, index);
             } else {
                 if (entityType !== EntityType.WINDOW) {

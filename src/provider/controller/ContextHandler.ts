@@ -30,8 +30,8 @@ export class ContextHandler {
     }
 
     /**
-     * Send a context to a specific connection. The promise returned may reject if provided client throws an error, so caller should take
-     * responsibility for error handling.
+     * Send a context to a specific connection. The promise returned may reject if provided connection throws an error,
+     * so caller should take responsibility for error handling.
      *
      * @param connection Entity to send the context to
      * @param context Context to be sent
