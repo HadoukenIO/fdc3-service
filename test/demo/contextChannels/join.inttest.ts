@@ -1,6 +1,6 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {IdentityError, DEFAULT_CHANNEL_ID} from '../../../src/client/main';
+import {ConnectionError, DEFAULT_CHANNEL_ID} from '../../../src/client/main';
 import {testManagerIdentity, appStartupTime, testAppNotInDirectory1, testAppNotInDirectoryNotFdc3, testAppInDirectory1, testAppInDirectory2, testAppUrl} from '../constants';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel, RemoteChannelEventListener} from '../utils/RemoteChannel';
@@ -189,7 +189,7 @@ describe('When attempting to join a channel', () => {
 
         await expect(blueChannel.join(nonExistentWindowIdentity)).
             toThrowFDC3Error(
-                IdentityError.WindowWithIdentityNotFound,
+                ConnectionError.WindowWithIdentityNotFound,
                 `No connection to FDC3 service found from window with identity: ${JSON.stringify(nonExistentWindowIdentity)}`
             );
     });
@@ -200,7 +200,7 @@ describe('When attempting to join a channel', () => {
         test('If the non-FDC3 app identity is provided, an FDC3 error is thrown', async () => {
             await expect(blueChannel.join(testAppNotInDirectoryNotFdc3)).
                 toThrowFDC3Error(
-                    IdentityError.WindowWithIdentityNotFound,
+                    ConnectionError.WindowWithIdentityNotFound,
                     `No connection to FDC3 service found from window with identity: \
 ${JSON.stringify({uuid: testAppNotInDirectoryNotFdc3.uuid, name: testAppNotInDirectoryNotFdc3.name})}`
                 );

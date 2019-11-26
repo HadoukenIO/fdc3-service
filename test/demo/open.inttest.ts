@@ -3,7 +3,7 @@ import 'jest';
 import {allowReject} from 'openfin-service-async';
 
 import {Context, OrganizationContext} from '../../src/client/main';
-import {OpenError, ApplicationError} from '../../src/client/errors';
+import {ApplicationError, SendContextError} from '../../src/client/errors';
 import {Timeouts} from '../../src/provider/constants';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
@@ -14,6 +14,8 @@ import {delay, Duration} from './utils/delay';
 import {TestWindowContext} from './utils/ofPuppeteer';
 
 setupTeardown();
+
+const invalidAppName = 'invalid-app-name';
 
 describe('Opening applications with the FDC3 client', () => {
     describe('Without context', () => {
@@ -40,11 +42,11 @@ describe('Opening applications with the FDC3 client', () => {
 
             test('When passing an unknown app name the promise rejects with an FDC3Error', async () => {
                 // From the launcher app, call fdc3.open with an unregistered name
-                const openPromise = open('invalid-app-name');
+                const openPromise = open(invalidAppName);
 
                 await expect(openPromise).toThrowFDC3Error(
-                    OpenError.AppNotFound,
-                    /No app in directory with name/
+                    ApplicationError.NotFound,
+                    `No application '${invalidAppName}' found running or in directory`
                 );
             });
         });
@@ -172,7 +174,7 @@ is not triggered', async () => {
                     // Add a listener
                     const listener = await fdc3Remote.addContextListener(testAppInDirectory1);
 
-                    await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'Context provided, but no context handler added');
+                    await expect(openPromise).toThrowFDC3Error(SendContextError.NoHandler, 'Context provided, but application has no handler for context');
 
                     // Check the listener did not receive the context in open
                     await expect(listener).toHaveReceivedContexts([]);
@@ -187,11 +189,11 @@ is not triggered', async () => {
 
             test('When passing an unknown app name with any context the promise rejects with an FDC3Error', async () => {
                 // From the launcher app, call fdc3.open with an invalid name and valid context
-                const openPromise = open('invalid-app-name', validContext);
+                const openPromise = open(invalidAppName, validContext);
 
                 await expect(openPromise).toThrowFDC3Error(
-                    OpenError.AppNotFound,
-                    /No app in directory with name/
+                    ApplicationError.NotFound,
+                    `No application '${invalidAppName}' found running or in directory`
                 );
             });
         });
@@ -271,8 +273,8 @@ the promise resolves', async () => {
 
                 // Check the promise rejects as expected
                 await expect(promise).toThrowFDC3Error(
-                    OpenError.SendContextError,
-                    'Error(s) thrown by client attempting to handle context on app starting'
+                    SendContextError.HandlerError,
+                    'Error(s) thrown by application attempting to handle context'
                 );
             });
 
@@ -356,7 +358,7 @@ and does not trigger the context listener of the already open app', async () => 
 
         // fin.Application.startFromManifest errors with this message when providing an inexistent manifest URL
         await expect(openPromise).toThrowFDC3Error(
-            ApplicationError.ErrorOnLaunch,
+            ApplicationError.LaunchError,
             /Failed to download resource\. Status code: 404/
         );
     });
@@ -367,8 +369,8 @@ and does not trigger the context listener of the already open app', async () => 
 
         // fin.Application.startFromManifest errors with this message when it times out trying to open an app
         await expect(openPromise).toThrowFDC3Error(
-            ApplicationError.AppTimeout,
-            `Timeout waiting for app '${appName}' to start from manifest`
+            ApplicationError.LaunchTimeout,
+            `Timeout waiting for application '${appName}' to start from manifest`
         );
     }, Timeouts.APP_START_FROM_MANIFEST + 2000);
 
@@ -416,12 +418,12 @@ and does not trigger the context listener of the already open app', async () => 
         });
 
         test('The promise rejects and the app opens', async () => {
-            await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'Context provided, but no context handler added');
+            await expect(openPromise).toThrowFDC3Error(SendContextError.NoHandler, 'Context provided, but application has no handler for context');
             await expect(fin.Application.wrapSync(testAppDelayedPreregisterLong).isRunning()).resolves.toBe(true);
         });
 
         test('The context is not received by the listener', async () => {
-            await expect(openPromise).toThrowFDC3Error(OpenError.SendContextNoHandler, 'Context provided, but no context handler added');
+            await expect(openPromise).toThrowFDC3Error(SendContextError.NoHandler, 'Context provided, but application has no handler for context');
 
             await delay(Duration.LONGER_THAN_APP_MATURITY);
             const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppDelayedPreregisterLong);

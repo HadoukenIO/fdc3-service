@@ -3,7 +3,7 @@ import {injectable, inject} from 'inversify';
 import {Inject} from '../common/Injectables';
 import {Intent} from '../intents';
 import {IntentResolution, Application} from '../../client/main';
-import {FDC3Error, RaiseIntentError} from '../../client/errors';
+import {FDC3Error, ResolveError, ApplicationError, SendContextError} from '../../client/errors';
 import {Model} from '../model/Model';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
@@ -49,14 +49,14 @@ export class IntentHandler {
         } else if (await this._model.existsAppForName(intent.target)) {
             // Target exists but does not handle intent with given context
             throw new FDC3Error(
-                RaiseIntentError.TargetAppDoesNotHandleIntent,
-                `App '${intent.target}' does not handle intent '${intent.type}' with context '${intent.context.type}'`
+                ResolveError.AppDoesNotHandleIntent,
+                `Application '${intent.target}' does not handle intent '${intent.type}' with context '${intent.context.type}'`
             );
         } else {
             // Target does not exist
             throw new FDC3Error(
-                RaiseIntentError.TargetAppNotAvailable,
-                `Couldn't resolve intent target '${intent.target}'. No matching app in directory or currently running.`
+                ApplicationError.NotFound,
+                `No application '${intent.target}' found running or in directory`
             );
         }
     }
@@ -68,7 +68,7 @@ export class IntentHandler {
         const apps: Application[] = await this._model.getApplicationsForIntent(intent.type, intent.context.type);
 
         if (apps.length === 0) {
-            throw new FDC3Error(RaiseIntentError.NoAppsFound, 'No applications available to handle this intent');
+            throw new FDC3Error(ResolveError.NoAppsFound, `No applications available to handle intent '${intent.type}' with context '${intent.context.type}'`);
         } else if (apps.length === 1) {
             console.log(`App '${apps[0].name}' found to resolve intent '${intent.type}, firing intent'`);
 
@@ -114,7 +114,7 @@ export class IntentHandler {
         });
 
         if (!selection) {
-            throw new FDC3Error(RaiseIntentError.ResolverClosedOrCancelled, 'Resolver closed or cancelled');
+            throw new FDC3Error(ResolveError.ResolverClosedOrCancelled, 'Resolver closed or cancelled');
         }
 
         // Handle response
@@ -140,12 +140,12 @@ export class IntentHandler {
             data = returnData;
 
             if (result === ClientCallsResult.ALL_FAILURE) {
-                throw new FDC3Error(RaiseIntentError.SendIntentError, 'Error(s) thrown by client attempting to handle intent');
+                throw new FDC3Error(SendContextError.HandlerError, 'Error(s) thrown by application attempting to handle intent');
             } else if (result === ClientCallsResult.TIMEOUT) {
-                throw new FDC3Error(RaiseIntentError.SendIntentTimeout, 'Timeout waiting for client to handle intent');
+                throw new FDC3Error(SendContextError.HandlerTimeout, 'Timeout waiting for application to handle intent');
             }
         } else {
-            throw new FDC3Error(RaiseIntentError.SendIntentNoHandler, `No intent handler added for intent: ${intent.type}`);
+            throw new FDC3Error(SendContextError.NoHandler, `Application has no handler for intent '${intent.type}'`);
         }
 
         const resolution: IntentResolution = {
