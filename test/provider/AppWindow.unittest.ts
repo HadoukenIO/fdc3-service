@@ -4,20 +4,21 @@ import {Identity} from 'openfin/_v2/main';
 import {DeferredPromise} from 'openfin-service-async';
 
 import {createMockChannel} from '../mocks';
-import {Application} from '../../src/client/main';
-import {AbstractAppWindow} from '../../src/provider/model/AppWindow';
-import {ContextChannel} from '../../src/provider/model/ContextChannel';
 import {useMockTime, unmockTime, advanceTime, resolvePromiseChain} from '../utils/unit/time';
+import {Application} from '../../src/client/main';
+import {AppConnectionBase} from '../../src/provider/model/AppConnection';
+import {ContextChannel} from '../../src/provider/model/ContextChannel';
+import {EntityType} from '../../src/provider/model/Environment';
 import {Timeouts} from '../../src/provider/constants';
 
-class TestAppWindow extends AbstractAppWindow {
+class TestAppWindow extends AppConnectionBase {
     public bringToFront: jest.Mock<Promise<void>, []> = jest.fn<Promise<void>, []>();
     public focus: jest.Mock<Promise<void>, []> = jest.fn<Promise<void>, []>();
 
     private readonly _identity: Readonly<Identity>;
 
-    constructor(identity: Identity, appInfo: Application, maturityPromise: Promise<void>, channel: ContextChannel, appWindowNumber: number) {
-        super(identity, appInfo, maturityPromise, channel, appWindowNumber);
+    constructor(identity: Identity, appInfo: Application, maturityPromise: Promise<void>, channel: ContextChannel, entityNumber: number) {
+        super(identity, EntityType.WINDOW, appInfo, maturityPromise, channel, entityNumber);
 
         this._identity = identity;
     }

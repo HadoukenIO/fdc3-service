@@ -88,11 +88,13 @@ export class APIHandler<T extends Enum> {
     public publish(action: string, payload: unknown): Promise<unknown>[] {
         const connections = this._providerChannel.connections.slice();
         return this._providerChannel.publish(action, payload).map((promise, index) => promise.catch((error) => {
+            const {message, stack} = error;
+
             // We don't know which connection had the error, but assume that the indices of the promises match the indices of the channel connections.
-            const connectionInfo = `probably from connection ${index + 1}/${connections.length}: ${connections[index].uuid} / ${connections[index].name}`;
+            const connectionInfo = `probably from connection ${index + 1}/${connections.length}: ${connections[index].uuid}/${connections[index].name}`;
 
             // Log and re-throw
-            console.error(`Error when publishing '${action}' (${connectionInfo})\n`, payload);
+            console.error(`Client-side error when publishing '${action}' (${connectionInfo})\n${message}\n`, stack, '\n', payload);
             throw error;
         }));
     }
@@ -122,7 +124,7 @@ export class APIHandler<T extends Enum> {
     }
 
     // TODO?: Remove the need for this any by defining connection payload type?
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private onConnectionHandler(identity: Identity, payload?: any): void {
         if (payload && payload.version && payload.version.length > 0) {
             console.log(`connection from client: ${identity.name}, version: ${payload.version}`);
