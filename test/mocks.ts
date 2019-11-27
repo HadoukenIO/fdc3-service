@@ -27,7 +27,7 @@ export function createMockAppConnection(options: Partial<jest.Mocked<AppConnecti
         id: getId(identity),
         identity,
         entityType: EntityType.WINDOW,
-        entityCounter: 0,
+        entityNumber: 0,
         appInfo: createFakeApp({appId: identity.uuid}),
         channel: createMockChannel(),
         intentListeners: [],

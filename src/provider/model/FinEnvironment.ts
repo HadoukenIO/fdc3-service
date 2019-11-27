@@ -24,7 +24,7 @@ import {FinAppWindow} from './FinAppWindow';
 import {LiveApp} from './LiveApp';
 
 interface KnownEntity {
-    index: number;
+    entityNumber: number;
     entityType: EntityType;
 }
 
@@ -83,16 +83,16 @@ export class FinEnvironment extends AsyncInit implements Environment {
         const knownEntity: KnownEntity | undefined = this._knownEntities.get(id) || this.registerEntity(identity, entityType);
 
         if (knownEntity) {
-            const {index} = knownEntity;
+            const {entityNumber} = knownEntity;
 
             if (entityType === EntityType.EXTERNAL_CONNECTION) {
-                return new FinAppConnection(identity, entityType, liveApp, channel, index);
+                return new FinAppConnection(identity, entityType, liveApp, channel, entityNumber);
             } else {
                 if (entityType !== EntityType.WINDOW) {
                     console.warn(`Unexpected entity type: ${entityType}. Treating as a regular OpenFin window.`);
                 }
 
-                return new FinAppWindow(identity, entityType, liveApp, channel, index);
+                return new FinAppWindow(identity, entityType, liveApp, channel, entityNumber);
             }
         } else {
             throw new Error('Cannot wrap entities belonging to the provider');
@@ -210,7 +210,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     private registerEntity(identity: Identity, entityType: EntityType): KnownEntity|undefined {
         if (identity.uuid !== SERVICE_IDENTITY.uuid) {
             const entity: KnownEntity = {
-                index: this._entityCount,
+                entityNumber: this._entityCount,
                 entityType
             };
 

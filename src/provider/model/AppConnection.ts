@@ -20,7 +20,7 @@ export interface AppConnection {
     id: string;
     identity: Identity;
     entityType: EntityType;
-    entityCounter: number;
+    entityNumber: number;
 
     appInfo: Readonly<Application>;
     channel: ContextChannel;
@@ -66,7 +66,7 @@ export abstract class AppConnectionBase implements AppConnection {
     private readonly _id: string;
     private readonly _entityType: EntityType;
     private readonly _appInfo: Application;
-    private readonly _entityCounter: number;
+    private readonly _entityNumber: number;
 
     private readonly _maturePromise: Promise<void>;
 
@@ -86,12 +86,12 @@ export abstract class AppConnectionBase implements AppConnection {
         appInfo: Application,
         maturePromise: Promise<void>,
         channel: ContextChannel,
-        entityCounter: number
+        entityNumber: number
     ) {
         this._id = getId(identity);
         this._entityType = entityType;
         this._appInfo = appInfo;
-        this._entityCounter = entityCounter;
+        this._entityNumber = entityNumber;
 
         this._maturePromise = maturePromise;
 
@@ -116,8 +116,8 @@ export abstract class AppConnectionBase implements AppConnection {
         return this._appInfo;
     }
 
-    public get entityCounter(): number {
-        return this._entityCounter;
+    public get entityNumber(): number {
+        return this._entityNumber;
     }
 
     public get channelContextListeners(): ReadonlyArray<ChannelId> {

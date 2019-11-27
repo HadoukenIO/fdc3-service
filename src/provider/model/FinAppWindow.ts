@@ -8,8 +8,8 @@ import {EntityType} from './Environment';
 export class FinAppWindow extends AppConnectionBase {
     private readonly _window: Window;
 
-    constructor(identity: Identity, entityType: EntityType, liveApp: LiveApp, channel: ContextChannel, entityCounter: number) {
-        super(identity, entityType, liveApp.appInfo!, liveApp.waitForAppMature(), channel, entityCounter);
+    constructor(identity: Identity, entityType: EntityType, liveApp: LiveApp, channel: ContextChannel, entityNumber: number) {
+        super(identity, entityType, liveApp.appInfo!, liveApp.waitForAppMature(), channel, entityNumber);
 
         this._window = fin.Window.wrapSync(identity);
     }
