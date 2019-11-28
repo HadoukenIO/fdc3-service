@@ -10,11 +10,13 @@ import {Model} from '../model/Model';
 import {ResolverHandler, ResolverHandlerBinding} from '../controller/ResolverHandler';
 import {AsyncInit} from '../controller/AsyncInit';
 import {FinEnvironment} from '../model/FinEnvironment';
+import {FinAppDirectoryStorage} from '../model/FinAppDirectoryStorage';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {ChannelHandler} from '../controller/ChannelHandler';
 import {EventHandler} from '../controller/EventHandler';
 import {Environment} from '../model/Environment';
+import {AppDirectoryStorage} from '../model/AppDirectoryStorage';
 
 import {Inject} from './Injectables';
 
@@ -24,6 +26,7 @@ import {Inject} from './Injectables';
 interface Types {
     [Inject.API_HANDLER]: APIHandler<APIFromClientTopic>;
     [Inject.APP_DIRECTORY]: AppDirectory;
+    [Inject.APP_DIRECTORY_STORAGE]: AppDirectoryStorage;
     [Inject.CHANNEL_HANDLER]: ChannelHandler;
     [Inject.CONFIG_STORE]: ConfigStoreBinding;
     [Inject.CONTEXT_HANDLER]: ContextHandler;
@@ -43,6 +46,7 @@ interface Types {
 const Bindings = {
     [Inject.API_HANDLER]: APIHandler,
     [Inject.APP_DIRECTORY]: AppDirectory,
+    [Inject.APP_DIRECTORY_STORAGE]: FinAppDirectoryStorage,
     [Inject.CHANNEL_HANDLER]: ChannelHandler,
     [Inject.CONFIG_STORE]: ConfigStore,
     [Inject.CONTEXT_HANDLER]: ContextHandler,

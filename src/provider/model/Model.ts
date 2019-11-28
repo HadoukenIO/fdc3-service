@@ -1,7 +1,7 @@
 import {injectable, inject} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
-import {withStrictTimeout, serialFilter, allowReject, untilSignal, untilTrue, DeferredPromise} from 'openfin-service-async';
+import {withStrictTimeout, allowReject, untilSignal, untilTrue, DeferredPromise} from 'openfin-service-async';
 
 import {Application, AppName} from '../../client/directory';
 import {Inject} from '../common/Injectables';
@@ -193,20 +193,20 @@ export class Model {
      * @param intentType The intent type we want to find supporting apps for
      * @param contextType The optional context type that we want apps to support with the given intent
      */
-    public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
+    public getApplicationsForIntent(intentType: string, contextType?: string): Application[] {
         // Get all live apps that support the given intent and context
         const liveApps = Object.values(this._liveAppsByUuid);
 
-        const liveAppsForIntent = (await serialFilter(liveApps, async (liveApp: LiveApp) => {
+        const liveAppsForIntent = liveApps.filter((liveApp: LiveApp) => {
             const {appInfo, windows} = liveApp;
 
             const hasIntentListener = windows.some((window) => window.hasIntentListener(intentType));
 
             return hasIntentListener && appInfo !== undefined && AppDirectory.mightAppSupportIntent(appInfo, intentType, contextType);
-        })).map((liveApp) => liveApp.appInfo!);
+        }).map((liveApp) => liveApp.appInfo!);
 
         // Get all directory apps that support the given intent and context
-        const directoryApps = await serialFilter(await this._directory.getAllApps(), async (app) => {
+        const directoryApps = this._directory.getAllApps().filter((app) => {
             const uuid = AppDirectory.getUuidFromApp(app);
             const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
 
@@ -233,7 +233,7 @@ export class Model {
      *
      * @param contextType The optional context type that we want to find intents to handle
      */
-    public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
+    public getAppIntentsByContext(contextType: string): AppIntent[] {
         const appIntentsBuilder = new AppIntentsBuilder();
 
         // Populate appIntentsBuilder from running apps
@@ -247,7 +247,7 @@ export class Model {
         });
 
         // Populate appIntentsBuilder from non-mature directory apps
-        const directoryApps = await serialFilter(await this._directory.getAllApps(), async (app) => {
+        const directoryApps = this._directory.getAllApps().filter((app) => {
             const uuid = AppDirectory.getUuidFromApp(app);
             const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
 
@@ -282,8 +282,8 @@ export class Model {
         return liveApp ? liveApp.windows : [];
     }
 
-    public async existsAppForName(name: AppName): Promise<boolean> {
-        const directoryApp = await this._directory.getAppByName(name);
+    public existsAppForName(name: AppName): boolean {
+        const directoryApp = this._directory.getAppByName(name);
 
         if (directoryApp) {
             return true;
@@ -299,7 +299,7 @@ export class Model {
         await liveApp.waitForAppStarted();
 
         // Attempt to get appInfo from the app directory, otherwise infer from environment
-        const appInfoFromDirectory = await this._directory.getAppByUuid(uuid);
+        const appInfoFromDirectory = this._directory.getAppByUuid(uuid);
         const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
 
         liveApp.setAppInfo(appInfo);

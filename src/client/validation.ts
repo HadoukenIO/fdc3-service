@@ -83,14 +83,25 @@ export function parseAppChannelName(name: string): ChannelId {
 }
 
 /**
- * Validates the provided applications value - can be either a URL or an array of Applications
+ * Validates the provided number is an integer
  */
-export function parseApplicationsParameter(applications: string | Application[]): string | Application[] {
-    if (!((typeof applications === 'string' && applications !== '') || (applications instanceof Array))) {
-        throw new TypeError(`${safeStringify(applications, 'The provided applications parameter')} is not a valid applications parameter`);
+export function parseInteger(number: number): number {
+    if (typeof number !== 'number' || isNaN(number) || Math.floor(number) !== number) {
+        throw new TypeError(`${safeStringify(number, 'The provided value')} is not a valid integer`);
     }
 
-    return applications;
+    return number;
+}
+
+/**
+ * Validates the provided applications value - can be either a URL or an array of Applications
+ */
+export function parseAppDirectoryData(data: string | Application[]): string | Application[] {
+    if (!((typeof data === 'string' && data !== '') || (data instanceof Array))) {
+        throw new TypeError(`${safeStringify(data, 'The provided applications parameter')} is not a valid applications parameter`);
+    }
+
+    return data;
 }
 
 /**

@@ -5,7 +5,7 @@ import {Identity} from 'openfin/_v2/main';
 import {AppWindow} from '../src/provider/model/AppWindow';
 import {Context, Application} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
-import {ChannelTransport, ChannelEvents, APIFromClientTopic} from '../src/client/internal';
+import {ChannelTransport, ChannelEvents, APIFromClientTopic, StoredDirectoryItem} from '../src/client/internal';
 import {Environment, EntityType} from '../src/provider/model/Environment';
 import {AppDirectory} from '../src/provider/model/AppDirectory';
 import {APIHandler} from '../src/provider/APIHandler';
@@ -16,6 +16,7 @@ import {Model} from '../src/provider/model/Model';
 import {ChannelHandler} from '../src/provider/controller/ChannelHandler';
 
 import {createFakeIdentity, createFakeApp} from './demo/utils/fakes';
+import { AppDirectoryStorage } from '../src/provider/model/AppDirectoryStorage';
 
 /**
  * Creates a minimal mock app window. Any utilizing test should set properties and set up mock functions as needed
@@ -97,6 +98,15 @@ export function createMockApiHandler(): jest.Mocked<APIHandler<APIFromClientTopi
 export function createMockAppDirectory(): jest.Mocked<AppDirectory> {
     const {AppDirectory} = jest.requireMock('../src/provider/model/AppDirectory');
     return new AppDirectory();
+}
+
+export function createMockAppDirectoryStorage(options: Partial<jest.Mocked<AppDirectoryStorage>> = {}): jest.Mocked<AppDirectoryStorage> {
+    return {
+        changed: new Signal<[]>(),
+        getStoredDirectoryItems: jest.fn<StoredDirectoryItem[], []>(),
+        // Apply any custom overrides
+        ...options
+    };
 }
 
 export function createMockModel(): jest.Mocked<Model> {

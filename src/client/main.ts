@@ -10,7 +10,7 @@ import {Context} from './context';
 import {Application, AppName} from './directory';
 import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners} from './internal';
 import {ChannelChangedEvent, getChannelObject, ChannelContextListener} from './contextChannels';
-import {parseContext, validateEnvironment, parseApplicationsParameter} from './validation';
+import {parseContext, validateEnvironment, parseAppDirectoryData, parseInteger} from './validation';
 import {Transport, Targeted} from './EventRouter';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -304,23 +304,6 @@ export async function raiseIntent(intent: string, context: Context, target?: App
     return tryServiceDispatch(APIFromClientTopic.RAISE_INTENT, {intent, context: parseContext(context), target});
 }
 
-export async function setApplications(applications: Application[]): Promise<void>;
-export async function setApplications(applications: string): Promise<void>;
-
-export async function setApplications(applications: Application[] | string): Promise<void> {
-    applications = parseApplicationsParameter(applications);
-
-    if (typeof applications === 'string') {
-        await fin.Storage.setItem('fdc3.applications', JSON.stringify({url: applications}));
-    } else {
-        await fin.Storage.setItem('fdc3.applications', JSON.stringify({applications}));
-    }
-}
-
-export async function clearApplications(): Promise<void> {
-    await fin.Storage.removeItem('fdc3.applications');
-}
-
 /**
  * Adds a listener for incoming intents from the Agent.
  *
@@ -428,6 +411,62 @@ export function removeEventListener(eventType: MainEvents['type'], handler: (eve
     validateEnvironment();
 
     eventEmitter.removeListener(eventType, handler);
+}
+
+/**
+ * Registers an app directory for the current application's domain. This may be in the form of a URL or an app
+ * directory.
+ *
+ * The app directory data should be versioned as an integer using the passed in parameter, `version`. If the version is
+ * lower the last registration, this call does nothing, if it is equal, the new provided data is appended to the old,
+ * and if greater, all existing app directory registratation is replaced by the provided data.
+ *
+ * @param data Either a URL containing the location of a JSON app directory, or an array of [Application]s.
+ * @param version The version of the provided app directory data.
+ */
+export async function registerAppDirectory(data: Application[], version: number): Promise<void>;
+export async function registerAppDirectory(data: string, version: number): Promise<void>;
+
+export async function registerAppDirectory(data: Application[] | string, version: number = 0): Promise<void> {
+    version = parseInteger(version);
+    data = parseAppDirectoryData(data);
+
+    const url = (typeof data === 'string') ? data as string : undefined;
+    const applications = (typeof data === 'string') ? undefined : data as Application[];
+
+    const current = await fin.Storage.getItem('of-fdc3-service.directory');
+
+    let newUrls: string[] | undefined;
+    let newApplications: Application[] | undefined;
+
+    if (current && current.version === version) {
+        newUrls = current.urls as string[];
+        newApplications = current.applications as Application[];
+
+        if (url) {
+            if (newUrls.indexOf(url) === -1) {
+                newUrls.push(url);
+            }
+        } else if (applications) {
+            newApplications = newApplications.filter((application) => !applications.some((newApplication) => newApplication.name === application.name));
+            newApplications = [
+                ...newApplications,
+                ...applications.filter((application, index) => applications.findIndex((app) => app.name === application.name) === index)
+            ];
+        }
+    } else if (!current || current.version < version) {
+        if (url) {
+            newUrls = [url];
+            newApplications = [];
+        } else if (applications) {
+            newUrls = [];
+            newApplications = applications;
+        }
+    }
+
+    if (newUrls && data) {
+        await fin.Storage.setItem('of-fdc3-service.directory', JSON.stringify({version, urls: newUrls, applications: newApplications}));
+    }
 }
 
 /**

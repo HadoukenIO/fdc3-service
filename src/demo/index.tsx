@@ -1,6 +1,8 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
+import * as fdc3 from '../client/main';
+
 import {BlotterApp} from './apps/BlotterApp';
 import {ChartsApp} from './apps/ChartsApp';
 import {ContactsApp} from './apps/ContactsApp';
@@ -20,6 +22,8 @@ import {NewsApp} from './apps/NewsApp';
  * Whilst these applications clearly share the same code, they should be assumed to be completely unrelated
  * applications, likely made by different vendors, that are both capable of providing the same funcionality.
  */
+
+Object.assign(window, {fdc3});
 
 function App(): React.ReactElement {
     // Note that we require demo app UUIDs to follow a 'fdc3-$NAME[-$COLOUR][-nodir]' convention

@@ -23,11 +23,13 @@ import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
 import {Environment} from './model/Environment';
 import {collateClientCalls, ClientCallsResult} from './utils/helpers';
+import {AppDirectoryStorage} from './model/AppDirectoryStorage';
 
 @injectable()
 export class Main {
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
     private readonly _directory: AppDirectory;
+    private readonly _directoryStorage: AppDirectoryStorage;
     private readonly _channelHandler: ChannelHandler;
     private readonly _configStore: ConfigStoreBinding;
     private readonly _contextHandler: ContextHandler;
@@ -39,6 +41,7 @@ export class Main {
     constructor(
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
+        @inject(Inject.APP_DIRECTORY_STORAGE) directoryStorage: AppDirectoryStorage,
         @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
         @inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding,
         @inject(Inject.CONTEXT_HANDLER) contextHandler: ContextHandler,
@@ -49,6 +52,7 @@ export class Main {
     ) {
         this._apiHandler = apiHandler;
         this._directory = directory;
+        this._directoryStorage = directoryStorage;
         this._channelHandler = channelHandler;
         this._configStore = configStore;
         this._contextHandler = contextHandler;
@@ -63,6 +67,7 @@ export class Main {
             main: this,
             apiHandler: this._apiHandler,
             directory: this._directory,
+            directoryStorage: this._directoryStorage,
             channelHandler: this._channelHandler,
             configStore: this._configStore,
             contextHandler: this._contextHandler,
@@ -112,7 +117,7 @@ export class Main {
     private async open(payload: OpenPayload): Promise<void> {
         const context = payload.context && parseContext(payload.context);
 
-        const appInfo: Application|null = await this._directory.getAppByName(payload.name);
+        const appInfo: Application|null = this._directory.getAppByName(payload.name);
 
         if (!appInfo) {
             throw new FDC3Error(ApplicationError.NotFound, `No application '${payload.name}' found running or in directory`);
@@ -170,14 +175,14 @@ export class Main {
      * Includes running apps that are not registered on the directory
      * @param payload Contains the intent type to find information for
      */
-    private async findIntent(payload: FindIntentPayload): Promise<AppIntent> {
+    private findIntent(payload: FindIntentPayload): AppIntent {
         let apps: Application[];
         if (payload.intent) {
-            apps = await this._model.getApplicationsForIntent(payload.intent, payload.context && parseContext(payload.context).type);
+            apps = this._model.getApplicationsForIntent(payload.intent, payload.context && parseContext(payload.context).type);
         } else {
             // This is a non-FDC3 workaround to get all directory apps by calling `findIntent` with a falsy intent.
             // Ideally the FDC3 spec would expose an API to access the directory in a more meaningful way
-            apps = await this._directory.getAllApps();
+            apps = this._directory.getAllApps();
         }
 
         return {
