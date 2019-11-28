@@ -190,8 +190,8 @@ describe('When an app is in the directory with multiple intents', () => {
 
         describe('When the app is not mature', () => {
             test('The model returns the app in app intents that handle a given context according to the directory, plus the app intent \
-for the non-directory intent', async () => {
-                await expectAppIntentsFromDirectoryPlusAdHocIntent(arbitraryIntentType);
+for the non-directory intent', () => {
+                expectAppIntentsFromDirectoryPlusAdHocIntent(arbitraryIntentType);
             });
         });
     });
