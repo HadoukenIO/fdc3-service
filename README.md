@@ -12,7 +12,7 @@ This project consist of 3 parts:
 
 ### Dependencies
 - OpenFin version for applications using the FDC3 Service >= 9.61.38.41
-- OpenFin version used by the FDC3 Provider = 14.78.45.31
+- OpenFin version used by the FDC3 Provider = 14.78.46.14
 - RVM >= 4.7
 
 ### Features
