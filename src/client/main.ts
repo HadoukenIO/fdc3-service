@@ -431,7 +431,14 @@ export async function registerAppDirectory(data: Application[] | string, version
     const url = (typeof data === 'string') ? data as string : undefined;
     const applications = (typeof data === 'string') ? undefined : data as Application[];
 
-    const current = await fin.Storage.getItem(APP_DIRECTORY_STORAGE_TAG);
+    let current;
+
+    try {
+        // We expect this to throw if no directory items have been written
+        current = await fin.Storage.getItem(APP_DIRECTORY_STORAGE_TAG);
+    } catch (e) {
+        current = undefined;
+    }
 
     let newUrls: string[] | undefined;
     let newApplications: Application[] | undefined;

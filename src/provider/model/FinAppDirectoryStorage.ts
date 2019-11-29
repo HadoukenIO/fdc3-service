@@ -34,8 +34,8 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
     }
 
     protected async init(): Promise<void> {
-        await fin.System.addListener('storage-changed', (tag: string) => {
-            if (tag === APP_DIRECTORY_STORAGE_TAG) {
+        await newFin.Storage.addListener('storage-changed', (event: {tag: string}) => {
+            if (event.tag === APP_DIRECTORY_STORAGE_TAG) {
                 this.handleStorageChanged();
             }
         });
@@ -51,7 +51,6 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
     }
 
     private async refreshFromStorage(): Promise<void> {
-        const domainWhitelist = this._configStore.config.query({level: 'desktop'}).domainWhitelist;
         let items: Map<string, string>;
 
         try {
@@ -62,9 +61,8 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
         }
 
         const entries = Array.from(items.entries());
-        const filterdEntries = domainWhitelist.length > 0 ? entries.filter((entry) => domainWhitelist.includes(entry[0])) : entries;
 
-        const sortedEntries = filterdEntries.sort((a, b) => a[0].localeCompare(b[0])).map((entry) => entry[1]);
+        const sortedEntries = entries.sort((a, b) => a[0].localeCompare(b[0])).map((entry) => entry[1]);
         this._items = sortedEntries.map((entry) => JSON.parse(entry) as StoredDirectoryItem);
     }
 }

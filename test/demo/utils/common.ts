@@ -170,7 +170,7 @@ export async function closeResolver(): Promise<void> {
     await delay(Duration.API_CALL);
 }
 
-async function clearDirectoryStorage(): Promise<void> {
+export async function clearDirectoryStorage(): Promise<void> {
     await fdc3Remote.ofBrowser.executeOnWindow(testManagerIdentity, async function (this: BaseWindowContext, tag: string) {
         await this.fin.Storage.removeItem(tag);
     }, APP_DIRECTORY_STORAGE_TAG);

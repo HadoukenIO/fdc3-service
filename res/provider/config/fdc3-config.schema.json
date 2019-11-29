@@ -134,14 +134,6 @@
                     "type": "string",
                     "default": "",
                     "description": "The location of a global application directory that will be used in addition to any other registered app directories"
-                },
-                "domainWhitelist": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "default": [],
-                    "description": "The whitelist of domains to consider for integration into the combined service app directory"
                 }
             },
             "additionalProperties": false
