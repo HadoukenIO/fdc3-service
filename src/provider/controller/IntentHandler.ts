@@ -40,13 +40,13 @@ export class IntentHandler {
     }
 
     private async raiseWithTarget(intent: IntentWithTarget): Promise<IntentResolution> {
-        const apps = this._model.getApplicationsForIntent(intent.type, intent.context.type);
+        const apps = await this._model.getApplicationsForIntent(intent.type, intent.context.type);
         const targetApp = apps.find((app) => app.name === intent.target);
 
         if (targetApp !== undefined) {
             // Target intent handles intent with given context, so fire
             return this.fireIntent(intent, targetApp);
-        } else if (this._model.existsAppForName(intent.target)) {
+        } else if (await this._model.existsAppForName(intent.target)) {
             // Target exists but does not handle intent with given context
             throw new FDC3Error(
                 ResolveError.AppDoesNotHandleIntent,
@@ -61,11 +61,11 @@ export class IntentHandler {
         }
     }
 
-    private startResolve(
+    private async startResolve(
         intent: Intent,
         handleAppChoice: (intent: Intent, apps: Application[]) => Promise<IntentResolution>
     ): Promise<IntentResolution> {
-        const apps: Application[] = this._model.getApplicationsForIntent(intent.type, intent.context.type);
+        const apps: Application[] = await this._model.getApplicationsForIntent(intent.type, intent.context.type);
 
         if (apps.length === 0) {
             throw new FDC3Error(ResolveError.NoAppsFound, `No applications available to handle intent '${intent.type}' with context '${intent.context.type}'`);

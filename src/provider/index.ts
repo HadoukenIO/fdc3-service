@@ -117,7 +117,7 @@ export class Main {
     private async open(payload: OpenPayload): Promise<void> {
         const context = payload.context && parseContext(payload.context);
 
-        const appInfo: Application|null = this._directory.getAppByName(payload.name);
+        const appInfo: Application|null = await this._directory.getAppByName(payload.name);
 
         if (!appInfo) {
             throw new FDC3Error(ApplicationError.NotFound, `No application '${payload.name}' found running or in directory`);
@@ -175,14 +175,14 @@ export class Main {
      * Includes running apps that are not registered on the directory
      * @param payload Contains the intent type to find information for
      */
-    private findIntent(payload: FindIntentPayload): AppIntent {
+    private async findIntent(payload: FindIntentPayload): Promise<AppIntent> {
         let apps: Application[];
         if (payload.intent) {
-            apps = this._model.getApplicationsForIntent(payload.intent, payload.context && parseContext(payload.context).type);
+            apps = await this._model.getApplicationsForIntent(payload.intent, payload.context && parseContext(payload.context).type);
         } else {
             // This is a non-FDC3 workaround to get all directory apps by calling `findIntent` with a falsy intent.
             // Ideally the FDC3 spec would expose an API to access the directory in a more meaningful way
-            apps = this._directory.getAllApps();
+            apps = await this._directory.getAllApps();
         }
 
         return {

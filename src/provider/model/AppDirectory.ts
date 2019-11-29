@@ -80,21 +80,21 @@ export class AppDirectory extends AsyncInit {
         this._configStore = configStore;
     }
 
-    public getAppByName(name: AppName): Application | null {
-        return this._directory.find((app: Application) => {
+    public getAppByName(name: AppName): Promise<Application | null> {
+        return Promise.resolve(this._directory.find((app: Application) => {
             return app.name === name;
-        }) || null;
+        }) || null);
     }
 
-    public getAppByUuid(uuid: string): Application | null {
-        return this._directory.find((app) => AppDirectory.getUuidFromApp(app) === uuid) || null;
+    public getAppByUuid(uuid: string): Promise<Application | null> {
+        return Promise.resolve(this._directory.find((app) => AppDirectory.getUuidFromApp(app) === uuid) || null);
     }
 
     /**
      * Retrieves all of the applications in the Application Directory.
      */
-    public getAllApps(): Application[] {
-        return this._directory;
+    public getAllApps(): Promise<Application[]> {
+        return Promise.resolve(this._directory);
     }
 
     protected async init(): Promise<void> {

@@ -193,7 +193,7 @@ export class Model {
      * @param intentType The intent type we want to find supporting apps for
      * @param contextType The optional context type that we want apps to support with the given intent
      */
-    public getApplicationsForIntent(intentType: string, contextType?: string): Application[] {
+    public async getApplicationsForIntent(intentType: string, contextType?: string): Promise<Application[]> {
         // Get all live apps that support the given intent and context
         const liveApps = Object.values(this._liveAppsByUuid);
 
@@ -206,7 +206,7 @@ export class Model {
         }).map((liveApp) => liveApp.appInfo!);
 
         // Get all directory apps that support the given intent and context
-        const directoryApps = this._directory.getAllApps().filter((app) => {
+        const directoryApps = (await this._directory.getAllApps()).filter((app) => {
             const uuid = AppDirectory.getUuidFromApp(app);
             const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
 
@@ -233,7 +233,7 @@ export class Model {
      *
      * @param contextType The optional context type that we want to find intents to handle
      */
-    public getAppIntentsByContext(contextType: string): AppIntent[] {
+    public async getAppIntentsByContext(contextType: string): Promise<AppIntent[]> {
         const appIntentsBuilder = new AppIntentsBuilder();
 
         // Populate appIntentsBuilder from running apps
@@ -247,7 +247,7 @@ export class Model {
         });
 
         // Populate appIntentsBuilder from non-mature directory apps
-        const directoryApps = this._directory.getAllApps().filter((app) => {
+        const directoryApps = (await this._directory.getAllApps()).filter((app) => {
             const uuid = AppDirectory.getUuidFromApp(app);
             const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
 
@@ -282,8 +282,8 @@ export class Model {
         return liveApp ? liveApp.windows : [];
     }
 
-    public existsAppForName(name: AppName): boolean {
-        const directoryApp = this._directory.getAppByName(name);
+    public async existsAppForName(name: AppName): Promise<boolean> {
+        const directoryApp = await this._directory.getAppByName(name);
 
         if (directoryApp) {
             return true;
@@ -299,7 +299,7 @@ export class Model {
         await liveApp.waitForAppStarted();
 
         // Attempt to get appInfo from the app directory, otherwise infer from environment
-        const appInfoFromDirectory = this._directory.getAppByUuid(uuid);
+        const appInfoFromDirectory = await this._directory.getAppByUuid(uuid);
         const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
 
         liveApp.setAppInfo(appInfo);

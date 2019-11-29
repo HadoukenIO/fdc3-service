@@ -113,8 +113,8 @@ describe('When Fetching Initial Data', () => {
             await createAppDirectory(DEV_APP_DIRECTORY_URL);
         });
 
-        test('We fetch data from the application directory JSON', () => {
-            expect(appDirectory.getAllApps()).toEqual(fakeApps);
+        test('We fetch data from the application directory JSON', async () => {
+            await expect(appDirectory.getAllApps()).resolves.toEqual(fakeApps);
         });
 
         test('Data is not retrieved from cache', () => {
@@ -129,12 +129,12 @@ describe('When Fetching Initial Data', () => {
         });
 
         describe('With cache', () => {
-            test('We fetch data from the cache', () => {
-                expect(appDirectory.getAllApps()).toEqual(cachedFakeApps);
+            test('We fetch data from the cache', async () => {
+                await expect(appDirectory.getAllApps()).resolves.toEqual(cachedFakeApps);
             });
 
-            test('Data is not fetched from live app directory', () => {
-                expect(appDirectory.getAllApps()).not.toEqual(fakeApps);
+            test('Data is not fetched from live app directory', async () => {
+                await expect(appDirectory.getAllApps()).resolves.not.toEqual(fakeApps);
             });
 
             test('We receive an empty array if the URLs do not match', async () => {
@@ -143,7 +143,7 @@ describe('When Fetching Initial Data', () => {
 
                 await createAppDirectory(DEV_APP_DIRECTORY_URL);
 
-                expect(appDirectory.getAllApps()).toEqual([]);
+                await expect(appDirectory.getAllApps()).resolves.toEqual([]);
             });
         });
 
@@ -164,12 +164,12 @@ describe('When Fetching Initial Data', () => {
                 await createAppDirectory(DEV_APP_DIRECTORY_URL);
             });
 
-            test('We receive an empty array', (() => {
-                expect(appDirectory.getAllApps()).toEqual([]);
+            test('We receive an empty array', (async () => {
+                await expect(appDirectory.getAllApps()).resolves.toEqual([]);
             }));
 
-            test('Data is not fetched from live app directory', () => {
-                expect(appDirectory.getAllApps()).not.toEqual(fakeApps);
+            test('Data is not fetched from live app directory', async () => {
+                await expect(appDirectory.getAllApps()).resolves.not.toEqual(fakeApps);
             });
         });
     });
@@ -180,31 +180,31 @@ describe('When querying the Directory', () => {
         await createAppDirectory(DEV_APP_DIRECTORY_URL);
     });
 
-    it('Can get all apps', () => {
-        const apps = appDirectory.getAllApps();
+    it('Can get all apps', async () => {
+        const apps = await appDirectory.getAllApps();
         expect(apps).toEqual(fakeApps);
     });
 
-    it('Can get applicaiton by name', () => {
-        const app = appDirectory.getAppByName(fakeApp2.name);
+    it('Can get applicaiton by name', async () => {
+        const app = await appDirectory.getAppByName(fakeApp2.name);
         expect(app).not.toBeNull();
     });
 
     describe('With a custom appUuid is not defined', () => {
-        it('Can get application by uuid using appId', () => {
-            const app = appDirectory.getAppByUuid(fakeApp2.appId);
+        it('Can get application by uuid using appId', async () => {
+            const app = await appDirectory.getAppByUuid(fakeApp2.appId);
             expect(app).not.toBeNull();
         });
     });
 
     describe('With a custom appUuid is defined', () => {
-        it('Can get application by uuid with appUuid property in customConfig', () => {
-            const app = appDirectory.getAppByUuid('customUuid');
+        it('Can get application by uuid with appUuid property in customConfig', async () => {
+            const app = await appDirectory.getAppByUuid('customUuid');
             expect(app).not.toBeNull();
         });
 
-        it('Cannot get application by uuid using appId', () => {
-            const app = appDirectory.getAppByUuid(fakeApp1.appId);
+        it('Cannot get application by uuid using appId', async () => {
+            const app = await appDirectory.getAppByUuid(fakeApp1.appId);
             expect(app).toBeNull();
         });
     });
