@@ -45,7 +45,16 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
     }
 
     private async refreshFromStorage(): Promise<void> {
-        const entries = Array.from((await newFin.Storage.getAllItems('of-fdc3-service.directory') as Map<string, string>).entries());
+        let items: Map<string, string>;
+
+        try {
+            items = await newFin.Storage.getAllItems('of-fdc3-service.directory');
+        } catch (e) {
+            console.warn('Unable to read directory items from storage');
+            items = new Map();
+        }
+
+        const entries = Array.from(items.entries());
 
         const sortedEntries = entries.sort((a, b) => a[0].localeCompare(b[0])).map((entry) => entry[1]);
         this._items = sortedEntries.map((entry) => JSON.parse(entry) as StoredDirectoryItem);
