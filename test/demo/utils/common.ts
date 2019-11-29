@@ -5,7 +5,7 @@ import {Intent} from '../../../src/provider/intents';
 import {testManagerIdentity, appStartupTime} from '../constants';
 import {Boxed} from '../../../src/provider/utils/types';
 import {RESOLVER_IDENTITY} from '../../../src/provider/utils/constants';
-import {SERVICE_IDENTITY} from '../../../src/client/internal';
+import {SERVICE_IDENTITY, APP_DIRECTORY_STORAGE_TAG} from '../../../src/client/internal';
 import {Model} from '../../../src/provider/model/Model';
 
 import {fin} from './fin';
@@ -127,15 +127,32 @@ export function setupTeardown(): void {
             await closeResolver();
         }
 
-        const expectedRunningApps = ['fdc3-service', testManagerIdentity.uuid];
-
         const runningApps = (await fin.System.getAllApplications()).map((appInfo) => appInfo.uuid);
+        const expectedRunningApps = ['fdc3-service', testManagerIdentity.uuid];
         const unexpectedRunningApps = runningApps.filter((uuid) => !expectedRunningApps.includes(uuid));
 
         await quitApps(...unexpectedRunningApps.map((uuid) => ({uuid})));
 
+        const hasStoredData = await fdc3Remote.ofBrowser.executeOnWindow(testManagerIdentity, async function (this: BaseWindowContext, tag: string) {
+            let hasData;
+
+            try {
+                await this.fin.Storage.getItem(tag);
+                hasData = true;
+            } catch (e) {
+                hasData = false;
+            }
+
+            return hasData;
+        }, APP_DIRECTORY_STORAGE_TAG);
+
+        if (hasStoredData) {
+            await clearDirectoryStorage();
+        }
+
         expect(resolverShowing).toBe(false);
         expect(runningApps.sort()).toEqual(expectedRunningApps.sort());
+        expect(hasStoredData).toBe(false);
 
         await expect(isServiceClear()).resolves.toBe(true);
     });
@@ -151,6 +168,12 @@ export async function closeResolver(): Promise<void> {
     }
 
     await delay(Duration.API_CALL);
+}
+
+async function clearDirectoryStorage(): Promise<void> {
+    await fdc3Remote.ofBrowser.executeOnWindow(testManagerIdentity, async function (this: BaseWindowContext, tag: string) {
+        await this.fin.Storage.removeItem(tag);
+    }, APP_DIRECTORY_STORAGE_TAG);
 }
 
 /**

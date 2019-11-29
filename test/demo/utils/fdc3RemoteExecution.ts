@@ -14,7 +14,7 @@ import {Identity} from 'openfin/_v2/main';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 
 import {IntentType} from '../../../src/provider/intents';
-import {Context, AppIntent, ChannelId, IntentResolution} from '../../../src/client/main';
+import {Context, AppIntent, ChannelId, IntentResolution, Application} from '../../../src/client/main';
 import {RaiseIntentPayload, deserializeError, Events, MainEvents, FindIntentPayload, OpenPayload, BroadcastPayload} from '../../../src/client/internal';
 
 import {OFPuppeteerBrowser, TestWindowContext, TestChannelTransport} from './ofPuppeteer';
@@ -222,6 +222,15 @@ export async function findIntentsByContext(executionTarget: Identity, context: C
     return ofBrowser.executeOnWindow(executionTarget, async function (this: TestWindowContext, contextRemote: Context): Promise<AppIntent[]> {
         return this.fdc3.findIntentsByContext(contextRemote).catch(this.errorHandler);
     }, context).catch(handlePuppeteerError);
+}
+
+export async function registerAppDirectory(executionTarget: Identity, data: Application[] | string, version: number = 0): Promise<void> {
+    return ofBrowser.executeOnWindow(
+        executionTarget,
+        async function (this: TestWindowContext, remoteData: Application[] | string, remoteVersion: number): Promise<void> {
+            await this.fdc3.registerAppDirectory(remoteData, remoteVersion);
+        }, data, version
+    );
 }
 
 export function clickHTMLElement(executionTarget: Identity, elementSelector: string): Promise<boolean> {

@@ -14,6 +14,7 @@
         "version": "14.78.46.14"
     },
     "serviceConfiguration": {
-        "applicationDirectory": "http://localhost:3923/provider/sample-app-directory.json"
+        "applicationDirectory": "http://localhost:3923/provider/sample-app-directory.json",
+        "domainWhitelist": ["localhost"]
     }
 }

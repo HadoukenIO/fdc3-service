@@ -2,7 +2,7 @@
     "devtools_port": 9090,
     "startup_app": {
         "name": "test-app",
-        "url": "http://localhost:3923/test/test-app.html",
+        "url": "http://localhost:3923/test/test-app.html?clearDirectoryStorage=true",
         "uuid": "test-app",
         "autoShow": true,
         "defaultHeight": 400,

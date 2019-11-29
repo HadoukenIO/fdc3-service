@@ -21,7 +21,7 @@ export interface TestWindowChannelEventListener {
 }
 
 export type TestWindowContext = Window & {
-    fin: Fin;
+    fin: Fin & {Storage: any};
     fdc3: typeof import('../../../src/client/main');
 
     contextListeners: ContextListener[];
@@ -49,7 +49,7 @@ export interface TestChannelTransport {
     constructor: string;
 }
 
-export type BaseWindowContext = Window & {fin: Fin};
+export type BaseWindowContext = Window & {fin: (Fin & {Storage: any})};
 
 export class OFPuppeteerBrowser<WindowContext extends BaseWindowContext = BaseWindowContext> {
     private readonly _pageIdentityCache: Map<Page, Identity>;
