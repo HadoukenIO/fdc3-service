@@ -8,7 +8,7 @@
 import {tryServiceDispatch, getServicePromise, getEventRouter, eventEmitter} from './connection';
 import {Context} from './context';
 import {Application, AppName} from './directory';
-import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners} from './internal';
+import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners, APP_DIRECTORY_STORAGE_TAG} from './internal';
 import {ChannelChangedEvent, getChannelObject, ChannelContextListener} from './contextChannels';
 import {parseContext, validateEnvironment, parseAppDirectoryData, parseInteger} from './validation';
 import {Transport, Targeted} from './EventRouter';
@@ -424,9 +424,6 @@ export function removeEventListener(eventType: MainEvents['type'], handler: (eve
  * @param data Either a URL containing the location of a JSON app directory, or an array of [Application]s.
  * @param version The version of the provided app directory data.
  */
-export async function registerAppDirectory(data: Application[], version: number): Promise<void>;
-export async function registerAppDirectory(data: string, version: number): Promise<void>;
-
 export async function registerAppDirectory(data: Application[] | string, version: number = 0): Promise<void> {
     version = parseInteger(version);
     data = parseAppDirectoryData(data);
@@ -434,7 +431,7 @@ export async function registerAppDirectory(data: Application[] | string, version
     const url = (typeof data === 'string') ? data as string : undefined;
     const applications = (typeof data === 'string') ? undefined : data as Application[];
 
-    const current = await fin.Storage.getItem('of-fdc3-service.directory');
+    const current = await fin.Storage.getItem(APP_DIRECTORY_STORAGE_TAG);
 
     let newUrls: string[] | undefined;
     let newApplications: Application[] | undefined;
@@ -465,7 +462,7 @@ export async function registerAppDirectory(data: Application[] | string, version
     }
 
     if (newUrls && data) {
-        await fin.Storage.setItem('of-fdc3-service.directory', JSON.stringify({version, urls: newUrls, applications: newApplications}));
+        await fin.Storage.setItem(APP_DIRECTORY_STORAGE_TAG, JSON.stringify({version, urls: newUrls, applications: newApplications}));
     }
 }
 

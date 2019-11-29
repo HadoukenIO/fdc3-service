@@ -2,7 +2,7 @@ import {Signal} from 'openfin-service-signal';
 import {injectable} from 'inversify';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {StoredDirectoryItem} from '../../client/internal';
+import {StoredDirectoryItem, APP_DIRECTORY_STORAGE_TAG} from '../../client/internal';
 import {Injector} from '../common/Injector';
 
 import {AppDirectoryStorage} from './AppDirectoryStorage';
@@ -29,7 +29,7 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
 
     protected async init(): Promise<void> {
         await fin.System.addListener('storage-changed', (tag: string) => {
-            if (tag === 'of-fdc3-service.directory') {
+            if (tag === APP_DIRECTORY_STORAGE_TAG) {
                 this.handleStorageChanged();
             }
         });
@@ -48,9 +48,9 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
         let items: Map<string, string>;
 
         try {
-            items = await newFin.Storage.getAllItems('of-fdc3-service.directory');
+            // We expect this to throw if no directory items have been written
+            items = await newFin.Storage.getAllItems(APP_DIRECTORY_STORAGE_TAG);
         } catch (e) {
-            console.warn('Unable to read directory items from storage');
             items = new Map();
         }
 

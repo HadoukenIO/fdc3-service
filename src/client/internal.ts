@@ -24,6 +24,11 @@ export const SERVICE_IDENTITY = {
 };
 
 /**
+ * Name of the tag used to store distributed app directory data
+ */
+export const APP_DIRECTORY_STORAGE_TAG: string = 'of-fdc3-service.directory';
+
+/**
  * Name of the IAB channel use to communicate between client and provider
  */
 export const SERVICE_CHANNEL = 'of-fdc3-service-v1';
