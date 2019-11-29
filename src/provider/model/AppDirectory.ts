@@ -1,5 +1,6 @@
 import {injectable, inject} from 'inversify';
 import {parallelMap} from 'openfin-service-async';
+import {Signal} from 'openfin-service-signal';
 
 import {Inject} from '../common/Injectables';
 import {Application, AppName, AppDirIntent} from '../../client/directory';
@@ -65,8 +66,12 @@ export class AppDirectory extends AsyncInit {
         return customValue !== undefined ? customValue : app.appId;
     }
 
+    private readonly _directoryChanged: Signal<[]> = new Signal();
+
     private readonly _appDirectoryStorage: AppDirectoryStorage;
     private readonly _configStore: ConfigStoreBinding;
+
+    private readonly _retrievedUrls: Set<string> = new Set();
 
     private _directory: Application[] = [];
 
@@ -98,15 +103,19 @@ export class AppDirectory extends AsyncInit {
     }
 
     protected async init(): Promise<void> {
+        this._appDirectoryStorage.changed.add(this.onStorageChanged, this);
+
         await this._configStore.initialized;
-        await this.initializeDirectoryData();
+        await this.refreshDirectory();
     }
 
-    private async initializeDirectoryData(): Promise<void> {
-        await this.setDirectory();
+    private async onStorageChanged(): Promise<void> {
+        await this.refreshDirectory();
+
+        this._directoryChanged.emit();
     }
 
-    private async setDirectory(): Promise<void> {
+    private async refreshDirectory(): Promise<void> {
         const configUrl = this._configStore.config.query({level: 'desktop'}).applicationDirectory;
 
         const directoryItems = [
@@ -119,19 +128,15 @@ export class AppDirectory extends AsyncInit {
 
         const remoteDirectorySnippets = await parallelMap(directoryItems, async (item) => {
             return parallelMap(item.urls, async (url) => {
-                const fetchedData = await this.fetchOnlineData(url);
+                const fetchedData = this._retrievedUrls.has(url) ? null : await this.fetchOnlineData(url);
+                this._retrievedUrls.add(url);
 
                 if (fetchedData) {
                     this.updateCache(url, fetchedData);
                     return fetchedData;
                 } else {
-                    const cachedData = this.fetchCacheData(url);
-                    if (cachedData) {
-                        return cachedData;
-                    }
+                    return this.fetchCacheData(url) || [];
                 }
-
-                return [];
             });
         });
 
