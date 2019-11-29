@@ -1,7 +1,7 @@
 import {injectable, inject} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
-import {withStrictTimeout, allowReject, untilSignal, untilTrue, DeferredPromise} from 'openfin-service-async';
+import {withStrictTimeout, allowReject, untilSignal, untilTrue, DeferredPromise, parallelForEach} from 'openfin-service-async';
 
 import {Application, AppName} from '../../client/directory';
 import {Inject} from '../common/Injectables';
@@ -73,6 +73,8 @@ export class Model {
 
         this._apiHandler.onConnection.add(this.onApiHandlerConnection, this);
         this._apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
+
+        this._directory.directoryChanged.add(this.onDirectoryChanged, this);
 
         this._channelsById[DEFAULT_CHANNEL_ID] = new DefaultContextChannel(DEFAULT_CHANNEL_ID);
         for (const channel of SYSTEM_CHANNELS) {
@@ -292,6 +294,19 @@ export class Model {
         }
     }
 
+    public async onDirectoryChanged(): Promise<void> {
+        await parallelForEach(Object.entries(this._liveAppsByUuid).filter((entry) => !entry[1].mature && !entry[1].hasFinalAppInfo()), async (entry) => {
+            const uuid = entry[0];
+            const liveApp = entry[1];
+
+            const appInfo = await this._directory.getAppByUuid(uuid);
+
+            if (appInfo) {
+                liveApp.setAppInfo(appInfo, true);
+            }
+        });
+    }
+
     private async onApplicationCreated(identity: Identity, liveApp: LiveApp): Promise<void> {
         const {uuid} = identity;
         this._liveAppsByUuid[uuid] = liveApp;
@@ -302,7 +317,7 @@ export class Model {
         const appInfoFromDirectory = await this._directory.getAppByUuid(uuid);
         const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
 
-        liveApp.setAppInfo(appInfo);
+        liveApp.setAppInfo(appInfo, !!appInfoFromDirectory);
     }
 
     private onApplicationClosed(identity: Identity): void {
@@ -352,7 +367,7 @@ export class Model {
             const appInfo = await this._environment.inferApplication(identity);
             const liveApp = new LiveApp(Promise.resolve());
 
-            liveApp.setAppInfo(appInfo);
+            liveApp.setAppInfo(appInfo, true);
             this._liveAppsByUuid[uuid] = liveApp;
 
             await this.registerWindow(liveApp, identity);

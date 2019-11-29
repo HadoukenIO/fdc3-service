@@ -66,7 +66,7 @@ export class AppDirectory extends AsyncInit {
         return customValue !== undefined ? customValue : app.appId;
     }
 
-    private readonly _directoryChanged: Signal<[]> = new Signal();
+    public readonly directoryChanged: Signal<[]> = new Signal();
 
     private readonly _appDirectoryStorage: AppDirectoryStorage;
     private readonly _configStore: ConfigStoreBinding;
@@ -112,7 +112,7 @@ export class AppDirectory extends AsyncInit {
     private async onStorageChanged(): Promise<void> {
         await this.refreshDirectory();
 
-        this._directoryChanged.emit();
+        this.directoryChanged.emit();
     }
 
     private async refreshDirectory(): Promise<void> {
