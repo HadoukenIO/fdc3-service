@@ -413,13 +413,14 @@ export function removeEventListener(eventType: MainEvents['type'], handler: (eve
     eventEmitter.removeListener(eventType, handler);
 }
 
+// TODO: Revise client-facing API [SERVICE-820]
 /**
  * Registers an app directory for the current application's domain. This may be in the form of a URL or an app
  * directory.
  *
  * The app directory data should be versioned as an integer using the passed in parameter, `version`. If the version is
- * lower the last registration, this call does nothing, if it is equal, the new provided data is appended to the old,
- * and if greater, all existing app directory registratation is replaced by the provided data.
+ * lower the last registration, this call does nothing, otherwise, the entire app directory is replaced with the new
+ * provided data
  *
  * @param data Either a URL containing the location of a JSON app directory, or an array of [Application]s.
  * @param version The version of the provided app directory data.
@@ -428,48 +429,20 @@ export async function registerAppDirectory(data: Application[] | string, version
     version = parseInteger(version);
     data = parseAppDirectoryData(data);
 
-    const url = (typeof data === 'string') ? data as string : undefined;
-    const applications = (typeof data === 'string') ? undefined : data as Application[];
+    const urls = (typeof data === 'string') ? [data] as string[] : undefined;
+    const applications = (typeof data === 'string') ? [] : data as Application[];
 
     let current;
 
     try {
-        // We expect this to throw if no directory items have been written
+        // We expect this to throw if no directory shard has been written
         current = await fin.Storage.getItem(APP_DIRECTORY_STORAGE_TAG);
     } catch (e) {
         current = undefined;
     }
 
-    let newUrls: string[] | undefined;
-    let newApplications: Application[] | undefined;
-
-    if (current && current.version === version) {
-        newUrls = current.urls as string[];
-        newApplications = current.applications as Application[];
-
-        if (url) {
-            if (newUrls.indexOf(url) === -1) {
-                newUrls.push(url);
-            }
-        } else if (applications) {
-            newApplications = newApplications.filter((application) => !applications.some((newApplication) => newApplication.name === application.name));
-            newApplications = [
-                ...newApplications,
-                ...applications.filter((application, index) => applications.findIndex((app) => app.name === application.name) === index)
-            ];
-        }
-    } else if (!current || current.version < version) {
-        if (url) {
-            newUrls = [url];
-            newApplications = [];
-        } else if (applications) {
-            newUrls = [];
-            newApplications = applications;
-        }
-    }
-
-    if (newUrls && data) {
-        await fin.Storage.setItem(APP_DIRECTORY_STORAGE_TAG, JSON.stringify({version, urls: newUrls, applications: newApplications}));
+    if (!current || current.version <= version) {
+        await fin.Storage.setItem(APP_DIRECTORY_STORAGE_TAG, JSON.stringify({version, urls, applications}));
     }
 }
 
