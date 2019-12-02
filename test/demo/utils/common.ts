@@ -183,7 +183,7 @@ async function isServiceClear(): Promise<boolean> {
     return fdc3Remote.ofBrowser.executeOnWindow<[TestAppData], boolean, ProviderWindow>(
         SERVICE_IDENTITY,
         function (this: ProviderWindow, expectedWindowIdentity: Identity): boolean {
-            if (this.model.windows.length !== 1) {
+            if (this.model.connections.length !== 1) {
                 return false;
             }
 
@@ -191,7 +191,7 @@ async function isServiceClear(): Promise<boolean> {
                 return false;
             }
 
-            const singleWindow = this.model.windows[0];
+            const singleWindow = this.model.connections[0];
             const singleApp = this.model.apps[0];
 
             if (singleWindow.appInfo.appId !== expectedWindowIdentity.uuid) {
@@ -202,7 +202,7 @@ async function isServiceClear(): Promise<boolean> {
                 return false;
             }
 
-            if (singleApp.windows.length !== 1 || singleApp.windows[0] !== singleWindow) {
+            if (singleApp.connections.length !== 1 || singleApp.connections[0] !== singleWindow) {
                 return false;
             }
 

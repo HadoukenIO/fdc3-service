@@ -1,28 +1,30 @@
-import {Identity, Window} from 'openfin/_v2/main';
+import {Identity} from 'openfin/_v2/main';
 
 import {AppConnectionBase} from './AppConnection';
 import {ContextChannel} from './ContextChannel';
-import {LiveApp} from './LiveApp';
 import {EntityType} from './Environment';
+import {LiveApp} from './LiveApp';
 
-export class FinAppWindow extends AppConnectionBase {
-    private readonly _window: Window;
+export class FinAppConnection extends AppConnectionBase {
+    private readonly _identity: Identity;
 
     constructor(identity: Identity, entityType: EntityType, liveApp: LiveApp, channel: ContextChannel, entityNumber: number) {
         super(identity, entityType, liveApp.appInfo!, liveApp.waitForAppMature(), channel, entityNumber);
 
-        this._window = fin.Window.wrapSync(identity);
+        this._identity = identity;
     }
 
     public get identity(): Readonly<Identity> {
-        return this._window.identity;
+        return this._identity;
     }
 
     public bringToFront(): Promise<void> {
-        return this._window.bringToFront();
+        // Deliberate no-op
+        return Promise.resolve();
     }
 
     public focus(): Promise<void> {
-        return this._window.focus();
+        // Deliberate no-op
+        return Promise.resolve();
     }
 }

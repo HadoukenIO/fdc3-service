@@ -1,8 +1,8 @@
-/* eslint-disable */
+/* eslint-disable @typescript-eslint/no-unused-vars, no-shadow */
 import {Signal} from 'openfin-service-signal';
 import {Identity} from 'openfin/_v2/main';
 
-import {AppWindow} from '../src/provider/model/AppWindow';
+import {AppConnection} from '../src/provider/model/AppConnection';
 import {Context, Application} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
 import {ChannelTransport, ChannelEvents, APIFromClientTopic, StoredDirectoryItem} from '../src/client/internal';
@@ -14,24 +14,25 @@ import {IntentType} from '../src/provider/intents';
 import {LiveApp} from '../src/provider/model/LiveApp';
 import {Model} from '../src/provider/model/Model';
 import {ChannelHandler} from '../src/provider/controller/ChannelHandler';
+import {AppDirectoryStorage} from '../src/provider/model/AppDirectoryStorage';
 
 import {createFakeIdentity, createFakeApp} from './demo/utils/fakes';
-import { AppDirectoryStorage } from '../src/provider/model/AppDirectoryStorage';
 
 /**
  * Creates a minimal mock app window. Any utilizing test should set properties and set up mock functions as needed
  */
-export function createMockAppWindow(options: Partial<jest.Mocked<AppWindow>> = {}): jest.Mocked<AppWindow> {
+export function createMockAppConnection(options: Partial<jest.Mocked<AppConnection>> = {}): jest.Mocked<AppConnection> {
     const identity = createFakeIdentity();
 
     return {
         id: getId(identity),
         identity,
+        entityType: EntityType.WINDOW,
+        entityNumber: 0,
         appInfo: createFakeApp({appId: identity.uuid}),
-        appWindowNumber: 0,
         channel: createMockChannel(),
-        channelContextListeners: [],
         intentListeners: [],
+        channelContextListeners: [],
         hasIntentListener: jest.fn<boolean, [string]>(),
         addIntentListener: jest.fn<void, [string]>(),
         removeIntentListener: jest.fn<void, [string]>(),
@@ -70,15 +71,15 @@ export function createMockChannel(options: Partial<jest.Mocked<ContextChannel>> 
 
 export function createMockEnvironmnent(options: Partial<jest.Mocked<Environment>> = {}): jest.Mocked<Environment> {
     return {
-        applicationCreated: new Signal<[Identity, LiveApp]>(),
-        applicationClosed: new Signal<[Identity]>(),
-        windowCreated: new Signal<[Identity]>(),
-        windowClosed: new Signal<[Identity]>(),
+        onApplicationCreated: new Signal<[Identity, LiveApp]>(),
+        onApplicationClosed: new Signal<[Identity]>(),
+        onWindowCreated: new Signal<[Identity]>(),
+        onWindowClosed: new Signal<[Identity]>(),
         createApplication: jest.fn<void, [Application]>(),
-        wrapWindow: jest.fn<AppWindow, [LiveApp, Identity, ContextChannel]>(),
+        wrapConnection: jest.fn<AppConnection, [LiveApp, Identity, EntityType, ContextChannel]>(),
         inferApplication: jest.fn<Promise<Application>, [Identity]>(),
         getEntityType: jest.fn<Promise<EntityType>, [Identity]>(),
-        isWindowCreated: jest.fn<boolean, [Identity]>(),
+        isKnownEntity: jest.fn<boolean, [Identity]>(),
         // Apply any custom overrides
         ...options
     };
@@ -87,7 +88,7 @@ export function createMockEnvironmnent(options: Partial<jest.Mocked<Environment>
 export function createMockApiHandler(): jest.Mocked<APIHandler<APIFromClientTopic>> {
     const {APIHandler} = jest.requireMock('../src/provider/APIHandler');
 
-    const apiHandler = new APIHandler() as jest.Mocked<APIHandler<APIFromClientTopic>>;
+    const apiHandler: jest.Mocked<APIHandler<APIFromClientTopic>> = new APIHandler();
 
     assignMockGetter(apiHandler, 'onConnection');
     assignMockGetter(apiHandler, 'onDisconnection');
@@ -111,9 +112,9 @@ export function createMockAppDirectoryStorage(options: Partial<jest.Mocked<AppDi
 
 export function createMockModel(): jest.Mocked<Model> {
     const {Model} = jest.requireMock('../src/provider/model/Model');
-    const model = new Model();
+    const model: jest.Mocked<Model> = new Model();
 
-    assignMockGetter(model, 'windows');
+    assignMockGetter(model, 'connections');
     assignMockGetter(model, 'apps');
 
     return model;
