@@ -1,5 +1,5 @@
 import {testManagerIdentity, testAppNotInDirectory1} from './constants';
-import {clearDirectoryStorage, setupTeardown, setupStartNonDirectoryAppBookends} from './utils/common';
+import {clearDirectoryShard, setupTeardown, setupStartNonDirectoryAppBookends} from './utils/common';
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay, Duration} from './utils/delay';
 
@@ -9,7 +9,7 @@ describe('When starting a non-directory app', () => {
     setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
 
     afterEach(async () => {
-        await clearDirectoryStorage();
+        await clearDirectoryShard();
     });
 
     test('The app can add itself to the app directory', async () => {

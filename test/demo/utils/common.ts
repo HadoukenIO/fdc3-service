@@ -133,26 +133,15 @@ export function setupTeardown(): void {
 
         await quitApps(...unexpectedRunningApps.map((uuid) => ({uuid})));
 
-        const hasStoredDirectoryShard = await fdc3Remote.ofBrowser.executeOnWindow(testManagerIdentity, async function (this: BaseWindowContext, tag: string) {
-            let hasStoredItem;
+        const directoryShard = await hasDirectoryShard();
 
-            try {
-                await this.fin.Storage.getItem(tag);
-                hasStoredItem = true;
-            } catch (e) {
-                hasStoredItem = false;
-            }
-
-            return hasStoredItem;
-        }, APP_DIRECTORY_STORAGE_TAG);
-
-        if (hasStoredDirectoryShard) {
-            await clearDirectoryStorage();
+        if (directoryShard) {
+            await clearDirectoryShard();
         }
 
         expect(resolverShowing).toBe(false);
         expect(runningApps.sort()).toEqual(expectedRunningApps.sort());
-        expect(hasStoredDirectoryShard).toBe(false);
+        expect(directoryShard).toBe(false);
 
         await expect(isServiceClear()).resolves.toBe(true);
     });
@@ -170,9 +159,24 @@ export async function closeResolver(): Promise<void> {
     await delay(Duration.API_CALL);
 }
 
-export async function clearDirectoryStorage(): Promise<void> {
+export async function clearDirectoryShard(): Promise<void> {
     await fdc3Remote.ofBrowser.executeOnWindow(testManagerIdentity, async function (this: BaseWindowContext, tag: string) {
         await this.fin.Storage.removeItem(tag);
+    }, APP_DIRECTORY_STORAGE_TAG);
+}
+
+async function hasDirectoryShard(): Promise<boolean> {
+    return fdc3Remote.ofBrowser.executeOnWindow(testManagerIdentity, async function (this: BaseWindowContext, tag: string): Promise<boolean> {
+        let hasStoredItem;
+
+        try {
+            await this.fin.Storage.getItem(tag);
+            hasStoredItem = true;
+        } catch (e) {
+            hasStoredItem = false;
+        }
+
+        return hasStoredItem;
     }, APP_DIRECTORY_STORAGE_TAG);
 }
 
