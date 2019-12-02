@@ -430,7 +430,7 @@ export async function registerAppDirectory(data: Application[] | string, version
     version = parseInteger(version);
     data = parseAppDirectoryData(data);
 
-    const urls = (typeof data === 'string') ? [data] as string[] : undefined;
+    const urls = (typeof data === 'string') ? [data] as string[] : [];
     const applications = (typeof data === 'string') ? [] : data as Application[];
 
     let current;
