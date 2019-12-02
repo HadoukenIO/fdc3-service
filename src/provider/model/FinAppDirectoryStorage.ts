@@ -31,6 +31,7 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
     }
 
     private async handleStorageChanged(): Promise<void> {
+        // Ensure we don't dispatch any events until the Injector is fully initialized
         await Injector.initialized;
         await this.refreshFromStorage();
 
