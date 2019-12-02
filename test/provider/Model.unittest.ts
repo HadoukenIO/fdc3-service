@@ -22,6 +22,7 @@ beforeEach(() => {
     jest.resetAllMocks();
     useMockTime();
 
+    getterMock(mockAppDirectory, 'directoryChanged').mockReturnValue(new Signal<[]>());
     getterMock(mockApiHandler, 'onConnection').mockReturnValue(new Signal<[Identity]>());
     getterMock(mockApiHandler, 'onDisconnection').mockReturnValue(new Signal<[Identity]>());
 

@@ -56,12 +56,13 @@ beforeEach(() => {
     mockAppDirectory = createMockAppDirectory();
     mockEnvironment = createMockEnvironmnent();
     mockApiHandler = createMockApiHandler();
+
+    getterMock(mockAppDirectory, 'directoryChanged').mockReturnValue(new Signal<[]>());
     getterMock(mockApiHandler, 'onConnection').mockReturnValue(new Signal<[Identity]>());
     getterMock(mockApiHandler, 'onDisconnection').mockReturnValue(new Signal<[Identity]>());
 
     model = new Model(mockAppDirectory, mockEnvironment, mockApiHandler);
 
-    jest.resetAllMocks();
     useMockTime();
 });
 

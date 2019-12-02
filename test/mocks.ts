@@ -5,7 +5,7 @@ import {Identity} from 'openfin/_v2/main';
 import {AppConnection} from '../src/provider/model/AppConnection';
 import {Context, Application} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
-import {ChannelTransport, ChannelEvents, APIFromClientTopic, StoredDirectoryItem} from '../src/client/internal';
+import {ChannelTransport, ChannelEvents, APIFromClientTopic, StoredAppDirectoryShard} from '../src/client/internal';
 import {Environment, EntityType} from '../src/provider/model/Environment';
 import {AppDirectory} from '../src/provider/model/AppDirectory';
 import {APIHandler} from '../src/provider/APIHandler';
@@ -96,24 +96,30 @@ export function createMockApiHandler(): jest.Mocked<APIHandler<APIFromClientTopi
     return apiHandler;
 }
 
-export function createMockAppDirectory(): jest.Mocked<AppDirectory> {
+export function createMockAppDirectory(options: Partial<jest.Mocked<AppDirectoryStorage>> = {}): jest.Mocked<AppDirectory> {
     const {AppDirectory} = jest.requireMock('../src/provider/model/AppDirectory');
-    return new AppDirectory();
+    const appDirectory: jest.Mocked<AppDirectory> = new AppDirectory();
+
+    assignMockGetter(appDirectory, 'directoryChanged');
+
+    // Apply any custom overrides
+    Object.assign(appDirectory, options);
+
+    return appDirectory;
 }
 
 export function createMockAppDirectoryStorage(options: Partial<jest.Mocked<AppDirectoryStorage>> = {}): jest.Mocked<AppDirectoryStorage> {
     const appDirectoryStorage = {
         changed: null! as Signal<[]>,
-        getStoredDirectoryShards: jest.fn<StoredDirectoryItem[], []>()
+        getStoredDirectoryShards: jest.fn<StoredAppDirectoryShard[], []>()
     };
 
     assignMockGetter(appDirectoryStorage, 'changed');
 
-    return {
-        ...appDirectoryStorage,
-        // Apply any custom overrides
-        ...options
-    };
+    // Apply any custom overrides
+    Object.assign(appDirectoryStorage, options);
+
+    return appDirectoryStorage;
 }
 
 export function createMockModel(): jest.Mocked<Model> {
