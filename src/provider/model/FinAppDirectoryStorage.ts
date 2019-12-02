@@ -1,36 +1,23 @@
 import {Signal} from 'openfin-service-signal';
-import {injectable, inject} from 'inversify';
+import {injectable} from 'inversify';
 
 import {AsyncInit} from '../controller/AsyncInit';
 import {StoredAppDirectoryShard, APP_DIRECTORY_STORAGE_TAG} from '../../client/internal';
 import {Injector} from '../common/Injector';
-import {Inject} from '../common/Injectables';
 
 import {AppDirectoryStorage} from './AppDirectoryStorage';
-import {ConfigStoreBinding} from './ConfigStore';
 
+// TODO: Remove once Storage API is in published runtime and types are updated [SERVICE-840]
 const newFin = fin as (typeof fin) & {Storage: any};
 
 @injectable()
 export class FinAppDirectoryStorage extends AsyncInit implements AppDirectoryStorage {
-    public readonly changed: Signal<[]>;
+    public readonly changed: Signal<[]> = new Signal();
 
-    private readonly _configStore: ConfigStoreBinding;
+    private _shards: StoredAppDirectoryShard[] = [];
 
-    private _items: StoredAppDirectoryShard[];
-
-    public constructor(@inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding) {
-        super();
-
-        this._configStore = configStore;
-
-        this.changed = new Signal();
-
-        this._items = [];
-    }
-
-    public getStoredDirectoryItems(): StoredAppDirectoryShard[] {
-        return this._items;
+    public getStoredDirectoryShards(): StoredAppDirectoryShard[] {
+        return this._shards;
     }
 
     protected async init(): Promise<void> {
@@ -51,18 +38,18 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
     }
 
     private async refreshFromStorage(): Promise<void> {
-        let items: Map<string, string>;
+        let shardsMap: Map<string, string>;
 
         try {
             // We expect this to throw if no directory items have been written
-            items = await newFin.Storage.getAllItems(APP_DIRECTORY_STORAGE_TAG);
+            shardsMap = await newFin.Storage.getAllItems(APP_DIRECTORY_STORAGE_TAG);
         } catch (e) {
-            items = new Map();
+            shardsMap = new Map();
         }
 
-        const entries = Array.from(items.entries());
+        const entries = Array.from(shardsMap.entries());
 
         const sortedEntries = entries.sort((a, b) => a[0].localeCompare(b[0])).map((entry) => entry[1]);
-        this._items = sortedEntries.map((entry) => JSON.parse(entry) as StoredAppDirectoryShard);
+        this._shards = sortedEntries.map((entry) => JSON.parse(entry) as StoredAppDirectoryShard);
     }
 }

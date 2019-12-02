@@ -5,5 +5,5 @@ import {StoredAppDirectoryShard} from '../../client/internal';
 export interface AppDirectoryStorage {
     readonly changed: Signal<[]>;
 
-    getStoredDirectoryItems(): StoredAppDirectoryShard[];
+    getStoredDirectoryShards(): StoredAppDirectoryShard[];
 }

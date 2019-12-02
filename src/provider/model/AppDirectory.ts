@@ -123,7 +123,7 @@ export class AppDirectory extends AsyncInit {
                 urls: [configUrl],
                 applications: []
             } as StoredAppDirectoryShard,
-            ...this._appDirectoryStorage.getStoredDirectoryItems()
+            ...this._appDirectoryStorage.getStoredDirectoryShards()
         ];
 
         const remoteDirectorySnippets = await parallelMap(directoryItems, async (item) => {
