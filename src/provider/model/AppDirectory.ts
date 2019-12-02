@@ -7,7 +7,6 @@ import {Application, AppName, AppDirIntent} from '../../client/directory';
 import {AsyncInit} from '../controller/AsyncInit';
 import {CustomConfigFields} from '../constants';
 import {checkCustomConfigField, deduplicate} from '../utils/helpers';
-import {StoredAppDirectoryShard} from '../../client/internal';
 
 import {ConfigStoreBinding} from './ConfigStore';
 import {AppDirectoryStorage} from './AppDirectoryStorage';
@@ -71,7 +70,7 @@ export class AppDirectory extends AsyncInit {
     private readonly _appDirectoryStorage: AppDirectoryStorage;
     private readonly _configStore: ConfigStoreBinding;
 
-    private readonly _retrievedUrls: Set<string> = new Set();
+    private readonly _fetchedUrls: Set<string> = new Set();
 
     private _directory: Application[] = [];
 
@@ -118,45 +117,46 @@ export class AppDirectory extends AsyncInit {
     private async refreshDirectory(): Promise<void> {
         const configUrl = this._configStore.config.query({level: 'desktop'}).applicationDirectory;
 
-        const directoryItems = [
+        const directoryShards = [
             {
                 urls: [configUrl],
                 applications: []
-            } as StoredAppDirectoryShard,
+            },
             ...this._appDirectoryStorage.getStoredDirectoryShards()
         ];
 
-        const remoteDirectorySnippets = await parallelMap(directoryItems, async (item) => {
-            return parallelMap(item.urls, async (url) => {
-                const fetchedData = this._retrievedUrls.has(url) ? null : await this.fetchOnlineData(url);
-                this._retrievedUrls.add(url);
+        const remoteDirectorySnippets = await parallelMap(directoryShards, async (shard) => {
+            return parallelMap(shard.urls, async (url) => {
+                const fetchedSnippet = this._fetchedUrls.has(url) ? null : await this.fetchRemoteSnippet(url);
+                this._fetchedUrls.add(url);
 
-                if (fetchedData) {
-                    this.updateCache(url, fetchedData);
-                    return fetchedData;
+                if (fetchedSnippet) {
+                    this.updateCache(url, fetchedSnippet);
+                    return fetchedSnippet;
                 } else {
-                    return this.fetchCacheData(url) || [];
+                    return this.fetchCachedSnippet(url) || [];
                 }
             });
         });
 
         const applications: Application[] = [];
-        for (let i = 0; i < directoryItems.length; i++) {
-            applications.push(...directoryItems[i].applications);
+        for (let i = 0; i < directoryShards.length; i++) {
+            applications.push(...directoryShards[i].applications);
 
             for (const snippet of remoteDirectorySnippets[i]) {
                 applications.push(...snippet);
             }
         }
 
+        // TODO: Further validate app data [SERVICE-822]
         this._directory = deduplicate(applications, (a, b) => {
             return a.name === b.name || a.appId === b.appId || AppDirectory.getUuidFromApp(a) === AppDirectory.getUuidFromApp(b);
         });
     }
 
-    private async fetchOnlineData(url: string): Promise<Application[] | null> {
+    private async fetchRemoteSnippet(url: string): Promise<Application[] | null> {
         const response = await fetch(url).catch(() => {
-            console.warn(`Failed to fetch app directory @ ${url}`);
+            console.warn(`Failed to fetch app directory snippet from ${url}`);
         });
 
         if (response && response.ok) {
@@ -172,7 +172,7 @@ export class AppDirectory extends AsyncInit {
         return null;
     }
 
-    private fetchCacheData(url: string): Application[] | null {
+    private fetchCachedSnippet(url: string): Application[] | null {
         const jsonCache = localStorage.getItem(StorageKeys.DIRECTORY_CACHE);
 
         if (jsonCache) {
