@@ -104,7 +104,7 @@ export function createMockAppDirectory(): jest.Mocked<AppDirectory> {
 export function createMockAppDirectoryStorage(options: Partial<jest.Mocked<AppDirectoryStorage>> = {}): jest.Mocked<AppDirectoryStorage> {
     return {
         changed: new Signal<[]>(),
-        getStoredDirectoryItems: jest.fn<StoredDirectoryItem[], []>(),
+        getStoredDirectoryShards: jest.fn<StoredDirectoryItem[], []>(),
         // Apply any custom overrides
         ...options
     };

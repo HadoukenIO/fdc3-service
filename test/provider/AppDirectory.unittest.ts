@@ -78,7 +78,7 @@ async function createAppDirectory(url: string): Promise<void> {
     configStore.config.add({level: 'desktop'}, {applicationDirectory: url});
 
     const mockAppDirectoryStorage = createMockAppDirectoryStorage();
-    mockAppDirectoryStorage.getStoredDirectoryItems.mockReturnValue([]);
+    mockAppDirectoryStorage.getStoredDirectoryShards.mockReturnValue([]);
 
     appDirectory = new AppDirectory(mockAppDirectoryStorage, configStore);
     await appDirectory.delayedInit();
