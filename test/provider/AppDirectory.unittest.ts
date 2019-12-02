@@ -2,13 +2,14 @@ import 'jest';
 import 'reflect-metadata';
 
 import {Store} from 'openfin-service-config';
+import {Signal} from 'openfin-service-signal';
 
 import {Application} from '../../src/client/directory';
 import {AppDirectory} from '../../src/provider/model/AppDirectory';
 import {ConfigurationObject} from '../../gen/provider/config/fdc3-config';
 import {ConfigStoreBinding} from '../../src/provider/model/ConfigStore';
 import {createFakeApp, createFakeIntent, createFakeContextType} from '../demo/utils/fakes';
-import {createMockAppDirectoryStorage} from '../mocks';
+import {createMockAppDirectoryStorage, getterMock} from '../mocks';
 
 enum StorageKeys {
     DIRECTORY_CACHE = 'fdc3@directoryCache'
@@ -78,6 +79,7 @@ async function createAppDirectory(url: string): Promise<void> {
     configStore.config.add({level: 'desktop'}, {applicationDirectory: url});
 
     const mockAppDirectoryStorage = createMockAppDirectoryStorage();
+    getterMock(mockAppDirectoryStorage, 'changed').mockReturnValue(new Signal<[]>());
     mockAppDirectoryStorage.getStoredDirectoryShards.mockReturnValue([]);
 
     appDirectory = new AppDirectory(mockAppDirectoryStorage, configStore);
