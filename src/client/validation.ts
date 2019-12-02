@@ -94,11 +94,11 @@ export function parseInteger(number: number): number {
 }
 
 /**
- * Validates the provided applications value - can be either a URL or an array of Applications
+ * Validates the provided 'applications' value - can be either a URL or an array of Applications
  */
 export function parseAppDirectoryData(data: string | Application[]): string | Application[] {
     if (!((typeof data === 'string' && data !== '') || (data instanceof Array))) {
-        throw new TypeError(`${safeStringify(data, 'The provided applications parameter')} is not a valid applications parameter`);
+        throw new TypeError(`${safeStringify(data, 'The provided \'applications\' parameter')} is not a valid 'applications' parameter`);
     }
 
     return data;
