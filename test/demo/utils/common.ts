@@ -133,26 +133,26 @@ export function setupTeardown(): void {
 
         await quitApps(...unexpectedRunningApps.map((uuid) => ({uuid})));
 
-        const hasStoredData = await fdc3Remote.ofBrowser.executeOnWindow(testManagerIdentity, async function (this: BaseWindowContext, tag: string) {
-            let hasData;
+        const hasStoredDirectoryShard = await fdc3Remote.ofBrowser.executeOnWindow(testManagerIdentity, async function (this: BaseWindowContext, tag: string) {
+            let hasStoredItem;
 
             try {
                 await this.fin.Storage.getItem(tag);
-                hasData = true;
+                hasStoredItem = true;
             } catch (e) {
-                hasData = false;
+                hasStoredItem = false;
             }
 
-            return hasData;
+            return hasStoredItem;
         }, APP_DIRECTORY_STORAGE_TAG);
 
-        if (hasStoredData) {
+        if (hasStoredDirectoryShard) {
             await clearDirectoryStorage();
         }
 
         expect(resolverShowing).toBe(false);
         expect(runningApps.sort()).toEqual(expectedRunningApps.sort());
-        expect(hasStoredData).toBe(false);
+        expect(hasStoredDirectoryShard).toBe(false);
 
         await expect(isServiceClear()).resolves.toBe(true);
     });
