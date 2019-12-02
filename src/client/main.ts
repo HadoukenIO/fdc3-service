@@ -13,6 +13,7 @@ import {ChannelChangedEvent, getChannelObject, ChannelContextListener} from './c
 import {parseContext, validateEnvironment, parseAppDirectoryData, parseInteger} from './validation';
 import {Transport, Targeted} from './EventRouter';
 
+// TODO: Remove once Storage API is in published runtime and types are updated [SERVICE-840]
 // eslint-disable-next-line @typescript-eslint/no-namespace
 declare namespace fin {
     const Storage: any;
