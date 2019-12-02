@@ -167,13 +167,12 @@ export async function clearDirectoryShard(): Promise<void> {
 
 async function hasDirectoryShard(): Promise<boolean> {
     return fdc3Remote.ofBrowser.executeOnWindow(testManagerIdentity, async function (this: BaseWindowContext, tag: string): Promise<boolean> {
-        let hasStoredItem;
+        let hasStoredItem = false;
 
         try {
-            await this.fin.Storage.getItem(tag);
-            hasStoredItem = true;
+            hasStoredItem = !!(await this.fin.Storage.getItem(tag));
         } catch (e) {
-            hasStoredItem = false;
+            // Intentionally empty
         }
 
         return hasStoredItem;
