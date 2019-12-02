@@ -2,7 +2,7 @@ import {Signal} from 'openfin-service-signal';
 import {injectable, inject} from 'inversify';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {StoredDirectoryItem, APP_DIRECTORY_STORAGE_TAG} from '../../client/internal';
+import {StoredAppDirectoryShard, APP_DIRECTORY_STORAGE_TAG} from '../../client/internal';
 import {Injector} from '../common/Injector';
 import {Inject} from '../common/Injectables';
 
@@ -17,7 +17,7 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
 
     private readonly _configStore: ConfigStoreBinding;
 
-    private _items: StoredDirectoryItem[];
+    private _items: StoredAppDirectoryShard[];
 
     public constructor(@inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding) {
         super();
@@ -29,7 +29,7 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
         this._items = [];
     }
 
-    public getStoredDirectoryItems(): StoredDirectoryItem[] {
+    public getStoredDirectoryItems(): StoredAppDirectoryShard[] {
         return this._items;
     }
 
@@ -63,6 +63,6 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
         const entries = Array.from(items.entries());
 
         const sortedEntries = entries.sort((a, b) => a[0].localeCompare(b[0])).map((entry) => entry[1]);
-        this._items = sortedEntries.map((entry) => JSON.parse(entry) as StoredDirectoryItem);
+        this._items = sortedEntries.map((entry) => JSON.parse(entry) as StoredAppDirectoryShard);
     }
 }

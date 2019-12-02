@@ -7,7 +7,7 @@ import {Application, AppName, AppDirIntent} from '../../client/directory';
 import {AsyncInit} from '../controller/AsyncInit';
 import {CustomConfigFields} from '../constants';
 import {checkCustomConfigField, deduplicate} from '../utils/helpers';
-import {StoredDirectoryItem} from '../../client/internal';
+import {StoredAppDirectoryShard} from '../../client/internal';
 
 import {ConfigStoreBinding} from './ConfigStore';
 import {AppDirectoryStorage} from './AppDirectoryStorage';
@@ -122,7 +122,7 @@ export class AppDirectory extends AsyncInit {
             {
                 urls: [configUrl],
                 applications: []
-            } as StoredDirectoryItem,
+            } as StoredAppDirectoryShard,
             ...this._appDirectoryStorage.getStoredDirectoryItems()
         ];
 

@@ -24,7 +24,7 @@ export const SERVICE_IDENTITY = {
 };
 
 /**
- * Name of the tag used to store distributed app directory data
+ * Name of the tag used to store app directory shards
  */
 export const APP_DIRECTORY_STORAGE_TAG: string = 'of-fdc3-service.directory';
 
@@ -248,7 +248,7 @@ export interface ChannelReceiveContextPayload {
     context: Context;
 }
 
-export interface StoredDirectoryItem {
+export interface StoredAppDirectoryShard {
     urls: string[];
     applications: Application[];
 }
