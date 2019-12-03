@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, no-shadow */
 import {Signal} from 'openfin-service-signal';
 import {Identity} from 'openfin/_v2/main';
+import {Store} from 'openfin-service-config';
 
 import {AppConnection} from '../src/provider/model/AppConnection';
 import {Context, Application} from '../src/client/main';
@@ -15,8 +16,21 @@ import {LiveApp} from '../src/provider/model/LiveApp';
 import {Model} from '../src/provider/model/Model';
 import {ChannelHandler} from '../src/provider/controller/ChannelHandler';
 import {AppDirectoryStorage} from '../src/provider/model/AppDirectoryStorage';
+import {ConfigStoreBinding} from '../src/provider/model/ConfigStore';
+import {ConfigurationObject} from '../gen/provider/config/fdc3-config';
 
 import {createFakeIdentity, createFakeApp} from './demo/utils/fakes';
+
+export function createMockApiHandler(): jest.Mocked<APIHandler<APIFromClientTopic>> {
+    const {APIHandler} = jest.requireMock('../src/provider/APIHandler');
+
+    const apiHandler: jest.Mocked<APIHandler<APIFromClientTopic>> = new APIHandler();
+
+    assignMockGetter(apiHandler, 'onConnection');
+    assignMockGetter(apiHandler, 'onDisconnection');
+
+    return apiHandler;
+}
 
 /**
  * Creates a minimal mock app window. Any utilizing test should set properties and set up mock functions as needed
@@ -56,46 +70,6 @@ export function createMockAppConnection(options: Partial<jest.Mocked<AppConnecti
     };
 }
 
-export function createMockChannel(options: Partial<jest.Mocked<ContextChannel>> = {}): jest.Mocked<ContextChannel> {
-    return {
-        id: '',
-        type: '',
-        storedContext: null,
-        setLastBroadcastContext: jest.fn<void, [Context]>(),
-        clearStoredContext: jest.fn<void, []>(),
-        serialize: jest.fn<ChannelTransport, []>(),
-        // Apply any custom overrides
-        ...options
-    };
-}
-
-export function createMockEnvironmnent(options: Partial<jest.Mocked<Environment>> = {}): jest.Mocked<Environment> {
-    return {
-        onApplicationCreated: new Signal<[Identity, LiveApp]>(),
-        onApplicationClosed: new Signal<[Identity]>(),
-        onWindowCreated: new Signal<[Identity]>(),
-        onWindowClosed: new Signal<[Identity]>(),
-        createApplication: jest.fn<void, [Application]>(),
-        wrapConnection: jest.fn<AppConnection, [LiveApp, Identity, EntityType, ContextChannel]>(),
-        inferApplication: jest.fn<Promise<Application>, [Identity]>(),
-        getEntityType: jest.fn<Promise<EntityType>, [Identity]>(),
-        isKnownEntity: jest.fn<boolean, [Identity]>(),
-        // Apply any custom overrides
-        ...options
-    };
-}
-
-export function createMockApiHandler(): jest.Mocked<APIHandler<APIFromClientTopic>> {
-    const {APIHandler} = jest.requireMock('../src/provider/APIHandler');
-
-    const apiHandler: jest.Mocked<APIHandler<APIFromClientTopic>> = new APIHandler();
-
-    assignMockGetter(apiHandler, 'onConnection');
-    assignMockGetter(apiHandler, 'onDisconnection');
-
-    return apiHandler;
-}
-
 export function createMockAppDirectory(options: Partial<jest.Mocked<AppDirectoryStorage>> = {}): jest.Mocked<AppDirectory> {
     const {AppDirectory} = jest.requireMock('../src/provider/model/AppDirectory');
     const appDirectory: jest.Mocked<AppDirectory> = new AppDirectory();
@@ -122,6 +96,55 @@ export function createMockAppDirectoryStorage(options: Partial<jest.Mocked<AppDi
     return appDirectoryStorage;
 }
 
+export function createMockChannel(options: Partial<jest.Mocked<ContextChannel>> = {}): jest.Mocked<ContextChannel> {
+    return {
+        id: '',
+        type: '',
+        storedContext: null,
+        setLastBroadcastContext: jest.fn<void, [Context]>(),
+        clearStoredContext: jest.fn<void, []>(),
+        serialize: jest.fn<ChannelTransport, []>(),
+        // Apply any custom overrides
+        ...options
+    };
+}
+
+export function createMockChannelHandler(): jest.Mocked<ChannelHandler> {
+    const {ChannelHandler} = jest.requireMock('../src/provider/controller/ChannelHandler');
+    return new ChannelHandler();
+}
+
+export function createMockConfigStore(options: Partial<jest.Mocked<ConfigStoreBinding>> = {}): jest.Mocked<ConfigStoreBinding> {
+    const configStore = {
+        config: null! as Store<ConfigurationObject>,
+        initialized: null! as Promise<void>
+    };
+
+    assignMockGetter(configStore, 'config');
+    assignMockGetter(configStore, 'initialized');
+
+    // Apply any custom overrides
+    Object.assign(configStore, options);
+
+    return configStore;
+}
+
+export function createMockEnvironmnent(options: Partial<jest.Mocked<Environment>> = {}): jest.Mocked<Environment> {
+    return {
+        onApplicationCreated: new Signal<[Identity, LiveApp]>(),
+        onApplicationClosed: new Signal<[Identity]>(),
+        onWindowCreated: new Signal<[Identity]>(),
+        onWindowClosed: new Signal<[Identity]>(),
+        createApplication: jest.fn<void, [Application]>(),
+        wrapConnection: jest.fn<AppConnection, [LiveApp, Identity, EntityType, ContextChannel]>(),
+        inferApplication: jest.fn<Promise<Application>, [Identity]>(),
+        getEntityType: jest.fn<Promise<EntityType>, [Identity]>(),
+        isKnownEntity: jest.fn<boolean, [Identity]>(),
+        // Apply any custom overrides
+        ...options
+    };
+}
+
 export function createMockModel(): jest.Mocked<Model> {
     const {Model} = jest.requireMock('../src/provider/model/Model');
     const model: jest.Mocked<Model> = new Model();
@@ -130,11 +153,6 @@ export function createMockModel(): jest.Mocked<Model> {
     assignMockGetter(model, 'apps');
 
     return model;
-}
-
-export function createMockChannelHandler(): jest.Mocked<ChannelHandler> {
-    const {ChannelHandler} = jest.requireMock('../src/provider/controller/ChannelHandler');
-    return new ChannelHandler();
 }
 
 /**

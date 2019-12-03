@@ -7,9 +7,8 @@ import {Signal} from 'openfin-service-signal';
 import {Application} from '../../src/client/directory';
 import {AppDirectory} from '../../src/provider/model/AppDirectory';
 import {ConfigurationObject} from '../../gen/provider/config/fdc3-config';
-import {ConfigStoreBinding} from '../../src/provider/model/ConfigStore';
 import {createFakeApp, createFakeIntent, createFakeContextType} from '../demo/utils/fakes';
-import {createMockAppDirectoryStorage, getterMock} from '../mocks';
+import {createMockAppDirectoryStorage, getterMock, createMockConfigStore} from '../mocks';
 
 enum StorageKeys {
     DIRECTORY_CACHE = 'fdc3@directoryCache'
@@ -63,28 +62,12 @@ const fakeApp2: Application = createFakeApp({
     }]
 });
 
+const mockAppDirectoryStorage = createMockAppDirectoryStorage();
+const mockConfigStore = createMockConfigStore();
+
 const fakeApps: Application[] = [fakeApp1, fakeApp2];
 const cachedFakeApps: Application[] = [fakeApp1, fakeApp2, createFakeApp(), createFakeApp()];
 const mockFetchReturnJson = jest.fn().mockResolvedValue(fakeApps);
-
-/**
- * Creates a new Application Directory with the specified URL
- */
-async function createAppDirectory(url: string): Promise<void> {
-    const configStore: ConfigStoreBinding = {
-        config: new Store<ConfigurationObject>(require('../../gen/provider/config/defaults.json')),
-        initialized: Promise.resolve()
-    };
-
-    configStore.config.add({level: 'desktop'}, {applicationDirectory: url});
-
-    const mockAppDirectoryStorage = createMockAppDirectoryStorage();
-    getterMock(mockAppDirectoryStorage, 'changed').mockReturnValue(new Signal<[]>());
-    mockAppDirectoryStorage.getStoredDirectoryShards.mockReturnValue([]);
-
-    appDirectory = new AppDirectory(mockAppDirectoryStorage, configStore);
-    await appDirectory.delayedInit();
-}
 
 beforeEach(() => {
     jest.restoreAllMocks();
@@ -112,7 +95,9 @@ beforeEach(() => {
 describe('When Fetching Initial Data', () => {
     describe('And we\'re online', () => {
         beforeEach(async () => {
-            await createAppDirectory(DEV_APP_DIRECTORY_URL);
+            setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
+            setupEmptyDirectoryStorage();
+            await createAppDirectory();
         });
 
         test('We fetch data from the application directory JSON', async () => {
@@ -127,7 +112,9 @@ describe('When Fetching Initial Data', () => {
     describe('And we\'re offline', () => {
         beforeEach(async () => {
             global.fetch = jest.fn().mockRejectedValue('');
-            await createAppDirectory(DEV_APP_DIRECTORY_URL);
+            setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
+            setupEmptyDirectoryStorage();
+            await createAppDirectory();
         });
 
         describe('With cache', () => {
@@ -143,7 +130,9 @@ describe('When Fetching Initial Data', () => {
                 const spyGetItem = jest.spyOn(global.localStorage, 'getItem');
                 spyGetItem.mockImplementation(() => '__test_url__');
 
-                await createAppDirectory(DEV_APP_DIRECTORY_URL);
+                setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
+                setupEmptyDirectoryStorage();
+                await createAppDirectory();
 
                 await expect(appDirectory.getAllApps()).resolves.toEqual([]);
             });
@@ -163,7 +152,9 @@ describe('When Fetching Initial Data', () => {
                     setItem: jest.fn((key: string, value: string) => {})
                 };
 
-                await createAppDirectory(DEV_APP_DIRECTORY_URL);
+                setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
+                setupEmptyDirectoryStorage();
+                await createAppDirectory();
             });
 
             test('We receive an empty array', (async () => {
@@ -179,7 +170,9 @@ describe('When Fetching Initial Data', () => {
 
 describe('When querying the Directory', () => {
     beforeEach(async () => {
-        await createAppDirectory(DEV_APP_DIRECTORY_URL);
+        setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
+        setupEmptyDirectoryStorage();
+        await createAppDirectory();
     });
 
     it('Can get all apps', async () => {
@@ -408,3 +401,28 @@ describe('When querying individual applications', () => {
         });
     });
 });
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function setupDefaultConfigStore(): void {
+    const config = new Store<ConfigurationObject>(require('../../gen/provider/config/defaults.json'));
+    getterMock(mockConfigStore, 'config').mockReturnValue(config);
+    getterMock(mockConfigStore, 'initialized').mockReturnValue(Promise.resolve());
+}
+
+function setupConfigStoreWithUrl(url: string): void {
+    const config = new Store<ConfigurationObject>(require('../../gen/provider/config/defaults.json'));
+    config.add({level: 'desktop'}, {applicationDirectory: url});
+
+    getterMock(mockConfigStore, 'config').mockReturnValue(config);
+    getterMock(mockConfigStore, 'initialized').mockReturnValue(Promise.resolve());
+}
+
+function setupEmptyDirectoryStorage(): void {
+    getterMock(mockAppDirectoryStorage, 'changed').mockReturnValue(new Signal<[]>());
+    mockAppDirectoryStorage.getStoredDirectoryShards.mockReturnValue([]);
+}
+
+async function createAppDirectory(): Promise<void> {
+    appDirectory = new AppDirectory(mockAppDirectoryStorage, mockConfigStore);
+    await appDirectory.delayedInit();
+}
