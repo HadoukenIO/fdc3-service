@@ -75,70 +75,76 @@ const cachedFakeApps: Application[] = [fakeApp1, fakeApp2, fakeApp3];
 
 beforeEach(() => {
     jest.restoreAllMocks();
-
-    setupCacheWithData([{url: DEV_APP_DIRECTORY_URL, applications: cachedFakeApps}]);
-    setupRemotesWithData([{url: DEV_APP_DIRECTORY_URL, applications: fakeApps}]);
 });
 
-describe('When Fetching Initial Data', () => {
-    describe('And we\'re online', () => {
+describe('When fetching initial data', () => {
+    describe('When our source is a single URL', () => {
         beforeEach(async () => {
             setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
             setupEmptyDirectoryStorage();
-            await createAppDirectory();
         });
 
-        test('We fetch data from the application directory JSON', async () => {
-            await expect(appDirectory.getAllApps()).resolves.toEqual(fakeApps);
-        });
-
-        test('Data is not retrieved from cache', () => {
-            expect(appDirectory.getAllApps()).resolves.not.toContainEqual(fakeApp3);
-        });
-    });
-
-    describe('And we\'re offline', () => {
-        beforeEach(async () => {
-            setupOfflineRemotes();
-            setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
-            setupEmptyDirectoryStorage();
-            await createAppDirectory();
-        });
-
-        describe('With cache', () => {
-            test('We fetch data from the cache', async () => {
-                await expect(appDirectory.getAllApps()).resolves.toEqual(cachedFakeApps);
-            });
-
-            test('Data is not fetched from live app directory', async () => {
-                await expect(appDirectory.getAllApps()).resolves.not.toEqual(fakeApps);
-            });
-
-            test('We receive an empty array if the URLs do not match', async () => {
-                setupCacheWithData([{url: '__test_url__', applications: cachedFakeApps}]);
-                setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
-                setupEmptyDirectoryStorage();
-                await createAppDirectory();
-
-                await expect(appDirectory.getAllApps()).resolves.toEqual([]);
-            });
-        });
-
-        describe('With no cache', () => {
+        describe('And we\'re online', () => {
             beforeEach(async () => {
-                setupEmptyCache();
+                setupRemotesWithData([{url: DEV_APP_DIRECTORY_URL, applications: fakeApps}]);
+                setupCacheWithData([{url: DEV_APP_DIRECTORY_URL, applications: cachedFakeApps}]);
 
-                setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
-                setupEmptyDirectoryStorage();
                 await createAppDirectory();
             });
 
-            test('We receive an empty array', (async () => {
-                await expect(appDirectory.getAllApps()).resolves.toEqual([]);
-            }));
+            test('We fetch data from the application directory JSON', async () => {
+                await expect(appDirectory.getAllApps()).resolves.toEqual(fakeApps);
+            });
 
-            test('Data is not fetched from live app directory', async () => {
-                await expect(appDirectory.getAllApps()).resolves.not.toEqual(fakeApps);
+            test('Data is not retrieved from cache', () => {
+                expect(appDirectory.getAllApps()).resolves.not.toContainEqual(fakeApp3);
+            });
+        });
+
+        describe('And we\'re offline', () => {
+            beforeEach(async () => {
+                setupOfflineRemotes();
+            });
+
+            describe('With URL cached', () => {
+                beforeEach(async () => {
+                    setupCacheWithData([{url: DEV_APP_DIRECTORY_URL, applications: cachedFakeApps}]);
+                    await createAppDirectory();
+                });
+
+                test('We fetch data from the cache', async () => {
+                    await expect(appDirectory.getAllApps()).resolves.toEqual(cachedFakeApps);
+                });
+
+                test('Data is not fetched from live app directory', async () => {
+                    await expect(appDirectory.getAllApps()).resolves.not.toEqual(fakeApps);
+                });
+            });
+
+            describe('With different URL cached', () => {
+                beforeEach(async () => {
+                    setupCacheWithData([{url: '__test_url__', applications: cachedFakeApps}]);
+                    await createAppDirectory();
+                });
+
+                test('We receive an empty array if the URLs do not match', async () => {
+                    await expect(appDirectory.getAllApps()).resolves.toEqual([]);
+                });
+            });
+
+            describe('With no cache', () => {
+                beforeEach(async () => {
+                    setupEmptyCache();
+                    await createAppDirectory();
+                });
+
+                test('We receive an empty array', (async () => {
+                    await expect(appDirectory.getAllApps()).resolves.toEqual([]);
+                }));
+
+                test('Data is not fetched from live app directory', async () => {
+                    await expect(appDirectory.getAllApps()).resolves.not.toEqual(fakeApps);
+                });
             });
         });
     });
@@ -148,6 +154,8 @@ describe('When querying the Directory', () => {
     beforeEach(async () => {
         setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
         setupEmptyDirectoryStorage();
+        setupRemotesWithData([{url: DEV_APP_DIRECTORY_URL, applications: fakeApps}]);
+
         await createAppDirectory();
     });
 
