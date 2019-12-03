@@ -10,6 +10,7 @@ import {ConfigurationObject} from '../../gen/provider/config/fdc3-config';
 import {createFakeApp, createFakeUrl} from '../demo/utils/fakes';
 import {createMockAppDirectoryStorage, getterMock, createMockConfigStore} from '../mocks';
 import {StoredAppDirectoryShard} from '../../src/client/internal';
+import {resolvePromiseChain} from '../utils/unit/time';
 
 enum StorageKeys {
     DIRECTORY_CACHE = 'fdc3@directoryCache'
@@ -316,6 +317,68 @@ describe('When fetching initial data', () => {
     });
 });
 
+describe('When stored data changes', () => {
+    let testUrl: string;
+
+    let startStoredSnippet: Application[];
+    let startRemoteSnippet: Application[];
+
+    beforeEach(async () => {
+        testUrl = createFakeUrl();
+
+        startStoredSnippet = [createFakeApp(), createFakeApp(), createFakeApp()];
+        startRemoteSnippet = [createFakeApp(), createFakeApp()];
+
+        setupDefaultConfigStore();
+        setupEmptyCache();
+        setupDirectoryStorage([{urls: [testUrl], applications: startStoredSnippet}]);
+        setupRemotesWithData([{url: testUrl, applications: startRemoteSnippet}]);
+
+        await createAppDirectory();
+    });
+
+    test('When stored snippets change, the contents of the app directory changes', async () => {
+        const endStoredSnippet = [createFakeApp(), createFakeApp()];
+
+        changeDirectoryStorage([{urls: [testUrl], applications: endStoredSnippet}]);
+        await resolvePromiseChain();
+
+        await expect(appDirectory.getAllApps()).resolves.toEqual([...endStoredSnippet, ...startRemoteSnippet]);
+    });
+
+    test('When stored snippets change, existing remote snippets are not refetched', async () => {
+        const endStoredSnippet = [createFakeApp(), createFakeApp()];
+        global.fetch.mockReset();
+
+        changeDirectoryStorage([{urls: [testUrl], applications: endStoredSnippet}]);
+        await resolvePromiseChain();
+
+        expect(global.fetch).not.toBeCalled();
+    });
+
+    test('When a URL is added to a shard, the new remote snippet is included in the app directory', async () => {
+        const newUrl = createFakeUrl();
+        const newRemoteSnippet = [createFakeApp(), createFakeApp()];
+
+        setupRemotesWithData([{url: testUrl, applications: startRemoteSnippet}, {url: newUrl, applications: newRemoteSnippet}]);
+
+        changeDirectoryStorage([{urls: [testUrl], applications: startStoredSnippet}, {urls: [newUrl], applications: []}]);
+        await resolvePromiseChain();
+
+        await expect(appDirectory.getAllApps()).resolves.toEqual([...startStoredSnippet, ...startRemoteSnippet, ...newRemoteSnippet]);
+    });
+
+    test('When a stored shared changes, the app directory fires a signal', async () => {
+        const signalListener = jest.fn<void, []>();
+        appDirectory.directoryChanged.add(signalListener);
+
+        changeDirectoryStorage([]);
+        await resolvePromiseChain();
+
+        expect(signalListener).toBeCalled();
+    });
+});
+
 describe('When querying the directory', () => {
     beforeEach(async () => {
         setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
@@ -377,6 +440,11 @@ function setupEmptyDirectoryStorage(): void {
 function setupDirectoryStorage(data: StoredAppDirectoryShard[]): void {
     getterMock(mockAppDirectoryStorage, 'changed').mockReturnValue(new Signal<[]>());
     mockAppDirectoryStorage.getStoredDirectoryShards.mockReturnValue(data);
+}
+
+function changeDirectoryStorage(data: StoredAppDirectoryShard[]): void {
+    mockAppDirectoryStorage.getStoredDirectoryShards.mockReturnValue(data);
+    mockAppDirectoryStorage.changed.emit();
 }
 
 function setupOfflineRemotes(): void {
