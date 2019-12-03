@@ -94,7 +94,7 @@ export const testAppOnlyInSnippet1: NonDirectoryTestAppData = {
 };
 
 /**
- * Another App only in the app directory snippet
+ * Another app only in the app directory snippet
  */
 export const testAppOnlyInSnippet2: NonDirectoryTestAppData = {
     uuid: 'test-app-only-in-snippet-2',
