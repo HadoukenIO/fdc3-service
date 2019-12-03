@@ -21,11 +21,14 @@ Object.defineProperty(global, 'localStorage', {
     value: {
         getItem: jest.fn(),
         setItem: jest.fn()
-    },
-    writable: true
+    }
 });
 
-declare const global: NodeJS.Global & {localStorage: LocalStore} & {fetch: (url: string) => Promise<Response>};
+Object.defineProperty(global, 'fetch', {
+    value: jest.fn()
+});
+
+declare const global: NodeJS.Global & {localStorage: LocalStore} & {fetch: jest.Mock<Promise<Pick<Response, 'ok' | 'json'>>, [string]>};
 
 const DEV_APP_DIRECTORY_URL = 'http://openfin.co';
 let appDirectory: AppDirectory;
@@ -67,29 +70,12 @@ const mockConfigStore = createMockConfigStore();
 
 const fakeApps: Application[] = [fakeApp1, fakeApp2];
 const cachedFakeApps: Application[] = [fakeApp1, fakeApp2, createFakeApp(), createFakeApp()];
-const mockFetchReturnJson = jest.fn().mockResolvedValue(fakeApps);
 
 beforeEach(() => {
     jest.restoreAllMocks();
 
-    global.localStorage = {
-        getItem: jest.fn().mockImplementation((key: string) => {
-            switch (key) {
-                case StorageKeys.DIRECTORY_CACHE:
-                    return JSON.stringify([{url: DEV_APP_DIRECTORY_URL, applications: cachedFakeApps}]);
-                default:
-                    return null;
-            }
-        }),
-        setItem: jest.fn((key: string, value: string) => {})
-    };
-
-    // Replace the fetch result with our mocked directory
-    global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: mockFetchReturnJson
-    });
-    mockFetchReturnJson.mockResolvedValue(fakeApps);
+    setupCacheWithData([{url: DEV_APP_DIRECTORY_URL, applications: cachedFakeApps}]);
+    setupRemotesWithData([{url: DEV_APP_DIRECTORY_URL, applications: fakeApps}]);
 });
 
 describe('When Fetching Initial Data', () => {
@@ -111,7 +97,7 @@ describe('When Fetching Initial Data', () => {
 
     describe('And we\'re offline', () => {
         beforeEach(async () => {
-            global.fetch = jest.fn().mockRejectedValue('');
+            setupOfflineRemotes();
             setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
             setupEmptyDirectoryStorage();
             await createAppDirectory();
@@ -127,9 +113,7 @@ describe('When Fetching Initial Data', () => {
             });
 
             test('We receive an empty array if the URLs do not match', async () => {
-                const spyGetItem = jest.spyOn(global.localStorage, 'getItem');
-                spyGetItem.mockImplementation(() => '__test_url__');
-
+                setupCacheWithData([{url: '__test_url__', applications: cachedFakeApps}]);
                 setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
                 setupEmptyDirectoryStorage();
                 await createAppDirectory();
@@ -140,17 +124,7 @@ describe('When Fetching Initial Data', () => {
 
         describe('With no cache', () => {
             beforeEach(async () => {
-                global.localStorage = {
-                    getItem: jest.fn().mockImplementation((key: string) => {
-                        switch (key) {
-                            case StorageKeys.DIRECTORY_CACHE:
-                                return null;
-                            default:
-                                return null;
-                        }
-                    }),
-                    setItem: jest.fn((key: string, value: string) => {})
-                };
+                setupEmptyCache();
 
                 setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
                 setupEmptyDirectoryStorage();
@@ -420,6 +394,44 @@ function setupConfigStoreWithUrl(url: string): void {
 function setupEmptyDirectoryStorage(): void {
     getterMock(mockAppDirectoryStorage, 'changed').mockReturnValue(new Signal<[]>());
     mockAppDirectoryStorage.getStoredDirectoryShards.mockReturnValue([]);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function setupOfflineRemotes(): void {
+    global.fetch.mockImplementation(async (url: string) => {
+        throw new Error();
+    });
+}
+
+function setupRemotesWithData(data: {url: string; applications: Application[]}[]): void {
+    global.fetch.mockImplementation(async (url: string) => {
+        const result = data.find((entry) => entry.url === url);
+
+        if (result) {
+            return {
+                ok: true,
+                json: async () => result.applications
+            };
+        } else {
+            throw new Error();
+        }
+    });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function setupEmptyCache(): void {
+    global.localStorage.getItem.mockReturnValue(null);
+}
+
+function setupCacheWithData(data: {url: string; applications: Application[]}[]): void {
+    global.localStorage.getItem.mockImplementation((key: string) => {
+        switch (key) {
+            case StorageKeys.DIRECTORY_CACHE:
+                return JSON.stringify(data);
+            default:
+                return null;
+        }
+    });
 }
 
 async function createAppDirectory(): Promise<void> {
