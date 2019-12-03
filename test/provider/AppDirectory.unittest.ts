@@ -7,8 +7,9 @@ import {Signal} from 'openfin-service-signal';
 import {Application} from '../../src/client/directory';
 import {AppDirectory} from '../../src/provider/model/AppDirectory';
 import {ConfigurationObject} from '../../gen/provider/config/fdc3-config';
-import {createFakeApp, createFakeIntent, createFakeContextType} from '../demo/utils/fakes';
+import {createFakeApp, createFakeIntent, createFakeContextType, createFakeUrl} from '../demo/utils/fakes';
 import {createMockAppDirectoryStorage, getterMock, createMockConfigStore} from '../mocks';
+import { StoredAppDirectoryShard } from '../../src/client/internal';
 
 enum StorageKeys {
     DIRECTORY_CACHE = 'fdc3@directoryCache'
@@ -30,7 +31,7 @@ Object.defineProperty(global, 'fetch', {
 
 declare const global: NodeJS.Global & {localStorage: LocalStore} & {fetch: jest.Mock<Promise<Pick<Response, 'ok' | 'json'>>, [string]>};
 
-const DEV_APP_DIRECTORY_URL = 'http://openfin.co';
+const DEV_APP_DIRECTORY_URL = createFakeUrl();
 let appDirectory: AppDirectory;
 
 const fakeApp1: Application = createFakeApp({
@@ -123,7 +124,7 @@ describe('When fetching initial data', () => {
 
             describe('With different URL cached', () => {
                 beforeEach(async () => {
-                    setupCacheWithData([{url: '__test_url__', applications: cachedFakeApps}]);
+                    setupCacheWithData([{url: createFakeUrl(), applications: cachedFakeApps}]);
                     await createAppDirectory();
                 });
 
@@ -148,9 +149,59 @@ describe('When fetching initial data', () => {
             });
         });
     });
+
+    describe('When our source is stored data', () => {
+        beforeEach(() => {
+            setupEmptyCache();
+            setupDefaultConfigStore();
+        })
+
+        test('When we have multiple stored snippets, all are used by the directory', async () => {
+            const storedApps1 = [createFakeApp()];
+            const storedApps2 = [createFakeApp(), createFakeApp()];
+            const storedApps3 = [createFakeApp(), createFakeApp(), createFakeApp()];
+
+            setupDirectoryStorage([{urls: [], applications: storedApps1}, {urls: [], applications: storedApps2}, {urls: [], applications: storedApps3}]);
+
+            await createAppDirectory();
+
+            await expect(appDirectory.getAllApps()).resolves.toEqual([...storedApps1, ...storedApps2, ...storedApps3]);
+        });
+
+        test('When we have a mix of stored and remote snippets, all are used by the directory', async () => {
+            const testUrl = createFakeUrl();
+
+            const storedApps = [createFakeApp(), createFakeApp()];
+            const remoteApps = [createFakeApp(), createFakeApp()];
+
+            setupDirectoryStorage([{urls: [], applications: storedApps}, {urls: [testUrl], applications: []}]);
+            setupRemotesWithData([{url: testUrl, applications: remoteApps}]);
+
+            await createAppDirectory();
+
+            await expect(appDirectory.getAllApps()).resolves.toEqual([...storedApps, ...remoteApps]);
+        });
+
+        test('When we have a mix of snippets and a service-level URL, all are used by the directory', async () => {
+            const defaultUrl = createFakeUrl();
+            const remoteUrl = createFakeUrl();
+
+            const defaultApps = [createFakeApp(), createFakeApp(), createFakeApp()];
+            const storedApps = [createFakeApp(), createFakeApp()];
+            const remoteApps = [createFakeApp(), createFakeApp()];
+
+            setupConfigStoreWithUrl(defaultUrl);
+            setupRemotesWithData([{url: defaultUrl, applications: defaultApps}, {url: remoteUrl, applications: remoteApps}]);
+            setupDirectoryStorage([{urls: [remoteUrl], applications: storedApps}]);
+
+            await createAppDirectory();
+
+            await expect(appDirectory.getAllApps()).resolves.toEqual([...defaultApps, ...storedApps, ...remoteApps]);
+        });
+    });
 });
 
-describe('When querying the Directory', () => {
+describe('When querying the directory', () => {
     beforeEach(async () => {
         setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
         setupEmptyDirectoryStorage();
@@ -406,7 +457,11 @@ function setupEmptyDirectoryStorage(): void {
     mockAppDirectoryStorage.getStoredDirectoryShards.mockReturnValue([]);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function setupDirectoryStorage(data: StoredAppDirectoryShard[]): void {
+    getterMock(mockAppDirectoryStorage, 'changed').mockReturnValue(new Signal<[]>());
+    mockAppDirectoryStorage.getStoredDirectoryShards.mockReturnValue(data);
+}
+
 function setupOfflineRemotes(): void {
     global.fetch.mockImplementation(async (url: string) => {
         throw new Error();
@@ -428,7 +483,6 @@ function setupRemotesWithData(data: {url: string; applications: Application[]}[]
     });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function setupEmptyCache(): void {
     global.localStorage.getItem.mockReturnValue(null);
 }
