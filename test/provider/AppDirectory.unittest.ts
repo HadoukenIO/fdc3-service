@@ -9,7 +9,7 @@ import {AppDirectory} from '../../src/provider/model/AppDirectory';
 import {ConfigurationObject} from '../../gen/provider/config/fdc3-config';
 import {createFakeApp, createFakeIntent, createFakeContextType, createFakeUrl} from '../demo/utils/fakes';
 import {createMockAppDirectoryStorage, getterMock, createMockConfigStore} from '../mocks';
-import { StoredAppDirectoryShard } from '../../src/client/internal';
+import {StoredAppDirectoryShard} from '../../src/client/internal';
 
 enum StorageKeys {
     DIRECTORY_CACHE = 'fdc3@directoryCache'
@@ -154,7 +154,7 @@ describe('When fetching initial data', () => {
         beforeEach(() => {
             setupEmptyCache();
             setupDefaultConfigStore();
-        })
+        });
 
         test('When we have multiple stored snippets, all are used by the directory', async () => {
             const storedApps1 = [createFakeApp()];
