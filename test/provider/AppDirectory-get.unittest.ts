@@ -58,7 +58,7 @@ beforeEach(() => {
 });
 
 describe('When fetching initial data', () => {
-    describe('When our source is a single URL', () => {
+    describe('When our source is a single URL from the config store', () => {
         beforeEach(async () => {
             setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
             setupEmptyDirectoryStorage();
@@ -107,7 +107,7 @@ describe('When fetching initial data', () => {
                     await createAppDirectory();
                 });
 
-                test('We receive an empty array if the URLs do not match', async () => {
+                test('We receive an empty array', async () => {
                     await expect(appDirectory.getAllApps()).resolves.toEqual([]);
                 });
             });
@@ -161,7 +161,7 @@ describe('When fetching initial data', () => {
             await expect(appDirectory.getAllApps()).resolves.toEqual([...storedApps, ...remoteApps]);
         });
 
-        test('When we have a mix of snippets and a service-level URL, all are used by the directory', async () => {
+        test('When we have a mix of snippets and a config store URL, all are used by the directory', async () => {
             const defaultUrl = createFakeUrl();
             const remoteUrl = createFakeUrl();
 
@@ -201,11 +201,11 @@ describe('When fetching initial data', () => {
                 await createAppDirectory();
             });
 
-            test('All expect offline uncached snippets are used by the directory', async () => {
+            test('All except offline uncached snippets are used by the directory', async () => {
                 await expect(appDirectory.getAllApps()).resolves.toEqual([...onlineApps, ...offlineCachedApps]);
             });
 
-            test('All expect offline uncached snippets are cached by the directory', async () => {
+            test('All except offline uncached snippets are cached by the directory', async () => {
                 setupRemotesWithData([]);
                 await createAppDirectory();
 
