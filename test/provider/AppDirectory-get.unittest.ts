@@ -355,7 +355,6 @@ describe('When querying the directory', () => {
     });
 });
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function setupDefaultConfigStore(): void {
     const config = new Store<ConfigurationObject>(require('../../gen/provider/config/defaults.json'));
     getterMock(mockConfigStore, 'config').mockReturnValue(config);
