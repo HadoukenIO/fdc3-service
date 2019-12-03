@@ -198,6 +198,121 @@ describe('When fetching initial data', () => {
 
             await expect(appDirectory.getAllApps()).resolves.toEqual([...defaultApps, ...storedApps, ...remoteApps]);
         });
+
+        describe('When we have a mix of online, offline cached, and offline uncached remote snippets', () => {
+            let onlineApps: Application[];
+            let offlineCachedApps: Application[];
+
+            beforeEach(async () => {
+                const onlineUrl = createFakeUrl();
+                const offlineCachedUrl = createFakeUrl();
+                const offlineUncachedUrl = createFakeUrl();
+
+                onlineApps = [createFakeApp(), createFakeApp()];
+                offlineCachedApps = [createFakeApp(), createFakeApp()];
+
+                setupRemotesWithData([{url: onlineUrl, applications: onlineApps}]);
+                setupCacheWithData([{url: offlineCachedUrl, applications: offlineCachedApps}]);
+                setupDirectoryStorage([
+                    {urls: [onlineUrl], applications: []},
+                    {urls: [offlineCachedUrl], applications: []},
+                    {urls: [offlineUncachedUrl], applications: []}
+                ]);
+
+                await createAppDirectory();
+            });
+
+            test('All expect offline uncached snippets are used by the directory', async () => {
+                await expect(appDirectory.getAllApps()).resolves.toEqual([...onlineApps, ...offlineCachedApps]);
+            });
+
+            test('All expect offline uncached snippets are cached by the directory', async () => {
+                setupRemotesWithData([]);
+                await createAppDirectory();
+
+                await expect(appDirectory.getAllApps()).resolves.toEqual([...onlineApps, ...offlineCachedApps]);
+            });
+        });
+
+        test('When stored snippets contain apps with conflicting names, the directory chooses one to use', async () => {
+            const app1 = createFakeApp();
+            const app2 = createFakeApp({name: app1.name});
+            const app3 = createFakeApp({name: app1.name});
+
+            setupDirectoryStorage([
+                {urls: [], applications: [app1, createFakeApp()]},
+                {urls: [], applications: [app2, createFakeApp()]},
+                {urls: [], applications: [app3, createFakeApp()]}
+            ]);
+
+            await createAppDirectory();
+
+            const allApps = await appDirectory.getAllApps();
+
+            expect(allApps).toHaveLength(4);
+            expect(allApps.filter((app) => app.name === app1.name)).toHaveLength(1);
+        });
+
+        test('When stored snippets contain apps with conflicting app IDs, the directory chooses one to use', async () => {
+            const app1 = createFakeApp();
+            const app2 = createFakeApp({appId: app1.appId});
+            const app3 = createFakeApp({appId: app1.appId});
+
+            setupDirectoryStorage([
+                {urls: [], applications: [app1, createFakeApp()]},
+                {urls: [], applications: [app2, createFakeApp()]},
+                {urls: [], applications: [app3, createFakeApp()]}
+            ]);
+
+            await createAppDirectory();
+
+            const allApps = await appDirectory.getAllApps();
+
+            expect(allApps).toHaveLength(4);
+            expect(allApps.filter((app) => app.name === app1.name)).toHaveLength(1);
+        });
+
+        test('When stored snippets contain apps with conflicting UUIDs, the directory chooses one to use', async () => {
+            const app1 = createFakeApp();
+            const app2 = createFakeApp({appId: app1.appId});
+            const app3 = createFakeApp({customConfig: [{name: 'appUuid', value: app1.appId}]});
+
+            setupDirectoryStorage([
+                {urls: [], applications: [app1, createFakeApp()]},
+                {urls: [], applications: [app2, createFakeApp()]},
+                {urls: [], applications: [app3, createFakeApp()]}
+            ]);
+
+            await createAppDirectory();
+
+            const allApps = await appDirectory.getAllApps();
+
+            expect(allApps).toHaveLength(4);
+            expect(allApps.filter((app) => app.name === app1.name)).toHaveLength(1);
+        });
+
+        test('When a mix of stored and remote snippets contain apps with conflicting names, the directory chooses one to use', async () => {
+            const testUrl = createFakeUrl();
+
+            const app1 = createFakeApp();
+            const app2 = createFakeApp({name: app1.name});
+            const app3 = createFakeApp({name: app1.name});
+
+            setupDirectoryStorage([
+                {urls: [], applications: [app1, createFakeApp()]},
+                {urls: [], applications: [app2, createFakeApp()]},
+                {urls: [testUrl], applications: []}
+            ]);
+
+            setupRemotesWithData([{url: testUrl, applications: [app3, createFakeApp()]}]);
+
+            await createAppDirectory();
+
+            const allApps = await appDirectory.getAllApps();
+
+            expect(allApps).toHaveLength(4);
+            expect(allApps.filter((app) => app.name === app1.name)).toHaveLength(1);
+        });
     });
 });
 
@@ -287,18 +402,25 @@ function setupRemotesWithData(data: {url: string; applications: Application[]}[]
 }
 
 function setupEmptyCache(): void {
-    global.localStorage.getItem.mockReturnValue(null);
+    const cache: Map<string, string> = new Map();
+    const implementation = createCacheImplementation(cache);
+
+    global.localStorage.getItem.mockImplementation(implementation[0]);
+    global.localStorage.setItem.mockImplementation(implementation[1]);
 }
 
 function setupCacheWithData(data: {url: string; applications: Application[]}[]): void {
-    global.localStorage.getItem.mockImplementation((key: string) => {
-        switch (key) {
-            case StorageKeys.DIRECTORY_CACHE:
-                return JSON.stringify(data);
-            default:
-                return null;
-        }
-    });
+    const cache: Map<string, string> = new Map();
+    cache.set(StorageKeys.DIRECTORY_CACHE, JSON.stringify(data));
+
+    const implementation = createCacheImplementation(cache);
+
+    global.localStorage.getItem.mockImplementation(implementation[0]);
+    global.localStorage.setItem.mockImplementation(implementation[1]);
+}
+
+function createCacheImplementation(map: Map<string, string>): [(key: string) => string | null, (key: string, value: string) => void] {
+    return [(key: string) => map.get(key) || null, (key: string, value: string) => map.set(key, value)];
 }
 
 async function createAppDirectory(): Promise<void> {
