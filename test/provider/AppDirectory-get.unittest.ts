@@ -7,7 +7,7 @@ import {Signal} from 'openfin-service-signal';
 import {Application} from '../../src/client/directory';
 import {AppDirectory} from '../../src/provider/model/AppDirectory';
 import {ConfigurationObject} from '../../gen/provider/config/fdc3-config';
-import {createFakeApp, createFakeUrl} from '../demo/utils/fakes';
+import {createFakeApp, createFakeUrl, createFakeIntent, createFakeContextType} from '../demo/utils/fakes';
 import {createMockAppDirectoryStorage, getterMock, createMockConfigStore} from '../mocks';
 import {StoredAppDirectoryShard} from '../../src/client/internal';
 import {resolvePromiseChain} from '../utils/unit/time';
@@ -17,6 +17,8 @@ enum StorageKeys {
 }
 
 type LocalStore = jest.Mocked<Pick<typeof localStorage, 'getItem' | 'setItem'>>;
+
+declare const global: NodeJS.Global & {localStorage: LocalStore} & {fetch: jest.Mock<Promise<Pick<Response, 'ok' | 'json'>>, [string]>};
 
 Object.defineProperty(global, 'localStorage', {
     value: {
@@ -29,40 +31,16 @@ Object.defineProperty(global, 'fetch', {
     value: jest.fn()
 });
 
-declare const global: NodeJS.Global & {localStorage: LocalStore} & {fetch: jest.Mock<Promise<Pick<Response, 'ok' | 'json'>>, [string]>};
-
 const DEV_APP_DIRECTORY_URL = createFakeUrl();
 
 const fakeApp1: Application = createFakeApp({
-    customConfig: [
-        {
-            'name': 'appUuid',
-            'value': 'customUuid'
-        }
-    ],
-    intents: [
-        {
-            name: 'StartChat',
-            contexts: ['testContext.User'],
-            customConfig: {}
-        }, {
-            name: 'SendEmail',
-            contexts: ['testContext.User'],
-            customConfig: {}
-        }
-    ]
+    customConfig: [{'name': 'appUuid', 'value': 'customUuid'}],
+    intents: [createFakeIntent({contexts: [createFakeContextType(), createFakeContextType()]})]
+
 });
 
 const fakeApp2: Application = createFakeApp({
-    intents: [{
-        name: 'StartChat',
-        contexts: ['testContext.User', 'testContext.Bot'],
-        customConfig: {}
-    }, {
-        name: 'ShowChart',
-        contexts: ['testContext.Instrument'],
-        customConfig: {}
-    }]
+    intents: [createFakeIntent({contexts: [createFakeContextType(), createFakeContextType()]})]
 });
 
 const fakeApp3: Application = createFakeApp();
