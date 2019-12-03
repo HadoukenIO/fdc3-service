@@ -119,7 +119,7 @@ export class AppDirectory extends AsyncInit {
 
         const directoryShards = [
             {
-                urls: [configUrl],
+                urls: configUrl ? [configUrl] : [],
                 applications: []
             },
             ...this._appDirectoryStorage.getStoredDirectoryShards()
