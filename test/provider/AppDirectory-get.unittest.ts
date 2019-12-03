@@ -32,7 +32,6 @@ Object.defineProperty(global, 'fetch', {
 declare const global: NodeJS.Global & {localStorage: LocalStore} & {fetch: jest.Mock<Promise<Pick<Response, 'ok' | 'json'>>, [string]>};
 
 const DEV_APP_DIRECTORY_URL = createFakeUrl();
-let appDirectory: AppDirectory;
 
 const fakeApp1: Application = createFakeApp({
     customConfig: [
@@ -73,6 +72,8 @@ const mockConfigStore = createMockConfigStore();
 
 const fakeApps: Application[] = [fakeApp1, fakeApp2];
 const cachedFakeApps: Application[] = [fakeApp1, fakeApp2, fakeApp3];
+
+let appDirectory: AppDirectory;
 
 beforeEach(() => {
     jest.restoreAllMocks();
