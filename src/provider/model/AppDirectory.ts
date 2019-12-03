@@ -127,6 +127,7 @@ export class AppDirectory extends AsyncInit {
 
         const remoteDirectorySnippets = await parallelMap(directoryShards, async (shard) => {
             return parallelMap(shard.urls, async (url) => {
+                // TODO: URLs will be fetched once per service run. Improve this logic [SERVICE-841]
                 const fetchedSnippet = this._fetchedUrls.has(url) ? null : await this.fetchRemoteSnippet(url);
                 this._fetchedUrls.add(url);
 
