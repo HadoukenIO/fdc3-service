@@ -65,11 +65,13 @@ const fakeApp2: Application = createFakeApp({
     }]
 });
 
+const fakeApp3: Application = createFakeApp();
+
 const mockAppDirectoryStorage = createMockAppDirectoryStorage();
 const mockConfigStore = createMockConfigStore();
 
 const fakeApps: Application[] = [fakeApp1, fakeApp2];
-const cachedFakeApps: Application[] = [fakeApp1, fakeApp2, createFakeApp(), createFakeApp()];
+const cachedFakeApps: Application[] = [fakeApp1, fakeApp2, fakeApp3];
 
 beforeEach(() => {
     jest.restoreAllMocks();
@@ -91,7 +93,7 @@ describe('When Fetching Initial Data', () => {
         });
 
         test('Data is not retrieved from cache', () => {
-            expect(appDirectory).not.toEqual([...fakeApps, ...fakeApps]);
+            expect(appDirectory.getAllApps()).resolves.not.toContainEqual(fakeApp3);
         });
     });
 
