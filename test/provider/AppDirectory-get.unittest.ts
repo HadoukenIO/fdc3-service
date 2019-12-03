@@ -18,7 +18,6 @@ enum StorageKeys {
 
 type LocalStore = jest.Mocked<Pick<typeof localStorage, 'getItem' | 'setItem'>>;
 
-// Define localStorage global/window
 Object.defineProperty(global, 'localStorage', {
     value: {
         getItem: jest.fn(),
