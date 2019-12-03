@@ -23,7 +23,7 @@ export function createFakeApp(options: Partial<Application> = {}): Application {
     return {
         appId: `app-id-${idString()}`,
         name: `app-name-${idString()}`,
-        manifestType: '',
+        manifestType: 'openfin',
         manifest: '',
         intents: [],
         ...options
