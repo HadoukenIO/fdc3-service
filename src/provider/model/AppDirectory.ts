@@ -7,9 +7,10 @@ import {Application, AppName, AppDirIntent} from '../../client/directory';
 import {AsyncInit} from '../controller/AsyncInit';
 import {CustomConfigFields} from '../constants';
 import {checkCustomConfigField, deduplicate} from '../utils/helpers';
+import {StoredAppDirectoryShard} from '../../client/internal';
 
 import {ConfigStoreBinding} from './ConfigStore';
-import {AppDirectoryStorage} from './AppDirectoryStorage';
+import {AppDirectoryStorage, DomainAppDirectoryShard} from './AppDirectoryStorage';
 
 enum StorageKeys {
     DIRECTORY_CACHE = 'fdc3@directoryCache'
@@ -18,6 +19,22 @@ enum StorageKeys {
 interface CacheEntry {
     url: string;
     applications: Application[];
+}
+
+interface GlobalShardScope {
+    type: 'global';
+}
+
+interface DomainShardScope {
+    type: 'domain';
+    domain: string;
+}
+
+type ShardScope = GlobalShardScope | DomainShardScope;
+
+interface ScopedAppDirectoryShard {
+    scope: ShardScope;
+    shard: StoredAppDirectoryShard;
 }
 
 @injectable()
@@ -117,16 +134,27 @@ export class AppDirectory extends AsyncInit {
     private async refreshDirectory(): Promise<void> {
         const configUrl = this._configStore.config.query({level: 'desktop'}).applicationDirectory;
 
-        const directoryShards = [
+        const scopedShards: ScopedAppDirectoryShard[] = [
             {
-                urls: configUrl ? [configUrl] : [],
-                applications: []
+                scope: {
+                    type: 'global'
+                },
+                shard: {
+                    urls: configUrl ? [configUrl] : [],
+                    applications: []
+                }
             },
-            ...this._appDirectoryStorage.getStoredDirectoryShards()
+            ...this._appDirectoryStorage.getDirectoryShards().map((shard: DomainAppDirectoryShard) => ({
+                scope: {
+                    type: 'domain',
+                    domain: shard.domain
+                } as ShardScope,
+                shard: shard.shard
+            }))
         ];
 
-        const remoteDirectorySnippets = await parallelMap(directoryShards, async (shard) => {
-            return parallelMap(shard.urls, async (url) => {
+        const remoteDirectorySnippets = await parallelMap(scopedShards, async (scopedShard) => {
+            return parallelMap(scopedShard.shard.urls.filter((url) => isUrlValidForScope(scopedShard.scope, url)), async (url) => {
                 // TODO: URLs will be fetched once per service run. Improve this logic [SERVICE-841]
                 const fetchedSnippet = this._fetchedUrls.has(url) ? null : await this.fetchRemoteSnippet(url);
                 this._fetchedUrls.add(url);
@@ -141,15 +169,16 @@ export class AppDirectory extends AsyncInit {
         });
 
         const applications: Application[] = [];
-        for (let i = 0; i < directoryShards.length; i++) {
-            applications.push(...directoryShards[i].applications);
+        scopedShards.forEach((scopedShard, i) => {
+            const validApplications = scopedShard.shard.applications.filter((app) => isUrlValidForScope(scopedShard.scope, app.manifest));
+
+            applications.push(...validApplications);
 
             for (const snippet of remoteDirectorySnippets[i]) {
-                applications.push(...snippet);
+                applications.push(...snippet.filter((app) => isUrlValidForScope(scopedShard.scope, app.manifest)));
             }
-        }
+        });
 
-        // TODO: Further validate app data [SERVICE-822]
         this._directory = deduplicate(applications, (a, b) => {
             return a.name === b.name || a.appId === b.appId || AppDirectory.getUuidFromApp(a) === AppDirectory.getUuidFromApp(b);
         });
@@ -230,4 +259,19 @@ export class AppDirectory extends AsyncInit {
 
 function intentSupportsContext(intent: AppDirIntent, contextType: string): boolean {
     return intent.contexts === undefined || intent.contexts.length === 0 || intent.contexts.includes(contextType);
+}
+
+function isUrlValidForScope(scope: ShardScope, url: string): boolean {
+    if (scope.type === 'global') {
+        return true;
+    } else if (scope.type === 'domain') {
+        const testUrl = new URL(url);
+
+        // Match logic in core for determining host
+        const testDomain = testUrl.protocol === 'file' ? url : testUrl.hostname;
+
+        return testDomain === scope.domain;
+    } else {
+        throw new Error('Unexpected scope type');
+    }
 }
