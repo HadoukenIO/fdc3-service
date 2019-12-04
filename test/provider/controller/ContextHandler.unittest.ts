@@ -1,10 +1,10 @@
 import 'reflect-metadata';
 
-import {ContextHandler} from '../../src/provider/controller/ContextHandler';
-import {AppConnection} from '../../src/provider/model/AppConnection';
-import {APIToClientTopic, ReceiveContextPayload} from '../../src/client/internal';
-import {createMockAppConnection, createMockChannel, createMockChannelHandler, createMockModel, createMockApiHandler, getterMock} from '../mocks';
-import {ContextChannel} from '../../src/provider/model/ContextChannel';
+import {ContextHandler} from '../../../src/provider/controller/ContextHandler';
+import {AppConnection} from '../../../src/provider/model/AppConnection';
+import {APIToClientTopic, ReceiveContextPayload} from '../../../src/client/internal';
+import {createMockAppConnection, createMockChannel, createMockChannelHandler, createMockModel, createMockApiHandler, getterMock} from '../../mocks';
+import {ContextChannel} from '../../../src/provider/model/ContextChannel';
 
 let contextHandler: ContextHandler;
 

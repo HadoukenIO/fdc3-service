@@ -3,14 +3,14 @@ import 'reflect-metadata';
 import {Signal} from 'openfin-service-signal';
 import {Identity} from 'openfin/_v2/main';
 
-import {Model} from '../../src/provider/model/Model';
-import {createMockAppDirectory, createMockEnvironmnent, createMockApiHandler, getterMock, createMockAppConnection} from '../mocks';
-import {Application, AppDirIntent} from '../../src/client/main';
-import {createFakeApp, createFakeIntent, createFakeContextType, createFakeIdentity} from '../demo/utils/fakes';
-import {getId} from '../../src/provider/utils/getId';
-import {LiveApp} from '../../src/provider/model/LiveApp';
-import {useMockTime, advanceTime, resolvePromiseChain} from '../utils/unit/time';
-import {Timeouts} from '../../src/provider/constants';
+import {Model} from '../../../src/provider/model/Model';
+import {createMockAppDirectory, createMockEnvironmnent, createMockApiHandler, getterMock, createMockAppConnection} from '../../mocks';
+import {Application, AppDirIntent} from '../../../src/client/main';
+import {createFakeApp, createFakeIntent, createFakeContextType, createFakeIdentity} from '../../demo/utils/fakes';
+import {getId} from '../../../src/provider/utils/getId';
+import {LiveApp} from '../../../src/provider/model/LiveApp';
+import {useMockTime, advanceTime, resolvePromiseChain} from '../../utils/unit/time';
+import {Timeouts} from '../../../src/provider/constants';
 
 const mockAppDirectory = createMockAppDirectory();
 const mockEnvironment = createMockEnvironmnent();

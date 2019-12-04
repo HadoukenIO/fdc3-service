@@ -4,13 +4,13 @@ import 'reflect-metadata';
 import {Store} from 'openfin-service-config';
 import {Signal} from 'openfin-service-signal';
 
-import {Application} from '../../src/client/directory';
-import {AppDirectory} from '../../src/provider/model/AppDirectory';
-import {ConfigurationObject} from '../../gen/provider/config/fdc3-config';
-import {createFakeApp, createFakeUrl, createFakeIntent, createFakeContextType} from '../demo/utils/fakes';
-import {createMockAppDirectoryStorage, getterMock, createMockConfigStore} from '../mocks';
-import {StoredAppDirectoryShard} from '../../src/client/internal';
-import {resolvePromiseChain} from '../utils/unit/time';
+import {Application} from '../../../src/client/directory';
+import {AppDirectory} from '../../../src/provider/model/AppDirectory';
+import {ConfigurationObject} from '../../../gen/provider/config/fdc3-config';
+import {createFakeApp, createFakeUrl, createFakeIntent, createFakeContextType} from '../../demo/utils/fakes';
+import {createMockAppDirectoryStorage, getterMock, createMockConfigStore} from '../../mocks';
+import {StoredAppDirectoryShard} from '../../../src/client/internal';
+import {resolvePromiseChain} from '../../utils/unit/time';
 
 enum StorageKeys {
     DIRECTORY_CACHE = 'fdc3@directoryCache'
@@ -397,13 +397,13 @@ describe('When querying the directory', () => {
 });
 
 function setupDefaultConfigStore(): void {
-    const config = new Store<ConfigurationObject>(require('../../gen/provider/config/defaults.json'));
+    const config = new Store<ConfigurationObject>(require('../../../gen/provider/config/defaults.json'));
     getterMock(mockConfigStore, 'config').mockReturnValue(config);
     getterMock(mockConfigStore, 'initialized').mockReturnValue(Promise.resolve());
 }
 
 function setupConfigStoreWithUrl(url: string): void {
-    const config = new Store<ConfigurationObject>(require('../../gen/provider/config/defaults.json'));
+    const config = new Store<ConfigurationObject>(require('../../../gen/provider/config/defaults.json'));
     config.add({level: 'desktop'}, {applicationDirectory: url});
 
     getterMock(mockConfigStore, 'config').mockReturnValue(config);

@@ -151,6 +151,9 @@ export function createMockModel(): jest.Mocked<Model> {
 
     assignMockGetter(model, 'connections');
     assignMockGetter(model, 'apps');
+    assignMockGetter(model, 'channels');
+    assignMockGetter(model, 'onConnectionAdded');
+    assignMockGetter(model, 'onConnectionRemoved');
 
     return model;
 }

@@ -1,8 +1,8 @@
 import 'jest';
 import 'reflect-metadata';
 
-import {AppDirectory} from '../../src/provider/model/AppDirectory';
-import {createFakeApp, createFakeIntent, createFakeContextType} from '../demo/utils/fakes';
+import {AppDirectory} from '../../../src/provider/model/AppDirectory';
+import {createFakeApp, createFakeIntent, createFakeContextType} from '../../demo/utils/fakes';
 
 describe('When querying individual applications', () => {
     describe('When an app has an intent with no contexts', () => {
