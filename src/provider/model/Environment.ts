@@ -7,34 +7,61 @@ import {AppConnection} from './AppConnection';
 import {ContextChannel} from './ContextChannel';
 import {LiveApp} from './LiveApp';
 
+/**
+ * The runtime-defined list of possible OpenFin entity types.
+ */
 export enum EntityType {
-    WINDOW = 'window',
-    IFRAME = 'iframe',
+    /**
+     * Connection from a non-DOM source. Typically from a .NET, Java, or other adapter-based app.
+     */
     EXTERNAL_CONNECTION = 'external connection',
+    /**
+     * Connection from an app running in a `fin.View` container. Typically, a Layouts2-enabled app.
+     */
+    VIEW = 'view',
+    /**
+     * Connection from an app running in a `fin.Window` container. Typically a non-Layouts2 app, or the frame of a
+     * Layouts2-based application.
+     */
+    WINDOW = 'window',
+
+    /**
+     * Connection from an app running in an iframe within a `view` or `window` entity.
+     *
+     * Not supported. Entities of this type may not be able to use FDC3 fully.
+     */
+    IFRAME = 'iframe',
+    /**
+     * Runtime couldn't determine entity type. Could be an external connection from an outdated adapter version.
+     *
+     * Not supported.
+     */
     UNKNOWN = 'unknown'
 }
 
 export interface Environment {
     /**
-     * Indicates that a window has been created by the service.
+     * Indicates that a window-like entity has been created, and registered with the service. Fired only for entity types where
+     * this is possible (`VIEW` and `WINDOW`).
      *
-     * Will fire for all OpenFin windows that get created, and that existed before the service started running. These windows may or may not be FDC3-aware.
+     * Will fire for all window-like entities that get created, and that existed before the service started running.
+     * These entities may or may not be FDC3-aware.
      *
-     * Arguments: (identity: Identity)
+     * Arguments: (identity: Identity, entityType: EntityType)
      */
-    onWindowCreated: Signal<[Identity]>;
+    onWindowCreated: Signal<[Identity, EntityType]>;
 
     /**
-     * Indicates that a window has been closed.
+     * Indicates that an existing window-like entity has been closed.
      *
-     * Arguments: (identity: Identity)
+     * Arguments: (identity: Identity, entityType: EntityType)
      */
-    onWindowClosed: Signal<[Identity]>;
+    onWindowClosed: Signal<[Identity, EntityType]>;
 
     /**
      * Indicates that an application has been created by the service.
      *
-     * Arguments: (identity: Identity)
+     * Arguments: (identity: Identity, liveApp: LiveApp)
      */
     onApplicationCreated: Signal<[Identity, LiveApp]>;
 

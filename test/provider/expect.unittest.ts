@@ -308,6 +308,16 @@ describe('When creating an external connection', () => {
 function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resultParams: ResultParam[]): void {
     const testParams = buildTestParams(testWindow, resultParams);
 
+    function getEntityType(entityIdentity: Identity, testWindowIdentity: Identity): EntityType {
+        if (getId(entityIdentity) !== getId(testWindowIdentity)) {
+            return EntityType.UNKNOWN;
+        } else if (testWindow.appType === 'non-directory-external') {
+            return EntityType.EXTERNAL_CONNECTION;
+        } else {
+            return EntityType.WINDOW;
+        }
+    }
+
     it.each(testParams)('%s', async (titleParam: string, expectCalls: ExpectCall[]) => {
         // Setup our environment
         const identity = {uuid: 'test-window', name: 'test-window'};
@@ -331,13 +341,7 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
         });
 
         mockEnvironment.getEntityType.mockImplementationOnce(async (entityIdentity: Identity): Promise<EntityType> => {
-            if (getId(entityIdentity) !== getId(identity)) {
-                return EntityType.UNKNOWN;
-            } else if (testWindow.appType === 'non-directory-external') {
-                return EntityType.EXTERNAL_CONNECTION;
-            } else {
-                return EntityType.WINDOW;
-            }
+            return getEntityType(entityIdentity, identity);
         });
 
         // eslint-disable-next-line @typescript-eslint/require-await
@@ -375,10 +379,10 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
 
         maybeSetTimeout(() => {
             mockEnvironment.onApplicationCreated.emit(identity, new LiveApp(Promise.resolve()));
-            mockEnvironment.onWindowCreated.emit(identity);
+            mockEnvironment.onWindowCreated.emit(identity, getEntityType(identity, identity));
         }, testWindow.createdTime);
         maybeSetTimeout(() => mockApiHandler.onConnection.emit(identity), testWindow.connectionTime);
-        maybeSetTimeout(() => mockEnvironment.onWindowClosed.emit(identity), testWindow.closeTime);
+        maybeSetTimeout(() => mockEnvironment.onWindowClosed.emit(identity, getEntityType(identity, identity)), testWindow.closeTime);
         maybeSetTimeout(() => appDirectoryResultPromise.resolve(), appDirectoryResultTime);
 
         const resultAccumulator = setupExpectCalls(identity, expectCalls);
