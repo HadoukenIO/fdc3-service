@@ -330,6 +330,65 @@ describe('When fetching initial data', () => {
             expect(allApps).toHaveLength(4);
             expect(allApps.filter((app) => app.name === app1.name)).toHaveLength(1);
         });
+
+        test('When a stored snippet contains an app from outside its domain, that app is not used by the directory', async () => {
+            const insideDomain: string = createFakeDomain();
+            const outsideDomain: string = createFakeDomain();
+
+            const app1 = createFakeAppForDomain(insideDomain);
+            const app2 = createFakeAppForDomain(outsideDomain);
+            const app3 = createFakeAppForDomain(insideDomain);
+
+            setupDirectoryStorage([
+                {domain: insideDomain, shard: {urls: [], applications: [app1, app2, app3]}}
+            ]);
+
+            await createAppDirectory();
+
+            await expect(appDirectory.getAllApps()).resolves.toEqual([app1, app3]);
+        });
+
+        test.only('When a stored shard references a remote snippet from outside its domain, that snippet is not used by the directory', async () => {
+            const insideDomain: string = createFakeDomain();
+            const outsideDomain: string = createFakeDomain();
+
+            const app1 = createFakeAppForDomain(insideDomain);
+            const app2 = createFakeAppForDomain(outsideDomain);
+            const app3 = createFakeAppForDomain(insideDomain);
+
+            const remoteSnippet = createFakeUrlForDomain(outsideDomain);
+
+            setupDirectoryStorage([
+                {domain: insideDomain, shard: {urls: [remoteSnippet], applications: [app1]}}
+            ]);
+
+            setupRemotesWithData([{url: remoteSnippet, applications: [app2, app3]}]);
+
+            await createAppDirectory();
+
+            await expect(appDirectory.getAllApps()).resolves.toEqual([app1]);
+        });
+
+        test.only('When a remote snippet contains an app from outside its domain, that app is not used by the directory', async () => {
+            const insideDomain: string = createFakeDomain();
+            const outsideDomain: string = createFakeDomain();
+
+            const app1 = createFakeAppForDomain(insideDomain);
+            const app2 = createFakeAppForDomain(outsideDomain);
+            const app3 = createFakeAppForDomain(insideDomain);
+
+            const remoteSnippet = createFakeUrlForDomain(insideDomain);
+
+            setupDirectoryStorage([
+                {domain: insideDomain, shard: {urls: [remoteSnippet], applications: [app1]}}
+            ]);
+
+            setupRemotesWithData([{url: remoteSnippet, applications: [app2, app3]}]);
+
+            await createAppDirectory();
+
+            await expect(appDirectory.getAllApps()).resolves.toEqual([app1, app3]);
+        });
     });
 });
 
