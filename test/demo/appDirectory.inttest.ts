@@ -18,8 +18,7 @@ describe('When running a directory app', () => {
 
     afterEach(async () => {
         await clearDirectoryShard();
-        await quitApps(testAppNotInDirectory1);
-        await quitApps(testAppOnlyInSnippet1);
+        await quitApps(testAppNotInDirectory1, testAppOnlyInSnippet1);
     });
 
     test('The app can add a different app to the app directory', async () => {
