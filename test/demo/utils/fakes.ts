@@ -62,5 +62,5 @@ export function fakeAppChannelName(): ChannelId {
 }
 
 function idString(): string {
-    return `[${(fakeCount++).toString(16).toUpperCase()}]`;
+    return `${(fakeCount++).toString(16).toUpperCase()}`;
 }

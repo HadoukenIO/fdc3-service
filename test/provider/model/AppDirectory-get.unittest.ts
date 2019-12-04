@@ -9,8 +9,8 @@ import {AppDirectory} from '../../../src/provider/model/AppDirectory';
 import {ConfigurationObject} from '../../../gen/provider/config/fdc3-config';
 import {createFakeApp, createFakeUrl, createFakeIntent, createFakeContextType} from '../../demo/utils/fakes';
 import {createMockAppDirectoryStorage, getterMock, createMockConfigStore} from '../../mocks';
-import {StoredAppDirectoryShard} from '../../../src/client/internal';
 import {resolvePromiseChain} from '../../utils/unit/time';
+import {DomainAppDirectoryShard} from '../../../src/provider/model/AppDirectoryStorage';
 
 enum StorageKeys {
     DIRECTORY_CACHE = 'fdc3@directoryCache'
@@ -136,11 +136,19 @@ describe('When fetching initial data', () => {
         });
 
         test('When we have multiple stored snippets, all are used by the directory', async () => {
-            const storedApps1 = [createFakeApp()];
-            const storedApps2 = [createFakeApp(), createFakeApp()];
-            const storedApps3 = [createFakeApp(), createFakeApp(), createFakeApp()];
+            const domain1: string = createFakeDomain();
+            const domain2: string = createFakeDomain();
+            const domain3: string = createFakeDomain();
 
-            setupDirectoryStorage([{urls: [], applications: storedApps1}, {urls: [], applications: storedApps2}, {urls: [], applications: storedApps3}]);
+            const storedApps1 = [createFakeAppForDomain(domain1)];
+            const storedApps2 = [createFakeAppForDomain(domain2), createFakeAppForDomain(domain2)];
+            const storedApps3 = [createFakeAppForDomain(domain3), createFakeAppForDomain(domain3), createFakeAppForDomain(domain3)];
+
+            setupDirectoryStorage([
+                {domain: domain1, shard: {urls: [], applications: storedApps1}},
+                {domain: domain2, shard: {urls: [], applications: storedApps2}},
+                {domain: domain3, shard: {urls: [], applications: storedApps3}}
+            ]);
 
             await createAppDirectory();
 
@@ -148,13 +156,19 @@ describe('When fetching initial data', () => {
         });
 
         test('When we have a mix of stored and remote snippets, all are used by the directory', async () => {
-            const testUrl = createFakeUrl();
+            const domain1: string = createFakeDomain();
+            const domain2: string = createFakeDomain();
 
-            const storedApps = [createFakeApp(), createFakeApp()];
-            const remoteApps = [createFakeApp(), createFakeApp()];
+            const remoteUrl = createFakeUrlForDomain(domain2);
 
-            setupDirectoryStorage([{urls: [], applications: storedApps}, {urls: [testUrl], applications: []}]);
-            setupRemotesWithData([{url: testUrl, applications: remoteApps}]);
+            const storedApps = [createFakeAppForDomain(domain1), createFakeAppForDomain(domain1)];
+            const remoteApps = [createFakeAppForDomain(domain2), createFakeAppForDomain(domain2)];
+
+            setupDirectoryStorage([
+                {domain: domain1, shard: {urls: [], applications: storedApps}},
+                {domain: domain2, shard: {urls: [remoteUrl], applications: []}}
+            ]);
+            setupRemotesWithData([{url: remoteUrl, applications: remoteApps}]);
 
             await createAppDirectory();
 
@@ -162,16 +176,20 @@ describe('When fetching initial data', () => {
         });
 
         test('When we have a mix of snippets and a config store URL, all are used by the directory', async () => {
+            const domain: string = createFakeDomain();
+
             const defaultUrl = createFakeUrl();
-            const remoteUrl = createFakeUrl();
+            const remoteUrl = createFakeUrlForDomain(domain);
 
             const defaultApps = [createFakeApp(), createFakeApp(), createFakeApp()];
-            const storedApps = [createFakeApp(), createFakeApp()];
-            const remoteApps = [createFakeApp(), createFakeApp()];
+            const storedApps = [createFakeAppForDomain(domain), createFakeAppForDomain(domain)];
+            const remoteApps = [createFakeAppForDomain(domain), createFakeAppForDomain(domain)];
 
             setupConfigStoreWithUrl(defaultUrl);
             setupRemotesWithData([{url: defaultUrl, applications: defaultApps}, {url: remoteUrl, applications: remoteApps}]);
-            setupDirectoryStorage([{urls: [remoteUrl], applications: storedApps}]);
+            setupDirectoryStorage([
+                {domain, shard: {urls: [remoteUrl], applications: storedApps}}
+            ]);
 
             await createAppDirectory();
 
@@ -183,19 +201,23 @@ describe('When fetching initial data', () => {
             let offlineCachedApps: Application[];
 
             beforeEach(async () => {
-                const onlineUrl = createFakeUrl();
-                const offlineCachedUrl = createFakeUrl();
-                const offlineUncachedUrl = createFakeUrl();
+                const domain1: string = createFakeDomain();
+                const domain2: string = createFakeDomain();
+                const domain3: string = createFakeDomain();
 
-                onlineApps = [createFakeApp(), createFakeApp()];
-                offlineCachedApps = [createFakeApp(), createFakeApp()];
+                const onlineUrl = createFakeUrlForDomain(domain1);
+                const offlineCachedUrl = createFakeUrlForDomain(domain2);
+                const offlineUncachedUrl = createFakeUrlForDomain(domain3);
+
+                onlineApps = [createFakeAppForDomain(domain1), createFakeAppForDomain(domain1)];
+                offlineCachedApps = [createFakeAppForDomain(domain2), createFakeAppForDomain(domain2)];
 
                 setupRemotesWithData([{url: onlineUrl, applications: onlineApps}]);
                 setupCacheWithData([{url: offlineCachedUrl, applications: offlineCachedApps}]);
                 setupDirectoryStorage([
-                    {urls: [onlineUrl], applications: []},
-                    {urls: [offlineCachedUrl], applications: []},
-                    {urls: [offlineUncachedUrl], applications: []}
+                    {domain: domain1, shard: {urls: [onlineUrl], applications: []}},
+                    {domain: domain2, shard: {urls: [offlineCachedUrl], applications: []}},
+                    {domain: domain3, shard: {urls: [offlineUncachedUrl], applications: []}}
                 ]);
 
                 await createAppDirectory();
@@ -214,14 +236,18 @@ describe('When fetching initial data', () => {
         });
 
         test('When stored snippets contain apps with conflicting names, the directory chooses one to use', async () => {
-            const app1 = createFakeApp();
-            const app2 = createFakeApp({name: app1.name});
-            const app3 = createFakeApp({name: app1.name});
+            const domain1: string = createFakeDomain();
+            const domain2: string = createFakeDomain();
+            const domain3: string = createFakeDomain();
+
+            const app1 = createFakeAppForDomain(domain1);
+            const app2 = createFakeAppForDomain(domain2, {name: app1.name});
+            const app3 = createFakeAppForDomain(domain3, {name: app1.name});
 
             setupDirectoryStorage([
-                {urls: [], applications: [app1, createFakeApp()]},
-                {urls: [], applications: [app2, createFakeApp()]},
-                {urls: [], applications: [app3, createFakeApp()]}
+                {domain: domain1, shard: {urls: [], applications: [app1, createFakeAppForDomain(domain1)]}},
+                {domain: domain2, shard: {urls: [], applications: [app2, createFakeAppForDomain(domain2)]}},
+                {domain: domain3, shard: {urls: [], applications: [app3, createFakeAppForDomain(domain3)]}}
             ]);
 
             await createAppDirectory();
@@ -233,14 +259,18 @@ describe('When fetching initial data', () => {
         });
 
         test('When stored snippets contain apps with conflicting app IDs, the directory chooses one to use', async () => {
-            const app1 = createFakeApp();
-            const app2 = createFakeApp({appId: app1.appId});
-            const app3 = createFakeApp({appId: app1.appId});
+            const domain1: string = createFakeDomain();
+            const domain2: string = createFakeDomain();
+            const domain3: string = createFakeDomain();
+
+            const app1 = createFakeAppForDomain(domain1);
+            const app2 = createFakeAppForDomain(domain2, {appId: app1.appId});
+            const app3 = createFakeAppForDomain(domain3, {appId: app1.appId});
 
             setupDirectoryStorage([
-                {urls: [], applications: [app1, createFakeApp()]},
-                {urls: [], applications: [app2, createFakeApp()]},
-                {urls: [], applications: [app3, createFakeApp()]}
+                {domain: domain1, shard: {urls: [], applications: [app1, createFakeAppForDomain(domain1)]}},
+                {domain: domain2, shard: {urls: [], applications: [app2, createFakeAppForDomain(domain2)]}},
+                {domain: domain3, shard: {urls: [], applications: [app3, createFakeAppForDomain(domain3)]}}
             ]);
 
             await createAppDirectory();
@@ -248,18 +278,22 @@ describe('When fetching initial data', () => {
             const allApps = await appDirectory.getAllApps();
 
             expect(allApps).toHaveLength(4);
-            expect(allApps.filter((app) => app.name === app1.name)).toHaveLength(1);
+            expect(allApps.filter((app) => app.appId === app1.appId)).toHaveLength(1);
         });
 
         test('When stored snippets contain apps with conflicting UUIDs, the directory chooses one to use', async () => {
-            const app1 = createFakeApp();
-            const app2 = createFakeApp({appId: app1.appId});
-            const app3 = createFakeApp({customConfig: [{name: 'appUuid', value: app1.appId}]});
+            const domain1: string = createFakeDomain();
+            const domain2: string = createFakeDomain();
+            const domain3: string = createFakeDomain();
+
+            const app1 = createFakeAppForDomain(domain1);
+            const app2 = createFakeAppForDomain(domain2, {appId: app1.appId});
+            const app3 = createFakeAppForDomain(domain3, {customConfig: [{name: 'appUuid', value: app1.appId}]});
 
             setupDirectoryStorage([
-                {urls: [], applications: [app1, createFakeApp()]},
-                {urls: [], applications: [app2, createFakeApp()]},
-                {urls: [], applications: [app3, createFakeApp()]}
+                {domain: domain1, shard: {urls: [], applications: [app1, createFakeAppForDomain(domain1)]}},
+                {domain: domain2, shard: {urls: [], applications: [app2, createFakeAppForDomain(domain2)]}},
+                {domain: domain3, shard: {urls: [], applications: [app3, createFakeAppForDomain(domain3)]}}
             ]);
 
             await createAppDirectory();
@@ -267,23 +301,27 @@ describe('When fetching initial data', () => {
             const allApps = await appDirectory.getAllApps();
 
             expect(allApps).toHaveLength(4);
-            expect(allApps.filter((app) => app.name === app1.name)).toHaveLength(1);
+            expect(allApps.filter((app) => AppDirectory.getUuidFromApp(app) === AppDirectory.getUuidFromApp(app1))).toHaveLength(1);
         });
 
         test('When a mix of stored and remote snippets contain apps with conflicting names, the directory chooses one to use', async () => {
-            const testUrl = createFakeUrl();
+            const domain1: string = createFakeDomain();
+            const domain2: string = createFakeDomain();
+            const domain3: string = createFakeDomain();
 
-            const app1 = createFakeApp();
-            const app2 = createFakeApp({name: app1.name});
-            const app3 = createFakeApp({name: app1.name});
+            const remoteUrl = createFakeUrlForDomain(domain3);
+
+            const app1 = createFakeAppForDomain(domain1);
+            const app2 = createFakeAppForDomain(domain2, {name: app1.name});
+            const app3 = createFakeAppForDomain(domain3, {name: app1.name});
 
             setupDirectoryStorage([
-                {urls: [], applications: [app1, createFakeApp()]},
-                {urls: [], applications: [app2, createFakeApp()]},
-                {urls: [testUrl], applications: []}
+                {domain: domain1, shard: {urls: [], applications: [app1, createFakeAppForDomain(domain1)]}},
+                {domain: domain2, shard: {urls: [], applications: [app2, createFakeAppForDomain(domain2)]}},
+                {domain: domain3, shard: {urls: [remoteUrl], applications: []}}
             ]);
 
-            setupRemotesWithData([{url: testUrl, applications: [app3, createFakeApp()]}]);
+            setupRemotesWithData([{url: remoteUrl, applications: [app3, createFakeAppForDomain(domain3)]}]);
 
             await createAppDirectory();
 
@@ -296,51 +334,63 @@ describe('When fetching initial data', () => {
 });
 
 describe('When stored data changes', () => {
+    let testDomain: string;
     let testUrl: string;
 
     let startStoredSnippet: Application[];
     let startRemoteSnippet: Application[];
 
     beforeEach(async () => {
-        testUrl = createFakeUrl();
+        testDomain = createFakeDomain();
+        testUrl = createFakeUrlForDomain(testDomain);
 
-        startStoredSnippet = [createFakeApp(), createFakeApp(), createFakeApp()];
-        startRemoteSnippet = [createFakeApp(), createFakeApp()];
+        startStoredSnippet = [createFakeAppForDomain(testDomain), createFakeAppForDomain(testDomain), createFakeAppForDomain(testDomain)];
+        startRemoteSnippet = [createFakeAppForDomain(testDomain), createFakeAppForDomain(testDomain)];
 
         setupDefaultConfigStore();
         setupEmptyCache();
-        setupDirectoryStorage([{urls: [testUrl], applications: startStoredSnippet}]);
+        setupDirectoryStorage([
+            {domain: testDomain, shard: {urls: [testUrl], applications: startStoredSnippet}}
+        ]);
         setupRemotesWithData([{url: testUrl, applications: startRemoteSnippet}]);
 
         await createAppDirectory();
     });
 
     test('When stored snippets change, the contents of the app directory changes', async () => {
-        const endStoredSnippet = [createFakeApp(), createFakeApp()];
+        const endStoredSnippet = [createFakeAppForDomain(testDomain), createFakeAppForDomain(testDomain)];
 
-        changeDirectoryStorage([{urls: [testUrl], applications: endStoredSnippet}]);
+        changeDirectoryStorage([
+            {domain: testDomain, shard: {urls: [testUrl], applications: endStoredSnippet}}
+        ]);
         await resolvePromiseChain();
 
         await expect(appDirectory.getAllApps()).resolves.toEqual([...endStoredSnippet, ...startRemoteSnippet]);
     });
 
     test('When stored snippets change, existing remote snippets are not refetched', async () => {
-        const endStoredSnippet = [createFakeApp(), createFakeApp()];
+        const endStoredSnippet = [createFakeAppForDomain(testDomain), createFakeAppForDomain(testDomain)];
         global.fetch.mockReset();
 
-        changeDirectoryStorage([{urls: [testUrl], applications: endStoredSnippet}]);
+        changeDirectoryStorage([
+            {domain: testDomain, shard: {urls: [testUrl], applications: endStoredSnippet}}
+        ]);
         await resolvePromiseChain();
 
         expect(global.fetch).not.toBeCalled();
     });
 
     test('When a URL is added to a shard, the new remote snippet is included in the app directory', async () => {
-        const newUrl = createFakeUrl();
-        const newRemoteSnippet = [createFakeApp(), createFakeApp()];
+        const newDomain = createFakeDomain();
+        const newUrl = createFakeUrlForDomain(newDomain);
+        const newRemoteSnippet = [createFakeAppForDomain(newDomain), createFakeAppForDomain(newDomain)];
 
         setupRemotesWithData([{url: testUrl, applications: startRemoteSnippet}, {url: newUrl, applications: newRemoteSnippet}]);
 
-        changeDirectoryStorage([{urls: [testUrl], applications: startStoredSnippet}, {urls: [newUrl], applications: []}]);
+        changeDirectoryStorage([
+            {domain: testDomain, shard: {urls: [testUrl], applications: startStoredSnippet}},
+            {domain: newDomain, shard: {urls: [newUrl], applications: []}}
+        ]);
         await resolvePromiseChain();
 
         await expect(appDirectory.getAllApps()).resolves.toEqual([...startStoredSnippet, ...startRemoteSnippet, ...newRemoteSnippet]);
@@ -412,16 +462,16 @@ function setupConfigStoreWithUrl(url: string): void {
 
 function setupEmptyDirectoryStorage(): void {
     getterMock(mockAppDirectoryStorage, 'changed').mockReturnValue(new Signal<[]>());
-    mockAppDirectoryStorage.getStoredDirectoryShards.mockReturnValue([]);
+    mockAppDirectoryStorage.getDirectoryShards.mockReturnValue([]);
 }
 
-function setupDirectoryStorage(data: StoredAppDirectoryShard[]): void {
+function setupDirectoryStorage(data: DomainAppDirectoryShard[]): void {
     getterMock(mockAppDirectoryStorage, 'changed').mockReturnValue(new Signal<[]>());
-    mockAppDirectoryStorage.getStoredDirectoryShards.mockReturnValue(data);
+    mockAppDirectoryStorage.getDirectoryShards.mockReturnValue(data);
 }
 
-function changeDirectoryStorage(data: StoredAppDirectoryShard[]): void {
-    mockAppDirectoryStorage.getStoredDirectoryShards.mockReturnValue(data);
+function changeDirectoryStorage(data: DomainAppDirectoryShard[]): void {
+    mockAppDirectoryStorage.getDirectoryShards.mockReturnValue(data);
     mockAppDirectoryStorage.changed.emit();
 }
 
@@ -466,6 +516,21 @@ function setupCacheWithData(data: {url: string; applications: Application[]}[]):
 
 function createCacheImplementation(map: Map<string, string>): [(key: string) => string | null, (key: string, value: string) => void] {
     return [(key: string) => map.get(key) || null, (key: string, value: string) => map.set(key, value)];
+}
+
+function createFakeDomain(): string {
+    return new URL(createFakeUrl()).hostname;
+}
+
+function createFakeUrlForDomain(domain: string): string {
+    const url = new URL(createFakeUrl());
+    url.hostname = domain;
+
+    return url.toString();
+}
+
+function createFakeAppForDomain(domain: string, options: Partial<Application> = {}): Application {
+    return createFakeApp({manifest: createFakeUrlForDomain(domain), ...options});
 }
 
 async function createAppDirectory(): Promise<void> {

@@ -15,7 +15,7 @@ import {IntentType} from '../src/provider/intents';
 import {LiveApp} from '../src/provider/model/LiveApp';
 import {Model} from '../src/provider/model/Model';
 import {ChannelHandler} from '../src/provider/controller/ChannelHandler';
-import {AppDirectoryStorage} from '../src/provider/model/AppDirectoryStorage';
+import {AppDirectoryStorage, DomainAppDirectoryShard} from '../src/provider/model/AppDirectoryStorage';
 import {ConfigStoreBinding} from '../src/provider/model/ConfigStore';
 import {ConfigurationObject} from '../gen/provider/config/fdc3-config';
 
@@ -85,7 +85,7 @@ export function createMockAppDirectory(options: Partial<jest.Mocked<AppDirectory
 export function createMockAppDirectoryStorage(options: Partial<jest.Mocked<AppDirectoryStorage>> = {}): jest.Mocked<AppDirectoryStorage> {
     const appDirectoryStorage = {
         changed: null! as Signal<[]>,
-        getStoredDirectoryShards: jest.fn<StoredAppDirectoryShard[], []>()
+        getDirectoryShards: jest.fn<DomainAppDirectoryShard[], []>()
     };
 
     assignMockGetter(appDirectoryStorage, 'changed');
