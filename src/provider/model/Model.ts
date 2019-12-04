@@ -311,10 +311,9 @@ export class Model {
     }
 
     public async onDirectoryChanged(): Promise<void> {
-        await parallelForEach(Object.entries(this._liveAppsByUuid).filter((entry) => !entry[1].mature && !entry[1].hasFinalAppInfo()), async (entry) => {
-            const uuid = entry[0];
-            const liveApp = entry[1];
+        const entries = Object.entries(this._liveAppsByUuid);
 
+        await parallelForEach(entries.filter(([, liveApp]) => !liveApp.hasFinalAppInfo()), async ([uuid, liveApp]) => {
             const appInfo = await this._directory.getAppByUuid(uuid);
 
             if (appInfo) {

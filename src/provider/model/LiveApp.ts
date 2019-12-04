@@ -82,7 +82,7 @@ export class LiveApp {
     }
 
     public hasFinalAppInfo(): boolean {
-        return this._appInfoFinal;
+        return this._appInfoFinal || this._mature;
     }
 
     public setAppInfo(appInfo: Application, final: boolean): void {
