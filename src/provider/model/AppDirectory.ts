@@ -154,7 +154,7 @@ export class AppDirectory extends AsyncInit {
         ];
 
         const remoteDirectorySnippets = await parallelMap(scopedShards, async (scopedShard) => {
-            return parallelMap(scopedShard.shard.urls.filter((url) => isUrlValidForScope(scopedShard.scope, url)), async (url) => {
+            return parallelMap(filterUrlsByScope(scopedShard.scope, scopedShard.shard.urls), async (url) => {
                 // TODO: URLs will be fetched once per service run. Improve this logic [SERVICE-841]
                 const fetchedSnippet = this._fetchedUrls.has(url) ? null : await this.fetchRemoteSnippet(url);
                 this._fetchedUrls.add(url);
@@ -170,12 +170,10 @@ export class AppDirectory extends AsyncInit {
 
         const applications: Application[] = [];
         scopedShards.forEach((scopedShard, i) => {
-            const validApplications = scopedShard.shard.applications.filter((app) => isUrlValidForScope(scopedShard.scope, app.manifest));
+            applications.push(...filterAppsByScope(scopedShard.scope, scopedShard.shard.applications));
 
-            applications.push(...validApplications);
-
-            for (const snippet of remoteDirectorySnippets[i]) {
-                applications.push(...snippet.filter((app) => isUrlValidForScope(scopedShard.scope, app.manifest)));
+            for (const remoteSnippet of remoteDirectorySnippets[i]) {
+                applications.push(...filterAppsByScope(scopedShard.scope, remoteSnippet));
             }
         });
 
@@ -259,6 +257,38 @@ export class AppDirectory extends AsyncInit {
 
 function intentSupportsContext(intent: AppDirIntent, contextType: string): boolean {
     return intent.contexts === undefined || intent.contexts.length === 0 || intent.contexts.includes(contextType);
+}
+
+function filterUrlsByScope(scope: ShardScope, urls: string[]): string[] {
+    return urls.filter((url) => {
+        if (isUrlValidForScope(scope, url)) {
+            return true;
+        } else {
+            if (scope.type === 'domain') {
+                console.warn(`Not including remote snippet at '${url}' in App Directory. URL not in domain '${scope.domain}'`);
+            } else {
+                console.warn(`Not including remote snippet at '${url}' in App Directory`);
+            }
+
+            return false;
+        }
+    });
+}
+
+function filterAppsByScope(scope: ShardScope, applications: Application[]): Application[] {
+    return applications.filter((app) => {
+        if (isUrlValidForScope(scope, app.manifest)) {
+            return true;
+        } else {
+            if (scope.type === 'domain') {
+                console.warn(`Not including application '${app.name}' in App Directory. Manifest URL '${app.manifest}' not in domain '${scope.domain}'`);
+            } else {
+                console.warn(`Not including application '${app.name}' in App Directory`);
+            }
+
+            return false;
+        }
+    });
 }
 
 function isUrlValidForScope(scope: ShardScope, url: string): boolean {
