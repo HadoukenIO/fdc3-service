@@ -178,7 +178,12 @@ export class AppDirectory extends AsyncInit {
         });
 
         this._directory = deduplicate(applications, (a, b) => {
-            return a.name === b.name || a.appId === b.appId || AppDirectory.getUuidFromApp(a) === AppDirectory.getUuidFromApp(b);
+            if (a.name === b.name || a.appId === b.appId || AppDirectory.getUuidFromApp(a) === AppDirectory.getUuidFromApp(b)) {
+                console.warn(`Not including application '${a.name}' in App Directory. Collides with app '${b.name}'`);
+                return true;
+            } else {
+                return false;
+            }
         });
     }
 
@@ -297,7 +302,7 @@ function isUrlValidForScope(scope: ShardScope, url: string): boolean {
     } else if (scope.type === 'domain') {
         const testUrl = new URL(url);
 
-        // Match logic in core for determining host
+        // Match logic in core for determining domain
         const testDomain = testUrl.protocol === 'file' ? url : testUrl.hostname;
 
         return testDomain === scope.domain;
