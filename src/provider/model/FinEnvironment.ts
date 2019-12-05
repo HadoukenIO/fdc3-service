@@ -1,4 +1,5 @@
 import {injectable, inject} from 'inversify';
+import {ApplicationOption} from 'openfin/_v2/api/application/applicationOption';
 import {WindowEvent, ApplicationEvent} from 'openfin/_v2/api/events/base';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
@@ -12,6 +13,7 @@ import {parseIdentity} from '../../client/validation';
 import {Timeouts} from '../constants';
 import {Injector} from '../common/Injector';
 import {getId} from '../utils/getId';
+import {SemVer} from '../utils/SemVer';
 import {Inject} from '../common/Injectables';
 import {APIHandler} from '../APIHandler';
 
@@ -36,6 +38,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public readonly onWindowCreated: Signal<[Identity]> = new Signal();
     public readonly onWindowClosed: Signal<[Identity]> = new Signal();
 
+    private readonly _apiHandler: APIHandler<APIFromClientTopic>;
+
     /**
      * Stores details of all known windows and IAB connections.
      *
@@ -49,7 +53,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
     constructor(@inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>) {
         super();
 
-        apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
+        this._apiHandler = apiHandler;
+        this._apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
     }
 
     public createApplication(appInfo: Application): void {
@@ -77,6 +82,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public wrapConnection(liveApp: LiveApp, identity: Identity, entityType: EntityType, channel: ContextChannel): AppConnection {
         identity = parseIdentity(identity);
         const id = getId(identity);
+        const version: SemVer = this._apiHandler.getClientVersion(id);
 
         // If `identity` is an adapter connection that hasn't yet connected to the service, there will not be a KnownEntity for this identity
         // In these cases, we will register the entity now
@@ -86,13 +92,13 @@ export class FinEnvironment extends AsyncInit implements Environment {
             const {entityNumber} = knownEntity;
 
             if (entityType === EntityType.EXTERNAL_CONNECTION) {
-                return new FinAppConnection(identity, entityType, liveApp, channel, entityNumber);
+                return new FinAppConnection(identity, entityType, version, liveApp, channel, entityNumber);
             } else {
                 if (entityType !== EntityType.WINDOW) {
                     console.warn(`Unexpected entity type: ${entityType}. Treating as a regular OpenFin window.`);
                 }
 
-                return new FinAppWindow(identity, entityType, liveApp, channel, entityNumber);
+                return new FinAppWindow(identity, entityType, version, liveApp, channel, entityNumber);
             }
         } else {
             throw new Error('Cannot wrap entities belonging to the provider');
@@ -116,19 +122,21 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
             const application = fin.Application.wrapSync(identity);
             const applicationInfo = await application.getInfo();
+            let {name: title, icon} = applicationInfo.initialOptions as ApplicationOption;
 
-            const {shortcut, startup_app: startupApp} = applicationInfo.manifest as OFManifest;
-
-            const title = (shortcut && shortcut.name) || startupApp.name || startupApp.uuid;
-            const icon = (shortcut && shortcut.icon) || startupApp.icon;
+            if (applicationInfo.manifest) {
+                const {shortcut, startup_app: startupApp} = applicationInfo.manifest as OFManifest;
+                title = (shortcut && shortcut.name) || startupApp.name || startupApp.uuid;
+                icon = (shortcut && shortcut.icon) || startupApp.icon;
+            }
 
             return {
-                appId: application.identity.uuid,
-                name: application.identity.uuid,
+                appId: identity.uuid,
+                name: identity.uuid,
                 title,
                 icons: icon ? [{icon}] : undefined,
                 manifestType: 'openfin',
-                manifest: applicationInfo.manifestUrl
+                manifest: applicationInfo.manifestUrl || ''
             };
         }
     }
