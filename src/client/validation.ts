@@ -85,12 +85,12 @@ export function parseAppChannelName(name: string): ChannelId {
 /**
  * Validates the provided number is an integer
  */
-export function parseInteger(number: number): number {
-    if (typeof number !== 'number' || isNaN(number) || Math.floor(number) !== number) {
-        throw new TypeError(`${safeStringify(number, 'The provided value')} is not a valid integer`);
+export function parseInteger(value: number): number {
+    if (typeof value !== 'number' || isNaN(value) || Math.floor(value) !== value) {
+        throw new TypeError(`${safeStringify(value, 'The provided value')} is not a valid integer`);
     }
 
-    return number;
+    return value;
 }
 
 /**
