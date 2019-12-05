@@ -6,7 +6,7 @@ import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 import {FDC3Error, ConnectionError, ApplicationError, SendContextError} from '../client/errors';
 import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, GetOrCreateAppChannelPayload, AppChannelTransport, AddContextListenerPayload, RemoveContextListenerPayload} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Context} from '../client/main';
-import {parseIdentity, parseContext, parseChannelId, parseAppChannelName} from '../client/validation';
+import {sanitizeIdentity, sanitizeContext, sanitizeChannelId, sanitizeAppChannelName} from '../client/validation';
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
@@ -115,7 +115,7 @@ export class Main {
     }
 
     private async open(payload: OpenPayload): Promise<void> {
-        const context = payload.context && parseContext(payload.context);
+        const context = payload.context && sanitizeContext(payload.context);
 
         const appInfo: Application|null = await this._directory.getAppByName(payload.name);
 
@@ -179,7 +179,7 @@ export class Main {
     private async findIntent(payload: FindIntentPayload): Promise<AppIntent> {
         let apps: Application[];
         if (payload.intent) {
-            apps = await this._model.getApplicationsForIntent(payload.intent, payload.context && parseContext(payload.context).type);
+            apps = await this._model.getApplicationsForIntent(payload.intent, payload.context && sanitizeContext(payload.context).type);
         } else {
             // This is a non-FDC3 workaround to get all directory apps by calling `findIntent` with a falsy intent.
             // Ideally the FDC3 spec would expose an API to access the directory in a more meaningful way
@@ -196,19 +196,19 @@ export class Main {
     }
 
     private async findIntentsByContext(payload: FindIntentsByContextPayload): Promise<AppIntent[]> {
-        return this._model.getAppIntentsByContext(parseContext(payload.context).type);
+        return this._model.getAppIntentsByContext(sanitizeContext(payload.context).type);
     }
 
     private async broadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {
         const connection = await this.expectConnection(source);
 
-        return this._contextHandler.broadcast(parseContext(payload.context), connection);
+        return this._contextHandler.broadcast(sanitizeContext(payload.context), connection);
     }
 
     private async raiseIntent(payload: RaiseIntentPayload): Promise<IntentResolution> {
         const intent: Intent = {
             type: payload.intent,
-            context: parseContext(payload.context),
+            context: sanitizeContext(payload.context),
             target: payload.target
         };
 
@@ -252,7 +252,7 @@ export class Main {
     }
 
     private getChannelById(payload: GetChannelByIdPayload, source: ProviderIdentity): ChannelTransport {
-        return this._channelHandler.getChannelById(parseChannelId(payload.id));
+        return this._channelHandler.getChannelById(sanitizeChannelId(payload.id));
     }
 
     private async getCurrentChannel(payload: GetCurrentChannelPayload, source: ProviderIdentity): Promise<ChannelTransport> {
@@ -263,7 +263,7 @@ export class Main {
     }
 
     private getOrCreateAppChannel(payload: GetOrCreateAppChannelPayload, source: ProviderIdentity): AppChannelTransport {
-        const name = parseAppChannelName(payload.name);
+        const name = sanitizeAppChannelName(payload.name);
 
         return this._channelHandler.getAppChannelByName(name).serialize();
     }
@@ -271,7 +271,7 @@ export class Main {
     private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): ReadonlyArray<Identity> {
         const channel = this._channelHandler.getChannelById(payload.id);
 
-        return this._channelHandler.getChannelMembers(channel).map((connection) => parseIdentity(connection.identity));
+        return this._channelHandler.getChannelMembers(channel).map((connection) => sanitizeIdentity(connection.identity));
     }
 
     private async channelJoin(payload: ChannelJoinPayload, source: ProviderIdentity): Promise<void> {
@@ -297,7 +297,7 @@ export class Main {
         const connection = await this.expectConnection(source);
         const channel = this._channelHandler.getChannelById(payload.id);
 
-        return this._contextHandler.broadcastOnChannel(parseContext(payload.context), connection, channel);
+        return this._contextHandler.broadcastOnChannel(sanitizeContext(payload.context), connection, channel);
     }
 
     private channelGetCurrentContext(payload: ChannelGetCurrentContextPayload, source: ProviderIdentity): Context | null {
@@ -308,14 +308,14 @@ export class Main {
 
     private async channelAddContextListener(payload: ChannelAddContextListenerPayload, source: ProviderIdentity): Promise<void> {
         const connection = await this.expectConnection(source);
-        const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
+        const channel = this._channelHandler.getChannelById(sanitizeChannelId(payload.id));
 
         connection.addChannelContextListener(channel);
     }
 
     private channelRemoveContextListener(payload: ChannelRemoveContextListenerPayload, source: ProviderIdentity): void {
         const connection = this.attemptGetConnection(source);
-        const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
+        const channel = this._channelHandler.getChannelById(sanitizeChannelId(payload.id));
 
         if (connection) {
             connection.removeChannelContextListener(channel);
@@ -327,14 +327,14 @@ export class Main {
 
     private async channelAddEventListener(payload: ChannelAddEventListenerPayload, source: ProviderIdentity): Promise<void> {
         const connection = await this.expectConnection(source);
-        const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
+        const channel = this._channelHandler.getChannelById(sanitizeChannelId(payload.id));
 
         connection.addChannelEventListener(channel, payload.eventType);
     }
 
     private channelRemoveEventListener(payload: ChannelRemoveEventListenerPayload, source: ProviderIdentity): void {
         const connection = this.attemptGetConnection(source);
-        const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
+        const channel = this._channelHandler.getChannelById(sanitizeChannelId(payload.id));
 
         if (connection) {
             connection.removeChannelEventListener(channel, payload.eventType);
@@ -345,7 +345,7 @@ export class Main {
     }
 
     private async expectConnection(identity: Identity): Promise<AppConnection> {
-        identity = parseIdentity(identity);
+        identity = sanitizeIdentity(identity);
         const connectionPromise = this._model.expectConnection(identity);
 
         try {
@@ -359,7 +359,7 @@ export class Main {
     }
 
     private attemptGetConnection(identity: Identity): AppConnection | null {
-        return this._model.getConnection(parseIdentity(identity));
+        return this._model.getConnection(sanitizeIdentity(identity));
     }
 }
 
