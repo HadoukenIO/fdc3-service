@@ -28,6 +28,18 @@ interface KnownEntity {
     entityType: EntityType;
 }
 
+/**
+ * Checks if an entity is of a "page-based" entity type. These are entities that are built using a
+ * webpage/browser/DOM/etc. This only includes entity types that both meet this definition, AND are supported by
+ * the service.
+ *
+ * These entity types have a more finely controlled handshake process, as the fin API provides better eventing
+ * and querying of these entity types.
+ */
+function isPagedEntity(entityType: EntityType): boolean {
+    return entityType === EntityType.WINDOW || entityType === EntityType.VIEW;
+}
+
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
     public readonly onApplicationCreated: Signal<[Identity, LiveApp]> = new Signal();
@@ -88,7 +100,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             if (entityType === EntityType.EXTERNAL_CONNECTION) {
                 return new FinAppConnection(identity, entityType, liveApp, channel, entityNumber);
             } else {
-                if (!this.isPagedEntity(entityType)) {
+                if (!isPagedEntity(entityType)) {
                     console.warn(`Connection '${id}' has unexpected entity type '${entityType}'. Some functionality may be unavailable.`);
                 }
 
@@ -205,7 +217,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
         // Only retain knowledge of the entity if it's a window.
         // Windows are removed when they are closed, all other entity types are removed when they disconnect.
-        if (connection && !this.isPagedEntity(connection.entityType)) {
+        if (connection && !isPagedEntity(connection.entityType)) {
             this.deregisterEntity(identity);
         }
     }
@@ -220,7 +232,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             this._knownEntities.set(getId(identity), entity);
             this._entityCount++;
 
-            if (this.isPagedEntity(entityType)) {
+            if (isPagedEntity(entityType)) {
                 this.onWindowCreated.emit(identity, entityType);
             }
 
@@ -238,7 +250,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             if (entity) {
                 this._knownEntities.delete(id);
 
-                if (this.isPagedEntity(entity.entityType)) {
+                if (isPagedEntity(entity.entityType)) {
                     this.onWindowClosed.emit(identity, entity.entityType);
                 }
             }
@@ -264,17 +276,5 @@ export class FinEnvironment extends AsyncInit implements Environment {
                 this.onApplicationClosed.emit(identity);
             }
         }
-    }
-
-    /**
-     * Checks if an entity is of a "page-based" entity type. These are entities that are built using a
-     * webpage/browser/DOM/etc. This only includes entity types that both meet this definition, AND are supported by
-     * the service.
-     *
-     * These entitity types have a more finely controlled handshake process, as the fin API provides better eventing
-     * and querying of these entity types.
-     */
-    private isPagedEntity(entityType: EntityType): boolean {
-        return entityType === EntityType.WINDOW || entityType === EntityType.VIEW;
     }
 }
