@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import * as fdc3 from '../../../client/main';
-import {Application, AppName} from '../../../client/directory';
+import {Application, AppName} from '../../../client/types/directory';
 import {Instrument} from '../../apps/BlotterApp';
 import {IntentButton} from '../common/IntentButton';
 import {showContextMenu, ContextMenuItem} from '../common/ContextMenu';

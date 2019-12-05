@@ -3,7 +3,7 @@ import {injectable, inject} from 'inversify';
 import {Inject} from '../common/Injectables';
 import {Intent} from '../intents';
 import {IntentResolution, Application} from '../../client/main';
-import {FDC3Error, ResolveError, ApplicationError, SendContextError} from '../../client/errors';
+import {FDC3Error, ResolveError, ApplicationError, SendContextError} from '../../client/types/errors';
 import {Model} from '../model/Model';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';

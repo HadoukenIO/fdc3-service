@@ -3,7 +3,7 @@ import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 import {withStrictTimeout, allowReject, untilSignal, untilTrue, DeferredPromise, parallelForEach} from 'openfin-service-async';
 
-import {Application, AppName} from '../../client/directory';
+import {Application, AppName} from '../../client/types/directory';
 import {Inject} from '../common/Injectables';
 import {ChannelId, DEFAULT_CHANNEL_ID, AppIntent} from '../../client/main';
 import {APIHandler} from '../APIHandler';

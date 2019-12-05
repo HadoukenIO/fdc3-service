@@ -3,7 +3,7 @@ import {parallelMap} from 'openfin-service-async';
 import {Signal} from 'openfin-service-signal';
 
 import {Inject} from '../common/Injectables';
-import {Application, AppName, AppDirIntent} from '../../client/directory';
+import {Application, AppName, AppDirIntent} from '../../client/types/directory';
 import {AsyncInit} from '../controller/AsyncInit';
 import {CustomConfigFields} from '../constants';
 import {checkCustomConfigField, deduplicate} from '../utils/helpers';

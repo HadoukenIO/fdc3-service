@@ -5,7 +5,7 @@ import {Signal} from 'openfin-service-signal';
 import {withTimeout} from 'openfin-service-async';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {FDC3Error, ApplicationError} from '../../client/errors';
+import {FDC3Error, ApplicationError} from '../../client/types/errors';
 import {APIFromClientTopic, SERVICE_IDENTITY} from '../../client/internal';
 import {Application} from '../../client/main';
 import {sanitizeIdentity} from '../../client/validation';

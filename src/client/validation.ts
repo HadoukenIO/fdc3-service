@@ -7,9 +7,9 @@
  */
 import {Identity} from 'openfin/_v2/main';
 
-import {Context} from './context';
-import {ChannelId} from './contextChannels';
-import {Application} from './directory';
+import {Context} from './types/context';
+import {ChannelId} from './api/contextChannels';
+import {Application} from './types/directory';
 
 /**
  * Validates the provided Identity and returns an Identity stripped of any extraneous properties.

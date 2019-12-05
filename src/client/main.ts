@@ -6,10 +6,10 @@
  * Main entry point
  */
 import {tryServiceDispatch, getServicePromise, getEventRouter, eventEmitter} from './connection';
-import {Context} from './context';
-import {Application, AppName} from './directory';
+import {Context} from './types/context';
+import {Application, AppName} from './types/directory';
 import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners, APP_DIRECTORY_STORAGE_TAG} from './internal';
-import {ChannelChangedEvent, getChannelObject, ChannelContextListener} from './contextChannels';
+import {ChannelChangedEvent, getChannelObject, ChannelContextListener} from './api/contextChannels';
 import {sanitizeContext, validateEnvironment, sanitizeAppDirectoryData, sanitizeInteger} from './validation';
 import {Transport, Targeted} from './EventRouter';
 
@@ -26,13 +26,13 @@ declare namespace fin {
  */
 
 // Re-export context channel API at top-level
-export * from './contextChannels';
+export * from './api/contextChannels';
 
 // Re-export types/enums at top-level
-export * from './context';
-export * from './directory';
-export * from './intents';
-export * from './errors';
+export * from './types/context';
+export * from './types/directory';
+export * from './types/intents';
+export * from './types/errors';
 
 /**
  * Describes an intent.

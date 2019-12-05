@@ -4,7 +4,7 @@ import 'reflect-metadata';
 import {Store} from 'openfin-service-config';
 import {Signal} from 'openfin-service-signal';
 
-import {Application} from '../../../src/client/directory';
+import {Application} from '../../../src/client/types/directory';
 import {AppDirectory} from '../../../src/provider/model/AppDirectory';
 import {ConfigurationObject} from '../../../gen/provider/config/fdc3-config';
 import {createFakeApp, createFakeUrl, createFakeIntent, createFakeContextType} from '../../demo/utils/fakes';

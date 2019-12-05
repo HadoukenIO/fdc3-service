@@ -22,12 +22,12 @@ import {EventEmitter} from 'events';
 
 import {Identity} from 'openfin/_v2/main';
 
-import {sanitizeIdentity, sanitizeContext, validateEnvironment, sanitizeChannelId, sanitizeAppChannelName} from './validation';
-import {tryServiceDispatch, getEventRouter, getServicePromise} from './connection';
-import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport, invokeListeners} from './internal';
-import {Context} from './context';
-import {ContextListener} from './main';
-import {Transport} from './EventRouter';
+import {sanitizeIdentity, sanitizeContext, validateEnvironment, sanitizeChannelId, sanitizeAppChannelName} from '../validation';
+import {tryServiceDispatch, getEventRouter, getServicePromise} from '../connection';
+import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport, invokeListeners} from '../internal';
+import {Context} from '../types/context';
+import {ContextListener} from '../main';
+import {Transport} from '../EventRouter';
 
 /**
  * Type used to identify specific Channels. Though simply an alias of `string`, use of this type indicates use of the string

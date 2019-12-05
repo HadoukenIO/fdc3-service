@@ -10,10 +10,10 @@
  */
 import {Identity} from 'openfin/_v2/main';
 
-import {AppName, Application} from './directory';
+import {AppName, Application} from './types/directory';
 import {AppIntent, Context, IntentResolution, Listener} from './main';
-import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel} from './contextChannels';
-import {FDC3Error} from './errors';
+import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel} from './api/contextChannels';
+import {FDC3Error} from './types/errors';
 
 /**
  * The identity of the main application window of the service provider

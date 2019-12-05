@@ -1,6 +1,6 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {Application, AppDirIntent} from '../../../src/client/directory';
+import {Application, AppDirIntent} from '../../../src/client/types/directory';
 import {ChannelId, Context} from '../../../src/client/main';
 
 import {ChannelDescriptor} from './channels';
