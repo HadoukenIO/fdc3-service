@@ -118,6 +118,10 @@
                 setTimeout(registerListeners, delay);
             }
         }
+
+        if (queryParams.get('clearDirectoryStorage') === 'true') {
+            fin.Storage.removeItem('of-fdc3-service.directory');
+        }
     </script>
 </head>
 <body>

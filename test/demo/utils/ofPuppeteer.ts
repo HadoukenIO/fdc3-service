@@ -20,8 +20,7 @@ export interface TestWindowChannelEventListener {
     unsubscribe: () => void;
 }
 
-export type TestWindowContext = Window & {
-    fin: Fin;
+export type TestWindowContext = BaseWindowContext & {
     fdc3: typeof import('../../../src/client/main');
 
     contextListeners: ContextListener[];
@@ -49,7 +48,8 @@ export interface TestChannelTransport {
     constructor: string;
 }
 
-export type BaseWindowContext = Window & {fin: Fin};
+// TODO: Remove once Storage API is in published runtime and types are updated [SERVICE-840]
+export type BaseWindowContext = Window & {fin: (Fin & {Storage: any})};
 
 export class OFPuppeteerBrowser<WindowContext extends BaseWindowContext = BaseWindowContext> {
     private readonly _pageIdentityCache: Map<Page, Identity>;

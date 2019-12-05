@@ -4,23 +4,19 @@ import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 import {DeferredPromise} from 'openfin-service-async';
 
-import {Model} from '../../src/provider/model/Model';
-import {APIHandler} from '../../src/provider/APIHandler';
-import {APIFromClientTopic} from '../../src/client/internal';
-import {AppDirectory} from '../../src/provider/model/AppDirectory';
-import {Environment, EntityType} from '../../src/provider/model/Environment';
-import {createMockEnvironmnent, createMockAppConnection} from '../mocks';
-import {Application} from '../../src/client/main';
-import {ContextChannel} from '../../src/provider/model/ContextChannel';
-import {AppConnection} from '../../src/provider/model/AppConnection';
-import {advanceTime, useMockTime} from '../utils/unit/time';
-import {PartiallyWritable} from '../types';
-import {Timeouts} from '../../src/provider/constants';
-import {getId} from '../../src/provider/utils/getId';
-import {LiveApp} from '../../src/provider/model/LiveApp';
-
-jest.mock('../../src/provider/model/AppDirectory');
-jest.mock('../../src/provider/APIHandler');
+import {Model} from '../../../src/provider/model/Model';
+import {APIHandler} from '../../../src/provider/APIHandler';
+import {APIFromClientTopic} from '../../../src/client/internal';
+import {AppDirectory} from '../../../src/provider/model/AppDirectory';
+import {Environment, EntityType} from '../../../src/provider/model/Environment';
+import {createMockEnvironmnent, createMockAppConnection, createMockAppDirectory, createMockApiHandler, getterMock} from '../../mocks';
+import {Application} from '../../../src/client/main';
+import {ContextChannel} from '../../../src/provider/model/ContextChannel';
+import {AppConnection} from '../../../src/provider/model/AppConnection';
+import {advanceTime, useMockTime} from '../../utils/unit/time';
+import {Timeouts} from '../../../src/provider/constants';
+import {getId} from '../../../src/provider/utils/getId';
+import {LiveApp} from '../../../src/provider/model/LiveApp';
 
 interface TestWindow {
     createdTime?: number;
@@ -57,15 +53,16 @@ let mockEnvironment: jest.Mocked<Environment>;
 let mockApiHandler: jest.Mocked<APIHandler<APIFromClientTopic>>;
 
 beforeEach(() => {
-    mockAppDirectory = new AppDirectory(null!) as jest.Mocked<AppDirectory>;
+    mockAppDirectory = createMockAppDirectory();
     mockEnvironment = createMockEnvironmnent();
-    mockApiHandler = new APIHandler<APIFromClientTopic>() as jest.Mocked<APIHandler<APIFromClientTopic>>;
-    (mockApiHandler as PartiallyWritable<typeof mockApiHandler, 'onConnection'>).onConnection = new Signal<[Identity]>();
-    (mockApiHandler as PartiallyWritable<typeof mockApiHandler, 'onDisconnection'>).onDisconnection = new Signal<[Identity]>();
+    mockApiHandler = createMockApiHandler();
+
+    getterMock(mockAppDirectory, 'directoryChanged').mockReturnValue(new Signal<[]>());
+    getterMock(mockApiHandler, 'onConnection').mockReturnValue(new Signal<[Identity]>());
+    getterMock(mockApiHandler, 'onDisconnection').mockReturnValue(new Signal<[Identity]>());
 
     model = new Model(mockAppDirectory, mockEnvironment, mockApiHandler);
 
-    jest.resetAllMocks();
     useMockTime();
 });
 

@@ -8,7 +8,7 @@ import {AsyncInit} from '../controller/AsyncInit';
 import {FDC3Error, ApplicationError} from '../../client/errors';
 import {APIFromClientTopic, SERVICE_IDENTITY} from '../../client/internal';
 import {Application} from '../../client/main';
-import {parseIdentity} from '../../client/validation';
+import {sanitizeIdentity} from '../../client/validation';
 import {Timeouts} from '../constants';
 import {Injector} from '../common/Injector';
 import {getId} from '../utils/getId';
@@ -75,7 +75,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     public wrapConnection(liveApp: LiveApp, identity: Identity, entityType: EntityType, channel: ContextChannel): AppConnection {
-        identity = parseIdentity(identity);
+        identity = sanitizeIdentity(identity);
         const id = getId(identity);
 
         // If `identity` is an adapter connection that hasn't yet connected to the service, there will not be a KnownEntity for this identity

@@ -1,7 +1,7 @@
 import {injectable, inject} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
-import {withStrictTimeout, serialFilter, allowReject, untilSignal, untilTrue, DeferredPromise} from 'openfin-service-async';
+import {withStrictTimeout, allowReject, untilSignal, untilTrue, DeferredPromise, parallelForEach} from 'openfin-service-async';
 
 import {Application, AppName} from '../../client/directory';
 import {Inject} from '../common/Injectables';
@@ -87,6 +87,8 @@ export class Model {
 
         this._apiHandler.onConnection.add(this.onApiHandlerConnection, this);
         this._apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
+
+        this._directory.directoryChanged.add(this.onDirectoryChanged, this);
 
         this._channelsById[DEFAULT_CHANNEL_ID] = new DefaultContextChannel(DEFAULT_CHANNEL_ID);
         for (const channel of SYSTEM_CHANNELS) {
@@ -213,16 +215,16 @@ export class Model {
         // Get all live apps that support the given intent and context
         const liveApps = Object.values(this._liveAppsByUuid);
 
-        const liveAppsForIntent = (await serialFilter(liveApps, async (liveApp: LiveApp) => {
+        const liveAppsForIntent = liveApps.filter((liveApp: LiveApp) => {
             const {appInfo, connections} = liveApp;
 
             const hasIntentListener = connections.some((connection) => connection.hasIntentListener(intentType));
 
             return hasIntentListener && appInfo !== undefined && AppDirectory.mightAppSupportIntent(appInfo, intentType, contextType);
-        })).map((liveApp) => liveApp.appInfo!);
+        }).map((liveApp) => liveApp.appInfo!);
 
         // Get all directory apps that support the given intent and context
-        const directoryApps = await serialFilter(await this._directory.getAllApps(), async (app) => {
+        const directoryApps = (await this._directory.getAllApps()).filter((app) => {
             const uuid = AppDirectory.getUuidFromApp(app);
             const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
 
@@ -263,7 +265,7 @@ export class Model {
         });
 
         // Populate appIntentsBuilder from non-mature directory apps
-        const directoryApps = await serialFilter(await this._directory.getAllApps(), async (app) => {
+        const directoryApps = (await this._directory.getAllApps()).filter((app) => {
             const uuid = AppDirectory.getUuidFromApp(app);
             const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
 
@@ -308,6 +310,18 @@ export class Model {
         }
     }
 
+    public async onDirectoryChanged(): Promise<void> {
+        const entries = Object.entries(this._liveAppsByUuid);
+
+        await parallelForEach(entries.filter(([, liveApp]) => !liveApp.hasFinalAppInfo()), async ([uuid, liveApp]) => {
+            const appInfo = await this._directory.getAppByUuid(uuid);
+
+            if (appInfo) {
+                liveApp.setAppInfo(appInfo, true);
+            }
+        });
+    }
+
     private async onApplicationCreated(identity: Identity, liveApp: LiveApp): Promise<void> {
         const {uuid} = identity;
         this._liveAppsByUuid[uuid] = liveApp;
@@ -318,7 +332,7 @@ export class Model {
         const appInfoFromDirectory = await this._directory.getAppByUuid(uuid);
         const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
 
-        liveApp.setAppInfo(appInfo);
+        liveApp.setAppInfo(appInfo, !!appInfoFromDirectory);
     }
 
     private onApplicationClosed(identity: Identity): void {
@@ -356,7 +370,7 @@ export class Model {
                 const appInfo = await this._environment.inferApplication(identity);
 
                 liveApp = new LiveApp(undefined);
-                liveApp.setAppInfo(appInfo);
+                liveApp.setAppInfo(appInfo, true);
                 this._liveAppsByUuid[identity.uuid] = liveApp;
             }
 

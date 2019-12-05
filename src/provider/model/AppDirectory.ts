@@ -1,16 +1,23 @@
 import {injectable, inject} from 'inversify';
+import {parallelMap} from 'openfin-service-async';
+import {Signal} from 'openfin-service-signal';
 
 import {Inject} from '../common/Injectables';
 import {Application, AppName, AppDirIntent} from '../../client/directory';
 import {AsyncInit} from '../controller/AsyncInit';
 import {CustomConfigFields} from '../constants';
-import {checkCustomConfigField} from '../utils/helpers';
+import {checkCustomConfigField, deduplicate} from '../utils/helpers';
 
 import {ConfigStoreBinding} from './ConfigStore';
+import {AppDirectoryStorage} from './AppDirectoryStorage';
 
 enum StorageKeys {
-    URL = 'fdc3@url',
-    APPLICATIONS = 'fdc3@applications'
+    DIRECTORY_CACHE = 'fdc3@directoryCache'
+}
+
+interface CacheEntry {
+    url: string;
+    applications: Application[];
 }
 
 @injectable()
@@ -58,13 +65,22 @@ export class AppDirectory extends AsyncInit {
         return customValue !== undefined ? customValue : app.appId;
     }
 
-    private readonly _configStore: ConfigStoreBinding;
-    private _directory: Application[] = [];
-    private _url!: string;
+    public readonly directoryChanged: Signal<[]> = new Signal();
 
-    public constructor(@inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding) {
+    private readonly _appDirectoryStorage: AppDirectoryStorage;
+    private readonly _configStore: ConfigStoreBinding;
+
+    private readonly _fetchedUrls: Set<string> = new Set();
+
+    private _directory: Application[] = [];
+
+    public constructor(
+        @inject(Inject.APP_DIRECTORY_STORAGE) appDirectoryStorage: AppDirectoryStorage,
+        @inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding
+    ) {
         super();
 
+        this._appDirectoryStorage = appDirectoryStorage;
         this._configStore = configStore;
     }
 
@@ -86,30 +102,67 @@ export class AppDirectory extends AsyncInit {
     }
 
     protected async init(): Promise<void> {
+        this._appDirectoryStorage.changed.add(this.onStorageChanged, this);
+
         await this._configStore.initialized;
-        await this.initializeDirectoryData();
+        await this.refreshDirectory();
     }
 
-    private async initializeDirectoryData(): Promise<void> {
-        this._url = this._configStore.config.query({level: 'desktop'}).applicationDirectory;
-        const fetchedData = await this.fetchOnlineData(this._url);
-        const cachedData = this.fetchCacheData();
+    private async onStorageChanged(): Promise<void> {
+        await this.refreshDirectory();
 
-        if (fetchedData) {
-            this.updateCache(this._url, fetchedData);
+        this.directoryChanged.emit();
+    }
+
+    private async refreshDirectory(): Promise<void> {
+        const configUrl = this._configStore.config.query({level: 'desktop'}).applicationDirectory;
+
+        const directoryShards = [
+            {
+                urls: configUrl ? [configUrl] : [],
+                applications: []
+            },
+            ...this._appDirectoryStorage.getStoredDirectoryShards()
+        ];
+
+        const remoteDirectorySnippets = await parallelMap(directoryShards, async (shard) => {
+            return parallelMap(shard.urls, async (url) => {
+                // TODO: URLs will be fetched once per service run. Improve this logic [SERVICE-841]
+                const fetchedSnippet = this._fetchedUrls.has(url) ? null : await this.fetchRemoteSnippet(url);
+                this._fetchedUrls.add(url);
+
+                if (fetchedSnippet) {
+                    this.updateCache(url, fetchedSnippet);
+                    return fetchedSnippet;
+                } else {
+                    return this.fetchCachedSnippet(url) || [];
+                }
+            });
+        });
+
+        const applications: Application[] = [];
+        for (let i = 0; i < directoryShards.length; i++) {
+            applications.push(...directoryShards[i].applications);
+
+            for (const snippet of remoteDirectorySnippets[i]) {
+                applications.push(...snippet);
+            }
         }
 
-        this._directory = fetchedData || cachedData || [];
+        // TODO: Further validate app data [SERVICE-822]
+        this._directory = deduplicate(applications, (a, b) => {
+            return a.name === b.name || a.appId === b.appId || AppDirectory.getUuidFromApp(a) === AppDirectory.getUuidFromApp(b);
+        });
     }
 
-    private async fetchOnlineData(url: string): Promise<Application[]|null> {
+    private async fetchRemoteSnippet(url: string): Promise<Application[] | null> {
         const response = await fetch(url).catch(() => {
-            console.warn(`Failed to fetch app directory @ ${url}`);
+            console.warn(`Failed to fetch app directory snippet from ${url}`);
         });
 
         if (response && response.ok) {
             try {
-                // TODO SERVICE-620 validate JSON we receive is valid against spec
+                // TODO: Validate JSON we receive is valid against spec [SERVICE-620]
                 const validate = await response.json();
                 return validate;
             } catch (error) {
@@ -120,18 +173,21 @@ export class AppDirectory extends AsyncInit {
         return null;
     }
 
-    private fetchCacheData(): Application[]|null {
-        if (localStorage.getItem(StorageKeys.URL) === this._url) {
-            const cache = localStorage.getItem(StorageKeys.APPLICATIONS);
+    private fetchCachedSnippet(url: string): Application[] | null {
+        const jsonCache = localStorage.getItem(StorageKeys.DIRECTORY_CACHE);
 
-            if (cache) {
-                try {
-                    const validate = JSON.parse(cache);
-                    return validate;
-                } catch (error) {
-                    // Not likely to get here but figured it's better to safely to handle it.
-                    console.warn('Invalid JSON retrieved from cache');
+        if (jsonCache) {
+            try {
+                const cache: CacheEntry[] = JSON.parse(jsonCache);
+
+                for (const cacheEntry of cache) {
+                    if (cacheEntry.url === url) {
+                        return cacheEntry.applications;
+                    }
                 }
+            } catch (error) {
+                // Not likely to get here but figured it's better to safely to handle it.
+                console.warn('Invalid JSON retrieved from cache');
             }
         }
 
@@ -144,8 +200,31 @@ export class AppDirectory extends AsyncInit {
      * @param applications Directory Applications.
      */
     private updateCache(url: string, applications: Application[]) {
-        localStorage.setItem(StorageKeys.URL, url);
-        localStorage.setItem(StorageKeys.APPLICATIONS, JSON.stringify(applications));
+        const jsonCache = localStorage.getItem(StorageKeys.DIRECTORY_CACHE);
+
+        if (jsonCache) {
+            try {
+                const cache: CacheEntry[] = JSON.parse(jsonCache);
+
+                for (const cacheEntry of cache) {
+                    if (cacheEntry.url === url) {
+                        cacheEntry.applications = applications;
+
+                        localStorage.setItem(StorageKeys.DIRECTORY_CACHE, JSON.stringify(cache));
+                        return;
+                    }
+                }
+
+                cache.push({url, applications});
+                localStorage.setItem(StorageKeys.DIRECTORY_CACHE, JSON.stringify(cache));
+                return;
+            } catch (error) {
+                // Not likely to get here but figured it's better to safely to handle it.
+                console.warn('Invalid JSON retrieved from cache');
+            }
+        } else {
+            localStorage.setItem(StorageKeys.DIRECTORY_CACHE, JSON.stringify([{url, applications}]));
+        }
     }
 }
 

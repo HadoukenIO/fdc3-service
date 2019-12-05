@@ -3,17 +3,18 @@
  */
 
 /**
- * Helpers for validating objects passed across IAB channels
+ * Helpers for validating objects passed across IAB channels.
  */
 import {Identity} from 'openfin/_v2/main';
 
 import {Context} from './context';
 import {ChannelId} from './contextChannels';
+import {Application} from './directory';
 
 /**
- * Validates the provided Identity and returns an Identity stripped of any extraneous properties
+ * Validates the provided Identity and returns an Identity stripped of any extraneous properties.
  */
-export function parseIdentity(identity: Identity): Identity {
+export function sanitizeIdentity(identity: Identity): Identity {
     let error = false;
 
     if (identity === null || typeof identity !== 'object') {
@@ -35,9 +36,9 @@ export function parseIdentity(identity: Identity): Identity {
 }
 
 /**
- * Validates the provided Context. No properties are stripped, as these are permitted by the FDC3 specification
+ * Validates and returns the provided Context. No properties are stripped, as these are permitted by the FDC3 specification.
  */
-export function parseContext(context: Context): Context {
+export function sanitizeContext(context: Context): Context {
     let error = false;
 
     if (context === null || typeof context !== 'object') {
@@ -60,9 +61,9 @@ export function parseContext(context: Context): Context {
 }
 
 /**
- * Validates the provided ChannelId
+ * Validates and returns the provided ChannelId.
  */
-export function parseChannelId(channelId: ChannelId): ChannelId {
+export function sanitizeChannelId(channelId: ChannelId): ChannelId {
     if (typeof channelId !== 'string') {
         throw new TypeError(`${safeStringify(channelId, 'The provided ChannelId')} is not a valid ChannelId`);
     }
@@ -71,14 +72,36 @@ export function parseChannelId(channelId: ChannelId): ChannelId {
 }
 
 /**
- * Validates the provided app channel name
+ * Validates and returns the provided app channel name.
  */
-export function parseAppChannelName(name: string): ChannelId {
+export function sanitizeAppChannelName(name: string): ChannelId {
     if (typeof name !== 'string' || name === '') {
         throw new TypeError(`${safeStringify(name, 'The provided app channel name')} is not a valid app channel name`);
     }
 
     return name;
+}
+
+/**
+ * Validates and returns the provided number. Will throw if the number is not an integer.
+ */
+export function sanitizeInteger(value: number): number {
+    if (typeof value !== 'number' || isNaN(value) || Math.floor(value) !== value) {
+        throw new TypeError(`${safeStringify(value, 'The provided value')} is not a valid integer`);
+    }
+
+    return value;
+}
+
+/**
+ * Validates and returns the provided app directory data. Can be either a URL or an array of Applications.
+ */
+export function sanitizeAppDirectoryData(data: string | Application[]): string | Application[] {
+    if (!((typeof data === 'string' && data !== '') || (data instanceof Array))) {
+        throw new TypeError(`${safeStringify(data, 'The provided app directory data')} is not a valid app directory data`);
+    }
+
+    return data;
 }
 
 /**

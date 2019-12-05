@@ -10,7 +10,7 @@
  */
 import {Identity} from 'openfin/_v2/main';
 
-import {AppName} from './directory';
+import {AppName, Application} from './directory';
 import {AppIntent, Context, IntentResolution, Listener} from './main';
 import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel} from './contextChannels';
 import {FDC3Error} from './errors';
@@ -22,6 +22,11 @@ export const SERVICE_IDENTITY = {
     uuid: 'fdc3-service',
     name: 'fdc3-service'
 };
+
+/**
+ * Name of the tag used to store app directory shards
+ */
+export const APP_DIRECTORY_STORAGE_TAG: string = 'of-fdc3-service.directory';
 
 /**
  * Name of the IAB channel use to communicate between client and provider
@@ -241,6 +246,11 @@ export interface ReceiveIntentPayload {
 export interface ChannelReceiveContextPayload {
     channel: ChannelId;
     context: Context;
+}
+
+export interface StoredAppDirectoryShard {
+    urls: string[];
+    applications: Application[];
 }
 
 /**

@@ -1,31 +1,28 @@
 import 'reflect-metadata';
 import {Signal} from 'openfin-service-signal';
 
-import {ChannelHandler} from '../../src/provider/controller/ChannelHandler';
-import {Model} from '../../src/provider/model/Model';
-import {AppConnection} from '../../src/provider/model/AppConnection';
-import {SystemContextChannel, ContextChannel} from '../../src/provider/model/ContextChannel';
-import {ChannelError} from '../../src/client/main';
-import {createMockChannel, createMockAppConnection} from '../mocks';
-import {PartiallyWritable} from '../types';
-
-jest.mock('../../src/provider/model/Model');
+import {ChannelHandler} from '../../../src/provider/controller/ChannelHandler';
+import {Model} from '../../../src/provider/model/Model';
+import {AppConnection} from '../../../src/provider/model/AppConnection';
+import {SystemContextChannel, ContextChannel} from '../../../src/provider/model/ContextChannel';
+import {ChannelError} from '../../../src/client/main';
+import {createMockChannel, createMockAppConnection, createMockModel, getterMock} from '../../mocks';
+import {PartiallyWritable} from '../../types';
 
 const mockOnChannelChanged = jest.fn<void, [AppConnection, ContextChannel | null, ContextChannel | null]>();
 
-let mockModel: jest.Mocked<Model>;
+const mockModel: jest.Mocked<Model> = createMockModel();
 
 let channelHandler: ChannelHandler;
 
 beforeEach(() => {
     jest.resetAllMocks();
 
-    mockModel = new Model(null!, null!, null!) as jest.Mocked<Model>;
-
-    (mockModel as PartiallyWritable<typeof mockModel, 'onConnectionAdded'>).onConnectionAdded = new Signal<[AppConnection]>();
-    (mockModel as PartiallyWritable<typeof mockModel, 'onConnectionRemoved'>).onConnectionRemoved = new Signal<[AppConnection]>();
+    getterMock(mockModel, 'onConnectionAdded').mockReturnValue(new Signal<[AppConnection]>());
+    getterMock(mockModel, 'onConnectionRemoved').mockReturnValue(new Signal<[AppConnection]>());
 
     channelHandler = new ChannelHandler(mockModel);
+
     channelHandler.onChannelChanged.add(async (connection: AppConnection, channel: ContextChannel | null, previousChannel: ContextChannel | null) => {
         mockOnChannelChanged(connection, channel, previousChannel);
     });
@@ -277,13 +274,9 @@ describe('When a window is removed from the Model', () => {
 });
 
 function setModelChannels(channels: ContextChannel[]): void {
-    Object.defineProperty(mockModel, 'channels', {
-        get: () => channels
-    });
+    getterMock(mockModel, 'channels').mockReturnValue(channels);
 }
 
 function setModelConnections(connections: AppConnection[]): void {
-    Object.defineProperty(mockModel, 'connections', {
-        get: () => connections
-    });
+    getterMock(mockModel, 'connections').mockReturnValue(connections);
 }

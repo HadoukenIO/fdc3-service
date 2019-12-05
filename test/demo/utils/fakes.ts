@@ -7,6 +7,10 @@ import {ChannelDescriptor} from './channels';
 
 let fakeCount = 0;
 
+export function createFakeUrl(): string {
+    return `http://fake-domain-${idString()}.com/path-${idString()}`;
+}
+
 export function createFakeIdentity(options: Partial<Identity> = {}): Identity {
     return {
         name: `test-window-${idString()}`,
@@ -19,7 +23,7 @@ export function createFakeApp(options: Partial<Application> = {}): Application {
     return {
         appId: `app-id-${idString()}`,
         name: `app-name-${idString()}`,
-        manifestType: '',
+        manifestType: 'openfin',
         manifest: '',
         intents: [],
         ...options

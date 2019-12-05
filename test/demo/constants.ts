@@ -83,3 +83,21 @@ export const testAppNotInDirectoryNotFdc3: NonDirectoryTestAppData = {
     name: 'test-app-not-in-directory-not-fdc3',
     manifestUrl: 'http://localhost:3923/test/configs/test-app-not-in-directory-not-fdc3.json'
 };
+
+/**
+ * App only in the app directory snippet
+ */
+export const testAppOnlyInSnippet1: NonDirectoryTestAppData = {
+    uuid: 'test-app-only-in-snippet-1',
+    name: 'test-app-only-in-snippet-1',
+    manifestUrl: 'http://localhost:3923/test/configs/test-app-only-in-snippet-1.json'
+};
+
+/**
+ * Another app only in the app directory snippet
+ */
+export const testAppOnlyInSnippet2: NonDirectoryTestAppData = {
+    uuid: 'test-app-only-in-snippet-2',
+    name: 'test-app-only-in-snippet-2',
+    manifestUrl: 'http://localhost:3923/test/configs/test-app-only-in-snippet-2.json'
+};
