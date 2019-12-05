@@ -54,10 +54,10 @@ export async function collateClientCalls<T = void>(promises: Promise<T>[]): Prom
 }
 
 /**
- * Takes an array and a comparison fuction, and returns a deduplicated equivalent, taking the first of any duplicate elements
+ * Takes an array and a comparison function, and returns a deduplicated equivalent, taking the first of any duplicate elements.
  *
  * @param array The array to deduplicate
- * @param compare A comparison function. Will be passed pairs of entries from `array`, and should return true if these should be considered equal.
+ * @param compare A comparison function. Will be passed pairs of entries from `array`, and should return true if these should be considered equal
  */
 export function deduplicate<T>(array: T[], compare: (a: T, b: T) => boolean): T[] {
     return array.filter((a, index) => array.findIndex((b) => compare(a, b)) === index);

@@ -10,7 +10,7 @@ import {Context} from './context';
 import {Application, AppName} from './directory';
 import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners, APP_DIRECTORY_STORAGE_TAG} from './internal';
 import {ChannelChangedEvent, getChannelObject, ChannelContextListener} from './contextChannels';
-import {parseContext, validateEnvironment, parseAppDirectoryData, parseInteger} from './validation';
+import {sanitizeContext, validateEnvironment, sanitizeAppDirectoryData, sanitizeInteger} from './validation';
 import {Transport, Targeted} from './EventRouter';
 
 // TODO: Remove once Storage API is in published runtime and types are updated [SERVICE-840]
@@ -169,7 +169,7 @@ const contextListeners: ContextListener[] = [];
  * @throws If `context` is passed, `TypeError` if `context` is not a valid [[Context]].
  */
 export async function open(name: AppName, context?: Context): Promise<void> {
-    return tryServiceDispatch(APIFromClientTopic.OPEN, {name, context: context && parseContext(context)});
+    return tryServiceDispatch(APIFromClientTopic.OPEN, {name, context: context && sanitizeContext(context)});
 }
 
 /**
@@ -202,7 +202,7 @@ export async function open(name: AppName, context?: Context): Promise<void> {
  * @throws If `context` is passed, `TypeError` if `context` is not a valid [[Context]].
  */
 export async function findIntent(intent: string, context?: Context): Promise<AppIntent> {
-    return tryServiceDispatch(APIFromClientTopic.FIND_INTENT, {intent, context: context && parseContext(context)});
+    return tryServiceDispatch(APIFromClientTopic.FIND_INTENT, {intent, context: context && sanitizeContext(context)});
 }
 
 /**
@@ -250,7 +250,7 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  * @throws `TypeError` if `context` is not a valid [[Context]].
  */
 export async function findIntentsByContext(context: Context): Promise<AppIntent[]> {
-    return tryServiceDispatch(APIFromClientTopic.FIND_INTENTS_BY_CONTEXT, {context: parseContext(context)});
+    return tryServiceDispatch(APIFromClientTopic.FIND_INTENTS_BY_CONTEXT, {context: sanitizeContext(context)});
 }
 
 /**
@@ -270,7 +270,7 @@ export async function findIntentsByContext(context: Context): Promise<AppIntent[
  * @throws `TypeError` if `context` is not a valid [[Context]].
  */
 export async function broadcast(context: Context): Promise<void> {
-    await tryServiceDispatch(APIFromClientTopic.BROADCAST, {context: parseContext(context)});
+    await tryServiceDispatch(APIFromClientTopic.BROADCAST, {context: sanitizeContext(context)});
 }
 
 /**
@@ -302,7 +302,7 @@ export async function broadcast(context: Context): Promise<void> {
  * @throws `TypeError` if `context` is not a valid [[Context]].
  **/
 export async function raiseIntent(intent: string, context: Context, target?: AppName): Promise<IntentResolution> {
-    return tryServiceDispatch(APIFromClientTopic.RAISE_INTENT, {intent, context: parseContext(context), target});
+    return tryServiceDispatch(APIFromClientTopic.RAISE_INTENT, {intent, context: sanitizeContext(context), target});
 }
 
 /**
@@ -427,8 +427,8 @@ export function removeEventListener(eventType: MainEvents['type'], handler: (eve
  * @param version The version of the provided app directory data.
  */
 export async function registerAppDirectory(data: Application[] | string, version: number = 0): Promise<void> {
-    version = parseInteger(version);
-    data = parseAppDirectoryData(data);
+    version = sanitizeInteger(version);
+    data = sanitizeAppDirectoryData(data);
 
     const urls = (typeof data === 'string') ? [data] as string[] : [];
     const applications = (typeof data === 'string') ? [] : data as Application[];
