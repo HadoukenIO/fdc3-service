@@ -112,4 +112,3 @@ export class SemVer {
         }
     }
 }
-(window as any).SemVer = SemVer;
