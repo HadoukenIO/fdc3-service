@@ -31,14 +31,14 @@ export class SemVer {
         if (version instanceof SemVer) {
             return version;
         } else {
-            let semver = SemVer.CACHE[version];
+            let semVer = SemVer.CACHE[version];
 
-            if (!semver) {
-                semver = new SemVer(version);
-                SemVer.CACHE[version] = semver;
+            if (!semVer) {
+                semVer = new SemVer(version);
+                SemVer.CACHE[version] = semVer;
             }
 
-            return semver;
+            return semVer;
         }
     }
 
