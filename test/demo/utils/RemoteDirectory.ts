@@ -10,14 +10,14 @@ export class RemoteDirectory {
     private readonly _id: string;
 
     public readonly remoteSnippets: RemoteDirectoryCollection<string>;
-    public readonly storedApplications: RemoteDirectoryCollection<Application>;
+    public readonly storedApplications: RemoteStoredApplicationDirectoryCollection;
 
     public constructor(executionTarget: Identity, id: string) {
         this._executionTarget = executionTarget;
         this._id = id;
 
         this.remoteSnippets = new RemoteDirectoryCollection(executionTarget, this._id, 'remoteSnippets');
-        this.storedApplications = new RemoteDirectoryCollection(executionTarget, this._id, 'storedApplications');
+        this.storedApplications = new RemoteStoredApplicationDirectoryCollection(executionTarget, this._id);
     }
 
     public get sourceVersion(): Promise<number> {
@@ -33,15 +33,26 @@ export class RemoteDirectory {
     }
 }
 
-class RemoteDirectoryCollection<T> {
-    private readonly _executionTarget: Identity;
-    private readonly _id: string;
+class RemoteDirectoryCollection<T, U = T> {
+    protected readonly _executionTarget: Identity;
+    protected readonly _id: string;
+
     private readonly _aspect: 'remoteSnippets' | 'storedApplications';
 
     public constructor(executionTarget: Identity, id: string, aspect: 'remoteSnippets' | 'storedApplications') {
         this._executionTarget = executionTarget;
         this._id = id;
         this._aspect = aspect;
+    }
+
+    public get source(): Promise<T[]> {
+        return ofBrowser.executeOnWindow(this._executionTarget, function (
+            this: TestWindowContext,
+            remoteId: string,
+            remoteAspect: 'remoteSnippets' | 'storedApplications'
+        ): T[] {
+            return this.directories[remoteId][remoteAspect].source as any;
+        }, this._id, this._aspect).catch(handlePuppeteerError);
     }
 
     public async add(arg: T | T[]): Promise<void> {
@@ -66,7 +77,40 @@ class RemoteDirectoryCollection<T> {
         }, this._id, this._aspect, arg).catch(handlePuppeteerError);
     }
 
-    /* remove: (arg: T | T[] | U | U[]) => void;
-    removeAll: () => void;
-    set: (arg: T | T[]) => void;*/
+    public async remove(arg: T | T[] | U | U[]): Promise<void> {
+        return ofBrowser.executeOnWindow(this._executionTarget, function (
+            this: TestWindowContext,
+            remoteId: string,
+            remoteAspect: 'remoteSnippets' | 'storedApplications',
+            remoteArg: T | T[] | U | U[]
+        ): void {
+            this.directories[remoteId][remoteAspect].remove(remoteArg as any);
+        }, this._id, this._aspect, arg).catch(handlePuppeteerError);
+    }
+
+    public async removeAll(): Promise<void> {
+        return ofBrowser.executeOnWindow(this._executionTarget, function (
+            this: TestWindowContext,
+            remoteId: string,
+            remoteAspect: 'remoteSnippets' | 'storedApplications'
+        ): void {
+            this.directories[remoteId][remoteAspect].removeAll();
+        }, this._id, this._aspect).catch(handlePuppeteerError);
+    }
+}
+
+class RemoteStoredApplicationDirectoryCollection extends RemoteDirectoryCollection<Application, string> {
+    public constructor(executionTarget: Identity, id: string) {
+        super(executionTarget, id, 'storedApplications');
+    }
+
+    public async addSelf(application?: Partial<Application>): Promise<void> {
+        return ofBrowser.executeOnWindow(this._executionTarget, function (
+            this: TestWindowContext,
+            remoteId: string,
+            remoteApplication?: Partial<Application>
+        ): void {
+            this.directories[remoteId].storedApplications.addSelf(remoteApplication);
+        }, this._id, application).catch(handlePuppeteerError);
+    }
 }

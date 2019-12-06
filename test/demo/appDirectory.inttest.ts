@@ -107,6 +107,8 @@ describe('When running a non-directory app', () => {
         const testIntent = createFakeIntent();
 
         const appInfo = createFakeApp({
+            name: testAppNotInDirectory1.uuid,
+            title: testAppNotInDirectory1.uuid,
             appId: testAppNotInDirectory1.uuid,
             manifest: testAppNotInDirectory1.manifestUrl,
             intents: [testIntent]
@@ -114,7 +116,7 @@ describe('When running a non-directory app', () => {
 
         // Set the new app info
         await fdc3Remote.updateAppDirectory(testAppNotInDirectory1, async (directory: RemoteDirectory) => {
-            await directory.storedApplications.set(appInfo);
+            await directory.storedApplications.addSelf({intents: [testIntent]});
         });
 
         // Test the service is aware of intents from the new app info
