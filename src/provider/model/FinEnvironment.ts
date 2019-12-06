@@ -28,18 +28,6 @@ interface KnownEntity {
     entityType: EntityType;
 }
 
-/**
- * Checks if an entity is of a "page-based" entity type. These are entities that are built using a
- * webpage/browser/DOM/etc. This only includes entity types that both meet this definition, AND are supported by
- * the service.
- *
- * These entity types have a more finely controlled handshake process, as the fin API provides better eventing
- * and querying of these entity types.
- */
-function isPagedEntity(entityType: EntityType): boolean {
-    return entityType === EntityType.WINDOW || entityType === EntityType.VIEW;
-}
-
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
     public readonly onApplicationCreated: Signal<[Identity, LiveApp]> = new Signal();
@@ -277,4 +265,16 @@ export class FinEnvironment extends AsyncInit implements Environment {
             }
         }
     }
+}
+
+/**
+ * Checks if an entity is of a "page-based" entity type. These are entities that are built using a
+ * webpage/browser/DOM/etc. This only includes entity types that both meet this definition, AND are supported by
+ * the service.
+ *
+ * These entity types have a more finely controlled handshake process, as the fin API provides better eventing
+ * and querying of these entity types.
+ */
+function isPagedEntity(entityType: EntityType): boolean {
+    return entityType === EntityType.WINDOW || entityType === EntityType.VIEW;
 }
