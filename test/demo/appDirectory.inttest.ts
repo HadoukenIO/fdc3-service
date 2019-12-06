@@ -4,6 +4,7 @@ import * as fdc3Remote from './utils/fdc3RemoteExecution';
 import {delay, Duration} from './utils/delay';
 import {fin} from './utils/fin';
 import {createFakeApp, createFakeIntent, createFakeContext} from './utils/fakes';
+import {RemoteDirectory} from './utils/RemoteDirectory';
 
 const testContent = createFakeContext();
 
@@ -31,8 +32,9 @@ describe('When running a directory app', () => {
         });
 
         // Set the new app info
-        await fdc3Remote.registerAppDirectory(testAppInDirectory1, [appInfo]);
-        await delay(Duration.API_CALL);
+        await fdc3Remote.updateAppDirectory(testAppInDirectory1, async (directory: RemoteDirectory) => {
+            await directory.storedApplications.set(appInfo);
+        });
 
         // Test the service is aware of intents from the new app info
         const result = await fdc3Remote.findIntent(testManagerIdentity, testIntent.name);
@@ -62,8 +64,9 @@ describe('When running a directory app', () => {
         });
 
         // Set the new app info and quit
-        await fdc3Remote.registerAppDirectory(testAppInDirectory1, [appInfo]);
-        await delay(Duration.API_CALL);
+        await fdc3Remote.updateAppDirectory(testAppInDirectory1, async (directory: RemoteDirectory) => {
+            await directory.storedApplications.set(appInfo);
+        });
         await quitApps(testAppInDirectory1);
 
         // Test we can open the app from the app's new name
@@ -76,8 +79,9 @@ describe('When running a directory app', () => {
     });
 
     test('The app can add a URL to the app directory', async () => {
-        await fdc3Remote.registerAppDirectory(testAppInDirectory1, 'http://localhost:3923/provider/sample-app-directory-snippet.json');
-        await delay(Duration.API_CALL);
+        await fdc3Remote.updateAppDirectory(testAppInDirectory1, async (directory: RemoteDirectory) => {
+            await directory.remoteSnippets.set('http://localhost:3923/provider/sample-app-directory-snippet.json');
+        });
         await delay(Duration.LOCALHOST_HTTP_REQUEST);
 
         // Test we can open an app from the new snippet
@@ -109,8 +113,9 @@ describe('When running a non-directory app', () => {
         });
 
         // Set the new app info
-        await fdc3Remote.registerAppDirectory(testAppNotInDirectory1, [appInfo]);
-        await delay(Duration.API_CALL);
+        await fdc3Remote.updateAppDirectory(testAppNotInDirectory1, async (directory: RemoteDirectory) => {
+            await directory.storedApplications.set(appInfo);
+        });
 
         // Test the service is aware of intents from the new app info
         const result = await fdc3Remote.findIntent(testManagerIdentity, testIntent.name);

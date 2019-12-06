@@ -4,6 +4,7 @@ import {injectable} from 'inversify';
 import {AsyncInit} from '../controller/AsyncInit';
 import {APP_DIRECTORY_STORAGE_TAG, StoredAppDirectoryShard} from '../../client/internal';
 import {Injector} from '../common/Injector';
+import {DirectoryShardMap, DirectoryShard} from '../../client/main';
 
 import {AppDirectoryStorage, DomainAppDirectoryShard} from './AppDirectoryStorage';
 
@@ -51,6 +52,23 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
         const entries = Array.from(shardsMap.entries());
 
         const sortedEntries = entries.sort((a, b) => a[0].localeCompare(b[0]));
-        this._shards = sortedEntries.map(([domain, json]) => ({domain, shard: JSON.parse(json) as StoredAppDirectoryShard}));
+        const shardMaps = sortedEntries.map(([domain, json]) => ({domain, shardMap: JSON.parse(json) as DirectoryShardMap}));
+
+        this._shards = shardMaps.map(({domain, shardMap}) => ({
+            domain,
+            shard: shardMapToShard(shardMap)
+        }));
     }
+}
+
+function shardMapToShard(shardMap: DirectoryShardMap): StoredAppDirectoryShard {
+    const entries = Object.entries(shardMap);
+    const sortedEntries = entries.sort((a, b) => a[0].localeCompare(b[0])).map(([key, shard]) => shard);
+
+    return sortedEntries.reduce((prev: StoredAppDirectoryShard, curr: DirectoryShard) => {
+        prev.applications.push(...curr.storedApplications);
+        prev.urls.push(...curr.remoteSnippets);
+
+        return prev;
+    }, {applications: [], urls: []});
 }

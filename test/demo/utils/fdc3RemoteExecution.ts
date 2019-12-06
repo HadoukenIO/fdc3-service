@@ -13,13 +13,15 @@
 import {Identity} from 'openfin/_v2/main';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 
+import {UpdateAppDirectoryOptions} from '../../../src/client/api/directory';
 import {IntentType} from '../../../src/provider/intents';
-import {Context, AppIntent, ChannelId, IntentResolution, Application} from '../../../src/client/main';
+import {Context, AppIntent, ChannelId, IntentResolution, Directory} from '../../../src/client/main';
 import {RaiseIntentPayload, deserializeError, Events, MainEvents, FindIntentPayload, OpenPayload, BroadcastPayload} from '../../../src/client/internal';
 
 import {OFPuppeteerBrowser, TestWindowContext, TestChannelTransport} from './ofPuppeteer';
 import {RemoteChannel} from './RemoteChannel';
 import {delay, Duration} from './delay';
+import {RemoteDirectory} from './RemoteDirectory';
 
 export const ofBrowser = new OFPuppeteerBrowser();
 
@@ -102,7 +104,7 @@ export async function addContextListener(executionTarget: Identity): Promise<Rem
 }
 
 export async function addIntentListener(executionTarget: Identity, intent: IntentType, listener?: IntentHandler): Promise<RemoteIntentListener> {
-    const remoteFn = (listener && await ofBrowser.getOrMountRemoteFunction(executionTarget, listener)) as unknown as IntentHandler || undefined;
+    const remoteFn = listener && await ofBrowser.getOrMountRemoteFunction(executionTarget, listener);
 
     const id = await ofBrowser.executeOnWindow(
         executionTarget,
@@ -124,7 +126,7 @@ export async function addIntentListener(executionTarget: Identity, intent: Inten
             return listenerID;
         },
         intent,
-        remoteFn
+        remoteFn as IntentHandler | undefined
     );
 
     await delay(Duration.LISTENER_HANDSHAKE);
@@ -224,13 +226,33 @@ export async function findIntentsByContext(executionTarget: Identity, context: C
     }, context).catch(handlePuppeteerError);
 }
 
-export async function registerAppDirectory(executionTarget: Identity, data: Application[] | string, version: number = 0): Promise<void> {
-    return ofBrowser.executeOnWindow(
+export async function updateAppDirectory(
+    executionTarget: Identity,
+    migrationHandler: (directory: RemoteDirectory) => Promise<void>,
+    options?: UpdateAppDirectoryOptions
+): Promise<void> {
+    const mountedTrigger = await ofBrowser.getOrMountRemoteFunction(executionTarget, async (id: string) => {
+        await migrationHandler(new RemoteDirectory(executionTarget, id));
+    });
+
+    await ofBrowser.executeOnWindow(
         executionTarget,
-        async function (this: TestWindowContext, remoteData: Application[] | string, remoteVersion: number): Promise<void> {
-            await this.fdc3.registerAppDirectory(remoteData, remoteVersion);
-        }, data, version
+        async function (
+            this: TestWindowContext,
+            remoteMigrationHandler: ((id: string) => Promise<void>),
+            remoteOptions?: UpdateAppDirectoryOptions
+        ): Promise<void> {
+            await this.fdc3.updateAppDirectory(async (directory: Directory) => {
+                this.directories['foo'] = directory;
+
+                await remoteMigrationHandler('foo');
+            }, remoteOptions);
+        },
+        mountedTrigger as unknown as ((id: string) => Promise<void>),
+        options as UpdateAppDirectoryOptions | undefined
     );
+
+    await delay(Duration.API_CALL);
 }
 
 export function clickHTMLElement(executionTarget: Identity, elementSelector: string): Promise<boolean> {
