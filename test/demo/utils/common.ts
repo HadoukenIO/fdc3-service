@@ -5,8 +5,9 @@ import {Intent} from '../../../src/provider/intents';
 import {testManagerIdentity, appStartupTime} from '../constants';
 import {Boxed} from '../../../src/provider/utils/types';
 import {RESOLVER_IDENTITY} from '../../../src/provider/utils/constants';
-import {SERVICE_IDENTITY, APP_DIRECTORY_STORAGE_TAG} from '../../../src/client/internal';
+import {SERVICE_IDENTITY} from '../../../src/client/internal';
 import {Model} from '../../../src/provider/model/Model';
+import {APP_DIRECTORY_STORAGE_TAG} from '../../../src/client/api/directory';
 
 import {fin} from './fin';
 import * as fdc3Remote from './fdc3RemoteExecution';

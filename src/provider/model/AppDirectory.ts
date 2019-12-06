@@ -139,8 +139,8 @@ export class AppDirectory extends AsyncInit {
                     type: 'global'
                 },
                 shard: {
-                    urls: configUrl ? [configUrl] : [],
-                    applications: []
+                    remoteSnippets: configUrl ? [configUrl] : [],
+                    storedApplications: []
                 }
             },
             ...this._appDirectoryStorage.getDirectoryShards().map((shard: DomainAppDirectoryShard) => ({
@@ -153,23 +153,23 @@ export class AppDirectory extends AsyncInit {
         ];
 
         const remoteDirectorySnippets = await parallelMap(scopedShards, async (scopedShard) => {
-            return parallelMap(filterUrlsByScope(scopedShard.scope, scopedShard.shard.urls), async (url) => {
+            return parallelMap(filterUrlsByScope(scopedShard.scope, scopedShard.shard.remoteSnippets), async (remoteSnippet) => {
                 // TODO: URLs will be fetched once per service run. Improve this logic [SERVICE-841]
-                const fetchedSnippet = this._fetchedUrls.has(url) ? null : await this.fetchRemoteSnippet(url);
-                this._fetchedUrls.add(url);
+                const fetchedSnippet = this._fetchedUrls.has(remoteSnippet) ? null : await this.fetchRemoteSnippet(remoteSnippet);
+                this._fetchedUrls.add(remoteSnippet);
 
                 if (fetchedSnippet) {
-                    this.updateCache(url, fetchedSnippet);
+                    this.updateCache(remoteSnippet, fetchedSnippet);
                     return fetchedSnippet;
                 } else {
-                    return this.fetchCachedSnippet(url) || [];
+                    return this.fetchCachedSnippet(remoteSnippet) || [];
                 }
             });
         });
 
         const applications: Application[] = [];
         scopedShards.forEach((scopedShard, i) => {
-            applications.push(...filterAppsByScope(scopedShard.scope, scopedShard.shard.applications));
+            applications.push(...filterAppsByScope(scopedShard.scope, scopedShard.shard.storedApplications));
 
             for (const remoteSnippet of remoteDirectorySnippets[i]) {
                 applications.push(...filterAppsByScope(scopedShard.scope, remoteSnippet));

@@ -2,9 +2,8 @@ import {Signal} from 'openfin-service-signal';
 import {injectable} from 'inversify';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {APP_DIRECTORY_STORAGE_TAG} from '../../client/internal';
 import {Injector} from '../common/Injector';
-import {DirectoryShardMap, DirectoryShard} from '../../client/main';
+import {DirectoryShardMap, DirectoryShard, APP_DIRECTORY_STORAGE_TAG} from '../../client/api/directory';
 
 import {AppDirectoryStorage, DomainAppDirectoryShard, AppDirectoryShard} from './AppDirectoryStorage';
 
@@ -40,16 +39,16 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
     }
 
     private async refreshFromStorage(): Promise<void> {
-        let shardsMap: Map<string, string>;
+        let storageMap: Map<string, string>;
 
         try {
             // We expect this to throw if no directory items have been written
-            shardsMap = await newFin.Storage.getAllItems(APP_DIRECTORY_STORAGE_TAG);
+            storageMap = await newFin.Storage.getAllItems(APP_DIRECTORY_STORAGE_TAG);
         } catch (e) {
-            shardsMap = new Map();
+            storageMap = new Map();
         }
 
-        const entries = Array.from(shardsMap.entries());
+        const entries = Array.from(storageMap.entries());
 
         const sortedEntries = entries.sort((a, b) => a[0].localeCompare(b[0]));
         const shardMaps = sortedEntries.map(([domain, json]) => ({domain, shardMap: JSON.parse(json) as DirectoryShardMap}));
@@ -66,9 +65,9 @@ function shardMapToShard(shardMap: DirectoryShardMap): AppDirectoryShard {
     const sortedEntries = entries.sort((a, b) => a[0].localeCompare(b[0])).map(([key, shard]) => shard);
 
     return sortedEntries.reduce((prev: AppDirectoryShard, curr: DirectoryShard) => {
-        prev.applications.push(...curr.storedApplications);
-        prev.urls.push(...curr.remoteSnippets);
+        prev.storedApplications.push(...curr.storedApplications);
+        prev.remoteSnippets.push(...curr.remoteSnippets);
 
         return prev;
-    }, {applications: [], urls: []});
+    }, {storedApplications: [], remoteSnippets: []});
 }

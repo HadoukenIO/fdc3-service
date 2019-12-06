@@ -3,8 +3,8 @@ import {Signal} from 'openfin-service-signal';
 import {Application} from '../../client/main';
 
 export interface AppDirectoryShard {
-    urls: string[];
-    applications: Application[];
+    remoteSnippets: string[];
+    storedApplications: Application[];
 }
 
 export interface DomainAppDirectoryShard {

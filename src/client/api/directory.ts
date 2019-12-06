@@ -1,7 +1,6 @@
 import deepEqual from 'deep-equal';
 
 import {Application, AppName} from '../types/directory';
-import {APP_DIRECTORY_STORAGE_TAG} from '../internal';
 
 // TODO: Remove once Storage API is in published runtime and types are updated [SERVICE-840]
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -58,6 +57,11 @@ export interface DirectoryShard {
  * @hidden
  */
 export interface DirectoryShardMap {[key: string]: DirectoryShard}
+
+/**
+ * @hidden
+ */
+export const APP_DIRECTORY_STORAGE_TAG: string = 'of-fdc3-service.directory';
 
 export async function updateAppDirectory(migrationHandler: UpdateAppDirectoryMigrationHandler, options?: UpdateAppDirectoryOptions): Promise<void> {
     const selfApplication = await getSelfApplication();
