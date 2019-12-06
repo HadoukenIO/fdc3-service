@@ -2,7 +2,7 @@ import {Fin, Identity} from 'openfin/_v2/main';
 import {Browser, Page, JSHandle} from 'puppeteer';
 import {connect} from 'hadouken-js-adapter';
 
-import {Context, ContextListener, IntentListener, Channel, Directory} from '../../../src/client/main';
+import {Context, ContextListener, IntentListener, Channel, AppDirectory} from '../../../src/client/main';
 import {Events, ChannelEvents} from '../../../src/client/internal';
 import {IntentType} from '../../../src/provider/intents';
 
@@ -29,7 +29,7 @@ export type TestWindowContext = BaseWindowContext & {
     channelEventListeners: TestWindowChannelEventListener[];
 
     channelTransports: {[id: string]: TestChannelTransport};
-    directories: {[id: string]: Directory};
+    directories: {[id: string]: AppDirectory};
 
     receivedContexts: {listenerID: number; context: Context}[];
     receivedEvents: {listenerID: number; payload: Events}[];

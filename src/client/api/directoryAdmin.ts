@@ -1,3 +1,9 @@
+/**
+ * Placeholder
+ *
+ * @module DirectoryAdmin
+ */
+
 import deepEqual from 'deep-equal';
 
 import {Application, AppName} from '../types/directory';
@@ -10,15 +16,24 @@ declare namespace fin {
     const Application: any;
 }
 
-export type UpdateAppDirectoryMigrationHandler = (directory: Directory) => void | Promise<void>;
+/**
+ * Placeholder
+ */
+export type UpdateAppDirectoryMigrationHandler = (directory: AppDirectory) => void | Promise<void>;
 
+/**
+ * Placeholder
+ */
 export interface UpdateAppDirectoryOptions {
     namespace?: string;
     sourceVersionRange?: [number, number];
     destinationVersion?: number;
 }
 
-export interface Directory {
+/**
+ * Placeholder
+ */
+export interface AppDirectory {
     sourceVersion: number;
 
     remoteSnippets: RemoteSnippetsDirectoryCollection;
@@ -27,27 +42,58 @@ export interface Directory {
     setVersion: (value: number) => void;
 }
 
+/**
+ * Placeholder
+ */
 export interface DirectoryCollection<T, U = T> {
+
+    /**
+     * Placeholder
+     */
     readonly source: ReadonlyArray<T>;
 
+    /**
+     * Placeholder
+     */
     add: (arg: T | T[]) => void;
+
+    /**
+     * Placeholder
+     */
     remove: (arg: T | T[] | U | U[]) => void;
+
+    /**
+     * Placeholder
+     */
     removeAll: () => void;
+
+    /**
+     * Placeholder
+     */
     set: (arg: T | T[]) => void;
 }
 
-export interface StoredApplicationDirectoryCollection extends DirectoryCollection<Application, string> {
-    addSelf: (application?: Partial<Application>) => void;
-}
-
+/**
+ * Placeholder
+ */
 export interface RemoteSnippetsDirectoryCollection extends DirectoryCollection<string, string> {
 
 }
 
 /**
+ * Placeholder
+ */
+export interface StoredApplicationDirectoryCollection extends DirectoryCollection<Application, string> {
+    /**
+     * Placeholder
+     */
+    addSelf: (application?: Partial<Application>) => void;
+}
+
+/**
  * @hidden
  */
-export interface DirectoryShard {
+export interface StoredDirectoryShard {
     version: number;
     remoteSnippets: string[];
     storedApplications: Application[];
@@ -56,18 +102,24 @@ export interface DirectoryShard {
 /**
  * @hidden
  */
-export interface DirectoryShardMap {[key: string]: DirectoryShard}
+export interface StoredDirectoryShardMap {[key: string]: StoredDirectoryShard}
 
 /**
  * @hidden
  */
 export const APP_DIRECTORY_STORAGE_TAG: string = 'of-fdc3-service.directory';
 
+/**
+ * Placeholder
+ *
+ * @param migrationHandler Placeholder
+ * @param options Placeholder
+ */
 export async function updateAppDirectory(migrationHandler: UpdateAppDirectoryMigrationHandler, options?: UpdateAppDirectoryOptions): Promise<void> {
     const selfApplication = await getSelfApplication();
 
     let json: string | undefined;
-    let shardMap: DirectoryShardMap;
+    let shardMap: StoredDirectoryShardMap;
 
     do {
         json = await readJson();
@@ -92,7 +144,7 @@ export async function updateAppDirectory(migrationHandler: UpdateAppDirectoryMig
             setVersion
         });
 
-        const result: DirectoryShard = {
+        const result: StoredDirectoryShard = {
             version,
             remoteSnippets: remoteSnippets.build(),
             storedApplications: storedApplications.build()
@@ -246,11 +298,11 @@ async function readJson(): Promise<string | undefined> {
     return json;
 }
 
-async function readShardMap(json: string): Promise<DirectoryShardMap> {
-    return JSON.parse(json) as DirectoryShardMap;
+async function readShardMap(json: string): Promise<StoredDirectoryShardMap> {
+    return JSON.parse(json) as StoredDirectoryShardMap;
 }
 
-function createDefaultShard(): DirectoryShard {
+function createDefaultShard(): StoredDirectoryShard {
     return {
         version: 0,
         remoteSnippets: [],
@@ -258,7 +310,7 @@ function createDefaultShard(): DirectoryShard {
     };
 }
 
-async function writeIfUnchanged(shardMap: DirectoryShardMap, json: string | undefined): Promise<boolean> {
+async function writeIfUnchanged(shardMap: StoredDirectoryShardMap, json: string | undefined): Promise<boolean> {
     let oldJson: string | undefined;
 
     try {

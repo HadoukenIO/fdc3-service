@@ -19,9 +19,9 @@ import {Transport, Targeted} from './EventRouter';
  * Original file: https://github.com/FDC3/FDC3/blob/master/src/api/interface.ts
  */
 
-// Re-export context channel API at top-level
+// Re-export APIs at top-level
 export * from './api/contextChannels';
-export * from './api/directory';
+export * from './api/directoryAdmin';
 
 // Re-export types/enums at top-level
 export * from './types/context';

@@ -13,9 +13,9 @@
 import {Identity} from 'openfin/_v2/main';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 
-import {UpdateAppDirectoryOptions} from '../../../src/client/api/directory';
+import {UpdateAppDirectoryOptions} from '../../../src/client/api/directoryAdmin';
 import {IntentType} from '../../../src/provider/intents';
-import {Context, AppIntent, ChannelId, IntentResolution, Directory} from '../../../src/client/main';
+import {Context, AppIntent, ChannelId, IntentResolution, AppDirectory} from '../../../src/client/main';
 import {RaiseIntentPayload, deserializeError, Events, MainEvents, FindIntentPayload, OpenPayload, BroadcastPayload} from '../../../src/client/internal';
 
 import {OFPuppeteerBrowser, TestWindowContext, TestChannelTransport} from './ofPuppeteer';
@@ -242,7 +242,7 @@ export async function updateAppDirectory(
             remoteMigrationHandler: ((id: string) => Promise<void>),
             remoteOptions?: UpdateAppDirectoryOptions
         ): Promise<void> {
-            await this.fdc3.updateAppDirectory(async (directory: Directory) => {
+            await this.fdc3.updateAppDirectory(async (directory: AppDirectory) => {
                 this.directories['foo'] = directory;
 
                 await remoteMigrationHandler('foo');

@@ -3,7 +3,7 @@ import {injectable} from 'inversify';
 
 import {AsyncInit} from '../controller/AsyncInit';
 import {Injector} from '../common/Injector';
-import {DirectoryShardMap, DirectoryShard, APP_DIRECTORY_STORAGE_TAG} from '../../client/api/directory';
+import {StoredDirectoryShardMap, StoredDirectoryShard, APP_DIRECTORY_STORAGE_TAG} from '../../client/api/directory';
 
 import {AppDirectoryStorage, DomainAppDirectoryShard, AppDirectoryShard} from './AppDirectoryStorage';
 
@@ -51,7 +51,7 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
         const entries = Array.from(storageMap.entries());
 
         const sortedEntries = entries.sort((a, b) => a[0].localeCompare(b[0]));
-        const shardMaps = sortedEntries.map(([domain, json]) => ({domain, shardMap: JSON.parse(json) as DirectoryShardMap}));
+        const shardMaps = sortedEntries.map(([domain, json]) => ({domain, shardMap: JSON.parse(json) as StoredDirectoryShardMap}));
 
         this._shards = shardMaps.map(({domain, shardMap}) => ({
             domain,
@@ -60,11 +60,11 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
     }
 }
 
-function shardMapToShard(shardMap: DirectoryShardMap): AppDirectoryShard {
+function shardMapToShard(shardMap: StoredDirectoryShardMap): AppDirectoryShard {
     const entries = Object.entries(shardMap);
     const sortedEntries = entries.sort((a, b) => a[0].localeCompare(b[0])).map(([key, shard]) => shard);
 
-    return sortedEntries.reduce((prev: AppDirectoryShard, curr: DirectoryShard) => {
+    return sortedEntries.reduce((prev: AppDirectoryShard, curr: StoredDirectoryShard) => {
         prev.storedApplications.push(...curr.storedApplications);
         prev.remoteSnippets.push(...curr.remoteSnippets);
 
