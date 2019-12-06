@@ -76,12 +76,17 @@ export class SemVer {
         other = SemVer.parse(other);
 
         if (this.type === SemVerType.VALID && other.type === SemVerType.VALID) {
+            // Based on operator, determine if inputs are allowed to be equal
+            const allowEqual = operator.endsWith('=');
+
+            // Given the existance of caching, there's a decent chance we don't actually need to compare anything
+            if (this === other) {
+                return allowEqual;
+            }
+
             // Based on the operator, determine which of the inputs should be smaller
             const {components: min} = operator.startsWith('<') ? this : other;
             const {components: max} = operator.startsWith('<') ? other : this;
-
-            // Based on operator, determine if inputs are allowed to be equal
-            const allowEqual = operator.endsWith('=');
 
             // Check each component of the inputs in turn
             const minCount = min.length;
