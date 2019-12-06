@@ -139,12 +139,12 @@ export class APIHandler<T extends Enum> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private onConnectionHandler(identity: Identity, payload?: any): void {
         const id = getId(identity);
-        const semver: SemVer = SemVer.parse(payload && payload.version);
+        const semVer: SemVer = SemVer.parse(payload && payload.version);
 
-        this._clientVersions[id] = semver;
+        this._clientVersions[id] = semVer;
 
-        if (semver.isValid) {
-            console.log(`connection from client: ${identity.name}, version: ${semver.version}`);
+        if (semVer.valid) {
+            console.log(`connection from client: ${identity.name}, version: ${semVer.version}`);
         } else {
             console.log(`connection from client: ${identity.name}, unable to determine version`);
         }

@@ -124,6 +124,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             const applicationInfo = await application.getInfo();
             let {name: title, icon} = applicationInfo.initialOptions as ApplicationOption;
 
+            // `manifest` is defined as required property but actually optional. Not present on programmatically-launched apps.
             if (applicationInfo.manifest) {
                 const {shortcut, startup_app: startupApp} = applicationInfo.manifest as OFManifest;
                 title = (shortcut && shortcut.name) || startupApp.name || startupApp.uuid;
@@ -136,6 +137,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
                 title,
                 icons: icon ? [{icon}] : undefined,
                 manifestType: 'openfin',
+                // `manifestUrl` is defined as required property but actually optional. Not present on programmatically-launched apps.
                 manifest: applicationInfo.manifestUrl || ''
             };
         }

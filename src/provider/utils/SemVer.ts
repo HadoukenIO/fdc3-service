@@ -28,7 +28,9 @@ export class SemVer {
     }
 
     public static parse(version: string | SemVer): SemVer {
-        if (typeof version === 'string' || version === null || version === undefined) {
+        if (version instanceof SemVer) {
+            return version;
+        } else {
             let semver = SemVer.CACHE[version];
 
             if (!semver) {
@@ -37,14 +39,12 @@ export class SemVer {
             }
 
             return semver;
-        } else {
-            return version;
         }
     }
 
     public readonly version: string;
     public readonly type: SemVerType;
-    public readonly components: Readonly<[number, number, number, ...(string|number)[]]>;
+    public readonly components: Readonly<[number, number, number, ...(string | number)[]]>;
 
     constructor(version: string) {
         const match = version && SemVer.REGEX_SEMVER.exec(version);
@@ -68,11 +68,11 @@ export class SemVer {
         }
     }
 
-    public get isValid(): boolean {
+    public get valid(): boolean {
         return this.type === SemVerType.VALID;
     }
 
-    public compare(operator: Operator, other: string|SemVer, defaultIfInvalid: boolean = false): boolean {
+    public compare(operator: Operator, other: string | SemVer, defaultIfInvalid: boolean = false): boolean {
         other = SemVer.parse(other);
 
         if (this.type === SemVerType.VALID && other.type === SemVerType.VALID) {
