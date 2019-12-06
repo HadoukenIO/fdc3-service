@@ -10,7 +10,7 @@
  */
 import {Identity} from 'openfin/_v2/main';
 
-import {AppName, Application} from './types/directory';
+import {AppName} from './types/directory';
 import {AppIntent, Context, IntentResolution, Listener} from './main';
 import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel} from './api/contextChannels';
 import {FDC3Error} from './types/errors';
@@ -246,11 +246,6 @@ export interface ReceiveIntentPayload {
 export interface ChannelReceiveContextPayload {
     channel: ChannelId;
     context: Context;
-}
-
-export interface StoredAppDirectoryShard {
-    urls: string[];
-    applications: Application[];
 }
 
 /**

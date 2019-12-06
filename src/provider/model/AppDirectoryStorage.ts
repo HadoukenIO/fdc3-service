@@ -1,10 +1,15 @@
 import {Signal} from 'openfin-service-signal';
 
-import {StoredAppDirectoryShard} from '../../client/internal';
+import {Application} from '../../client/main';
+
+export interface AppDirectoryShard {
+    urls: string[];
+    applications: Application[];
+}
 
 export interface DomainAppDirectoryShard {
     domain: string;
-    shard: StoredAppDirectoryShard;
+    shard: AppDirectoryShard;
 }
 
 export interface AppDirectoryStorage {

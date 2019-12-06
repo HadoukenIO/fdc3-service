@@ -2,11 +2,11 @@ import {Signal} from 'openfin-service-signal';
 import {injectable} from 'inversify';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {APP_DIRECTORY_STORAGE_TAG, StoredAppDirectoryShard} from '../../client/internal';
+import {APP_DIRECTORY_STORAGE_TAG} from '../../client/internal';
 import {Injector} from '../common/Injector';
 import {DirectoryShardMap, DirectoryShard} from '../../client/main';
 
-import {AppDirectoryStorage, DomainAppDirectoryShard} from './AppDirectoryStorage';
+import {AppDirectoryStorage, DomainAppDirectoryShard, AppDirectoryShard} from './AppDirectoryStorage';
 
 // TODO: Remove once Storage API is in published runtime and types are updated [SERVICE-840]
 const newFin = fin as (typeof fin) & {Storage: any};
@@ -61,11 +61,11 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
     }
 }
 
-function shardMapToShard(shardMap: DirectoryShardMap): StoredAppDirectoryShard {
+function shardMapToShard(shardMap: DirectoryShardMap): AppDirectoryShard {
     const entries = Object.entries(shardMap);
     const sortedEntries = entries.sort((a, b) => a[0].localeCompare(b[0])).map(([key, shard]) => shard);
 
-    return sortedEntries.reduce((prev: StoredAppDirectoryShard, curr: DirectoryShard) => {
+    return sortedEntries.reduce((prev: AppDirectoryShard, curr: DirectoryShard) => {
         prev.applications.push(...curr.storedApplications);
         prev.urls.push(...curr.remoteSnippets);
 

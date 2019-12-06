@@ -6,7 +6,7 @@ import {Store} from 'openfin-service-config';
 import {AppConnection} from '../src/provider/model/AppConnection';
 import {Context, Application} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
-import {ChannelTransport, ChannelEvents, APIFromClientTopic, StoredAppDirectoryShard} from '../src/client/internal';
+import {ChannelTransport, ChannelEvents, APIFromClientTopic} from '../src/client/internal';
 import {Environment, EntityType} from '../src/provider/model/Environment';
 import {AppDirectory} from '../src/provider/model/AppDirectory';
 import {APIHandler} from '../src/provider/APIHandler';

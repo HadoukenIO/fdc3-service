@@ -7,10 +7,9 @@ import {Application, AppName, AppDirIntent} from '../../client/types/directory';
 import {AsyncInit} from '../controller/AsyncInit';
 import {CustomConfigFields} from '../constants';
 import {checkCustomConfigField, deduplicate} from '../utils/helpers';
-import {StoredAppDirectoryShard} from '../../client/internal';
 
 import {ConfigStoreBinding} from './ConfigStore';
-import {AppDirectoryStorage, DomainAppDirectoryShard} from './AppDirectoryStorage';
+import {AppDirectoryStorage, DomainAppDirectoryShard, AppDirectoryShard} from './AppDirectoryStorage';
 
 enum StorageKeys {
     DIRECTORY_CACHE = 'fdc3@directoryCache'
@@ -34,7 +33,7 @@ type ShardScope = GlobalShardScope | DomainShardScope;
 
 interface ScopedAppDirectoryShard {
     scope: ShardScope;
-    shard: StoredAppDirectoryShard;
+    shard: AppDirectoryShard;
 }
 
 @injectable()
