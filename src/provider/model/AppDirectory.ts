@@ -111,7 +111,7 @@ export class AppDirectory extends AsyncInit {
     private async refreshDirectory(): Promise<void> {
         const scopedShards = this._appDirectoryStorage.getDirectoryShards();
 
-        const remoteDirectorySnippets = await parallelMap(scopedShards, async (scopedShard) => {
+        const applicationsPerSnippetPerShard = await parallelMap(scopedShards, async (scopedShard) => {
             return parallelMap(filterUrlsByScope(scopedShard.scope, scopedShard.shard.urls), async (url) => {
                 // TODO: URLs will be fetched once per service run. Improve this logic [SERVICE-841]
                 const fetchedSnippet = this._fetchedUrls.has(url) ? null : await this.fetchRemoteSnippet(url);
@@ -130,7 +130,7 @@ export class AppDirectory extends AsyncInit {
         scopedShards.forEach((scopedShard, i) => {
             applications.push(...filterAppsByScope(scopedShard.scope, scopedShard.shard.applications));
 
-            for (const remoteSnippet of remoteDirectorySnippets[i]) {
+            for (const remoteSnippet of applicationsPerSnippetPerShard[i]) {
                 applications.push(...filterAppsByScope(scopedShard.scope, remoteSnippet));
             }
         });
