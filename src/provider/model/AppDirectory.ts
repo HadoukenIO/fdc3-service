@@ -8,8 +8,7 @@ import {AsyncInit} from '../controller/AsyncInit';
 import {CustomConfigFields} from '../constants';
 import {checkCustomConfigField, deduplicate} from '../utils/helpers';
 
-import {ConfigStoreBinding} from './ConfigStore';
-import {AppDirectoryStorage, DomainAppDirectoryShard, AppDirectoryShard} from './AppDirectoryStorage';
+import {AppDirectoryStorage, ShardScope} from './AppDirectoryStorage';
 
 enum StorageKeys {
     DIRECTORY_CACHE = 'fdc3@directoryCache'
@@ -18,22 +17,6 @@ enum StorageKeys {
 interface CacheEntry {
     url: string;
     applications: Application[];
-}
-
-interface GlobalShardScope {
-    type: 'global';
-}
-
-interface DomainShardScope {
-    type: 'domain';
-    domain: string;
-}
-
-type ShardScope = GlobalShardScope | DomainShardScope;
-
-interface ScopedAppDirectoryShard {
-    scope: ShardScope;
-    shard: AppDirectoryShard;
 }
 
 @injectable()
@@ -84,20 +67,15 @@ export class AppDirectory extends AsyncInit {
     public readonly directoryChanged: Signal<[]> = new Signal();
 
     private readonly _appDirectoryStorage: AppDirectoryStorage;
-    private readonly _configStore: ConfigStoreBinding;
 
     private readonly _fetchedUrls: Set<string> = new Set();
 
     private _directory: Application[] = [];
 
-    public constructor(
-        @inject(Inject.APP_DIRECTORY_STORAGE) appDirectoryStorage: AppDirectoryStorage,
-        @inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding
-    ) {
+    public constructor(@inject(Inject.APP_DIRECTORY_STORAGE) appDirectoryStorage: AppDirectoryStorage) {
         super();
 
         this._appDirectoryStorage = appDirectoryStorage;
-        this._configStore = configStore;
     }
 
     public getAppByName(name: AppName): Promise<Application | null> {
@@ -119,8 +97,8 @@ export class AppDirectory extends AsyncInit {
 
     protected async init(): Promise<void> {
         this._appDirectoryStorage.changed.add(this.onStorageChanged, this);
+        await this._appDirectoryStorage.initialized;
 
-        await this._configStore.initialized;
         await this.refreshDirectory();
     }
 
@@ -131,28 +109,9 @@ export class AppDirectory extends AsyncInit {
     }
 
     private async refreshDirectory(): Promise<void> {
-        const configUrl = this._configStore.config.query({level: 'desktop'}).applicationDirectory;
+        const scopedShards = this._appDirectoryStorage.getDirectoryShards();
 
-        const scopedShards: ScopedAppDirectoryShard[] = [
-            {
-                scope: {
-                    type: 'global'
-                },
-                shard: {
-                    remoteSnippets: configUrl ? [configUrl] : [],
-                    storedApplications: []
-                }
-            },
-            ...this._appDirectoryStorage.getDirectoryShards().map((shard: DomainAppDirectoryShard) => ({
-                scope: {
-                    type: 'domain',
-                    domain: shard.domain
-                } as ShardScope,
-                shard: shard.shard
-            }))
-        ];
-
-        const remoteDirectorySnippets = await parallelMap(scopedShards, async (scopedShard) => {
+        const applicationsPerSnippetPerShard = await parallelMap(scopedShards, async (scopedShard) => {
             return parallelMap(filterUrlsByScope(scopedShard.scope, scopedShard.shard.remoteSnippets), async (remoteSnippet) => {
                 // TODO: URLs will be fetched once per service run. Improve this logic [SERVICE-841]
                 const fetchedSnippet = this._fetchedUrls.has(remoteSnippet) ? null : await this.fetchRemoteSnippet(remoteSnippet);
@@ -171,7 +130,7 @@ export class AppDirectory extends AsyncInit {
         scopedShards.forEach((scopedShard, i) => {
             applications.push(...filterAppsByScope(scopedShard.scope, scopedShard.shard.storedApplications));
 
-            for (const remoteSnippet of remoteDirectorySnippets[i]) {
+            for (const remoteSnippet of applicationsPerSnippetPerShard[i]) {
                 applications.push(...filterAppsByScope(scopedShard.scope, remoteSnippet));
             }
         });
