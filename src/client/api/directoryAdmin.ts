@@ -26,7 +26,7 @@ export type UpdateAppDirectoryMigrationHandler = (directory: AppDirectory) => vo
  */
 export interface UpdateAppDirectoryOptions {
     namespace?: string;
-    sourceVersionRange?: [number, number];
+    maxSourceVersion?: number;
     destinationVersion?: number;
 }
 
@@ -38,8 +38,6 @@ export interface AppDirectory {
 
     remoteSnippets: RemoteSnippetsDirectoryCollection;
     storedApplications: StoredApplicationDirectoryCollection;
-
-    setVersion: (value: number) => void;
 }
 
 /**
@@ -131,17 +129,33 @@ export async function updateAppDirectory(migrationHandler: UpdateAppDirectoryMig
         const remoteSnippets = new RemoteSnippetsDirectoryCollectionImpl(shard.remoteSnippets);
         const storedApplications = new StoredApplicationDirectoryCollectionImpl(shard.storedApplications, selfApplication);
 
-        let version = shard.version;
+        const version = shard.version;
 
-        const setVersion = (value: number) => {
-            version = value;
-        };
+        if (options && options.maxSourceVersion !== undefined && options.maxSourceVersion < version) {
+            console.log(`Stored directory is version ${version}, but update handler requires \
+${options.maxSourceVersion} or lower. Skipping directory update.`);
+            break;
+        }
+
+        if (options && options.destinationVersion !== undefined && options.destinationVersion < version) {
+            console.log(`Stored directory is version ${version}, but update handler outputs version \
+${options.destinationVersion}. Skipping directory update.`);
+            break;
+        }
+
+        if (options &&
+            options.maxSourceVersion !== undefined &&
+            options.destinationVersion !== undefined &&
+            options.maxSourceVersion > options.destinationVersion
+        ) {
+            console.warn(`Update handler outputs version ${options.destinationVersion} but claims to require version \
+${options.maxSourceVersion} or lower. \`destinationVersion\` should be greater than or equal to \`maxSourceVersion\``);
+        }
 
         await migrationHandler({
             sourceVersion: version,
             remoteSnippets,
-            storedApplications,
-            setVersion
+            storedApplications
         });
 
         const result: StoredDirectoryShard = {
@@ -158,6 +172,8 @@ abstract class DirectoryCollectionBase<T, U = T> implements DirectoryCollection<
     private readonly _source: ReadonlyArray<T>;
     private _result: T[];
 
+    private _valid: boolean;
+
     public get source(): ReadonlyArray<T> {
         return this._source;
     }
@@ -165,15 +181,21 @@ abstract class DirectoryCollectionBase<T, U = T> implements DirectoryCollection<
     protected constructor(source: T[]) {
         this._source = source;
         this._result = [...source];
+
+        this._valid = true;
     }
 
     public add(arg: T | T[]): void {
+        this.validityCheck();
+
         const values = Array.isArray(arg) ? arg : [arg];
 
         this._result.push(...values);
     }
 
     public remove(arg: T | T[] | U | U []): void {
+        this.validityCheck();
+
         const values = Array.isArray(arg) ? arg : [arg];
 
         if (values.length !== 0) {
@@ -190,22 +212,33 @@ abstract class DirectoryCollectionBase<T, U = T> implements DirectoryCollection<
     }
 
     public removeAll(): void {
+        this.validityCheck();
+
         this._result = [];
     }
 
     public set(arg: T | T[]): void {
+        this.validityCheck();
+
         const values = Array.isArray(arg) ? arg : [arg];
 
         this._result = [...values];
     }
 
     public build(): T[] {
+        this._valid = false;
         return this._result;
     }
 
     protected abstract isId(value: T | U): value is U;
     protected abstract doesId(id: U, value: T): boolean;
     protected abstract doesEqual(a: T, b: T): boolean;
+
+    private validityCheck(): void {
+        if (!this._valid) {
+            throw new Error('Attempting to use `Directory` object outside of update handler');
+        }
+    }
 }
 
 class RemoteSnippetsDirectoryCollectionImpl extends DirectoryCollectionBase<string> implements RemoteSnippetsDirectoryCollection {
@@ -264,6 +297,7 @@ async function getSelfApplication(): Promise<Application> {
         startup_app: {uuid: string; name?: string; icon?: string};
     }
 
+    // TODO: Use latest version of this from develop FinEnvironment
     const {shortcut, startup_app: startupApp} = applicationInfo.manifest as OFManifest;
 
     const title = (shortcut && shortcut.name) || startupApp.name || startupApp.uuid;

@@ -29,7 +29,7 @@ export type TestWindowContext = BaseWindowContext & {
     channelEventListeners: TestWindowChannelEventListener[];
 
     channelTransports: {[id: string]: TestChannelTransport};
-    directories: {[id: string]: AppDirectory};
+    directories: AppDirectory[];
 
     receivedContexts: {listenerID: number; context: Context}[];
     receivedEvents: {listenerID: number; payload: Events}[];

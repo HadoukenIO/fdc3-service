@@ -7,7 +7,7 @@
  *
  * The Listener classes have been replaced with functions which will create the
  * listeners and when triggered will invoke the provided callback in the test's
- * context (i.e. in node, not the window);
+ * context (i.e. in node, not the window).
  */
 
 import {Identity} from 'openfin/_v2/main';
@@ -231,24 +231,24 @@ export async function updateAppDirectory(
     migrationHandler: (directory: RemoteDirectory) => Promise<void>,
     options?: UpdateAppDirectoryOptions
 ): Promise<void> {
-    const mountedTrigger = await ofBrowser.getOrMountRemoteFunction(executionTarget, async (id: string) => {
-        await migrationHandler(new RemoteDirectory(executionTarget, id));
+    const mountedTrigger = await ofBrowser.getOrMountRemoteFunction(executionTarget, async (index: number) => {
+        await migrationHandler(new RemoteDirectory(executionTarget, index));
     });
 
     await ofBrowser.executeOnWindow(
         executionTarget,
         async function (
             this: TestWindowContext,
-            remoteMigrationHandler: ((id: string) => Promise<void>),
+            remoteMigrationHandler: ((index: number) => Promise<void>),
             remoteOptions?: UpdateAppDirectoryOptions
         ): Promise<void> {
             await this.fdc3.updateAppDirectory(async (directory: AppDirectory) => {
-                this.directories['foo'] = directory;
+                this.directories.push(directory);
 
-                await remoteMigrationHandler('foo');
+                await remoteMigrationHandler(this.directories.length - 1);
             }, remoteOptions);
         },
-        mountedTrigger as unknown as ((id: string) => Promise<void>),
+        mountedTrigger as unknown as ((index: number) => Promise<void>),
         options as UpdateAppDirectoryOptions | undefined
     );
 
