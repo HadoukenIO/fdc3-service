@@ -33,6 +33,7 @@
 import deepEqual from 'deep-equal';
 
 import {Application, AppName} from '../types/directory';
+import {sanitizeFunction, sanitizePositiveInteger, sanitizeNonEmptyString, safeStringify} from '../validation';
 
 // TODO: Remove once Storage API is in published runtime and types are updated [SERVICE-840]
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -200,7 +201,8 @@ export const APP_DIRECTORY_STORAGE_TAG: string = 'of-fdc3-service.directory';
  * specified in [[UpdateAppDirectoryOptions]]
  */
 export async function updateAppDirectory(migrationHandler: UpdateAppDirectoryMigrationHandler, options?: UpdateAppDirectoryOptions): Promise<void> {
-    // TODO: type check options, check for empty strings, positive integer values.
+    migrationHandler = sanitizeFunction(migrationHandler);
+    options = sanitizeOptions(options);
 
     const selfApplication = await getSelfApplication();
 
@@ -448,5 +450,25 @@ async function writeIfUnchanged(shardMap: StoredDirectoryShardMap, json: string 
         return true;
     } else {
         return false;
+    }
+}
+
+function sanitizeOptions(options: UpdateAppDirectoryOptions | undefined): UpdateAppDirectoryOptions | undefined {
+    if (options === undefined) {
+        return options;
+    }
+
+    if (options === null || typeof options !== 'object') {
+        throw new TypeError(`${safeStringify(options, 'The provided value')} is not a valid UpdateAppDirectoryOptions`);
+    }
+
+    try {
+        return {
+            namespace: options.namespace === undefined ? undefined : sanitizeNonEmptyString(options.namespace),
+            maxSourceVersion: options.maxSourceVersion === undefined ? undefined : sanitizePositiveInteger(options.maxSourceVersion),
+            destinationVersion: options.destinationVersion === undefined ? undefined : sanitizePositiveInteger(options.destinationVersion)
+        };
+    } catch (e) {
+        throw new TypeError(`${safeStringify(options, 'The provided value')} is not a valid UpdateAppDirectoryOptions. ${e.message}`);
     }
 }

@@ -12,6 +12,17 @@ import {ChannelId} from './api/contextChannels';
 import {Application} from './types/directory';
 
 /**
+ * Validates and returns the provided function
+ */
+export function sanitizeFunction<T, U extends any[]>(value: (...args: U) => T): (...args: U) => T {
+    if (typeof value !== 'function') {
+        throw new TypeError(`${safeStringify(value, 'The provided value')} is not a valid function`);
+    }
+
+    return value;
+}
+
+/**
  * Validates the provided Identity and returns an Identity stripped of any extraneous properties.
  */
 export function sanitizeIdentity(identity: Identity): Identity {
@@ -29,7 +40,7 @@ export function sanitizeIdentity(identity: Identity): Identity {
     }
 
     if (error) {
-        throw new TypeError(`${safeStringify(identity, 'The provided Identity')} is not a valid Identity`);
+        throw new TypeError(`${safeStringify(identity, 'The provided value')} is not a valid Identity`);
     }
 
     return {uuid: identity.uuid, name: identity.name || identity.uuid};
@@ -54,7 +65,7 @@ export function sanitizeContext(context: Context): Context {
     }
 
     if (error) {
-        throw new TypeError(`${safeStringify(context, 'The provided Context')} is not a valid Context`);
+        throw new TypeError(`${safeStringify(context, 'The provided value')} is not a valid Context`);
     }
 
     return context;
@@ -65,7 +76,7 @@ export function sanitizeContext(context: Context): Context {
  */
 export function sanitizeChannelId(channelId: ChannelId): ChannelId {
     if (typeof channelId !== 'string') {
-        throw new TypeError(`${safeStringify(channelId, 'The provided ChannelId')} is not a valid ChannelId`);
+        throw new TypeError(`${safeStringify(channelId, 'The provided value')} is not a valid ChannelId`);
     }
 
     return channelId;
@@ -75,19 +86,30 @@ export function sanitizeChannelId(channelId: ChannelId): ChannelId {
  * Validates and returns the provided app channel name.
  */
 export function sanitizeAppChannelName(name: string): ChannelId {
-    if (typeof name !== 'string' || name === '') {
-        throw new TypeError(`${safeStringify(name, 'The provided app channel name')} is not a valid app channel name`);
+    try {
+        return sanitizeNonEmptyString(name);
+    } catch (e) {
+        throw new TypeError(`${safeStringify(name, 'The provided value')} is not a valid app channel name`);
     }
-
-    return name;
 }
 
 /**
- * Validates and returns the provided number. Will throw if the number is not an integer.
+ * Validates and returns the provided string. Will throw if the string is empty
  */
-export function sanitizeInteger(value: number): number {
-    if (typeof value !== 'number' || isNaN(value) || Math.floor(value) !== value) {
-        throw new TypeError(`${safeStringify(value, 'The provided value')} is not a valid integer`);
+export function sanitizeNonEmptyString(value: string): ChannelId {
+    if (typeof value !== 'string' || value === '') {
+        throw new TypeError(`${safeStringify(value, 'The provided value')} is not a non-empty string`);
+    }
+
+    return value;
+}
+
+/**
+ * Validates and returns the provided number. Will throw if the number is not a positive integer.
+ */
+export function sanitizePositiveInteger(value: number): number {
+    if (typeof value !== 'number' || isNaN(value) || Math.floor(value) !== value || value < 1) {
+        throw new TypeError(`${safeStringify(value, 'The provided value')} is not a valid positive integer`);
     }
 
     return value;
@@ -98,7 +120,7 @@ export function sanitizeInteger(value: number): number {
  */
 export function sanitizeAppDirectoryData(data: string | Application[]): string | Application[] {
     if (!((typeof data === 'string' && data !== '') || (data instanceof Array))) {
-        throw new TypeError(`${safeStringify(data, 'The provided app directory data')} is not a valid app directory data`);
+        throw new TypeError(`${safeStringify(data, 'The provided value')} is not a valid app directory data`);
     }
 
     return data;
@@ -113,7 +135,7 @@ export function validateEnvironment(): void {
     }
 }
 
-function safeStringify(value: {}, fallback: string): string {
+export function safeStringify(value: {}, fallback: string): string {
     // Provided object may not be stringify-able (e.g., due to circular references), so we need to try-catch
     let result: string;
     try {
