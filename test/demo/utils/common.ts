@@ -5,7 +5,7 @@ import {Intent} from '../../../src/provider/intents';
 import {testManagerIdentity, appStartupTime} from '../constants';
 import {Boxed} from '../../../src/provider/utils/types';
 import {RESOLVER_IDENTITY} from '../../../src/provider/utils/constants';
-import {SERVICE_IDENTITY} from '../../../src/client/internal';
+import {getServiceIdentity} from '../../../src/client/internal';
 import {Model} from '../../../src/provider/model/Model';
 
 import {fin} from './fin';
@@ -158,7 +158,7 @@ export async function closeResolver(): Promise<void> {
  */
 async function isServiceClear(): Promise<boolean> {
     return fdc3Remote.ofBrowser.executeOnWindow<[TestAppData], boolean, ProviderWindow>(
-        SERVICE_IDENTITY,
+        getServiceIdentity(),
         function (this: ProviderWindow, expectedWindowIdentity: Identity): boolean {
             if (this.model.connections.length !== 1) {
                 return false;

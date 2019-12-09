@@ -4,7 +4,7 @@ import {ChannelProvider} from 'openfin/_v2/api/interappbus/channel/provider';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
-import {SERVICE_CHANNEL, serializeError} from '../client/internal';
+import {getServiceChannel, serializeError} from '../client/internal';
 
 /**
  * Semantic type definition.
@@ -100,7 +100,7 @@ export class APIHandler<T extends Enum> {
     }
 
     public async registerListeners<S extends APISpecification<T>>(actionHandlerMap: APIImplementation<T, S>): Promise<void> {
-        this._providerChannel = await fin.InterApplicationBus.Channel.create(SERVICE_CHANNEL);
+        this._providerChannel = await fin.InterApplicationBus.Channel.create(getServiceChannel());
 
         this._providerChannel.onConnection(this.onConnectionHandler.bind(this));
         this._providerChannel.onDisconnection(this.onDisconnectionHandler.bind(this));

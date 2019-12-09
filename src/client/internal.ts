@@ -15,21 +15,24 @@ import {AppIntent, Context, IntentResolution, Listener} from './main';
 import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel} from './contextChannels';
 import {FDC3Error} from './errors';
 
+export interface ServiceIdentity{
+    uuid: string;
+    name: string;
+}
+
 /**
- * The identity of the main application window of the service provider
+ * The identity of the main application window of the service provider. Will be changed based on
+ * how the service is started.
  */
-export const SERVICE_IDENTITY = {
-    uuid: 'fdc3-service',  // default value
+const serviceIdentity: ServiceIdentity = {
+    uuid: 'fdc3-service',
     name: 'fdc3-service'
 };
 
 /**
  * Name of the IAB channel use to communicate between client and provider
  */
-export let SERVICE_CHANNEL: string = 'of-fdc3-service-v1';
-export function setServiceChannel(channelName: string) {
-    SERVICE_CHANNEL = channelName;
-}
+let serviceChannel: string = 'of-fdc3-service-v1';
 
 /**
  * Enum containing all and only actions that the provider can accept.
@@ -328,4 +331,29 @@ export function deserializeError(error: Error): Error | FDC3Error {
     }
 
     return error;
+}
+
+export function getServiceChannel(): string {
+    return serviceChannel;
+}
+
+export function setServiceChannel(channelName: string) {
+    serviceChannel = channelName;
+}
+
+export function getServiceIdentity(): ServiceIdentity {
+    return serviceIdentity;
+}
+
+export function getServiceIdentityUUID(): string {
+    return serviceIdentity.uuid;
+}
+
+export function getServiceIdentityName(): string {
+    return serviceIdentity.name;
+}
+
+export function setServiceIdentity(newServiceIdentity: ServiceIdentity) {
+    serviceIdentity.uuid = newServiceIdentity.uuid;
+    serviceIdentity.name = newServiceIdentity.name;
 }

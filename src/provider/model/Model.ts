@@ -47,7 +47,7 @@ export class Model {
     public readonly onConnectionAdded: Signal<[AppConnection]> = new Signal();
 
     /**
-     * Signal emitted whenever an application entity (previously emitted via `onConnecitonAdded`) disconnects from the
+     * Signal emitted whenever an application entity (previously emitted via `onConnectionAdded`) disconnects from the
      * service.
      *
      * For window-based entities, this is keyed to the window closing rather than the IAB disconnecting.
@@ -66,7 +66,7 @@ export class Model {
     private readonly _onConnectionRegisteredInternal: Signal<[AppConnection]> = new Signal();
 
     constructor(
-    @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
+        @inject(Inject.APP_DIRECTORY) directory: AppDirectory, // eslint-disable-line @typescript-eslint/indent
         @inject(Inject.ENVIRONMENT) environment: Environment,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>
     ) {
@@ -380,7 +380,7 @@ export class Model {
             connection.removeAllListeners();
 
             // For non-window connections, also treat this as the entity being destroyed
-            // There is no `window-closed` equivilant for external connections, so we will do our full clean-up of state here
+            // There is no `window-closed` equivalent for external connections, so we will do our full clean-up of state here
             if (connection.entityType === EntityType.EXTERNAL_CONNECTION) {
                 this.removeConnection(connection.identity);
 

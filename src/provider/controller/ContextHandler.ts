@@ -20,7 +20,7 @@ export class ContextHandler {
     private readonly _model: Model;
 
     constructor(
-    @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
+        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>, // eslint-disable-line @typescript-eslint/indent
         @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
         @inject(Inject.MODEL) model: Model
     ) {
