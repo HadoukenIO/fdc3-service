@@ -348,7 +348,7 @@ describe('When fetching initial data', () => {
             await expect(appDirectory.getAllApps()).resolves.toEqual([app1, app3]);
         });
 
-        test.only('When a stored shard references a remote snippet from outside its domain, that snippet is not used by the directory', async () => {
+        test('When a stored shard references a remote snippet from outside its domain, that snippet is not used by the directory', async () => {
             const insideDomain: string = createFakeDomain();
             const outsideDomain: string = createFakeDomain();
 
@@ -369,7 +369,7 @@ describe('When fetching initial data', () => {
             await expect(appDirectory.getAllApps()).resolves.toEqual([app1]);
         });
 
-        test.only('When a remote snippet contains an app from outside its domain, that app is not used by the directory', async () => {
+        test('When a remote snippet contains an app from outside its domain, that app is not used by the directory', async () => {
             const insideDomain: string = createFakeDomain();
             const outsideDomain: string = createFakeDomain();
 
