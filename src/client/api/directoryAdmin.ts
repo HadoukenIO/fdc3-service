@@ -116,6 +116,17 @@ export const APP_DIRECTORY_STORAGE_TAG: string = 'of-fdc3-service.directory';
 export async function updateAppDirectory(migrationHandler: UpdateAppDirectoryMigrationHandler, options?: UpdateAppDirectoryOptions): Promise<void> {
     const selfApplication = await getSelfApplication();
 
+    const namespaceKey = getNamespaceKey(options);
+
+    if (options &&
+        options.maxSourceVersion !== undefined &&
+        options.destinationVersion !== undefined &&
+        options.maxSourceVersion > options.destinationVersion
+    ) {
+        console.warn(`Update handler outputs version ${options.destinationVersion} but claims to require version \
+${options.maxSourceVersion} or lower. \`destinationVersion\` should be greater than or equal to \`maxSourceVersion\``);
+    }
+
     let json: string | undefined;
     let shardMap: StoredDirectoryShardMap;
 
@@ -123,7 +134,6 @@ export async function updateAppDirectory(migrationHandler: UpdateAppDirectoryMig
         json = await readJson();
         shardMap = json ? await readShardMap(json) : {};
 
-        const namespaceKey = getNamespaceKey(options);
         const shard = shardMap[namespaceKey] || createDefaultShard();
 
         const remoteSnippets = new RemoteSnippetsDirectoryCollectionImpl(shard.remoteSnippets);
@@ -141,15 +151,6 @@ ${options.maxSourceVersion} or lower. Skipping directory update.`);
             console.log(`Stored directory is version ${version}, but update handler outputs version \
 ${options.destinationVersion}. Skipping directory update.`);
             break;
-        }
-
-        if (options &&
-            options.maxSourceVersion !== undefined &&
-            options.destinationVersion !== undefined &&
-            options.maxSourceVersion > options.destinationVersion
-        ) {
-            console.warn(`Update handler outputs version ${options.destinationVersion} but claims to require version \
-${options.maxSourceVersion} or lower. \`destinationVersion\` should be greater than or equal to \`maxSourceVersion\``);
         }
 
         await migrationHandler({
