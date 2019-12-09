@@ -18,17 +18,27 @@ import {FDC3Error} from './errors';
 /**
  * The identity of the main application window of the service provider
  */
-export const SERVICE_IDENTITY = {
+const serviceIdentity: Identity = {
     uuid: 'fdc3-service',  // default value
     name: 'fdc3-service'
 };
+export function setServiceIdentity(uuid: string) {
+    serviceIdentity.uuid = uuid;
+    serviceIdentity.name = uuid;
+}
+export function getServiceIdentity(): Identity {
+    return serviceChannel;
+}
 
 /**
  * Name of the IAB channel use to communicate between client and provider
  */
-export let SERVICE_CHANNEL: string = 'of-fdc3-service-v1';
+let serviceChannel: string = 'of-fdc3-service-v1';
 export function setServiceChannel(channelName: string) {
-    SERVICE_CHANNEL = channelName;
+    serviceChannel = channelName;
+}
+export function getServiceChannel(): string {
+    return serviceChannel;
 }
 
 /**

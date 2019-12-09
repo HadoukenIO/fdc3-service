@@ -15,7 +15,7 @@ import {EventEmitter} from 'events';
 
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
-import {APIFromClientTopic, SERVICE_CHANNEL, setServiceChannel, SERVICE_IDENTITY, APIFromClient, deserializeError, Events} from './internal';
+import {APIFromClientTopic, getServiceChannel, setServiceChannel, getServiceIdentity, setServiceIdentity, APIFromClient, deserializeError, Events} from './internal';
 import {EventRouter} from './EventRouter';
 
 /**
@@ -52,7 +52,7 @@ export function getServicePromise(): Promise<ChannelClient> {
     if (!channelPromise) {
         if (typeof fin === 'undefined') {
             channelPromise = Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.'));
-        } else if (fin.Window.me.uuid === SERVICE_IDENTITY.uuid && fin.Window.me.name === SERVICE_IDENTITY.name) {
+        } else if (fin.Window.me.uuid === getServiceIdentity().uuid && fin.Window.me.name === getServiceIdentity().name) {
             // Currently a runtime bug when provider connects to itself. Ideally the provider would never import a file
             // that includes this, but for now it is easier to put a guard in place.
             channelPromise = Promise.reject<ChannelClient>(new Error('Trying to connect to provider from provider'));
@@ -60,14 +60,13 @@ export function getServicePromise(): Promise<ChannelClient> {
             channelPromise = new Promise<ChannelClient>((resolve, reject) => {
                 fin.System.getRuntimeInfo().then((info: any) => {
                     if (info.fdc3AppUuid && info.fdc3ChannelName) {
-                        SERVICE_IDENTITY.uuid = info.fdc3AppUuid;
-                        SERVICE_IDENTITY.name = info.fdc3AppUuid;
+                        setServiceIdentity(info.fdc3AppUuid);
                         setServiceChannel(info.fdc3ChannelName);
                     }
-                    if (fin.Window.me.uuid === SERVICE_IDENTITY.uuid && fin.Window.me.name === SERVICE_IDENTITY.name) {
+                    if (fin.Window.me.uuid === getServiceIdentity().uuid && fin.Window.me.name === getServiceIdentity().name) {
                         reject(new Error('Trying to connect to provider from provider'));
                     } else {
-                        fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}}).then((channel: ChannelClient) => {
+                        fin.InterApplicationBus.Channel.connect(getServiceChannel(), {payload: {version: PACKAGE_VERSION}}).then((channel: ChannelClient) => {
                             // Register service listeners
                             channel.register('WARN', (payload: unknown) => console.warn(payload));  // tslint:disable-line:no-any
 
