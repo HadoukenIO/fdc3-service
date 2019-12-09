@@ -1,7 +1,33 @@
 /**
- * Placeholder
+ * API enabling FDC3 applications to specify an app directory for that application's domain.
+ *
+ * The FDC3 service builds its app directory by combining each domain-specific app directory provided by individual
+ * FDC3 applications. An FDC3 application may only specify a directory for its own domain (defined to be the domain of
+ * the file the calling OpenFin window is viewing), and this directory may only provide applications whose manifests
+ * live on that domain.
+ *
+ * The app directory for a domain is specified or updated by calling the [[updateAppDirectory]] with a migration
+ * handler callback. This callback will be called with an [[AppDirectory]] object which allows the current (possibly
+ * empty) state of the app directory to the read and modified.
+ *
+ * Where app directories of different names provide applications of conflicting names, appIds, or UUIDs, the service
+ * will arbitrarily choose one of the conflicting applications to include and discard the rest.
+ *
+ * The app directory for a given domain will have an associated version number, which will default to 1 when an app
+ * directory is first created. The [[updateAppDirectory]] function allows this version number to be updated and
+ * queried, which may be useful to your organization if you have several apps that may be trying to update their
+ * domain's app directory in potentially differing and depricated ways. It is up to your organization how you wish to
+ * use this feature.
+ *
+ * Callers of [[updateAppDirectory]] may also specify a namespace, which allows multiple independent app directories to
+ * exist on the same domain. This may be useful if your organization has multiple internal groups with applications
+ * hosted on the same domain.
  *
  * @module DirectoryAdmin
+ */
+
+/**
+ * Contains API definitions for updating a domain's app directory shard
  */
 
 import deepEqual from 'deep-equal';
@@ -17,16 +43,33 @@ declare namespace fin {
 }
 
 /**
- * Placeholder
+ * The required signature of the migration handler callback.
  */
 export type UpdateAppDirectoryMigrationHandler = (directory: AppDirectory) => void | Promise<void>;
 
 /**
- * Placeholder
+ * Options that may be passed to [[updateAppDirectory]].
  */
 export interface UpdateAppDirectoryOptions {
+    /**
+     * An optional namespace. If exists, must be a non-empty string. If this is specified, that app directory for this
+     * namespace on this applications domain will be read and written to be [[updateAppDirectory]].
+     */
     namespace?: string;
+
+    /**
+     * The maximum app directory version that the migration handler can handle. If exists, must be a positive integer.
+     * If this is specified, and the current version of the app directory is greater than this version, the migration
+     * handler will not be called.
+     */
     maxSourceVersion?: number;
+
+    /**
+     * The version of the app directory outputted by the migration handler. If exists, must be a positive integer,
+     * and should be greater than or equal to `maxSourceVersion` if that also exists. If this is specified, and the
+     * current version of the app directory is greater than this version, the migration handler will not be called. If
+     * this is not specied, the version of the app directory will be unchanged.
+     */
     destinationVersion?: number;
 }
 
