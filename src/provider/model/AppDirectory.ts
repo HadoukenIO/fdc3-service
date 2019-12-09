@@ -97,6 +97,7 @@ export class AppDirectory extends AsyncInit {
 
     protected async init(): Promise<void> {
         this._appDirectoryStorage.changed.add(this.onStorageChanged, this);
+        await this._appDirectoryStorage.initialized;
 
         await this.refreshDirectory();
     }

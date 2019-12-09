@@ -1,16 +1,15 @@
 import 'jest';
 import 'reflect-metadata';
 
-import {Store} from 'openfin-service-config';
 import {Signal} from 'openfin-service-signal';
 
 import {Application} from '../../../src/client/directory';
 import {AppDirectory} from '../../../src/provider/model/AppDirectory';
-import {ConfigurationObject} from '../../../gen/provider/config/fdc3-config';
 import {createFakeApp, createFakeUrl, createFakeIntent, createFakeContextType} from '../../demo/utils/fakes';
-import {createMockAppDirectoryStorage, getterMock, createMockConfigStore} from '../../mocks';
+import {createMockAppDirectoryStorage, getterMock} from '../../mocks';
 import {resolvePromiseChain} from '../../utils/unit/time';
-import {DomainAppDirectoryShard} from '../../../src/provider/model/AppDirectoryStorage';
+import {StoredAppDirectoryShard} from '../../../src/client/internal';
+import {ScopedAppDirectoryShard, DomainShardScope} from '../../../src/provider/model/AppDirectoryStorage';
 
 enum StorageKeys {
     DIRECTORY_CACHE = 'fdc3@directoryCache'
@@ -46,7 +45,6 @@ const fakeApp2: Application = createFakeApp({
 const fakeApp3: Application = createFakeApp();
 
 const mockAppDirectoryStorage = createMockAppDirectoryStorage();
-const mockConfigStore = createMockConfigStore();
 
 const fakeApps: Application[] = [fakeApp1, fakeApp2];
 const cachedFakeApps: Application[] = [fakeApp1, fakeApp2, fakeApp3];
@@ -60,8 +58,7 @@ beforeEach(() => {
 describe('When fetching initial data', () => {
     describe('When our source is a single URL from the config store', () => {
         beforeEach(async () => {
-            setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
-            setupEmptyDirectoryStorage();
+            setupDirectoryStorage([], DEV_APP_DIRECTORY_URL);
         });
 
         describe('And we\'re online', () => {
@@ -132,7 +129,6 @@ describe('When fetching initial data', () => {
     describe('When our source is stored data', () => {
         beforeEach(() => {
             setupEmptyCache();
-            setupDefaultConfigStore();
         });
 
         test('When we have multiple stored snippets, all are used by the directory', async () => {
@@ -185,11 +181,10 @@ describe('When fetching initial data', () => {
             const storedApps = [createFakeAppForDomain(domain), createFakeAppForDomain(domain)];
             const remoteApps = [createFakeAppForDomain(domain), createFakeAppForDomain(domain)];
 
-            setupConfigStoreWithUrl(defaultUrl);
             setupRemotesWithData([{url: defaultUrl, applications: defaultApps}, {url: remoteUrl, applications: remoteApps}]);
             setupDirectoryStorage([
                 {domain, shard: {urls: [remoteUrl], applications: storedApps}}
-            ]);
+            ], defaultUrl);
 
             await createAppDirectory();
 
@@ -406,7 +401,6 @@ describe('When stored data changes', () => {
         startStoredSnippet = [createFakeAppForDomain(testDomain), createFakeAppForDomain(testDomain), createFakeAppForDomain(testDomain)];
         startRemoteSnippet = [createFakeAppForDomain(testDomain), createFakeAppForDomain(testDomain)];
 
-        setupDefaultConfigStore();
         setupEmptyCache();
         setupDirectoryStorage([
             {domain: testDomain, shard: {urls: [testUrl], applications: startStoredSnippet}}
@@ -468,8 +462,7 @@ describe('When stored data changes', () => {
 
 describe('When querying the directory', () => {
     beforeEach(async () => {
-        setupConfigStoreWithUrl(DEV_APP_DIRECTORY_URL);
-        setupEmptyDirectoryStorage();
+        setupDirectoryStorage([], DEV_APP_DIRECTORY_URL);
         setupRemotesWithData([{url: DEV_APP_DIRECTORY_URL, applications: fakeApps}]);
 
         await createAppDirectory();
@@ -505,32 +498,15 @@ describe('When querying the directory', () => {
     });
 });
 
-function setupDefaultConfigStore(): void {
-    const config = new Store<ConfigurationObject>(require('../../../gen/provider/config/defaults.json'));
-    getterMock(mockConfigStore, 'config').mockReturnValue(config);
-    getterMock(mockConfigStore, 'initialized').mockReturnValue(Promise.resolve());
-}
-
-function setupConfigStoreWithUrl(url: string): void {
-    const config = new Store<ConfigurationObject>(require('../../../gen/provider/config/defaults.json'));
-    config.add({level: 'desktop'}, {applicationDirectory: url});
-
-    getterMock(mockConfigStore, 'config').mockReturnValue(config);
-    getterMock(mockConfigStore, 'initialized').mockReturnValue(Promise.resolve());
-}
-
-function setupEmptyDirectoryStorage(): void {
+function setupDirectoryStorage(data: {domain: string; shard: StoredAppDirectoryShard}[], url?: string): void {
+    getterMock(mockAppDirectoryStorage, 'initialized').mockReturnValue(Promise.resolve());
     getterMock(mockAppDirectoryStorage, 'changed').mockReturnValue(new Signal<[]>());
-    mockAppDirectoryStorage.getDirectoryShards.mockReturnValue([]);
+    mockAppDirectoryStorage.getDirectoryShards.mockReturnValue(createDirectoryShards(data, url));
 }
 
-function setupDirectoryStorage(data: DomainAppDirectoryShard[]): void {
-    getterMock(mockAppDirectoryStorage, 'changed').mockReturnValue(new Signal<[]>());
-    mockAppDirectoryStorage.getDirectoryShards.mockReturnValue(data);
-}
-
-function changeDirectoryStorage(data: DomainAppDirectoryShard[]): void {
-    mockAppDirectoryStorage.getDirectoryShards.mockReturnValue(data);
+function changeDirectoryStorage(data: {domain: string; shard: StoredAppDirectoryShard}[], url?: string): void {
+    getterMock(mockAppDirectoryStorage, 'initialized').mockReturnValue(Promise.resolve());
+    mockAppDirectoryStorage.getDirectoryShards.mockReturnValue(createDirectoryShards(data, url));
     mockAppDirectoryStorage.changed.emit();
 }
 
@@ -593,6 +569,24 @@ function createFakeAppForDomain(domain: string, options: Partial<Application> = 
 }
 
 async function createAppDirectory(): Promise<void> {
-    appDirectory = new AppDirectory(mockAppDirectoryStorage, mockConfigStore);
+    appDirectory = new AppDirectory(mockAppDirectoryStorage);
     await appDirectory.delayedInit();
+}
+
+function createDirectoryShards(data: {domain: string; shard: StoredAppDirectoryShard}[], url?: string): ScopedAppDirectoryShard[] {
+    const result: ScopedAppDirectoryShard[] = [];
+
+    if (url) {
+        result.push({
+            scope: {type: 'global'},
+            shard: {urls: [url], applications: []}
+        });
+    }
+
+    result.push(...data.map((domainShard) => ({
+        scope: {type: 'domain', domain: domainShard.domain} as DomainShardScope,
+        shard: domainShard.shard
+    })));
+
+    return result;
 }

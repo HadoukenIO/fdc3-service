@@ -21,5 +21,7 @@ export interface ScopedAppDirectoryShard {
 export interface AppDirectoryStorage {
     readonly changed: Signal<[]>;
 
+    readonly initialized: Promise<void>;
+
     getDirectoryShards(): ScopedAppDirectoryShard[];
 }
