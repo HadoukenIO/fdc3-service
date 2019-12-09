@@ -406,7 +406,7 @@ export class Model {
 
         const connection: AppConnection = this._environment.wrapConnection(liveApp, identity, entityType, this._channelsById[DEFAULT_CHANNEL_ID]);
 
-        console.info(`Registering connection ${connection.id}`);
+        console.info(`Registering connection ${connection.id} of type ${entityType}`);
 
         this._connectionsById[connection.id] = connection;
         delete this._expectedConnectionsById[connection.id];
