@@ -3,82 +3,21 @@
  */
 
 /**
- * Error codes specific to the [[open]] function. Note that this is not an exhaustive list of error codes that can be returned by [[open]],
- * which may return any of the generic error codes, such as ApplicationError.
- */
-export enum OpenError {
-    /**
-     * Indicates that an application of the provided name cannot be found in the application directory.
-     */
-    AppNotFound = 'AppNotFound',
-
-    /**
-     * In the case where the optional `context` argument is provided, indicates that the provided application was started, but threw an
-     * error when attempting to handle the provided context.
-     */
-    SendContextError = 'SendContextError',
-
-    /**
-     * In the case where the optional `context` argument is provided, indicates that the provided application was started, but a timeout
-     * was reached waiting for it to handle the provided context.
-     */
-    SendContextTimeout = 'SendContextTimeout',
-
-    /**
-     * In the case where the optional `context` argument is provided, indicates that the provided application was started, but did not add
-     * a context handler.
-     */
-    SendContextNoHandler = 'SendContextNoHandler'
-}
-
-/**
- * Error codes specific to the [[raiseIntent]] function. Note that this is not an exhaustive list of error codes that can be returned by
- * [[raiseIntent]], which may return any of the generic error codes, such as ApplicationError.
- */
-export enum RaiseIntentError {
-    /**
-     * Indicates that no application could be found to handle the provided intent and context.
-     */
-    NoAppsFound = 'NoAppsFound',
-    /**
-     * In the case where the optional 'target' argument is provided, no such application either exists in the application directory or is
-     * currently running.
-     */
-    TargetAppNotAvailable = 'TargetAppNotAvailable',
-    /**
-     * In the case where the optional 'target' argument is provided, indicates that the app is not able to handle this intent and context.
-     */
-    TargetAppDoesNotHandleIntent = 'TargetAppDoesNotHandleIntent',
-    /**
-     * The intent resolver UI was dismissed by the user, so the intent has been cancelled.
-     */
-    ResolverClosedOrCancelled = 'ResolverClosedOrCancelled',
-    /**
-     * Indicates that an application was started, but threw an error when attempting to handle the provided intent and context.
-     */
-    SendIntentError = 'SendIntentError',
-    /**
-     * Indicates that an application was started, but a timeout was reached waiting for it to handle the provided intent and context.
-     */
-    SendIntentTimeout = 'SendIntentTimeout',
-    /**
-     * Indicates that an application was started, but did not add a handler for the provided intent.
-     */
-    SendIntentNoHandler = 'SendIntentNoHandler'
-}
-
-/**
- * Error codes relating to launching applications.
+ * Errors related to launching or interacting with a particular application.
  */
 export enum ApplicationError {
     /**
+     * Indicates that an application of the provided name could not be found, either running or in the application directory.
+     */
+    NotFound = 'ApplicationError:NotFound',
+    /**
      * Indicates that an application could not be started from an OpenFin manifest.
      */
-    ErrorOnLaunch = 'ErrorOnLaunch',
+    LaunchError = 'ApplicationError:LaunchError',
     /**
      * Indicates that a timeout was reached before the application was started.
      */
-    AppTimeout = 'AppTimeout'
+    LaunchTimeout = 'ApplicationError:LaunchTimeout'
 }
 
 /**
@@ -88,17 +27,53 @@ export enum ChannelError {
     /**
      * Indicates that a channel of a provided ID does not exist.
      */
-    ChannelWithIdDoesNotExist = 'ChannelWithIdDoesNotExist'
+    ChannelWithIdDoesNotExist = 'ChannelError:ChannelWithIdDoesNotExist'
 }
 
 /**
- * Error codes relating to OpenFin windows.
+ * Error codes relating to connections to the FDC3 service, from OpenFin windows or otherwise.
  */
-export enum IdentityError {
+export enum ConnectionError {
     /**
-     * Indicates that a window with a provided OpenFin Identity cannot be found.
+     * Indicates that no window with a provided OpenFin Identity is registered with the FDC3 service.
      */
-    WindowWithIdentityNotFound = 'WindowWithIdentityNotFound'
+    WindowWithIdentityNotFound = 'ConnectionError:WindowWithIdentityNotFound'
+}
+
+/**
+ * Errors related to resolving an application to handle an intent and context.
+ */
+export enum ResolveError {
+    /**
+     * Indicates that no application could be found to handle the provided intent and context.
+     */
+    NoAppsFound = 'ResolveError:NoAppsFound',
+    /**
+     * Indicates that a provided application does not handle the provided intent and context.
+     */
+    AppDoesNotHandleIntent = 'ResolveError:AppDoesNotHandleIntent',
+    /**
+     * Indicates that intent resolution has been cancelled because the user dismissed the intent resolver UI.
+     */
+    ResolverClosedOrCancelled = 'ResolveError:ResolverClosedOrCancelled'
+}
+
+/**
+ * Errors related to sending a context, possibly as part of an intent, to another application registered with the FDC3 service
+ */
+export enum SendContextError {
+    /**
+     * Indicates that the target application has no windows that have a relevant handler for the given context.
+     */
+    NoHandler = 'SendContextError:NoHandler',
+    /**
+     * Indicates that all handlers for the given context threw an error when invoked.
+     */
+    HandlerError = 'SendContextError:HandlerError',
+    /**
+     * Indicates that all handers for the given context failed to completed before a timeout was reached
+     */
+    HandlerTimeout = 'SendContextError:SendIntentTimeout'
 }
 
 /**
@@ -110,7 +85,7 @@ export enum IdentityError {
  */
 export class FDC3Error extends Error {
     /**
-     * A string from one of [[OpenError]], [[ResolveError]], [[ChannelError]] or [[IdentityError]].
+     * A string from one of [[ApplicationError]], [[ChannelError]], [[ConnectionError]], [[ResolveError]] or [[SendContextError]].
      *
      * Future versions of the service may add additional error codes. Applications should allow for the possibility of
      * error codes that do not exist in the above enumerations.

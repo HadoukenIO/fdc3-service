@@ -13,12 +13,16 @@ export const Timeouts = {
     APP_START_FROM_MANIFEST: 30000,
 
     /**
-     * Time service allows for a `window-created` event after a client expects the window to exist.
+     * For windows, the time service allows for a `window-created` event after a client expects the window to exist.
+     *
+     * For other entity types, the entity must connect to the service within this time of an expected connection.
      */
-    WINDOW_EXPECT_TO_CREATED: 250,
+    ENTITY_INITIALIZE: 250,
 
     /**
      * Time service allows for a window to go from first created to being fully registered with the model.
+     *
+     * Applies only to windows, since there is no `window-created` equivilant for non-OpenFin windows/connections.
      */
     WINDOW_CREATED_TO_REGISTERED: 5000,
 

@@ -1,70 +1,54 @@
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
+import {allowReject, untilTrue} from 'openfin-service-async';
 
 import {Events, ChannelEvents} from '../../client/internal';
 import {getId} from '../utils/getId';
 import {IntentType} from '../intents';
 import {Application, ChannelId} from '../../client/main';
-import {untilTrue, allowReject} from '../utils/async';
 
 import {ContextChannel} from './ContextChannel';
+import {EntityType} from './Environment';
 
 /**
- * Model interface, representing a window that has connected to the service.
+ * Model interface, representing an entity that has connected to the service.
  *
- * Only windows that have created intent or context listeners will be represented in this model. If any non-registered
- * window.
- *
- * TODO [SERVICE-737] Review naming of this interface, due to these objects now representing (potentially window-less)
- * external connections. Likewise for "downstream" types/functions/etc.
+ * Since an IAB connection is required for an `AppConnection` object to be created, these will only ever refer to FDC3-enabled
+ * entities (windows/applications/etc).
  */
-export interface AppWindow {
+export interface AppConnection {
     id: string;
-
     identity: Identity;
+    entityType: EntityType;
+    entityNumber: number;
 
     appInfo: Readonly<Application>;
-
-    appWindowNumber: number;
-
     channel: ContextChannel;
 
     intentListeners: ReadonlyArray<string>;
-
     channelContextListeners: ReadonlyArray<ChannelId>;
 
     hasIntentListener(intentName: string): boolean;
-
     addIntentListener(intentName: string): void;
-
     removeIntentListener(intentName: string): void;
 
     hasContextListener(): boolean;
-
     addContextListener(): void;
-
     removeContextListener(): void;
 
     hasChannelContextListener(channel: ContextChannel): boolean;
-
     addChannelContextListener(channel: ContextChannel): void;
-
     removeChannelContextListener(channel: ContextChannel): void;
 
     hasChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): boolean;
-
     addChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): void;
-
     removeChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): void;
 
     bringToFront(): Promise<void>;
-
     focus(): Promise<void>;
 
     waitForReadyToReceiveIntent(intent: IntentType): Promise<void>;
-
     waitForReadyToReceiveContext(): Promise<void>;
-
     waitForReadyToReceiveContextOnChannel(channel: ContextChannel): Promise<void>;
 
     removeAllListeners(): void;
@@ -76,12 +60,13 @@ type ContextMap = Set<string>;
 
 type ChannelEventMap = Map<string, Set<Events['type']>>;
 
-export abstract class AbstractAppWindow implements AppWindow {
+export abstract class AppConnectionBase implements AppConnection {
     public channel: ContextChannel;
 
     private readonly _id: string;
+    private readonly _entityType: EntityType;
     private readonly _appInfo: Application;
-    private readonly _appWindowNumber: number;
+    private readonly _entityNumber: number;
 
     private readonly _maturePromise: Promise<void>;
 
@@ -89,16 +74,24 @@ export abstract class AbstractAppWindow implements AppWindow {
     private readonly _channelContextListeners: ContextMap;
     private readonly _channelEventListeners: ChannelEventMap;
 
-    private _contextListener: boolean;
+    private _hasContextListener: boolean;
 
     private readonly _onIntentListenerAdded: Signal<[IntentType]> = new Signal();
     private readonly _onContextListenerAdded: Signal<[]> = new Signal();
     private readonly _onChannelContextListenerAdded: Signal<[ContextChannel]> = new Signal();
 
-    constructor(identity: Identity, appInfo: Application, maturePromise: Promise<void>, channel: ContextChannel, appWindowNumber: number) {
+    constructor(
+        identity: Identity,
+        entityType: EntityType,
+        appInfo: Application,
+        maturePromise: Promise<void>,
+        channel: ContextChannel,
+        entityNumber: number
+    ) {
         this._id = getId(identity);
+        this._entityType = entityType;
         this._appInfo = appInfo;
-        this._appWindowNumber = appWindowNumber;
+        this._entityNumber = entityNumber;
 
         this._maturePromise = maturePromise;
 
@@ -106,7 +99,7 @@ export abstract class AbstractAppWindow implements AppWindow {
         this._channelContextListeners = new Set();
         this._channelEventListeners = new Map();
 
-        this._contextListener = false;
+        this._hasContextListener = false;
 
         this.channel = channel;
     }
@@ -115,12 +108,16 @@ export abstract class AbstractAppWindow implements AppWindow {
         return this._id;
     }
 
+    public get entityType(): EntityType {
+        return this._entityType;
+    }
+
     public get appInfo(): Readonly<Application> {
         return this._appInfo;
     }
 
-    public get appWindowNumber(): number {
-        return this._appWindowNumber;
+    public get entityNumber(): number {
+        return this._entityNumber;
     }
 
     public get channelContextListeners(): ReadonlyArray<ChannelId> {
@@ -145,16 +142,16 @@ export abstract class AbstractAppWindow implements AppWindow {
     }
 
     public hasContextListener(): boolean {
-        return this._contextListener;
+        return this._hasContextListener;
     }
 
     public addContextListener(): void {
-        this._contextListener = true;
+        this._hasContextListener = true;
         this._onContextListenerAdded.emit();
     }
 
     public removeContextListener(): void {
-        this._contextListener = false;
+        this._hasContextListener = false;
     }
 
     public hasChannelContextListener(channel: ContextChannel): boolean {
@@ -205,7 +202,7 @@ export abstract class AbstractAppWindow implements AppWindow {
         this._channelContextListeners.clear();
         this._channelEventListeners.clear();
         this._intentListeners.clear();
-        this._contextListener = false;
+        this._hasContextListener = false;
     }
 
     public abstract identity: Readonly<Identity>;

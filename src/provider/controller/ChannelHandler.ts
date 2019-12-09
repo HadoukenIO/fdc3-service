@@ -5,17 +5,17 @@ import {Model} from '../model/Model';
 import {Inject} from '../common/Injectables';
 import {ChannelId, FDC3Error, ChannelError, Context} from '../../client/main';
 import {SystemContextChannel, ContextChannel, AppContextChannel} from '../model/ContextChannel';
-import {AppWindow} from '../model/AppWindow';
+import {AppConnection} from '../model/AppConnection';
 import {ChannelEvents} from '../../client/internal';
 
 @injectable()
 export class ChannelHandler {
     /**
-     * Channel is adding or removing a window
+     * Channel is adding or removing an entity
      *
-     * Arguments: (window: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null)
+     * Arguments: (connection: AppConnection, channel: ContextChannel | null, previousChannel: ContextChannel | null)
      */
-    public readonly onChannelChanged: Signal<[AppWindow, ContextChannel | null, ContextChannel | null], Promise<void>>;
+    public readonly onChannelChanged: Signal<[AppConnection, ContextChannel | null, ContextChannel | null], Promise<void>>;
 
     private readonly _model: Model;
 
@@ -24,8 +24,8 @@ export class ChannelHandler {
 
         this.onChannelChanged = new Signal(Aggregators.AWAIT_VOID);
 
-        this._model.onWindowAdded.add(this.onModelWindowAdded, this);
-        this._model.onWindowRemoved.add(this.onModelWindowRemoved, this);
+        this._model.onConnectionAdded.add(this.onModelConnectionAdded, this);
+        this._model.onConnectionRemoved.add(this.onModelConnectionRemoved, this);
     }
 
     public getSystemChannels(): SystemContextChannel[] {
@@ -54,59 +54,59 @@ export class ChannelHandler {
         return channel.storedContext;
     }
 
-    public getChannelMembers(channel: ContextChannel): AppWindow[] {
-        return this._model.windows.filter((window) => window.channel === channel);
+    public getChannelMembers(channel: ContextChannel): AppConnection[] {
+        return this._model.connections.filter((connection) => connection.channel === channel);
     }
 
-    public getWindowsListeningForContextsOnChannel(channel: ContextChannel): AppWindow[] {
-        return this._model.windows.filter((window) => window.hasChannelContextListener(channel));
+    public getConnectionsListeningForContextsOnChannel(channel: ContextChannel): AppConnection[] {
+        return this._model.connections.filter((connection) => connection.hasChannelContextListener(channel));
     }
 
-    public getWindowsListeningForEventsOnChannel(channel: ContextChannel, eventType: ChannelEvents['type']): AppWindow[] {
-        return this._model.windows.filter((window) => window.hasChannelEventListener(channel, eventType));
+    public getConnectionsListeningForEventsOnChannel(channel: ContextChannel, eventType: ChannelEvents['type']): AppConnection[] {
+        return this._model.connections.filter((connection) => connection.hasChannelEventListener(channel, eventType));
     }
 
-    public async joinChannel(appWindow: AppWindow, channel: ContextChannel): Promise<void> {
-        const previousChannel = appWindow.channel;
+    public async joinChannel(connection: AppConnection, channel: ContextChannel): Promise<void> {
+        const previousChannel = connection.channel;
 
         if (previousChannel !== channel) {
-            appWindow.channel = channel;
+            connection.channel = channel;
 
             if (this.isChannelEmpty(previousChannel)) {
                 previousChannel.clearStoredContext();
             }
 
-            await this.onChannelChanged.emit(appWindow, channel, previousChannel);
+            await this.onChannelChanged.emit(connection, channel, previousChannel);
         }
     }
 
     public setLastBroadcastOnChannel(channel: ContextChannel, context: Context): void {
-        if (this._model.windows.some((window) => window.channel === channel)) {
+        if (this._model.connections.some((connection) => connection.channel === channel)) {
             channel.setLastBroadcastContext(context);
         }
     }
 
-    private onModelWindowAdded(window: AppWindow): void {
-        this.onChannelChanged.emit(window, window.channel, null);
+    private onModelConnectionAdded(connection: AppConnection): void {
+        this.onChannelChanged.emit(connection, connection.channel, null);
     }
 
-    private onModelWindowRemoved(window: AppWindow): void {
-        if (this.isChannelEmpty(window.channel)) {
-            window.channel.clearStoredContext();
+    private onModelConnectionRemoved(connection: AppConnection): void {
+        if (this.isChannelEmpty(connection.channel)) {
+            connection.channel.clearStoredContext();
         }
 
-        this.onChannelChanged.emit(window, null, window.channel);
+        this.onChannelChanged.emit(connection, null, connection.channel);
     }
 
     private isChannelEmpty(channel: ContextChannel): boolean {
-        return !this._model.windows.some((window) => window.channel === channel);
+        return !this._model.connections.some((connection) => connection.channel === channel);
     }
 
     private validateChannelId(channelId: ChannelId): void {
         const channel = this._model.getChannel(channelId);
 
         if (!channel) {
-            throw new FDC3Error(ChannelError.ChannelWithIdDoesNotExist, `No channel with channelId: ${channelId}`);
+            throw new FDC3Error(ChannelError.ChannelWithIdDoesNotExist, `No channel '${channelId}' found`);
         }
     }
 

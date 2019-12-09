@@ -1,46 +1,56 @@
-/* eslint-disable @typescript-eslint/camelcase, camelcase */
-
+import {injectable, inject} from 'inversify';
 import {WindowEvent, ApplicationEvent} from 'openfin/_v2/api/events/base';
-import {injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
+import {withTimeout} from 'openfin-service-async';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {Application} from '../../client/main';
 import {FDC3Error, ApplicationError} from '../../client/errors';
-import {withTimeout} from '../utils/async';
-import {Timeouts} from '../constants';
+import {APIFromClientTopic, SERVICE_IDENTITY} from '../../client/internal';
+import {Application} from '../../client/main';
 import {parseIdentity} from '../../client/validation';
+import {Timeouts} from '../constants';
 import {Injector} from '../common/Injector';
 import {getId} from '../utils/getId';
-import {SERVICE_IDENTITY} from '../../client/internal';
+import {Inject} from '../common/Injectables';
+import {APIHandler} from '../APIHandler';
 
 import {Environment, EntityType} from './Environment';
-import {AppWindow} from './AppWindow';
-import {ContextChannel} from './ContextChannel';
-import {FinAppWindow} from './FinAppWindow';
+import {AppConnection} from './AppConnection';
 import {AppDirectory} from './AppDirectory';
+import {ContextChannel} from './ContextChannel';
+import {FinAppConnection} from './FinAppConnection';
+import {FinAppWindow} from './FinAppWindow';
 import {LiveApp} from './LiveApp';
 
-interface EnvironmentWindow {
-    index: number;
+interface KnownEntity {
+    entityNumber: number;
+    entityType: EntityType;
 }
-
-type EnvironmentWindowMap = Map<string, EnvironmentWindow>;
-type EnvironmentApplicationSet = Set<string>;
 
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
-    public readonly applicationCreated: Signal<[Identity, LiveApp]> = new Signal();
-    public readonly applicationClosed: Signal<[Identity]> = new Signal();
+    public readonly onApplicationCreated: Signal<[Identity, LiveApp]> = new Signal();
+    public readonly onApplicationClosed: Signal<[Identity]> = new Signal();
 
-    public readonly windowCreated: Signal<[Identity]> = new Signal();
-    public readonly windowClosed: Signal<[Identity]> = new Signal();
+    public readonly onWindowCreated: Signal<[Identity]> = new Signal();
+    public readonly onWindowClosed: Signal<[Identity]> = new Signal();
 
-    private readonly _applications: EnvironmentApplicationSet = new Set<string>();
-    private readonly _windows: EnvironmentWindowMap = new Map<string, EnvironmentWindow>();
+    /**
+     * Stores details of all known windows and IAB connections.
+     *
+     * Will include all OpenFin windows currently open, plus all active external connections to the service.
+     */
+    private readonly _knownEntities: Map<string, KnownEntity> = new Map<string, KnownEntity>();
+    private readonly _applications: Set<string> = new Set<string>();
 
-    private _windowsCreated: number = 0;
+    private _entityCount: number = 0;
+
+    constructor(@inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>) {
+        super();
+
+        apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
+    }
 
     public createApplication(appInfo: Application): void {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
@@ -50,53 +60,68 @@ export class FinEnvironment extends AsyncInit implements Environment {
             fin.Application.startFromManifest(appInfo.manifest).catch((e) => {
                 this.deregisterApplication({uuid});
 
-                throw new FDC3Error(ApplicationError.ErrorOnLaunch, (e as Error).message);
+                throw new FDC3Error(ApplicationError.LaunchError, (e as Error).message);
             })
         ).then((result) => {
             const [didTimeout] = result;
 
             if (didTimeout) {
                 this.deregisterApplication({uuid});
-                throw new FDC3Error(ApplicationError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
+                throw new FDC3Error(ApplicationError.LaunchTimeout, `Timeout waiting for application '${appInfo.name}' to start from manifest`);
             }
         });
 
         this.registerApplication({uuid}, startPromise);
     }
 
-    public wrapWindow(liveApp: LiveApp, identity: Identity, channel: ContextChannel): AppWindow {
+    public wrapConnection(liveApp: LiveApp, identity: Identity, entityType: EntityType, channel: ContextChannel): AppConnection {
         identity = parseIdentity(identity);
         const id = getId(identity);
 
-        // If `identity` is an adapter connection, there will not be any `_windows` entry for this identity
-        const window = this._windows.get(id) || {index: this._windowsCreated++};
+        // If `identity` is an adapter connection that hasn't yet connected to the service, there will not be a KnownEntity for this identity
+        // In these cases, we will register the entity now
+        const knownEntity: KnownEntity | undefined = this._knownEntities.get(id) || this.registerEntity(identity, entityType);
 
-        return new FinAppWindow(identity, liveApp, channel, window.index);
+        if (knownEntity) {
+            const {entityNumber} = knownEntity;
+
+            if (entityType === EntityType.EXTERNAL_CONNECTION) {
+                return new FinAppConnection(identity, entityType, liveApp, channel, entityNumber);
+            } else {
+                if (entityType !== EntityType.WINDOW) {
+                    console.warn(`Unexpected entity type: ${entityType}. Treating as a regular OpenFin window.`);
+                }
+
+                return new FinAppWindow(identity, entityType, liveApp, channel, entityNumber);
+            }
+        } else {
+            throw new Error('Cannot wrap entities belonging to the provider');
+        }
     }
 
     public async inferApplication(identity: Identity): Promise<Application> {
-        if (await this.isExternalWindow(identity)) {
-            const application = fin.ExternalApplication.wrapSync(identity.uuid);
-
+        if (await this.getEntityType(identity) === EntityType.EXTERNAL_CONNECTION) {
             return {
-                appId: application.identity.uuid,
-                name: application.identity.uuid,
+                appId: identity.uuid,
+                name: identity.uuid,
                 manifestType: 'openfin',
                 manifest: ''
             };
         } else {
             interface OFManifest {
                 shortcut?: {name?: string; icon: string};
+                // eslint-disable-next-line camelcase
                 startup_app: {uuid: string; name?: string; icon?: string};
             }
 
             const application = fin.Application.wrapSync(identity);
             const applicationInfo = await application.getInfo();
 
-            const {shortcut, startup_app} = (applicationInfo.manifest || {}) as OFManifest;
+            const {shortcut, startup_app: startupApp} = (applicationInfo.manifest || {}) as OFManifest;
 
-            const title = (shortcut && shortcut.name) || (startup_app && (startup_app.name || startup_app.uuid));
-            const icon = (shortcut && shortcut.icon) || (startup_app && startup_app.icon);
+            const title = (shortcut && shortcut.name) || (startupApp && (startupApp.name || startupApp.uuid));
+            const icon = (shortcut && shortcut.icon) || (startupApp && startupApp.icon);
+
 
             return {
                 appId: application.identity.uuid,
@@ -110,13 +135,21 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     public async getEntityType(identity: Identity): Promise<EntityType> {
-        const entityInfo = await fin.System.getEntityInfo(identity.uuid, identity.name!);
+        const extendedIdentity = identity as (Identity & {entityType: string | undefined});
 
-        return entityInfo.entityType as EntityType;
+        // Attempt to avoid async call if possible
+        if (extendedIdentity.entityType) {
+            return extendedIdentity.entityType as EntityType;
+        } else if (this._knownEntities.has(getId(identity))) {
+            return this._knownEntities.get(getId(identity))!.entityType;
+        } else {
+            const entityInfo = await fin.System.getEntityInfo(identity.uuid, identity.uuid);
+            return entityInfo.entityType as EntityType;
+        }
     }
 
-    public isWindowCreated(identity: Identity): boolean {
-        return this._windows.has(getId(identity));
+    public isKnownEntity(identity: Identity): boolean {
+        return this._knownEntities.has(getId(identity));
     }
 
     protected async init(): Promise<void> {
@@ -140,14 +173,14 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
             await Injector.initialized;
             this.registerApplication({uuid: event.uuid}, Promise.resolve());
-            this.registerWindow(identity);
+            this.registerEntity(identity, EntityType.WINDOW);
         });
 
         fin.System.addListener('window-closed', async (event: WindowEvent<'system', 'window-closed'>) => {
             const identity = {uuid: event.uuid, name: event.name};
 
             await Injector.initialized;
-            this.deregisterWindow(identity);
+            this.deregisterEntity(identity);
             this.deregisterApplication({uuid: event.uuid});
         });
 
@@ -158,27 +191,55 @@ export class FinEnvironment extends AsyncInit implements Environment {
                 const {uuid, mainWindow, childWindows} = info;
                 this.registerApplication({uuid: info.uuid}, undefined);
 
-                this.registerWindow({uuid, name: mainWindow.name});
-                childWindows.forEach((child) => this.registerWindow({uuid, name: child.name}));
+                this.registerEntity({uuid, name: mainWindow.name}, EntityType.WINDOW);
+                childWindows.forEach((child) => this.registerEntity({uuid, name: child.name}, EntityType.WINDOW));
             });
         });
     }
 
-    private registerWindow(identity: Identity): void {
-        if (identity.uuid !== SERVICE_IDENTITY.uuid) {
-            const createdWindow = {index: this._windowsCreated};
+    private onApiHandlerDisconnection(identity: Identity): void {
+        const id: string = getId(identity);
+        const connection: KnownEntity|undefined = this._knownEntities.get(id);
 
-            this._windows.set(getId(identity), createdWindow);
-            this._windowsCreated++;
-
-            this.windowCreated.emit(identity);
+        // Only retain knowledge of the entity if it's a window.
+        // Windows are removed when they are closed, all other entity types are removed when they disconnect.
+        if (connection && connection.entityType !== EntityType.WINDOW) {
+            this.deregisterEntity(identity);
         }
     }
 
-    private deregisterWindow(identity: Identity): void {
+    private registerEntity(identity: Identity, entityType: EntityType): KnownEntity|undefined {
         if (identity.uuid !== SERVICE_IDENTITY.uuid) {
-            this._windows.delete(getId(identity));
-            this.windowClosed.emit(identity);
+            const entity: KnownEntity = {
+                entityNumber: this._entityCount,
+                entityType
+            };
+
+            this._knownEntities.set(getId(identity), entity);
+            this._entityCount++;
+
+            if (entityType === EntityType.WINDOW) {
+                this.onWindowCreated.emit(identity);
+            }
+
+            return entity;
+        } else {
+            return undefined;
+        }
+    }
+
+    private deregisterEntity(identity: Identity): void {
+        if (identity.uuid !== SERVICE_IDENTITY.uuid) {
+            const id = getId(identity);
+            const entity = this._knownEntities.get(id);
+
+            if (entity) {
+                this._knownEntities.delete(id);
+
+                if (entity.entityType === EntityType.WINDOW) {
+                    this.onWindowClosed.emit(identity);
+                }
+            }
         }
     }
 
@@ -188,7 +249,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         if (uuid !== SERVICE_IDENTITY.uuid) {
             if (!this._applications.has(uuid)) {
                 this._applications.add(uuid);
-                this.applicationCreated.emit(identity, new LiveApp(startedPromise));
+                this.onApplicationCreated.emit(identity, new LiveApp(startedPromise));
             }
         }
     }
@@ -198,22 +259,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
         if (uuid !== SERVICE_IDENTITY.uuid) {
             if (this._applications.delete(uuid)) {
-                this.applicationClosed.emit(identity);
+                this.onApplicationClosed.emit(identity);
             }
-        }
-    }
-
-    private async isExternalWindow(identity: Identity): Promise<boolean> {
-        const extendedIdentity = identity as (Identity & {entityType: string | undefined});
-
-        const externalWindowType = 'external connection';
-
-        if (extendedIdentity.entityType) {
-            return extendedIdentity.entityType === externalWindowType;
-        } else {
-            const entityInfo = await fin.System.getEntityInfo(identity.uuid, identity.uuid);
-
-            return entityInfo.entityType === externalWindowType;
         }
     }
 }

@@ -31,7 +31,7 @@ interface ContextMenuParameters {
     isRoot?: boolean;
 }
 
-// eslint-disable-next-line
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type clickCallback<T extends {}={}> = (payload: T) => any;
 
 class ContextMenu {
@@ -159,7 +159,7 @@ class ContextMenu {
             li.addEventListener('click', () => {
                 if (!item.children && item.payload) {
                     contextMenu.hide();
-                    // eslint-disable-next-line
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     clickCallback(item.payload as any);
                 }
             });
