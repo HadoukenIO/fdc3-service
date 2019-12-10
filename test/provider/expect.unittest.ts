@@ -414,7 +414,7 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
         maybeSetTimeout(() => mockApiHandler.onConnection.emit(identity), testWindow.connectionTime);
         maybeSetTimeout(() => {
             if (testWindow.windowType === 'view') {
-                // There will also be an event for the window creation at around the same time as the view creation
+                // There will also be an event for the window destruction at around the same time as the view destruction
                 const windowIdentity = {
                     uuid: identity.uuid,
                     name: `${identity.name}-window`
