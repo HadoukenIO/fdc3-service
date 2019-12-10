@@ -27,6 +27,7 @@ interface TestWindow {
     connectionTime?: number;
     closeTime?: number;
     appType: 'directory' | 'non-directory' | 'non-directory-external';
+    windowType?: 'window' | 'view';
 }
 
 interface ExpectCall {
@@ -69,13 +70,20 @@ beforeEach(() => {
     useMockTime();
 });
 
-describe('When creating a directory FDC3 app', () => {
-    const testWindow: TestWindow = {
-        createdTime: 1000,
-        connectionTime: 1100,
-        appType: 'directory'
-    };
+const windowApp: TestWindow = {
+    createdTime: 1000,
+    connectionTime: 1100,
+    appType: 'directory'
+};
+const viewApp: TestWindow = {
+    ...windowApp,
+    windowType: 'view'
+};
 
+describe.each<[string, TestWindow]>([
+    ['window', windowApp],
+    ['view', viewApp]
+])('When creating a %s-based directory FDC3 app', (instanceName, testWindow) => {
     describe('When the window is registered quickly', () => {
         expectTest(testWindow, 3000, [
             [
@@ -185,8 +193,11 @@ describe('When creating a non-directory FDC3 app', () => {
         appType: 'non-directory'
     };
 
-    describe('When the window is registered quickly, and connection occurs before the app directory returns', () => {
-        expectTest(fastConnectWindow, 5000, [
+    describe.each<[string, TestWindow]>([
+        ['window', fastConnectWindow],
+        ['view', {...fastConnectWindow, windowType: 'view'}]
+    ])('When the %s-based entity is registered quickly, and connection occurs before the app directory returns', (instanceName, testWindow) => {
+        expectTest(testWindow, 5000, [
             [
                 'When a window is expected shortly before it is created, the window promise resolves',
                 {callTime: 950, finalizeTime: 5000, result: 'resolve'}
@@ -202,8 +213,11 @@ describe('When creating a non-directory FDC3 app', () => {
         ]);
     });
 
-    describe('When the window is registered quickly, and connection occurs after of the app directory returns', () => {
-        expectTest(fastConnectWindow, 3000, [
+    describe.each<[string, TestWindow]>([
+        ['window', fastConnectWindow],
+        ['view', {...fastConnectWindow, windowType: 'view'}]
+    ])('When the %s-based entity is registered quickly, and connection occurs after of the app directory returns', (instanceName, testWindow) => {
+        expectTest(testWindow, 3000, [
             [
                 'When a window is expected shortly before it is created, the window promise resolves',
                 {callTime: 950, finalizeTime: 4000, result: 'resolve'}
@@ -219,8 +233,11 @@ describe('When creating a non-directory FDC3 app', () => {
         ]);
     });
 
-    describe('When the window registration is delayed due to a delayed connection', () => {
-        expectTest(slowConnectWindow, 3000, [
+    describe.each<[string, TestWindow]>([
+        ['window', slowConnectWindow],
+        ['view', {...slowConnectWindow, windowType: 'view'}]
+    ])('When the %s-based entity registration is delayed due to a delayed connection', (instanceName, testWindow) => {
+        expectTest(testWindow, 3000, [
             [
                 'When a window is expected before the app directory has returned, the window promise rejects',
                 {callTime: 2500, finalizeTime: 1000 + Timeouts.WINDOW_CREATED_TO_REGISTERED, result: 'reject-timeout'}
@@ -305,6 +322,16 @@ describe('When creating an external connection', () => {
     });
 });
 
+function getEntityType(testWindow: TestWindow): EntityType {
+    if (testWindow.appType === 'non-directory-external') {
+        return EntityType.EXTERNAL_CONNECTION;
+    } else if (testWindow.windowType === 'view') {
+        return EntityType.VIEW;
+    } else {
+        return EntityType.WINDOW;
+    }
+}
+
 function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resultParams: ResultParam[]): void {
     const testParams = buildTestParams(testWindow, resultParams);
 
@@ -313,6 +340,7 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
         const identity = {uuid: 'test-window', name: 'test-window'};
         const manifestUrl = testWindow.appType !== 'non-directory-external' ? 'test-manifest-url' : '';
         const mockApplication = {manifest: manifestUrl} as Application;
+        const testWindowEntityType = getEntityType(testWindow);
 
         const appDirectoryResultPromise = new DeferredPromise();
 
@@ -333,10 +361,8 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
         mockEnvironment.getEntityType.mockImplementationOnce(async (entityIdentity: Identity): Promise<EntityType> => {
             if (getId(entityIdentity) !== getId(identity)) {
                 return EntityType.UNKNOWN;
-            } else if (testWindow.appType === 'non-directory-external') {
-                return EntityType.EXTERNAL_CONNECTION;
             } else {
-                return EntityType.WINDOW;
+                return testWindowEntityType;
             }
         });
 
@@ -375,10 +401,28 @@ function expectTest(testWindow: TestWindow, appDirectoryResultTime: number, resu
 
         maybeSetTimeout(() => {
             mockEnvironment.onApplicationCreated.emit(identity, new LiveApp(Promise.resolve()));
-            mockEnvironment.onWindowCreated.emit(identity);
+            if (testWindow.windowType === 'view') {
+                // There will also be an event for the window creation at around the same time as the view creation
+                const windowIdentity = {
+                    uuid: identity.uuid,
+                    name: `${identity.name}-window`
+                };
+                mockEnvironment.onWindowCreated.emit(windowIdentity, EntityType.WINDOW);
+            }
+            mockEnvironment.onWindowCreated.emit(identity, testWindowEntityType);
         }, testWindow.createdTime);
         maybeSetTimeout(() => mockApiHandler.onConnection.emit(identity), testWindow.connectionTime);
-        maybeSetTimeout(() => mockEnvironment.onWindowClosed.emit(identity), testWindow.closeTime);
+        maybeSetTimeout(() => {
+            if (testWindow.windowType === 'view') {
+                // There will also be an event for the window destruction at around the same time as the view destruction
+                const windowIdentity = {
+                    uuid: identity.uuid,
+                    name: `${identity.name}-window`
+                };
+                mockEnvironment.onWindowClosed.emit(windowIdentity, EntityType.WINDOW);
+            }
+            mockEnvironment.onWindowClosed.emit(identity, testWindowEntityType);
+        }, testWindow.closeTime);
         maybeSetTimeout(() => appDirectoryResultPromise.resolve(), appDirectoryResultTime);
 
         const resultAccumulator = setupExpectCalls(identity, expectCalls);

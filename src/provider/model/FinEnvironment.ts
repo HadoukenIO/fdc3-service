@@ -35,8 +35,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public readonly onApplicationCreated: Signal<[Identity, LiveApp]> = new Signal();
     public readonly onApplicationClosed: Signal<[Identity]> = new Signal();
 
-    public readonly onWindowCreated: Signal<[Identity]> = new Signal();
-    public readonly onWindowClosed: Signal<[Identity]> = new Signal();
+    public readonly onWindowCreated: Signal<[Identity, EntityType]> = new Signal();
+    public readonly onWindowClosed: Signal<[Identity, EntityType]> = new Signal();
 
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
 
@@ -94,8 +94,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
             if (entityType === EntityType.EXTERNAL_CONNECTION) {
                 return new FinAppConnection(identity, entityType, version, liveApp, channel, entityNumber);
             } else {
-                if (entityType !== EntityType.WINDOW) {
-                    console.warn(`Unexpected entity type: ${entityType}. Treating as a regular OpenFin window.`);
+                if (!isPagedEntity(entityType)) {
+                    console.warn(`Connection '${id}' has unexpected entity type '${entityType}'. Some functionality may be unavailable.`);
                 }
 
                 return new FinAppWindow(identity, entityType, version, liveApp, channel, entityNumber);
@@ -164,34 +164,37 @@ export class FinEnvironment extends AsyncInit implements Environment {
     protected async init(): Promise<void> {
         const windowInfo = await fin.System.getAllWindows();
 
-        fin.System.addListener('application-started', async (event: ApplicationEvent<'system', 'application-started'>) => {
-            await Injector.initialized;
-            this.registerApplication({uuid: event.uuid}, Promise.resolve());
-        });
-
         const appicationClosedHandler = async (event: {uuid: string}) => {
             await Injector.initialized;
             this.deregisterApplication({uuid: event.uuid});
         };
-
-        fin.System.addListener('application-closed', appicationClosedHandler);
-        fin.System.addListener('application-crashed', appicationClosedHandler);
-
-        fin.System.addListener('window-created', async (event: WindowEvent<'system', 'window-created'>) => {
+        const entityCreatedHandler = async <T>(entityType: EntityType, event: WindowEvent<'system', T>) => {
             const identity = {uuid: event.uuid, name: event.name};
 
             await Injector.initialized;
             this.registerApplication({uuid: event.uuid}, Promise.resolve());
-            this.registerEntity(identity, EntityType.WINDOW);
-        });
-
-        fin.System.addListener('window-closed', async (event: WindowEvent<'system', 'window-closed'>) => {
+            this.registerEntity(identity, entityType);
+        };
+        const entityClosedHandler = async <T>(event: WindowEvent<'system', T>) => {
             const identity = {uuid: event.uuid, name: event.name};
 
             await Injector.initialized;
             this.deregisterEntity(identity);
             this.deregisterApplication({uuid: event.uuid});
+        };
+
+        fin.System.addListener('application-started', async (event: ApplicationEvent<'system', 'application-started'>) => {
+            await Injector.initialized;
+            this.registerApplication({uuid: event.uuid}, Promise.resolve());
         });
+        fin.System.addListener('application-closed', appicationClosedHandler);
+        fin.System.addListener('application-crashed', appicationClosedHandler);
+
+        fin.System.addListener('window-created', entityCreatedHandler.bind(this, EntityType.WINDOW));
+        fin.System.addListener('window-closed', entityClosedHandler);
+
+        fin.System.addListener('view-created', entityCreatedHandler.bind(this, EntityType.VIEW));
+        fin.System.addListener('view-closed', entityClosedHandler);
 
         // No await here otherwise the injector will never properly initialize - The injector awaits this init before completion!
         Injector.initialized.then(async () => {
@@ -212,7 +215,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
         // Only retain knowledge of the entity if it's a window.
         // Windows are removed when they are closed, all other entity types are removed when they disconnect.
-        if (connection && connection.entityType !== EntityType.WINDOW) {
+        if (connection && !isPagedEntity(connection.entityType)) {
             this.deregisterEntity(identity);
         }
     }
@@ -227,8 +230,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
             this._knownEntities.set(getId(identity), entity);
             this._entityCount++;
 
-            if (entityType === EntityType.WINDOW) {
-                this.onWindowCreated.emit(identity);
+            if (isPagedEntity(entityType)) {
+                this.onWindowCreated.emit(identity, entityType);
             }
 
             return entity;
@@ -245,8 +248,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
             if (entity) {
                 this._knownEntities.delete(id);
 
-                if (entity.entityType === EntityType.WINDOW) {
-                    this.onWindowClosed.emit(identity);
+                if (isPagedEntity(entity.entityType)) {
+                    this.onWindowClosed.emit(identity, entity.entityType);
                 }
             }
         }
@@ -272,4 +275,16 @@ export class FinEnvironment extends AsyncInit implements Environment {
             }
         }
     }
+}
+
+/**
+ * Checks if an entity is of a "page-based" entity type. These are entities that are built using a
+ * webpage/browser/DOM/etc. This only includes entity types that both meet this definition, AND are supported by
+ * the service.
+ *
+ * These entity types have a more finely controlled handshake process, as the fin API provides better eventing
+ * and querying of these entity types.
+ */
+function isPagedEntity(entityType: EntityType): boolean {
+    return entityType === EntityType.WINDOW || entityType === EntityType.VIEW;
 }

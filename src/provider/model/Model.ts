@@ -82,8 +82,8 @@ export class Model {
         this._environment.onApplicationCreated.add(this.onApplicationCreated, this);
         this._environment.onApplicationClosed.add(this.onApplicationClosed, this);
 
-        this._environment.onWindowCreated.add(this.onWindowCreated, this);
-        this._environment.onWindowClosed.add(this.onWindowClosed, this);
+        this._environment.onWindowCreated.add(this.onWindowOrViewCreated, this);
+        this._environment.onWindowClosed.add(this.onWindowOrViewClosed, this);
 
         this._apiHandler.onConnection.add(this.onApiHandlerConnection, this);
         this._apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
@@ -331,17 +331,17 @@ export class Model {
         }
     }
 
-    private onWindowCreated(identity: Identity): void {
-        const expectedWindow = this.getOrCreateExpectedConnection(identity);
+    private onWindowOrViewCreated(identity: Identity, entityType: EntityType): void {
+        const connection: ExpectedConnection = this.getOrCreateExpectedConnection(identity);
 
         const {uuid} = identity;
         const liveApp = this._liveAppsByUuid[uuid];
 
         // Only register windows once they are connected to the service
-        allowReject(expectedWindow.connected.then(() => this.registerConnection(liveApp, identity, EntityType.WINDOW)));
+        allowReject(connection.connected.then(() => this.registerConnection(liveApp, identity, entityType)));
     }
 
-    private onWindowClosed(identity: Identity): void {
+    private onWindowOrViewClosed(identity: Identity, entityType: EntityType): void {
         this.removeConnection(identity);
     }
 
@@ -406,7 +406,7 @@ export class Model {
 
         const connection: AppConnection = this._environment.wrapConnection(liveApp, identity, entityType, this._channelsById[DEFAULT_CHANNEL_ID]);
 
-        console.info(`Registering connection ${connection.id}`);
+        console.info(`Registering connection ${connection.id} of type ${entityType}`);
 
         this._connectionsById[connection.id] = connection;
         delete this._expectedConnectionsById[connection.id];
