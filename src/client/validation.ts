@@ -12,6 +12,73 @@ import {ChannelId} from './api/contextChannels';
 import {Application} from './types/directory';
 
 /**
+ * Validates and returns the provided app channel name.
+ */
+export function sanitizeAppChannelName(name: string): ChannelId {
+    try {
+        return sanitizeNonEmptyString(name);
+    } catch (e) {
+        throw new TypeError(`${safeStringify(name, 'The provided value')} is not a valid app channel name`);
+    }
+}
+
+/**
+ * Validates and returns the provided Application.
+ */
+export function sanitizeApplication(application: Application): Application {
+    if (application === null || typeof application !== 'object') {
+        throw new TypeError(`${safeStringify(application, 'The provided value')} is not a valid Application`);
+    }
+
+    return application;
+}
+
+/**
+ * Validates and returns the provided ChannelId.
+ */
+export function sanitizeChannelId(channelId: ChannelId): ChannelId {
+    if (typeof channelId !== 'string') {
+        throw new TypeError(`${safeStringify(channelId, 'The provided value')} is not a valid ChannelId`);
+    }
+
+    return channelId;
+}
+
+/**
+ * Validates and returns the provided Context. No properties are stripped, as these are permitted by the FDC3 specification.
+ */
+export function sanitizeContext(context: Context): Context {
+    let error = false;
+
+    if (context === null || typeof context !== 'object') {
+        error = true;
+    } else {
+        const typeCheck = typeof context.type === 'string';
+        const nameCheck = !context.name || typeof context.name === 'string';
+        const idCheck = !context.id || typeof context.id === 'object';
+
+        if (!typeCheck || !nameCheck || !idCheck) {
+            error = true;
+        }
+    }
+
+    if (error) {
+        throw new TypeError(`${safeStringify(context, 'The provided value')} is not a valid Context`);
+    }
+
+    return context;
+}
+
+/**
+ * Validates we're running inside an OpenFin environment
+ */
+export function validateEnvironment(): void {
+    if (typeof fin === 'undefined') {
+        throw new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.');
+    }
+}
+
+/**
  * Validates and returns the provided function
  */
 export function sanitizeFunction<T, U extends any[]>(value: (...args: U) => T): (...args: U) => T {
@@ -47,53 +114,6 @@ export function sanitizeIdentity(identity: Identity): Identity {
 }
 
 /**
- * Validates and returns the provided Context. No properties are stripped, as these are permitted by the FDC3 specification.
- */
-export function sanitizeContext(context: Context): Context {
-    let error = false;
-
-    if (context === null || typeof context !== 'object') {
-        error = true;
-    } else {
-        const typeCheck = typeof context.type === 'string';
-        const nameCheck = !context.name || typeof context.name === 'string';
-        const idCheck = !context.id || typeof context.id === 'object';
-
-        if (!typeCheck || !nameCheck || !idCheck) {
-            error = true;
-        }
-    }
-
-    if (error) {
-        throw new TypeError(`${safeStringify(context, 'The provided value')} is not a valid Context`);
-    }
-
-    return context;
-}
-
-/**
- * Validates and returns the provided ChannelId.
- */
-export function sanitizeChannelId(channelId: ChannelId): ChannelId {
-    if (typeof channelId !== 'string') {
-        throw new TypeError(`${safeStringify(channelId, 'The provided value')} is not a valid ChannelId`);
-    }
-
-    return channelId;
-}
-
-/**
- * Validates and returns the provided app channel name.
- */
-export function sanitizeAppChannelName(name: string): ChannelId {
-    try {
-        return sanitizeNonEmptyString(name);
-    } catch (e) {
-        throw new TypeError(`${safeStringify(name, 'The provided value')} is not a valid app channel name`);
-    }
-}
-
-/**
  * Validates and returns the provided string. Will throw if the string is empty
  */
 export function sanitizeNonEmptyString(value: string): ChannelId {
@@ -113,26 +133,6 @@ export function sanitizePositiveInteger(value: number): number {
     }
 
     return value;
-}
-
-/**
- * Validates and returns the provided app directory data. Can be either a URL or an array of Applications.
- */
-export function sanitizeAppDirectoryData(data: string | Application[]): string | Application[] {
-    if (!((typeof data === 'string' && data !== '') || (data instanceof Array))) {
-        throw new TypeError(`${safeStringify(data, 'The provided value')} is not a valid app directory data`);
-    }
-
-    return data;
-}
-
-/**
- * Validates we're running inside an OpenFin environment
- */
-export function validateEnvironment(): void {
-    if (typeof fin === 'undefined') {
-        throw new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.');
-    }
 }
 
 export function safeStringify(value: {}, fallback: string): string {

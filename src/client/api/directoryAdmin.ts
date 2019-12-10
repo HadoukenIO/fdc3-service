@@ -33,7 +33,7 @@
 import deepEqual from 'deep-equal';
 
 import {Application, AppName} from '../types/directory';
-import {sanitizeFunction, sanitizePositiveInteger, sanitizeNonEmptyString, safeStringify} from '../validation';
+import {sanitizeFunction, sanitizePositiveInteger, sanitizeNonEmptyString, safeStringify, sanitizeApplication} from '../validation';
 
 // TODO: Remove once Storage API is in published runtime and types are updated [SERVICE-840]
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -279,7 +279,7 @@ abstract class DirectoryCollectionBase<T, U = T> implements DirectoryCollection<
     public add(arg: T | T[]): void {
         this.validityCheck();
 
-        const values = Array.isArray(arg) ? arg : [arg];
+        const values = Array.isArray(arg) ? arg.map((item) => this.sanitizeItem(item)) : [this.sanitizeItem(arg)];
 
         this._result.push(...values);
     }
@@ -295,7 +295,7 @@ abstract class DirectoryCollectionBase<T, U = T> implements DirectoryCollection<
 
                 this._result = this._result.filter((resultItem) => !ids.some((id) => this.doesId(id, resultItem)));
             } else {
-                const items = values as T[];
+                const items = (values as T[]).map((item) => this.sanitizeItem(item));
 
                 this._result = this._result.filter((resultItem) => !items.some((item) => this.doesEqual(item, resultItem)));
             }
@@ -311,9 +311,9 @@ abstract class DirectoryCollectionBase<T, U = T> implements DirectoryCollection<
     public set(arg: T | T[]): void {
         this.validityCheck();
 
-        const values = Array.isArray(arg) ? arg : [arg];
+        const items = Array.isArray(arg) ? arg.map((item) => this.sanitizeItem(item)) : [this.sanitizeItem(arg)];
 
-        this._result = [...values];
+        this._result = [...items];
     }
 
     public build(): T[] {
@@ -324,6 +324,7 @@ abstract class DirectoryCollectionBase<T, U = T> implements DirectoryCollection<
     protected abstract isId(value: T | U): value is U;
     protected abstract doesId(id: U, value: T): boolean;
     protected abstract doesEqual(a: T, b: T): boolean;
+    protected abstract sanitizeItem(a: T): T;
 
     private validityCheck(): void {
         if (!this._valid) {
@@ -347,6 +348,14 @@ class RemoteSnippetsDirectoryCollectionImpl extends DirectoryCollectionBase<stri
 
     public doesEqual(a: string, b: string): boolean {
         return a === b;
+    }
+
+    public sanitizeItem(item: string): string {
+        try {
+            return sanitizeNonEmptyString(item);
+        } catch (e) {
+            throw new TypeError(`${safeStringify(item, 'The provided value')} is not a valid remote snippet URL`);
+        }
     }
 }
 
@@ -375,6 +384,10 @@ class StoredApplicationDirectoryCollectionImpl extends DirectoryCollectionBase<A
 
     public doesEqual(a: Application, b: Application): boolean {
         return deepEqual(a, b);
+    }
+
+    public sanitizeItem(item: Application): Application {
+        return sanitizeApplication(item);
     }
 }
 
