@@ -8,6 +8,7 @@ import {createMockAppDirectory, createMockEnvironmnent, createMockApiHandler, ge
 import {Application, AppDirIntent} from '../../../src/client/main';
 import {createFakeApp, createFakeIntent, createFakeContextType, createFakeIdentity} from '../../demo/utils/fakes';
 import {getId} from '../../../src/provider/utils/getId';
+import {EntityType} from '../../../src/provider/model/Environment';
 import {LiveApp} from '../../../src/provider/model/LiveApp';
 import {useMockTime, advanceTime, resolvePromiseChain} from '../../utils/unit/time';
 import {Timeouts} from '../../../src/provider/constants';
@@ -26,7 +27,7 @@ beforeEach(() => {
     getterMock(mockApiHandler, 'onConnection').mockReturnValue(new Signal<[Identity]>());
     getterMock(mockApiHandler, 'onDisconnection').mockReturnValue(new Signal<[Identity]>());
 
-    mockEnvironment.onWindowCreated = new Signal<[Identity]>();
+    mockEnvironment.onWindowCreated = new Signal<[Identity, EntityType]>();
 
     model = new Model(mockAppDirectory, mockEnvironment, mockApiHandler);
 });
@@ -366,7 +367,7 @@ async function setupAppRunningWithoutFdc3Connection(app: Application): Promise<v
 
     mockEnvironment.isKnownEntity.mockImplementation((identity) => identity.uuid === app.appId);
     mockEnvironment.onApplicationCreated.emit({uuid: app.appId}, new LiveApp(Promise.resolve()));
-    mockEnvironment.onWindowCreated.emit(createFakeIdentity({uuid: app.appId}));
+    mockEnvironment.onWindowCreated.emit(createFakeIdentity({uuid: app.appId}), EntityType.WINDOW);
 
     await resolvePromiseChain();
 }
@@ -394,7 +395,7 @@ async function setupAppRunningWithWindowWithIntentListeners(app: Application, in
     });
 
     mockEnvironment.onApplicationCreated.emit({uuid: app.appId}, new LiveApp(Promise.resolve()));
-    mockEnvironment.onWindowCreated.emit(createFakeIdentity({uuid: app.appId}));
+    mockEnvironment.onWindowCreated.emit(createFakeIdentity({uuid: app.appId}), EntityType.WINDOW);
 
     await resolvePromiseChain();
 }

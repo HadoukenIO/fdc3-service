@@ -13,7 +13,8 @@ export const Timeouts = {
     APP_START_FROM_MANIFEST: 30000,
 
     /**
-     * For windows, the time service allows for a `window-created` event after a client expects the window to exist.
+     * For windows, the time service allows for a `window-created` (or `view-created`) event after a client expects the
+     * window to exist.
      *
      * For other entity types, the entity must connect to the service within this time of an expected connection.
      */
