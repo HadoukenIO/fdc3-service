@@ -97,7 +97,7 @@ export interface AppDirectory {
      * A [[DirectoryCollection]] object that allows reading modifying stored applications in the current app directory.
      * Stored applications are [[Application]]s stored locally.
      */
-    storedApplications: StoredApplicationDirectoryCollection;
+    storedApplications: StoredApplicationsDirectoryCollection;
 }
 
 /**
@@ -156,7 +156,7 @@ export interface RemoteSnippetsDirectoryCollection extends DirectoryCollection<s
  * Interface for reading and modifying stored applications. When removing applications, applications can be refered to
  * be either a complete, deep-equal [[Application]] object, or by the applications [[AppName]].
  */
-export interface StoredApplicationDirectoryCollection extends DirectoryCollection<Application, string> {
+export interface StoredApplicationsDirectoryCollection extends DirectoryCollection<Application, string> {
     /**
      * Adds the current application to the app directory.
      *
@@ -227,7 +227,7 @@ ${options.maxSourceVersion} or lower. \`destinationVersion\` should be greater t
         const shard = shardMap[namespaceKey] || createDefaultShard();
 
         const remoteSnippets = new RemoteSnippetsDirectoryCollectionImpl(shard.remoteSnippets);
-        const storedApplications = new StoredApplicationDirectoryCollectionImpl(shard.storedApplications, selfApplication);
+        const storedApplications = new StoredApplicationsDirectoryCollectionImpl(shard.storedApplications, selfApplication);
 
         const version = shard.version;
 
@@ -359,7 +359,7 @@ class RemoteSnippetsDirectoryCollectionImpl extends DirectoryCollectionBase<stri
     }
 }
 
-class StoredApplicationDirectoryCollectionImpl extends DirectoryCollectionBase<Application, AppName> implements StoredApplicationDirectoryCollection {
+class StoredApplicationsDirectoryCollectionImpl extends DirectoryCollectionBase<Application, AppName> implements StoredApplicationsDirectoryCollection {
     private readonly _templateSelf: Application;
 
     public constructor(source: Application[], templateSelf: Application) {
