@@ -6,6 +6,9 @@ import {Signal} from 'openfin-service-signal';
 
 import {SERVICE_CHANNEL, serializeError} from '../client/internal';
 
+import {getId} from './utils/getId';
+import {SemVer} from './utils/SemVer';
+
 /**
  * Semantic type definition.
  *
@@ -66,6 +69,11 @@ export class APIHandler<T extends Enum> {
     public readonly onDisconnection: Signal<[Identity]> = new Signal();
 
     private _providerChannel!: ChannelProvider;
+    private readonly _clientVersions: {[key: string]: SemVer};
+
+    constructor() {
+        this._clientVersions = {};
+    }
 
     public isClientConnection(identity: Identity): boolean {
         return !!this._providerChannel && this._providerChannel.connections.some((conn: Identity) => {
@@ -75,6 +83,10 @@ export class APIHandler<T extends Enum> {
 
     public getClientConnections(): Identity[] {
         return this._providerChannel.connections;
+    }
+
+    public getClientVersion(id: string): SemVer {
+        return this._clientVersions[id] || SemVer.parse('');
     }
 
     public dispatch(to: Identity, action: string, payload: any): Promise<any> {
@@ -126,8 +138,13 @@ export class APIHandler<T extends Enum> {
     // TODO?: Remove the need for this any by defining connection payload type?
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private onConnectionHandler(identity: Identity, payload?: any): void {
-        if (payload && payload.version && payload.version.length > 0) {
-            console.log(`connection from client: ${identity.name}, version: ${payload.version}`);
+        const id = getId(identity);
+        const semVer: SemVer = SemVer.parse(payload && payload.version);
+
+        this._clientVersions[id] = semVer;
+
+        if (semVer.valid) {
+            console.log(`connection from client: ${identity.name}, version: ${semVer.version}`);
         } else {
             console.log(`connection from client: ${identity.name}, unable to determine version`);
         }
@@ -139,7 +156,10 @@ export class APIHandler<T extends Enum> {
         });
     }
 
-    private onDisconnectionHandler(app: Identity): void {
-        this.onDisconnection.emit(app);
+    private onDisconnectionHandler(identity: Identity): void {
+        const id = getId(identity);
+        delete this._clientVersions[id];
+
+        this.onDisconnection.emit(identity);
     }
 }

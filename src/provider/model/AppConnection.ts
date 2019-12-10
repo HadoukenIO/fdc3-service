@@ -3,9 +3,10 @@ import {Signal} from 'openfin-service-signal';
 import {allowReject, untilTrue} from 'openfin-service-async';
 
 import {Events, ChannelEvents} from '../../client/internal';
-import {getId} from '../utils/getId';
-import {IntentType} from '../intents';
 import {Application, ChannelId} from '../../client/main';
+import {IntentType} from '../intents';
+import {getId} from '../utils/getId';
+import {SemVer, SemVerType, Operator} from '../utils/SemVer';
 
 import {ContextChannel} from './ContextChannel';
 import {EntityType} from './Environment';
@@ -65,6 +66,7 @@ export abstract class AppConnectionBase implements AppConnection {
 
     private readonly _id: string;
     private readonly _entityType: EntityType;
+    private readonly _clientVersion: SemVer;
     private readonly _appInfo: Application;
     private readonly _entityNumber: number;
 
@@ -83,6 +85,7 @@ export abstract class AppConnectionBase implements AppConnection {
     constructor(
         identity: Identity,
         entityType: EntityType,
+        clientVersion: SemVer,
         appInfo: Application,
         maturePromise: Promise<void>,
         channel: ContextChannel,
@@ -90,6 +93,7 @@ export abstract class AppConnectionBase implements AppConnection {
     ) {
         this._id = getId(identity);
         this._entityType = entityType;
+        this._clientVersion = clientVersion;
         this._appInfo = appInfo;
         this._entityNumber = entityNumber;
 
@@ -99,7 +103,13 @@ export abstract class AppConnectionBase implements AppConnection {
         this._channelContextListeners = new Set();
         this._channelEventListeners = new Map();
 
-        this._hasContextListener = false;
+        // For any clients pre-0.2.1, there is no way for us to tell if they have a context listener.
+        // To maintain compatibility, assume all clients before this version are always listening to contexts
+        this._hasContextListener = clientVersion.compare(Operator.LESS_THAN, '0.2.1', false);
+
+        if (clientVersion.type !== SemVerType.VALID) {
+            console.warn(`Client version of connection ${this._id} not known (${clientVersion.type})`);
+        }
 
         this.channel = channel;
     }
@@ -110,6 +120,10 @@ export abstract class AppConnectionBase implements AppConnection {
 
     public get entityType(): EntityType {
         return this._entityType;
+    }
+
+    public get clientVersion(): SemVer {
+        return this._clientVersion;
     }
 
     public get appInfo(): Readonly<Application> {
