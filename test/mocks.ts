@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, no-shadow */
 import {Signal} from 'openfin-service-signal';
-import {Identity} from 'openfin/_v2/main';
+import {Identity, System} from 'openfin/_v2/main';
 import {Store} from 'openfin-service-config';
+import {ApplicationOption} from 'openfin/_v2/api/application/applicationOption';
+import {SubOptions} from 'openfin/_v2/api/base';
 
 import {AppConnection} from '../src/provider/model/AppConnection';
 import {Context, Application} from '../src/client/main';
@@ -20,6 +22,19 @@ import {ConfigStoreBinding} from '../src/provider/model/ConfigStore';
 import {ConfigurationObject} from '../gen/provider/config/fdc3-config';
 
 import {createFakeIdentity, createFakeApp} from './demo/utils/fakes';
+
+type AddListenerParams = [string, (...args: any[]) => void, SubOptions];
+
+/**
+ * Incomplete type representing a mock `fin` object. This should be expanded as tests require.
+ */
+export interface MockFin {
+    Application: {
+        wrapSync: jest.Mock<Promise<Application>, [Identity]>;
+        createFromManifest: jest.Mock<Promise<Application>, [string]>;
+        create: jest.Mock<Promise<Application>, [ApplicationOption]>;
+    };
+}
 
 export function createMockApiHandler(): jest.Mocked<APIHandler<APIFromClientTopic>> {
     const {APIHandler} = jest.requireMock('../src/provider/APIHandler');
@@ -145,6 +160,31 @@ export function createMockEnvironmnent(options: Partial<jest.Mocked<Environment>
         // Apply any custom overrides
         ...options
     };
+}
+
+/**
+ * Note that this also assigns the created mock to the global `fin` object. Incomplete, and
+ * should be expanded as tests require.
+ */
+export function createMockFin(): MockFin {
+    const fin = {
+        Application: {
+            wrapSync: jest.fn<Promise<Application>, [Identity]>(),
+            createFromManifest: jest.fn<Promise<Application>, [string]>(),
+            create: jest.fn<Promise<Application>, [ApplicationOption]>()
+        },
+        System: {
+            addListener: jest.fn<Promise<System>, AddListenerParams>()
+        },
+        Storage: {
+            getItem: jest.fn<Promise<string>, [string]>(),
+            setItem: jest.fn<Promise<void>, [string, string]>()
+        }
+    };
+
+    Object.assign(global, {fin});
+
+    return fin;
 }
 
 export function createMockModel(): jest.Mocked<Model> {
