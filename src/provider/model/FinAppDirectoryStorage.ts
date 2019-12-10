@@ -1,11 +1,13 @@
 import {Signal} from 'openfin-service-signal';
-import {injectable} from 'inversify';
+import {injectable, inject} from 'inversify';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {StoredAppDirectoryShard, APP_DIRECTORY_STORAGE_TAG} from '../../client/internal';
+import {APP_DIRECTORY_STORAGE_TAG, StoredAppDirectoryShard} from '../../client/internal';
 import {Injector} from '../common/Injector';
+import {Inject} from '../common/Injectables';
 
-import {AppDirectoryStorage} from './AppDirectoryStorage';
+import {AppDirectoryStorage, ScopedAppDirectoryShard, ShardScope} from './AppDirectoryStorage';
+import {ConfigStoreBinding} from './ConfigStore';
 
 // TODO: Remove once Storage API is in published runtime and types are updated [SERVICE-840]
 const newFin = fin as (typeof fin) & {Storage: any};
@@ -14,18 +16,38 @@ const newFin = fin as (typeof fin) & {Storage: any};
 export class FinAppDirectoryStorage extends AsyncInit implements AppDirectoryStorage {
     public readonly changed: Signal<[]> = new Signal();
 
-    private _shards: StoredAppDirectoryShard[] = [];
+    private _shards: ScopedAppDirectoryShard[] = [];
+    private _globalShard: ScopedAppDirectoryShard | undefined;
 
-    public getStoredDirectoryShards(): StoredAppDirectoryShard[] {
+    private readonly _configStore: ConfigStoreBinding;
+
+    public constructor(@inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding) {
+        super();
+
+        this._configStore = configStore;
+    }
+
+    public getDirectoryShards(): ScopedAppDirectoryShard[] {
         return this._shards;
     }
 
     protected async init(): Promise<void> {
+        await this._configStore.initialized;
+
         await newFin.Storage.addListener('storage-changed', (event: {tag: string}) => {
             if (event.tag === APP_DIRECTORY_STORAGE_TAG) {
                 this.handleStorageChanged();
             }
         });
+
+        const configUrl = this._configStore.config.query({level: 'desktop'}).applicationDirectory;
+
+        if (configUrl) {
+            this._globalShard = {
+                scope: {type: 'global'},
+                shard: {urls: [configUrl], applications: []}
+            };
+        }
 
         await this.refreshFromStorage();
     }
@@ -39,6 +61,8 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
     }
 
     private async refreshFromStorage(): Promise<void> {
+        this._shards = this._globalShard ? [this._globalShard] : [];
+
         let shardsMap: Map<string, string>;
 
         try {
@@ -50,7 +74,10 @@ export class FinAppDirectoryStorage extends AsyncInit implements AppDirectorySto
 
         const entries = Array.from(shardsMap.entries());
 
-        const sortedEntries = entries.sort((a, b) => a[0].localeCompare(b[0])).map((entry) => entry[1]);
-        this._shards = sortedEntries.map((entry) => JSON.parse(entry) as StoredAppDirectoryShard);
+        const sortedEntries = entries.sort((a, b) => a[0].localeCompare(b[0]));
+        this._shards.push(...sortedEntries.map(([domain, json]) => ({
+            scope: {type: 'domain', domain} as ShardScope,
+            shard: JSON.parse(json) as StoredAppDirectoryShard
+        })));
     }
 }

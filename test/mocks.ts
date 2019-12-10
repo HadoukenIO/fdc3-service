@@ -6,7 +6,7 @@ import {Store} from 'openfin-service-config';
 import {AppConnection} from '../src/provider/model/AppConnection';
 import {Context, Application} from '../src/client/main';
 import {ContextChannel} from '../src/provider/model/ContextChannel';
-import {ChannelTransport, ChannelEvents, APIFromClientTopic, StoredAppDirectoryShard} from '../src/client/internal';
+import {ChannelTransport, ChannelEvents, APIFromClientTopic} from '../src/client/internal';
 import {Environment, EntityType} from '../src/provider/model/Environment';
 import {AppDirectory} from '../src/provider/model/AppDirectory';
 import {APIHandler} from '../src/provider/APIHandler';
@@ -15,7 +15,7 @@ import {IntentType} from '../src/provider/intents';
 import {LiveApp} from '../src/provider/model/LiveApp';
 import {Model} from '../src/provider/model/Model';
 import {ChannelHandler} from '../src/provider/controller/ChannelHandler';
-import {AppDirectoryStorage} from '../src/provider/model/AppDirectoryStorage';
+import {AppDirectoryStorage, ScopedAppDirectoryShard} from '../src/provider/model/AppDirectoryStorage';
 import {ConfigStoreBinding} from '../src/provider/model/ConfigStore';
 import {ConfigurationObject} from '../gen/provider/config/fdc3-config';
 
@@ -85,10 +85,12 @@ export function createMockAppDirectory(options: Partial<jest.Mocked<AppDirectory
 export function createMockAppDirectoryStorage(options: Partial<jest.Mocked<AppDirectoryStorage>> = {}): jest.Mocked<AppDirectoryStorage> {
     const appDirectoryStorage = {
         changed: null! as Signal<[]>,
-        getStoredDirectoryShards: jest.fn<StoredAppDirectoryShard[], []>()
+        initialized: null! as Promise<void>,
+        getDirectoryShards: jest.fn<ScopedAppDirectoryShard[], []>()
     };
 
     assignMockGetter(appDirectoryStorage, 'changed');
+    assignMockGetter(appDirectoryStorage, 'initialized');
 
     // Apply any custom overrides
     Object.assign(appDirectoryStorage, options);
