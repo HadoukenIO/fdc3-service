@@ -14,6 +14,7 @@
 import {EventEmitter} from 'events';
 
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
+import {RuntimeInfo} from 'openfin/_v2/api/system/runtime-info';
 
 import {APIFromClientTopic, getServiceChannel, setServiceChannel, getServiceIdentity, setServiceIdentity, APIFromClient, deserializeError, Events} from './internal';
 import {EventRouter} from './EventRouter';
@@ -58,7 +59,8 @@ export function getServicePromise(): Promise<ChannelClient> {
             channelPromise = Promise.reject<ChannelClient>(new Error('Trying to connect to provider from provider'));
         } else {
             channelPromise = new Promise<ChannelClient>((resolve, reject) => {
-                fin.System.getRuntimeInfo().then((info: any) => {
+                // TODO: just use RuntimeInfo once its type is updated from js v2 API
+                fin.System.getRuntimeInfo().then((info: RuntimeInfo & {fdc3AppUuid?: string; fdc3ChannelName?: string}) => {
                     if (info.fdc3AppUuid && info.fdc3ChannelName) {
                         setServiceIdentity(info.fdc3AppUuid);
                         setServiceChannel(info.fdc3ChannelName);

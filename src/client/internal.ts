@@ -19,27 +19,14 @@ import {FDC3Error} from './errors';
  * The identity of the main application window of the service provider
  */
 const serviceIdentity: Identity = {
-    uuid: 'fdc3-service',  // default value
+    uuid: 'fdc3-service',
     name: 'fdc3-service'
 };
-export function setServiceIdentity(uuid: string) {
-    serviceIdentity.uuid = uuid;
-    serviceIdentity.name = uuid;
-}
-export function getServiceIdentity(): Identity {
-    return serviceChannel;
-}
 
 /**
  * Name of the IAB channel use to communicate between client and provider
  */
 let serviceChannel: string = 'of-fdc3-service-v1';
-export function setServiceChannel(channelName: string) {
-    serviceChannel = channelName;
-}
-export function getServiceChannel(): string {
-    return serviceChannel;
-}
 
 /**
  * Enum containing all and only actions that the provider can accept.
@@ -338,4 +325,19 @@ export function deserializeError(error: Error): Error | FDC3Error {
     }
 
     return error;
+}
+
+export function setServiceChannel(channelName: string) {
+    serviceChannel = channelName;
+}
+export function getServiceChannel(): string {
+    return serviceChannel;
+}
+
+export function setServiceIdentity(uuid: string) {
+    serviceIdentity.uuid = uuid;
+    serviceIdentity.name = uuid;
+}
+export function getServiceIdentity(): Identity {
+    return serviceIdentity;
 }
