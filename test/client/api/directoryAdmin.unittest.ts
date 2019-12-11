@@ -192,7 +192,11 @@ describe('When the app directory is populated and we specify a namespace', () =>
             directory.storedApplications.add(fakeApp7);
         }, createPopulatedDirectoryWithStoredApplications([fakeApp4, fakeApp5, fakeApp6, fakeApp7])],
 
-        ['We can attempt to remove an application not in the app directory and the directory will not modified', (directory: AppDirectory) => {
+        ['We can attempt to add a duplicate stored application and the directory will not be modified', (directory: AppDirectory) => {
+            directory.storedApplications.add(fakeApp4);
+        }, createPopulatedDirectoryWithStoredApplications([fakeApp4, fakeApp5, fakeApp6])],
+
+        ['We can attempt to remove a stored application not in the app directory and the directory will not modified', (directory: AppDirectory) => {
             directory.storedApplications.remove(fakeApp1);
         }, populatedDirectory]
     ];

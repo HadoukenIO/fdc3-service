@@ -6,7 +6,8 @@ import {Inject} from '../common/Injectables';
 import {Application, AppName, AppDirIntent} from '../../client/types/directory';
 import {AsyncInit} from '../controller/AsyncInit';
 import {CustomConfigFields} from '../constants';
-import {checkCustomConfigField, deduplicate} from '../utils/helpers';
+import {checkCustomConfigField} from '../utils/helpers';
+import {deduplicate} from '../../client/internal';
 
 import {AppDirectoryStorage, ShardScope} from './AppDirectoryStorage';
 

@@ -35,6 +35,7 @@ import {ApplicationOption} from 'openfin/_v2/api/application/applicationOption';
 
 import {Application, AppName} from '../types/directory';
 import {sanitizeFunction, sanitizePositiveInteger, sanitizeNonEmptyString, safeStringify, sanitizeApplication} from '../validation';
+import {deduplicate} from '../internal';
 
 // TODO: Remove once Storage API is in published runtime and types are updated [SERVICE-840]
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -116,7 +117,7 @@ export interface DirectoryCollection<T, U = T> {
     readonly source: ReadonlyArray<T>;
 
     /**
-     * Adds either a single value or multiple values to this collection.
+     * Adds either a single value or multiple values to this collection. Any duplicate values will be ignored.
      *
      * @param arg The value or array of values to add
      */
@@ -137,7 +138,8 @@ export interface DirectoryCollection<T, U = T> {
     removeAll: () => void;
 
     /**
-     * Removes all values from this collection, and then populates it with the value or values provided.
+     * Removes all values from this collection, and then populates it with the value or values provided. Any duplicate
+     * values will be ignored.
      *
      * @param arg The value or array of values to populate this collection with
      */
@@ -281,7 +283,7 @@ abstract class DirectoryCollectionBase<T, U = T> implements DirectoryCollection<
 
         const values = Array.isArray(arg) ? arg.map((item) => this.sanitizeItem(item)) : [this.sanitizeItem(arg)];
 
-        this._result.push(...values);
+        this._result = deduplicate([...this._result, ...values], (a, b) => this.doesEqual(a, b));
     }
 
     public remove(arg: T | T[] | U | U []): void {
@@ -313,7 +315,7 @@ abstract class DirectoryCollectionBase<T, U = T> implements DirectoryCollection<
 
         const items = Array.isArray(arg) ? arg.map((item) => this.sanitizeItem(item)) : [this.sanitizeItem(arg)];
 
-        this._result = [...items];
+        this._result = deduplicate([...items], (a, b) => this.doesEqual(a, b));
     }
 
     public build(): T[] {
