@@ -62,16 +62,16 @@ export interface UpdateAppDirectoryOptions {
     /**
      * The maximum app directory version that the migration handler can handle. If exists, must be a positive integer.
      * If this is specified, and the current version of the app directory is greater than this version, the migration
-     * handler will not be called.
+     * handler will not be called and the directory will not be modified.
      */
     maxSourceVersion?: number;
 
     /**
      * The version of the app directory outputted by the migration handler. If exists, must be a positive integer,
      * and should be greater than or equal to `maxSourceVersion` if that also exists. If this is specified, and the
-     * current version of the app directory is greater than this version, the migration handler will not be called. If
-     * this is not specied, the version of the app directory will be unchanged, or will be set to 1 when creating a new
-     * app directory.
+     * current version of the app directory is greater than this version, the migration handler will not be called and
+     * the directory will not be modified. If this is not specied, the version of the app directory will be unchanged,
+     * or will be set to 1 when creating a new app directory.
      */
     destinationVersion?: number;
 }
@@ -88,22 +88,21 @@ export interface AppDirectory {
     sourceVersion: number;
 
     /**
-     * A [[DirectoryCollection]] object that allows reading an modifying remote snippets in the current app directory.
-     * Remote snippets are URLs that contain a JSON array of [[Application]]s to be included in the app directory.
-     * URLs not within the current appliction's domain will be ignored by the service.
+     * A [[DirectoryCollection]] object that allows reading and modifying of remote snippets in the current app
+     * directory. Remote snippets are URLs that contain a JSON array of [[Application]]s to be included in the app
+     * directory. URLs not within the current appliction's domain will be ignored by the service.
      */
     remoteSnippets: RemoteSnippetsDirectoryCollection;
 
     /**
-     * A [[DirectoryCollection]] object that allows reading modifying stored applications in the current app directory.
-     * Stored applications are [[Application]]s stored locally.
+     * A [[DirectoryCollection]] object that allows reading and modifying of stored applications in the current app
+     * directory. Stored applications are [[Application]]s stored locally.
      */
     storedApplications: StoredApplicationsDirectoryCollection;
 }
 
 /**
- * Interface for reading an modifying remote snippets and stored applications. Also se
- * e
+ * Interface for reading and modifying remote snippets and stored applications. Also see
  * [[RemoteSnippetsDirectoryCollection]] and [[StoredApplicationDirectoryCollection]].
  *
  * @typeparam T The type stored by this collection
@@ -124,16 +123,16 @@ export interface DirectoryCollection<T, U = T> {
     add: (arg: T | T[]) => void;
 
     /**
-     * Removes either a single value or multiple values to this collection. The value or values to be removed may be
-     * specified by either a value of type `T` that is deep-equal to the one to be removed, or a value of type `U` that
-     * refers to the value to be removed (implementation specific to the implentation of this interface).
+     * Removes either a single value or multiple values from this collection. The value or values to be removed may be
+     * specified by either a value of type `T` that is deep-equal to the value to be removed, or a value of type `U`
+     * that refers to the value to be removed (implementation specific to the implentation of this interface).
      *
      * @param arg The value or array of values, or ID of the value or array of IDs of the values, to remove
      */
     remove: (arg: T | T[] | U | U[]) => void;
 
     /**
-     * Removes all values from this collection
+     * Removes all values from this collection.
      */
     removeAll: () => void;
 
@@ -146,8 +145,8 @@ export interface DirectoryCollection<T, U = T> {
 }
 
 /**
- * Inteface for reading and modifying remote snippets in the current app directory. Since these are specified as string
- * there is no separate ID type.
+ * Inteface for reading and modifying remote snippets in the current app directory. Since these are specified as
+ * `string`s there is no separate ID type.
  */
 export interface RemoteSnippetsDirectoryCollection extends DirectoryCollection<string, string> {
 
@@ -155,7 +154,7 @@ export interface RemoteSnippetsDirectoryCollection extends DirectoryCollection<s
 
 /**
  * Interface for reading and modifying stored applications. When removing applications, applications can be refered to
- * be either a complete, deep-equal [[Application]] object, or by the applications [[AppName]].
+ * by either a complete, deep-equal [[Application]] object, or by the application's [[AppName]].
  */
 export interface StoredApplicationsDirectoryCollection extends DirectoryCollection<Application, string> {
     /**
@@ -163,7 +162,7 @@ export interface StoredApplicationsDirectoryCollection extends DirectoryCollecti
      *
      * @param application A partial [[Application]] of any values that should override those derrived by the service
      * @throws `Error` if the service is unable to determine the manifest URL for this application and it hasn't been
-     * given in the `application` paramter.
+     * given in the `application` parameter.
      */
     addSelf: (application?: Partial<Application>) => void;
 }
