@@ -121,7 +121,7 @@ export interface DirectoryCollection<T, U = T> {
      *
      * @param arg The value or array of values to add
      */
-    add: (arg: T | T[]) => void;
+    add(arg: T | T[]): void;
 
     /**
      * Removes either a single value or multiple values from this collection. The value or values to be removed may be
@@ -130,12 +130,12 @@ export interface DirectoryCollection<T, U = T> {
      *
      * @param arg The value or array of values, or ID of the value or array of IDs of the values, to remove
      */
-    remove: (arg: T | T[] | U | U[]) => void;
+    remove(arg: T | T[] | U | U[]): void;
 
     /**
      * Removes all values from this collection.
      */
-    removeAll: () => void;
+    removeAll(): void;
 
     /**
      * Removes all values from this collection, and then populates it with the value or values provided. Any duplicate
@@ -143,7 +143,7 @@ export interface DirectoryCollection<T, U = T> {
      *
      * @param arg The value or array of values to populate this collection with
      */
-    set: (arg: T | T[]) => void;
+    set(arg: T | T[]): void;
 }
 
 /**
@@ -166,7 +166,7 @@ export interface StoredApplicationsDirectoryCollection extends DirectoryCollecti
      * @throws `Error` if the service is unable to determine the manifest URL for this application and it hasn't been
      * given in the `application` parameter.
      */
-    addSelf: (application?: Partial<Application>) => void;
+    addSelf(application?: Partial<Application>): void;
 }
 
 /**
