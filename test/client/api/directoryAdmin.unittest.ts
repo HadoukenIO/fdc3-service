@@ -156,6 +156,18 @@ describe('When the app directory is empty', () => {
 
         expect(fin.Storage.setItem).toBeCalledWith(APP_DIRECTORY_STORAGE_TAG, JSON.stringify(expectedAppDirectory));
     });
+
+    test('If we attempt to modify the app directory after the migration handler has completed, an error is thrown', async () => {
+        let outerDirectory: AppDirectory;
+
+        await updateAppDirectory(async (directory: AppDirectory) => {
+            outerDirectory = directory;
+        });
+
+        expect(() => {
+            outerDirectory.remoteSnippets.add(fakeUrl1);
+        }).toThrowError();
+    });
 });
 
 describe('When the app directory is populated and we specify a namespace', () => {
