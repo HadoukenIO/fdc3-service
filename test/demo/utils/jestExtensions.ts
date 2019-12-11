@@ -1,5 +1,5 @@
 import 'jest';
-import * as diff from 'jest-diff';
+import diff from 'jest-diff';
 
 import {ChannelId, Context as FDC3Context} from '../../../src/client/main';
 

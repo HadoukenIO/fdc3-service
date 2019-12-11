@@ -31,6 +31,7 @@
  */
 
 import deepEqual from 'deep-equal';
+import {ApplicationOption} from 'openfin/_v2/api/application/applicationOption';
 
 import {Application, AppName} from '../types/directory';
 import {sanitizeFunction, sanitizePositiveInteger, sanitizeNonEmptyString, safeStringify, sanitizeApplication} from '../validation';
@@ -290,7 +291,7 @@ abstract class DirectoryCollectionBase<T, U = T> implements DirectoryCollection<
         const values = Array.isArray(arg) ? arg : [arg];
 
         if (values.length !== 0) {
-            if (this.isId(values[1])) {
+            if (this.isId(values[0])) {
                 const ids = values as U[];
 
                 this._result = this._result.filter((resultItem) => !ids.some((id) => this.doesId(id, resultItem)));
@@ -371,6 +372,10 @@ class StoredApplicationsDirectoryCollectionImpl extends DirectoryCollectionBase<
     public addSelf(application?: Partial<Application>): void {
         const self = {...this._templateSelf, ...application};
 
+        if (!self.manifest) {
+            throw new Error('Unable to determine manifest for current application and not provided');
+        }
+
         this.add(self);
     }
 
@@ -392,31 +397,33 @@ class StoredApplicationsDirectoryCollectionImpl extends DirectoryCollectionBase<
 }
 
 async function getSelfApplication(): Promise<Application> {
-    const application = fin.Application.wrapSync(fin.Application.me);
-    const applicationInfo = await application.getInfo();
-
     interface OFManifest {
         shortcut?: {name?: string; icon: string};
         // eslint-disable-next-line camelcase
         startup_app: {uuid: string; name?: string; icon?: string};
     }
 
-    // TODO: Use latest version of this from develop FinEnvironment. Throw exception if no able to determine manifest
-    const {shortcut, startup_app: startupApp} = applicationInfo.manifest as OFManifest;
+    const application = fin.Application.wrapSync(fin.Application.me);
+    const applicationInfo = await application.getInfo();
 
-    const title = (shortcut && shortcut.name) || startupApp.name || startupApp.uuid;
-    const icon = (shortcut && shortcut.icon) || startupApp.icon;
+    let {name: title, icon} = applicationInfo.initialOptions as ApplicationOption;
 
-    const self = {
+    // `manifest` is defined as required property but actually optional. Not present on programmatically-launched apps.
+    if (applicationInfo.manifest) {
+        const {shortcut, startup_app: startupApp} = applicationInfo.manifest as OFManifest;
+        title = (shortcut && shortcut.name) || startupApp.name || startupApp.uuid;
+        icon = (shortcut && shortcut.icon) || startupApp.icon;
+    }
+
+    return {
         appId: application.identity.uuid,
         name: application.identity.uuid,
         title,
         icons: icon ? [{icon}] : undefined,
         manifestType: 'openfin',
-        manifest: applicationInfo.manifestUrl
+        // `manifestUrl` is defined as required property but actually optional. Not present on programmatically-launched apps.
+        manifest: applicationInfo.manifestUrl || ''
     };
-
-    return self;
 }
 
 function getNamespaceKey(options?: UpdateAppDirectoryOptions): string {

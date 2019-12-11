@@ -4,6 +4,7 @@ import {Identity, System} from 'openfin/_v2/main';
 import {Store} from 'openfin-service-config';
 import {ApplicationOption} from 'openfin/_v2/api/application/applicationOption';
 import {SubOptions} from 'openfin/_v2/api/base';
+import {Application as FinApplication} from 'openfin/_v2/api/application/application';
 
 import {AppConnection} from '../src/provider/model/AppConnection';
 import {Context, Application} from '../src/client/main';
@@ -30,9 +31,17 @@ type AddListenerParams = [string, (...args: any[]) => void, SubOptions];
  */
 export interface MockFin {
     Application: {
-        wrapSync: jest.Mock<Promise<Application>, [Identity]>;
-        createFromManifest: jest.Mock<Promise<Application>, [string]>;
-        create: jest.Mock<Promise<Application>, [ApplicationOption]>;
+        me: Identity;
+        wrapSync: jest.Mock<FinApplication, [Identity]>;
+        createFromManifest: jest.Mock<Promise<FinApplication>, [string]>;
+        create: jest.Mock<Promise<FinApplication>, [ApplicationOption]>;
+    };
+    System: {
+        addListener: jest.Mock<Promise<System>, AddListenerParams>;
+    };
+    Storage: {
+        getItem: jest.Mock<Promise<string>, [string]>;
+        setItem: jest.Mock<Promise<void>, [string, string]>;
     };
 }
 
@@ -97,7 +106,7 @@ export function createMockAppDirectory(options: Partial<jest.Mocked<AppDirectory
     return appDirectory;
 }
 
-export function createMockAppDirectoryStorage(options: Partial<jest.Mocked<AppDirectoryStorage>> = {}): jest.Mocked<AppDirectoryStorage> {
+export function createMockAppDirectoryStorage(options: Partial<AppDirectoryStorage> = {}): jest.Mocked<AppDirectoryStorage> {
     const appDirectoryStorage = {
         changed: null! as Signal<[]>,
         initialized: null! as Promise<void>,
@@ -111,6 +120,22 @@ export function createMockAppDirectoryStorage(options: Partial<jest.Mocked<AppDi
     Object.assign(appDirectoryStorage, options);
 
     return appDirectoryStorage;
+}
+
+export function createMockApplication(options: Partial<FinApplication> = {}): jest.Mocked<FinApplication> {
+    const application = {
+        identity: null! as Identity,
+        addListener: jest.fn<Promise<FinApplication>, AddListenerParams>(),
+        getInfo: jest.fn<Promise<void>, []>(),
+        run: jest.fn<Promise<void>, []>()
+    } as unknown as jest.Mocked<FinApplication>;
+
+    assignMockGetter(application, 'identity');
+
+    // Apply any custom overrides
+    Object.assign(application, options);
+
+    return application;
 }
 
 export function createMockChannel(options: Partial<jest.Mocked<ContextChannel>> = {}): jest.Mocked<ContextChannel> {
@@ -169,9 +194,10 @@ export function createMockEnvironmnent(options: Partial<jest.Mocked<Environment>
 export function createMockFin(): MockFin {
     const fin = {
         Application: {
-            wrapSync: jest.fn<Promise<Application>, [Identity]>(),
-            createFromManifest: jest.fn<Promise<Application>, [string]>(),
-            create: jest.fn<Promise<Application>, [ApplicationOption]>()
+            me: null!,
+            wrapSync: jest.fn<FinApplication, [Identity]>(),
+            createFromManifest: jest.fn<Promise<FinApplication>, [string]>(),
+            create: jest.fn<Promise<FinApplication>, [ApplicationOption]>()
         },
         System: {
             addListener: jest.fn<Promise<System>, AddListenerParams>()
@@ -180,7 +206,9 @@ export function createMockFin(): MockFin {
             getItem: jest.fn<Promise<string>, [string]>(),
             setItem: jest.fn<Promise<void>, [string, string]>()
         }
-    };
+    } as MockFin;
+
+    assignMockGetter(fin.Application, 'me');
 
     Object.assign(global, {fin});
 
