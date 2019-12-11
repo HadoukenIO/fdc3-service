@@ -68,6 +68,10 @@ describe('When the app directory is empty', () => {
     });
 
     const testParams: TestParam[] = [
+        ['We can read the version of the app directory', (directory: AppDirectory) => {
+            expect(directory.sourceVersion).toEqual(0);
+        }, defaultDirectory],
+
         ['We can read the remote snippets of the app directory', (directory: AppDirectory) => {
             expect(directory.remoteSnippets.source).toEqual([]);
         }, defaultDirectory],
@@ -160,6 +164,18 @@ describe('When the app directory is populated and we specify a namespace', () =>
     });
 
     const testParams: TestParam[] = [
+        ['We can read the version of the app directory', (directory: AppDirectory) => {
+            expect(directory.sourceVersion).toEqual(populatedDirectory['namespace-namespace-2'].version);
+        }, populatedDirectory],
+
+        ['We can read the remote snippets of the app directory', (directory: AppDirectory) => {
+            expect(directory.remoteSnippets.source).toEqual(populatedDirectory['namespace-namespace-2'].remoteSnippets);
+        }, populatedDirectory],
+
+        ['We can read the stored applications of the app directory', (directory: AppDirectory) => {
+            expect(directory.storedApplications.source).toEqual(populatedDirectory['namespace-namespace-2'].storedApplications);
+        }, populatedDirectory],
+
         ['We can add to the stored applications of the app directory without modifying another namespaced app directory', (directory: AppDirectory) => {
             directory.storedApplications.add(fakeApp7);
         }, createPopulatedDirectoryWithStoredApplications([fakeApp4, fakeApp5, fakeApp6, fakeApp7])],
