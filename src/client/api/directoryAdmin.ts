@@ -54,8 +54,8 @@ export type UpdateAppDirectoryMigrationHandler = (directory: AppDirectory) => vo
  */
 export interface UpdateAppDirectoryOptions {
     /**
-     * An optional namespace. If exists, must be a non-empty string. If this is specified, that app directory for this
-     * namespace on this applications domain will be read and written to be [[updateAppDirectory]].
+     * An optional namespace. If exists, must be a non-empty string. If this is specified, the app directory for this
+     * namespace on this application's domain will be read and written to by [[updateAppDirectory]].
      */
     namespace?: string;
 
