@@ -193,6 +193,28 @@ export const APP_DIRECTORY_STORAGE_TAG: string = 'of-fdc3-service.directory';
  * the application. If no app directory has previously been written, the migration handler will be taken to be updating
  * an 'empty' app directory with version 0.
  *
+ * For example, an organization may add its app directory by running the following at startup in its applications:
+ *
+ * ```ts
+ * await updateAppDirectory((directory: AppDirectory) => {
+ *     directory.remoteSnippets.set('http://your-domain.com/path-to-app-directory');
+ * });
+ *
+ * ```
+ *
+ * This assumes your organization's applications host their manifests and HTML on your-domain.com. If the URL of your
+ * organization's app directory then changes, you may run the following at your applications' startup:
+ *
+ * ```ts
+ * await updateAppDirectory((directory: AppDirectory) => {
+ *     directory.remoteSnippets.set('http://your-domain.com/new-path-to-app-directory', {destinationVersion: 2});
+ * });
+ *
+ * ```
+ *
+ * The use of `destinationVersion` version ensures any older applications still being run won't be able to overwrite
+ * the new app directory URL with the old app directory URL.
+ *
  * @param migrationHandler The migration handler function that should perform the update to the app directory for the
  * current domain/specified namespace. This will be called with an [[AppDirectory]] object. Note that depending on
  * `options`, and any other applications attempting to write to the app directory, this function may be called zero,
