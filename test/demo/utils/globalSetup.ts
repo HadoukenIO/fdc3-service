@@ -4,7 +4,7 @@ import * as path from 'path';
 
 import * as mkdirp from 'mkdirp';
 import fetch from 'node-fetch';
-import * as puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer';
 import * as jsAdapter from 'hadouken-js-adapter';
 
 declare const global: NodeJS.Global&{__BROWSER_GLOBAL__: puppeteer.Browser};
