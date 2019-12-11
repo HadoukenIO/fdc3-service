@@ -117,7 +117,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             interface OFManifest {
                 shortcut?: {name?: string; icon: string};
                 // eslint-disable-next-line camelcase
-                startup_app: {uuid: string; name?: string; icon?: string};
+                startup_app?: {uuid: string; name?: string; icon?: string};
             }
 
             const application = fin.Application.wrapSync(identity);
