@@ -111,7 +111,7 @@ describe('When running a non-directory app', () => {
             title: testAppNotInDirectory1.uuid,
             appId: testAppNotInDirectory1.uuid,
             manifest: testAppNotInDirectory1.manifestUrl,
-            intents: []
+            intents: [testIntent]
         });
 
         // Set the new app info
