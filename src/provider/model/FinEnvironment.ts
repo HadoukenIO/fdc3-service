@@ -1,4 +1,5 @@
 import {injectable, inject} from 'inversify';
+import {ApplicationOption} from 'openfin/_v2/api/application/applicationOption';
 import {WindowEvent, ApplicationEvent} from 'openfin/_v2/api/events/base';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
@@ -12,6 +13,7 @@ import {sanitizeIdentity} from '../../client/validation';
 import {Timeouts} from '../constants';
 import {Injector} from '../common/Injector';
 import {getId} from '../utils/getId';
+import {SemVer} from '../utils/SemVer';
 import {Inject} from '../common/Injectables';
 import {APIHandler} from '../APIHandler';
 
@@ -33,8 +35,10 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public readonly onApplicationCreated: Signal<[Identity, LiveApp]> = new Signal();
     public readonly onApplicationClosed: Signal<[Identity]> = new Signal();
 
-    public readonly onWindowCreated: Signal<[Identity]> = new Signal();
-    public readonly onWindowClosed: Signal<[Identity]> = new Signal();
+    public readonly onWindowCreated: Signal<[Identity, EntityType]> = new Signal();
+    public readonly onWindowClosed: Signal<[Identity, EntityType]> = new Signal();
+
+    private readonly _apiHandler: APIHandler<APIFromClientTopic>;
 
     /**
      * Stores details of all known windows and IAB connections.
@@ -49,7 +53,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
     constructor(@inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>) {
         super();
 
-        apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
+        this._apiHandler = apiHandler;
+        this._apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
     }
 
     public createApplication(appInfo: Application): void {
@@ -77,6 +82,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     public wrapConnection(liveApp: LiveApp, identity: Identity, entityType: EntityType, channel: ContextChannel): AppConnection {
         identity = sanitizeIdentity(identity);
         const id = getId(identity);
+        const version: SemVer = this._apiHandler.getClientVersion(id);
 
         // If `identity` is an adapter connection that hasn't yet connected to the service, there will not be a KnownEntity for this identity
         // In these cases, we will register the entity now
@@ -86,13 +92,13 @@ export class FinEnvironment extends AsyncInit implements Environment {
             const {entityNumber} = knownEntity;
 
             if (entityType === EntityType.EXTERNAL_CONNECTION) {
-                return new FinAppConnection(identity, entityType, liveApp, channel, entityNumber);
+                return new FinAppConnection(identity, entityType, version, liveApp, channel, entityNumber);
             } else {
-                if (entityType !== EntityType.WINDOW) {
-                    console.warn(`Unexpected entity type: ${entityType}. Treating as a regular OpenFin window.`);
+                if (!isPagedEntity(entityType)) {
+                    console.warn(`Connection '${id}' has unexpected entity type '${entityType}'. Some functionality may be unavailable.`);
                 }
 
-                return new FinAppWindow(identity, entityType, liveApp, channel, entityNumber);
+                return new FinAppWindow(identity, entityType, version, liveApp, channel, entityNumber);
             }
         } else {
             throw new Error('Cannot wrap entities belonging to the provider');
@@ -116,19 +122,23 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
             const application = fin.Application.wrapSync(identity);
             const applicationInfo = await application.getInfo();
+            let {name: title, icon} = applicationInfo.initialOptions as ApplicationOption;
 
-            const {shortcut, startup_app: startupApp} = applicationInfo.manifest as OFManifest;
-
-            const title = (shortcut && shortcut.name) || startupApp.name || startupApp.uuid;
-            const icon = (shortcut && shortcut.icon) || startupApp.icon;
+            // `manifest` is defined as required property but actually optional. Not present on programmatically-launched apps.
+            if (applicationInfo.manifest) {
+                const {shortcut, startup_app: startupApp} = applicationInfo.manifest as OFManifest;
+                title = (shortcut && shortcut.name) || startupApp.name || startupApp.uuid;
+                icon = (shortcut && shortcut.icon) || startupApp.icon;
+            }
 
             return {
-                appId: application.identity.uuid,
-                name: application.identity.uuid,
+                appId: identity.uuid,
+                name: identity.uuid,
                 title,
                 icons: icon ? [{icon}] : undefined,
                 manifestType: 'openfin',
-                manifest: applicationInfo.manifestUrl
+                // `manifestUrl` is defined as required property but actually optional. Not present on programmatically-launched apps.
+                manifest: applicationInfo.manifestUrl || ''
             };
         }
     }
@@ -154,34 +164,37 @@ export class FinEnvironment extends AsyncInit implements Environment {
     protected async init(): Promise<void> {
         const windowInfo = await fin.System.getAllWindows();
 
-        fin.System.addListener('application-started', async (event: ApplicationEvent<'system', 'application-started'>) => {
-            await Injector.initialized;
-            this.registerApplication({uuid: event.uuid}, Promise.resolve());
-        });
-
         const appicationClosedHandler = async (event: {uuid: string}) => {
             await Injector.initialized;
             this.deregisterApplication({uuid: event.uuid});
         };
-
-        fin.System.addListener('application-closed', appicationClosedHandler);
-        fin.System.addListener('application-crashed', appicationClosedHandler);
-
-        fin.System.addListener('window-created', async (event: WindowEvent<'system', 'window-created'>) => {
+        const entityCreatedHandler = async <T>(entityType: EntityType, event: WindowEvent<'system', T>) => {
             const identity = {uuid: event.uuid, name: event.name};
 
             await Injector.initialized;
             this.registerApplication({uuid: event.uuid}, Promise.resolve());
-            this.registerEntity(identity, EntityType.WINDOW);
-        });
-
-        fin.System.addListener('window-closed', async (event: WindowEvent<'system', 'window-closed'>) => {
+            this.registerEntity(identity, entityType);
+        };
+        const entityClosedHandler = async <T>(event: WindowEvent<'system', T>) => {
             const identity = {uuid: event.uuid, name: event.name};
 
             await Injector.initialized;
             this.deregisterEntity(identity);
             this.deregisterApplication({uuid: event.uuid});
+        };
+
+        fin.System.addListener('application-started', async (event: ApplicationEvent<'system', 'application-started'>) => {
+            await Injector.initialized;
+            this.registerApplication({uuid: event.uuid}, Promise.resolve());
         });
+        fin.System.addListener('application-closed', appicationClosedHandler);
+        fin.System.addListener('application-crashed', appicationClosedHandler);
+
+        fin.System.addListener('window-created', entityCreatedHandler.bind(this, EntityType.WINDOW));
+        fin.System.addListener('window-closed', entityClosedHandler);
+
+        fin.System.addListener('view-created', entityCreatedHandler.bind(this, EntityType.VIEW));
+        fin.System.addListener('view-closed', entityClosedHandler);
 
         // No await here otherwise the injector will never properly initialize - The injector awaits this init before completion!
         Injector.initialized.then(async () => {
@@ -202,7 +215,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
         // Only retain knowledge of the entity if it's a window.
         // Windows are removed when they are closed, all other entity types are removed when they disconnect.
-        if (connection && connection.entityType !== EntityType.WINDOW) {
+        if (connection && !isPagedEntity(connection.entityType)) {
             this.deregisterEntity(identity);
         }
     }
@@ -217,8 +230,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
             this._knownEntities.set(getId(identity), entity);
             this._entityCount++;
 
-            if (entityType === EntityType.WINDOW) {
-                this.onWindowCreated.emit(identity);
+            if (isPagedEntity(entityType)) {
+                this.onWindowCreated.emit(identity, entityType);
             }
 
             return entity;
@@ -235,8 +248,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
             if (entity) {
                 this._knownEntities.delete(id);
 
-                if (entity.entityType === EntityType.WINDOW) {
-                    this.onWindowClosed.emit(identity);
+                if (isPagedEntity(entity.entityType)) {
+                    this.onWindowClosed.emit(identity, entity.entityType);
                 }
             }
         }
@@ -262,4 +275,16 @@ export class FinEnvironment extends AsyncInit implements Environment {
             }
         }
     }
+}
+
+/**
+ * Checks if an entity is of a "page-based" entity type. These are entities that are built using a
+ * webpage/browser/DOM/etc. This only includes entity types that both meet this definition, AND are supported by
+ * the service.
+ *
+ * These entity types have a more finely controlled handshake process, as the fin API provides better eventing
+ * and querying of these entity types.
+ */
+function isPagedEntity(entityType: EntityType): boolean {
+    return entityType === EntityType.WINDOW || entityType === EntityType.VIEW;
 }
