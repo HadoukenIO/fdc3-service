@@ -197,8 +197,8 @@ export const APP_DIRECTORY_STORAGE_TAG: string = 'of-fdc3-service.directory';
  * one, or many times
  * @param options An optional [[UpdateAppDirectoryOptions]] object to control the behaviour of the current update
  * @throws `TypeError` if `migrationHandler` is not a function
- * @throws `TypeError` if not either undefined or an object, or any of it's contained values do not meet requirements
- * specified in [[UpdateAppDirectoryOptions]]
+ * @throws `TypeError` if `options` is not either undefined or an object, or any of its contained values do not meet
+ * requirements specified in [[UpdateAppDirectoryOptions]]
  */
 export async function updateAppDirectory(migrationHandler: UpdateAppDirectoryMigrationHandler, options?: UpdateAppDirectoryOptions): Promise<void> {
     migrationHandler = sanitizeFunction(migrationHandler);
