@@ -191,7 +191,7 @@ async function isServiceClear(): Promise<boolean> {
                 return false;
             }
 
-            if (this.model.apps.length !== 1) {
+            if (this.model.liveApps.length !== 1) {
                 return false;
             }
 
