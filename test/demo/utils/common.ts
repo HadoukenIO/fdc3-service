@@ -196,7 +196,7 @@ async function isServiceClear(): Promise<boolean> {
             }
 
             const singleWindow = this.model.connections[0];
-            const singleApp = this.model.apps[0];
+            const singleApp = this.model.liveApps[0];
 
             if (singleWindow.appInfo.appId !== expectedWindowIdentity.uuid) {
                 return false;
