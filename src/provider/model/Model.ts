@@ -174,138 +174,42 @@ export class Model {
     }
 
     public async getOrCreateLiveAppByName(name: AppName): Promise<LiveApp> {
-        const deferredPromise = new DeferredPromise<LiveApp>();
-        let found = false;
-
-        const search = (searchAppInfo: Application, liveApp: LiveApp) => {
-            if (searchAppInfo.name === name) {
-                found = true;
-                deferredPromise.resolve(liveApp);
-            }
-        };
-
-        // Look for the desired name in existing apps
-        const searchPromise = parallelForEach(Object.values(this._liveAppsByUuid), async (liveApp: LiveApp) => {
-            const appInfo = liveApp.appInfo || await liveApp.waitForAppInfo().catch(() => undefined);
-            if (appInfo) {
-                search(appInfo, liveApp);
-            }
-        });
-
-        // Look for the desired name in apps as they are created
-        const slot = this._environment.onApplicationCreated.add((identity: Identity, liveApp: LiveApp) => {
-            liveApp.waitForAppInfo().then((searchAppInfo) => search(searchAppInfo, liveApp));
-        }, () => {});
-
-        deferredPromise.promise.then(() => slot.remove(), () => slot.remove());
-
-        // If unable to find the app, the try to start it
-        searchPromise.then(async () => {
-            if (!found) {
-                const appInfo = await this._directory.getAppByName(name);
-
-                if (appInfo && !found) {
-                    deferredPromise.resolve(this._environment.createApplication(appInfo));
-                } else {
-                    deferredPromise.reject(new FDC3Error(ApplicationError.NotFound, `No application '${name}' found running or in directory`));
-                }
-            }
-        });
-
-        return deferredPromise.promise;
+        return this.getOrCreateLiveAppByNameWithPredicate(
+            name,
+            async () => this._directory.getAppByName(name),
+            (appInfo) => appInfo.name === name,
+            () => true
+        ) as Promise<LiveApp>;
     }
 
     public async getOrCreateLiveAppByNameForIntent(name: AppName, intentType: string, contextType: string): Promise<LiveApp | undefined> {
-        const deferredPromise = new DeferredPromise<LiveApp>();
-        let found = false;
-        let startedApp: LiveApp | undefined = undefined;
-
-        const search = (searchAppInfo: Application, liveApp: LiveApp) => {
-            if ((!startedApp && (searchAppInfo.name === name)) || (liveApp === startedApp)) {
+        return this.getOrCreateLiveAppByNameWithPredicate(
+            name,
+            async () => this._directory.getAppByName(name),
+            (searchAppInfo) => searchAppInfo.name === name,
+            (liveApp) => {
                 const hasIntentListener = liveApp.connections.some((connection) => connection.hasIntentListener(intentType));
 
                 if (hasIntentListener && AppDirectory.mightAppSupportIntent(liveApp.appInfo!, intentType, contextType)) {
-                    found = true;
-                    deferredPromise.resolve(liveApp);
+                    return true;
                 }
 
                 if (!liveApp.mature && AppDirectory.shouldAppSupportIntent(liveApp.appInfo!, intentType, contextType)) {
-                    found = true;
-                    deferredPromise.resolve(liveApp);
+                    return true;
                 }
+
+                return false;
             }
-        };
-
-        // Look for the desired name in existing apps
-        const searchPromise = parallelForEach(Object.values(this._liveAppsByUuid), async (liveApp: LiveApp) => {
-            const appInfo = liveApp.appInfo || await liveApp.waitForAppInfo().catch(() => undefined);
-            if (appInfo) {
-                search(appInfo, liveApp);
-            }
-        });
-
-        // Look for the desired name in apps as they are created
-        const slot = this._environment.onApplicationCreated.add((identity: Identity, liveApp: LiveApp) => {
-            liveApp.waitForAppInfo().then((appInfo) => {
-                search(appInfo, liveApp);
-                if (startedApp) {
-                    deferredPromise.reject(undefined);
-                }
-            });
-        }, () => {});
-
-        deferredPromise.promise.then(() => slot.remove(), () => slot.remove());
-
-        // If unable to find the app, the try to start it
-        searchPromise.then(async () => {
-            if (!found) {
-                const appInfo = await this._directory.getAppByName(name);
-
-                if (appInfo && !found) {
-                    startedApp = this._environment.createApplication(appInfo);
-                } else {
-                    deferredPromise.reject(new FDC3Error(ApplicationError.NotFound, `No application '${name}' found running or in directory`));
-                }
-            }
-        });
-
-        return deferredPromise.promise;
+        );
     }
 
     public async getOrCreateLiveAppByAppInfo(appInfo: Application): Promise<LiveApp> {
-        const deferredPromise = new DeferredPromise<LiveApp>();
-        let found = false;
-
-        const search = (searchAppInfo: Application | undefined, liveApp: LiveApp) => {
-            if (searchAppInfo === appInfo) {
-                found = true;
-                deferredPromise.resolve(liveApp);
-            }
-        };
-
-        // Look for the desired appInfo in existing apps
-        const searchPromise = parallelForEach(Object.values(this._liveAppsByUuid), async (liveApp: LiveApp) => {
-            const searchAppInfo = liveApp.appInfo || await liveApp.waitForAppInfo().catch(() => undefined);
-            search(searchAppInfo, liveApp);
-        });
-
-        // Look for the desired appInfo in apps as they are created
-        const slot = this._environment.onApplicationCreated.add((identity: Identity, liveApp: LiveApp) => {
-            liveApp.waitForAppInfo().then((searchAppInfo) => search(searchAppInfo, liveApp));
-        }, () => {});
-
-        deferredPromise.promise.then(() => slot.remove(), () => slot.remove());
-
-        // If unable to find the app, the try to start it
-        searchPromise.then(async () => {
-            if (!found) {
-                deferredPromise.resolve(this._environment.createApplication(appInfo));
-            } else {
-                deferredPromise.reject(new FDC3Error(ApplicationError.NotFound, `No application '${name}' found running or in directory`));
-            }
-        });
-
-        return deferredPromise.promise;
+        return this.getOrCreateLiveAppByNameWithPredicate(
+            appInfo.name,
+            async () => appInfo,
+            (searchAppInfo) => searchAppInfo === appInfo,
+            () => true
+        ) as Promise<LiveApp>;
     }
 
     public getChannel(id: ChannelId): ContextChannel|null {
@@ -626,6 +530,54 @@ export class Model {
         }
 
         return (app1.title || app1.name).localeCompare(app2.title || app2.name, 'en');
+    }
+
+    private async getOrCreateLiveAppByNameWithPredicate(
+        name: string,
+        getAppInfo: () => Promise<Application | null>,
+        matcher: (appInfo: Application) => boolean,
+        predicate: (liveApp: LiveApp) => boolean
+    ): Promise<LiveApp | undefined> {
+        const deferredPromise = new DeferredPromise<LiveApp>();
+        let found = false;
+
+        const search = async (liveApp: LiveApp, forceMatchApp: boolean) => {
+            const appInfo = liveApp.appInfo || await liveApp.waitForAppInfo().catch(() => undefined);
+
+            if (appInfo && (matcher(appInfo) || forceMatchApp)) {
+                found = true;
+                if (!predicate || predicate(liveApp)) {
+                    deferredPromise.resolve(liveApp);
+                } else {
+                    deferredPromise.resolve(undefined);
+                }
+            } else if (forceMatchApp) {
+                deferredPromise.reject(new FDC3Error(ApplicationError.LaunchError, `Application '${name}' closed before registering`));
+            }
+        };
+
+        // Look for the desired name in existing apps
+        const searchPromise = parallelForEach(Object.values(this._liveAppsByUuid), (liveApp) => search(liveApp, false));
+
+        // Look for the desired name in apps as they are created
+        const slot = this._environment.onApplicationCreated.add(async (identity, liveApp) => search(liveApp, false));
+        deferredPromise.promise.then(() => slot.remove(), () => slot.remove());
+
+        // If unable to find the app, the try to start it
+        searchPromise.then(async () => {
+            if (!found) {
+                const appInfo = await getAppInfo();
+
+                if (appInfo && !found) {
+                    slot.remove();
+                    search(this._environment.createApplication(appInfo), true);
+                } else {
+                    deferredPromise.reject(new FDC3Error(ApplicationError.NotFound, `No application '${name}' found running or in directory`));
+                }
+            }
+        });
+
+        return deferredPromise.promise;
     }
 }
 
