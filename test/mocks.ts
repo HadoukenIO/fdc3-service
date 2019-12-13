@@ -177,7 +177,7 @@ export function createMockEnvironmnent(options: Partial<jest.Mocked<Environment>
         onApplicationClosed: new Signal<[Identity]>(),
         onWindowCreated: new Signal<[Identity, EntityType]>(),
         onWindowClosed: new Signal<[Identity, EntityType]>(),
-        createApplication: jest.fn<void, [Application]>(),
+        createApplication: jest.fn<LiveApp, [Application]>(),
         wrapConnection: jest.fn<AppConnection, [LiveApp, Identity, EntityType, ContextChannel]>(),
         inferApplication: jest.fn<Promise<Application>, [Identity]>(),
         getEntityType: jest.fn<Promise<EntityType>, [Identity]>(),
