@@ -544,15 +544,13 @@ export class Model {
         const search = async (liveApp: LiveApp, forceMatchApp: boolean) => {
             const appInfo = liveApp.appInfo || await liveApp.waitForAppInfo().catch(() => undefined);
 
-            if (appInfo && (matcher(appInfo) || forceMatchApp)) {
+            if ((appInfo && matcher(appInfo)) || forceMatchApp) {
                 found = true;
                 if (!predicate || predicate(liveApp)) {
                     deferredPromise.resolve(liveApp);
                 } else {
                     deferredPromise.resolve(undefined);
                 }
-            } else if (forceMatchApp) {
-                deferredPromise.reject(new FDC3Error(ApplicationError.LaunchError, `Application '${name}' closed before registering`));
             }
         };
 
