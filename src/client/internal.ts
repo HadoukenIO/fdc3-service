@@ -243,6 +243,16 @@ export interface ChannelReceiveContextPayload {
     context: Context;
 }
 
+export interface OpenFinChannelConnectionEvent {
+    channelId: string;
+    channelName: string;
+    isExternal: boolean;
+    name: string;
+    topic: string;
+    type: string;
+    uuid: string;
+}
+
 /**
  * Invokes an array of listeners with a given context, allowing us to apply consistent error handling. Will throw an error if > 0 listeners are given, and all
  * fail. Otherwise the first *defined* value returned is returned, or undefined is no defined values are returned.

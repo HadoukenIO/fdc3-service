@@ -13,9 +13,10 @@
  */
 import {EventEmitter} from 'events';
 
+import {DeferredPromise} from 'openfin-service-async';
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
-import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient, deserializeError, Events} from './internal';
+import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient, deserializeError, Events, OpenFinChannelConnectionEvent} from './internal';
 import {EventRouter} from './EventRouter';
 
 /**
@@ -42,22 +43,39 @@ export function getEventRouter(): EventRouter<Events> {
 /**
  * Promise to the channel object that allows us to connect to the client
  */
-let channelPromise: Promise<ChannelClient>|null = null;
+let channelPromise: Promise<ChannelClient> | null = null;
+const hasDOMContentLoaded = new DeferredPromise<void>();
 
-if (typeof fin !== 'undefined') {
-    getServicePromise();
-}
+document.addEventListener('DOMContentLoaded', () => {
+    hasDOMContentLoaded.resolve();
+    if (typeof fin !== 'undefined') {
+        getServicePromise();
+    } else {
+        channelPromise = Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.'));
+    }
 
-export function getServicePromise(): Promise<ChannelClient> {
+    fin.InterApplicationBus.Channel.onChannelDisconnect((event: OpenFinChannelConnectionEvent) => {
+        const {uuid, name, channelName} = event;
+        if (uuid === SERVICE_IDENTITY.uuid && name === SERVICE_IDENTITY.name && channelName === SERVICE_CHANNEL) {
+            channelPromise = null;
+        }
+    });
+});
+
+export async function getServicePromise(): Promise<ChannelClient> {
+    await hasDOMContentLoaded.promise;
     if (!channelPromise) {
-        if (typeof fin === 'undefined') {
-            channelPromise = Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.'));
-        } else if (fin.Window.me.uuid === SERVICE_IDENTITY.uuid && fin.Window.me.name === SERVICE_IDENTITY.name) {
+        if (fin.Window.me.uuid === SERVICE_IDENTITY.uuid && fin.Window.me.name === SERVICE_IDENTITY.name) {
             // Currently a runtime bug when provider connects to itself. Ideally the provider would never import a file
             // that includes this, but for now it is easier to put a guard in place.
             channelPromise = Promise.reject<ChannelClient>(new Error('Trying to connect to provider from provider'));
         } else {
-            channelPromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}}).then((channel: ChannelClient) => {
+            channelPromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {
+                wait: true,
+                payload: {version: PACKAGE_VERSION}
+            }).then(async (channel: ChannelClient) => {
+                // @ts-ignore Timestamp channel creation time for debugging
+                channel['timestamp'] = (new Date()).toUTCString();
                 // Register service listeners
                 channel.register('WARN', (payload: unknown) => console.warn(payload));  // tslint:disable-line:no-any
 

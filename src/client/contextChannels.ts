@@ -24,7 +24,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {parseIdentity, parseContext, validateEnvironment, parseChannelId, parseAppChannelName} from './validation';
 import {tryServiceDispatch, getEventRouter, getServicePromise} from './connection';
-import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport, invokeListeners} from './internal';
+import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport, invokeListeners, SERVICE_IDENTITY, SERVICE_CHANNEL, OpenFinChannelConnectionEvent} from './internal';
 import {Context} from './context';
 import {ContextListener} from './main';
 import {Transport} from './EventRouter';
@@ -554,7 +554,6 @@ function deserializeWindowAddedEvent(eventTransport: Transport<ChannelWindowAdde
     const identity = eventTransport.identity;
     const channel = getChannelObject(eventTransport.channel);
     const previousChannel = eventTransport.previousChannel ? getChannelObject(eventTransport.previousChannel) : null;
-
     return {type: 'window-added', identity, channel, previousChannel};
 }
 
@@ -562,11 +561,42 @@ function deserializeWindowRemovedEvent(eventTransport: Transport<ChannelWindowRe
     const identity = eventTransport.identity;
     const channel = eventTransport.channel ? getChannelObject(eventTransport.channel) : null;
     const previousChannel = getChannelObject(eventTransport.previousChannel);
-
     return {type: 'window-removed', identity, channel, previousChannel};
 }
 
+// Keep track of channels currently in so they can be rejoined on disconnect
+const currentChannels = new Set<string>();
+
+function deserializeChannelChangedEvent(eventTransport: Transport<ChannelChangedEvent>): ChannelChangedEvent {
+    const type = eventTransport.type;
+    const identity = eventTransport.identity;
+    const channel = eventTransport.channel ? getChannelObject(eventTransport.channel) : null;
+    const previousChannel = eventTransport.previousChannel ? getChannelObject(eventTransport.previousChannel) : null;
+
+    if (fin.Window.me.name === identity.name && fin.Window.me.uuid === identity.uuid) {
+        if (previousChannel) {
+            currentChannels.delete(previousChannel.id);
+        }
+        if (channel) {
+            currentChannels.add(channel.id);
+        }
+    }
+
+    return {type, identity, channel, previousChannel};
+}
+
 if (typeof fin !== 'undefined') {
+    initialize();
+
+    fin.InterApplicationBus.Channel.onChannelConnect((event: OpenFinChannelConnectionEvent) => {
+        const {uuid, name, channelName} = event;
+        if (uuid === SERVICE_IDENTITY.uuid && name === SERVICE_IDENTITY.name && channelName === SERVICE_CHANNEL) {
+            initialize();
+        }
+    });
+}
+
+function initialize() {
     getServicePromise().then((channelClient) => {
         channelClient.register(APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, async (payload: ChannelReceiveContextPayload) => {
             await invokeListeners(
@@ -585,7 +615,25 @@ if (typeof fin !== 'undefined') {
 
         eventHandler.registerDeserializer('window-added', deserializeWindowAddedEvent);
         eventHandler.registerDeserializer('window-removed', deserializeWindowRemovedEvent);
+        eventHandler.registerDeserializer('channel-changed', deserializeChannelChangedEvent);
+
+        rehydrate();
     }, (reason) => {
         console.warn('Unable to register client channel context handlers. getServicePromise() rejected with reason:', reason);
     });
+}
+
+async function rehydrate(): Promise<void> {
+    const joinChannels = [...currentChannels.values()].map(async (id) => {
+        return (await getChannelById(id)).join();
+    });
+
+    const tempContextListeners = [...channelContextListeners];
+    channelContextListeners.splice(0, channelContextListeners.length);
+
+    tempContextListeners.map(({channel, handler}) => {
+        return channel.addContextListener(handler);
+    });
+
+    await Promise.all(joinChannels);
 }

@@ -8,8 +8,8 @@
 import {tryServiceDispatch, getServicePromise, getEventRouter, eventEmitter} from './connection';
 import {Context} from './context';
 import {Application, AppName} from './directory';
-import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners} from './internal';
-import {ChannelChangedEvent, getChannelObject, ChannelContextListener} from './contextChannels';
+import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners, SERVICE_IDENTITY, SERVICE_CHANNEL, OpenFinChannelConnectionEvent} from './internal';
+import {ChannelChangedEvent, ChannelContextListener} from './contextChannels';
 import {parseContext, validateEnvironment} from './validation';
 import {Transport, Targeted} from './EventRouter';
 
@@ -416,16 +416,18 @@ function hasIntentListener(intent: string): boolean {
     return intentListeners.some((intentListener) => intentListener.intent === intent);
 }
 
-function deserializeChannelChangedEvent(eventTransport: Transport<ChannelChangedEvent>): ChannelChangedEvent {
-    const type = eventTransport.type;
-    const identity = eventTransport.identity;
-    const channel = eventTransport.channel ? getChannelObject(eventTransport.channel) : null;
-    const previousChannel = eventTransport.previousChannel ? getChannelObject(eventTransport.previousChannel) : null;
+if (typeof fin !== 'undefined') {
+    initialize();
 
-    return {type, identity, channel, previousChannel};
+    fin.InterApplicationBus.Channel.onChannelConnect((event: OpenFinChannelConnectionEvent) => {
+        const {uuid, name, channelName} = event;
+        if (uuid === SERVICE_IDENTITY.uuid && name === SERVICE_IDENTITY.name && channelName === SERVICE_CHANNEL) {
+            initialize();
+        }
+    });
 }
 
-if (typeof fin !== 'undefined') {
+function initialize() {
     getServicePromise().then((channelClient) => {
         channelClient.register(APIToClientTopic.RECEIVE_INTENT, async (payload: RaiseIntentPayload) => {
             const result = await invokeListeners(
@@ -457,9 +459,26 @@ if (typeof fin !== 'undefined') {
             }
         });
 
+        rehydrate();
+
         eventHandler.registerEmitterProvider('main', () => eventEmitter);
-        eventHandler.registerDeserializer('channel-changed', deserializeChannelChangedEvent);
     }, (reason) => {
         console.warn('Unable to register client Context and Intent handlers. getServicePromise() rejected with reason:', reason);
     });
+}
+
+async function rehydrate(): Promise<void> {
+    const tempIntentListeners = [...intentListeners];
+    intentListeners.splice(0, intentListeners.length);
+    const tempContextListeners = [...contextListeners];
+    contextListeners.splice(0, contextListeners.length);
+
+    const intents = tempIntentListeners.map(async ({intent, handler}) => {
+        return addIntentListener(intent, handler);
+    });
+    const contexts = tempContextListeners.map(async ({handler}) => {
+        return addContextListener(handler);
+    });
+
+    await Promise.all([...intents, ...contexts]);
 }
