@@ -5,7 +5,7 @@ import {withStrictTimeout, allowReject, untilSignal, untilTrue, DeferredPromise,
 
 import {Application, AppName} from '../../client/types/directory';
 import {Inject} from '../common/Injectables';
-import {ChannelId, DEFAULT_CHANNEL_ID, AppIntent} from '../../client/main';
+import {ChannelId, DEFAULT_CHANNEL_ID, AppIntent, FDC3Error, ApplicationError} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {SYSTEM_CHANNELS, Timeouts} from '../constants';
@@ -96,7 +96,7 @@ export class Model {
         }
     }
 
-    public get apps(): LiveApp[] {
+    public get liveApps(): LiveApp[] {
         return Object.values(this._liveAppsByUuid);
     }
 
@@ -134,13 +134,12 @@ export class Model {
      * Returns all registered connections for an app satisfying our predicate, waiting for at least one connection or
      * until the app is mature.
      */
-    public async expectConnectionsForApp(
-        appInfo: Application,
+    public async expectConnectionsForLiveApp(
+        liveApp: LiveApp,
         isReadyNow: (connection: AppConnection) => boolean,
         waitForReady: (connection: AppConnection) => Promise<void>
     ): Promise<AppConnection[]> {
-        const uuid = AppDirectory.getUuidFromApp(appInfo);
-        const connections = this._liveAppsByUuid[uuid] ? this._liveAppsByUuid[uuid].connections : [];
+        const connections = liveApp.connections;
 
         const result: AppConnection[] = connections.filter(isReadyNow);
 
@@ -153,7 +152,7 @@ export class Model {
 
             // Apply the async predicate to any incoming connections
             const slot = this._onConnectionRegisteredInternal.add((connection) => {
-                if (connection.appInfo.appId === appInfo.appId) {
+                if (liveApp.connections.includes(connection)) {
                     waitForReady(connection).then(() => deferredPromise.resolve(connection), () => {});
                 }
             });
@@ -166,7 +165,7 @@ export class Model {
             // Return a connection once we have one, or timeout when the application is mature
             return Promise.race([
                 deferredPromise.promise.then((connection) => [connection]),
-                this.getOrCreateLiveApp(appInfo).then((liveApp) => liveApp.waitForAppMature().then(() => [], () => []))
+                liveApp.waitForAppMature().then(() => [], () => [])
             ]).then((connection) => {
                 slot.remove();
                 return connection;
@@ -174,25 +173,45 @@ export class Model {
         }
     }
 
-    public async getOrCreateLiveApp(appInfo: Application): Promise<LiveApp> {
-        const uuid = AppDirectory.getUuidFromApp(appInfo);
+    public async getOrCreateLiveAppByName(name: AppName): Promise<LiveApp> {
+        const deferredPromise = new DeferredPromise<LiveApp>();
+        let found = false;
 
-        if (this._liveAppsByUuid[uuid]) {
-            return this._liveAppsByUuid[uuid];
-        } else {
-            const deferredPromise = new DeferredPromise<LiveApp>();
+        // Look for the desired name in existing apps
+        const searchPromise = parallelForEach(Object.values(this._liveAppsByUuid), async (liveApp: LiveApp) => {
+            const appInfo = liveApp.appInfo || await liveApp.waitForAppInfo().catch(() => undefined);
+            if (appInfo && appInfo.name === name) {
+                found = true;
+                deferredPromise.resolve(liveApp);
+            }
+        });
 
-            const slot = this._environment.onApplicationCreated.add((identity: Identity, liveApp: LiveApp) => {
-                if (identity.uuid === uuid) {
-                    slot.remove();
+        // Look for the desired name in apps as they are created
+        const slot = this._environment.onApplicationCreated.add((identity: Identity, liveApp: LiveApp) => {
+            liveApp.waitForAppInfo().then((appInfo) => {
+                if (appInfo.name === name) {
+                    found = true;
                     deferredPromise.resolve(liveApp);
                 }
             });
+        }, () => {});
 
-            this._environment.createApplication(appInfo);
+        deferredPromise.promise.then(() => slot.remove(), () => slot.remove());
 
-            return deferredPromise.promise;
-        }
+        // If unable to find the app, the try to start it
+        searchPromise.then(async () => {
+            if (!found) {
+                const appInfo = await this._directory.getAppByName(name);
+
+                if (appInfo && !found) {
+                    this._environment.createApplication(appInfo);
+                } else {
+                    deferredPromise.reject(new FDC3Error(ApplicationError.NotFound, `No application '${name}' found running or in directory`));
+                }
+            }
+        });
+
+        return deferredPromise.promise;
     }
 
     public getChannel(id: ChannelId): ContextChannel|null {
@@ -292,12 +311,6 @@ export class Model {
         appIntents.sort((a, b) => a.intent.name.localeCompare(b.intent.name, 'en'));
 
         return appIntents;
-    }
-
-    public findConnectionsByAppName(name: AppName): AppConnection[] {
-        const liveApp = Object.values(this._liveAppsByUuid).find((testLiveApp) => !!testLiveApp.appInfo && testLiveApp.appInfo.name === name);
-
-        return liveApp ? liveApp.connections : [];
     }
 
     public async existsAppForName(name: AppName): Promise<boolean> {

@@ -123,8 +123,8 @@ export class IntentHandler {
     }
 
     private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
-        const listeningWindows = await this._model.expectConnectionsForApp(
-            appInfo,
+        const listeningWindows = await this._model.expectConnectionsForLiveApp(
+            await this._model.getOrCreateLiveAppByName(appInfo.name),
             (connection) => connection.hasIntentListener(intent.type),
             (connection) => connection.waitForReadyToReceiveIntent(intent.type)
         );
