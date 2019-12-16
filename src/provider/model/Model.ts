@@ -314,16 +314,6 @@ export class Model {
         return appIntents;
     }
 
-    public async existsAppForName(name: AppName): Promise<boolean> {
-        const directoryApp = await this._directory.getAppByName(name);
-
-        if (directoryApp) {
-            return true;
-        } else {
-            return !!this._liveAppsByUuid[name];
-        }
-    }
-
     public async onDirectoryChanged(): Promise<void> {
         const entries = Object.entries(this._liveAppsByUuid);
 
