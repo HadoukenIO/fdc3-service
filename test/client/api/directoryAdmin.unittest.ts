@@ -9,20 +9,8 @@ type TestParam = [string, UpdateAppDirectoryMigrationHandler, StoredDirectorySha
 
 const fin = createMockFin();
 
-const fakeApp1 = createFakeApp();
-const fakeApp2 = createFakeApp();
-const fakeApp3 = createFakeApp();
-const fakeApp4 = createFakeApp();
-const fakeApp5 = createFakeApp();
-const fakeApp6 = createFakeApp();
-const fakeApp7 = createFakeApp();
-
-const fakeUrl1 = createFakeUrl();
-const fakeUrl2 = createFakeUrl();
-const fakeUrl3 = createFakeUrl();
-const fakeUrl4 = createFakeUrl();
-const fakeUrl5 = createFakeUrl();
-const fakeUrl6 = createFakeUrl();
+const [fakeApp1, fakeApp2, fakeApp3, fakeApp4, fakeApp5, fakeApp6, fakeApp7] = Array(7).map(createFakeApp);
+const [fakeUrl1, fakeUrl2, fakeUrl3, fakeUrl4, fakeUrl5, fakeUrl6] = Array(6).map(createFakeUrl);
 
 const populatedDirectoryVersion = 4;
 
