@@ -176,7 +176,7 @@ export class Model {
     public async getOrCreateLiveAppByName(name: AppName): Promise<LiveApp> {
         return this.getOrCreateLiveApp<never>(
             name,
-            async () => this._directory.getAppByName(name),
+            () => this._directory.getAppByName(name),
             (appInfo) => appInfo.name === name,
             () => undefined,
             () => undefined
@@ -186,7 +186,7 @@ export class Model {
     public async getOrCreateLiveAppByNameForIntent(name: AppName, intentType: string, contextType: string): Promise<LiveApp | 'does-not-support-intent'> {
         return this.getOrCreateLiveApp(
             name,
-            async () => this._directory.getAppByName(name),
+            () => this._directory.getAppByName(name),
             (searchAppInfo) => searchAppInfo.name === name,
             (searchAppInfo) => AppDirectory.shouldAppSupportIntent(searchAppInfo, intentType, contextType) ? undefined : 'does-not-support-intent',
             (liveApp) => {
@@ -470,7 +470,6 @@ export class Model {
                 const appInfo = await getAppInfo();
 
                 if (appInfo && !found) {
-                    slot.remove();
                     const testAppInfoResult = testAppInfo(appInfo);
                     if (testAppInfoResult === undefined) {
                         deferredPromise.resolve(this._environment.createApplication(appInfo));
