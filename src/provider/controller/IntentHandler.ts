@@ -43,7 +43,7 @@ export class IntentHandler {
     private async raiseWithTarget(intent: IntentWithTarget): Promise<IntentResolution> {
         const liveApp = await this._model.getOrCreateLiveAppByNameForIntent(intent.target, intent.type, intent.context.type);
 
-        if (liveApp) {
+        if (liveApp !== 'does-not-support-intent') {
             // Target intent handles intent with given context, so fire
             return this.fireIntent(intent, liveApp);
         } else {

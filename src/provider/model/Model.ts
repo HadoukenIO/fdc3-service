@@ -178,27 +178,29 @@ export class Model {
             name,
             async () => this._directory.getAppByName(name),
             (appInfo) => appInfo.name === name,
-            () => true
+            () => undefined,
+            () => undefined
         ) as Promise<LiveApp>;
     }
 
-    public async getOrCreateLiveAppByNameForIntent(name: AppName, intentType: string, contextType: string): Promise<LiveApp | undefined> {
+    public async getOrCreateLiveAppByNameForIntent(name: AppName, intentType: string, contextType: string): Promise<LiveApp | 'does-not-support-intent'> {
         return this.getOrCreateLiveApp(
             name,
             async () => this._directory.getAppByName(name),
             (searchAppInfo) => searchAppInfo.name === name,
+            (searchAppInfo) => AppDirectory.shouldAppSupportIntent(searchAppInfo, intentType, contextType) ? undefined : 'does-not-support-intent',
             (liveApp) => {
                 const hasIntentListener = liveApp.connections.some((connection) => connection.hasIntentListener(intentType));
 
                 if (hasIntentListener && AppDirectory.mightAppSupportIntent(liveApp.appInfo!, intentType, contextType)) {
-                    return true;
+                    return undefined;
                 }
 
                 if (!liveApp.mature && AppDirectory.shouldAppSupportIntent(liveApp.appInfo!, intentType, contextType)) {
-                    return true;
+                    return undefined;
                 }
 
-                return false;
+                return 'does-not-support-intent';
             }
         );
     }
@@ -208,7 +210,8 @@ export class Model {
             appInfo.name,
             async () => appInfo,
             (searchAppInfo) => searchAppInfo === appInfo,
-            () => true
+            () => undefined,
+            () => undefined
         ) as Promise<LiveApp>;
     }
 
@@ -418,33 +421,36 @@ export class Model {
         }
     }
 
-    private async getOrCreateLiveApp(
+    private async getOrCreateLiveApp<T = never>(
         name: string,
         getAppInfo: () => Promise<Application | null>,
-        testAppInfo: (appInfo: Application) => boolean,
-        testLiveApp: (liveApp: LiveApp) => boolean
-    ): Promise<LiveApp | undefined> {
-        const deferredPromise = new DeferredPromise<LiveApp>();
+        identifyAppInfo: (appInfo: Application) => boolean,
+        testAppInfo: (appInfo: Application) => T | undefined,
+        testLiveApp: (liveApp: LiveApp) => T | undefined
+    ): Promise<LiveApp | T> {
+        const deferredPromise = new DeferredPromise<LiveApp | T>();
         let found = false;
 
-        const search = async (liveApp: LiveApp, forceMatchApp: boolean) => {
-            const appInfo = liveApp.appInfo || await liveApp.waitForAppInfo().catch(() => undefined);
+        const search = async (liveApp: LiveApp) => {
+            const appInfo = await liveApp.waitForAppInfo().catch(() => undefined);
 
-            if (forceMatchApp || (appInfo && testAppInfo(appInfo))) {
+            if (appInfo && identifyAppInfo(appInfo)) {
                 found = true;
-                if (!testLiveApp || testLiveApp(liveApp)) {
+                const testLiveAppResult = testLiveApp(liveApp);
+
+                if (testLiveAppResult === undefined) {
                     deferredPromise.resolve(liveApp);
                 } else {
-                    deferredPromise.resolve(undefined);
+                    deferredPromise.resolve(testLiveAppResult);
                 }
             }
         };
 
         // Look for the desired name in existing apps
-        const searchPromise = parallelForEach(Object.values(this._liveAppsByUuid), (liveApp) => search(liveApp, false));
+        const searchPromise = parallelForEach(Object.values(this._liveAppsByUuid), (liveApp) => search(liveApp));
 
         // Look for the desired name in apps as they are created
-        const slot = this._environment.onApplicationCreated.add(async (identity, liveApp) => search(liveApp, false));
+        const slot = this._environment.onApplicationCreated.add(async (identity, liveApp) => search(liveApp));
         deferredPromise.promise.then(() => slot.remove(), () => slot.remove());
 
         // If unable to find the app, the try to start it
@@ -454,10 +460,11 @@ export class Model {
 
                 if (appInfo && !found) {
                     slot.remove();
-                    if (testAppInfo(appInfo)) {
-                        search(this._environment.createApplication(appInfo), true);
+                    const testAppInfoResult = testAppInfo(appInfo);
+                    if (testAppInfoResult === undefined) {
+                        deferredPromise.resolve(this._environment.createApplication(appInfo));
                     } else {
-                        deferredPromise.resolve(undefined);
+                        deferredPromise.resolve(testAppInfoResult);
                     }
                 } else {
                     deferredPromise.reject(new FDC3Error(ApplicationError.NotFound, `No application '${name}' found running or in directory`));
