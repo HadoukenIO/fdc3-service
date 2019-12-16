@@ -186,7 +186,7 @@ export interface StoredDirectoryShardMap {[key: string]: StoredDirectoryShard}
 /**
  * @hidden
  */
-export const APP_DIRECTORY_STORAGE_TAG: string = 'of-fdc3-service.directory';
+export const APP_DIRECTORY_STORAGE_TAG: string = 'fdc3-app-dir';
 
 /**
  * Updates the app directory for the current domain/specified namespace, using a migration handler function provided by
