@@ -10,10 +10,10 @@
  */
 import {Identity} from 'openfin/_v2/main';
 
-import {AppName, Application} from './directory';
+import {AppName} from './types/directory';
 import {AppIntent, Context, IntentResolution, Listener} from './main';
-import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel} from './contextChannels';
-import {FDC3Error} from './errors';
+import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel} from './api/contextChannels';
+import {FDC3Error} from './types/errors';
 
 /**
  * The identity of the main application window of the service provider
@@ -22,11 +22,6 @@ export const SERVICE_IDENTITY = {
     uuid: 'fdc3-service',
     name: 'fdc3-service'
 };
-
-/**
- * Name of the tag used to store app directory shards
- */
-export const APP_DIRECTORY_STORAGE_TAG: string = 'of-fdc3-service.directory';
 
 /**
  * Name of the IAB channel use to communicate between client and provider
@@ -248,11 +243,6 @@ export interface ChannelReceiveContextPayload {
     context: Context;
 }
 
-export interface StoredAppDirectoryShard {
-    urls: string[];
-    applications: Application[];
-}
-
 /**
  * Invokes an array of listeners with a given context, allowing us to apply consistent error handling. Will throw an error if > 0 listeners are given, and all
  * fail. Otherwise the first *defined* value returned is returned, or undefined is no defined values are returned.
@@ -335,4 +325,14 @@ export function deserializeError(error: Error): Error | FDC3Error {
     }
 
     return error;
+}
+
+/**
+ * Takes an array and a comparison function, and returns a deduplicated equivalent, taking the first of any duplicate elements.
+ *
+ * @param array The array to deduplicate
+ * @param compare A comparison function. Will be passed pairs of entries from `array`, and should return true if these should be considered equal
+ */
+export function deduplicate<T>(array: T[], compare: (a: T, b: T) => boolean): T[] {
+    return array.filter((a, index) => array.findIndex((b) => compare(a, b)) === index);
 }

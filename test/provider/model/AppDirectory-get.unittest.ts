@@ -3,13 +3,12 @@ import 'reflect-metadata';
 
 import {Signal} from 'openfin-service-signal';
 
-import {Application} from '../../../src/client/directory';
+import {Application} from '../../../src/client/types/directory';
 import {AppDirectory} from '../../../src/provider/model/AppDirectory';
 import {createFakeApp, createFakeUrl, createFakeIntent, createFakeContextType} from '../../demo/utils/fakes';
 import {createMockAppDirectoryStorage, getterMock} from '../../mocks';
 import {resolvePromiseChain} from '../../utils/unit/time';
-import {StoredAppDirectoryShard} from '../../../src/client/internal';
-import {ScopedAppDirectoryShard, DomainShardScope} from '../../../src/provider/model/AppDirectoryStorage';
+import {ScopedAppDirectoryShard, DomainShardScope, AppDirectoryShard} from '../../../src/provider/model/AppDirectoryStorage';
 
 enum StorageKeys {
     DIRECTORY_CACHE = 'fdc3@directoryCache'
@@ -141,9 +140,9 @@ describe('When fetching initial data', () => {
             const storedApps3 = [createFakeAppForDomain(domain3), createFakeAppForDomain(domain3), createFakeAppForDomain(domain3)];
 
             setupDirectoryStorage([
-                {domain: domain1, shard: {urls: [], applications: storedApps1}},
-                {domain: domain2, shard: {urls: [], applications: storedApps2}},
-                {domain: domain3, shard: {urls: [], applications: storedApps3}}
+                {domain: domain1, shard: {remoteSnippets: [], storedApplications: storedApps1}},
+                {domain: domain2, shard: {remoteSnippets: [], storedApplications: storedApps2}},
+                {domain: domain3, shard: {remoteSnippets: [], storedApplications: storedApps3}}
             ]);
 
             await createAppDirectory();
@@ -161,8 +160,8 @@ describe('When fetching initial data', () => {
             const remoteApps = [createFakeAppForDomain(domain2), createFakeAppForDomain(domain2)];
 
             setupDirectoryStorage([
-                {domain: domain1, shard: {urls: [], applications: storedApps}},
-                {domain: domain2, shard: {urls: [remoteUrl], applications: []}}
+                {domain: domain1, shard: {remoteSnippets: [], storedApplications: storedApps}},
+                {domain: domain2, shard: {remoteSnippets: [remoteUrl], storedApplications: []}}
             ]);
             setupRemotesWithData([{url: remoteUrl, applications: remoteApps}]);
 
@@ -183,7 +182,7 @@ describe('When fetching initial data', () => {
 
             setupRemotesWithData([{url: defaultUrl, applications: defaultApps}, {url: remoteUrl, applications: remoteApps}]);
             setupDirectoryStorage([
-                {domain, shard: {urls: [remoteUrl], applications: storedApps}}
+                {domain, shard: {remoteSnippets: [remoteUrl], storedApplications: storedApps}}
             ], defaultUrl);
 
             await createAppDirectory();
@@ -210,9 +209,9 @@ describe('When fetching initial data', () => {
                 setupRemotesWithData([{url: onlineUrl, applications: onlineApps}]);
                 setupCacheWithData([{url: offlineCachedUrl, applications: offlineCachedApps}]);
                 setupDirectoryStorage([
-                    {domain: domain1, shard: {urls: [onlineUrl], applications: []}},
-                    {domain: domain2, shard: {urls: [offlineCachedUrl], applications: []}},
-                    {domain: domain3, shard: {urls: [offlineUncachedUrl], applications: []}}
+                    {domain: domain1, shard: {remoteSnippets: [onlineUrl], storedApplications: []}},
+                    {domain: domain2, shard: {remoteSnippets: [offlineCachedUrl], storedApplications: []}},
+                    {domain: domain3, shard: {remoteSnippets: [offlineUncachedUrl], storedApplications: []}}
                 ]);
 
                 await createAppDirectory();
@@ -240,9 +239,9 @@ describe('When fetching initial data', () => {
             const app3 = createFakeAppForDomain(domain3, {name: app1.name});
 
             setupDirectoryStorage([
-                {domain: domain1, shard: {urls: [], applications: [app1, createFakeAppForDomain(domain1)]}},
-                {domain: domain2, shard: {urls: [], applications: [app2, createFakeAppForDomain(domain2)]}},
-                {domain: domain3, shard: {urls: [], applications: [app3, createFakeAppForDomain(domain3)]}}
+                {domain: domain1, shard: {remoteSnippets: [], storedApplications: [app1, createFakeAppForDomain(domain1)]}},
+                {domain: domain2, shard: {remoteSnippets: [], storedApplications: [app2, createFakeAppForDomain(domain2)]}},
+                {domain: domain3, shard: {remoteSnippets: [], storedApplications: [app3, createFakeAppForDomain(domain3)]}}
             ]);
 
             await createAppDirectory();
@@ -263,9 +262,9 @@ describe('When fetching initial data', () => {
             const app3 = createFakeAppForDomain(domain3, {appId: app1.appId});
 
             setupDirectoryStorage([
-                {domain: domain1, shard: {urls: [], applications: [app1, createFakeAppForDomain(domain1)]}},
-                {domain: domain2, shard: {urls: [], applications: [app2, createFakeAppForDomain(domain2)]}},
-                {domain: domain3, shard: {urls: [], applications: [app3, createFakeAppForDomain(domain3)]}}
+                {domain: domain1, shard: {remoteSnippets: [], storedApplications: [app1, createFakeAppForDomain(domain1)]}},
+                {domain: domain2, shard: {remoteSnippets: [], storedApplications: [app2, createFakeAppForDomain(domain2)]}},
+                {domain: domain3, shard: {remoteSnippets: [], storedApplications: [app3, createFakeAppForDomain(domain3)]}}
             ]);
 
             await createAppDirectory();
@@ -286,9 +285,9 @@ describe('When fetching initial data', () => {
             const app3 = createFakeAppForDomain(domain3, {customConfig: [{name: 'appUuid', value: app1.appId}]});
 
             setupDirectoryStorage([
-                {domain: domain1, shard: {urls: [], applications: [app1, createFakeAppForDomain(domain1)]}},
-                {domain: domain2, shard: {urls: [], applications: [app2, createFakeAppForDomain(domain2)]}},
-                {domain: domain3, shard: {urls: [], applications: [app3, createFakeAppForDomain(domain3)]}}
+                {domain: domain1, shard: {remoteSnippets: [], storedApplications: [app1, createFakeAppForDomain(domain1)]}},
+                {domain: domain2, shard: {remoteSnippets: [], storedApplications: [app2, createFakeAppForDomain(domain2)]}},
+                {domain: domain3, shard: {remoteSnippets: [], storedApplications: [app3, createFakeAppForDomain(domain3)]}}
             ]);
 
             await createAppDirectory();
@@ -311,9 +310,9 @@ describe('When fetching initial data', () => {
             const app3 = createFakeAppForDomain(domain3, {name: app1.name});
 
             setupDirectoryStorage([
-                {domain: domain1, shard: {urls: [], applications: [app1, createFakeAppForDomain(domain1)]}},
-                {domain: domain2, shard: {urls: [], applications: [app2, createFakeAppForDomain(domain2)]}},
-                {domain: domain3, shard: {urls: [remoteUrl], applications: []}}
+                {domain: domain1, shard: {remoteSnippets: [], storedApplications: [app1, createFakeAppForDomain(domain1)]}},
+                {domain: domain2, shard: {remoteSnippets: [], storedApplications: [app2, createFakeAppForDomain(domain2)]}},
+                {domain: domain3, shard: {remoteSnippets: [remoteUrl], storedApplications: []}}
             ]);
 
             setupRemotesWithData([{url: remoteUrl, applications: [app3, createFakeAppForDomain(domain3)]}]);
@@ -335,7 +334,7 @@ describe('When fetching initial data', () => {
             const app3 = createFakeAppForDomain(insideDomain);
 
             setupDirectoryStorage([
-                {domain: insideDomain, shard: {urls: [], applications: [app1, app2, app3]}}
+                {domain: insideDomain, shard: {remoteSnippets: [], storedApplications: [app1, app2, app3]}}
             ]);
 
             await createAppDirectory();
@@ -354,7 +353,7 @@ describe('When fetching initial data', () => {
             const remoteSnippet = createFakeUrlForDomain(outsideDomain);
 
             setupDirectoryStorage([
-                {domain: insideDomain, shard: {urls: [remoteSnippet], applications: [app1]}}
+                {domain: insideDomain, shard: {remoteSnippets: [remoteSnippet], storedApplications: [app1]}}
             ]);
 
             setupRemotesWithData([{url: remoteSnippet, applications: [app2, app3]}]);
@@ -375,7 +374,7 @@ describe('When fetching initial data', () => {
             const remoteSnippet = createFakeUrlForDomain(insideDomain);
 
             setupDirectoryStorage([
-                {domain: insideDomain, shard: {urls: [remoteSnippet], applications: [app1]}}
+                {domain: insideDomain, shard: {remoteSnippets: [remoteSnippet], storedApplications: [app1]}}
             ]);
 
             setupRemotesWithData([{url: remoteSnippet, applications: [app2, app3]}]);
@@ -403,7 +402,7 @@ describe('When stored data changes', () => {
 
         setupEmptyCache();
         setupDirectoryStorage([
-            {domain: testDomain, shard: {urls: [testUrl], applications: startStoredSnippet}}
+            {domain: testDomain, shard: {remoteSnippets: [testUrl], storedApplications: startStoredSnippet}}
         ]);
         setupRemotesWithData([{url: testUrl, applications: startRemoteSnippet}]);
 
@@ -414,7 +413,7 @@ describe('When stored data changes', () => {
         const endStoredSnippet = [createFakeAppForDomain(testDomain), createFakeAppForDomain(testDomain)];
 
         changeDirectoryStorage([
-            {domain: testDomain, shard: {urls: [testUrl], applications: endStoredSnippet}}
+            {domain: testDomain, shard: {remoteSnippets: [testUrl], storedApplications: endStoredSnippet}}
         ]);
         await resolvePromiseChain();
 
@@ -426,7 +425,7 @@ describe('When stored data changes', () => {
         global.fetch.mockReset();
 
         changeDirectoryStorage([
-            {domain: testDomain, shard: {urls: [testUrl], applications: endStoredSnippet}}
+            {domain: testDomain, shard: {remoteSnippets: [testUrl], storedApplications: endStoredSnippet}}
         ]);
         await resolvePromiseChain();
 
@@ -441,8 +440,8 @@ describe('When stored data changes', () => {
         setupRemotesWithData([{url: testUrl, applications: startRemoteSnippet}, {url: newUrl, applications: newRemoteSnippet}]);
 
         changeDirectoryStorage([
-            {domain: testDomain, shard: {urls: [testUrl], applications: startStoredSnippet}},
-            {domain: newDomain, shard: {urls: [newUrl], applications: []}}
+            {domain: testDomain, shard: {remoteSnippets: [testUrl], storedApplications: startStoredSnippet}},
+            {domain: newDomain, shard: {remoteSnippets: [newUrl], storedApplications: []}}
         ]);
         await resolvePromiseChain();
 
@@ -498,13 +497,13 @@ describe('When querying the directory', () => {
     });
 });
 
-function setupDirectoryStorage(data: {domain: string; shard: StoredAppDirectoryShard}[], url?: string): void {
+function setupDirectoryStorage(data: {domain: string; shard: AppDirectoryShard}[], url?: string): void {
     getterMock(mockAppDirectoryStorage, 'initialized').mockReturnValue(Promise.resolve());
     getterMock(mockAppDirectoryStorage, 'changed').mockReturnValue(new Signal<[]>());
     mockAppDirectoryStorage.getDirectoryShards.mockReturnValue(createDirectoryShards(data, url));
 }
 
-function changeDirectoryStorage(data: {domain: string; shard: StoredAppDirectoryShard}[], url?: string): void {
+function changeDirectoryStorage(data: {domain: string; shard: AppDirectoryShard}[], url?: string): void {
     getterMock(mockAppDirectoryStorage, 'initialized').mockReturnValue(Promise.resolve());
     mockAppDirectoryStorage.getDirectoryShards.mockReturnValue(createDirectoryShards(data, url));
     mockAppDirectoryStorage.changed.emit();
@@ -573,13 +572,13 @@ async function createAppDirectory(): Promise<void> {
     await appDirectory.delayedInit();
 }
 
-function createDirectoryShards(data: {domain: string; shard: StoredAppDirectoryShard}[], url?: string): ScopedAppDirectoryShard[] {
+function createDirectoryShards(data: {domain: string; shard: AppDirectoryShard}[], url?: string): ScopedAppDirectoryShard[] {
     const result: ScopedAppDirectoryShard[] = [];
 
     if (url) {
         result.push({
             scope: {type: 'global'},
-            shard: {urls: [url], applications: []}
+            shard: {remoteSnippets: [url], storedApplications: []}
         });
     }
 

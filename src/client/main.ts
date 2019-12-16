@@ -6,18 +6,12 @@
  * Main entry point
  */
 import {tryServiceDispatch, getServicePromise, getEventRouter, eventEmitter} from './connection';
-import {Context} from './context';
-import {Application, AppName} from './directory';
-import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners, APP_DIRECTORY_STORAGE_TAG} from './internal';
-import {ChannelChangedEvent, getChannelObject, ChannelContextListener} from './contextChannels';
-import {sanitizeContext, validateEnvironment, sanitizeAppDirectoryData, sanitizeInteger} from './validation';
+import {Context} from './types/context';
+import {Application, AppName} from './types/directory';
+import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners} from './internal';
+import {ChannelChangedEvent, getChannelObject, ChannelContextListener} from './api/contextChannels';
+import {sanitizeContext, validateEnvironment} from './validation';
 import {Transport, Targeted} from './EventRouter';
-
-// TODO: Remove once Storage API is in published runtime and types are updated [SERVICE-840]
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare namespace fin {
-    const Storage: any;
-}
 
 /**
  * This file was copied from the FDC3 v1 specification.
@@ -25,14 +19,15 @@ declare namespace fin {
  * Original file: https://github.com/FDC3/FDC3/blob/master/src/api/interface.ts
  */
 
-// Re-export context channel API at top-level
-export * from './contextChannels';
+// Re-export APIs at top-level
+export * from './api/contextChannels';
+export * from './api/directoryAdmin';
 
 // Re-export types/enums at top-level
-export * from './context';
-export * from './directory';
-export * from './intents';
-export * from './errors';
+export * from './types/context';
+export * from './types/directory';
+export * from './types/intents';
+export * from './types/errors';
 
 /**
  * Describes an intent.
@@ -412,39 +407,6 @@ export function removeEventListener(eventType: MainEvents['type'], handler: (eve
     validateEnvironment();
 
     eventEmitter.removeListener(eventType, handler);
-}
-
-// TODO: Revise client-facing API [SERVICE-820]
-/**
- * Registers an app directory for the current application's domain. This may be in the form of a URL or an app
- * directory.
- *
- * The app directory data should be versioned as an integer using the passed in parameter, `version`. If the version is
- * lower the last registration, this call does nothing, otherwise, the entire app directory is replaced with the new
- * provided data
- *
- * @param data Either a URL containing the location of a JSON app directory, or an array of [Application]s.
- * @param version The version of the provided app directory data.
- */
-export async function registerAppDirectory(data: Application[] | string, version: number = 0): Promise<void> {
-    version = sanitizeInteger(version);
-    data = sanitizeAppDirectoryData(data);
-
-    const urls = (typeof data === 'string') ? [data] as string[] : [];
-    const applications = (typeof data === 'string') ? [] : data as Application[];
-
-    let current;
-
-    try {
-        // We expect this to throw if no directory shard has been written
-        current = await fin.Storage.getItem(APP_DIRECTORY_STORAGE_TAG);
-    } catch (e) {
-        current = undefined;
-    }
-
-    if (!current || current.version <= version) {
-        await fin.Storage.setItem(APP_DIRECTORY_STORAGE_TAG, JSON.stringify({version, urls, applications}));
-    }
 }
 
 /**

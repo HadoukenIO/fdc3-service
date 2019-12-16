@@ -103,6 +103,7 @@
         window.channelEventListeners = [];
 
         window.channelTransports = {};
+        window.directories = [];
 
         window.receivedContexts = [];
         window.receivedIntents = [];
@@ -120,7 +121,7 @@
         }
 
         if (queryParams.get('clearDirectoryStorage') === 'true') {
-            fin.Storage.removeItem('of-fdc3-service.directory');
+            fin.Storage.removeItem('fdc3-app-dir');
         }
     </script>
 </head>

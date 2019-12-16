@@ -3,10 +3,11 @@ import {parallelMap} from 'openfin-service-async';
 import {Signal} from 'openfin-service-signal';
 
 import {Inject} from '../common/Injectables';
-import {Application, AppName, AppDirIntent} from '../../client/directory';
+import {Application, AppName, AppDirIntent} from '../../client/types/directory';
 import {AsyncInit} from '../controller/AsyncInit';
 import {CustomConfigFields} from '../constants';
-import {checkCustomConfigField, deduplicate} from '../utils/helpers';
+import {checkCustomConfigField} from '../utils/helpers';
+import {deduplicate} from '../../client/internal';
 
 import {AppDirectoryStorage, ShardScope} from './AppDirectoryStorage';
 
@@ -112,23 +113,23 @@ export class AppDirectory extends AsyncInit {
         const scopedShards = this._appDirectoryStorage.getDirectoryShards();
 
         const applicationsPerSnippetPerShard = await parallelMap(scopedShards, async (scopedShard) => {
-            return parallelMap(filterUrlsByScope(scopedShard.scope, scopedShard.shard.urls), async (url) => {
+            return parallelMap(filterUrlsByScope(scopedShard.scope, scopedShard.shard.remoteSnippets), async (remoteSnippet) => {
                 // TODO: URLs will be fetched once per service run. Improve this logic [SERVICE-841]
-                const fetchedSnippet = this._fetchedUrls.has(url) ? null : await this.fetchRemoteSnippet(url);
-                this._fetchedUrls.add(url);
+                const fetchedSnippet = this._fetchedUrls.has(remoteSnippet) ? null : await this.fetchRemoteSnippet(remoteSnippet);
+                this._fetchedUrls.add(remoteSnippet);
 
                 if (fetchedSnippet) {
-                    this.updateCache(url, fetchedSnippet);
+                    this.updateCache(remoteSnippet, fetchedSnippet);
                     return fetchedSnippet;
                 } else {
-                    return this.fetchCachedSnippet(url) || [];
+                    return this.fetchCachedSnippet(remoteSnippet) || [];
                 }
             });
         });
 
         const applications: Application[] = [];
         scopedShards.forEach((scopedShard, i) => {
-            applications.push(...filterAppsByScope(scopedShard.scope, scopedShard.shard.applications));
+            applications.push(...filterAppsByScope(scopedShard.scope, scopedShard.shard.storedApplications));
 
             for (const remoteSnippet of applicationsPerSnippetPerShard[i]) {
                 applications.push(...filterAppsByScope(scopedShard.scope, remoteSnippet));

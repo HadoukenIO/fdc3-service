@@ -1,6 +1,11 @@
 import {Signal} from 'openfin-service-signal';
 
-import {StoredAppDirectoryShard} from '../../client/internal';
+import {Application} from '../../client/main';
+
+export interface AppDirectoryShard {
+    remoteSnippets: string[];
+    storedApplications: Application[];
+}
 
 export interface GlobalShardScope {
     type: 'global';
@@ -15,7 +20,7 @@ export type ShardScope = GlobalShardScope | DomainShardScope;
 
 export interface ScopedAppDirectoryShard {
     scope: ShardScope;
-    shard: StoredAppDirectoryShard;
+    shard: AppDirectoryShard;
 }
 
 export interface AppDirectoryStorage {

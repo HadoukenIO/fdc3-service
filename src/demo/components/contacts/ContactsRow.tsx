@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import * as fdc3 from '../../../client/main';
-import {ContactContext} from '../../../client/context';
+import {ContactContext} from '../../../client/types/context';
 import {Contact} from '../../apps/ContactsApp';
 import {IntentButton} from '../common/IntentButton';
 import './ContactsRow.css';
