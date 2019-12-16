@@ -1,5 +1,5 @@
 /**
- * Returns a promise which resolves after a specificed period of time.
+ * Returns a promise which resolves after a specified period of time.
  * @param duration Time in milliseconds to wait before resolving
  */
 export async function delay(duration: number) {

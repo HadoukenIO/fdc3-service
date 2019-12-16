@@ -9,20 +9,8 @@ type TestParam = [string, UpdateAppDirectoryMigrationHandler, StoredDirectorySha
 
 const fin = createMockFin();
 
-const fakeApp1 = createFakeApp();
-const fakeApp2 = createFakeApp();
-const fakeApp3 = createFakeApp();
-const fakeApp4 = createFakeApp();
-const fakeApp5 = createFakeApp();
-const fakeApp6 = createFakeApp();
-const fakeApp7 = createFakeApp();
-
-const fakeUrl1 = createFakeUrl();
-const fakeUrl2 = createFakeUrl();
-const fakeUrl3 = createFakeUrl();
-const fakeUrl4 = createFakeUrl();
-const fakeUrl5 = createFakeUrl();
-const fakeUrl6 = createFakeUrl();
+const [fakeApp1, fakeApp2, fakeApp3, fakeApp4, fakeApp5, fakeApp6, fakeApp7] = Array(7).map(createFakeApp);
+const [fakeUrl1, fakeUrl2, fakeUrl3, fakeUrl4, fakeUrl5, fakeUrl6] = Array(6).map(createFakeUrl);
 
 const populatedDirectoryVersion = 4;
 
@@ -241,7 +229,7 @@ describe('When the app directory is populated and we specify a namespace', () =>
         }));
     });
 
-    test('If the specificed version is lower the than version of the app directory, the migration function is not called \
+    test('If the specified version is lower the than version of the app directory, the migration function is not called \
 and the directory is not modified', async () => {
         const spy = jest.fn<void, [AppDirectory]>();
 
@@ -254,7 +242,7 @@ and the directory is not modified', async () => {
         expect(fin.Storage.setItem).not.toBeCalled();
     });
 
-    test('If the specificed max version is lower the than version of the app directory, the migration function is not called \
+    test('If the specified max version is lower the than version of the app directory, the migration function is not called \
 and the directory is not modified', async () => {
         const spy = jest.fn<void, [AppDirectory]>();
 
@@ -267,7 +255,7 @@ and the directory is not modified', async () => {
         expect(fin.Storage.setItem).not.toBeCalled();
     });
 
-    test('If the specificed max version is equal to version of the app directory, the migration function is called \
+    test('If the specified max version is equal to version of the app directory, the migration function is called \
 and the directory is modified', async () => {
         await updateAppDirectory((directory: AppDirectory) => {
             directory.storedApplications.add(fakeApp7);
@@ -282,7 +270,7 @@ and the directory is modified', async () => {
         );
     });
 
-    test('If the specificed max version is greater than the version of the app directory, the migration function is \
+    test('If the specified max version is greater than the version of the app directory, the migration function is \
 called and the directory is modified', async () => {
         await updateAppDirectory((directory: AppDirectory) => {
             directory.storedApplications.add(fakeApp7);

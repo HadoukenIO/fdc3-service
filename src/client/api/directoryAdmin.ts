@@ -16,7 +16,7 @@
  * The app directory for a given domain will have an associated version number, which will default to 1 when an app
  * directory is first created. The [[updateAppDirectory]] function allows this version number to be updated and
  * queried, which may be useful to your organization if you have several apps that may be trying to update their
- * domain's app directory in potentially differing and depricated ways. It is up to your organization how you wish to
+ * domain's app directory in potentially differing and deprecated ways. It is up to your organization how you wish to
  * use this feature.
  *
  * Callers of [[updateAppDirectory]] may also specify a namespace, which allows multiple independent app directories to
@@ -71,8 +71,8 @@ export interface UpdateAppDirectoryOptions {
      * The version of the app directory outputted by the migration handler. If exists, must be a positive integer,
      * and should be greater than or equal to `maxSourceVersion` if that also exists. If this is specified, and the
      * current version of the app directory is greater than this version, the migration handler will not be called and
-     * the directory will not be modified. If this is not specied, the version of the app directory will be unchanged,
-     * or will be set to 1 when creating a new app directory.
+     * the directory will not be modified. If this is not specified, the version of the app directory will be
+     * unchanged, or will be set to 1 when creating a new app directory.
      */
     destinationVersion?: number;
 }
@@ -91,7 +91,7 @@ export interface AppDirectory {
     /**
      * A [[DirectoryCollection]] object that allows reading and modifying of remote snippets in the current app
      * directory. Remote snippets are URLs that contain a JSON array of [[Application]]s to be included in the app
-     * directory. URLs not within the current appliction's domain will be ignored by the service.
+     * directory. URLs not within the current application's domain will be ignored by the service.
      */
     remoteSnippets: RemoteSnippetsDirectoryCollection;
 
@@ -126,7 +126,7 @@ export interface DirectoryCollection<T, U = T> {
     /**
      * Removes either a single value or multiple values from this collection. The value or values to be removed may be
      * specified by either a value of type `T` that is deep-equal to the value to be removed, or a value of type `U`
-     * that refers to the value to be removed (implementation specific to the implentation of this interface).
+     * that refers to the value to be removed (implementation specific to the implementation of this interface).
      *
      * @param arg The value or array of values, or ID of the value or array of IDs of the values, to remove
      */
@@ -147,7 +147,7 @@ export interface DirectoryCollection<T, U = T> {
 }
 
 /**
- * Inteface for reading and modifying remote snippets in the current app directory. Since these are specified as
+ * Interface for reading and modifying remote snippets in the current app directory. Since these are specified as
  * `string`s there is no separate ID type.
  */
 export interface RemoteSnippetsDirectoryCollection extends DirectoryCollection<string, string> {
@@ -155,14 +155,14 @@ export interface RemoteSnippetsDirectoryCollection extends DirectoryCollection<s
 }
 
 /**
- * Interface for reading and modifying stored applications. When removing applications, applications can be refered to
+ * Interface for reading and modifying stored applications. When removing applications, applications can be referred to
  * by either a complete, deep-equal [[Application]] object, or by the application's [[AppName]].
  */
 export interface StoredApplicationsDirectoryCollection extends DirectoryCollection<Application, string> {
     /**
      * Adds the current application to the app directory.
      *
-     * @param application A partial [[Application]] of any values that should override those derrived by the service
+     * @param application A partial [[Application]] of any values that should override those derived by the service
      * @throws `Error` if the service is unable to determine the manifest URL for this application and it hasn't been
      * given in the `application` parameter.
      */
