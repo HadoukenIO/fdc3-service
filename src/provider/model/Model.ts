@@ -425,12 +425,13 @@ export class Model {
      * Attempts to find a live app matching given criteria, or start an app if it cannot be found
      *
      * @param name The name of the application to use in any error messages
-     * @param getAppInfo A function that returns an [[Application]], if a matching application cannot be found amoung running apps
+     * @param getAppInfo A function that returns an [[Application]], if a matching application cannot be found among running apps
      * @param identifyAppInfo A function to test if the passed [[Application]] is the one we want to find. Should returns true if a match, false otherwise
      * @param testAppInfo A function to test if the passed [[Application]] fulfils our criteria. Should return undefined if criteria is satisfied, otherwise
      * T describing the failure
      * @param testLiveApp A function to test if the passed [[LiveApp]] fulfils our criteria. should return undefined if criteria is satisfied, otherise T
      * describing the failure
+     * @typeparam T Failure type, returned if one of ours tests for fails for the identified [[Application]]/[[LiveApp]]
      */
     private async getOrCreateLiveApp<T>(
         name: string,
