@@ -460,7 +460,7 @@ export class Model {
         const slot = this._environment.onApplicationCreated.add(async (identity, liveApp) => attemptResolve(liveApp));
         deferredPromise.promise.then(() => slot.remove(), () => slot.remove());
 
-        // If unable to find the app, the try to start it
+        // If unable to find the app, then try to start it
         searchPromise.then(async () => {
             if (!found) {
                 const appInfo = await getAppInfo();
