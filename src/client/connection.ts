@@ -53,10 +53,6 @@ export function getServicePromise(): Promise<ChannelClient> {
     if (!channelPromise) {
         if (typeof fin === 'undefined') {
             channelPromise = Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.'));
-        } else if (fin.Window.me.uuid === getServiceIdentity().uuid && fin.Window.me.name === getServiceIdentity().name) {
-            // Currently a runtime bug when provider connects to itself. Ideally the provider would never import a file
-            // that includes this, but for now it is easier to put a guard in place.
-            channelPromise = Promise.reject<ChannelClient>(new Error('Trying to connect to provider from provider'));
         } else {
             channelPromise = new Promise<ChannelClient>((resolve, reject) => {
                 // TODO: just use RuntimeInfo once its type is updated from js v2 API
