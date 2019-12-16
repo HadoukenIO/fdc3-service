@@ -174,13 +174,13 @@ export class Model {
     }
 
     public async getOrCreateLiveAppByName(name: AppName): Promise<LiveApp> {
-        return this.getOrCreateLiveApp(
+        return this.getOrCreateLiveApp<never>(
             name,
             async () => this._directory.getAppByName(name),
             (appInfo) => appInfo.name === name,
             () => undefined,
             () => undefined
-        ) as Promise<LiveApp>;
+        );
     }
 
     public async getOrCreateLiveAppByNameForIntent(name: AppName, intentType: string, contextType: string): Promise<LiveApp | 'does-not-support-intent'> {
@@ -206,13 +206,13 @@ export class Model {
     }
 
     public async getOrCreateLiveAppByAppInfo(appInfo: Application): Promise<LiveApp> {
-        return this.getOrCreateLiveApp(
+        return this.getOrCreateLiveApp<never>(
             appInfo.name,
             async () => appInfo,
             (searchAppInfo) => searchAppInfo === appInfo,
             () => undefined,
             () => undefined
-        ) as Promise<LiveApp>;
+        );
     }
 
     public getChannel(id: ChannelId): ContextChannel|null {
@@ -421,7 +421,18 @@ export class Model {
         }
     }
 
-    private async getOrCreateLiveApp<T = never>(
+    /**
+     * Attempts to find a live app matching given criteria, or start an app if it cannot be found
+     *
+     * @param name The name of the application to use in any error messages
+     * @param getAppInfo A function that returns an [[Application]], if a matching application cannot be found amoung running apps
+     * @param identifyAppInfo A function to test if the passed [[Application]] is the one we want to find. Should returns true if a match, false otherwise
+     * @param testAppInfo A function to test if the passed [[Application]] fulfils our criteria. Should return undefined if criteria is satisfied, otherwise
+     * T describing the failure
+     * @param testLiveApp A function to test if the passed [[LiveApp]] fulfils our criteria. should return undefined if criteria is satisfied, otherise T
+     * describing the failure
+     */
+    private async getOrCreateLiveApp<T>(
         name: string,
         getAppInfo: () => Promise<Application | null>,
         identifyAppInfo: (appInfo: Application) => boolean,
@@ -431,7 +442,7 @@ export class Model {
         const deferredPromise = new DeferredPromise<LiveApp | T>();
         let found = false;
 
-        const search = async (liveApp: LiveApp) => {
+        const attemptResolve = async (liveApp: LiveApp) => {
             const appInfo = await liveApp.waitForAppInfo().catch(() => undefined);
 
             if (appInfo && identifyAppInfo(appInfo)) {
@@ -447,10 +458,10 @@ export class Model {
         };
 
         // Look for the desired name in existing apps
-        const searchPromise = parallelForEach(Object.values(this._liveAppsByUuid), (liveApp) => search(liveApp));
+        const searchPromise = parallelForEach(Object.values(this._liveAppsByUuid), (liveApp) => attemptResolve(liveApp));
 
         // Look for the desired name in apps as they are created
-        const slot = this._environment.onApplicationCreated.add(async (identity, liveApp) => search(liveApp));
+        const slot = this._environment.onApplicationCreated.add(async (identity, liveApp) => attemptResolve(liveApp));
         deferredPromise.promise.then(() => slot.remove(), () => slot.remove());
 
         // If unable to find the app, the try to start it
