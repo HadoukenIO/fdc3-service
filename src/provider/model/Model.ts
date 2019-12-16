@@ -448,12 +448,7 @@ export class Model {
             if (appInfo && identifyAppInfo(appInfo)) {
                 found = true;
                 const testLiveAppResult = testLiveApp(liveApp);
-
-                if (testLiveAppResult === undefined) {
-                    deferredPromise.resolve(liveApp);
-                } else {
-                    deferredPromise.resolve(testLiveAppResult);
-                }
+                deferredPromise.resolve(testLiveAppResult || liveApp);
             }
         };
 
@@ -468,14 +463,9 @@ export class Model {
         searchPromise.then(async () => {
             if (!found) {
                 const appInfo = await getAppInfo();
-
-                if (appInfo && !found) {
+                if (appInfo) {
                     const testAppInfoResult = testAppInfo(appInfo);
-                    if (testAppInfoResult === undefined) {
-                        deferredPromise.resolve(this._environment.createApplication(appInfo));
-                    } else {
-                        deferredPromise.resolve(testAppInfoResult);
-                    }
+                    deferredPromise.resolve(testAppInfoResult || this._environment.createApplication(appInfo));
                 } else {
                     deferredPromise.reject(new FDC3Error(ApplicationError.NotFound, `No application '${name}' found running or in directory`));
                 }
