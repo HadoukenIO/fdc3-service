@@ -241,7 +241,7 @@ describe('When the app directory is populated and we specify a namespace', () =>
         }));
     });
 
-    test('If the specificed version is lower the than version of the app directory, the migration function is not called \
+    test('If the specified version is lower the than version of the app directory, the migration function is not called \
 and the directory is not modified', async () => {
         const spy = jest.fn<void, [AppDirectory]>();
 
@@ -254,7 +254,7 @@ and the directory is not modified', async () => {
         expect(fin.Storage.setItem).not.toBeCalled();
     });
 
-    test('If the specificed max version is lower the than version of the app directory, the migration function is not called \
+    test('If the specified max version is lower the than version of the app directory, the migration function is not called \
 and the directory is not modified', async () => {
         const spy = jest.fn<void, [AppDirectory]>();
 
@@ -267,7 +267,7 @@ and the directory is not modified', async () => {
         expect(fin.Storage.setItem).not.toBeCalled();
     });
 
-    test('If the specificed max version is equal to version of the app directory, the migration function is called \
+    test('If the specified max version is equal to version of the app directory, the migration function is called \
 and the directory is modified', async () => {
         await updateAppDirectory((directory: AppDirectory) => {
             directory.storedApplications.add(fakeApp7);
@@ -282,7 +282,7 @@ and the directory is modified', async () => {
         );
     });
 
-    test('If the specificed max version is greater than the version of the app directory, the migration function is \
+    test('If the specified max version is greater than the version of the app directory, the migration function is \
 called and the directory is modified', async () => {
         await updateAppDirectory((directory: AppDirectory) => {
             directory.storedApplications.add(fakeApp7);
