@@ -216,7 +216,7 @@ export class Model {
                 if (!appInfo) {
                     return 'application-not-found';
                 } else {
-                    return AppDirectory.shouldAppSupportIntent(appInfo, intentType, contextType) ? appInfo : 'application-not-found';
+                    return AppDirectory.shouldAppSupportIntent(appInfo, intentType, contextType) ? appInfo : 'does-not-support-intent';
                 }
             }
         );
