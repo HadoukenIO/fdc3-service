@@ -28,7 +28,7 @@ beforeEach(() => {
     mockGetWindowsListeningForContextsOnChannel.mockReturnValue([]);
 
     getterMock(mockModel, 'connections').mockReturnValue(mockConnections);
-    getterMock(mockModel, 'apps').mockReturnValue([]);
+    getterMock(mockModel, 'liveApps').mockReturnValue([]);
 
     mockApiHandler.dispatch.mockReturnValue(Promise.resolve());
 

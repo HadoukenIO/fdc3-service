@@ -191,12 +191,12 @@ async function isServiceClear(): Promise<boolean> {
                 return false;
             }
 
-            if (this.model.apps.length !== 1) {
+            if (this.model.liveApps.length !== 1) {
                 return false;
             }
 
             const singleWindow = this.model.connections[0];
-            const singleApp = this.model.apps[0];
+            const singleApp = this.model.liveApps[0];
 
             if (singleWindow.appInfo.appId !== expectedWindowIdentity.uuid) {
                 return false;
