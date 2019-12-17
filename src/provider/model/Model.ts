@@ -476,7 +476,7 @@ export class Model {
 
         // Look for the desired name in apps as they are created
         const slot = this._environment.onApplicationCreated.add(async (identity, liveApp) => attemptResolve(liveApp));
-        deferredPromise.promise.then(() => slot.remove(), () => slot.remove());
+        deferredPromise.promise.then(() => slot.remove());
 
         // If unable to find the app, then try to start it
         searchPromise.then(async () => {
