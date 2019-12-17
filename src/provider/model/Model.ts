@@ -175,52 +175,58 @@ export class Model {
 
     public async getOrCreateLiveAppByName(name: AppName): Promise<LiveApp> {
         return this.getOrCreateLiveApp<never>(
-            name,
             // Either find an app with this name
-            (candidateAppInfo) => candidateAppInfo.name === name,
+            (liveApp, candidateAppInfo) => candidateAppInfo.name === name ? liveApp : undefined,
             // Or get it from the app directory
-            () => this._directory.getAppByName(name),
-            // We have no additional criteria for this application
-            () => undefined,
-            () => undefined
+            async () => {
+                const appInfo = await this._directory.getAppByName(name);
+                if (appInfo === null) {
+                    throw new FDC3Error(ApplicationError.NotFound, `No application '${name}' found running or in directory`);
+                } else {
+                    return appInfo;
+                }
+            }
         );
     }
 
     public async getOrCreateLiveAppByNameForIntent(name: AppName, intentType: string, contextType: string): Promise<LiveApp | 'does-not-support-intent'> {
         return this.getOrCreateLiveApp(
-            name,
-            // Either find an app with this name
-            (candidateAppInfo) => candidateAppInfo.name === name,
-            // Or get it from the app directory
-            () => this._directory.getAppByName(name),
-            // Additionally require that this application supports the given intent and context
-            (liveApp) => {
-                const hasIntentListener = liveApp.connections.some((connection) => connection.hasIntentListener(intentType));
-
-                if (hasIntentListener && AppDirectory.mightAppSupportIntent(liveApp.appInfo!, intentType, contextType)) {
+            // Either find an app with this name, and check that it supports the given intent and context
+            (liveApp, candidateAppInfo) => {
+                if (candidateAppInfo.name !== name) {
                     return undefined;
-                }
+                } else {
+                    const hasIntentListener = liveApp.connections.some((connection) => connection.hasIntentListener(intentType));
 
-                if (!liveApp.mature && AppDirectory.shouldAppSupportIntent(liveApp.appInfo!, intentType, contextType)) {
-                    return undefined;
-                }
+                    if (hasIntentListener && AppDirectory.mightAppSupportIntent(liveApp.appInfo!, intentType, contextType)) {
+                        return liveApp;
+                    }
 
-                return 'does-not-support-intent';
+                    if (!liveApp.mature && AppDirectory.shouldAppSupportIntent(liveApp.appInfo!, intentType, contextType)) {
+                        return liveApp;
+                    }
+
+                    return 'does-not-support-intent';
+                }
             },
-            (appInfo) => AppDirectory.shouldAppSupportIntent(appInfo, intentType, contextType) ? undefined : 'does-not-support-intent'
+            // Or get it from the app directory and check that it supports the given intent and context
+            async () => {
+                const appInfo = await this._directory.getAppByName(name);
+                if (appInfo === null) {
+                    throw new FDC3Error(ApplicationError.NotFound, `No application '${name}' found running or in directory`);
+                } else {
+                    return AppDirectory.shouldAppSupportIntent(appInfo, intentType, contextType) ? appInfo : 'does-not-support-intent';
+                }
+            }
         );
     }
 
     public async getOrCreateLiveAppByAppInfo(appInfo: Application): Promise<LiveApp> {
         return this.getOrCreateLiveApp<never>(
-            appInfo.name,
             // Either find an app with this [[Application]]
-            (candidateAppInfo) => candidateAppInfo === appInfo,
+            (liveApp, candidateAppInfo) => candidateAppInfo === appInfo ? liveApp : undefined,
             // Or just return it to be started
-            async () => appInfo,
-            // We have no additional criteria for this application
-            () => undefined,
-            () => undefined
+            async () => appInfo
         );
     }
 
@@ -424,36 +430,10 @@ export class Model {
      * Attempts to find a given [[LiveApp]], or start an application if it cannot be found. Will test that the app
      * fulfils given criteria, and returns either the [[LiveApp]] of the found or started app, or a value describing
      * why our criteria was not fulfilled by the app (in which case no new app will be started)
-     *
-     * @param name The name of the application to use in any error messages
-     *
-     * @param identifyAppInfo Used to test if any currently running applications are the one we are looking for. Will
-     * be called with the `appInfo` of running [[LiveApp]]s. Will be called with an [[Application]], and should return
-     * true if this is the app we are looking for, false otherwise
-     *
-     * @param getAppInfo Will be called if we're not able to find the desired application among currently running
-     * applications. Should return the [[Application]] of an app we want to start
-     *
-     * @param testLiveApp In the case where the application we are looking for is already running (i.e.
-     * `identifyAppInfo` has found a match), this will be called to test if the [[LiveApp]] fulfils our desired
-     * criteria. This should return undefined if our criteria is fulfiled, otherwise T describing the failure. In the
-     * case where this is called, `getOrCreateLiveApp` will return either the [[LiveApp]] or the failure value
-     *
-     * @param testAppInfo In the case where the application we are looking for is not already running (i.e.
-     * `identifyAppInfo` has not found a match and we have an [[Application]] from `getAppInfo`), this will be called
-     * to test if the [[Application]] we want to start fulfils our desired criteria. This should return undefined if
-     * our criteria is fulfiled, otherwise T describing the failure. In the case where this is called,
-     * `getOrCreateLiveApp` will either start the [[Application]] and return the corresponding [[LiveApp]], or return
-     * the failure value
-     *
-     * @typeparam T Failure type, returned if one of ours tests for fails for the identified [[Application]]/[[LiveApp]]
      */
-    private async getOrCreateLiveApp<T>(
-        name: string,
-        identifyAppInfo: (appInfo: Application) => boolean,
-        getAppInfo: () => Promise<Application | null>,
-        testLiveApp: (liveApp: LiveApp) => T | undefined,
-        testAppInfo: (appInfo: Application) => T | undefined
+    private async getOrCreateLiveApp<T extends string>(
+        testLiveApp: (liveApp: LiveApp, appInfo: Application) => LiveApp | T | undefined,
+        getApplication: () => Promise<Application | T>
     ): Promise<LiveApp | T> {
         const deferredPromise = new DeferredPromise<LiveApp | T>();
         let found = false;
@@ -461,10 +441,11 @@ export class Model {
         const attemptResolve = async (liveApp: LiveApp) => {
             const appInfo = await liveApp.waitForAppInfo().catch(() => undefined);
 
-            if (appInfo && identifyAppInfo(appInfo)) {
+            const result = appInfo && testLiveApp(liveApp, appInfo);
+
+            if (result !== undefined) {
                 found = true;
-                const testLiveAppResult = testLiveApp(liveApp);
-                deferredPromise.resolve(testLiveAppResult || liveApp);
+                deferredPromise.resolve(result);
             }
         };
 
@@ -478,13 +459,13 @@ export class Model {
         // If unable to find the app, then try to start it
         searchPromise.then(async () => {
             if (!found) {
-                const appInfo = await getAppInfo();
-                if (appInfo) {
-                    const testAppInfoResult = testAppInfo(appInfo);
-                    deferredPromise.resolve(testAppInfoResult || this._environment.createApplication(appInfo));
-                } else {
-                    deferredPromise.reject(new FDC3Error(ApplicationError.NotFound, `No application '${name}' found running or in directory`));
-                }
+                getApplication().then((result) => {
+                    if (!found) {
+                        deferredPromise.resolve(typeof result === 'string' ? result : this._environment.createApplication(result));
+                    }
+                }, (error) => {
+                    deferredPromise.reject(error);
+                });
             }
         });
 
