@@ -176,7 +176,7 @@ export class Model {
     public async getOrCreateLiveAppByName(name: AppName): Promise<LiveApp> {
         const result = await this.getOrCreateLiveApp<'application-not-found'>(
             // Either find an app with this name
-            (liveApp, candidateAppInfo) => candidateAppInfo.name === name,
+            (candidateLiveApp, candidateAppInfo) => candidateAppInfo.name === name,
             // Or get it from the app directory
             async () => {
                 return (await this._directory.getAppByName(name)) || 'application-not-found';
@@ -193,17 +193,17 @@ export class Model {
     public async getOrCreateLiveAppByNameForIntent(name: AppName, intentType: string, contextType: string): Promise<LiveApp | 'does-not-support-intent'> {
         const result = await this.getOrCreateLiveApp(
             // Either find an app with this name, and check that it supports the given intent and context
-            (liveApp, candidateAppInfo) => {
+            (candidateLiveApp, candidateAppInfo) => {
                 if (candidateAppInfo.name !== name) {
                     return false;
                 } else {
-                    const hasIntentListener = liveApp.connections.some((connection) => connection.hasIntentListener(intentType));
+                    const hasIntentListener = candidateLiveApp.connections.some((connection) => connection.hasIntentListener(intentType));
 
-                    if (hasIntentListener && AppDirectory.mightAppSupportIntent(liveApp.appInfo!, intentType, contextType)) {
+                    if (hasIntentListener && AppDirectory.mightAppSupportIntent(candidateLiveApp.appInfo!, intentType, contextType)) {
                         return true;
                     }
 
-                    if (!liveApp.mature && AppDirectory.shouldAppSupportIntent(liveApp.appInfo!, intentType, contextType)) {
+                    if (!candidateLiveApp.mature && AppDirectory.shouldAppSupportIntent(candidateLiveApp.appInfo!, intentType, contextType)) {
                         return true;
                     }
 
@@ -231,7 +231,7 @@ export class Model {
     public async getOrCreateLiveAppByAppInfo(appInfo: Application): Promise<LiveApp> {
         return this.getOrCreateLiveApp<never>(
             // Either find an app with this [[Application]]
-            (liveApp, candidateAppInfo) => candidateAppInfo === appInfo,
+            (candidateLiveApp, candidateAppInfo) => candidateAppInfo === appInfo,
             // Or just return it to be started
             async () => appInfo
         );
