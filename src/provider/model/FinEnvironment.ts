@@ -127,8 +127,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
             // `manifest` is defined as required property but actually optional. Not present on programmatically-launched apps.
             if (applicationInfo.manifest) {
                 const {shortcut, startup_app: startupApp} = applicationInfo.manifest as OFManifest;
-                title = (shortcut && shortcut.name) || startupApp.name || startupApp.uuid;
-                icon = (shortcut && shortcut.icon) || startupApp.icon;
+                title = (shortcut && shortcut.name) || (startupApp && (startupApp.name || startupApp.uuid));
+                icon = (shortcut && shortcut.icon) || (startupApp && startupApp.icon);
             }
 
             return {
