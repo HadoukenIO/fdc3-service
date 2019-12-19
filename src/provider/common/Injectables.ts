@@ -14,6 +14,7 @@ enum Injectable {
     EVENT_HANDLER,
     INTENT_HANDLER,
     MODEL,
+    MULTI_RUNTIME_HANDLER,
     RESOLVER,
 }
 

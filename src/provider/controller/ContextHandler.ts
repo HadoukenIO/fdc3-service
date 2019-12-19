@@ -7,6 +7,7 @@ import {APIFromClientTopic, APIToClientTopic, ChannelReceiveContextPayload, Rece
 import {Inject} from '../common/Injectables';
 import {getId} from '../utils/getId';
 import {ContextChannel} from '../model/ContextChannel';
+import {MultiRuntimeHandler} from '../controller/MultiRuntimeHandler';
 import {Model} from '../model/Model';
 import {LiveApp} from '../model/LiveApp';
 import {collateClientCalls, ClientCallsResult} from '../utils/helpers';
@@ -18,15 +19,18 @@ export class ContextHandler {
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
     private readonly _channelHandler: ChannelHandler;
     private readonly _model: Model;
+    private readonly _mrh: MultiRuntimeHandler;
 
     constructor(
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>, // eslint-disable-line @typescript-eslint/indent
         @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
-        @inject(Inject.MODEL) model: Model
+        @inject(Inject.MODEL) model: Model,
+        @inject(Inject.MULTI_RUNTIME_HANDLER) multiRuntimeHandler: MultiRuntimeHandler
     ) {
         this._apiHandler = apiHandler;
         this._channelHandler = channelHandler;
         this._model = model;
+        this._mrh = multiRuntimeHandler;
     }
 
     /**
@@ -64,7 +68,7 @@ export class ContextHandler {
      * @param source Entity sending the context. It won't receive the broadcast
      */
     public broadcast(context: Context, source: AppConnection): Promise<void> {
-        return this.broadcastOnChannel(context, source, source.channel);
+        return this.broadcastOnChannel(context, source, source.channel, false);
     }
 
     /**
@@ -74,15 +78,23 @@ export class ContextHandler {
      * @param context Context to send
      * @param source Entity sending the context. It won't receive the broadcast
      * @param channel ContextChannel to broadcast on
+     * @param foreign whether the message came from a foreign runtime or not
      */
-    public broadcastOnChannel(context: Context, source: AppConnection, channel: ContextChannel): Promise<void> {
+    public broadcastOnChannel(context: Context, source: AppConnection | null, channel: ContextChannel, foreign: boolean): Promise<void> {
         const members = this._channelHandler.getChannelMembers(channel);
         const listeners = this._channelHandler.getConnectionsListeningForContextsOnChannel(channel);
 
+        if (!foreign) {
+            this._mrh.broadcastOnChannel(context, channel);
+        }
+
         this._channelHandler.setLastBroadcastOnChannel(channel, context);
 
-        const sourceId = getId(source.identity);
-        const notSender = (connection: AppConnection) => getId(connection.identity) !== sourceId;
+        let notSender = (connection: AppConnection) => true;
+        if (source) {
+            const sourceId = getId(source.identity);
+            notSender = (connection: AppConnection) => getId(connection.identity) !== sourceId;
+        }
 
         const promises: Promise<void>[] = [];
 

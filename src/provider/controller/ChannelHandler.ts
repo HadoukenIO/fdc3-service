@@ -1,5 +1,6 @@
 import {injectable, inject} from 'inversify';
 import {Signal, Aggregators} from 'openfin-service-signal';
+import {Identity} from 'openfin/_v2/main';
 
 import {Model} from '../model/Model';
 import {Inject} from '../common/Injectables';
@@ -7,6 +8,7 @@ import {ChannelId, FDC3Error, ChannelError, Context} from '../../client/main';
 import {SystemContextChannel, ContextChannel, AppContextChannel} from '../model/ContextChannel';
 import {AppConnection} from '../model/AppConnection';
 import {ChannelEvents} from '../../client/internal';
+import {MultiRuntimeHandler} from '../controller/MultiRuntimeHandler';
 
 @injectable()
 export class ChannelHandler {
@@ -18,9 +20,14 @@ export class ChannelHandler {
     public readonly onChannelChanged: Signal<[AppConnection, ContextChannel | null, ContextChannel | null], Promise<void>>;
 
     private readonly _model: Model;
+    private readonly _mrh: MultiRuntimeHandler;
 
-    constructor(@inject(Inject.MODEL) model: Model) {
+    constructor(
+        @inject(Inject.MODEL) model: Model, // eslint-disable-line @typescript-eslint/indent
+        @inject(Inject.MULTI_RUNTIME_HANDLER) multiRuntimeHandler: MultiRuntimeHandler
+    ) {
         this._model = model;
+        this._mrh = multiRuntimeHandler;
 
         this.onChannelChanged = new Signal(Aggregators.AWAIT_VOID);
 
@@ -99,7 +106,7 @@ export class ChannelHandler {
     }
 
     private isChannelEmpty(channel: ContextChannel): boolean {
-        return !this._model.connections.some((connection) => connection.channel === channel);
+        return !this._model.connections.some((connection) => connection.channel === channel) && this._model.getForeignChannelMembers(channel.id).length === 0;
     }
 
     private validateChannelId(channelId: ChannelId): void {
@@ -112,5 +119,13 @@ export class ChannelHandler {
 
     private isSystemChannel(channel: ContextChannel): channel is SystemContextChannel {
         return channel.type === 'system';
+    }
+
+    public registerForeignChannelMember(id: Identity, channelId: ChannelId): void {
+        this._model.registerForeignChannelMember(id, channelId);
+    }
+
+    public unregisterForeignChannelMember(id: Identity, channelId: ChannelId): void {
+        this._model.unregisterForeignChannelMember(id, channelId);
     }
 }

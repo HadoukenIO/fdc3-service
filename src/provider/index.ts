@@ -292,7 +292,7 @@ export class Main {
         const connection = await this.expectConnection(source);
         const channel = this._channelHandler.getChannelById(payload.id);
 
-        return this._contextHandler.broadcastOnChannel(parseContext(payload.context), connection, channel);
+        return this._contextHandler.broadcastOnChannel(parseContext(payload.context), connection, channel, false);
     }
 
     private channelGetCurrentContext(payload: ChannelGetCurrentContextPayload, source: ProviderIdentity): Context | null {

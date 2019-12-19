@@ -62,6 +62,7 @@ export class Model {
     private readonly _connectionsById: {[id: string]: AppConnection};
     private readonly _channelsById: {[id: string]: ContextChannel};
     private readonly _expectedConnectionsById: {[id: string]: ExpectedConnection};
+    private readonly _foreignChannelsById: {[id: string]: Identity[]};
 
     private readonly _onConnectionRegisteredInternal: Signal<[AppConnection]> = new Signal();
 
@@ -74,6 +75,7 @@ export class Model {
         this._connectionsById = {};
         this._expectedConnectionsById = {};
         this._liveAppsByUuid = {};
+        this._foreignChannelsById = {};
 
         this._directory = directory;
         this._environment = environment;
@@ -306,6 +308,18 @@ export class Model {
         } else {
             return !!this._liveAppsByUuid[name];
         }
+    }
+
+    public registerForeignChannelMember(id: Identity, channelId: ChannelId): void {
+        this._foreignChannelsById[channelId].push(id);
+    }
+
+    public unregisterForeignChannelMember(id: Identity, channelId: ChannelId): void {
+        this._foreignChannelsById[channelId] = this._foreignChannelsById[channelId].filter((c) => c.name !== id.name && c.uuid !== id.uuid);
+    }
+
+    public getForeignChannelMembers(id: ChannelId): Identity[] {
+        return this._foreignChannelsById[id] || [];
     }
 
     private async onApplicationCreated(identity: Identity, liveApp: LiveApp): Promise<void> {
