@@ -6,10 +6,11 @@ import {DeferredPromise} from 'openfin-service-async';
 import {createMockChannel} from '../mocks';
 import {useMockTime, unmockTime, advanceTime, resolvePromiseChain} from '../utils/unit/time';
 import {Application} from '../../src/client/main';
+import {Timeouts} from '../../src/provider/constants';
 import {AppConnectionBase} from '../../src/provider/model/AppConnection';
 import {ContextChannel} from '../../src/provider/model/ContextChannel';
 import {EntityType} from '../../src/provider/model/Environment';
-import {Timeouts} from '../../src/provider/constants';
+import {SemVer} from '../../src/provider/utils/SemVer';
 
 class TestAppWindow extends AppConnectionBase {
     public bringToFront: jest.Mock<Promise<void>, []> = jest.fn<Promise<void>, []>();
@@ -17,8 +18,8 @@ class TestAppWindow extends AppConnectionBase {
 
     private readonly _identity: Readonly<Identity>;
 
-    constructor(identity: Identity, appInfo: Application, maturityPromise: Promise<void>, channel: ContextChannel, entityNumber: number) {
-        super(identity, EntityType.WINDOW, appInfo, maturityPromise, channel, entityNumber);
+    constructor(identity: Identity, version: SemVer, appInfo: Application, maturityPromise: Promise<void>, channel: ContextChannel, entityNumber: number) {
+        super(identity, EntityType.WINDOW, version, appInfo, maturityPromise, channel, entityNumber);
 
         this._identity = identity;
     }
@@ -31,6 +32,7 @@ class TestAppWindow extends AppConnectionBase {
 const mockChannel = createMockChannel();
 
 const fakeIdentity = {uuid: 'test', name: 'test'};
+const fakeVersion = new SemVer('1.0.0');
 const fakeAppInfo: Application = {
     appId: 'test',
     name: 'Test App',
@@ -46,7 +48,7 @@ describe('When querying if a window has a context listener', () => {
     let testAppWindow: TestAppWindow;
 
     beforeEach(() => {
-        testAppWindow = new TestAppWindow(fakeIdentity, fakeAppInfo, createMaturityPromise(), mockChannel, 0);
+        testAppWindow = new TestAppWindow(fakeIdentity, fakeVersion, fakeAppInfo, createMaturityPromise(), mockChannel, 0);
     });
 
     test('A freshly-initialized window returns false', () => {
@@ -78,7 +80,7 @@ describe('When querying if a window has a context listener', () => {
     });
 
     test('The state of one TestAppWindow does not affect another', () => {
-        const secondTestAppWindow = new TestAppWindow(fakeIdentity, fakeAppInfo, createMaturityPromise(), mockChannel, 0);
+        const secondTestAppWindow = new TestAppWindow(fakeIdentity, fakeVersion, fakeAppInfo, createMaturityPromise(), mockChannel, 0);
         secondTestAppWindow.addContextListener();
 
         expect(testAppWindow.hasContextListener()).toBe(false);
@@ -92,7 +94,7 @@ describe('When querying if a window is ready to receive contexts', () => {
         // All tests in this section will use fake timers to allow us to control the Promise races precisely
         useMockTime();
 
-        testAppWindow = new TestAppWindow(fakeIdentity, fakeAppInfo, createMaturityPromise(), mockChannel, 0);
+        testAppWindow = new TestAppWindow(fakeIdentity, fakeVersion, fakeAppInfo, createMaturityPromise(), mockChannel, 0);
     });
 
     afterEach(() => {
