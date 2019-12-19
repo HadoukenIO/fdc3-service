@@ -37,7 +37,7 @@ export class Main {
     private readonly _model: Model;
 
     constructor(
-        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
+        @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>, // eslint-disable-line @typescript-eslint/indent
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
         @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
         @inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding,
@@ -292,7 +292,7 @@ export class Main {
         const connection = await this.expectConnection(source);
         const channel = this._channelHandler.getChannelById(payload.id);
 
-        return this._contextHandler.broadcastOnChannel(parseContext(payload.context), connection, channel);
+        return this._contextHandler.broadcastOnChannel(parseContext(payload.context), connection, channel, false);
     }
 
     private channelGetCurrentContext(payload: ChannelGetCurrentContextPayload, source: ProviderIdentity): Context | null {

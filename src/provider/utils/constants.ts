@@ -1,8 +1,8 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {SERVICE_IDENTITY} from '../../client/internal';
+import {getServiceIdentityUUID} from '../../client/internal';
 
 export const RESOLVER_IDENTITY: Identity = {
-    uuid: SERVICE_IDENTITY.uuid,
+    uuid: getServiceIdentityUUID(),
     name: 'fdc3-resolver'
 };
