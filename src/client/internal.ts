@@ -351,3 +351,13 @@ export function setServiceIdentity(uuid: string) {
 export function getServiceIdentity(): Identity {
     return serviceIdentity;
 }
+
+export function registerOnChannelConnect(fn: () => void): void {
+    fin.InterApplicationBus.Channel.onChannelConnect((event: OpenFinChannelConnectionEvent) => {
+        const {uuid, name, channelName} = event;
+        if (uuid === getServiceIdentity().uuid && name === getServiceIdentity().name && channelName === getServiceChannel()) {
+            console.info('Reconnected FDC3 service');
+            fn();
+        }
+    });
+}

@@ -8,7 +8,7 @@
 import {tryServiceDispatch, getServicePromise, getEventRouter, eventEmitter} from './connection';
 import {Context} from './context';
 import {Application, AppName} from './directory';
-import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners, OpenFinChannelConnectionEvent, getServiceChannel, getServiceIdentity} from './internal';
+import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners, registerOnChannelConnect, getServiceIdentity} from './internal';
 import {ChannelChangedEvent, ChannelContextListener} from './contextChannels';
 import {parseContext, validateEnvironment} from './validation';
 import {Transport, Targeted} from './EventRouter';
@@ -348,6 +348,7 @@ export function addContextListener(handler: (context: Context) => void): Context
     const listener: ContextListener = {
         handler,
         unsubscribe: () => {
+            console.log('Unsubscribed', handler);
             const index: number = contextListeners.indexOf(listener);
 
             if (index >= 0) {
@@ -417,18 +418,18 @@ function hasIntentListener(intent: string): boolean {
 }
 
 if (typeof fin !== 'undefined') {
-    initialize();
-
-    fin.InterApplicationBus.Channel.onChannelConnect((event: OpenFinChannelConnectionEvent) => {
-        const {uuid, name, channelName} = event;
-        if (uuid === getServiceIdentity().uuid && name === getServiceIdentity().name && channelName === getServiceChannel()) {
-            initialize();
-        }
-    });
+    if (getServiceIdentity().name !== fin.Window.me.name && getServiceIdentity().uuid !== fin.Window.me.uuid) {
+        const eventHandler = getEventRouter();
+        eventHandler.registerEmitterProvider('main', () => eventEmitter);
+        initialize().then(() => {
+            registerOnChannelConnect(initialize);
+        });
+    }
 }
 
-function initialize() {
-    getServicePromise().then((channelClient) => {
+async function initialize(): Promise<void> {
+    const channelClient = await getServicePromise();
+    try {
         channelClient.register(APIToClientTopic.RECEIVE_INTENT, async (payload: RaiseIntentPayload) => {
             const result = await invokeListeners(
                 intentListeners.filter((listener) => payload.intent === listener.intent),
@@ -448,37 +449,24 @@ function initialize() {
             );
         });
 
-        const eventHandler = getEventRouter();
-
         channelClient.register('event', (eventTransport: Targeted<Transport<Events>>) => {
             try {
-                eventHandler.dispatchEvent(eventTransport);
+                getEventRouter().dispatchEvent(eventTransport);
             } catch (e) {
                 console.warn(`Error thrown dispatching ${eventTransport.type} event, rethrowing error. Error message: ${e.message}`);
                 throw e;
             }
         });
+    } catch (e) {
+        // Trying to subscribe the same topic
+    }
 
-        rehydrate();
-
-        eventHandler.registerEmitterProvider('main', () => eventEmitter);
-    }, (reason) => {
-        console.warn('Unable to register client Context and Intent handlers. getServicePromise() rejected with reason:', reason);
-    });
+    await rehydrate();
 }
 
 async function rehydrate(): Promise<void> {
-    const tempIntentListeners = [...intentListeners];
-    intentListeners.splice(0, intentListeners.length);
-    const tempContextListeners = [...contextListeners];
-    contextListeners.splice(0, contextListeners.length);
-
-    const intents = tempIntentListeners.map(async ({intent, handler}) => {
-        return addIntentListener(intent, handler);
-    });
-    const contexts = tempContextListeners.map(async ({handler}) => {
-        return addContextListener(handler);
-    });
+    const intents = intentListeners.map(async ({intent}) => tryServiceDispatch(APIFromClientTopic.ADD_INTENT_LISTENER, {intent}));
+    const contexts = contextListeners.map(async () => tryServiceDispatch(APIFromClientTopic.ADD_CONTEXT_LISTENER, {}));
 
     await Promise.all([...intents, ...contexts]);
 }

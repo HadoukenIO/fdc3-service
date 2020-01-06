@@ -47,27 +47,28 @@ export function getEventRouter(): EventRouter<Events> {
 let channelPromise: Promise<ChannelClient> | null = null;
 const hasDOMContentLoaded = new DeferredPromise<void>();
 
-if (typeof document !== 'undefined') {
+if (typeof fin !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
         hasDOMContentLoaded.resolve();
-        if (typeof fin !== 'undefined') {
-            getServicePromise();
-
-            fin.InterApplicationBus.Channel.onChannelDisconnect((event: OpenFinChannelConnectionEvent) => {
-                const {uuid, name, channelName} = event;
-                if (uuid === getServiceIdentity().uuid && name === getServiceIdentity().name && channelName === getServiceChannel()) {
-                    channelPromise = null;
-                }
-            });
-        } else {
-            channelPromise = Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.'));
-        }
     });
+    if (getServiceIdentity().name !== fin.Window.me.name && getServiceIdentity().uuid !== fin.Window.me.uuid) {
+        getServicePromise();
+
+        fin.InterApplicationBus.Channel.onChannelDisconnect((event: OpenFinChannelConnectionEvent) => {
+            const {uuid, name, channelName} = event;
+            if (uuid === getServiceIdentity().uuid && name === getServiceIdentity().name && channelName === getServiceChannel()) {
+                channelPromise = null;
+            }
+        });
+    }
 }
 
 export async function getServicePromise(): Promise<ChannelClient> {
     await hasDOMContentLoaded.promise;
     if (!channelPromise) {
+        if (typeof fin === 'undefined') {
+            channelPromise = Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.'));
+        }
         channelPromise = new Promise<ChannelClient>((resolve, reject) => {
             // TODO: just use RuntimeInfo once its type is updated from js v2 API
             fin.System.getRuntimeInfo().then((info: RuntimeInfo & {fdc3AppUuid?: string; fdc3ChannelName?: string}) => {
@@ -82,8 +83,6 @@ export async function getServicePromise(): Promise<ChannelClient> {
                         wait: true,
                         payload: {version: PACKAGE_VERSION}
                     }).then((channel: ChannelClient) => {
-                        // @ts-ignore Timestamp channel creation time for debugging
-                        channel['timestamp'] = (new Date()).toUTCString();
                         // Register service listeners
                         channel.register('WARN', (payload: unknown) => console.warn(payload));  // tslint:disable-line:no-any
                         // Any unregistered action will simply return false

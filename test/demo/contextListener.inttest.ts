@@ -200,7 +200,7 @@ window, the listener is triggered exactly once with the correct context', async 
             listener = await fdc3Remote.addContextListener(testAppInDirectory1);
         });
 
-        test('Contexts listeners are readded and contexts are recieved', async () => {
+        test('Contexts listeners are readded and contexts are received', async () => {
             await reloadProvider();
             await fdc3Remote.broadcast(testManagerIdentity, validContext);
             await expect(listener).toHaveReceivedContexts([validContext]);

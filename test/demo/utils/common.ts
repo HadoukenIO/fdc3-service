@@ -40,6 +40,13 @@ export async function quitApps(...apps: Identity[]) {
     await delay(250);
 }
 
+export async function reloadProvider(): Promise<void> {
+    await fdc3Remote.ofBrowser.executeOnWindow(getServiceIdentity(), function (this: ProviderWindow) {
+        this.window.location.reload();
+    });
+    await delay(Duration.PROVIDER_RELOAD);
+}
+
 export async function waitForAppToBeRunning(app: Identity): Promise<void> {
     let timedOut = false;
 
@@ -194,11 +201,4 @@ async function isServiceClear(): Promise<boolean> {
             return true;
         }, testManagerIdentity
     );
-}
-
-export async function reloadProvider(): Promise<void> {
-    await fdc3Remote.ofBrowser.executeOnWindow(getServiceIdentity(), function (this: ProviderWindow) {
-        this.window.location.reload();
-    });
-    await delay(Duration.PROVIDER_RELOAD);
 }

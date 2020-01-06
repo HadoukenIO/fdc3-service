@@ -256,7 +256,7 @@ the promise resolves', async () => {
                 await expect(preregisteredListener).toHaveReceivedContexts([validContext]);
             });
 
-            test('When the running app has a listener that throws an error, the promise rejects with an FDC3 error', async () => {
+            test.only('When the running app has a listener that throws an error, the promise rejects with an FDC3 error', async () => {
                 // Remove the pre-registered listener
                 const preregisteredListener = await fdc3Remote.getRemoteContextListener(testAppWithPreregisteredListeners1);
                 await preregisteredListener.unsubscribe();
@@ -268,9 +268,9 @@ the promise resolves', async () => {
                     });
                 });
 
+                await delay(30000);
                 // From the launcher app, call fdc3.open with a valid name and context
                 const promise = allowReject(open(testAppWithPreregisteredListeners1.name, validContext));
-
                 // Check the promise rejects as expected
                 await expect(promise).toThrowFDC3Error(
                     SendContextError.HandlerError,
