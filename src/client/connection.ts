@@ -15,8 +15,9 @@ import {EventEmitter} from 'events';
 
 import {DeferredPromise} from 'openfin-service-async';
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
+import {RuntimeInfo} from 'openfin/_v2/api/system/runtime-info';
 
-import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient, deserializeError, Events, OpenFinChannelConnectionEvent} from './internal';
+import {APIFromClientTopic, getServiceChannel, setServiceChannel, getServiceIdentity, setServiceIdentity, APIFromClient, deserializeError, Events, OpenFinChannelConnectionEvent} from './internal';
 import {EventRouter} from './EventRouter';
 
 /**
@@ -59,7 +60,7 @@ function initialize() {
 
         fin.InterApplicationBus.Channel.onChannelDisconnect((event: OpenFinChannelConnectionEvent) => {
             const {uuid, name, channelName} = event;
-            if (uuid === SERVICE_IDENTITY.uuid && name === SERVICE_IDENTITY.name && channelName === SERVICE_CHANNEL) {
+            if (uuid === getServiceIdentity().uuid && name === getServiceIdentity().name && channelName === getServiceChannel()) {
                 channelPromise = null;
             }
         });
@@ -71,26 +72,32 @@ function initialize() {
 export async function getServicePromise(): Promise<ChannelClient> {
     await hasDOMContentLoaded.promise;
     if (!channelPromise) {
-        if (fin.Window.me.uuid === SERVICE_IDENTITY.uuid && fin.Window.me.name === SERVICE_IDENTITY.name) {
-            // Currently a runtime bug when provider connects to itself. Ideally the provider would never import a file
-            // that includes this, but for now it is easier to put a guard in place.
-            channelPromise = Promise.reject<ChannelClient>(new Error('Trying to connect to provider from provider'));
-        } else {
-            channelPromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {
-                wait: true,
-                payload: {version: PACKAGE_VERSION}
-            }).then(async (channel: ChannelClient) => {
-                // @ts-ignore Timestamp channel creation time for debugging
-                channel['timestamp'] = (new Date()).toUTCString();
-                // Register service listeners
-                channel.register('WARN', (payload: unknown) => console.warn(payload));  // tslint:disable-line:no-any
+        channelPromise = new Promise<ChannelClient>((resolve, reject) => {
+            // TODO: just use RuntimeInfo once its type is updated from js v2 API
+            fin.System.getRuntimeInfo().then((info: RuntimeInfo & {fdc3AppUuid?: string; fdc3ChannelName?: string}) => {
+                if (info.fdc3AppUuid && info.fdc3ChannelName) {
+                    setServiceIdentity(info.fdc3AppUuid);
+                    setServiceChannel(info.fdc3ChannelName);
+                }
+                if (fin.Window.me.uuid === getServiceIdentity().uuid && fin.Window.me.name === getServiceIdentity().name) {
+                    reject(new Error('Trying to connect to provider from provider'));
+                } else {
+                    fin.InterApplicationBus.Channel.connect(getServiceChannel(), {
+                        wait: true,
+                        payload: {version: PACKAGE_VERSION}
+                    }).then((channel: ChannelClient) => {
+                        // @ts-ignore Timestamp channel creation time for debugging
+                        channel['timestamp'] = (new Date()).toUTCString();
+                        // Register service listeners
+                        channel.register('WARN', (payload: unknown) => console.warn(payload));  // tslint:disable-line:no-any
+                        // Any unregistered action will simply return false
+                        channel.setDefaultAction(() => false);
 
-                // Any unregistered action will simply return false
-                channel.setDefaultAction(() => false);
-
-                return channel;
+                        resolve(channel);
+                    });
+                }
             });
-        }
+        });
     }
 
     return channelPromise;

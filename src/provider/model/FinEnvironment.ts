@@ -7,7 +7,7 @@ import {withTimeout} from 'openfin-service-async';
 
 import {AsyncInit} from '../controller/AsyncInit';
 import {FDC3Error, ApplicationError} from '../../client/errors';
-import {APIFromClientTopic, SERVICE_IDENTITY} from '../../client/internal';
+import {APIFromClientTopic, getServiceIdentity} from '../../client/internal';
 import {Application} from '../../client/main';
 import {parseIdentity} from '../../client/validation';
 import {Timeouts} from '../constants';
@@ -117,7 +117,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             interface OFManifest {
                 shortcut?: {name?: string; icon: string};
                 // eslint-disable-next-line camelcase
-                startup_app: {uuid: string; name?: string; icon?: string};
+                startup_app?: {uuid: string; name?: string; icon?: string};
             }
 
             const application = fin.Application.wrapSync(identity);
@@ -127,8 +127,8 @@ export class FinEnvironment extends AsyncInit implements Environment {
             // `manifest` is defined as required property but actually optional. Not present on programmatically-launched apps.
             if (applicationInfo.manifest) {
                 const {shortcut, startup_app: startupApp} = applicationInfo.manifest as OFManifest;
-                title = (shortcut && shortcut.name) || startupApp.name || startupApp.uuid;
-                icon = (shortcut && shortcut.icon) || startupApp.icon;
+                title = (shortcut && shortcut.name) || (startupApp && (startupApp.name || startupApp.uuid));
+                icon = (shortcut && shortcut.icon) || (startupApp && startupApp.icon);
             }
 
             return {
@@ -221,7 +221,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     private registerEntity(identity: Identity, entityType: EntityType): KnownEntity|undefined {
-        if (identity.uuid !== SERVICE_IDENTITY.uuid) {
+        if (identity.uuid !== getServiceIdentity().uuid) {
             const entity: KnownEntity = {
                 entityNumber: this._entityCount,
                 entityType
@@ -241,7 +241,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     }
 
     private deregisterEntity(identity: Identity): void {
-        if (identity.uuid !== SERVICE_IDENTITY.uuid) {
+        if (identity.uuid !== getServiceIdentity().uuid) {
             const id = getId(identity);
             const entity = this._knownEntities.get(id);
 
@@ -258,7 +258,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     private registerApplication(identity: Identity, startedPromise: Promise<void> | undefined): void {
         const {uuid} = identity;
 
-        if (uuid !== SERVICE_IDENTITY.uuid) {
+        if (uuid !== getServiceIdentity().uuid) {
             if (!this._applications.has(uuid)) {
                 this._applications.add(uuid);
                 this.onApplicationCreated.emit(identity, new LiveApp(startedPromise));
@@ -269,7 +269,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
     private deregisterApplication(identity: Identity): void {
         const {uuid} = identity;
 
-        if (uuid !== SERVICE_IDENTITY.uuid) {
+        if (uuid !== getServiceIdentity().uuid) {
             if (this._applications.delete(uuid)) {
                 this.onApplicationClosed.emit(identity);
             }
