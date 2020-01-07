@@ -4,7 +4,7 @@ import {ConnectionError, DEFAULT_CHANNEL_ID} from '../../../src/client/main';
 import {testManagerIdentity, appStartupTime, testAppNotInDirectory1, testAppNotInDirectoryNotFdc3, testAppInDirectory1, testAppInDirectory2, testAppUrl} from '../constants';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel, RemoteChannelEventListener} from '../utils/RemoteChannel';
-import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, quitApps, startNonDirectoryApp, startDirectoryApp} from '../utils/common';
+import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, quitApps, startNonDirectoryApp, startDirectoryApp, reloadProvider} from '../utils/common';
 import {fakeAppChannelName, createFakeContext} from '../utils/fakes';
 import {TestWindowContext} from '../utils/ofPuppeteer';
 
@@ -561,5 +561,18 @@ describe('When using a non-directory app', () => {
         await expect(channelChangedListener.getReceivedEvents()).resolves.toEqual([{
             type: 'channel-changed', ...expectedEvent
         }]);
+    });
+});
+
+describe.only('When the provider is reloaded', () => {
+    setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
+
+    test('The client rejoins the channel it was previously in', async () => {
+        const greenChannel = await fdc3Remote.getChannelById(testAppNotInDirectory1, 'green');
+        await greenChannel.join();
+
+        await reloadProvider();
+        await expect(fdc3Remote.getCurrentChannel(testAppNotInDirectory1)).resolves.toHaveProperty('channel', greenChannel.channel);
+        await expect(greenChannel.getMembers()).resolves.toEqual([{uuid: testAppNotInDirectory1.uuid, name: testAppNotInDirectory1.name}]);
     });
 });

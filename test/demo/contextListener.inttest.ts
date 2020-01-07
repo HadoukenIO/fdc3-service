@@ -2,7 +2,7 @@ import 'jest';
 import {OrganizationContext} from '../../src/client/main';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';
-import {setupTeardown, setupOpenDirectoryAppBookends} from './utils/common';
+import {setupTeardown, setupOpenDirectoryAppBookends, reloadProvider} from './utils/common';
 import {testManagerIdentity, testAppInDirectory1, testAppUrl} from './constants';
 import {delay, Duration} from './utils/delay';
 
@@ -189,6 +189,21 @@ window, the listener is triggered exactly once with the correct context', async 
 
             // Window on the same app as the one broadcasting DOES receive context
             await expect(testAppMainWindowListener).toHaveReceivedContexts([validContext]);
+        });
+    });
+
+    describe('When the provider is reloaded', () => {
+        let listener: fdc3Remote.RemoteContextListener;
+        setupOpenDirectoryAppBookends(testAppInDirectory1);
+
+        beforeEach(async () => {
+            listener = await fdc3Remote.addContextListener(testAppInDirectory1);
+        });
+
+        test('Contexts listeners are readded and contexts are recieved', async () => {
+            await reloadProvider();
+            await fdc3Remote.broadcast(testManagerIdentity, validContext);
+            await expect(listener).toHaveReceivedContexts([validContext]);
         });
     });
 });

@@ -195,3 +195,10 @@ async function isServiceClear(): Promise<boolean> {
         }, testManagerIdentity
     );
 }
+
+export async function reloadProvider(): Promise<void> {
+    await fdc3Remote.ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow) {
+        this.window.location.reload();
+    });
+    await delay(Duration.PAGE_RELOAD);
+}

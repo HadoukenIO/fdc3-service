@@ -7,7 +7,7 @@ import {ResolveError, ApplicationError, SendContextError} from '../../../src/cli
 import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {delay, Duration} from '../utils/delay';
-import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning} from '../utils/common';
+import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning, reloadProvider} from '../utils/common';
 import {appStartupTime, testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, testAppWithPreregisteredListeners1, testAppNotInDirectoryNotFdc3, testAppUrl} from '../constants';
 import {Intent, IntentType} from '../../../src/provider/intents';
 import {TestWindowContext} from '../utils/ofPuppeteer';
@@ -173,6 +173,26 @@ listener to be added', async () => {
             setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
             setupCommonRunningAppTests(testAppNotInDirectory1);
         });
+    });
+});
+
+describe('When reloading the provider', () => {
+    setupOpenDirectoryAppBookends(testAppWithPreregisteredListeners1);
+
+    test('Apps with a preregistered intent listener recieve intents', async () => {
+        await reloadProvider();
+
+        await raiseIntent(preregisteredIntent, testAppWithPreregisteredListeners1);
+        const listener = await fdc3Remote.getRemoteIntentListener(testAppWithPreregisteredListeners1, preregisteredIntent.type);
+        await expect(listener).toHaveReceivedContexts([preregisteredIntent.context]);
+    });
+
+    test('Apps that registered an intent listener recieve intents', async () => {
+        const listener = await fdc3Remote.addIntentListener(testAppWithPreregisteredListeners1, validIntent.type);
+        await reloadProvider();
+
+        await raiseIntent(validIntent, testAppWithPreregisteredListeners1);
+        await expect(listener).toHaveReceivedContexts([validIntent.context]);
     });
 });
 
