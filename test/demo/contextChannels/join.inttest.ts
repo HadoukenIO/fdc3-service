@@ -564,7 +564,7 @@ describe('When using a non-directory app', () => {
     });
 });
 
-describe.only('When the provider is reloaded', () => {
+describe('When the provider is reloaded', () => {
     setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
 
     test('The client rejoins the channel it was previously in', async () => {
