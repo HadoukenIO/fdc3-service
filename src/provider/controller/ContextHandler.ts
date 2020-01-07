@@ -20,6 +20,7 @@ export class ContextHandler {
     private readonly _model: Model;
 
     constructor(
+    // eslint-disable-next-line @typescript-eslint/indent
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
         @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
         @inject(Inject.MODEL) model: Model
