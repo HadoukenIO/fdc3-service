@@ -200,5 +200,5 @@ export async function reloadProvider(): Promise<void> {
     await fdc3Remote.ofBrowser.executeOnWindow(getServiceIdentity(), function (this: ProviderWindow) {
         this.window.location.reload();
     });
-    await delay(Duration.PAGE_RELOAD);
+    await delay(Duration.PROVIDER_RELOAD);
 }
