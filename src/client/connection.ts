@@ -49,24 +49,20 @@ const hasDOMContentLoaded = new DeferredPromise<void>();
 
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
-        initialize();
+        hasDOMContentLoaded.resolve();
+        if (typeof fin !== 'undefined') {
+            getServicePromise();
+
+            fin.InterApplicationBus.Channel.onChannelDisconnect((event: OpenFinChannelConnectionEvent) => {
+                const {uuid, name, channelName} = event;
+                if (uuid === getServiceIdentity().uuid && name === getServiceIdentity().name && channelName === getServiceChannel()) {
+                    channelPromise = null;
+                }
+            });
+        } else {
+            channelPromise = Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.'));
+        }
     });
-}
-
-function initialize() {
-    hasDOMContentLoaded.resolve();
-    if (typeof fin !== 'undefined') {
-        getServicePromise();
-
-        fin.InterApplicationBus.Channel.onChannelDisconnect((event: OpenFinChannelConnectionEvent) => {
-            const {uuid, name, channelName} = event;
-            if (uuid === getServiceIdentity().uuid && name === getServiceIdentity().name && channelName === getServiceChannel()) {
-                channelPromise = null;
-            }
-        });
-    } else {
-        channelPromise = Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.'));
-    }
 }
 
 export async function getServicePromise(): Promise<ChannelClient> {
