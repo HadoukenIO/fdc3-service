@@ -6,10 +6,10 @@ import {Signal} from 'openfin-service-signal';
 import {withTimeout} from 'openfin-service-async';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {FDC3Error, ApplicationError} from '../../client/errors';
+import {FDC3Error, ApplicationError} from '../../client/types/errors';
 import {APIFromClientTopic, getServiceIdentity} from '../../client/internal';
 import {Application} from '../../client/main';
-import {parseIdentity} from '../../client/validation';
+import {sanitizeIdentity} from '../../client/validation';
 import {Timeouts} from '../constants';
 import {Injector} from '../common/Injector';
 import {getId} from '../utils/getId';
@@ -57,7 +57,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         this._apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
     }
 
-    public createApplication(appInfo: Application): void {
+    public createApplication(appInfo: Application): LiveApp {
         const uuid = AppDirectory.getUuidFromApp(appInfo);
 
         const startPromise = withTimeout(
@@ -76,11 +76,15 @@ export class FinEnvironment extends AsyncInit implements Environment {
             }
         });
 
-        this.registerApplication({uuid}, startPromise);
+        const liveApp = new LiveApp(startPromise);
+
+        this.registerApplication({uuid}, liveApp);
+
+        return liveApp;
     }
 
     public wrapConnection(liveApp: LiveApp, identity: Identity, entityType: EntityType, channel: ContextChannel): AppConnection {
-        identity = parseIdentity(identity);
+        identity = sanitizeIdentity(identity);
         const id = getId(identity);
         const version: SemVer = this._apiHandler.getClientVersion(id);
 
@@ -172,7 +176,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             const identity = {uuid: event.uuid, name: event.name};
 
             await Injector.initialized;
-            this.registerApplication({uuid: event.uuid}, Promise.resolve());
+            this.registerApplication({uuid: event.uuid}, new LiveApp(Promise.resolve()));
             this.registerEntity(identity, entityType);
         };
         const entityClosedHandler = async <T>(event: WindowEvent<'system', T>) => {
@@ -185,7 +189,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
         fin.System.addListener('application-started', async (event: ApplicationEvent<'system', 'application-started'>) => {
             await Injector.initialized;
-            this.registerApplication({uuid: event.uuid}, Promise.resolve());
+            this.registerApplication({uuid: event.uuid}, new LiveApp(Promise.resolve()));
         });
         fin.System.addListener('application-closed', appicationClosedHandler);
         fin.System.addListener('application-crashed', appicationClosedHandler);
@@ -201,7 +205,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
             // Register windows that were running before launching the FDC3 service
             windowInfo.forEach((info) => {
                 const {uuid, mainWindow, childWindows} = info;
-                this.registerApplication({uuid: info.uuid}, undefined);
+                this.registerApplication({uuid: info.uuid}, new LiveApp(undefined));
 
                 this.registerEntity({uuid, name: mainWindow.name}, EntityType.WINDOW);
                 childWindows.forEach((child) => this.registerEntity({uuid, name: child.name}, EntityType.WINDOW));
@@ -255,13 +259,13 @@ export class FinEnvironment extends AsyncInit implements Environment {
         }
     }
 
-    private registerApplication(identity: Identity, startedPromise: Promise<void> | undefined): void {
+    private registerApplication(identity: Identity, liveApp: LiveApp): void {
         const {uuid} = identity;
 
         if (uuid !== getServiceIdentity().uuid) {
             if (!this._applications.has(uuid)) {
                 this._applications.add(uuid);
-                this.onApplicationCreated.emit(identity, new LiveApp(startedPromise));
+                this.onApplicationCreated.emit(identity, liveApp);
             }
         }
     }

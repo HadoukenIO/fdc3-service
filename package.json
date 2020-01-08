@@ -35,7 +35,10 @@
     "url": "https://github.com/HadoukenIO/fdc3-service/issues"
   },
   "homepage": "https://github.com/HadoukenIO/fdc3-service#readme",
-  "dependencies": {},
+  "dependencies": {
+    "@types/deep-equal": "1.0.1",
+    "deep-equal": "1.1.1"
+  },
   "devDependencies": {
     "@types/mkdirp": "^0.5.2",
     "@types/node-fetch": "^2.1.6",

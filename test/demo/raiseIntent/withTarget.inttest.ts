@@ -3,7 +3,7 @@ import 'reflect-metadata';
 
 import {allowReject} from 'openfin-service-async';
 
-import {ResolveError, ApplicationError, SendContextError} from '../../../src/client/errors';
+import {ResolveError, ApplicationError, SendContextError} from '../../../src/client/types/errors';
 import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {delay, Duration} from '../utils/delay';

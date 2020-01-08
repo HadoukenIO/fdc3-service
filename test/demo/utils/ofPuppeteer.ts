@@ -2,7 +2,7 @@ import {Fin, Identity} from 'openfin/_v2/main';
 import {Browser, Page, JSHandle} from 'puppeteer';
 import {connect} from 'hadouken-js-adapter';
 
-import {Context, ContextListener, IntentListener, Channel} from '../../../src/client/main';
+import {Context, ContextListener, IntentListener, Channel, AppDirectory} from '../../../src/client/main';
 import {Events, ChannelEvents} from '../../../src/client/internal';
 import {IntentType} from '../../../src/provider/intents';
 
@@ -20,8 +20,7 @@ export interface TestWindowChannelEventListener {
     unsubscribe: () => void;
 }
 
-export type TestWindowContext = Window & {
-    fin: Fin;
+export type TestWindowContext = BaseWindowContext & {
     fdc3: typeof import('../../../src/client/main');
 
     contextListeners: ContextListener[];
@@ -30,6 +29,7 @@ export type TestWindowContext = Window & {
     channelEventListeners: TestWindowChannelEventListener[];
 
     channelTransports: {[id: string]: TestChannelTransport};
+    directories: AppDirectory[];
 
     receivedContexts: {listenerID: number; context: Context}[];
     receivedEvents: {listenerID: number; payload: Events}[];
@@ -49,7 +49,8 @@ export interface TestChannelTransport {
     constructor: string;
 }
 
-export type BaseWindowContext = Window & {fin: Fin};
+// TODO: Remove once Storage API is in published runtime and types are updated [SERVICE-840]
+export type BaseWindowContext = Window & {fin: (Fin & {Storage: any})};
 
 export class OFPuppeteerBrowser<WindowContext extends BaseWindowContext = BaseWindowContext> {
     private readonly _pageIdentityCache: Map<Page, Identity>;

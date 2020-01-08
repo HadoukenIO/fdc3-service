@@ -1,6 +1,6 @@
 import {DeferredPromise, allowReject} from 'openfin-service-async';
 
-import {Application} from '../../client/directory';
+import {Application} from '../../client/types/directory';
 import {Timeouts} from '../constants';
 
 import {AppConnection} from './AppConnection';
@@ -18,6 +18,8 @@ export class LiveApp {
     private readonly _matureDeferredPromise: DeferredPromise<void> | undefined;
 
     private _appInfo: Application | undefined = undefined;
+    private _appInfoFinal: boolean = false;
+
     private _started: boolean = false;
     private _mature: boolean = false;
 
@@ -79,10 +81,15 @@ export class LiveApp {
         return this._appInfoDeferredPromise.promise;
     }
 
-    public setAppInfo(appInfo: Application): void {
-        if (this._appInfo === undefined) {
+    public hasFinalAppInfo(): boolean {
+        return this._appInfoFinal || this._mature;
+    }
+
+    public setAppInfo(appInfo: Application, final: boolean): void {
+        if ((this._appInfo === undefined) || (final && !this._appInfoFinal)) {
             this._appInfo = appInfo;
             this._appInfoDeferredPromise.resolve(appInfo);
+            this._appInfoFinal = final;
         }
     }
 

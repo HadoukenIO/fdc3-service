@@ -6,11 +6,11 @@
  * Main entry point
  */
 import {tryServiceDispatch, getServicePromise, getEventRouter, eventEmitter} from './connection';
-import {Context} from './context';
-import {Application, AppName} from './directory';
+import {Context} from './types/context';
+import {Application, AppName} from './types/directory';
 import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners} from './internal';
-import {ChannelChangedEvent, getChannelObject, ChannelContextListener} from './contextChannels';
-import {parseContext, validateEnvironment} from './validation';
+import {ChannelChangedEvent, getChannelObject, ChannelContextListener} from './api/contextChannels';
+import {sanitizeContext, validateEnvironment} from './validation';
 import {Transport, Targeted} from './EventRouter';
 
 /**
@@ -19,14 +19,15 @@ import {Transport, Targeted} from './EventRouter';
  * Original file: https://github.com/FDC3/FDC3/blob/master/src/api/interface.ts
  */
 
-// Re-export context channel API at top-level
-export * from './contextChannels';
+// Re-export APIs at top-level
+export * from './api/contextChannels';
+export * from './api/directoryAdmin';
 
 // Re-export types/enums at top-level
-export * from './context';
-export * from './directory';
-export * from './intents';
-export * from './errors';
+export * from './types/context';
+export * from './types/directory';
+export * from './types/intents';
+export * from './types/errors';
 
 /**
  * Describes an intent.
@@ -163,7 +164,7 @@ const contextListeners: ContextListener[] = [];
  * @throws If `context` is passed, `TypeError` if `context` is not a valid [[Context]].
  */
 export async function open(name: AppName, context?: Context): Promise<void> {
-    return tryServiceDispatch(APIFromClientTopic.OPEN, {name, context: context && parseContext(context)});
+    return tryServiceDispatch(APIFromClientTopic.OPEN, {name, context: context && sanitizeContext(context)});
 }
 
 /**
@@ -196,7 +197,7 @@ export async function open(name: AppName, context?: Context): Promise<void> {
  * @throws If `context` is passed, `TypeError` if `context` is not a valid [[Context]].
  */
 export async function findIntent(intent: string, context?: Context): Promise<AppIntent> {
-    return tryServiceDispatch(APIFromClientTopic.FIND_INTENT, {intent, context: context && parseContext(context)});
+    return tryServiceDispatch(APIFromClientTopic.FIND_INTENT, {intent, context: context && sanitizeContext(context)});
 }
 
 /**
@@ -244,7 +245,7 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  * @throws `TypeError` if `context` is not a valid [[Context]].
  */
 export async function findIntentsByContext(context: Context): Promise<AppIntent[]> {
-    return tryServiceDispatch(APIFromClientTopic.FIND_INTENTS_BY_CONTEXT, {context: parseContext(context)});
+    return tryServiceDispatch(APIFromClientTopic.FIND_INTENTS_BY_CONTEXT, {context: sanitizeContext(context)});
 }
 
 /**
@@ -264,7 +265,7 @@ export async function findIntentsByContext(context: Context): Promise<AppIntent[
  * @throws `TypeError` if `context` is not a valid [[Context]].
  */
 export async function broadcast(context: Context): Promise<void> {
-    await tryServiceDispatch(APIFromClientTopic.BROADCAST, {context: parseContext(context)});
+    await tryServiceDispatch(APIFromClientTopic.BROADCAST, {context: sanitizeContext(context)});
 }
 
 /**
@@ -296,7 +297,7 @@ export async function broadcast(context: Context): Promise<void> {
  * @throws `TypeError` if `context` is not a valid [[Context]].
  **/
 export async function raiseIntent(intent: string, context: Context, target?: AppName): Promise<IntentResolution> {
-    return tryServiceDispatch(APIFromClientTopic.RAISE_INTENT, {intent, context: parseContext(context), target});
+    return tryServiceDispatch(APIFromClientTopic.RAISE_INTENT, {intent, context: sanitizeContext(context), target});
 }
 
 /**
