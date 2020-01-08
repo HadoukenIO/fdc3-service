@@ -17,6 +17,7 @@ export class EventHandler {
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
 
     constructor(
+    // eslint-disable-next-line @typescript-eslint/indent
         @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>
     ) {

@@ -22,6 +22,7 @@
     "test:int": "svc-tools test int -m ./test/middleware.js",
     "test:unit": "svc-tools test unit",
     "zip": "svc-tools zip",
+    "asar": "svc-tools asar",
     "start": "svc-tools start"
   },
   "repository": {
@@ -55,7 +56,7 @@
     "openfin-service-async": "^1.0.1",
     "openfin-service-config": "1.0.2",
     "openfin-service-signal": "^1.0.0",
-    "openfin-service-tooling": "1.0.21",
+    "openfin-service-tooling": "1.0.23",
     "pre-commit": "^1.2.2",
     "puppeteer": "~1.17.0",
     "react": "^16.8.3",
