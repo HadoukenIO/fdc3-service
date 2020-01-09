@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {Identity} from 'openfin/_v2/main';
 
-import {Channel} from '../../../client/api/contextChannels';
+import {Channel} from '../../../client/contextChannels';
 import {addEventListener} from '../../../client/main';
 
 interface ChannelViewProps {

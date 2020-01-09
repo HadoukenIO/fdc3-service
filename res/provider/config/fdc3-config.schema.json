@@ -133,7 +133,7 @@
                 "applicationDirectory": {
                     "type": "string",
                     "default": "",
-                    "description": "The location of a global application directory that will be used in addition to any other registered app directories"
+                    "description": "The default location of the application directory"
                 }
             },
             "additionalProperties": false

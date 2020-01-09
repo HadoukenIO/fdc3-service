@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import * as fdc3 from '../../client/main';
 import {Chart} from '../components/charts/Chart';
-import {InstrumentContext, Context} from '../../client/types/context';
+import {InstrumentContext, Context} from '../../client/context';
 import '../../../res/demo/css/w3.css';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
 

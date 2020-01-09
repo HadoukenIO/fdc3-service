@@ -1,6 +1,6 @@
 import {withTimeout} from 'openfin-service-async';
 
-import {Application} from '../../client/types/directory';
+import {Application} from '../../client/directory';
 import {Timeouts} from '../constants';
 
 export enum ClientCallsResult {

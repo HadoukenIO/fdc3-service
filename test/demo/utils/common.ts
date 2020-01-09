@@ -7,7 +7,6 @@ import {Boxed} from '../../../src/provider/utils/types';
 import {RESOLVER_IDENTITY} from '../../../src/provider/utils/constants';
 import {getServiceIdentity} from '../../../src/client/internal';
 import {Model} from '../../../src/provider/model/Model';
-import {APP_DIRECTORY_STORAGE_TAG} from '../../../src/client/api/directoryAdmin';
 
 import {fin} from './fin';
 import * as fdc3Remote from './fdc3RemoteExecution';
@@ -128,21 +127,15 @@ export function setupTeardown(): void {
             await closeResolver();
         }
 
-        const runningApps = (await fin.System.getAllApplications()).map((appInfo) => appInfo.uuid);
         const expectedRunningApps = ['fdc3-service', testManagerIdentity.uuid];
+
+        const runningApps = (await fin.System.getAllApplications()).map((appInfo) => appInfo.uuid);
         const unexpectedRunningApps = runningApps.filter((uuid) => !expectedRunningApps.includes(uuid));
 
         await quitApps(...unexpectedRunningApps.map((uuid) => ({uuid})));
 
-        const directoryShard = await hasDirectoryShard();
-
-        if (directoryShard) {
-            await clearDirectoryShard();
-        }
-
         expect(resolverShowing).toBe(false);
         expect(runningApps.sort()).toEqual(expectedRunningApps.sort());
-        expect(directoryShard).toBe(false);
 
         await expect(isServiceClear()).resolves.toBe(true);
     });
@@ -160,26 +153,6 @@ export async function closeResolver(): Promise<void> {
     await delay(Duration.API_CALL);
 }
 
-export async function clearDirectoryShard(): Promise<void> {
-    await fdc3Remote.ofBrowser.executeOnWindow(testManagerIdentity, async function (this: BaseWindowContext, tag: string) {
-        await this.fin.Storage.removeItem(tag);
-    }, APP_DIRECTORY_STORAGE_TAG);
-}
-
-async function hasDirectoryShard(): Promise<boolean> {
-    return fdc3Remote.ofBrowser.executeOnWindow(testManagerIdentity, async function (this: BaseWindowContext, tag: string): Promise<boolean> {
-        let hasStoredItem = false;
-
-        try {
-            hasStoredItem = !!(await this.fin.Storage.getItem(tag));
-        } catch (e) {
-            // Intentionally empty
-        }
-
-        return hasStoredItem;
-    }, APP_DIRECTORY_STORAGE_TAG);
-}
-
 /**
  * Checks that the service is in the expected state when no test apps are running
  */
@@ -191,12 +164,12 @@ async function isServiceClear(): Promise<boolean> {
                 return false;
             }
 
-            if (this.model.liveApps.length !== 1) {
+            if (this.model.apps.length !== 1) {
                 return false;
             }
 
             const singleWindow = this.model.connections[0];
-            const singleApp = this.model.liveApps[0];
+            const singleApp = this.model.apps[0];
 
             if (singleWindow.appInfo.appId !== expectedWindowIdentity.uuid) {
                 return false;

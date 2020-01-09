@@ -22,12 +22,12 @@ import {EventEmitter} from 'events';
 
 import {Identity} from 'openfin/_v2/main';
 
-import {sanitizeIdentity, sanitizeContext, validateEnvironment, sanitizeChannelId, sanitizeAppChannelName} from '../validation';
-import {tryServiceDispatch, getEventRouter, getServicePromise} from '../connection';
-import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport, invokeListeners} from '../internal';
-import {Context} from '../types/context';
-import {ContextListener} from '../main';
-import {Transport} from '../EventRouter';
+import {parseIdentity, parseContext, validateEnvironment, parseChannelId, parseAppChannelName} from './validation';
+import {tryServiceDispatch, getEventRouter, getServicePromise} from './connection';
+import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport, invokeListeners} from './internal';
+import {Context} from './context';
+import {ContextListener} from './main';
+import {Transport} from './EventRouter';
 
 /**
  * Type used to identify specific Channels. Though simply an alias of `string`, use of this type indicates use of the string
@@ -244,7 +244,7 @@ export abstract class ChannelBase {
      * {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}.
      */
     public async join(identity?: Identity): Promise<void> {
-        return tryServiceDispatch(APIFromClientTopic.CHANNEL_JOIN, {id: this.id, identity: identity && sanitizeIdentity(identity)});
+        return tryServiceDispatch(APIFromClientTopic.CHANNEL_JOIN, {id: this.id, identity: identity && parseIdentity(identity)});
     }
 
     /**
@@ -260,7 +260,7 @@ export abstract class ChannelBase {
      * @throws `TypeError` if `context` is not a valid [[Context]].
      */
     public async broadcast(context: Context): Promise<void> {
-        await tryServiceDispatch(APIFromClientTopic.CHANNEL_BROADCAST, {id: this.id, context: sanitizeContext(context)});
+        await tryServiceDispatch(APIFromClientTopic.CHANNEL_BROADCAST, {id: this.id, context: parseContext(context)});
     }
 
     /**
@@ -483,7 +483,7 @@ export async function getSystemChannels(): Promise<SystemChannel[]> {
  * @throws [[FDC3Error]] with an [[ChannelError]] code.
  */
 export async function getChannelById(channelId: ChannelId): Promise<Channel> {
-    const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_CHANNEL_BY_ID, {id: sanitizeChannelId(channelId)});
+    const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_CHANNEL_BY_ID, {id: parseChannelId(channelId)});
 
     return getChannelObject(channelTransport);
 }
@@ -497,7 +497,7 @@ export async function getChannelById(channelId: ChannelId): Promise<Channel> {
  * {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}.
  */
 export async function getCurrentChannel(identity?: Identity): Promise<Channel> {
-    const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_CURRENT_CHANNEL, {identity: identity && sanitizeIdentity(identity)});
+    const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_CURRENT_CHANNEL, {identity: identity && parseIdentity(identity)});
 
     return getChannelObject(channelTransport);
 }
@@ -516,7 +516,7 @@ export async function getCurrentChannel(identity?: Identity): Promise<Channel> {
  * @throws `TypeError` if `name` is not a valid app channel name, i.e., a non-empty string.
  */
 export async function getOrCreateAppChannel(name: string): Promise<AppChannel> {
-    const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_OR_CREATE_APP_CHANNEL, {name: sanitizeAppChannelName(name)});
+    const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_OR_CREATE_APP_CHANNEL, {name: parseAppChannelName(name)});
 
     return getChannelObject<AppChannel>(channelTransport);
 }

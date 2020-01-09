@@ -5,7 +5,7 @@ import {Number} from '../components/dialer/Number';
 import {Dialer} from '../components/dialer/Dialer';
 import {CallTimer} from '../components/dialer/CallTimer';
 import {CallButton} from '../components/dialer/CallButton';
-import {ContactContext, Context} from '../../client/types/context';
+import {ContactContext, Context} from '../../client/context';
 import {Dialog} from '../components/common/Dialog';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
 import '../../../res/demo/css/w3.css';

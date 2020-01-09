@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import {Application} from '../../../../client/types/directory';
+import {Application} from '../../../../client/directory';
 import {AppCard} from '../AppCard/AppCard';
 
 import './AppList.scss';
