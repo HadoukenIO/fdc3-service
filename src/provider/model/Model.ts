@@ -66,6 +66,7 @@ export class Model {
     private readonly _onConnectionRegisteredInternal: Signal<[AppConnection]> = new Signal();
 
     constructor(
+    // eslint-disable-next-line @typescript-eslint/indent
         @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
         @inject(Inject.ENVIRONMENT) environment: Environment,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>

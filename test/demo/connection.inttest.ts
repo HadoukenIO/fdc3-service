@@ -2,7 +2,7 @@ import 'jest';
 import {Identity} from 'openfin/_v2/main';
 
 import {AppConnection} from '../../src/provider/model/AppConnection';
-import {SERVICE_IDENTITY, ChannelEvents} from '../../src/client/internal';
+import {getServiceIdentity, ChannelEvents} from '../../src/client/internal';
 import {Model} from '../../src/provider/model/Model';
 import {ChannelHandler} from '../../src/provider/controller/ChannelHandler';
 import {EventHandler} from '../../src/provider/controller/EventHandler';
@@ -212,20 +212,20 @@ async function navigateTo(target: Identity, url: string): Promise<void> {
 }
 
 async function getIntentListeners(intentType: string): Promise<AppConnection[]> {
-    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, async function (this: ProviderWindow, type: string): Promise<AppConnection[]> {
+    return ofBrowser.executeOnWindow(getServiceIdentity(), async function (this: ProviderWindow, type: string): Promise<AppConnection[]> {
         return this.model.connections.filter((connection) => connection.hasIntentListener(type));
     }, intentType);
 }
 
 async function getChannelContextListeners(remoteChannel: RemoteChannel): Promise<AppConnection[]> {
-    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, id: string): AppConnection[] {
+    return ofBrowser.executeOnWindow(getServiceIdentity(), function (this: ProviderWindow, id: string): AppConnection[] {
         const channel = this.channelHandler.getChannelById(id);
         return this.channelHandler.getConnectionsListeningForContextsOnChannel(channel);
     }, remoteChannel.channel.id);
 }
 
 async function hasEventListeners(identity: Identity, eventType: ChannelEvents['type']): Promise<boolean> {
-    const identities = await ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, event: ChannelEvents['type']): Identity[] {
+    const identities = await ofBrowser.executeOnWindow(getServiceIdentity(), function (this: ProviderWindow, event: ChannelEvents['type']): Identity[] {
         // Check that the window identity is on any channel.
         return this.model.channels.map((channel) => {
             return this.channelHandler.getConnectionsListeningForEventsOnChannel(channel, event).map((appWindow) => appWindow.identity);
@@ -235,7 +235,7 @@ async function hasEventListeners(identity: Identity, eventType: ChannelEvents['t
 }
 
 function isRegistered(identity: Identity): Promise<boolean> {
-    return ofBrowser.executeOnWindow(SERVICE_IDENTITY, function (this: ProviderWindow, identityRemote: Identity): boolean {
+    return ofBrowser.executeOnWindow(getServiceIdentity(), function (this: ProviderWindow, identityRemote: Identity): boolean {
         return this.model.getConnection(identityRemote) !== null;
     }, identity);
 }

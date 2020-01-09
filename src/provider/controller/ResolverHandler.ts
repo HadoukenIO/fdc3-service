@@ -18,7 +18,7 @@ const RESOLVER_URL = (() => {
     }
 
     // Locate the default resolver HTML page, relative to the location of the provider
-    return providerLocation.replace('provider.html', 'ui/resolver');
+    return providerLocation.replace('provider.html', 'ui/resolver/index.html');
 })();
 
 /**
