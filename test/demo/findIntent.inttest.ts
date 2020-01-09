@@ -1,7 +1,7 @@
 import 'jest';
 import fetch from 'node-fetch';
 
-import {Application as DirectoryApp} from '../../src/client/types/directory';
+import {Application as DirectoryApp} from '../../src/client/directory';
 import {Context, AppIntent} from '../../src/client/main';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';

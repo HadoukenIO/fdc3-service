@@ -1,11 +1,11 @@
 import {injectable, inject} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
-import {withStrictTimeout, allowReject, untilSignal, untilTrue, DeferredPromise, parallelForEach} from 'openfin-service-async';
+import {withStrictTimeout, serialFilter, allowReject, untilSignal, untilTrue, DeferredPromise} from 'openfin-service-async';
 
-import {Application, AppName} from '../../client/types/directory';
+import {Application, AppName} from '../../client/directory';
 import {Inject} from '../common/Injectables';
-import {ChannelId, DEFAULT_CHANNEL_ID, AppIntent, FDC3Error, ApplicationError} from '../../client/main';
+import {ChannelId, DEFAULT_CHANNEL_ID, AppIntent} from '../../client/main';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic} from '../../client/internal';
 import {SYSTEM_CHANNELS, Timeouts} from '../constants';
@@ -89,15 +89,13 @@ export class Model {
         this._apiHandler.onConnection.add(this.onApiHandlerConnection, this);
         this._apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
 
-        this._directory.directoryChanged.add(this.onDirectoryChanged, this);
-
         this._channelsById[DEFAULT_CHANNEL_ID] = new DefaultContextChannel(DEFAULT_CHANNEL_ID);
         for (const channel of SYSTEM_CHANNELS) {
             this._channelsById[channel.id] = new SystemContextChannel(channel.id, channel.visualIdentity);
         }
     }
 
-    public get liveApps(): LiveApp[] {
+    public get apps(): LiveApp[] {
         return Object.values(this._liveAppsByUuid);
     }
 
@@ -135,12 +133,13 @@ export class Model {
      * Returns all registered connections for an app satisfying our predicate, waiting for at least one connection or
      * until the app is mature.
      */
-    public async expectConnectionsForLiveApp(
-        liveApp: LiveApp,
+    public async expectConnectionsForApp(
+        appInfo: Application,
         isReadyNow: (connection: AppConnection) => boolean,
         waitForReady: (connection: AppConnection) => Promise<void>
     ): Promise<AppConnection[]> {
-        const connections = liveApp.connections;
+        const uuid = AppDirectory.getUuidFromApp(appInfo);
+        const connections = this._liveAppsByUuid[uuid] ? this._liveAppsByUuid[uuid].connections : [];
 
         const result: AppConnection[] = connections.filter(isReadyNow);
 
@@ -153,7 +152,7 @@ export class Model {
 
             // Apply the async predicate to any incoming connections
             const slot = this._onConnectionRegisteredInternal.add((connection) => {
-                if (liveApp.connections.includes(connection)) {
+                if (connection.appInfo.appId === appInfo.appId) {
                     waitForReady(connection).then(() => deferredPromise.resolve(connection), () => {});
                 }
             });
@@ -166,7 +165,7 @@ export class Model {
             // Return a connection once we have one, or timeout when the application is mature
             return Promise.race([
                 deferredPromise.promise.then((connection) => [connection]),
-                liveApp.waitForAppMature().then(() => [], () => [])
+                this.getOrCreateLiveApp(appInfo).then((liveApp) => liveApp.waitForAppMature().then(() => [], () => []))
             ]).then((connection) => {
                 slot.remove();
                 return connection;
@@ -174,68 +173,25 @@ export class Model {
         }
     }
 
-    public async getOrCreateLiveAppByName(name: AppName): Promise<LiveApp> {
-        const result = await this.getOrCreateLiveApp<'application-not-found'>(
-            // Either find an app with this name
-            (candidateLiveApp, candidateAppInfo) => candidateAppInfo.name === name,
-            // Or get it from the app directory
-            async () => {
-                return (await this._directory.getAppByName(name)) || 'application-not-found';
-            }
-        );
+    public async getOrCreateLiveApp(appInfo: Application): Promise<LiveApp> {
+        const uuid = AppDirectory.getUuidFromApp(appInfo);
 
-        if (result === 'application-not-found') {
-            throw new FDC3Error(ApplicationError.NotFound, `No application '${name}' found running or in directory`);
+        if (this._liveAppsByUuid[uuid]) {
+            return this._liveAppsByUuid[uuid];
         } else {
-            return result;
-        }
-    }
+            const deferredPromise = new DeferredPromise<LiveApp>();
 
-    public async getOrCreateLiveAppByNameForIntent(name: AppName, intentType: string, contextType: string): Promise<LiveApp | 'does-not-support-intent'> {
-        const result = await this.getOrCreateLiveApp(
-            // Either find an app with this name, and check that it supports the given intent and context
-            (candidateLiveApp, candidateAppInfo) => {
-                if (candidateAppInfo.name !== name) {
-                    return false;
-                } else {
-                    const hasIntentListener = candidateLiveApp.connections.some((connection) => connection.hasIntentListener(intentType));
-
-                    if (hasIntentListener && AppDirectory.mightAppSupportIntent(candidateLiveApp.appInfo!, intentType, contextType)) {
-                        return true;
-                    }
-
-                    if (!candidateLiveApp.mature && AppDirectory.shouldAppSupportIntent(candidateLiveApp.appInfo!, intentType, contextType)) {
-                        return true;
-                    }
-
-                    return 'does-not-support-intent';
+            const slot = this._environment.onApplicationCreated.add((identity: Identity, liveApp: LiveApp) => {
+                if (identity.uuid === uuid) {
+                    slot.remove();
+                    deferredPromise.resolve(liveApp);
                 }
-            },
-            // Or get it from the app directory and check that it supports the given intent and context
-            async () => {
-                const appInfo = await this._directory.getAppByName(name);
-                if (!appInfo) {
-                    return 'application-not-found';
-                } else {
-                    return AppDirectory.shouldAppSupportIntent(appInfo, intentType, contextType) ? appInfo : 'does-not-support-intent';
-                }
-            }
-        );
+            });
 
-        if (result === 'application-not-found') {
-            throw new FDC3Error(ApplicationError.NotFound, `No application '${name}' found running or in directory`);
-        } else {
-            return result;
+            this._environment.createApplication(appInfo);
+
+            return deferredPromise.promise;
         }
-    }
-
-    public async getOrCreateLiveAppByAppInfo(appInfo: Application): Promise<LiveApp> {
-        return this.getOrCreateLiveApp<never>(
-            // Either find an app with this [[Application]]
-            (candidateLiveApp, candidateAppInfo) => candidateAppInfo === appInfo,
-            // Or just return it to be started
-            async () => appInfo
-        );
     }
 
     public getChannel(id: ChannelId): ContextChannel|null {
@@ -258,16 +214,16 @@ export class Model {
         // Get all live apps that support the given intent and context
         const liveApps = Object.values(this._liveAppsByUuid);
 
-        const liveAppsForIntent = liveApps.filter((liveApp: LiveApp) => {
+        const liveAppsForIntent = (await serialFilter(liveApps, async (liveApp: LiveApp) => {
             const {appInfo, connections} = liveApp;
 
             const hasIntentListener = connections.some((connection) => connection.hasIntentListener(intentType));
 
             return hasIntentListener && appInfo !== undefined && AppDirectory.mightAppSupportIntent(appInfo, intentType, contextType);
-        }).map((liveApp) => liveApp.appInfo!);
+        })).map((liveApp) => liveApp.appInfo!);
 
         // Get all directory apps that support the given intent and context
-        const directoryApps = (await this._directory.getAllApps()).filter((app) => {
+        const directoryApps = await serialFilter(await this._directory.getAllApps(), async (app) => {
             const uuid = AppDirectory.getUuidFromApp(app);
             const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
 
@@ -308,7 +264,7 @@ export class Model {
         });
 
         // Populate appIntentsBuilder from non-mature directory apps
-        const directoryApps = (await this._directory.getAllApps()).filter((app) => {
+        const directoryApps = await serialFilter(await this._directory.getAllApps(), async (app) => {
             const uuid = AppDirectory.getUuidFromApp(app);
             const liveApp: LiveApp | undefined = this._liveAppsByUuid[uuid];
 
@@ -337,16 +293,20 @@ export class Model {
         return appIntents;
     }
 
-    public async onDirectoryChanged(): Promise<void> {
-        const entries = Object.entries(this._liveAppsByUuid);
+    public findConnectionsByAppName(name: AppName): AppConnection[] {
+        const liveApp = Object.values(this._liveAppsByUuid).find((testLiveApp) => !!testLiveApp.appInfo && testLiveApp.appInfo.name === name);
 
-        await parallelForEach(entries.filter(([, liveApp]) => !liveApp.hasFinalAppInfo()), async ([uuid, liveApp]) => {
-            const appInfo = await this._directory.getAppByUuid(uuid);
+        return liveApp ? liveApp.connections : [];
+    }
 
-            if (appInfo) {
-                liveApp.setAppInfo(appInfo, true);
-            }
-        });
+    public async existsAppForName(name: AppName): Promise<boolean> {
+        const directoryApp = await this._directory.getAppByName(name);
+
+        if (directoryApp) {
+            return true;
+        } else {
+            return !!this._liveAppsByUuid[name];
+        }
     }
 
     private async onApplicationCreated(identity: Identity, liveApp: LiveApp): Promise<void> {
@@ -359,7 +319,7 @@ export class Model {
         const appInfoFromDirectory = await this._directory.getAppByUuid(uuid);
         const appInfo = appInfoFromDirectory || await this._environment.inferApplication(identity);
 
-        liveApp.setAppInfo(appInfo, !!appInfoFromDirectory);
+        liveApp.setAppInfo(appInfo);
     }
 
     private onApplicationClosed(identity: Identity): void {
@@ -397,7 +357,7 @@ export class Model {
                 const appInfo = await this._environment.inferApplication(identity);
 
                 liveApp = new LiveApp(undefined);
-                liveApp.setAppInfo(appInfo, true);
+                liveApp.setAppInfo(appInfo);
                 this._liveAppsByUuid[identity.uuid] = liveApp;
             }
 
@@ -432,65 +392,6 @@ export class Model {
                 }
             }
         }
-    }
-
-    /**
-     * Attempts to find a given [[LiveApp]], or start an application if it cannot be found. Will test that the app
-     * fulfils given criteria, and returns either the [[LiveApp]] of the found or started app, or a value describing
-     * why our criteria was not fulfilled by the app (in which case no new app will be started)
-     *
-     * @param testLiveApp Called by `getOrCreateLiveApp` to test if any of the currently running [[LiveApp]]s are the
-     * one we are looking for. Function should take a [[LiveApp]] and its corresponding [[Application]]. Should return
-     * false if this is not the application we are looking for, true if it is the app we are looking for and it fulfils
-     * our criteria, or in the case this is the app we are looking for but it does not fulfil our criteria, a value of
-     * type T describing the failure
-     *
-     * @param getApplication In the case where the application we are looking for is not already running (i.e.
-     * `testLiveApp` has returned false for all running apps), this will be called to get the [[Application]] that
-     * `getOrCreateLiveApp` should start. This should return an [[Application]] if we have an [[Application]] that
-     * fulfils our desired criteria, or if we don't have such an [[Application]], a value of type T describing the
-     * failure
-     *
-     * @typeparam T Failure type, returned if we're unable to find the given application or it does not fulfil our
-     * criteria. Should be a union of strings
-     */
-    private async getOrCreateLiveApp<T extends string>(
-        testLiveApp: (liveApp: LiveApp, appInfo: Application) => boolean | T,
-        getApplication: () => Promise<Application | T>
-    ): Promise<LiveApp | T> {
-        const deferredPromise = new DeferredPromise<LiveApp | T>();
-        let found = false;
-
-        const attemptResolve = async (liveApp: LiveApp) => {
-            await liveApp.waitForAppInfo().then((appInfo) => {
-                const result = testLiveApp(liveApp, appInfo);
-
-                if (result !== false) {
-                    found = true;
-                    deferredPromise.resolve(result === true ? liveApp : result);
-                }
-            }, () => {});
-        };
-
-        // Look for the desired name in existing apps
-        const searchPromise = parallelForEach(Object.values(this._liveAppsByUuid), (liveApp) => attemptResolve(liveApp));
-
-        // Look for the desired name in apps as they are created
-        const slot = this._environment.onApplicationCreated.add(async (identity, liveApp) => attemptResolve(liveApp));
-        deferredPromise.promise.then(() => slot.remove());
-
-        // If unable to find the app, then try to start it
-        searchPromise.then(async () => {
-            if (!found) {
-                const result = await getApplication();
-
-                if (!found) {
-                    deferredPromise.resolve(typeof result === 'string' ? result : this._environment.createApplication(result));
-                }
-            }
-        });
-
-        return deferredPromise.promise;
     }
 
     /**

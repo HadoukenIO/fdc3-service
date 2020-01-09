@@ -78,7 +78,7 @@ export interface Environment {
      * * FDC3Error if app fails to start
      * * FDC3Error if timeout trying to start app
      */
-    createApplication: (appInfo: Application) => LiveApp;
+    createApplication: (appInfo: Application) => void;
 
     /**
      * Creates an `AppConnection` object for an existing identity, should only be called once per identity.

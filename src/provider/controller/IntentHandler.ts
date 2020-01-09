@@ -3,12 +3,11 @@ import {injectable, inject} from 'inversify';
 import {Inject} from '../common/Injectables';
 import {Intent} from '../intents';
 import {IntentResolution, Application} from '../../client/main';
-import {FDC3Error, ResolveError, SendContextError} from '../../client/types/errors';
+import {FDC3Error, ResolveError, ApplicationError, SendContextError} from '../../client/errors';
 import {Model} from '../model/Model';
 import {APIToClientTopic, ReceiveIntentPayload} from '../../client/internal';
 import {APIHandler} from '../APIHandler';
 import {collateClientCalls, ClientCallsResult} from '../utils/helpers';
-import {LiveApp} from '../model/LiveApp';
 
 import {ResolverResult, ResolverHandlerBinding} from './ResolverHandler';
 
@@ -42,16 +41,23 @@ export class IntentHandler {
     }
 
     private async raiseWithTarget(intent: IntentWithTarget): Promise<IntentResolution> {
-        const liveApp = await this._model.getOrCreateLiveAppByNameForIntent(intent.target, intent.type, intent.context.type);
+        const apps = await this._model.getApplicationsForIntent(intent.type, intent.context.type);
+        const targetApp = apps.find((app) => app.name === intent.target);
 
-        if (liveApp !== 'does-not-support-intent') {
+        if (targetApp !== undefined) {
             // Target intent handles intent with given context, so fire
-            return this.fireIntent(intent, liveApp);
-        } else {
+            return this.fireIntent(intent, targetApp);
+        } else if (await this._model.existsAppForName(intent.target)) {
             // Target exists but does not handle intent with given context
             throw new FDC3Error(
                 ResolveError.AppDoesNotHandleIntent,
                 `Application '${intent.target}' does not handle intent '${intent.type}' with context '${intent.context.type}'`
+            );
+        } else {
+            // Target does not exist
+            throw new FDC3Error(
+                ApplicationError.NotFound,
+                `No application '${intent.target}' found running or in directory`
             );
         }
     }
@@ -68,7 +74,7 @@ export class IntentHandler {
             console.log(`App '${apps[0].name}' found to resolve intent '${intent.type}, firing intent'`);
 
             // Resolve intent immediately
-            return this.fireIntent(intent, await this._model.getOrCreateLiveAppByAppInfo(apps[0]));
+            return this.fireIntent(intent, apps[0]);
         } else {
             console.log(`${apps.length} apps found to resolve intent '${intent.type}', delegating app choice'`);
 
@@ -114,14 +120,12 @@ export class IntentHandler {
 
         // Handle response
         console.log(`App ${selection.app.name} selected to resolve intent '${intent.type}', firing intent`);
-        return this.fireIntent(intent, await this._model.getOrCreateLiveAppByAppInfo(applications.find((app) => selection.app.name === app.name)!));
+        return this.fireIntent(intent, selection.app);
     }
 
-    private async fireIntent(intent: Intent, liveApp: LiveApp): Promise<IntentResolution> {
-        const name = (await liveApp.waitForAppInfo()).name;
-
-        const listeningWindows = await this._model.expectConnectionsForLiveApp(
-            liveApp,
+    private async fireIntent(intent: Intent, appInfo: Application): Promise<IntentResolution> {
+        const listeningWindows = await this._model.expectConnectionsForApp(
+            appInfo,
             (connection) => connection.hasIntentListener(intent.type),
             (connection) => connection.waitForReadyToReceiveIntent(intent.type)
         );
@@ -146,7 +150,7 @@ export class IntentHandler {
         }
 
         const resolution: IntentResolution = {
-            source: name,
+            source: appInfo.name,
             version: '1.0.0',
             data
         };

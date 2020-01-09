@@ -3,7 +3,7 @@ import 'jest';
 import {allowReject} from 'openfin-service-async';
 
 import {Context, OrganizationContext} from '../../src/client/main';
-import {ApplicationError, SendContextError} from '../../src/client/types/errors';
+import {ApplicationError, SendContextError} from '../../src/client/errors';
 import {Timeouts} from '../../src/provider/constants';
 
 import * as fdc3Remote from './utils/fdc3RemoteExecution';

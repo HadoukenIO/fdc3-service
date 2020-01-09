@@ -1,23 +1,16 @@
 import {injectable, inject} from 'inversify';
-import {parallelMap} from 'openfin-service-async';
-import {Signal} from 'openfin-service-signal';
 
 import {Inject} from '../common/Injectables';
-import {Application, AppName, AppDirIntent} from '../../client/types/directory';
+import {Application, AppName, AppDirIntent} from '../../client/directory';
 import {AsyncInit} from '../controller/AsyncInit';
 import {CustomConfigFields} from '../constants';
 import {checkCustomConfigField} from '../utils/helpers';
-import {deduplicate} from '../../client/internal';
 
-import {AppDirectoryStorage, ShardScope} from './AppDirectoryStorage';
+import {ConfigStoreBinding} from './ConfigStore';
 
 enum StorageKeys {
-    DIRECTORY_CACHE = 'fdc3@directoryCache'
-}
-
-interface CacheEntry {
-    url: string;
-    applications: Application[];
+    URL = 'fdc3@url',
+    APPLICATIONS = 'fdc3@applications'
 }
 
 @injectable()
@@ -65,18 +58,14 @@ export class AppDirectory extends AsyncInit {
         return customValue !== undefined ? customValue : app.appId;
     }
 
-    public readonly directoryChanged: Signal<[]> = new Signal();
-
-    private readonly _appDirectoryStorage: AppDirectoryStorage;
-
-    private readonly _fetchedUrls: Set<string> = new Set();
-
+    private readonly _configStore: ConfigStoreBinding;
     private _directory: Application[] = [];
+    private _url!: string;
 
-    public constructor(@inject(Inject.APP_DIRECTORY_STORAGE) appDirectoryStorage: AppDirectoryStorage) {
+    public constructor(@inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding) {
         super();
 
-        this._appDirectoryStorage = appDirectoryStorage;
+        this._configStore = configStore;
     }
 
     public getAppByName(name: AppName): Promise<Application | null> {
@@ -97,63 +86,30 @@ export class AppDirectory extends AsyncInit {
     }
 
     protected async init(): Promise<void> {
-        this._appDirectoryStorage.changed.add(this.onStorageChanged, this);
-        await this._appDirectoryStorage.initialized;
-
-        await this.refreshDirectory();
+        await this._configStore.initialized;
+        await this.initializeDirectoryData();
     }
 
-    private async onStorageChanged(): Promise<void> {
-        await this.refreshDirectory();
+    private async initializeDirectoryData(): Promise<void> {
+        this._url = this._configStore.config.query({level: 'desktop'}).applicationDirectory;
+        const fetchedData = await this.fetchOnlineData(this._url);
+        const cachedData = this.fetchCacheData();
 
-        this.directoryChanged.emit();
+        if (fetchedData) {
+            this.updateCache(this._url, fetchedData);
+        }
+
+        this._directory = fetchedData || cachedData || [];
     }
 
-    private async refreshDirectory(): Promise<void> {
-        const scopedShards = this._appDirectoryStorage.getDirectoryShards();
-
-        const applicationsPerSnippetPerShard = await parallelMap(scopedShards, async (scopedShard) => {
-            return parallelMap(filterUrlsByScope(scopedShard.scope, scopedShard.shard.remoteSnippets), async (remoteSnippet) => {
-                // TODO: URLs will be fetched once per service run. Improve this logic [SERVICE-841]
-                const fetchedSnippet = this._fetchedUrls.has(remoteSnippet) ? null : await this.fetchRemoteSnippet(remoteSnippet);
-                this._fetchedUrls.add(remoteSnippet);
-
-                if (fetchedSnippet) {
-                    this.updateCache(remoteSnippet, fetchedSnippet);
-                    return fetchedSnippet;
-                } else {
-                    return this.fetchCachedSnippet(remoteSnippet) || [];
-                }
-            });
-        });
-
-        const applications: Application[] = [];
-        scopedShards.forEach((scopedShard, i) => {
-            applications.push(...filterAppsByScope(scopedShard.scope, scopedShard.shard.storedApplications));
-
-            for (const remoteSnippet of applicationsPerSnippetPerShard[i]) {
-                applications.push(...filterAppsByScope(scopedShard.scope, remoteSnippet));
-            }
-        });
-
-        this._directory = deduplicate(applications, (a, b) => {
-            if (a.name === b.name || a.appId === b.appId || AppDirectory.getUuidFromApp(a) === AppDirectory.getUuidFromApp(b)) {
-                console.warn(`Not including application '${a.name}' in App Directory. Collides with app '${b.name}'`);
-                return true;
-            } else {
-                return false;
-            }
-        });
-    }
-
-    private async fetchRemoteSnippet(url: string): Promise<Application[] | null> {
+    private async fetchOnlineData(url: string): Promise<Application[]|null> {
         const response = await fetch(url).catch(() => {
-            console.warn(`Failed to fetch app directory snippet from ${url}`);
+            console.warn(`Failed to fetch app directory @ ${url}`);
         });
 
         if (response && response.ok) {
             try {
-                // TODO: Validate JSON we receive is valid against spec [SERVICE-620]
+                // TODO SERVICE-620 validate JSON we receive is valid against spec
                 const validate = await response.json();
                 return validate;
             } catch (error) {
@@ -164,21 +120,18 @@ export class AppDirectory extends AsyncInit {
         return null;
     }
 
-    private fetchCachedSnippet(url: string): Application[] | null {
-        const jsonCache = localStorage.getItem(StorageKeys.DIRECTORY_CACHE);
+    private fetchCacheData(): Application[]|null {
+        if (localStorage.getItem(StorageKeys.URL) === this._url) {
+            const cache = localStorage.getItem(StorageKeys.APPLICATIONS);
 
-        if (jsonCache) {
-            try {
-                const cache: CacheEntry[] = JSON.parse(jsonCache);
-
-                for (const cacheEntry of cache) {
-                    if (cacheEntry.url === url) {
-                        return cacheEntry.applications;
-                    }
+            if (cache) {
+                try {
+                    const validate = JSON.parse(cache);
+                    return validate;
+                } catch (error) {
+                    // Not likely to get here but figured it's better to safely to handle it.
+                    console.warn('Invalid JSON retrieved from cache');
                 }
-            } catch (error) {
-                // Not likely to get here but figured it's better to safely to handle it.
-                console.warn('Invalid JSON retrieved from cache');
             }
         }
 
@@ -191,81 +144,11 @@ export class AppDirectory extends AsyncInit {
      * @param applications Directory Applications.
      */
     private updateCache(url: string, applications: Application[]) {
-        const jsonCache = localStorage.getItem(StorageKeys.DIRECTORY_CACHE);
-
-        if (jsonCache) {
-            try {
-                const cache: CacheEntry[] = JSON.parse(jsonCache);
-
-                for (const cacheEntry of cache) {
-                    if (cacheEntry.url === url) {
-                        cacheEntry.applications = applications;
-
-                        localStorage.setItem(StorageKeys.DIRECTORY_CACHE, JSON.stringify(cache));
-                        return;
-                    }
-                }
-
-                cache.push({url, applications});
-                localStorage.setItem(StorageKeys.DIRECTORY_CACHE, JSON.stringify(cache));
-                return;
-            } catch (error) {
-                // Not likely to get here but figured it's better to safely to handle it.
-                console.warn('Invalid JSON retrieved from cache');
-            }
-        } else {
-            localStorage.setItem(StorageKeys.DIRECTORY_CACHE, JSON.stringify([{url, applications}]));
-        }
+        localStorage.setItem(StorageKeys.URL, url);
+        localStorage.setItem(StorageKeys.APPLICATIONS, JSON.stringify(applications));
     }
 }
 
 function intentSupportsContext(intent: AppDirIntent, contextType: string): boolean {
     return intent.contexts === undefined || intent.contexts.length === 0 || intent.contexts.includes(contextType);
-}
-
-function filterUrlsByScope(scope: ShardScope, urls: string[]): string[] {
-    return urls.filter((url) => {
-        if (isUrlValidForScope(scope, url)) {
-            return true;
-        } else {
-            if (scope.type === 'domain') {
-                console.warn(`Not including remote snippet at '${url}' in App Directory. URL not in domain '${scope.domain}'`);
-            } else {
-                console.warn(`Not including remote snippet at '${url}' in App Directory`);
-            }
-
-            return false;
-        }
-    });
-}
-
-function filterAppsByScope(scope: ShardScope, applications: Application[]): Application[] {
-    return applications.filter((app) => {
-        if (isUrlValidForScope(scope, app.manifest)) {
-            return true;
-        } else {
-            if (scope.type === 'domain') {
-                console.warn(`Not including application '${app.name}' in App Directory. Manifest URL '${app.manifest}' not in domain '${scope.domain}'`);
-            } else {
-                console.warn(`Not including application '${app.name}' in App Directory`);
-            }
-
-            return false;
-        }
-    });
-}
-
-function isUrlValidForScope(scope: ShardScope, url: string): boolean {
-    if (scope.type === 'global') {
-        return true;
-    } else if (scope.type === 'domain') {
-        const testUrl = new URL(url);
-
-        // Match logic in core for determining domain
-        const testDomain = testUrl.protocol === 'file' ? url : testUrl.hostname;
-
-        return testDomain === scope.domain;
-    } else {
-        throw new Error('Unexpected scope type');
-    }
 }

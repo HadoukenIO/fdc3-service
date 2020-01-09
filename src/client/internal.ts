@@ -10,10 +10,10 @@
  */
 import {Identity} from 'openfin/_v2/main';
 
-import {AppName} from './types/directory';
+import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution, Listener} from './main';
-import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel} from './api/contextChannels';
-import {FDC3Error} from './types/errors';
+import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel} from './contextChannels';
+import {FDC3Error} from './errors';
 
 /**
  * The identity of the main application window of the service provider
@@ -327,20 +327,9 @@ export function deserializeError(error: Error): Error | FDC3Error {
     return error;
 }
 
-/**
- * Takes an array and a comparison function, and returns a deduplicated equivalent, taking the first of any duplicate elements.
- *
- * @param array The array to deduplicate
- * @param compare A comparison function. Will be passed pairs of entries from `array`, and should return true if these should be considered equal
- */
-export function deduplicate<T>(array: T[], compare: (a: T, b: T) => boolean): T[] {
-    return array.filter((a, index) => array.findIndex((b) => compare(a, b)) === index);
-}
-
 export function setServiceChannel(channelName: string) {
     serviceChannel = channelName;
 }
-
 export function getServiceChannel(): string {
     return serviceChannel;
 }
@@ -349,7 +338,6 @@ export function setServiceIdentity(uuid: string) {
     serviceIdentity.uuid = uuid;
     serviceIdentity.name = uuid;
 }
-
 export function getServiceIdentity(): Identity {
     return serviceIdentity;
 }

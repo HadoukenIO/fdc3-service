@@ -1,5 +1,5 @@
-import {Context} from '../client/types/context';
-import {Intents} from '../client/types/intents';
+import {Context} from '../client/context';
+import {Intents} from '../client/intents';
 
 /**
  * General-purpose intent type

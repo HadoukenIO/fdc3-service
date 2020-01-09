@@ -3,6 +3,7 @@
     "compilerOptions": {
       "rootDir": "..",
       "outDir": "../dist/test",
+      "esModuleInterop": false,
       "types": ["node", "openfin", "reflect-metadata"],
       "experimentalDecorators": true,
       "emitDecoratorMetadata": true

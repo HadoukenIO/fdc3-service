@@ -3,14 +3,14 @@ import 'reflect-metadata';
 import {Identity} from 'openfin/_v2/main';
 import {DeferredPromise} from 'openfin-service-async';
 
-import {createMockChannel} from '../../mocks';
-import {useMockTime, unmockTime, advanceTime, resolvePromiseChain} from '../../utils/unit/time';
-import {Application} from '../../../src/client/main';
-import {Timeouts} from '../../../src/provider/constants';
-import {AppConnectionBase} from '../../../src/provider/model/AppConnection';
-import {ContextChannel} from '../../../src/provider/model/ContextChannel';
-import {EntityType} from '../../../src/provider/model/Environment';
-import {SemVer} from '../../../src/provider/utils/SemVer';
+import {createMockChannel} from '../mocks';
+import {useMockTime, unmockTime, advanceTime, resolvePromiseChain} from '../utils/unit/time';
+import {Application} from '../../src/client/main';
+import {Timeouts} from '../../src/provider/constants';
+import {AppConnectionBase} from '../../src/provider/model/AppConnection';
+import {ContextChannel} from '../../src/provider/model/ContextChannel';
+import {EntityType} from '../../src/provider/model/Environment';
+import {SemVer} from '../../src/provider/utils/SemVer';
 
 class TestAppWindow extends AppConnectionBase {
     public bringToFront: jest.Mock<Promise<void>, []> = jest.fn<Promise<void>, []>();

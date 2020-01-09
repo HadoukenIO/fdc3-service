@@ -96,25 +96,27 @@ export class ContextHandler {
             .map((connection) => this.sendOnChannelForBroadcast(connection, context, channel)));
 
         // We intentionally don't await this, as we have no expectation that entities will add a context listener
-        for (const liveApp of this._model.liveApps.filter((testApp: LiveApp) => testApp.started)) {
-            this._model.expectConnectionsForLiveApp(
-                liveApp,
-                (connection: AppConnection) => connection.hasContextListener(),
-                async (connection: AppConnection) => connection.waitForReadyToReceiveContext()
-            ).then((connections) => {
-                connections
-                    .filter((connection) => notSender(connection) && !members.includes(connection) && connection.channel.id === channel.id)
-                    .forEach((connection) => this.sendForBroadcast(connection, context));
-            });
+        for (const app of this._model.apps.filter((testApp: LiveApp) => testApp.started)) {
+            app.waitForAppInfo().then((appInfo) => {
+                this._model.expectConnectionsForApp(
+                    appInfo,
+                    (connection: AppConnection) => connection.hasContextListener(),
+                    async (connection: AppConnection) => connection.waitForReadyToReceiveContext()
+                ).then((connections) => {
+                    connections
+                        .filter((connection) => notSender(connection) && !members.includes(connection) && connection.channel.id === channel.id)
+                        .forEach((connection) => this.sendForBroadcast(connection, context));
+                });
 
-            this._model.expectConnectionsForLiveApp(
-                liveApp,
-                (connection: AppConnection) => connection.hasChannelContextListener(channel),
-                async (connection: AppConnection) => connection.waitForReadyToReceiveContextOnChannel(channel)
-            ).then((connections) => {
-                connections
-                    .filter((connection) => notSender(connection) && !listeners.includes(connection))
-                    .forEach((connection) => this.sendOnChannelForBroadcast(connection, context, channel));
+                this._model.expectConnectionsForApp(
+                    appInfo,
+                    (connection: AppConnection) => connection.hasChannelContextListener(channel),
+                    async (connection: AppConnection) => connection.waitForReadyToReceiveContextOnChannel(channel)
+                ).then((connections) => {
+                    connections
+                        .filter((connection) => notSender(connection) && !listeners.includes(connection))
+                        .forEach((connection) => this.sendOnChannelForBroadcast(connection, context, channel));
+                });
             });
         }
 

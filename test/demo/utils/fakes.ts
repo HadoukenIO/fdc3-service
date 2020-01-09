@@ -1,15 +1,11 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {Application, AppDirIntent} from '../../../src/client/types/directory';
+import {Application, AppDirIntent} from '../../../src/client/directory';
 import {ChannelId, Context} from '../../../src/client/main';
 
 import {ChannelDescriptor} from './channels';
 
 let fakeCount = 0;
-
-export function createFakeUrl(): string {
-    return `http://fake-domain-${idString()}.com/path-${idString()}`;
-}
 
 export function createFakeIdentity(options: Partial<Identity> = {}): Identity {
     return {
@@ -23,7 +19,7 @@ export function createFakeApp(options: Partial<Application> = {}): Application {
     return {
         appId: `app-id-${idString()}`,
         name: `app-name-${idString()}`,
-        manifestType: 'openfin',
+        manifestType: '',
         manifest: '',
         intents: [],
         ...options
@@ -62,5 +58,5 @@ export function fakeAppChannelName(): ChannelId {
 }
 
 function idString(): string {
-    return `${(fakeCount++).toString(16).toUpperCase()}`;
+    return `[${(fakeCount++).toString(16).toUpperCase()}]`;
 }

@@ -3,51 +3,41 @@
  */
 
 /**
- * Helpers for validating objects passed across IAB channels.
+ * Helpers for validating objects passed across IAB channels
  */
 import {Identity} from 'openfin/_v2/main';
 
-import {Context} from './types/context';
-import {ChannelId} from './api/contextChannels';
-import {Application} from './types/directory';
+import {Context} from './context';
+import {ChannelId} from './contextChannels';
 
 /**
- * Validates and returns the provided app channel name.
+ * Validates the provided Identity and returns an Identity stripped of any extraneous properties
  */
-export function sanitizeAppChannelName(name: string): ChannelId {
-    try {
-        return sanitizeNonEmptyString(name);
-    } catch (e) {
-        throw new TypeError(`${safeStringify(name, 'The provided value')} is not a valid app channel name`);
+export function parseIdentity(identity: Identity): Identity {
+    let error = false;
+
+    if (identity === null || typeof identity !== 'object') {
+        error = true;
+    } else {
+        const uuidCheck = typeof identity.uuid === 'string';
+        const nameCheck = !identity.name || typeof identity.name === 'string';
+
+        if (!uuidCheck || !nameCheck) {
+            error = true;
+        }
     }
+
+    if (error) {
+        throw new TypeError(`${safeStringify(identity, 'The provided Identity')} is not a valid Identity`);
+    }
+
+    return {uuid: identity.uuid, name: identity.name || identity.uuid};
 }
 
 /**
- * Validates and returns the provided Application.
+ * Validates the provided Context. No properties are stripped, as these are permitted by the FDC3 specification
  */
-export function sanitizeApplication(application: Application): Application {
-    if (application === null || typeof application !== 'object') {
-        throw new TypeError(`${safeStringify(application, 'The provided value')} is not a valid Application`);
-    }
-
-    return application;
-}
-
-/**
- * Validates and returns the provided ChannelId.
- */
-export function sanitizeChannelId(channelId: ChannelId): ChannelId {
-    if (typeof channelId !== 'string') {
-        throw new TypeError(`${safeStringify(channelId, 'The provided value')} is not a valid ChannelId`);
-    }
-
-    return channelId;
-}
-
-/**
- * Validates and returns the provided Context. No properties are stripped, as these are permitted by the FDC3 specification.
- */
-export function sanitizeContext(context: Context): Context {
+export function parseContext(context: Context): Context {
     let error = false;
 
     if (context === null || typeof context !== 'object') {
@@ -63,10 +53,32 @@ export function sanitizeContext(context: Context): Context {
     }
 
     if (error) {
-        throw new TypeError(`${safeStringify(context, 'The provided value')} is not a valid Context`);
+        throw new TypeError(`${safeStringify(context, 'The provided Context')} is not a valid Context`);
     }
 
     return context;
+}
+
+/**
+ * Validates the provided ChannelId
+ */
+export function parseChannelId(channelId: ChannelId): ChannelId {
+    if (typeof channelId !== 'string') {
+        throw new TypeError(`${safeStringify(channelId, 'The provided ChannelId')} is not a valid ChannelId`);
+    }
+
+    return channelId;
+}
+
+/**
+ * Validates the provided app channel name
+ */
+export function parseAppChannelName(name: string): ChannelId {
+    if (typeof name !== 'string' || name === '') {
+        throw new TypeError(`${safeStringify(name, 'The provided app channel name')} is not a valid app channel name`);
+    }
+
+    return name;
 }
 
 /**
@@ -78,64 +90,7 @@ export function validateEnvironment(): void {
     }
 }
 
-/**
- * Validates and returns the provided function
- */
-export function sanitizeFunction<T, U extends any[]>(value: (...args: U) => T): (...args: U) => T {
-    if (typeof value !== 'function') {
-        throw new TypeError(`${safeStringify(value, 'The provided value')} is not a valid function`);
-    }
-
-    return value;
-}
-
-/**
- * Validates the provided Identity and returns an Identity stripped of any extraneous properties.
- */
-export function sanitizeIdentity(identity: Identity): Identity {
-    let error = false;
-
-    if (identity === null || typeof identity !== 'object') {
-        error = true;
-    } else {
-        const uuidCheck = typeof identity.uuid === 'string';
-        const nameCheck = !identity.name || typeof identity.name === 'string';
-
-        if (!uuidCheck || !nameCheck) {
-            error = true;
-        }
-    }
-
-    if (error) {
-        throw new TypeError(`${safeStringify(identity, 'The provided value')} is not a valid Identity`);
-    }
-
-    return {uuid: identity.uuid, name: identity.name || identity.uuid};
-}
-
-/**
- * Validates and returns the provided string. Will throw if the string is empty
- */
-export function sanitizeNonEmptyString(value: string): ChannelId {
-    if (typeof value !== 'string' || value === '') {
-        throw new TypeError(`${safeStringify(value, 'The provided value')} is not a non-empty string`);
-    }
-
-    return value;
-}
-
-/**
- * Validates and returns the provided number. Will throw if the number is not a positive integer.
- */
-export function sanitizePositiveInteger(value: number): number {
-    if (typeof value !== 'number' || isNaN(value) || Math.floor(value) !== value || value < 1) {
-        throw new TypeError(`${safeStringify(value, 'The provided value')} is not a valid positive integer`);
-    }
-
-    return value;
-}
-
-export function safeStringify(value: {}, fallback: string): string {
+function safeStringify(value: {}, fallback: string): string {
     // Provided object may not be stringify-able (e.g., due to circular references), so we need to try-catch
     let result: string;
     try {
