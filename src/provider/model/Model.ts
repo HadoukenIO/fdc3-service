@@ -327,6 +327,8 @@ export class Model {
         const app = this._liveAppsByUuid[uuid];
 
         if (app) {
+            app.connections.forEach((connection) => this.removeConnection(connection.identity));
+
             app.setClosed();
             delete this._liveAppsByUuid[uuid];
         }
