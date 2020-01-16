@@ -17,7 +17,7 @@ import {DeferredPromise} from 'openfin-service-async';
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 import {RuntimeInfo} from 'openfin/_v2/api/system/runtime-info';
 
-import {APIFromClientTopic, getServiceChannel, setServiceChannel, getServiceIdentity, setServiceIdentity, APIFromClient, deserializeError, Events, OpenFinChannelConnectionEvent} from './internal';
+import {APIFromClientTopic, getServiceChannel, setServiceChannel, getServiceIdentity, setServiceIdentity, APIFromClient, deserializeError, Events, onReconnect} from './internal';
 import {EventRouter} from './EventRouter';
 
 /**
@@ -47,6 +47,7 @@ export function getEventRouter(): EventRouter<Events> {
 let channelPromise: Promise<ChannelClient> | null = null;
 const hasDOMContentLoaded = new DeferredPromise<void>();
 let hasDisconnectListener = false;
+let reconnect = false;
 
 if (typeof fin !== 'undefined') {
     if (getServiceIdentity().name !== fin.Window.me.name && getServiceIdentity().uuid !== fin.Window.me.uuid) {
@@ -89,10 +90,14 @@ export async function getServicePromise(): Promise<ChannelClient> {
                     channel.setDefaultAction(() => false);
                     if (!hasDisconnectListener) {
                         channel.onDisconnection(() => {
+                            reconnect = true;
                             channelPromise = null;
                             setTimeout(getServicePromise, 300);
                         });
                         hasDisconnectListener = true;
+                    }
+                    if (reconnect) {
+                        onReconnect.emit();
                     }
                     resolve(channel);
                 }

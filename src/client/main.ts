@@ -8,7 +8,7 @@
 import {tryServiceDispatch, getServicePromise, getEventRouter, eventEmitter} from './connection';
 import {Context} from './context';
 import {Application, AppName} from './directory';
-import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners, registerOnChannelConnect, getServiceIdentity} from './internal';
+import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners, getServiceIdentity, onReconnect} from './internal';
 import {ChannelChangedEvent, ChannelContextListener} from './contextChannels';
 import {parseContext, validateEnvironment} from './validation';
 import {Transport, Targeted} from './EventRouter';
@@ -420,8 +420,12 @@ if (typeof fin !== 'undefined') {
     if (getServiceIdentity().name !== fin.Window.me.name && getServiceIdentity().uuid !== fin.Window.me.uuid) {
         const eventHandler = getEventRouter();
         eventHandler.registerEmitterProvider('main', () => eventEmitter);
-        initialize().then(() => {
-            registerOnChannelConnect(initialize);
+        onReconnect.add(async () => {
+            await initialize();
+            await rehydrate();
+        });
+        setImmediate(() => {
+            initialize();
         });
     }
 }
@@ -459,8 +463,6 @@ async function initialize(): Promise<void> {
     } catch (e) {
         // Trying to subscribe the same topic
     }
-
-    await rehydrate();
 }
 
 async function rehydrate(): Promise<void> {

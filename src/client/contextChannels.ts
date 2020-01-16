@@ -24,7 +24,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {parseIdentity, parseContext, validateEnvironment, parseChannelId, parseAppChannelName} from './validation';
 import {tryServiceDispatch, getEventRouter, getServicePromise} from './connection';
-import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport, invokeListeners, registerOnChannelConnect, getServiceIdentity} from './internal';
+import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport, invokeListeners, getServiceIdentity, onReconnect} from './internal';
 import {Context} from './context';
 import {ContextListener} from './main';
 import {Transport} from './EventRouter';
@@ -565,7 +565,7 @@ function deserializeWindowRemovedEvent(eventTransport: Transport<ChannelWindowRe
 }
 
 // Keep track of the channel the client is in so it can be rejoined on disconnect
-let currentChannel: DefaultChannel | SystemChannel | AppChannel | null = null;
+let currentChannel: Channel | null = null;
 
 function deserializeChannelChangedEvent(eventTransport: Transport<ChannelChangedEvent>): ChannelChangedEvent {
     const type = eventTransport.type;
@@ -590,10 +590,11 @@ if (typeof fin !== 'undefined') {
         eventHandler.registerDeserializer('channel-changed', deserializeChannelChangedEvent);
         eventHandler.registerDeserializer('window-added', deserializeWindowAddedEvent);
         eventHandler.registerDeserializer('window-removed', deserializeWindowRemovedEvent);
-
-        initialize().then(() => {
-            registerOnChannelConnect(initialize);
+        onReconnect.add(async () => {
+            await initialize();
+            await rehydrate();
         });
+        initialize();
     }
 }
 
@@ -611,20 +612,14 @@ function initialize(): Promise<void> {
         } catch (e) {
             // Trying to resubscribe to the same channel
         }
-
-        await rehydrate();
     }, (reason) => {
         console.warn('Unable to register client channel context handlers. getServicePromise() rejected with reason:', reason);
     });
 }
 
 async function rehydrate(): Promise<void> {
-    let channelToJoin: DefaultChannel | SystemChannel | AppChannel | null = currentChannel;
+    let channelToJoin: Channel = currentChannel || defaultChannel;
     // Check if the client reloaded and was already in a channel
-    if (!channelToJoin) {
-        const previousChannel = await getCurrentChannel();
-        channelToJoin = previousChannel ? previousChannel : defaultChannel;
-    }
     if (channelToJoin.type === 'app') {
         channelToJoin = await getOrCreateAppChannel(channelToJoin.name);
     }
