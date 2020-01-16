@@ -348,7 +348,6 @@ export function addContextListener(handler: (context: Context) => void): Context
     const listener: ContextListener = {
         handler,
         unsubscribe: () => {
-            console.log('Unsubscribed', handler);
             const index: number = contextListeners.indexOf(listener);
 
             if (index >= 0) {

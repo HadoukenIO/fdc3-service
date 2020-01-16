@@ -573,7 +573,6 @@ function deserializeChannelChangedEvent(eventTransport: Transport<ChannelChanged
     const channel = eventTransport.channel ? getChannelObject(eventTransport.channel) : null;
     const previousChannel = eventTransport.previousChannel ? getChannelObject(eventTransport.previousChannel) : null;
 
-    console.log(eventTransport);
     if (fin.Window.me.name === identity.name && fin.Window.me.uuid === identity.uuid) {
         currentChannel = channel;
     }
@@ -622,7 +621,6 @@ function initialize(): Promise<void> {
 async function rehydrate(): Promise<void> {
     let channelToJoin: DefaultChannel | SystemChannel | AppChannel | null = currentChannel;
     // Check if the client reloaded and was already in a channel
-    console.log('Current channel', currentChannel);
     if (!channelToJoin) {
         const previousChannel = await getCurrentChannel();
         channelToJoin = previousChannel ? previousChannel : defaultChannel;
@@ -633,5 +631,4 @@ async function rehydrate(): Promise<void> {
     await channelToJoin.join();
     await Promise.all(channelContextListeners.map(({channel}) => tryServiceDispatch(APIFromClientTopic.CHANNEL_ADD_CONTEXT_LISTENER, {id: channel.id})));
     currentChannel = channelToJoin;
-    console.log('Rehydrate', currentChannel);
 }
