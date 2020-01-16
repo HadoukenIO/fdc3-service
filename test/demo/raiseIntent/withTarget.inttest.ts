@@ -179,7 +179,7 @@ listener to be added', async () => {
 describe('When reloading the provider', () => {
     setupOpenDirectoryAppBookends(testAppWithPreregisteredListeners1);
 
-    test('Apps with a preregistered intent listener recieve intents', async () => {
+    test('Apps with a preregistered intent listener receive intents', async () => {
         await reloadProvider();
 
         await raiseIntent(preregisteredIntent, testAppWithPreregisteredListeners1);
@@ -187,7 +187,7 @@ describe('When reloading the provider', () => {
         await expect(listener).toHaveReceivedContexts([preregisteredIntent.context]);
     });
 
-    test('Apps that registered an intent listener recieve intents', async () => {
+    test('Apps that registered an intent listener receive intents', async () => {
         const listener = await fdc3Remote.addIntentListener(testAppWithPreregisteredListeners1, validIntent.type);
         await reloadProvider();
 

@@ -70,7 +70,7 @@ export class OFPuppeteerBrowser<WindowContext extends BaseWindowContext = BaseWi
         return this._browser;
     }
 
-    public async getPage(identity: Identity): Promise<Page|undefined> {
+    private async getPage(identity: Identity): Promise<Page|undefined> {
         await this._ready;
         const idString = getIdString(identity);
 
