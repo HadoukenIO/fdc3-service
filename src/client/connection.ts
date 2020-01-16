@@ -48,9 +48,6 @@ let channelPromise: Promise<ChannelClient> | null = null;
 const hasDOMContentLoaded = new DeferredPromise<void>();
 
 if (typeof fin !== 'undefined') {
-    document.addEventListener('DOMContentLoaded', () => {
-        hasDOMContentLoaded.resolve();
-    });
     if (getServiceIdentity().name !== fin.Window.me.name && getServiceIdentity().uuid !== fin.Window.me.uuid) {
         getServicePromise();
 
@@ -61,6 +58,10 @@ if (typeof fin !== 'undefined') {
             }
         });
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        hasDOMContentLoaded.resolve();
+    });
 }
 
 export async function getServicePromise(): Promise<ChannelClient> {
