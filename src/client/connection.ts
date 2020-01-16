@@ -68,31 +68,32 @@ export async function getServicePromise(): Promise<ChannelClient> {
     if (!channelPromise) {
         if (typeof fin === 'undefined') {
             channelPromise = Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.'));
-        }
-        channelPromise = new Promise<ChannelClient>((resolve, reject) => {
-            // TODO: just use RuntimeInfo once its type is updated from js v2 API
-            fin.System.getRuntimeInfo().then((info: RuntimeInfo & {fdc3AppUuid?: string; fdc3ChannelName?: string}) => {
-                if (info.fdc3AppUuid && info.fdc3ChannelName) {
-                    setServiceIdentity(info.fdc3AppUuid);
-                    setServiceChannel(info.fdc3ChannelName);
-                }
-                if (fin.Window.me.uuid === getServiceIdentity().uuid && fin.Window.me.name === getServiceIdentity().name) {
-                    reject(new Error('Trying to connect to provider from provider'));
-                } else {
-                    fin.InterApplicationBus.Channel.connect(getServiceChannel(), {
-                        wait: true,
-                        payload: {version: PACKAGE_VERSION}
-                    }).then((channel: ChannelClient) => {
-                        // Register service listeners
-                        channel.register('WARN', (payload: unknown) => console.warn(payload));  // tslint:disable-line:no-any
-                        // Any unregistered action will simply return false
-                        channel.setDefaultAction(() => false);
+        } else {
+            channelPromise = new Promise<ChannelClient>((resolve, reject) => {
+                // TODO: just use RuntimeInfo once its type is updated from js v2 API
+                fin.System.getRuntimeInfo().then((info: RuntimeInfo & {fdc3AppUuid?: string; fdc3ChannelName?: string}) => {
+                    if (info.fdc3AppUuid && info.fdc3ChannelName) {
+                        setServiceIdentity(info.fdc3AppUuid);
+                        setServiceChannel(info.fdc3ChannelName);
+                    }
+                    if (fin.Window.me.uuid === getServiceIdentity().uuid && fin.Window.me.name === getServiceIdentity().name) {
+                        reject(new Error('Trying to connect to provider from provider'));
+                    } else {
+                        fin.InterApplicationBus.Channel.connect(getServiceChannel(), {
+                            wait: true,
+                            payload: {version: PACKAGE_VERSION}
+                        }).then((channel: ChannelClient) => {
+                            // Register service listeners
+                            channel.register('WARN', (payload: unknown) => console.warn(payload));  // tslint:disable-line:no-any
+                            // Any unregistered action will simply return false
+                            channel.setDefaultAction(() => false);
 
-                        resolve(channel);
-                    });
-                }
+                            resolve(channel);
+                        });
+                    }
+                });
             });
-        });
+        }
     }
 
     return channelPromise;
