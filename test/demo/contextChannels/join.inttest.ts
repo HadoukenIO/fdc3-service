@@ -7,7 +7,6 @@ import {RemoteChannel, RemoteChannelEventListener} from '../utils/RemoteChannel'
 import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, quitApps, startNonDirectoryApp, startDirectoryApp, reloadProvider} from '../utils/common';
 import {fakeAppChannelName, createFakeContext} from '../utils/fakes';
 import {TestWindowContext} from '../utils/ofPuppeteer';
-import {delay} from '../utils/delay';
 
 /*
  * Tests simple behaviour of Channel.getMembers() and the channel-changed and Channel events, before testing how they and getCurrentChannel()
@@ -572,16 +571,11 @@ describe('When the provider is reloaded', () => {
         const greenChannel = await fdc3Remote.getChannelById(testAppNotInDirectory1, 'green');
         await greenChannel.join();
 
-        await reloadProvider();
-        await expect(fdc3Remote.getCurrentChannel(testAppNotInDirectory1)).resolves.toHaveProperty('channel', greenChannel.channel);
-        await expect(greenChannel.getMembers()).resolves.toEqual([{uuid: testAppNotInDirectory1.uuid, name: testAppNotInDirectory1.name}]);
-        await reloadProvider();
-        await expect(fdc3Remote.getCurrentChannel(testAppNotInDirectory1)).resolves.toHaveProperty('channel', greenChannel.channel);
-        await expect(greenChannel.getMembers()).resolves.toEqual([{uuid: testAppNotInDirectory1.uuid, name: testAppNotInDirectory1.name}]);
-        await reloadProvider();
-        await expect(fdc3Remote.getCurrentChannel(testAppNotInDirectory1)).resolves.toHaveProperty('channel', greenChannel.channel);
-        await expect(greenChannel.getMembers()).resolves.toEqual([{uuid: testAppNotInDirectory1.uuid, name: testAppNotInDirectory1.name}]);
+        for (let i = 0; i < 4; i++) {
+            await reloadProvider();
+        }
 
-        await delay(1000);
+        await expect(fdc3Remote.getCurrentChannel(testAppNotInDirectory1)).resolves.toHaveProperty('channel', greenChannel.channel);
+        await expect(greenChannel.getMembers()).resolves.toEqual([{uuid: testAppNotInDirectory1.uuid, name: testAppNotInDirectory1.name}]);
     });
 });
