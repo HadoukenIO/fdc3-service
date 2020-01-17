@@ -150,7 +150,7 @@ const contextListeners: ContextListener[] = [];
  *
  * If opening errors, it returns an [[FDC3Error]] with a string from the [[ApplicationError]] export enumeration.
  *
- *  ```javascript
+ * ```javascript
  *     // No context
  *     agent.open('myApp');
  *     // With context
@@ -228,7 +228,7 @@ export async function findIntent(intent: string, context?: Context): Promise<App
  * ```
  *
  * We could now use this by taking one of the intents, and raising it.
- *```javascript
+ * ```javascript
  * // Select a particular intent to raise
  * const selectedIntent = appIntents[1];
  *
@@ -294,7 +294,7 @@ export async function broadcast(context: Context): Promise<void> {
  * @throws [[FDC3Error]] with an [[ApplicationError]] code.
  * @throws [[FDC3Error]] with a [[SendContextError]] code.
  * @throws `TypeError` if `context` is not a valid [[Context]].
- **/
+ */
 export async function raiseIntent(intent: string, context: Context, target?: AppName): Promise<IntentResolution> {
     return tryServiceDispatch(APIFromClientTopic.RAISE_INTENT, {intent, context: parseContext(context), target});
 }
