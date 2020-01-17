@@ -571,6 +571,8 @@ describe('When the provider is reloaded', () => {
         const greenChannel = await fdc3Remote.getChannelById(testAppNotInDirectory1, 'green');
         await greenChannel.join();
 
+        // Reload multiple times to confirm that the client reconnected and joins the correct channel
+        // If this fails the test app will be in the default channel and not green.
         for (let i = 0; i < 4; i++) {
             await reloadProvider();
         }
