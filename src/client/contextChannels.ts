@@ -24,7 +24,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {parseIdentity, parseContext, validateEnvironment, parseChannelId, parseAppChannelName} from './validation';
 import {tryServiceDispatch, getEventRouter, getServicePromise} from './connection';
-import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport, invokeListeners, getServiceIdentity, onReconnect} from './internal';
+import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport, invokeListeners, onReconnect} from './internal';
 import {Context} from './context';
 import {ContextListener} from './main';
 import {Transport} from './EventRouter';
@@ -581,21 +581,19 @@ function deserializeChannelChangedEvent(eventTransport: Transport<ChannelChanged
 }
 
 if (typeof fin !== 'undefined') {
-    if (getServiceIdentity().name !== fin.Window.me.name && getServiceIdentity().uuid !== fin.Window.me.uuid) {
-        const eventHandler = getEventRouter();
-        eventHandler.registerEmitterProvider('channel', (channelId: ChannelId) => {
-            return channelEventEmitters[channelId];
-        });
+    const eventHandler = getEventRouter();
+    eventHandler.registerEmitterProvider('channel', (channelId: ChannelId) => {
+        return channelEventEmitters[channelId];
+    });
 
-        eventHandler.registerDeserializer('channel-changed', deserializeChannelChangedEvent);
-        eventHandler.registerDeserializer('window-added', deserializeWindowAddedEvent);
-        eventHandler.registerDeserializer('window-removed', deserializeWindowRemovedEvent);
-        onReconnect.add(async () => {
-            await initialize();
-            await rehydrate();
-        });
-        initialize();
-    }
+    eventHandler.registerDeserializer('channel-changed', deserializeChannelChangedEvent);
+    eventHandler.registerDeserializer('window-added', deserializeWindowAddedEvent);
+    eventHandler.registerDeserializer('window-removed', deserializeWindowRemovedEvent);
+    onReconnect.add(async () => {
+        await initialize();
+        await rehydrate();
+    });
+    initialize();
 }
 
 function initialize(): Promise<void> {

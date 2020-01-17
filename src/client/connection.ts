@@ -50,10 +50,7 @@ let hasDisconnectListener = false;
 let reconnect = false;
 
 if (typeof fin !== 'undefined') {
-    if (getServiceIdentity().name !== fin.Window.me.name && getServiceIdentity().uuid !== fin.Window.me.uuid) {
-        console.log('Start');
-        getServicePromise();
-    }
+    getServicePromise();
 
     document.addEventListener('DOMContentLoaded', () => {
         hasDOMContentLoaded.resolve();
@@ -63,7 +60,6 @@ if (typeof fin !== 'undefined') {
 export async function getServicePromise(): Promise<ChannelClient> {
     await hasDOMContentLoaded.promise;
     if (!channelPromise) {
-        console.log('No channel available');
         if (typeof fin === 'undefined') {
             channelPromise = Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.'));
         } else {
