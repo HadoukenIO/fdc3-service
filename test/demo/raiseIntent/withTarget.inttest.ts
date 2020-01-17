@@ -175,7 +175,7 @@ listener to be added', async () => {
             setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
             setupCommonRunningAppTests(testAppNotInDirectory1);
 
-            // This test is in response to a bug where an app would be wrong de-registered if any child window de-registered
+            // This test is in response to a bug where an app would be wrongly de-registered if any child window de-registered
             describe('When the target has opened and closed a child window', () => {
                 beforeEach(async () => {
                     listener = await fdc3Remote.addIntentListener(testAppNotInDirectory1, validIntent.type);
