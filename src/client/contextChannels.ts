@@ -617,7 +617,6 @@ function initialize(): Promise<void> {
 
 async function rehydrate(): Promise<void> {
     let channelToJoin: Channel = currentChannel || defaultChannel;
-    // Check if the client reloaded and was already in a channel
     if (channelToJoin.type === 'app') {
         channelToJoin = await getOrCreateAppChannel(channelToJoin.name);
     }
