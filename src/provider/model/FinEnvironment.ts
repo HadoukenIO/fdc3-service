@@ -180,7 +180,6 @@ export class FinEnvironment extends AsyncInit implements Environment {
 
             await Injector.initialized;
             this.deregisterEntity(identity);
-            this.deregisterApplication({uuid: event.uuid});
         };
 
         fin.System.addListener('application-started', async (event: ApplicationEvent<'system', 'application-started'>) => {

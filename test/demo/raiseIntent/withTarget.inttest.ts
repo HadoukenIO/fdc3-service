@@ -170,8 +170,30 @@ listener to be added', async () => {
         });
 
         describe('When the target (which is an ad-hoc app) is running', () => {
+            let listener: fdc3Remote.RemoteIntentListener;
+
             setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
             setupCommonRunningAppTests(testAppNotInDirectory1);
+
+            // This test is in response to a bug where an app would be wrongly de-registered if any child window de-registered
+            describe('When the target has opened and closed a child window', () => {
+                beforeEach(async () => {
+                    listener = await fdc3Remote.addIntentListener(testAppNotInDirectory1, validIntent.type);
+                    const childIdentity = await fdc3Remote.createFinWindow(testAppNotInDirectory1, {name: 'child-window'});
+
+                    await fin.Window.wrapSync(childIdentity).close();
+                });
+
+                afterEach(async () => {
+                    await listener.unsubscribe();
+                });
+
+                test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
+                    await raiseIntent(validIntent, testAppNotInDirectory1);
+
+                    await expect(listener).toHaveReceivedContexts([validIntent.context]);
+                });
+            });
         });
     });
 });
