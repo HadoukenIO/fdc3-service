@@ -83,11 +83,11 @@ export async function getServicePromise(): Promise<ChannelClient> {
                         wait: true,
                         payload: {version: PACKAGE_VERSION}
                     });
-                    console.log('Connected');
                     // Register service listeners
                     channel.register('WARN', (payload: unknown) => console.warn(payload));  // tslint:disable-line:no-any
                     // Any unregistered action will simply return false
                     channel.setDefaultAction(() => false);
+
                     if (!hasDisconnectListener) {
                         channel.onDisconnection(() => {
                             reconnect = true;
@@ -96,9 +96,11 @@ export async function getServicePromise(): Promise<ChannelClient> {
                         });
                         hasDisconnectListener = true;
                     }
+
                     if (reconnect) {
                         onReconnect.emit();
                     }
+
                     resolve(channel);
                 }
             });
