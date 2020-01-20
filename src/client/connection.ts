@@ -13,10 +13,11 @@
  */
 import {EventEmitter} from 'events';
 
+import {DeferredPromise} from 'openfin-service-async';
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 import {RuntimeInfo} from 'openfin/_v2/api/system/runtime-info';
 
-import {APIFromClientTopic, getServiceChannel, setServiceChannel, getServiceIdentity, setServiceIdentity, APIFromClient, deserializeError, Events} from './internal';
+import {APIFromClientTopic, getServiceChannel, setServiceChannel, getServiceIdentity, setServiceIdentity, APIFromClient, deserializeError, Events, onReconnect} from './internal';
 import {EventRouter} from './EventRouter';
 
 /**
@@ -43,38 +44,61 @@ export function getEventRouter(): EventRouter<Events> {
 /**
  * Promise to the channel object that allows us to connect to the client
  */
-let channelPromise: Promise<ChannelClient>|null = null;
+let channelPromise: Promise<ChannelClient> | null = null;
+const hasDOMContentLoaded = new DeferredPromise<void>();
+let hasDisconnectListener = false;
+let reconnect = false;
 
 if (typeof fin !== 'undefined') {
     getServicePromise();
+
+    document.addEventListener('DOMContentLoaded', () => {
+        hasDOMContentLoaded.resolve();
+    });
 }
 
-export function getServicePromise(): Promise<ChannelClient> {
+export async function getServicePromise(): Promise<ChannelClient> {
+    await hasDOMContentLoaded.promise;
     if (!channelPromise) {
         if (typeof fin === 'undefined') {
             channelPromise = Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.'));
         } else {
-            channelPromise = new Promise<ChannelClient>((resolve, reject) => {
+            channelPromise = new Promise<ChannelClient>(async (resolve, reject) => {
                 // TODO: just use RuntimeInfo once its type is updated from js v2 API
-                fin.System.getRuntimeInfo().then((info: RuntimeInfo & {fdc3AppUuid?: string; fdc3ChannelName?: string}) => {
-                    if (info.fdc3AppUuid && info.fdc3ChannelName) {
-                        setServiceIdentity(info.fdc3AppUuid);
-                        setServiceChannel(info.fdc3ChannelName);
-                    }
-                    if (fin.Window.me.uuid === getServiceIdentity().uuid && fin.Window.me.name === getServiceIdentity().name) {
-                        reject(new Error('Trying to connect to provider from provider'));
-                    } else {
-                        fin.InterApplicationBus.Channel.connect(getServiceChannel(), {payload: {version: PACKAGE_VERSION}}).then((channel: ChannelClient) => {
-                            // Register service listeners
-                            channel.register('WARN', (payload: unknown) => console.warn(payload));  // tslint:disable-line:no-any
+                const info: RuntimeInfo & {fdc3AppUuid?: string; fdc3ChannelName?: string} = await fin.System.getRuntimeInfo();
 
-                            // Any unregistered action will simply return false
-                            channel.setDefaultAction(() => false);
+                if (info.fdc3AppUuid && info.fdc3ChannelName) {
+                    setServiceIdentity(info.fdc3AppUuid);
+                    setServiceChannel(info.fdc3ChannelName);
+                }
 
-                            resolve(channel);
+                if (fin.Window.me.uuid === getServiceIdentity().uuid && fin.Window.me.name === getServiceIdentity().name) {
+                    reject(new Error('Trying to connect to provider from provider'));
+                } else {
+                    const channel = await fin.InterApplicationBus.Channel.connect(getServiceChannel(), {
+                        wait: true,
+                        payload: {version: PACKAGE_VERSION}
+                    });
+                    // Register service listeners
+                    channel.register('WARN', (payload: unknown) => console.warn(payload));  // tslint:disable-line:no-any
+                    // Any unregistered action will simply return false
+                    channel.setDefaultAction(() => false);
+
+                    if (!hasDisconnectListener) {
+                        channel.onDisconnection(() => {
+                            reconnect = true;
+                            channelPromise = null;
+                            setTimeout(getServicePromise, 300);
                         });
+                        hasDisconnectListener = true;
                     }
-                });
+
+                    if (reconnect) {
+                        onReconnect.emit();
+                    }
+
+                    resolve(channel);
+                }
             });
         }
     }

@@ -7,7 +7,7 @@ import {ResolveError, ApplicationError, SendContextError} from '../../../src/cli
 import {fin} from '../utils/fin';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {delay, Duration} from '../utils/delay';
-import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning} from '../utils/common';
+import {TestAppData, DirectoryTestAppData, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, setupTeardown, setupQuitAppAfterEach, waitForAppToBeRunning, reloadProvider} from '../utils/common';
 import {appStartupTime, testManagerIdentity, testAppInDirectory1, testAppNotInDirectory1, testAppWithPreregisteredListeners1, testAppNotInDirectoryNotFdc3, testAppUrl} from '../constants';
 import {Intent, IntentType} from '../../../src/provider/intents';
 import {TestWindowContext} from '../utils/ofPuppeteer';
@@ -170,9 +170,51 @@ listener to be added', async () => {
         });
 
         describe('When the target (which is an ad-hoc app) is running', () => {
+            let listener: fdc3Remote.RemoteIntentListener;
+
             setupStartNonDirectoryAppBookends(testAppNotInDirectory1);
             setupCommonRunningAppTests(testAppNotInDirectory1);
+
+            // This test is in response to a bug where an app would be wrongly de-registered if any child window de-registered
+            describe('When the target has opened and closed a child window', () => {
+                beforeEach(async () => {
+                    listener = await fdc3Remote.addIntentListener(testAppNotInDirectory1, validIntent.type);
+                    const childIdentity = await fdc3Remote.createFinWindow(testAppNotInDirectory1, {name: 'child-window'});
+
+                    await fin.Window.wrapSync(childIdentity).close();
+                });
+
+                afterEach(async () => {
+                    await listener.unsubscribe();
+                });
+
+                test('When calling raiseIntent from another app the listener is triggered exactly once with the correct context', async () => {
+                    await raiseIntent(validIntent, testAppNotInDirectory1);
+
+                    await expect(listener).toHaveReceivedContexts([validIntent.context]);
+                });
+            });
         });
+    });
+});
+
+describe('When reloading the provider', () => {
+    setupOpenDirectoryAppBookends(testAppWithPreregisteredListeners1);
+
+    test('Apps with a preregistered intent listener receive intents', async () => {
+        await reloadProvider();
+
+        await raiseIntent(preregisteredIntent, testAppWithPreregisteredListeners1);
+        const listener = await fdc3Remote.getRemoteIntentListener(testAppWithPreregisteredListeners1, preregisteredIntent.type);
+        await expect(listener).toHaveReceivedContexts([preregisteredIntent.context]);
+    });
+
+    test('Apps that registered an intent listener receive intents', async () => {
+        const listener = await fdc3Remote.addIntentListener(testAppWithPreregisteredListeners1, validIntent.type);
+        await reloadProvider();
+
+        await raiseIntent(validIntent, testAppWithPreregisteredListeners1);
+        await expect(listener).toHaveReceivedContexts([validIntent.context]);
     });
 });
 
