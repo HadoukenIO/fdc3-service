@@ -24,7 +24,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {parseIdentity, parseContext, validateEnvironment, parseChannelId, parseAppChannelName} from './validation';
 import {tryServiceDispatch, getEventRouter, getServicePromise} from './connection';
-import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport, invokeListeners} from './internal';
+import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport, invokeListeners, onReconnect} from './internal';
 import {Context} from './context';
 import {ContextListener} from './main';
 import {Transport} from './EventRouter';
@@ -554,7 +554,6 @@ function deserializeWindowAddedEvent(eventTransport: Transport<ChannelWindowAdde
     const identity = eventTransport.identity;
     const channel = getChannelObject(eventTransport.channel);
     const previousChannel = eventTransport.previousChannel ? getChannelObject(eventTransport.previousChannel) : null;
-
     return {type: 'window-added', identity, channel, previousChannel};
 }
 
@@ -562,30 +561,66 @@ function deserializeWindowRemovedEvent(eventTransport: Transport<ChannelWindowRe
     const identity = eventTransport.identity;
     const channel = eventTransport.channel ? getChannelObject(eventTransport.channel) : null;
     const previousChannel = getChannelObject(eventTransport.previousChannel);
-
     return {type: 'window-removed', identity, channel, previousChannel};
 }
 
+// Keep track of the channel the client is in so it can be rejoined on disconnect
+let currentChannel: Channel | null = null;
+
+function deserializeChannelChangedEvent(eventTransport: Transport<ChannelChangedEvent>): ChannelChangedEvent {
+    const type = eventTransport.type;
+    const identity = eventTransport.identity;
+    const channel = eventTransport.channel ? getChannelObject(eventTransport.channel) : null;
+    const previousChannel = eventTransport.previousChannel ? getChannelObject(eventTransport.previousChannel) : null;
+
+    if (fin.Window.me.name === identity.name && fin.Window.me.uuid === identity.uuid) {
+        currentChannel = channel;
+    }
+
+    return {type, identity, channel, previousChannel};
+}
+
 if (typeof fin !== 'undefined') {
-    getServicePromise().then((channelClient) => {
-        channelClient.register(APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, async (payload: ChannelReceiveContextPayload) => {
-            await invokeListeners(
-                channelContextListeners.filter((listener) => listener.channel.id === payload.channel),
-                payload.context,
-                (e) => console.warn(`Error thrown by channel context handler, swallowing error. Error message: ${e.message}`),
-                () => new Error('All channel context handlers failed')
-            );
-        });
+    const eventHandler = getEventRouter();
+    eventHandler.registerEmitterProvider('channel', (channelId: ChannelId) => {
+        return channelEventEmitters[channelId];
+    });
 
-        const eventHandler = getEventRouter();
+    eventHandler.registerDeserializer('channel-changed', deserializeChannelChangedEvent);
+    eventHandler.registerDeserializer('window-added', deserializeWindowAddedEvent);
+    eventHandler.registerDeserializer('window-removed', deserializeWindowRemovedEvent);
+    onReconnect.add(async () => {
+        await initialize();
+        await rehydrate();
+    });
+    initialize();
+}
 
-        eventHandler.registerEmitterProvider('channel', (channelId: ChannelId) => {
-            return channelEventEmitters[channelId];
-        });
-
-        eventHandler.registerDeserializer('window-added', deserializeWindowAddedEvent);
-        eventHandler.registerDeserializer('window-removed', deserializeWindowRemovedEvent);
+function initialize(): Promise<void> {
+    return getServicePromise().then(async (channelClient) => {
+        try {
+            channelClient.register(APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, async (payload: ChannelReceiveContextPayload) => {
+                await invokeListeners(
+                    channelContextListeners.filter((listener) => listener.channel.id === payload.channel),
+                    payload.context,
+                    (e) => console.warn(`Error thrown by channel context handler, swallowing error. Error message: ${e.message}`),
+                    () => new Error('All channel context handlers failed')
+                );
+            });
+        } catch (e) {
+            // Trying to resubscribe to the same channel
+        }
     }, (reason) => {
         console.warn('Unable to register client channel context handlers. getServicePromise() rejected with reason:', reason);
     });
+}
+
+async function rehydrate(): Promise<void> {
+    let channelToJoin: Channel = currentChannel || defaultChannel;
+    if (channelToJoin.type === 'app') {
+        channelToJoin = await getOrCreateAppChannel(channelToJoin.name);
+    }
+    await channelToJoin.join();
+    await Promise.all(channelContextListeners.map(({channel}) => tryServiceDispatch(APIFromClientTopic.CHANNEL_ADD_CONTEXT_LISTENER, {id: channel.id})));
+    currentChannel = channelToJoin;
 }
