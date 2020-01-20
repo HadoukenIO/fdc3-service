@@ -270,7 +270,6 @@ the promise resolves', async () => {
 
                 // From the launcher app, call fdc3.open with a valid name and context
                 const promise = allowReject(open(testAppWithPreregisteredListeners1.name, validContext));
-
                 // Check the promise rejects as expected
                 await expect(promise).toThrowFDC3Error(
                     SendContextError.HandlerError,

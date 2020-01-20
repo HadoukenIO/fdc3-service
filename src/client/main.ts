@@ -8,9 +8,9 @@
 import {tryServiceDispatch, getServicePromise, getEventRouter, eventEmitter} from './connection';
 import {Context} from './types/context';
 import {Application, AppName} from './types/directory';
-import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners} from './internal';
-import {ChannelChangedEvent, getChannelObject, ChannelContextListener} from './api/contextChannels';
-import {sanitizeContext, validateEnvironment} from './validation';
+import {APIFromClientTopic, APIToClientTopic, RaiseIntentPayload, ReceiveContextPayload, MainEvents, Events, invokeListeners, onReconnect} from './internal';
+import {ChannelChangedEvent, ChannelContextListener} from './api/contextChannels';
+import {validateEnvironment, sanitizeContext} from './validation';
 import {Transport, Targeted} from './EventRouter';
 
 /**
@@ -417,17 +417,21 @@ function hasIntentListener(intent: string): boolean {
     return intentListeners.some((intentListener) => intentListener.intent === intent);
 }
 
-function deserializeChannelChangedEvent(eventTransport: Transport<ChannelChangedEvent>): ChannelChangedEvent {
-    const type = eventTransport.type;
-    const identity = eventTransport.identity;
-    const channel = eventTransport.channel ? getChannelObject(eventTransport.channel) : null;
-    const previousChannel = eventTransport.previousChannel ? getChannelObject(eventTransport.previousChannel) : null;
-
-    return {type, identity, channel, previousChannel};
+if (typeof fin !== 'undefined') {
+    const eventHandler = getEventRouter();
+    eventHandler.registerEmitterProvider('main', () => eventEmitter);
+    onReconnect.add(async () => {
+        await initialize();
+        await rehydrate();
+    });
+    setImmediate(() => {
+        initialize();
+    });
 }
 
-if (typeof fin !== 'undefined') {
-    getServicePromise().then((channelClient) => {
+async function initialize(): Promise<void> {
+    const channelClient = await getServicePromise();
+    try {
         channelClient.register(APIToClientTopic.RECEIVE_INTENT, async (payload: RaiseIntentPayload) => {
             const result = await invokeListeners(
                 intentListeners.filter((listener) => payload.intent === listener.intent),
@@ -447,20 +451,22 @@ if (typeof fin !== 'undefined') {
             );
         });
 
-        const eventHandler = getEventRouter();
-
         channelClient.register('event', (eventTransport: Targeted<Transport<Events>>) => {
             try {
-                eventHandler.dispatchEvent(eventTransport);
+                getEventRouter().dispatchEvent(eventTransport);
             } catch (e) {
                 console.warn(`Error thrown dispatching ${eventTransport.type} event, rethrowing error. Error message: ${e.message}`);
                 throw e;
             }
         });
+    } catch (e) {
+        // Trying to subscribe the same topic
+    }
+}
 
-        eventHandler.registerEmitterProvider('main', () => eventEmitter);
-        eventHandler.registerDeserializer('channel-changed', deserializeChannelChangedEvent);
-    }, (reason) => {
-        console.warn('Unable to register client Context and Intent handlers. getServicePromise() rejected with reason:', reason);
-    });
+async function rehydrate(): Promise<void> {
+    const intents = intentListeners.map(async ({intent}) => tryServiceDispatch(APIFromClientTopic.ADD_INTENT_LISTENER, {intent}));
+    const contexts = contextListeners.map(async () => tryServiceDispatch(APIFromClientTopic.ADD_CONTEXT_LISTENER, {}));
+
+    await Promise.all([...intents, ...contexts]);
 }

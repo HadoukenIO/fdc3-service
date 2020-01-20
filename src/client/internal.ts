@@ -9,6 +9,7 @@
  * This file is excluded from the public-facing TypeScript documentation.
  */
 import {Identity} from 'openfin/_v2/main';
+import {Signal} from 'openfin-service-signal';
 
 import {AppName} from './types/directory';
 import {AppIntent, Context, IntentResolution, Listener} from './main';
@@ -27,6 +28,11 @@ const serviceIdentity: Identity = {
  * Name of the IAB channel use to communicate between client and provider
  */
 let serviceChannel: string = 'of-fdc3-service-v1';
+
+/**
+ * Event fired when the channel to the provider has been re-established.
+ */
+export const onReconnect = new Signal();
 
 /**
  * Enum containing all and only actions that the provider can accept.

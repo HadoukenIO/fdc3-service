@@ -1,12 +1,16 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
+import * as fdc3 from '../client/main';
+
 import {BlotterApp} from './apps/BlotterApp';
 import {ChartsApp} from './apps/ChartsApp';
 import {ContactsApp} from './apps/ContactsApp';
 import {DialerApp} from './apps/DialerApp';
 import {LauncherApp} from './apps/LauncherApp';
 import {NewsApp} from './apps/NewsApp';
+
+Object.assign(window, {fdc3});
 
 /*
  * This file defines the entry point for all of the applications in this project. This "bootstrap" is intended to allow

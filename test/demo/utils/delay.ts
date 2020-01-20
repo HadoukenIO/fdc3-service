@@ -9,6 +9,7 @@ export async function delay(duration: number) {
 }
 
 export enum Duration {
+    PROVIDER_RELOAD = 2000,
     PAGE_RELOAD = 500,
     PAGE_NAVIGATE = 500,
     SHORTER_THAN_APP_MATURITY = 2000,
