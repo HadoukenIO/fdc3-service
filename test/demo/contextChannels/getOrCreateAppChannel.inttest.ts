@@ -1,8 +1,10 @@
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {testManagerIdentity, testAppInDirectory1, testAppInDirectory2} from '../constants';
-import {setupOpenDirectoryAppBookends} from '../utils/common';
+import {setupOpenDirectoryAppBookends, setupTeardown} from '../utils/common';
 import {AppChannel} from '../../../src/client/main';
 import {fakeAppChannelName} from '../utils/fakes';
+
+setupTeardown();
 
 test('If a name of the wrong type is provided, a TypeError is thrown', async () => {
     const invalidName = {irrelevantProperty: 'irrelevantValue'} as unknown as string;
