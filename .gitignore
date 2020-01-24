@@ -8,3 +8,5 @@ gen
 node_modules
 test/coverage
 .eslintcache
+hooks.js
+services.user.json
