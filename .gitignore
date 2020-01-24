@@ -9,4 +9,4 @@ node_modules
 test/coverage
 .eslintcache
 hooks.js
-service.user.json
+services.user.json
