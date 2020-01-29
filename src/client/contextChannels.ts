@@ -522,9 +522,6 @@ export async function getOrCreateAppChannel(name: string): Promise<AppChannel> {
     return getChannelObject<AppChannel>(channelTransport);
 }
 
-/**
- * @hidden
- */
 function getChannelObject<T extends Channel = Channel>(channelTransport: ChannelTransport): T {
     let channel: Channel = channelLookup[channelTransport.id];
 
