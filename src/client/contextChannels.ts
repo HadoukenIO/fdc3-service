@@ -24,10 +24,11 @@ import {Identity} from 'openfin/_v2/main';
 
 import {parseIdentity, parseContext, validateEnvironment, parseChannelId, parseAppChannelName} from './validation';
 import {tryServiceDispatch, getEventRouter, getServicePromise} from './connection';
-import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport, invokeListeners, onReconnect} from './internal';
+import {APIFromClientTopic, APIToClientTopic, ChannelReceiveContextPayload, ChannelEvents, invokeListeners, onReconnect} from './internal';
 import {Context} from './context';
 import {ContextListener} from './main';
 import {Transport} from './EventRouter';
+import {SystemChannelTransport, AppChannelTransport, ChannelTransport} from './channelTransport';
 
 /**
  * Type used to identify specific Channels. Though simply an alias of `string`, use of this type indicates use of the string
@@ -524,7 +525,7 @@ export async function getOrCreateAppChannel(name: string): Promise<AppChannel> {
 /**
  * @hidden
  */
-export function getChannelObject<T extends Channel = Channel>(channelTransport: ChannelTransport): T {
+function getChannelObject<T extends Channel = Channel>(channelTransport: ChannelTransport): T {
     let channel: Channel = channelLookup[channelTransport.id];
 
     if (!channel) {

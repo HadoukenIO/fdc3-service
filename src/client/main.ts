@@ -302,11 +302,17 @@ export async function raiseIntent(intent: string, context: Context, target?: App
 /**
  * Adds a listener for incoming intents from the Agent.
  *
+ * If the handler function returns a defined value, this value will be returned to the caller of [[raiseIntent]] in
+ * the `data` property of the [[IntentResolution]] object. If the value returned by the handler is a Promise, this
+ * will be resolved before passing to the [[raiseIntent]] caller. If multiple handlers are registered by a target
+ * application for a given intent, the fist defined return value to be returned and resolved (if a Promise) will be used.
+ *
  * To unsubscribe, use the returned [[IntentListener]].
+ *
  * @param intent The name of the intent to listen for.
  * @param handler The handler to call when we get sent an intent.
  */
-export function addIntentListener(intent: string, handler: (context: Context) => any | Promise<any>): IntentListener {
+export function addIntentListener(intent: string, handler: (context: Context) => any): IntentListener {
     validateEnvironment();
 
     const listener: IntentListener = {

@@ -13,8 +13,9 @@ import {Signal} from 'openfin-service-signal';
 
 import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution, Listener} from './main';
-import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel} from './contextChannels';
+import {ChannelId, DefaultChannel, SystemChannel, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel} from './contextChannels';
 import {FDC3Error} from './errors';
+import {ChannelTransport, SystemChannelTransport, AppChannelTransport} from './channelTransport';
 
 /**
  * The identity of the main application window of the service provider
@@ -127,21 +128,6 @@ export type TransportMemberMappings<T> =
             T extends AppChannel ? AppChannelTransport :
                 T extends ChannelBase ? ChannelTransport :
                     T;
-
-export interface ChannelTransport {
-    id: ChannelId;
-    type: string;
-}
-
-export interface SystemChannelTransport extends ChannelTransport {
-    type: 'system';
-    visualIdentity: DisplayMetadata;
-}
-
-export interface AppChannelTransport extends ChannelTransport {
-    type: 'app';
-    name: string;
-}
 
 export interface OpenPayload {
     name: AppName;
