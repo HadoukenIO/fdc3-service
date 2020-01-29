@@ -28,7 +28,6 @@ import {APIFromClientTopic, APIToClientTopic, ChannelReceiveContextPayload, Chan
 import {Context} from './context';
 import {ContextListener} from './main';
 import {Transport} from './EventRouter';
-import {SystemChannelTransport, AppChannelTransport, ChannelTransport} from './channelTransport';
 
 /**
  * Type used to identify specific Channels. Though simply an alias of `string`, use of this type indicates use of the string
@@ -170,6 +169,30 @@ export interface ChannelContextListener extends ContextListener {
      * Listener will trigger whenever a context is broadcast on this channel.
      */
     channel: Channel;
+}
+
+/**
+ * @hidden
+ */
+export interface ChannelTransport {
+    id: ChannelId;
+    type: string;
+}
+
+/**
+ * @hidden
+ */
+export interface SystemChannelTransport extends ChannelTransport {
+    type: 'system';
+    visualIdentity: DisplayMetadata;
+}
+
+/**
+ * @hidden
+ */
+export interface AppChannelTransport extends ChannelTransport {
+    type: 'app';
+    name: string;
 }
 
 /**

@@ -13,9 +13,8 @@ import {Signal} from 'openfin-service-signal';
 
 import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution, Listener} from './main';
-import {ChannelId, DefaultChannel, SystemChannel, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel} from './contextChannels';
+import {ChannelId, DefaultChannel, SystemChannel, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel, SystemChannelTransport, ChannelTransport, AppChannelTransport} from './contextChannels';
 import {FDC3Error} from './errors';
-import {ChannelTransport, SystemChannelTransport, AppChannelTransport} from './channelTransport';
 
 /**
  * The identity of the main application window of the service provider
