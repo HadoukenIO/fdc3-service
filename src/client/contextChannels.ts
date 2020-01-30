@@ -24,7 +24,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {parseIdentity, parseContext, validateEnvironment, parseChannelId, parseAppChannelName} from './validation';
 import {tryServiceDispatch, getEventRouter, getServicePromise} from './connection';
-import {APIFromClientTopic, APIToClientTopic, ChannelReceiveContextPayload, ChannelEvents, invokeListeners, onReconnect} from './internal';
+import {APIFromClientTopic, APIToClientTopic, ChannelReceiveContextPayload, ChannelEvents, invokeListeners, onReconnect, DEFAULT_CHANNEL_ID} from './internal';
 import {Context} from './context';
 import {ContextListener} from './main';
 import {Transport} from './EventRouter';
@@ -466,11 +466,6 @@ export class AppChannel extends ChannelBase {
 }
 
 const channelEventEmitters: {[key: string]: EventEmitter} = {};
-
-/**
- * @hidden
- */
-export const DEFAULT_CHANNEL_ID: ChannelId = 'default';
 
 /**
  * The channel in which all windows will initially be placed.

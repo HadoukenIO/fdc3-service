@@ -35,6 +35,11 @@ let serviceChannel: string = 'of-fdc3-service-v1';
 export const onReconnect = new Signal();
 
 /**
+ * ID of the channel all windows are placed in by default when first created
+ */
+export const DEFAULT_CHANNEL_ID: ChannelId = 'default';
+
+/**
  * Enum containing all and only actions that the provider can accept.
  */
 export enum APIFromClientTopic {
