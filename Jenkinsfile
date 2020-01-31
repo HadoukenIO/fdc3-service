@@ -75,7 +75,7 @@ def configure() {
 
     GIT_SHORT_SHA = GIT_COMMIT.substring(0, 7)
     PKG_VERSION = manifest.version
-    SERVICE_NAME = config.SERVICE_NAME
+    SERVICE_NAME = config.NAME
 
     if (env.BRANCH_NAME == 'master') {
         BUILD_VERSION = PKG_VERSION
