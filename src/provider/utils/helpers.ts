@@ -32,15 +32,19 @@ export async function collateClientCalls<T = void>(promises: Promise<T>[]): Prom
 
     let result: T | undefined = undefined;
 
-    await Promise.all(promises.map((promise) => withTimeout(Timeouts.SERVICE_TO_CLIENT_API_CALL, promise.then((promiseResult) => {
+    await Promise.all(promises.map((promise, index) => withTimeout(Timeouts.SERVICE_TO_CLIENT_API_CALL, promise.then((promiseResult) => {
         if (result === undefined && promiseResult !== undefined) {
             result = promiseResult;
         }
         successes++;
     }, (e) => {
-        console.warn(`API call failed with error ${e.message}`);
+        console.warn(`API call with index ${index} failed with error ${e.message}`);
         failures++;
-    }))));
+    })).then((withTimeoutResult: [boolean, void | undefined]) => {
+        if (withTimeoutResult[0]) {
+            console.warn(`API call with index ${index} did not resolve within timeout`);
+        }
+    })));
 
     if (promises.length === 0) {
         return [ClientCallsResult.NO_CALLS, undefined];
