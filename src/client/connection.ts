@@ -75,7 +75,15 @@ export async function getServicePromise(): Promise<ChannelClient> {
                 if (fin.Window.me.uuid === getServiceIdentity().uuid && fin.Window.me.name === getServiceIdentity().name) {
                     reject(new Error('Trying to connect to provider from provider'));
                 } else {
-                    const channel = await fin.InterApplicationBus.Channel.connect(getServiceChannel(), {
+                    let channel: ChannelClient | null = null;
+
+                    setTimeout(() => {
+                        if (channel === null) {
+                            console.warn('Taking a long time to connect to FDC3 service. Is the FDC3 service running?');
+                        }
+                    }, 5000);
+
+                    channel = await fin.InterApplicationBus.Channel.connect(getServiceChannel(), {
                         wait: true,
                         payload: {version: PACKAGE_VERSION}
                     });
@@ -86,15 +94,22 @@ export async function getServicePromise(): Promise<ChannelClient> {
 
                     if (!hasDisconnectListener) {
                         channel.onDisconnection(() => {
+                            console.warn('Disconnected from FDC3 service');
                             reconnect = true;
                             channelPromise = null;
-                            setTimeout(getServicePromise, 300);
+                            setTimeout(() => {
+                                console.log('Attempting to reconnect to FDC3 service');
+                                getServicePromise();
+                            }, 300);
                         });
                         hasDisconnectListener = true;
                     }
 
                     if (reconnect) {
                         onReconnect.emit();
+                        console.log('Reconnected to FDC3 service');
+                    } else {
+                        console.log('Connected to FDC3 service');
                     }
 
                     resolve(channel);
