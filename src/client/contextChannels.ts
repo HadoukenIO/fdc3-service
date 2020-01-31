@@ -24,7 +24,7 @@ import {Identity} from 'openfin/_v2/main';
 
 import {parseIdentity, parseContext, validateEnvironment, parseChannelId, parseAppChannelName} from './validation';
 import {tryServiceDispatch, getEventRouter, getServicePromise} from './connection';
-import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents, AppChannelTransport, invokeListeners, onReconnect} from './internal';
+import {APIFromClientTopic, APIToClientTopic, ChannelReceiveContextPayload, ChannelEvents, invokeListeners, onReconnect, DEFAULT_CHANNEL_ID} from './internal';
 import {Context} from './context';
 import {ContextListener} from './main';
 import {Transport} from './EventRouter';
@@ -169,6 +169,30 @@ export interface ChannelContextListener extends ContextListener {
      * Listener will trigger whenever a context is broadcast on this channel.
      */
     channel: Channel;
+}
+
+/**
+ * @hidden
+ */
+export interface ChannelTransport {
+    id: ChannelId;
+    type: string;
+}
+
+/**
+ * @hidden
+ */
+export interface SystemChannelTransport extends ChannelTransport {
+    type: 'system';
+    visualIdentity: DisplayMetadata;
+}
+
+/**
+ * @hidden
+ */
+export interface AppChannelTransport extends ChannelTransport {
+    type: 'app';
+    name: string;
 }
 
 /**
@@ -444,11 +468,6 @@ export class AppChannel extends ChannelBase {
 const channelEventEmitters: {[key: string]: EventEmitter} = {};
 
 /**
- * @hidden
- */
-export const DEFAULT_CHANNEL_ID: ChannelId = 'default';
-
-/**
  * The channel in which all windows will initially be placed.
  *
  * All windows will belong to exactly one channel at all times. If they have not explicitly been placed into a channel
@@ -521,10 +540,7 @@ export async function getOrCreateAppChannel(name: string): Promise<AppChannel> {
     return getChannelObject<AppChannel>(channelTransport);
 }
 
-/**
- * @hidden
- */
-export function getChannelObject<T extends Channel = Channel>(channelTransport: ChannelTransport): T {
+function getChannelObject<T extends Channel = Channel>(channelTransport: ChannelTransport): T {
     let channel: Channel = channelLookup[channelTransport.id];
 
     if (!channel) {

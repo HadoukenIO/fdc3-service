@@ -13,7 +13,7 @@ import {Signal} from 'openfin-service-signal';
 
 import {AppName} from './directory';
 import {AppIntent, Context, IntentResolution, Listener} from './main';
-import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel} from './contextChannels';
+import {ChannelId, DefaultChannel, SystemChannel, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel, SystemChannelTransport, ChannelTransport, AppChannelTransport} from './contextChannels';
 import {FDC3Error} from './errors';
 
 /**
@@ -33,6 +33,11 @@ let serviceChannel: string = 'of-fdc3-service-v1';
  * Event fired when the channel to the provider has been re-established.
  */
 export const onReconnect = new Signal();
+
+/**
+ * ID of the channel all windows are placed in by default when first created
+ */
+export const DEFAULT_CHANNEL_ID: ChannelId = 'default';
 
 /**
  * Enum containing all and only actions that the provider can accept.
@@ -127,21 +132,6 @@ export type TransportMemberMappings<T> =
             T extends AppChannel ? AppChannelTransport :
                 T extends ChannelBase ? ChannelTransport :
                     T;
-
-export interface ChannelTransport {
-    id: ChannelId;
-    type: string;
-}
-
-export interface SystemChannelTransport extends ChannelTransport {
-    type: 'system';
-    visualIdentity: DisplayMetadata;
-}
-
-export interface AppChannelTransport extends ChannelTransport {
-    type: 'app';
-    name: string;
-}
 
 export interface OpenPayload {
     name: AppName;

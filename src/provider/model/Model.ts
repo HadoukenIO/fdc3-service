@@ -5,9 +5,9 @@ import {withStrictTimeout, serialFilter, allowReject, untilSignal, untilTrue, De
 
 import {Application, AppName} from '../../client/directory';
 import {Inject} from '../common/Injectables';
-import {ChannelId, DEFAULT_CHANNEL_ID, AppIntent} from '../../client/main';
+import {ChannelId, AppIntent} from '../../client/main';
 import {APIHandler} from '../APIHandler';
-import {APIFromClientTopic} from '../../client/internal';
+import {APIFromClientTopic, DEFAULT_CHANNEL_ID} from '../../client/internal';
 import {SYSTEM_CHANNELS, Timeouts} from '../constants';
 import {Boxed} from '../utils/types';
 import {getId} from '../utils/getId';

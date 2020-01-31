@@ -1,12 +1,13 @@
 import {Identity} from 'openfin/_v2/main';
 
-import {ConnectionError, DEFAULT_CHANNEL_ID} from '../../../src/client/main';
+import {ConnectionError} from '../../../src/client/main';
 import {testManagerIdentity, appStartupTime, testAppNotInDirectory1, testAppNotInDirectoryNotFdc3, testAppInDirectory1, testAppInDirectory2, testAppUrl} from '../constants';
 import * as fdc3Remote from '../utils/fdc3RemoteExecution';
 import {RemoteChannel, RemoteChannelEventListener} from '../utils/RemoteChannel';
 import {setupTeardown, setupOpenDirectoryAppBookends, setupStartNonDirectoryAppBookends, quitApps, startNonDirectoryApp, startDirectoryApp, reloadProvider} from '../utils/common';
 import {fakeAppChannelName, createFakeContext} from '../utils/fakes';
 import {TestWindowContext} from '../utils/ofPuppeteer';
+import {DEFAULT_CHANNEL_ID} from '../../../src/client/internal';
 
 /*
  * Tests simple behaviour of Channel.getMembers() and the channel-changed and Channel events, before testing how they and getCurrentChannel()
