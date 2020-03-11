@@ -2,5 +2,7 @@
     "PORT": 3923,
     "NAME": "fdc3",
     "TITLE": "FDC3",
+
+    "ASAR_FLAG": "fdc3Api",
     "CDN_LOCATION": "https://cdn.openfin.co/services/openfin/fdc3"
- }
+}

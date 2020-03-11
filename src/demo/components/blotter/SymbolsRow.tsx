@@ -1,12 +1,13 @@
 import * as React from 'react';
 
-import * as fdc3 from '../../../client/main';
-import {Application, AppName} from '../../../client/directory';
+import type {Application, AppName} from '../../../client/directory';
 import {Instrument} from '../../apps/BlotterApp';
 import {IntentButton} from '../common/IntentButton';
 import {showContextMenu, ContextMenuItem} from '../common/ContextMenu';
 
 import './SymbolsRow.css';
+
+declare const fdc3: typeof import('../../../client/main');
 
 interface SymbolsRowProps {
     item: Instrument;
@@ -24,13 +25,13 @@ const menuItems: ContextMenuItem<Payload>[] = [
     {
         text: 'View Quote',
         payload: {
-            intent: fdc3.Intents.VIEW_QUOTE
+            intent: 'ViewQuote' // fdc3.Intents.VIEW_QUOTE
         }
     },
     {
         text: 'View News',
         payload: {
-            intent: fdc3.Intents.VIEW_NEWS
+            intent: 'ViewNews' // fdc3.Intents.VIEW_NEWS
         }
     },
     {
@@ -42,7 +43,7 @@ const menuItems: ContextMenuItem<Payload>[] = [
 const viewChartsSubMenu: ContextMenuItem = {
     text: 'Use Default',
     payload: {
-        intent: fdc3.Intents.VIEW_CHART
+        intent: 'ViewChart' // fdc3.Intents.VIEW_CHART
     }
 };
 

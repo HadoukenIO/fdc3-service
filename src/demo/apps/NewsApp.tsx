@@ -1,10 +1,12 @@
 import * as React from 'react';
 
-import * as fdc3 from '../../client/main';
+import type {InstrumentContext, Context} from '../../client/context';
 import {NewsFeed} from '../components/news/NewsFeed';
-import {InstrumentContext, Context} from '../../client/context';
-import '../../../res/demo/css/w3.css';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
+
+import '../../../res/demo/css/w3.css';
+
+declare const fdc3: typeof import('../../client/main');
 
 export function NewsApp(): React.ReactElement {
     const [title, setTitle] = React.useState('Apple (AAPL)');
