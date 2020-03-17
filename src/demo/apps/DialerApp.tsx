@@ -8,10 +8,9 @@ import {CallTimer} from '../components/dialer/CallTimer';
 import {CallButton} from '../components/dialer/CallButton';
 import {Dialog} from '../components/common/Dialog';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
+import {fdc3} from '../stub';
 
 import '../../../res/demo/css/w3.css';
-
-declare const fdc3: typeof import('../../client/main');
 
 interface AppProps {
     phoneNumber?: string;

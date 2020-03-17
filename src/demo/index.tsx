@@ -76,6 +76,4 @@ function SelectApp(props: SelectAppProps): React.ReactElement {
     return selectedApp;
 }
 
-fin.desktop.main(() => {
-    ReactDOM.render(<App />, document.getElementById('react-app'));
-});
+ReactDOM.render(<App />, document.getElementById('react-app'));

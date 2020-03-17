@@ -2,10 +2,9 @@ import * as React from 'react';
 
 import {Instrument} from '../../apps/BlotterApp';
 import type {Application} from '../../../client/main';
+import {fdc3} from '../../stub';
 
 import {SymbolsRow} from './SymbolsRow';
-
-declare const fdc3: typeof import('../../../client/main');
 
 interface SymbolsTableProps {
     items?: Instrument[];

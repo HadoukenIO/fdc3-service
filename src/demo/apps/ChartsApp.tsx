@@ -3,10 +3,9 @@ import * as React from 'react';
 import type {Context, InstrumentContext} from '../../client/main';
 import {Chart} from '../components/charts/Chart';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
+import {fdc3} from '../stub';
 
 import '../../../res/demo/css/w3.css';
-
-declare const fdc3: typeof import('../../client/main');
 
 interface AppProps {
     symbolName?: string;

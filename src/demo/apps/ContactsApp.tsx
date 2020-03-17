@@ -4,8 +4,7 @@ import {ContactsTable} from '../components/contacts/ContactsTable';
 import '../../../res/demo/css/w3.css';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
 import type {Context, ContactContext, AppIntent} from '../../client/main';
-
-declare const fdc3: typeof import('../../client/main');
+import {fdc3} from '../stub';
 
 const initialContactsState: Contact[] = [
     {'name': 'Tailor D\'Angeli', 'email': 'tdangeli0@toplist.cz', 'phone': '4475836763'},

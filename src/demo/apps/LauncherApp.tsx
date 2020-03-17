@@ -3,10 +3,9 @@ import {ApplicationOption} from 'openfin/_v2/api/application/applicationOption';
 
 import type {Application} from '../../client/directory';
 import {AppCard} from '../components/launcher/AppCard';
+import {fdc3} from '../stub';
 
 import '../../../res/demo/css/w3.css';
-
-declare const fdc3: typeof import('../../client/main');
 
 interface ManifestAppLaunchData {
     type: 'manifest';

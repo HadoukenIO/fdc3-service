@@ -4,9 +4,9 @@ import type {ContactContext} from '../../../client/context';
 import type {AppIntent} from '../../../client/main';
 import {Contact} from '../../apps/ContactsApp';
 import {IntentButton} from '../common/IntentButton';
-import './ContactsRow.css';
+import {fdc3} from '../../stub';
 
-declare const fdc3: typeof import('../../../client/main');
+import './ContactsRow.css';
 
 interface ContactRowProps {
     item: Contact;

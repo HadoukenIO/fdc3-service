@@ -3,12 +3,11 @@ import * as React from 'react';
 import type {Channel, ChannelChangedEvent} from '../../../client/contextChannels';
 import {addEventListener, removeEventListener} from '../../../client/main';
 import {getId} from '../../../provider/utils/getId';
+import {fdc3} from '../../stub';
 
 import {ContextChannelView} from './ChannelMemberView';
 
 import './ContextChannelSelector.css';
-
-declare const fdc3: typeof import('../../../client/main');
 
 interface ContextChannelSelectorProps {
     float?: boolean;
