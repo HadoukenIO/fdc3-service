@@ -69,7 +69,7 @@ const mockFetchReturnJson = jest.fn().mockResolvedValue(fakeApps);
 /**
  * Creates a new Application Directory with the specified URL
  */
-async function createAppDirectory(url: string): Promise<void> {
+async function createAppDirectory(url?: string): Promise<void> {
     const configStore: ConfigStoreBinding = {
         config: new Store<ConfigurationObject>(require('../../gen/provider/config/defaults.json')),
         initialized: Promise.resolve()
@@ -106,6 +106,27 @@ beforeEach(() => {
 });
 
 describe('When Fetching Initial Data', () => {
+    describe('And config applicationDirectory is undefined', () => {
+        beforeEach(async () => {
+            await createAppDirectory(undefined);
+        });
+
+        test('The default public application directory is used', async () => {
+            await expect(appDirectory.getAllApps()).resolves.toEqual(fakeApps);
+        });
+    });
+
+    describe('And config applicationDirectory is falsey', () => {
+        beforeEach(async () => {
+            mockFetchReturnJson.mockRejectedValue({});
+            await createAppDirectory('');
+        });
+
+        test('The application directory will be empty', async () => {
+            await expect(appDirectory.getAllApps()).resolves.toEqual([]);
+        });
+    });
+
     describe('And we\'re online', () => {
         beforeEach(async () => {
             await createAppDirectory(DEV_APP_DIRECTORY_URL);
