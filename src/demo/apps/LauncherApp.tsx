@@ -46,7 +46,7 @@ export function LauncherApp(): React.ReactElement {
     }, []);
 
     const openApp = async (app: AppLaunchData) => {
-        const id: string = (app.type === 'manifest') ? app.data.appId : app.data.uuid;
+        const id: string = (app.type === 'manifest') ? app.data.name : app.data.uuid;
         const title: string = ((app.type === 'manifest') ? app.data.title : app.data.name) || id;
         console.log(`Opening app ${title}`);
         try {

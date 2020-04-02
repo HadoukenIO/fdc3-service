@@ -52,7 +52,7 @@ let reconnect = false;
 if (typeof fin !== 'undefined') {
     getServicePromise();
 
-    document.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', () => {
         hasDOMContentLoaded.resolve();
     });
 }
