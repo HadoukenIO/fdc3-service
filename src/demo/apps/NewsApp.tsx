@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import type {InstrumentContext, Context} from '../../client/context';
+import /* type */ {InstrumentContext, Context} from '../../client/context';
 import {NewsFeed} from '../components/news/NewsFeed';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
 import {fdc3} from '../stub';

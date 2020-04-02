@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {Identity} from 'openfin/_v2/main';
 
-import type {Channel} from '../../../client/contextChannels';
+import /* type */ {Channel} from '../../../client/contextChannels';
 import {fdc3} from '../../stub';
 
 interface ChannelViewProps {

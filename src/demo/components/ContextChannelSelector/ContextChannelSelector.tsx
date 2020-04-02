@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import type {Channel, ChannelChangedEvent} from '../../../client/contextChannels';
+import /* type */ {Channel, ChannelChangedEvent} from '../../../client/contextChannels';
 import {getId} from '../../../provider/utils/getId';
 import {fdc3} from '../../stub';
 

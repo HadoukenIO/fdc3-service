@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import {Instrument} from '../../apps/BlotterApp';
-import type {Application} from '../../../client/main';
+import /* type */ {Application} from '../../../client/main';
 import {fdc3} from '../../stub';
 
 import {SymbolsRow} from './SymbolsRow';

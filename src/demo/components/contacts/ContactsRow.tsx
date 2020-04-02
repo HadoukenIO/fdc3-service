@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import type {ContactContext} from '../../../client/context';
-import type {AppIntent} from '../../../client/main';
+import /* type */ {ContactContext} from '../../../client/context';
+import /* type */ {AppIntent} from '../../../client/main';
 import {Contact} from '../../apps/ContactsApp';
 import {IntentButton} from '../common/IntentButton';
 import {fdc3} from '../../stub';

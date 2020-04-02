@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import type {AppIntent} from '../../../client/main';
+import /* type */ {AppIntent} from '../../../client/main';
 import {Contact} from '../../apps/ContactsApp';
 
 import {ContactsRow} from './ContactsRow';

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import type {Application, AppName} from '../../../client/directory';
+import /* type */ {Application, AppName} from '../../../client/directory';
 import {Instrument} from '../../apps/BlotterApp';
 import {IntentButton} from '../common/IntentButton';
 import {showContextMenu, ContextMenuItem} from '../common/ContextMenu';

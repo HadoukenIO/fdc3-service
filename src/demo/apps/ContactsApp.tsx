@@ -3,7 +3,7 @@ import * as React from 'react';
 import {ContactsTable} from '../components/contacts/ContactsTable';
 import '../../../res/demo/css/w3.css';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
-import type {Context, ContactContext, AppIntent} from '../../client/main';
+import /* type */ {Context, ContactContext, AppIntent} from '../../client/main';
 import {fdc3} from '../stub';
 
 const initialContactsState: Contact[] = [

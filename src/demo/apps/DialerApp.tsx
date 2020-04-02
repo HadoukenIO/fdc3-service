@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import type {IntentListener} from '../../client/main';
-import type {ContactContext, Context} from '../../client/context';
+import /* type */ {IntentListener} from '../../client/main';
+import /* type */ {ContactContext, Context} from '../../client/context';
 import {Number} from '../components/dialer/Number';
 import {Dialer} from '../components/dialer/Dialer';
 import {CallTimer} from '../components/dialer/CallTimer';
