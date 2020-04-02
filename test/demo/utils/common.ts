@@ -41,7 +41,8 @@ export async function quitApps(...apps: Identity[]) {
 }
 
 export async function reloadProvider(): Promise<void> {
-    await fdc3Remote.ofBrowser.executeOnWindow(getServiceIdentity(), function (this: ProviderWindow) {
+    await fdc3Remote.ofBrowser.executeOnWindow(getServiceIdentity(), async function (this: ProviderWindow) {
+        await this.fin.Window.wrapSync({uuid: this.fin.Window.me.uuid, name: 'fdc3-resolver'}).close(true).catch(() => {});
         this.window.location.reload();
     });
     await delay(Duration.PROVIDER_RELOAD);
@@ -134,7 +135,7 @@ export function setupTeardown(): void {
             await closeResolver();
         }
 
-        const expectedRunningApps = ['fdc3-service', testManagerIdentity.uuid];
+        const expectedRunningApps = [getServiceIdentity().uuid, testManagerIdentity.uuid];
 
         const runningApps = (await fin.System.getAllApplications()).map((appInfo) => appInfo.uuid);
         const unexpectedRunningApps = runningApps.filter((uuid) => !expectedRunningApps.includes(uuid));

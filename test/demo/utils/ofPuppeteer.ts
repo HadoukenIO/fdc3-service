@@ -138,7 +138,8 @@ export class OFPuppeteerBrowser<WindowContext extends BaseWindowContext = BaseWi
             if (!this.fin) {
                 return undefined;
             } else {
-                return this.fin.Window.me;
+                const {uuid, name} = this.fin.Window.me;
+                return {uuid, name};
             }
         });
 

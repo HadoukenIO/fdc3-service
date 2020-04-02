@@ -12,7 +12,7 @@
     "build:dev": "svc-tools build --mode development",
     "channels": "svc-tools channels",
     "check": "svc-tools check",
-    "clean": "rimraf dist gen",
+    "clean": "rimraf dist gen hooks.js",
     "fix": "svc-tools fix",
     "docs": "svc-tools docs",
     "posttest": "npm run check",
