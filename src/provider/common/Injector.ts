@@ -114,7 +114,7 @@ export class Injector {
      *
      * @param type Any class that is tagged with `@injectable`
      */
-    public static getClass<T extends {}>(type: (new (...args: any[]) => T)): T {
+    public static getClass<T extends {}>(type: (new (...args: any[])=> T)): T {
         const value = Injector._container.resolve<T>(type);
 
         return value;
