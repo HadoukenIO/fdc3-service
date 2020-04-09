@@ -193,7 +193,7 @@ export class FinEnvironment extends AsyncInit implements Environment {
         fin.System.addListener('window-closed', entityClosedHandler);
 
         fin.System.addListener('view-created', entityCreatedHandler.bind(this, EntityType.VIEW));
-        fin.System.addListener('view-closed', entityClosedHandler);
+        fin.System.addListener('view-destroyed', entityClosedHandler);
 
         // No await here otherwise the injector will never properly initialize - The injector awaits this init before completion!
         Injector.initialized.then(async () => {
