@@ -53,7 +53,7 @@
     "openfin-service-async": "^1.0.1",
     "openfin-service-config": "1.0.4",
     "openfin-service-signal": "^1.0.0",
-    "openfin-service-tooling": "1.0.33",
+    "openfin-service-tooling": "1.0.34",
     "pre-commit": "^1.2.2",
     "puppeteer": "~1.17.0",
     "react": "^16.8.3",
