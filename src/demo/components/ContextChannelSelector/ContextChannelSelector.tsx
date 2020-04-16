@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import {Channel, defaultChannel, getCurrentChannel, getSystemChannels, ChannelChangedEvent} from '../../../client/contextChannels';
-import {addEventListener, removeEventListener} from '../../../client/main';
+import /* type */ {Channel, ChannelChangedEvent} from '../../../client/contextChannels';
 import {getId} from '../../../provider/utils/getId';
+import {fdc3} from '../../stub';
 
 import {ContextChannelView} from './ChannelMemberView';
 
@@ -18,22 +18,22 @@ ContextChannelSelector.defaultProps = {
 
 /**
  * Context channel ui
-*/
+ */
 export function ContextChannelSelector(props: ContextChannelSelectorProps): React.ReactElement {
     const {float} = props;
-    const [currentChannel, setCurrentChannel] = React.useState<Channel>(defaultChannel);
+    const [currentChannel, setCurrentChannel] = React.useState<Channel>(fdc3.defaultChannel);
     const [channels, setChannels] = React.useState<Channel[]>([]);
     React.useEffect(() => {
-        getCurrentChannel().then((channel) => {
+        fdc3.getCurrentChannel().then((channel) => {
             setCurrentChannel(channel);
         });
-        getSystemChannels().then((channelsLocal) => {
-            setChannels([defaultChannel, ...channelsLocal]);
+        fdc3.getSystemChannels().then((channelsLocal) => {
+            setChannels([fdc3.defaultChannel, ...channelsLocal]);
         });
-        addEventListener('channel-changed', channelChanged);
+        fdc3.addEventListener('channel-changed', channelChanged);
 
         return () => {
-            removeEventListener('channel-changed', channelChanged);
+            fdc3.removeEventListener('channel-changed', channelChanged);
         };
     }, []);
 

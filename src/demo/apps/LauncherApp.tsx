@@ -1,9 +1,9 @@
 import * as React from 'react';
 import {ApplicationOption} from 'openfin/_v2/api/application/applicationOption';
 
-import * as fdc3 from '../../client/main';
-import {Application} from '../../client/directory';
+import /* type */ {Application} from '../../client/directory';
 import {AppCard} from '../components/launcher/AppCard';
+import {fdc3} from '../stub';
 
 import '../../../res/demo/css/w3.css';
 

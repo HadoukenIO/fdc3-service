@@ -1,10 +1,11 @@
 import * as React from 'react';
 
-import * as fdc3 from '../../client/main';
+import /* type */ {Context, InstrumentContext} from '../../client/main';
 import {Chart} from '../components/charts/Chart';
-import {InstrumentContext, Context} from '../../client/context';
-import '../../../res/demo/css/w3.css';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
+import {fdc3} from '../stub';
+
+import '../../../res/demo/css/w3.css';
 
 interface AppProps {
     symbolName?: string;

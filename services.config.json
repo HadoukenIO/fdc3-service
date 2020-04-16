@@ -2,5 +2,7 @@
     "PORT": 3923,
     "NAME": "fdc3",
     "TITLE": "FDC3",
-    "CDN_LOCATION": "https://cdn.openfin.co/services/openfin/fdc3"
- }
+
+    "CDN_LOCATION": "https://cdn.openfin.co/services/openfin/fdc3",
+    "RUNTIME_INJECTABLE": true
+}

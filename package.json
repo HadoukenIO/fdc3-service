@@ -12,7 +12,7 @@
     "build:dev": "svc-tools build --mode development",
     "channels": "svc-tools channels",
     "check": "svc-tools check",
-    "clean": "rimraf dist gen",
+    "clean": "rimraf dist gen hooks.js",
     "fix": "svc-tools fix",
     "docs": "svc-tools docs",
     "posttest": "npm run check",
@@ -39,7 +39,7 @@
   "devDependencies": {
     "@types/mkdirp": "^0.5.2",
     "@types/node-fetch": "^2.1.6",
-    "@types/openfin": "^45.0.1",
+    "@types/openfin": "^49.0.0",
     "@types/puppeteer": "~1.19.1",
     "@types/react": "^16.8.6",
     "@types/react-dom": "^16.8.2",
@@ -51,15 +51,15 @@
     "moment": "^2.22.1",
     "node-fetch": "^2.3.0",
     "openfin-service-async": "^1.0.1",
-    "openfin-service-config": "1.0.2",
+    "openfin-service-config": "1.0.4",
     "openfin-service-signal": "^1.0.0",
-    "openfin-service-tooling": "1.0.25",
+    "openfin-service-tooling": "1.0.34",
     "pre-commit": "^1.2.2",
     "puppeteer": "~1.17.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3",
     "reflect-metadata": "^0.1.13",
-    "typescript": "^3.1.1"
+    "typescript": "^3.8.3"
   },
   "precommit": {
     "run": [

@@ -1,9 +1,10 @@
 import * as React from 'react';
 
-import * as fdc3 from '../../client/main';
 import {ContactsTable} from '../components/contacts/ContactsTable';
 import '../../../res/demo/css/w3.css';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
+import /* type */ {Context, ContactContext, AppIntent} from '../../client/main';
+import {fdc3} from '../stub';
 
 const initialContactsState: Contact[] = [
     {'name': 'Tailor D\'Angeli', 'email': 'tdangeli0@toplist.cz', 'phone': '4475836763'},
@@ -36,7 +37,7 @@ export interface Contact {
 
 export function ContactsApp(): React.ReactElement {
     const [contacts, setContacts] = React.useState(initialContactsState);
-    function handleIntent(context: fdc3.ContactContext) {
+    function handleIntent(context: ContactContext) {
         if (context && context.name) {
             const newContact: Contact = {
                 name: context.name,
@@ -47,7 +48,7 @@ export function ContactsApp(): React.ReactElement {
         }
     }
 
-    const [appIntents, setAppIntents] = React.useState([] as fdc3.AppIntent[]);
+    const [appIntents, setAppIntents] = React.useState([] as AppIntent[]);
     React.useEffect(() => {
         const context = {
             type: 'fdc3.contact',
@@ -71,12 +72,12 @@ export function ContactsApp(): React.ReactElement {
         fdc3.getCurrentChannel().then(async (channel) => {
             const context = await channel.getCurrentContext();
             if (context && context.type === 'fdc3.contact') {
-                handleIntent(context as fdc3.ContactContext);
+                handleIntent(context as ContactContext);
             }
         });
-        const intentListener = fdc3.addIntentListener(fdc3.Intents.SAVE_CONTACT, (context: fdc3.Context): void => {
+        const intentListener = fdc3.addIntentListener(fdc3.Intents.SAVE_CONTACT, (context: Context): void => {
             try {
-                handleIntent(context as fdc3.ContactContext);
+                handleIntent(context as ContactContext);
             } catch (e) {
                 throw new Error('SAVE_CONTACT intent requires a valid contact context');
             }

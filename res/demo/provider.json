@@ -11,7 +11,7 @@
         "defaultWidth": 500
     },
     "runtime": {
-        "version": "14.78.45.31"
+        "version": "15.80.50.23"
     },
     "serviceConfiguration": {
         "applicationDirectory": "http://localhost:3923/provider/sample-app-directory.json"

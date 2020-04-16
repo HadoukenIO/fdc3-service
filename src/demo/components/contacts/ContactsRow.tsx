@@ -1,29 +1,31 @@
 import * as React from 'react';
 
-import * as fdc3 from '../../../client/main';
-import {ContactContext} from '../../../client/context';
+import /* type */ {ContactContext} from '../../../client/context';
+import /* type */ {AppIntent} from '../../../client/main';
 import {Contact} from '../../apps/ContactsApp';
 import {IntentButton} from '../common/IntentButton';
+import {fdc3} from '../../stub';
+
 import './ContactsRow.css';
 
 interface ContactRowProps {
     item: Contact;
     selected: boolean;
     handleSelect: (item: Contact | null) => void;
-    appIntents: fdc3.AppIntent[];
+    appIntents: AppIntent[];
 }
 
 export function ContactsRow(props: ContactRowProps): React.ReactElement {
     const {item, selected, handleSelect} = props;
 
-    const handleAppIntent = async (appIntent: fdc3.AppIntent): Promise<void> => {
+    const handleAppIntent = async (appIntent: AppIntent): Promise<void> => {
         if (handleSelect) {
             handleSelect(null);
         }
         await fdc3.raiseIntent(appIntent.intent.name, getContext());
     };
 
-    const getIntentIcon = (appIntent: fdc3.AppIntent): string => {
+    const getIntentIcon = (appIntent: AppIntent): string => {
         if (appIntent && appIntent.apps.length > 0 && appIntent.apps[0].intents) {
             const intent = appIntent.apps[0].intents.find((intentLocal) => intentLocal.name === appIntent.intent.name);
             if (intent && intent.customConfig) {

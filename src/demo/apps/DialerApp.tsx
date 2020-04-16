@@ -1,13 +1,15 @@
 import * as React from 'react';
 
-import {IntentListener, getCurrentChannel, addIntentListener, Intents, addContextListener} from '../../client/main';
+import /* type */ {IntentListener} from '../../client/main';
+import /* type */ {ContactContext, Context} from '../../client/context';
 import {Number} from '../components/dialer/Number';
 import {Dialer} from '../components/dialer/Dialer';
 import {CallTimer} from '../components/dialer/CallTimer';
 import {CallButton} from '../components/dialer/CallButton';
-import {ContactContext, Context} from '../../client/context';
 import {Dialog} from '../components/common/Dialog';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
+import {fdc3} from '../stub';
+
 import '../../../res/demo/css/w3.css';
 
 interface AppProps {
@@ -48,7 +50,7 @@ export function DialerApp(props: AppProps): React.ReactElement {
 
     // Setup listeners
     React.useEffect(() => {
-        getCurrentChannel().then(async (channel) => {
+        fdc3.getCurrentChannel().then(async (channel) => {
             const context = await channel.getCurrentContext();
             if (context && context.type === 'fdc3.contact') {
                 handleIntent(context as ContactContext, false);
@@ -56,7 +58,7 @@ export function DialerApp(props: AppProps): React.ReactElement {
         });
         let dialListener: IntentListener;
         setTimeout(() => {
-            dialListener = addIntentListener(Intents.DIAL_CALL, (context: Context) => {
+            dialListener = fdc3.addIntentListener(fdc3.Intents.DIAL_CALL, (context: Context) => {
                 if (!inCall) {
                     handleIntent(context as ContactContext, false);
                 } else if (context.id && context.id.phone) {
@@ -64,14 +66,14 @@ export function DialerApp(props: AppProps): React.ReactElement {
                 }
             });
         }, 2000);
-        const callListener = addIntentListener(Intents.START_CALL, (context: Context) => {
+        const callListener = fdc3.addIntentListener(fdc3.Intents.START_CALL, (context: Context) => {
             if (!inCall) {
                 handleIntent(context as ContactContext, true);
             } else if (context.id && context.id.phone) {
                 setPendingCall(context as ContactContext);
             }
         });
-        const contextListener = addContextListener((context: Context) => {
+        const contextListener = fdc3.addContextListener((context: Context) => {
             if (context.type === 'fdc3.contact') {
                 if (!inCall) {
                     handleIntent(context as ContactContext, false);
