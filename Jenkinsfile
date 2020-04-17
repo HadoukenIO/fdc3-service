@@ -98,7 +98,7 @@ def configure() {
 def buildProject() {
     sh "npm install"
     sh "npm run clean"
-    sh "SERVICE_VERSION=${BUILD_VERSION} npm run build"
+    sh "VERSION=${BUILD_VERSION} npm run build"
     sh "echo ${GIT_SHORT_SHA} > ./dist/SHA.txt"
 
     sh "npm run zip"
