@@ -49,12 +49,11 @@ const hasDOMContentLoaded = new DeferredPromise<void>();
 let hasDisconnectListener = false;
 let reconnect = false;
 
+window.addEventListener('DOMContentLoaded', () => {
+    hasDOMContentLoaded.resolve();
+});
 if (typeof fin !== 'undefined') {
     getServicePromise();
-
-    window.addEventListener('DOMContentLoaded', () => {
-        hasDOMContentLoaded.resolve();
-    });
 }
 
 export async function getServicePromise(): Promise<ChannelClient> {
