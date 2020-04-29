@@ -45,19 +45,23 @@ export function getEventRouter(): EventRouter<Events> {
  * Promise to the channel object that allows us to connect to the client
  */
 let channelPromise: Promise<ChannelClient> | null = null;
-const hasDOMContentLoaded = new DeferredPromise<void>();
+const environmentInitialized = new DeferredPromise<void>();
 let hasDisconnectListener = false;
 let reconnect = false;
 
-window.addEventListener('DOMContentLoaded', () => {
-    hasDOMContentLoaded.resolve();
-});
+if (typeof window !== 'undefined') {
+    window.addEventListener('DOMContentLoaded', () => {
+        environmentInitialized.resolve();
+    });
+} else {
+    environmentInitialized.resolve();
+}
 if (typeof fin !== 'undefined') {
     getServicePromise();
 }
 
 export async function getServicePromise(): Promise<ChannelClient> {
-    await hasDOMContentLoaded.promise;
+    await environmentInitialized.promise;
     if (!channelPromise) {
         if (typeof fin === 'undefined') {
             channelPromise = Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.'));
