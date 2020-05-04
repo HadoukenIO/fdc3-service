@@ -331,12 +331,18 @@ export function getServiceIdentity(): Identity {
     return serviceIdentity;
 }
 
-export async function setServiceIdentity() {
-    const info: RuntimeInfo = await fin.System.getRuntimeInfo();
+export async function setServiceIdentity(runtimeVersion?: string) {
+    if (runtimeVersion === undefined) {
+        const info: RuntimeInfo = await fin.System.getRuntimeInfo();
 
-    if (info.fdc3AppUuid && info.fdc3ChannelName) {
-        serviceIdentity.uuid = info.fdc3AppUuid;
-        serviceIdentity.name = info.fdc3AppUuid;
-        serviceChannel = info.fdc3ChannelName;
+        if (info.fdc3AppUuid && info.fdc3ChannelName) {
+            serviceIdentity.uuid = info.fdc3AppUuid;
+            serviceIdentity.name = info.fdc3AppUuid;
+            serviceChannel = info.fdc3ChannelName;
+        }
+    } else if (runtimeVersion) {
+        serviceIdentity.uuid += `-${runtimeVersion}`;
+        serviceIdentity.name += `-${runtimeVersion}`;
+        serviceChannel += `-${runtimeVersion}`;
     }
 }

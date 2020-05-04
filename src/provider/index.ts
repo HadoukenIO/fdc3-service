@@ -4,7 +4,7 @@ import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
 import {FDC3Error, ConnectionError, ApplicationError, SendContextError} from '../client/errors';
-import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, GetOrCreateAppChannelPayload, AddContextListenerPayload, RemoveContextListenerPayload} from '../client/internal';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, GetOrCreateAppChannelPayload, AddContextListenerPayload, RemoveContextListenerPayload, setServiceIdentity} from '../client/internal';
 import {AppIntent, IntentResolution, Application, Context, ChannelTransport, SystemChannelTransport, AppChannelTransport} from '../client/main';
 import {parseIdentity, parseContext, parseChannelId, parseAppChannelName} from '../client/validation';
 
@@ -72,6 +72,9 @@ export class Main {
             intentHandler: this._intentHandler,
             model: this._model
         });
+
+        // Fetch our identity, and derive the name of the IAB channel
+        await setServiceIdentity();
 
         // Wait for creation of any injected components that require async initialization
         await Injector.init();

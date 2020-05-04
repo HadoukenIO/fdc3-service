@@ -9,5 +9,5 @@ if (args && args.asar) {
     const runtime = args.runtime || manifest.runtime.version;
 
     // Set service identity, in a place that is accesssible to tests
-    setServiceIdentity(`fdc3-service-${runtime}`);
+    setServiceIdentity(runtime);
 }

@@ -145,7 +145,7 @@ export function setupTeardown(): void {
         expect(resolverShowing).toBe(false);
         expect(runningApps.sort()).toEqual(expectedRunningApps.sort());
 
-        await expect(isServiceClear()).resolves.toBe(true);
+        await checkService();
     });
 }
 
@@ -164,42 +164,54 @@ export async function closeResolver(): Promise<void> {
 /**
  * Checks that the service is in the expected state when no test apps are running
  */
-async function isServiceClear(): Promise<boolean> {
-    return fdc3Remote.ofBrowser.executeOnWindow<[TestAppData], boolean, ProviderWindow>(
+async function checkService(): Promise<void> {
+    const problemList = await fdc3Remote.ofBrowser.executeOnWindow<[TestAppData], string[], ProviderWindow>(
         getServiceIdentity(),
-        function (this: ProviderWindow, expectedWindowIdentity: Identity): boolean {
-            if (this.model.connections.length !== 1) {
-                return false;
+        function (this: ProviderWindow, expectedWindowIdentity: Identity): string[] {
+            const problems: string[] = [];
+            const {connections, apps} = this.model;
+
+            if (connections.length !== 1) {
+                problems.push(`Had ${connections.length} connections, expected 1. Connections: ${connections.map((c) => c.id).join(', ')}`);
+            } else {
+                const singleConnection = connections[0];
+
+                if (singleConnection.appInfo.appId !== expectedWindowIdentity.uuid) {
+                    problems.push(`Expected connection to be from ${expectedWindowIdentity.uuid}, was from ${singleConnection.id}`);
+                }
+
+                if (singleConnection.hasContextListener() || singleConnection.channelContextListeners.length !== 0) {
+                    problems.push('Expected connection to have a context listener, but it did not');
+                }
+
+                if (singleConnection.intentListeners.length !== 0) {
+                    problems.push(`Expected connection to have no intent listener, but it has listeners for: ${singleConnection.intentListeners.join(', ')}`);
+                }
             }
 
-            if (this.model.apps.length !== 1) {
-                return false;
+            if (apps.length !== 1) {
+                problems.push(`Had ${apps.length} live apps, expected 1. Apps: ${apps.map((a) => a.appInfo?.appId || '<unknown>').join(', ')}`);
+            } else {
+                const singleApp = apps[0];
+
+                if (singleApp.appInfo!.appId !== expectedWindowIdentity.uuid) {
+                    problems.push(`Expected registered app to be ${expectedWindowIdentity.uuid}, was from ${singleApp.appInfo?.appId || '<unknown>'}`);
+                }
+
+                if (singleApp.connections.length !== 1 || connections.length !== 1 || singleApp.connections[0] !== connections[0]) {
+                    problems.push(`Expected sole connection to be from sole app. App connections: ${singleApp.connections.map((c) => c.id).join(', ')}`);
+                }
             }
 
-            const singleWindow = this.model.connections[0];
-            const singleApp = this.model.apps[0];
-
-            if (singleWindow.appInfo.appId !== expectedWindowIdentity.uuid) {
-                return false;
-            }
-
-            if (singleApp.appInfo!.appId !== expectedWindowIdentity.uuid) {
-                return false;
-            }
-
-            if (singleApp.connections.length !== 1 || singleApp.connections[0] !== singleWindow) {
-                return false;
-            }
-
-            if (singleWindow.hasContextListener() || singleWindow.channelContextListeners.length !== 0) {
-                return false;
-            }
-
-            if (singleWindow.intentListeners.length !== 0) {
-                return false;
-            }
-
-            return true;
+            return problems;
         }, testManagerIdentity
     );
+
+    const problemCount = problemList.length;
+    if (problemCount === 1) {
+        throw new Error(`Problem found within service state: ${problemList[0]}`);
+    } else if (problemCount > 1) {
+        const sep = '\n  - ';
+        throw new Error(`Found ${problemCount} problems within service state:${sep}${problemList.join(sep)}`);
+    }
 }
