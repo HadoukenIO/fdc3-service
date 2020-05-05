@@ -9,6 +9,7 @@
  * This file is excluded from the public-facing TypeScript documentation.
  */
 import {Identity} from 'openfin/_v2/main';
+import {RuntimeInfo} from 'openfin/_v2/api/system/runtime-info';
 import {Signal} from 'openfin-service-signal';
 
 import {AppName} from './directory';
@@ -323,17 +324,25 @@ export function deserializeError(error: Error): Error | FDC3Error {
     return error;
 }
 
-export function setServiceChannel(channelName: string) {
-    serviceChannel = channelName;
-}
 export function getServiceChannel(): string {
     return serviceChannel;
 }
-
-export function setServiceIdentity(uuid: string) {
-    serviceIdentity.uuid = uuid;
-    serviceIdentity.name = uuid;
-}
 export function getServiceIdentity(): Identity {
     return serviceIdentity;
+}
+
+export async function setServiceIdentity(runtimeVersion?: string) {
+    if (runtimeVersion === undefined) {
+        const info: RuntimeInfo = await fin.System.getRuntimeInfo();
+
+        if (info.fdc3AppUuid && info.fdc3ChannelName) {
+            serviceIdentity.uuid = info.fdc3AppUuid;
+            serviceIdentity.name = info.fdc3AppUuid;
+            serviceChannel = info.fdc3ChannelName;
+        }
+    } else if (runtimeVersion) {
+        serviceIdentity.uuid += `-${runtimeVersion}`;
+        serviceIdentity.name += `-${runtimeVersion}`;
+        serviceChannel += `-${runtimeVersion}`;
+    }
 }
