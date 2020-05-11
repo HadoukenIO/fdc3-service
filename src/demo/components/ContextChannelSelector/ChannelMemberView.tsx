@@ -1,8 +1,8 @@
 import * as React from 'react';
 import {Identity} from 'openfin/_v2/main';
 
-import {Channel} from '../../../client/contextChannels';
-import {addEventListener} from '../../../client/main';
+import /* type */ {Channel} from '../../../client/contextChannels';
+import {fdc3} from '../../stub';
 
 interface ChannelViewProps {
     channel: Channel;
@@ -18,10 +18,10 @@ export function ContextChannelView(props: ChannelViewProps): React.ReactElement 
         setVisible(!visible);
     };
 
-    const setInfo = async (channel: Channel) => {
-        setMembers(await channel.getMembers());
-        if (channel.type === 'system') {
-            setColor(channel.visualIdentity.color);
+    const setInfo = async (channelLocal: Channel) => {
+        setMembers(await channelLocal.getMembers());
+        if (channelLocal.type === 'system') {
+            setColor(channelLocal.visualIdentity.color);
         } else {
             // Use white for default channel
             setColor('#FFFFFF');
@@ -30,10 +30,10 @@ export function ContextChannelView(props: ChannelViewProps): React.ReactElement 
 
     React.useEffect(() => {
         setInfo(channel);
-        addEventListener('channel-changed', (event) => {
+        fdc3.addEventListener('channel-changed', (event) => {
             const changedChannel = event.channel || event.previousChannel;
             if (changedChannel!.id === channel.id) {
-                changedChannel!.getMembers().then(result => {
+                changedChannel!.getMembers().then((result) => {
                     setMembers(result);
                 });
             }
@@ -70,8 +70,4 @@ function MemberList(props: MemberList): React.ReactElement {
             </ul>
         </div>
     );
-}
-
-function numberToHex(num: number) {
-    return num.toString(16).padStart(6, '0');
 }

@@ -4,10 +4,10 @@ import 'reflect-metadata';
 import {Store} from 'openfin-service-config';
 
 import {Application} from '../../src/client/directory';
-import {AppIntent} from '../../src/client/main';
 import {AppDirectory} from '../../src/provider/model/AppDirectory';
 import {ConfigurationObject} from '../../gen/provider/config/fdc3-config';
 import {ConfigStoreBinding} from '../../src/provider/model/ConfigStore';
+import {createFakeApp, createFakeIntent, createFakeContextType} from '../demo/utils/fakes';
 
 enum StorageKeys {
     URL = 'fdc3@url',
@@ -30,39 +30,37 @@ declare const global: NodeJS.Global & {localStorage: LocalStore} & {fetch: (url:
 const DEV_APP_DIRECTORY_URL = 'http://openfin.co';
 let appDirectory: AppDirectory;
 
-const fakeApp1: Application = {
-    appId: '1',
-    name: 'App 1',
-    manifestType: '',
-    manifest: '',
+const fakeApp1: Application = createFakeApp({
+    customConfig: [
+        {
+            'name': 'appUuid',
+            'value': 'customUuid'
+        }
+    ],
     intents: [
         {
-            name: 'testIntent.StartChat',
+            name: 'StartChat',
             contexts: ['testContext.User'],
             customConfig: {}
         }, {
-            name: 'testIntent.SendEmail',
+            name: 'SendEmail',
             contexts: ['testContext.User'],
             customConfig: {}
         }
     ]
-};
+});
 
-const fakeApp2: Application = {
-    appId: '2',
-    name: 'App 2',
-    manifestType: '',
-    manifest: '',
+const fakeApp2: Application = createFakeApp({
     intents: [{
-        name: 'testIntent.StartChat',
+        name: 'StartChat',
         contexts: ['testContext.User', 'testContext.Bot'],
         customConfig: {}
     }, {
-        name: 'testIntent.ShowChart',
+        name: 'ShowChart',
         contexts: ['testContext.Instrument'],
         customConfig: {}
     }]
-};
+});
 
 const fakeApps: Application[] = [fakeApp1, fakeApp2];
 const cachedFakeApps: Application[] = [fakeApp1, fakeApp1, fakeApp2, fakeApp2];
@@ -71,7 +69,7 @@ const mockFetchReturnJson = jest.fn().mockResolvedValue(fakeApps);
 /**
  * Creates a new Application Directory with the specified URL
  */
-async function createAppDirectory(url: string): Promise<void> {
+async function createAppDirectory(url?: string): Promise<void> {
     const configStore: ConfigStoreBinding = {
         config: new Store<ConfigurationObject>(require('../../gen/provider/config/defaults.json')),
         initialized: Promise.resolve()
@@ -82,7 +80,7 @@ async function createAppDirectory(url: string): Promise<void> {
     await appDirectory.delayedInit();
 }
 
-beforeEach(async () => {
+beforeEach(() => {
     jest.restoreAllMocks();
 
     global.localStorage = {
@@ -100,7 +98,7 @@ beforeEach(async () => {
     };
 
     // Replace the fetch result with our mocked directory
-    (global as any).fetch = jest.fn().mockResolvedValue({
+    global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: mockFetchReturnJson
     });
@@ -108,6 +106,27 @@ beforeEach(async () => {
 });
 
 describe('When Fetching Initial Data', () => {
+    describe('And config applicationDirectory is undefined', () => {
+        beforeEach(async () => {
+            await createAppDirectory(undefined);
+        });
+
+        test('The default public application directory is used', async () => {
+            await expect(appDirectory.getAllApps()).resolves.toEqual(fakeApps);
+        });
+    });
+
+    describe('And config applicationDirectory is falsey', () => {
+        beforeEach(async () => {
+            mockFetchReturnJson.mockRejectedValue({});
+            await createAppDirectory('');
+        });
+
+        test('The application directory will be empty', async () => {
+            await expect(appDirectory.getAllApps()).resolves.toEqual([]);
+        });
+    });
+
     describe('And we\'re online', () => {
         beforeEach(async () => {
             await createAppDirectory(DEV_APP_DIRECTORY_URL);
@@ -188,56 +207,223 @@ describe('When querying the Directory', () => {
     });
 
     it('Can get applicaiton by name', async () => {
-        const app = await appDirectory.getAppByName('App 1');
+        const app = await appDirectory.getAppByName(fakeApp2.name);
         expect(app).not.toBeNull();
     });
 
-    it('Can get application by intent', async () => {
-        const apps = await appDirectory.getAppsByIntent('testIntent.SendEmail');
-        expect(apps).toHaveLength(1);
+    describe('With a custom appUuid is not defined', () => {
+        it('Can get application by uuid using appId', async () => {
+            const app = await appDirectory.getAppByUuid(fakeApp2.appId);
+            expect(app).not.toBeNull();
+        });
+    });
+
+    describe('With a custom appUuid is defined', () => {
+        it('Can get application by uuid with appUuid property in customConfig', async () => {
+            const app = await appDirectory.getAppByUuid('customUuid');
+            expect(app).not.toBeNull();
+        });
+
+        it('Cannot get application by uuid using appId', async () => {
+            const app = await appDirectory.getAppByUuid(fakeApp1.appId);
+            expect(app).toBeNull();
+        });
     });
 });
 
-describe('Given an App Directory with apps', () => {
-    beforeEach(async () => {
-        await createAppDirectory(DEV_APP_DIRECTORY_URL);
-    });
+describe('When querying individual applications', () => {
+    describe('When an app has an intent with no contexts', () => {
+        const intent = createFakeIntent();
 
-    describe('When finding app intents by context with a context implemented by 2 intents in both apps', () => {
-        it('Should return 2 intents', async () => {
-            const intents = await appDirectory.getAppIntentsByContext('testContext.User');
+        const intentType = intent.name;
 
-            expect(intents).toEqual([
-                {
-                    intent: {name: 'testIntent.SendEmail', displayName: 'testIntent.SendEmail'},
-                    apps: [fakeApp1]
-                },
-                {
-                    intent: {name: 'testIntent.StartChat', displayName: 'testIntent.StartChat'},
-                    apps: [fakeApp1, fakeApp2]
-                }
-            ] as AppIntent[]);
+        const app = createFakeApp({
+            intents: [intent]
+        });
+
+        it('The app might support that intent', () => {
+            expect(AppDirectory.mightAppSupportIntent(app, intentType)).toBe(true);
+        });
+
+        it('The app might support an arbitrary intent', () => {
+            const arbitraryIntentType = createFakeIntent().name;
+
+            expect(AppDirectory.mightAppSupportIntent(app, arbitraryIntentType)).toBe(true);
+        });
+
+        it('The app might support that intent with an arbitrary context', () => {
+            const arbitraryContextType = createFakeContextType();
+
+            expect(AppDirectory.mightAppSupportIntent(app, intentType, arbitraryContextType)).toBe(true);
+        });
+
+        it('The app is expected to support that intent', () => {
+            expect(AppDirectory.shouldAppSupportIntent(app, intentType)).toBe(true);
+        });
+
+        it('The app is not expected to support an arbitrary intent', () => {
+            const arbitraryIntentType = createFakeIntent().name;
+
+            expect(AppDirectory.shouldAppSupportIntent(app, arbitraryIntentType)).toBe(false);
+        });
+
+        it('The app is expected to support that intent with an arbitrarycontext', () => {
+            const arbitraryContextType = createFakeContextType();
+
+            expect(AppDirectory.shouldAppSupportIntent(app, intentType, arbitraryContextType)).toBe(true);
         });
     });
 
-    describe('When finding app intents by context with a context not implemented by any intent', () => {
-        it('Should return an empty array', async () => {
-            const intents = await appDirectory.getAppIntentsByContext('testContext.NonExistent');
+    describe('When an app has an intent with multiple contexts', () => {
+        const contexts = [createFakeContextType(), createFakeContextType(), createFakeContextType()];
 
-            expect(intents).toEqual([] as AppIntent[]);
+        const intent = createFakeIntent({
+            contexts
+        });
+
+        const intentType = intent.name;
+
+        const app = createFakeApp({
+            intents: [intent]
+        });
+
+        it('The app might support that intent', () => {
+            expect(AppDirectory.mightAppSupportIntent(app, intentType)).toBe(true);
+        });
+
+        it('The app might support an arbitrary intent', () => {
+            const arbitraryIntentType = createFakeIntent().name;
+
+            expect(AppDirectory.mightAppSupportIntent(app, arbitraryIntentType)).toBe(true);
+        });
+
+        it('The app might support that intent with each of its contexts', () => {
+            for (const context of contexts) {
+                expect(AppDirectory.mightAppSupportIntent(app, intentType, context)).toBe(true);
+            }
+        });
+
+        it('The app will not support that intent with an arbitrary context', () => {
+            const arbitraryContextType = createFakeContextType();
+
+            expect(AppDirectory.mightAppSupportIntent(app, intentType, arbitraryContextType)).toBe(false);
+        });
+
+        it('The app is expected to support that intent', () => {
+            expect(AppDirectory.shouldAppSupportIntent(app, intentType)).toBe(true);
+        });
+
+        it('The app is not expected to support an arbitrary intent', () => {
+            const arbitraryIntentType = createFakeIntent().name;
+
+            expect(AppDirectory.shouldAppSupportIntent(app, arbitraryIntentType)).toBe(false);
+        });
+
+        it('The app is expected to support that intent with each of its contexts', () => {
+            for (const context of contexts) {
+                expect(AppDirectory.shouldAppSupportIntent(app, intentType, context)).toBe(true);
+            }
+        });
+
+        it('The app is not expect to support that intent with an arbitrary context', () => {
+            const arbitraryContextType = createFakeContextType();
+
+            expect(AppDirectory.mightAppSupportIntent(app, intentType, arbitraryContextType)).toBe(false);
         });
     });
 
-    describe('When finding app intents by context with a context implemented by only 1 intent in 1 app', () => {
-        it('Should return 1 intent in 1 app', async () => {
-            const intents = await appDirectory.getAppIntentsByContext('testContext.Instrument');
+    describe('When an app has multiple intents', () => {
+        const intent1Contexts = [createFakeContextType(), createFakeContextType(), createFakeContextType()];
 
-            expect(intents).toEqual([
-                {
-                    intent: {name: 'testIntent.ShowChart', displayName: 'testIntent.ShowChart'},
-                    apps: [fakeApp2]
+        const intent1 = createFakeIntent({
+            contexts: intent1Contexts
+        });
+
+        const intent2Contexts = [createFakeContextType()];
+
+        const intent2 = createFakeIntent({
+            contexts: intent2Contexts
+        });
+
+        const intent3 = createFakeIntent({
+            contexts: []
+        });
+
+        const intent4 = createFakeIntent();
+
+        const intents = [intent1, intent2, intent3, intent4];
+
+        const app = createFakeApp({
+            intents
+        });
+
+        it('The app might support each of its intents', () => {
+            for (const intent of intents) {
+                expect(AppDirectory.mightAppSupportIntent(app, intent.name)).toBe(true);
+            }
+        });
+
+        it('The app might support an arbitrary intent', () => {
+            const arbitraryIntentType = createFakeIntent().name;
+
+            expect(AppDirectory.mightAppSupportIntent(app, arbitraryIntentType)).toBe(true);
+        });
+
+        it('The app might support each intent with each of its contexts', () => {
+            for (const intent of intents) {
+                for (const context of intent.contexts || []) {
+                    expect(AppDirectory.mightAppSupportIntent(app, intent.name, context)).toBe(true);
                 }
-            ] as AppIntent[]);
+            }
+        });
+
+        it('For intents with no contexts, the app might support those intents with an arbitrarycontext', () => {
+            const arbitraryContextType = createFakeContextType();
+
+            for (const intent of [intent3, intent4]) {
+                expect(AppDirectory.mightAppSupportIntent(app, intent.name, arbitraryContextType)).toBe(true);
+            }
+        });
+
+        it('For intents with contexts, the app will not support those intents with an arbitrarycontext', () => {
+            const arbitraryContextType = createFakeContextType();
+
+            for (const intent of [intent1, intent2]) {
+                expect(AppDirectory.mightAppSupportIntent(app, intent.name, arbitraryContextType)).toBe(false);
+            }
+        });
+
+        it('The app is expected to support each of its intents', () => {
+            for (const intent of intents) {
+                expect(AppDirectory.shouldAppSupportIntent(app, intent.name)).toBe(true);
+            }
+        });
+
+        it('The app is not expected to support an arbitrary intent', () => {
+            const arbitraryIntentType = createFakeIntent().name;
+
+            expect(AppDirectory.shouldAppSupportIntent(app, arbitraryIntentType)).toBe(false);
+        });
+
+        it('For intents with contexts, the app is expected to support each of those intents with each intent\'s contexts', () => {
+            for (const intent of intents) {
+                for (const context of intent.contexts || []) {
+                    expect(AppDirectory.shouldAppSupportIntent(app, intent.name, context)).toBe(true);
+                }
+            }
+        });
+
+        it('For intents with contexts, the app is not expected to support each of those intents with contexts of a different intent', () => {
+            expect(AppDirectory.shouldAppSupportIntent(app, intent1.name, intent2Contexts[0])).toBe(false);
+            expect(AppDirectory.shouldAppSupportIntent(app, intent2.name, intent1Contexts[0])).toBe(false);
+        });
+
+        it('For intents with no contexts, the app is expected to support each of those intents with an arbitrary context', () => {
+            const arbitraryContextType = createFakeContextType();
+
+            for (const intent of [intent3, intent4]) {
+                expect(AppDirectory.shouldAppSupportIntent(app, intent.name, arbitraryContextType)).toBe(true);
+            }
         });
     });
 });

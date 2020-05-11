@@ -6,39 +6,35 @@ import {ChannelId, Context as FDC3Context} from '../../../src/client/main';
 import {RemoteChannel} from './RemoteChannel';
 import {RemoteContextListener} from './fdc3RemoteExecution';
 
-interface CustomMatcherResult {
-    pass: boolean;
-    message: string | (() => string);
-}
-
 declare global {
+    // eslint-disable-next-line @typescript-eslint/no-namespace
     namespace jest {
-        interface Matchers<R> {
+        interface Matchers<R, T> {
             /**
              * Used to test that an FDC3Error is thrown
              * @param code Assert that the FDC3Error is thrown with a given `code`
              * @param message Optionally, assert that a given error message is returned
              */
-            toThrowFDC3Error(code: string, message?: string | RegExp): R;
+            toThrowFDC3Error(code: string, message?: string | RegExp): Promise<R>;
 
             /**
              * Used to test that a RemoteChannel represents the expected client-side Channel
              * @param channel An object with optional `id` and `type` properties that if present we expect the channel to match, or the `ChannelId`
              * @param classType The class we expect the channel to be an instance of
              */
-            toBeChannel(channel: {id?: ChannelId, type?: string} | ChannelId, classType?: Function): R;
+            toBeChannel(channel: {id?: ChannelId; type?: string} | ChannelId, classType?: Function): R;
 
             /**
              * Used to test that a remote listener has received the provided contexts
              * @param contexts The expected contexts
              */
-            toHaveReceivedContexts(contexts: FDC3Context[]): R;
+            toHaveReceivedContexts(contexts: FDC3Context[]): Promise<R>;
         }
     }
 }
 
 expect.extend({
-    async toThrowFDC3Error<T = any>(promiseOrFunction: Promise<T> | (() => T), code: string, message?: string | RegExp): Promise<CustomMatcherResult> {
+    async toThrowFDC3Error<T>(promiseOrFunction: Promise<T> | (() => T), code: string, message?: string | RegExp): Promise<jest.CustomMatcherResult> {
         try {
             if (promiseOrFunction instanceof Promise) {
                 await promiseOrFunction;
@@ -67,7 +63,7 @@ expect.extend({
         }
     },
 
-    toBeChannel(channel: RemoteChannel, expectedChannel: {id?: ChannelId, type?: string} | ChannelId, channelType?: Function): CustomMatcherResult {
+    toBeChannel(channel: RemoteChannel, expectedChannel: {id?: ChannelId; type?: string} | ChannelId, channelType?: Function): jest.CustomMatcherResult {
         const inflatedExpectedChannel = typeof expectedChannel === 'string' ? {id: expectedChannel} : expectedChannel;
 
         let pass = true;
@@ -104,20 +100,17 @@ expect.extend({
 
                 if (!pass) {
                     return errorLines.join('\n');
+                } else if (channelType) {
+                    return `Expected channel not to match: ${JSON.stringify(inflatedExpectedChannel)}, with protoype ${receivedPrototype.name}`;
                 } else {
-                    if (channelType) {
-                        return `Expected channel not to match: ${JSON.stringify(inflatedExpectedChannel)}, with protoype ${receivedPrototype.name}`;
-                    } else {
-                        return `Expected channel not to match: ${JSON.stringify(inflatedExpectedChannel)}`;
-                    }
+                    return `Expected channel not to match: ${JSON.stringify(inflatedExpectedChannel)}`;
                 }
             }
         };
     },
 
-    async toHaveReceivedContexts(listener: RemoteContextListener, expectedContexts: FDC3Context[]): Promise<CustomMatcherResult> {
-        const receivedContexts = await listener.getReceivedContexts();
-
+    async toHaveReceivedContexts(listener: RemoteContextListener, expectedContexts: FDC3Context[]): Promise<jest.CustomMatcherResult> {
+        const receivedContexts: FDC3Context[] = await listener.getReceivedContexts();
         const pass = this.equals(receivedContexts, expectedContexts);
 
         const message = () => {

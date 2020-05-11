@@ -1,13 +1,13 @@
 import * as React from 'react';
 
+import /* type */ {AppIntent} from '../../../client/main';
 import {Contact} from '../../apps/ContactsApp';
-import {AppIntent} from '../../../client/main';
 
 import {ContactsRow} from './ContactsRow';
 
 interface ContactTableProps {
     items?: Contact[];
-    appIntents: AppIntent[]
+    appIntents: AppIntent[];
 }
 
 export function ContactsTable(props: ContactTableProps): React.ReactElement {

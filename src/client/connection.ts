@@ -13,9 +13,10 @@
  */
 import {EventEmitter} from 'events';
 
+import {DeferredPromise} from 'openfin-service-async';
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
 
-import {APIFromClientTopic, SERVICE_CHANNEL, SERVICE_IDENTITY, APIFromClient, deserializeError, Events} from './internal';
+import {APIFromClientTopic, getServiceChannel, getServiceIdentity, setServiceIdentity, APIFromClient, deserializeError, Events, onReconnect} from './internal';
 import {EventRouter} from './EventRouter';
 
 /**
@@ -42,29 +43,73 @@ export function getEventRouter(): EventRouter<Events> {
 /**
  * Promise to the channel object that allows us to connect to the client
  */
-let channelPromise: Promise<ChannelClient>|null = null;
+let channelPromise: Promise<ChannelClient> | null = null;
+const environmentInitialized = new DeferredPromise<void>();
+let hasDisconnectListener = false;
+let reconnect = false;
 
+if (typeof document !== 'undefined' && document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        environmentInitialized.resolve();
+    });
+} else {
+    environmentInitialized.resolve();
+}
 if (typeof fin !== 'undefined') {
     getServicePromise();
 }
 
-export function getServicePromise(): Promise<ChannelClient> {
+export async function getServicePromise(): Promise<ChannelClient> {
+    await environmentInitialized.promise;
     if (!channelPromise) {
         if (typeof fin === 'undefined') {
             channelPromise = Promise.reject(new Error('fin is not defined. The openfin-fdc3 module is only intended for use in an OpenFin application.'));
-        } else if (fin.Window.me.uuid === SERVICE_IDENTITY.uuid && fin.Window.me.name === SERVICE_IDENTITY.name) {
-            // Currently a runtime bug when provider connects to itself. Ideally the provider would never import a file
-            // that includes this, but for now it is easier to put a guard in place.
-            channelPromise = Promise.reject<ChannelClient>(new Error('Trying to connect to provider from provider'));
         } else {
-            channelPromise = fin.InterApplicationBus.Channel.connect(SERVICE_CHANNEL, {payload: {version: PACKAGE_VERSION}}).then((channel: ChannelClient) => {
-                // Register service listeners
-                channel.register('WARN', (payload: any) => console.warn(payload));  // tslint:disable-line:no-any
+            channelPromise = new Promise<ChannelClient>(async (resolve, reject) => {
+                await setServiceIdentity();
 
-                // Any unregistered action will simply return false
-                channel.setDefaultAction(() => false);
+                if (fin.Window.me.uuid === getServiceIdentity().uuid && fin.Window.me.name === getServiceIdentity().name) {
+                    reject(new Error('Trying to connect to provider from provider'));
+                } else {
+                    let channel: ChannelClient | null = null;
 
-                return channel;
+                    setTimeout(() => {
+                        if (channel === null) {
+                            console.warn('Taking a long time to connect to FDC3 service. Is the FDC3 service running?');
+                        }
+                    }, 5000);
+
+                    channel = await fin.InterApplicationBus.Channel.connect(getServiceChannel(), {
+                        wait: true,
+                        payload: {version: PACKAGE_VERSION}
+                    });
+                    // Register service listeners
+                    channel.register('WARN', (payload: unknown) => console.warn(payload));  // tslint:disable-line:no-any
+                    // Any unregistered action will simply return false
+                    channel.setDefaultAction(() => false);
+
+                    if (!hasDisconnectListener) {
+                        channel.onDisconnection(() => {
+                            console.warn('Disconnected from FDC3 service');
+                            reconnect = true;
+                            channelPromise = null;
+                            setTimeout(() => {
+                                console.log('Attempting to reconnect to FDC3 service');
+                                getServicePromise();
+                            }, 300);
+                        });
+                        hasDisconnectListener = true;
+                    }
+
+                    if (reconnect) {
+                        onReconnect.emit();
+                        console.log('Reconnected to FDC3 service');
+                    } else {
+                        console.log('Connected to FDC3 service');
+                    }
+
+                    resolve(channel);
+                }
             });
         }
     }
@@ -81,7 +126,7 @@ export function getServicePromise(): Promise<ChannelClient> {
 export async function tryServiceDispatch<T extends APIFromClientTopic>(action: T, payload: APIFromClient[T][0]): Promise<APIFromClient[T][1]> {
     const channel: ChannelClient = await getServicePromise();
     return (channel.dispatch(action, payload) as Promise<APIFromClient[T][1]>)
-        .catch(error => {
+        .catch((error) => {
             throw deserializeError(error);
         });
 }

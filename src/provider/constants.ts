@@ -1,26 +1,40 @@
 /**
- * Timeouts, in milliseconds, for the different FDC3 actions
+ * Timeouts, in milliseconds, for the different FDC3 actions.
  */
 export const Timeouts = {
     /**
-     * Time for an app to register a listener after opening
+     * Time before we consider an app 'mature', i.e., has had chance to register any listeners.
      */
-    ADD_INTENT_LISTENER: 5000,
+    APP_MATURITY: 5000,
 
     /**
-     * Time for an OpenFin app to start by calling `fin.Application.startFromManifest`
+     * Time for an OpenFin app to start by calling `fin.Application.startFromManifest`.
      */
     APP_START_FROM_MANIFEST: 30000,
 
     /**
-     * Time service allows for a `window-created` event after a client expects the window to exist
+     * For windows, the time service allows for a `window-created` (or `view-created`) event after a client expects the
+     * window to exist.
+     *
+     * For other entity types, the entity must connect to the service within this time of an expected connection.
      */
-    WINDOW_EXPECT_TO_SEEN: 100,
+    ENTITY_INITIALIZE: 250,
 
     /**
-     * Time service allows for a window to go from first seen to being fully registered with the model
+     * Time service allows for a window to go from first created to being fully registered with the model.
+     *
+     * Applies only to windows, since there is no `window-created` equivilant for non-OpenFin windows/connections.
      */
-    WINDOW_SEEN_TO_REGISTERED: 5000
+    WINDOW_CREATED_TO_REGISTERED: 5000,
+
+    /**
+     * Time service allows for an API call to a client to resolve.
+     */
+    SERVICE_TO_CLIENT_API_CALL: 5000
+};
+
+export const CustomConfigFields = {
+    OPENFIN_APP_UUID: 'appUuid'
 };
 
 export const SYSTEM_CHANNELS = [

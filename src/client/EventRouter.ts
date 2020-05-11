@@ -9,9 +9,9 @@ import {EventEmitter} from 'events';
 
 import {TransportMappings, TransportMemberMappings} from './internal';
 
-export type EventSpecification = {
+export interface EventSpecification {
     type: string;
-};
+}
 
 type EmitterProvider = (targetId: string) => EventEmitter;
 type EventDeserializer<E extends EventSpecification, T extends E> = (event: Transport<T>) => T;
@@ -29,7 +29,7 @@ export type Targeted<T extends EventSpecification> = T & {
      * emitter.
      */
     target: EventTarget | 'default';
-}
+};
 export type Transport<T extends EventSpecification> = TransportMappings<T> extends never ? {
     [K in keyof T]: TransportMemberMappings<T[K]>;
 } : TransportMappings<T>;
@@ -41,7 +41,7 @@ export class EventRouter<E extends EventSpecification> {
     private readonly _emitterProviders: {[targetType: string]: (targetId: string) => EventEmitter};
     private readonly _deserializers: {[eventType: string]: EventDeserializer<E, E>};
 
-    private _defaultEmitter: EventEmitter;
+    private readonly _defaultEmitter: EventEmitter;
 
     public constructor(defaultEmitter: EventEmitter) {
         this._emitterProviders = {};

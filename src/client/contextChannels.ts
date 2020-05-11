@@ -1,5 +1,19 @@
 /**
+ * Context channels allow end-user filtering of context broadcasts. Each window is assigned to a particular
+ * context channel, and any [[broadcast|broadcasts]] by any window in that channel will only be recevied by the other
+ * windows in that channel. The assignment of windows to channels would typically be managed by the user, through
+ * either a channel selector widget built into the window itself, or through a separate channel manager application.
+ *
+ * All windows will initially be placed in the [[defaultChannel|default channel]], and will remain there unless they
+ * explicitly [[join]] another channel.
+ *
+ * There are three types of channels: [[DefaultChannel]], [[SystemChannel]] and [[AppChannel]].
+ *
  * @module ContextChannels
+ */
+
+/**
+ * Contains API definitions for context channels
  */
 
 /* eslint-disable no-dupe-class-members */
@@ -8,15 +22,15 @@ import {EventEmitter} from 'events';
 
 import {Identity} from 'openfin/_v2/main';
 
-import {parseIdentity, parseContext, validateEnvironment, parseChannelId} from './validation';
+import {parseIdentity, parseContext, validateEnvironment, parseChannelId, parseAppChannelName} from './validation';
 import {tryServiceDispatch, getEventRouter, getServicePromise} from './connection';
-import {APIFromClientTopic, ChannelTransport, APIToClientTopic, ChannelReceiveContextPayload, SystemChannelTransport, ChannelEvents} from './internal';
+import {APIFromClientTopic, APIToClientTopic, ChannelReceiveContextPayload, ChannelEvents, invokeListeners, onReconnect, DEFAULT_CHANNEL_ID} from './internal';
 import {Context} from './context';
 import {ContextListener} from './main';
 import {Transport} from './EventRouter';
 
 /**
- * Type used to identify specific Channels. Though simply an alias of `string`, use of this type indicates usage of the string
+ * Type used to identify specific Channels. Though simply an alias of `string`, use of this type indicates use of the string
  * as a channel identifier, and that the user should avoid assuming any internal structure and instead treat as a fully opaque object
  */
 export type ChannelId = string;
@@ -26,12 +40,12 @@ export type ChannelId = string;
  */
 export interface DisplayMetadata {
     /**
-     * A user-readable name for this channel, e.g: `"Red"`
+     * A user-readable name for this channel, e.g. `"Red"`
      */
     name: string;
 
     /**
-     * The color that should be associated within this channel when displaying this channel in a UI, e.g: `#FF0000`.
+     * The color that should be associated with this channel when displaying this channel in a UI, e.g. `#FF0000`.
      */
     color: string;
 
@@ -44,14 +58,16 @@ export interface DisplayMetadata {
 /**
  * Union of all possible concrete channel classes that may be returned by the service.
  */
-export type Channel = SystemChannel | DefaultChannel;
+export type Channel = DefaultChannel | SystemChannel | AppChannel;
 
 /**
- * Event fired when a window is added to a channel. See {@link Channel.addEventListener}.
+ * Event fired when a window is added to a channel. See {@link ChannelBase.addEventListener}.
  *
  * Note that this event will typically fire as part of a pair - since windows must always belong to a channel, a window
- * can only join a channel by leaving it's previous channel. The exceptions to this rule are when the window is created
+ * can only join a channel by leaving its previous channel. The exceptions to this rule are when the window is created
  * and destroyed when there will be no previous channel or no current channel, respectively.
+ *
+ * To listen for channel changes across all (or multiple) channels, there is also a top-level {@link ChannelChangedEvent}.
  *
  * @event
  */
@@ -64,7 +80,7 @@ export interface ChannelWindowAddedEvent {
     identity: Identity;
 
     /**
-     * The channel that window now belongs to. Will always be the channel object that {@link Channel.addEventListener} was
+     * The channel that window now belongs to. Will always be the channel object that {@link ChannelBase.addEventListener} was
      * called on.
      */
     channel: Channel;
@@ -78,13 +94,13 @@ export interface ChannelWindowAddedEvent {
 }
 
 /**
- * Event fired when a window is removed from a channel. See {@link Channel.addEventListener}.
+ * Event fired when a window is removed from a channel. See {@link ChannelBase.addEventListener}.
  *
  * Note that this event will typically fire as part of a pair - since windows must always belong to a channel, a window
  * can only join a channel by leaving it's previous channel. The exceptions to this rule are when the window is created
  * and destroyed when there will be no previous channel or no current channel, respectively.
  *
- * To listen for channel changes across all (or multiple) channel, there is also a top-level {@link ChannelChangedEvent}.
+ * To listen for channel changes across all (or multiple) channels, there is also a top-level {@link ChannelChangedEvent}.
  *
  * @event
  */
@@ -92,7 +108,7 @@ export interface ChannelWindowRemovedEvent {
     type: 'window-removed';
 
     /**
-     * The window that has just been added to the channel.
+     * The window that has just been removed from the channel.
      */
     identity: Identity;
 
@@ -104,7 +120,7 @@ export interface ChannelWindowRemovedEvent {
     channel: Channel | null;
 
     /**
-     * The channel that the window belonged to previously. Will always be the channel object that {@link Channel.addEventListener} was
+     * The channel that the window belonged to previously. Will always be the channel object that {@link ChannelBase.addEventListener} was
      * called on.
      */
     previousChannel: Channel;
@@ -156,10 +172,34 @@ export interface ChannelContextListener extends ContextListener {
 }
 
 /**
+ * @hidden
+ */
+export interface ChannelTransport {
+    id: ChannelId;
+    type: string;
+}
+
+/**
+ * @hidden
+ */
+export interface SystemChannelTransport extends ChannelTransport {
+    type: 'system';
+    visualIdentity: DisplayMetadata;
+}
+
+/**
+ * @hidden
+ */
+export interface AppChannelTransport extends ChannelTransport {
+    type: 'app';
+    name: string;
+}
+
+/**
  * Class representing a context channel. All interactions with a context channel happen through the methods on here.
  *
- * When users wish to generically handle both {@link SystemChannel}s and the {@link DefaultChannel}, generally the
- * {@link Channel} type should be used instead of {@link ChannelBase}.
+ * When users wish to generically handle both {@link SystemChannel}s, {@link AppChannel}s and the
+ * {@link DefaultChannel}, generally the {@link Channel} type should be used instead of {@link ChannelBase}.
  */
 export abstract class ChannelBase {
     /**
@@ -199,7 +239,7 @@ export abstract class ChannelBase {
     /**
      * Returns the last context that was broadcast on this channel. All channels initially have no context, until a
      * window is added to the channel and then broadcasts. If there is not yet any context on the channel, this method
-     * will return `null`. The context is also reset back into it's initial context-less state whenever a channel is
+     * will return `null`. The context is also reset back into its initial context-less state whenever a channel is
      * cleared of all windows.
      *
      * The context of a channel will be captured regardless of how the context is broadcasted on this channel - whether
@@ -223,9 +263,9 @@ export abstract class ChannelBase {
      * the only way to do so is to join another channel. A window may rejoin the default channel by calling `channels.defaultChannel.join()`.
      *
      * @param identity The window that should be added to this channel. If omitted, will use the window that calls this method.
-     * @throws `TypeError`: If `identity` is not a valid {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}
-     * @throws `FDC3Error`: If the window specified by `identity` does not exist
-     * @throws `FDC3Error`: If the window specified by `identity` does not integrate FDC3 (determined by inclusion of the client API module)
+     * @throws If `identity` is passed, [[FDC3Error]] with an [[ConnectionError]] code.
+     * @throws If `identity` is passed, `TypeError` if `identity` is not a valid
+     * {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}.
      */
     public async join(identity?: Identity): Promise<void> {
         return tryServiceDispatch(APIFromClientTopic.CHANNEL_JOIN, {id: this.id, identity: identity && parseIdentity(identity)});
@@ -238,13 +278,13 @@ export abstract class ChannelBase {
      * channels that they aren't a member of.
      *
      * This broadcast will be received by all windows that are members of this channel, *except* for the window that
-     * makes the broadcast. This matches the behaviour of the top-level FDC3 `broadcast` function.
+     * makes the broadcast. This matches the behavior of the top-level FDC3 `broadcast` function.
      *
-     * @param context The context to broadcast to all windows on this channel
-     * @throws `TypeError`: If `context` is not a valid {@link Context}
+     * @param context The context to broadcast to all windows on this channel.
+     * @throws `TypeError` if `context` is not a valid [[Context]].
      */
-    public broadcast(context: Context): void {
-        tryServiceDispatch(APIFromClientTopic.CHANNEL_BROADCAST, {id: this.id, context: parseContext(context)});
+    public async broadcast(context: Context): Promise<void> {
+        await tryServiceDispatch(APIFromClientTopic.CHANNEL_BROADCAST, {id: this.id, context: parseContext(context)});
     }
 
     /**
@@ -253,22 +293,22 @@ export abstract class ChannelBase {
      * This can be triggered by a window belonging to the channel calling the top-level FDC3 `broadcast` function, or by
      * any window calling this channel's {@link broadcast} method.
      *
-     * @param handler Function that should be called whenever a context is broadcast on this channel
+     * @param handler Function that should be called whenever a context is broadcast on this channel.
      */
-    public async addContextListener(handler: (context: Context) => void): Promise<ChannelContextListener> {
+    public addContextListener(handler: (context: Context) => void): ChannelContextListener {
         validateEnvironment();
 
         const listener: ChannelContextListener = {
             channel: this as Channel,
             handler,
-            unsubscribe: async () => {
+            unsubscribe: () => {
                 const index: number = channelContextListeners.indexOf(listener);
 
                 if (index >= 0) {
                     channelContextListeners.splice(index, 1);
 
                     if (!hasChannelContextListener(this.id)) {
-                        await tryServiceDispatch(APIFromClientTopic.CHANNEL_REMOVE_CONTEXT_LISTENER, {id: this.id});
+                        tryServiceDispatch(APIFromClientTopic.CHANNEL_REMOVE_CONTEXT_LISTENER, {id: this.id});
                     }
                 }
 
@@ -280,59 +320,89 @@ export abstract class ChannelBase {
         channelContextListeners.push(listener);
 
         if (!hasContextListenerBefore) {
-            await tryServiceDispatch(APIFromClientTopic.CHANNEL_ADD_CONTEXT_LISTENER, {id: this.id});
+            tryServiceDispatch(APIFromClientTopic.CHANNEL_ADD_CONTEXT_LISTENER, {id: this.id});
         }
         return listener;
     }
 
     /**
-     * Event that is fired whenever a window changes joins this channel. This includes switching to/from the default
+     * Event that is fired whenever a window joins this channel. This includes switching to/from the default
      * channel.
      *
      * The event also includes which channel the window was in previously. The `channel` property within the
      * event will always be this channel instance.
      */
-    public async addEventListener(eventType: 'window-added', listener: (event: ChannelWindowAddedEvent) => void): Promise<void>;
+    public addEventListener(eventType: 'window-added', handler: (event: ChannelWindowAddedEvent) => void): void;
 
     /**
-     * Event that is fired whenever a window changes leaves this channel. This includes switching to/from the default
+     * Event that is fired whenever a window leaves this channel. This includes switching to/from the default
      * channel.
      *
      * The event also includes which channel the window is being added to. The `previousChannel` property within the
      * event will always be this channel instance.
      */
-    public async addEventListener(eventType: 'window-removed', listener: (event: ChannelWindowRemovedEvent) => void): Promise<void>;
+    public addEventListener(eventType: 'window-removed', handler: (event: ChannelWindowRemovedEvent) => void): void;
 
-    public async addEventListener<E extends ChannelEvents>(eventType: E['type'], listener: (event: E) => void): Promise<void> {
+    /**
+     * Subscribes to a particular event. This is not for subscribing to context updates on this channel. Instead, use
+     * [[addContextListener]] to receive broadcasts. This is used for events that are raised from a specific channel.
+     *
+     * See also [[main#addEventListener]], for subscribing to "global" events that are not related to a specific channel.
+     *
+     * @param eventType The event type.
+     * @param handler The handler to call when the event is fired.
+     */
+    public addEventListener<E extends ChannelEvents>(eventType: E['type'], handler: (event: E) => void): void {
         validateEnvironment();
 
         const hasEventListenerBefore = channelEventEmitters[this.id].listenerCount(eventType) > 0;
-        channelEventEmitters[this.id].addListener(eventType, listener);
+        channelEventEmitters[this.id].addListener(eventType, handler);
 
         if (!hasEventListenerBefore) {
-            await tryServiceDispatch(APIFromClientTopic.CHANNEL_ADD_EVENT_LISTENER, {id: this.id, eventType});
+            tryServiceDispatch(APIFromClientTopic.CHANNEL_ADD_EVENT_LISTENER, {id: this.id, eventType});
         }
     }
 
-    public async removeEventListener(eventType: 'window-added', listener: (event: ChannelWindowAddedEvent) => void): Promise<void>;
-    public async removeEventListener(eventType: 'window-removed', listener: (event: ChannelWindowRemovedEvent) => void): Promise<void>;
+    public removeEventListener(eventType: 'window-added', handler: (event: ChannelWindowAddedEvent) => void): void;
+    public removeEventListener(eventType: 'window-removed', handler: (event: ChannelWindowRemovedEvent) => void): void;
 
     /**
-     * Removes a listener previously added with {@link addEventListener}.
+     * Unsubscribes from a particular event.
      *
-     * Has no effect if `eventType` isn't a valid event, or `listener` isn't a callback registered against `eventType`.
+     * Has no effect if `eventType` isn't a valid event, or `handler` isn't a handler registered against `eventType`.
      *
-     * @param eventType The event being unsubscribed from
-     * @param listener The callback function to remove
+     * @param eventType The event being unsubscribed from.
+     * @param handler The handler function to remove.
      */
-    public async removeEventListener<E extends ChannelEvents>(eventType: E['type'], listener: (event: E) => void): Promise<void> {
+    public removeEventListener<E extends ChannelEvents>(eventType: E['type'], handler: (event: E) => void): void {
         validateEnvironment();
 
-        channelEventEmitters[this.id].removeListener(eventType, listener);
+        channelEventEmitters[this.id].removeListener(eventType, handler);
 
         if (channelEventEmitters[this.id].listenerCount(eventType) === 0) {
-            await tryServiceDispatch(APIFromClientTopic.CHANNEL_REMOVE_EVENT_LISTENER, {id: this.id, eventType});
+            tryServiceDispatch(APIFromClientTopic.CHANNEL_REMOVE_EVENT_LISTENER, {id: this.id, eventType});
         }
+    }
+}
+
+/**
+ * The channel all windows start in.
+ *
+ * Unlike system channels, the default channel has no pre-defined name or visual style. It is up to apps to display
+ * this in the channel selector as they see fit - it could be as "default", or "none", or by "leaving" a user channel.
+ *
+ * An instance of the default channel is available from the [[defaultChannel]] getter API.
+ */
+export class DefaultChannel extends ChannelBase {
+    public readonly type!: 'default';
+
+    /**
+     * @hidden
+     *
+     * Channel objects should not be created directly by an application, channel objects should be obtained by calling the relevant APIs.
+     */
+    public constructor() {
+        super(DEFAULT_CHANNEL_ID, 'default');
     }
 }
 
@@ -343,19 +413,20 @@ export abstract class ChannelBase {
  * making the same list of channels available to all applications, and this list will not change over the lifecycle of
  * the service.
  *
- * We do not intend to support creation of 'user' channels at runtime, as this would add considerable complexity when
- * implementing a channel selector component, as it would need to support a dynamic channel list
+ * To fetch the list of available channels, use [[getSystemChannels]].
  */
 export class SystemChannel extends ChannelBase {
     public readonly type!: 'system';
 
     /**
-     * How a client application should present this channel in any UI
+     * How a client application should present this channel in any UI.
      */
     public readonly visualIdentity: DisplayMetadata;
 
     /**
      * @hidden
+     *
+     * Channel objects should not be created directly by an application, channel objects should be obtained by calling the relevant APIs.
      */
     public constructor(transport: SystemChannelTransport) {
         super(transport.id, 'system');
@@ -365,36 +436,44 @@ export class SystemChannel extends ChannelBase {
 }
 
 /**
- * All windows will start off in this channel.
+ * Custom application-created channels.
  *
- * Unlike system channels, the default channel has no pre-defined name or visual style. It is up to apps to display
- * this in the channel selector as they see fit - it could be as "default", or "none", or by "leaving" a user channel.
+ * Applications can create these for specialised use-cases.  These channels should be obtained by name by calling
+ * {@link getOrCreateAppChannel} and it is up to your organization to decide how applications are aware of this name.
+ * As with organization defined contexts, app channel names should have a prefix specific to your organization to avoid
+ * name collisions, e.g. `'company-name.channel-name'`.
+ *
+ * App channels can be joined by any window, but are only indirectly discoverable if the name is not known.
  */
-export class DefaultChannel extends ChannelBase {
-    public readonly type!: 'default';
+export class AppChannel extends ChannelBase {
+    public readonly type!: 'app';
+
+    /**
+     * The name of this channel. This is the same string as is passed to [[getOrCreateAppChannel]].
+     */
+    public readonly name: string;
 
     /**
      * @hidden
+     *
+     * Channel objects should not be created directly by an application, channel objects should be obtained by calling the relevant APIs.
      */
-    public constructor() {
-        super(DEFAULT_CHANNEL_ID, 'default');
+    public constructor(transport: AppChannelTransport) {
+        super(transport.id, 'app');
+
+        this.name = transport.name;
     }
 }
 
 const channelEventEmitters: {[key: string]: EventEmitter} = {};
 
 /**
- * @hidden
- */
-export const DEFAULT_CHANNEL_ID: ChannelId = 'default';
-
-/**
  * The channel in which all windows will initially be placed.
  *
- * All windows will belong to exactly one channel at all times. If they have not explicitly
- * been placed into a channel via a {@link ChannelBase.join} call, they will be in this channel.
+ * All windows will belong to exactly one channel at all times. If they have not explicitly been placed into a channel
+ * via a {@link ChannelBase.join} call, they will be in this channel.
  *
- * If an app wishes to leave a system channel it can do so by (re-)joining this channel.
+ * If an app wishes to leave any other channel, it can do so by (re-)joining this channel.
  */
 export const defaultChannel: DefaultChannel = new DefaultChannel();
 
@@ -405,7 +484,7 @@ const channelLookup: {[id: string]: Channel} = {
 const channelContextListeners: ChannelContextListener[] = [];
 
 /**
- * Gets all user-visible channels.
+ * Gets all service-defined system channels.
  *
  * This is the list of channels that should be used to populate a channel selector. All channels returned will have
  * additional metadata that can be used to populate a selector UI with a consistent cross-app channel list.
@@ -420,8 +499,7 @@ export async function getSystemChannels(): Promise<SystemChannel[]> {
  * Fetches a channel object for a given channel identifier. The `channelId` property maps to the {@link ChannelBase.id} field.
  *
  * @param channelId The ID of the channel to return
- * @throws `TypeError`: If `channelId` is not a valid ChannelId
- * @throws `FDC3Error`: If the channel specified by `channelId` does not exist
+ * @throws [[FDC3Error]] with an [[ChannelError]] code.
  */
 export async function getChannelById(channelId: ChannelId): Promise<Channel> {
     const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_CHANNEL_BY_ID, {id: parseChannelId(channelId)});
@@ -433,9 +511,9 @@ export async function getChannelById(channelId: ChannelId): Promise<Channel> {
  * Returns the channel that the current window is assigned to.
  *
  * @param identity The window to query. If omitted, will use the window that calls this method.
- * @throws `TypeError`: If `identity` is not a valid {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}
- * @throws `FDC3Error`: If the window specified by `identity` does not exist
- * @throws `FDC3Error`: If the window specified by `identity` does not integrate FDC3 (determined by inclusion of the client API module)
+ * @throws If `identity` is passed, [[FDC3Error]] with an [[ConnectionError]] code.
+ * @throws If `identity` is passed, `TypeError` if `identity` is not a valid
+ * {@link https://developer.openfin.co/docs/javascript/stable/global.html#Identity | Identity}.
  */
 export async function getCurrentChannel(identity?: Identity): Promise<Channel> {
     const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_CURRENT_CHANNEL, {identity: identity && parseIdentity(identity)});
@@ -444,9 +522,25 @@ export async function getCurrentChannel(identity?: Identity): Promise<Channel> {
 }
 
 /**
- * @hidden
+ * Returns an app channel with the given name. Either creates a new channel or returns an existing channel.
+ *
+ * It is up to your organization to decide how to share knowledge of these custom channels. As with organization
+ * defined contexts, app channel names should have a prefix specific to your organization to avoid name collisions,
+ * e.g. `'company-name.channel-name'`.
+ *
+ * The service will assign a unique ID when creating a new app channel, but no particular mapping of name to ID should
+ * be assumed.
+ *
+ * @param name The name of the channel. Must not be an empty string.
+ * @throws `TypeError` if `name` is not a valid app channel name, i.e., a non-empty string.
  */
-export function getChannelObject<T extends Channel = Channel>(channelTransport: ChannelTransport): T {
+export async function getOrCreateAppChannel(name: string): Promise<AppChannel> {
+    const channelTransport = await tryServiceDispatch(APIFromClientTopic.GET_OR_CREATE_APP_CHANNEL, {name: parseAppChannelName(name)});
+
+    return getChannelObject<AppChannel>(channelTransport);
+}
+
+function getChannelObject<T extends Channel = Channel>(channelTransport: ChannelTransport): T {
     let channel: Channel = channelLookup[channelTransport.id];
 
     if (!channel) {
@@ -457,6 +551,11 @@ export function getChannelObject<T extends Channel = Channel>(channelTransport: 
             case 'system':
                 channel = new SystemChannel(channelTransport as SystemChannelTransport);
                 channelLookup[channelTransport.id] = channel;
+                break;
+            case 'app':
+                channel = new AppChannel(channelTransport as AppChannelTransport);
+                channelLookup[channelTransport.id] = channel;
+                break;
         }
     }
 
@@ -464,44 +563,80 @@ export function getChannelObject<T extends Channel = Channel>(channelTransport: 
 }
 
 function hasChannelContextListener(id: ChannelId): boolean {
-    return channelContextListeners.some(listener => listener.channel.id === id);
+    return channelContextListeners.some((listener) => listener.channel.id === id);
 }
 
 function deserializeWindowAddedEvent(eventTransport: Transport<ChannelWindowAddedEvent>): ChannelWindowAddedEvent {
     const identity = eventTransport.identity;
-    const channel = getChannelObject(eventTransport.channel!);
+    const channel = getChannelObject(eventTransport.channel);
     const previousChannel = eventTransport.previousChannel ? getChannelObject(eventTransport.previousChannel) : null;
-
     return {type: 'window-added', identity, channel, previousChannel};
 }
 
 function deserializeWindowRemovedEvent(eventTransport: Transport<ChannelWindowRemovedEvent>): ChannelWindowRemovedEvent {
     const identity = eventTransport.identity;
     const channel = eventTransport.channel ? getChannelObject(eventTransport.channel) : null;
-    const previousChannel = getChannelObject(eventTransport.previousChannel!);
-
+    const previousChannel = getChannelObject(eventTransport.previousChannel);
     return {type: 'window-removed', identity, channel, previousChannel};
 }
 
+// Keep track of the channel the client is in so it can be rejoined on disconnect
+let currentChannel: Channel | null = null;
+
+function deserializeChannelChangedEvent(eventTransport: Transport<ChannelChangedEvent>): ChannelChangedEvent {
+    const type = eventTransport.type;
+    const identity = eventTransport.identity;
+    const channel = eventTransport.channel ? getChannelObject(eventTransport.channel) : null;
+    const previousChannel = eventTransport.previousChannel ? getChannelObject(eventTransport.previousChannel) : null;
+
+    if (fin.Window.me.name === identity.name && fin.Window.me.uuid === identity.uuid) {
+        currentChannel = channel;
+    }
+
+    return {type, identity, channel, previousChannel};
+}
+
 if (typeof fin !== 'undefined') {
-    getServicePromise().then(channelClient => {
-        channelClient.register(APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, (payload: ChannelReceiveContextPayload) => {
-            channelContextListeners.forEach((listener: ChannelContextListener) => {
-                if (listener.channel.id === payload.channel) {
-                    listener.handler(payload.context);
-                }
+    const eventHandler = getEventRouter();
+    eventHandler.registerEmitterProvider('channel', (channelId: ChannelId) => {
+        return channelEventEmitters[channelId];
+    });
+
+    eventHandler.registerDeserializer('channel-changed', deserializeChannelChangedEvent);
+    eventHandler.registerDeserializer('window-added', deserializeWindowAddedEvent);
+    eventHandler.registerDeserializer('window-removed', deserializeWindowRemovedEvent);
+    onReconnect.add(async () => {
+        await initialize();
+        await rehydrate();
+    });
+    initialize();
+}
+
+function initialize(): Promise<void> {
+    return getServicePromise().then(async (channelClient) => {
+        try {
+            channelClient.register(APIToClientTopic.CHANNEL_RECEIVE_CONTEXT, async (payload: ChannelReceiveContextPayload) => {
+                await invokeListeners(
+                    channelContextListeners.filter((listener) => listener.channel.id === payload.channel),
+                    payload.context,
+                    (e) => console.warn(`Error thrown by channel context handler, swallowing error. Error message: ${e.message}`),
+                    () => new Error('All channel context handlers failed')
+                );
             });
-        });
-
-        const eventHandler = getEventRouter();
-
-        eventHandler.registerEmitterProvider('channel', (channelId: ChannelId) => {
-            return channelEventEmitters[channelId];
-        });
-
-        eventHandler.registerDeserializer('window-added', deserializeWindowAddedEvent);
-        eventHandler.registerDeserializer('window-removed', deserializeWindowRemovedEvent);
-    }, reason => {
+        } catch (e) {
+            // Trying to resubscribe to the same channel
+        }
+    }, (reason) => {
         console.warn('Unable to register client channel context handlers. getServicePromise() rejected with reason:', reason);
     });
+}
+
+async function rehydrate(): Promise<void> {
+    let channelToJoin: Channel = currentChannel || defaultChannel;
+    if (channelToJoin.type === 'app') {
+        channelToJoin = await getOrCreateAppChannel(channelToJoin.name);
+    }
+    await channelToJoin.join();
+    await Promise.all(channelContextListeners.map(({channel}) => tryServiceDispatch(APIFromClientTopic.CHANNEL_ADD_CONTEXT_LISTENER, {id: channel.id})));
+    currentChannel = channelToJoin;
 }

@@ -1,18 +1,17 @@
 import * as React from 'react';
 
-import {Application} from '../../../client/directory';
-import {ResolverArgs, ResolverResult} from '../../controller/ResolverHandler';
+import {Application} from '../../../../client/directory';
+import {ResolverArgs, ResolverResult} from '../../../controller/ResolverHandler';
+import {AppList} from '../AppList/AppList';
 
-import {AppList} from './AppList';
-
-import './Resolver.css';
+import '../../styles/_main.scss';
+import './Resolver.scss';
 
 let sendSuccess: (result: {app: Application}) => void;
-let sendError: (result: string) => void;
 
 export function Resolver(): React.ReactElement {
     const [applications, setApplications] = React.useState<Application[]>([]);
-    const [intent, setIntent] = React.useState<String>();
+    const [intent, setIntent] = React.useState<string>();
 
     const handleAppOpen = (app: Application) => sendSuccess({app});
     const handleCancel = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -21,7 +20,7 @@ export function Resolver(): React.ReactElement {
     };
 
     React.useEffect(() => {
-        fin.InterApplicationBus.Channel.create('resolver').then(channel => {
+        fin.InterApplicationBus.Channel.create('resolver').then((channel) => {
             Object.assign(window, {channel});
 
             channel.register('resolve', async (args: ResolverArgs) => {
@@ -30,21 +29,20 @@ export function Resolver(): React.ReactElement {
 
                 return new Promise<ResolverResult>((resolve, reject) => {
                     sendSuccess = resolve;
-                    sendError = reject;
                 });
             });
         });
     }, []);
 
     return (
-        <div id="container">
-            <div id="header">
+        <div className="container">
+            <div className="header">
                 <h1>{intent}</h1>
                 <div id="exit" onClick={handleCancel}>
                     <img src="assets/exit.png" />
                 </div>
             </div>
-            <AppList applications={applications} onAppOpen={handleAppOpen}/>
+            <AppList applications={applications} onAppOpen={handleAppOpen} />
             <div id="cancel" onClick={handleCancel}>
                 <h1>Cancel</h1>
             </div>

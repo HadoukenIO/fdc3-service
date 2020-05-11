@@ -1,29 +1,29 @@
 import * as React from 'react';
 
-import * as fdc3 from '../../client/main';
+import /* type */ {IntentListener} from '../../client/main';
+import /* type */ {ContactContext, Context} from '../../client/context';
 import {Number} from '../components/dialer/Number';
 import {Dialer} from '../components/dialer/Dialer';
 import {CallTimer} from '../components/dialer/CallTimer';
 import {CallButton} from '../components/dialer/CallButton';
-import {ContactContext, Context} from '../../client/context';
 import {Dialog} from '../components/common/Dialog';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
+import {fdc3} from '../stub';
+
 import '../../../res/demo/css/w3.css';
-import {getCurrentChannel} from '../../client/main';
 
 interface AppProps {
     phoneNumber?: string;
 }
 /**
  * Dialer App
- * @param props
  */
 export function DialerApp(props: AppProps): React.ReactElement {
     const [inCall, setInCall] = React.useState(false);
     const [phoneNumber, setPhoneNumber] = React.useState<string>('');
     const [pendingCall, setPendingCall] = React.useState<ContactContext | null>(null);
 
-    const onNumberEntry = (phoneNumber: string) => setPhoneNumber(phoneNumber);
+    const onNumberEntry = (phoneNumberLocal: string) => setPhoneNumber(phoneNumberLocal);
     const onDialerEntry = (key: string) => setPhoneNumber(phoneNumber + key);
     const toggleCall = () => setInCall(!inCall);
     const handleDialog = (option: string) => {
@@ -35,8 +35,8 @@ export function DialerApp(props: AppProps): React.ReactElement {
         }
     };
     const handleIntent = (context: ContactContext, startCall: boolean) => {
-        const phoneNumber: string = context.id.phone!;
-        if (phoneNumber) {
+        const phoneNumberLocal: string = context.id.phone!;
+        if (phoneNumberLocal) {
             setPhoneNumber(context.id.phone!);
             setInCall(startCall);
         } else {
@@ -50,13 +50,13 @@ export function DialerApp(props: AppProps): React.ReactElement {
 
     // Setup listeners
     React.useEffect(() => {
-        getCurrentChannel().then(async channel => {
+        fdc3.getCurrentChannel().then(async (channel) => {
             const context = await channel.getCurrentContext();
             if (context && context.type === 'fdc3.contact') {
                 handleIntent(context as ContactContext, false);
             }
         });
-        let dialListener: any;
+        let dialListener: IntentListener;
         setTimeout(() => {
             dialListener = fdc3.addIntentListener(fdc3.Intents.DIAL_CALL, (context: Context) => {
                 if (!inCall) {
@@ -82,7 +82,9 @@ export function DialerApp(props: AppProps): React.ReactElement {
         });
         // Cleanup
         return () => {
-            dialListener && dialListener.unsubscribe();
+            if (dialListener) {
+                dialListener.unsubscribe();
+            }
             callListener.unsubscribe();
             contextListener.unsubscribe();
         };
@@ -98,7 +100,7 @@ export function DialerApp(props: AppProps): React.ReactElement {
             <Dialog
                 show={!!pendingCall}
                 title="Replace call?"
-                body={'Hang up and call ' + (pendingCall && pendingCall.id.phone) + '?'}
+                body={`Hang up and call ${pendingCall && pendingCall.id.phone}?`}
                 options={['No', 'Yes']} handleOption={handleDialog}
             />
         </div>

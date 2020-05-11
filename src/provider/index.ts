@@ -3,10 +3,10 @@ import {inject, injectable} from 'inversify';
 import {Identity} from 'openfin/_v2/main';
 import {ProviderIdentity} from 'openfin/_v2/api/interappbus/channel/channel';
 
-import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, ChannelTransport, SystemChannelTransport, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload} from '../client/internal';
-import {AppIntent, IntentResolution, Application, Intent, Context} from '../client/main';
-import {FDC3Error, OpenError, IdentityError} from '../client/errors';
-import {parseIdentity, parseContext, parseChannelId} from '../client/validation';
+import {FDC3Error, ConnectionError, ApplicationError, SendContextError} from '../client/errors';
+import {RaiseIntentPayload, APIFromClientTopic, OpenPayload, FindIntentPayload, FindIntentsByContextPayload, BroadcastPayload, APIFromClient, AddIntentListenerPayload, RemoveIntentListenerPayload, GetSystemChannelsPayload, GetCurrentChannelPayload, ChannelGetMembersPayload, ChannelJoinPayload, GetChannelByIdPayload, ChannelBroadcastPayload, ChannelGetCurrentContextPayload, ChannelAddContextListenerPayload, ChannelRemoveContextListenerPayload, ChannelAddEventListenerPayload, ChannelRemoveEventListenerPayload, GetOrCreateAppChannelPayload, AddContextListenerPayload, RemoveContextListenerPayload, setServiceIdentity} from '../client/internal';
+import {AppIntent, IntentResolution, Application, Context, ChannelTransport, SystemChannelTransport, AppChannelTransport} from '../client/main';
+import {parseIdentity, parseContext, parseChannelId, parseAppChannelName} from '../client/validation';
 
 import {Inject} from './common/Injectables';
 import {AppDirectory} from './model/AppDirectory';
@@ -17,51 +17,64 @@ import {APIHandler} from './APIHandler';
 import {EventHandler} from './controller/EventHandler';
 import {Injector} from './common/Injector';
 import {ChannelHandler} from './controller/ChannelHandler';
-import {AppWindow} from './model/AppWindow';
+import {AppConnection} from './model/AppConnection';
+import {Intent} from './intents';
 import {ConfigStoreBinding} from './model/ConfigStore';
 import {ContextChannel} from './model/ContextChannel';
+import {Environment} from './model/Environment';
+import {collateClientCalls, ClientCallsResult} from './utils/helpers';
 
 @injectable()
 export class Main {
-    private readonly _directory: AppDirectory;
-    private readonly _model: Model;
-    private readonly _contextHandler: ContextHandler;
-    private readonly _intentHandler: IntentHandler;
-    private readonly _channelHandler: ChannelHandler;
-    private readonly _eventHandler: EventHandler;
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
-    private readonly _configStore: ConfigStoreBinding
+    private readonly _directory: AppDirectory;
+    private readonly _channelHandler: ChannelHandler;
+    private readonly _configStore: ConfigStoreBinding;
+    private readonly _contextHandler: ContextHandler;
+    private readonly _environment: Environment;
+    private readonly _eventHandler: EventHandler;
+    private readonly _intentHandler: IntentHandler;
+    private readonly _model: Model;
 
     constructor(
-        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
-        @inject(Inject.MODEL) model: Model,
-        @inject(Inject.CONTEXT_HANDLER) contextHandler: ContextHandler,
-        @inject(Inject.INTENT_HANDLER) intentHandler: IntentHandler,
-        @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
-        @inject(Inject.EVENT_HANDLER) eventHandler: EventHandler,
+    // eslint-disable-next-line @typescript-eslint/indent
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>,
-        @inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding
+        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
+        @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
+        @inject(Inject.CONFIG_STORE) configStore: ConfigStoreBinding,
+        @inject(Inject.CONTEXT_HANDLER) contextHandler: ContextHandler,
+        @inject(Inject.ENVIRONMENT) environment: Environment,
+        @inject(Inject.EVENT_HANDLER) eventHandler: EventHandler,
+        @inject(Inject.INTENT_HANDLER) intentHandler: IntentHandler,
+        @inject(Inject.MODEL) model: Model
     ) {
-        this._directory = directory;
-        this._model = model;
-        this._contextHandler = contextHandler;
-        this._intentHandler = intentHandler;
-        this._channelHandler = channelHandler;
-        this._eventHandler = eventHandler;
         this._apiHandler = apiHandler;
+        this._directory = directory;
+        this._channelHandler = channelHandler;
         this._configStore = configStore;
+        this._contextHandler = contextHandler;
+        this._environment = environment;
+        this._eventHandler = eventHandler;
+        this._intentHandler = intentHandler;
+        this._model = model;
     }
 
     public async register(): Promise<void> {
         Object.assign(window, {
             main: this,
+            apiHandler: this._apiHandler,
             directory: this._directory,
-            model: this._model,
-            contextHandler: this._contextHandler,
-            intentHandler: this._intentHandler,
             channelHandler: this._channelHandler,
-            configStore: this._configStore
+            configStore: this._configStore,
+            contextHandler: this._contextHandler,
+            environment: this._environment,
+            eventHandler: this._eventHandler,
+            intentHandler: this._intentHandler,
+            model: this._model
         });
+
+        // Fetch our identity, and derive the name of the IAB channel
+        await setServiceIdentity();
 
         // Wait for creation of any injected components that require async initialization
         await Injector.init();
@@ -75,9 +88,12 @@ export class Main {
             [APIFromClientTopic.RAISE_INTENT]: this.raiseIntent.bind(this),
             [APIFromClientTopic.ADD_INTENT_LISTENER]: this.addIntentListener.bind(this),
             [APIFromClientTopic.REMOVE_INTENT_LISTENER]: this.removeIntentListener.bind(this),
+            [APIFromClientTopic.ADD_CONTEXT_LISTENER]: this.addContextListener.bind(this),
+            [APIFromClientTopic.REMOVE_CONTEXT_LISTENER]: this.removeContextListener.bind(this),
             [APIFromClientTopic.GET_SYSTEM_CHANNELS]: this.getSystemChannels.bind(this),
             [APIFromClientTopic.GET_CHANNEL_BY_ID]: this.getChannelById.bind(this),
             [APIFromClientTopic.GET_CURRENT_CHANNEL]: this.getCurrentChannel.bind(this),
+            [APIFromClientTopic.GET_OR_CREATE_APP_CHANNEL]: this.getOrCreateAppChannel.bind(this),
             [APIFromClientTopic.CHANNEL_GET_MEMBERS]: this.channelGetMembers.bind(this),
             [APIFromClientTopic.CHANNEL_JOIN]: this.channelJoin.bind(this),
             [APIFromClientTopic.CHANNEL_BROADCAST]: this.channelBroadcast.bind(this),
@@ -93,30 +109,64 @@ export class Main {
         console.log('Service Initialised');
     }
 
-    private async onChannelChangedHandler(appWindow: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null): Promise<void> {
-        return this._eventHandler.dispatchEventOnChannelChanged(appWindow, channel, previousChannel);
+    private async onChannelChangedHandler(connection: AppConnection, channel: ContextChannel | null, previousChannel: ContextChannel | null): Promise<void> {
+        await this._eventHandler.dispatchEventOnChannelChanged(connection, channel, previousChannel);
     }
 
     private async open(payload: OpenPayload): Promise<void> {
+        const context = payload.context && parseContext(payload.context);
+
         const appInfo: Application|null = await this._directory.getAppByName(payload.name);
 
         if (!appInfo) {
-            throw new FDC3Error(OpenError.AppNotFound, `No app in directory with name: ${payload.name}`);
+            throw new FDC3Error(ApplicationError.NotFound, `No application '${payload.name}' found running or in directory`);
         }
 
-        // This can throw FDC3Errors if app fails to open or times out
-        const appWindows = await this._model.findOrCreate(appInfo);
+        const promises: Promise<void>[] = [];
 
-        await Promise.all(appWindows.map(window => window.bringToFront()));
-        if (appWindows.length > 0) {
-            appWindows[appWindows.length - 1].focus();
+        // Start the application if not already running
+        const startedPromise = (await this._model.getOrCreateLiveApp(appInfo)).waitForAppStarted();
+
+        promises.push(startedPromise);
+
+        // If the app has open windows, bring all to front in creation order
+        const connections = this._model.findConnectionsByAppName(appInfo.name);
+        if (connections.length > 0) {
+            connections.sort((a, b) => a.entityNumber - b.entityNumber);
+
+            // Some connections may not be windows. Calling bringToFront on these entities is a no-op.
+            const bringToFrontPromise = Promise.all(connections.map((connection) => connection.bringToFront()));
+            const focusPromise = bringToFrontPromise.then(() => connections[connections.length - 1].focus());
+
+            promises.push(focusPromise);
         }
 
-        if (payload.context) {
-            await Promise.all(appWindows.map(window => {
-                return this._contextHandler.send(window, parseContext(payload.context!));
-            }));
+        // If a context has been provided, send to listening windows
+        if (context) {
+            const connectionsPromise = this._model.expectConnectionsForApp(
+                appInfo,
+                (connection) => connection.hasContextListener(),
+                (connection) => connection.waitForReadyToReceiveContext()
+            );
+
+            const sendContextPromise = connectionsPromise.then(async (expectedConnections) => {
+                if (expectedConnections.length === 0) {
+                    throw new FDC3Error(SendContextError.NoHandler, 'Context provided, but application has no handler for context');
+                }
+
+                const [result] = await collateClientCalls(expectedConnections.map((connection) => this._contextHandler.send(connection, context)));
+
+                if (result === ClientCallsResult.ALL_FAILURE) {
+                    throw new FDC3Error(SendContextError.HandlerError, 'Error(s) thrown by application attempting to handle context');
+                } else if (result === ClientCallsResult.TIMEOUT) {
+                    throw new FDC3Error(SendContextError.HandlerTimeout, 'Timeout waiting for application to handle context');
+                }
+            });
+
+            promises.push(sendContextPromise);
         }
+
+        await Promise.all(promises);
     }
 
     /**
@@ -128,7 +178,7 @@ export class Main {
     private async findIntent(payload: FindIntentPayload): Promise<AppIntent> {
         let apps: Application[];
         if (payload.intent) {
-            apps = await this._model.getApplicationsForIntent(payload.intent);
+            apps = await this._model.getApplicationsForIntent(payload.intent, payload.context && parseContext(payload.context).type);
         } else {
             // This is a non-FDC3 workaround to get all directory apps by calling `findIntent` with a falsy intent.
             // Ideally the FDC3 spec would expose an API to access the directory in a more meaningful way
@@ -138,20 +188,20 @@ export class Main {
         return {
             intent: {
                 name: payload.intent,
-                displayName: payload.intent
+                displayName: AppDirectory.getIntentDisplayName(apps, payload.intent)
             },
             apps
         };
     }
 
-    private async findIntentsByContext (payload: FindIntentsByContextPayload): Promise<AppIntent[]> {
-        return this._directory.getAppIntentsByContext(parseContext(payload.context).type);
+    private async findIntentsByContext(payload: FindIntentsByContextPayload): Promise<AppIntent[]> {
+        return this._model.getAppIntentsByContext(parseContext(payload.context).type);
     }
 
     private async broadcast(payload: BroadcastPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = await this.expectWindow(source);
+        const connection = await this.expectConnection(source);
 
-        return this._contextHandler.broadcast(parseContext(payload.context), appWindow);
+        return this._contextHandler.broadcast(parseContext(payload.context), connection);
     }
 
     private async raiseIntent(payload: RaiseIntentPayload): Promise<IntentResolution> {
@@ -165,15 +215,31 @@ export class Main {
     }
 
     private async addIntentListener(payload: AddIntentListenerPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = await this.expectWindow(source);
+        const connection = await this.expectConnection(source);
 
-        appWindow.addIntentListener(payload.intent);
+        connection.addIntentListener(payload.intent);
     }
 
     private removeIntentListener(payload: RemoveIntentListenerPayload, source: ProviderIdentity): void {
-        const appWindow = this.attemptGetWindow(source);
-        if (appWindow) {
-            appWindow.removeIntentListener(payload.intent);
+        const connection = this.attemptGetConnection(source);
+        if (connection) {
+            connection.removeIntentListener(payload.intent);
+        } else {
+            // If for some odd reason the window is not in the model it's still OK to return successfully,
+            // as the caller's intention was to remove a listener and the listener is certainly not there.
+        }
+    }
+
+    private async addContextListener(payload: AddContextListenerPayload, source: ProviderIdentity): Promise<void> {
+        const connection = await this.expectConnection(source);
+
+        connection.addContextListener();
+    }
+
+    private removeContextListener(payload: RemoveContextListenerPayload, source: ProviderIdentity): void {
+        const connection = this.attemptGetConnection(source);
+        if (connection) {
+            connection.removeContextListener();
         } else {
             // If for some odd reason the window is not in the model it's still OK to return successfully,
             // as the caller's intention was to remove a listener and the listener is certainly not there.
@@ -181,7 +247,7 @@ export class Main {
     }
 
     private getSystemChannels(payload: GetSystemChannelsPayload, source: ProviderIdentity): ReadonlyArray<SystemChannelTransport> {
-        return this._channelHandler.getSystemChannels().map(channel => channel.serialize());
+        return this._channelHandler.getSystemChannels().map((channel) => channel.serialize());
     }
 
     private getChannelById(payload: GetChannelByIdPayload, source: ProviderIdentity): ChannelTransport {
@@ -190,35 +256,47 @@ export class Main {
 
     private async getCurrentChannel(payload: GetCurrentChannelPayload, source: ProviderIdentity): Promise<ChannelTransport> {
         const identity = payload.identity || source;
-        const appWindow = await this.expectWindow(identity);
+        const connection = await this.expectConnection(identity);
 
-        return appWindow.channel.serialize();
+        return connection.channel.serialize();
+    }
+
+    private getOrCreateAppChannel(payload: GetOrCreateAppChannelPayload, source: ProviderIdentity): AppChannelTransport {
+        const name = parseAppChannelName(payload.name);
+
+        return this._channelHandler.getAppChannelByName(name).serialize();
     }
 
     private channelGetMembers(payload: ChannelGetMembersPayload, source: ProviderIdentity): ReadonlyArray<Identity> {
         const channel = this._channelHandler.getChannelById(payload.id);
 
-        return this._channelHandler.getChannelMembers(channel).map(appWindow => parseIdentity(appWindow.identity));
+        return this._channelHandler.getChannelMembers(channel).map((connection) => parseIdentity(connection.identity));
     }
 
     private async channelJoin(payload: ChannelJoinPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = await this.expectWindow(payload.identity || source);
+        const connection = await this.expectConnection(payload.identity || source);
 
         const channel = this._channelHandler.getChannelById(payload.id);
 
-        this._channelHandler.joinChannel(appWindow, channel);
+        await this._channelHandler.joinChannel(connection, channel);
         const context = this._channelHandler.getChannelContext(channel);
 
         if (context) {
-            return this._contextHandler.send(appWindow, context);
+            await collateClientCalls([this._contextHandler.send(connection, context)]).then(([result]) => {
+                if (result === ClientCallsResult.ALL_FAILURE) {
+                    console.warn(`Error thrown by client connection ${connection.id} attempting to handle context on joining channel, swallowing error`);
+                } else if (result === ClientCallsResult.TIMEOUT) {
+                    console.warn(`Timeout waiting for client connection ${connection.id} to handle context on joining channel, swallowing error`);
+                }
+            });
         }
     }
 
     private async channelBroadcast(payload: ChannelBroadcastPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = await this.expectWindow(source);
+        const connection = await this.expectConnection(source);
         const channel = this._channelHandler.getChannelById(payload.id);
 
-        return this._contextHandler.broadcastOnChannel(parseContext(payload.context), appWindow, channel);
+        return this._contextHandler.broadcastOnChannel(parseContext(payload.context), connection, channel);
     }
 
     private channelGetCurrentContext(payload: ChannelGetCurrentContextPayload, source: ProviderIdentity): Context | null {
@@ -228,18 +306,18 @@ export class Main {
     }
 
     private async channelAddContextListener(payload: ChannelAddContextListenerPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = await this.expectWindow(source);
+        const connection = await this.expectConnection(source);
         const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
 
-        appWindow.addChannelContextListener(channel);
+        connection.addChannelContextListener(channel);
     }
 
     private channelRemoveContextListener(payload: ChannelRemoveContextListenerPayload, source: ProviderIdentity): void {
-        const appWindow = this.attemptGetWindow(source);
+        const connection = this.attemptGetConnection(source);
         const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
 
-        if (appWindow) {
-            appWindow.removeChannelContextListener(channel);
+        if (connection) {
+            connection.removeChannelContextListener(channel);
         } else {
             // If for some odd reason the window is not in the model it's still OK to return successfully,
             // as the caller's intention was to remove a listener and the listener is certainly not there.
@@ -247,40 +325,40 @@ export class Main {
     }
 
     private async channelAddEventListener(payload: ChannelAddEventListenerPayload, source: ProviderIdentity): Promise<void> {
-        const appWindow = await this.expectWindow(source);
+        const connection = await this.expectConnection(source);
         const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
 
-        appWindow.addChannelEventListener(channel, payload.eventType);
+        connection.addChannelEventListener(channel, payload.eventType);
     }
 
     private channelRemoveEventListener(payload: ChannelRemoveEventListenerPayload, source: ProviderIdentity): void {
-        const appWindow = this.attemptGetWindow(source);
+        const connection = this.attemptGetConnection(source);
         const channel = this._channelHandler.getChannelById(parseChannelId(payload.id));
 
-        if (appWindow) {
-            appWindow.removeChannelEventListener(channel, payload.eventType);
+        if (connection) {
+            connection.removeChannelEventListener(channel, payload.eventType);
         } else {
             // If for some odd reason the window is not in the model it's still OK to return successfully,
             // as the caller's intention was to remove a listener and the listener is certainly not there.
         }
     }
 
-    private async expectWindow(identity: Identity): Promise<AppWindow> {
+    private async expectConnection(identity: Identity): Promise<AppConnection> {
         identity = parseIdentity(identity);
-        const windowPromise = this._model.expectWindow(identity);
+        const connectionPromise = this._model.expectConnection(identity);
 
         try {
-            return await windowPromise;
+            return await connectionPromise;
         } catch {
             throw new FDC3Error(
-                IdentityError.WindowWithIdentityNotFound,
+                ConnectionError.WindowWithIdentityNotFound,
                 `No connection to FDC3 service found from window with identity: ${JSON.stringify(identity)}`
             );
         }
     }
 
-    private attemptGetWindow(identity: Identity): AppWindow | null {
-        return this._model.getWindow(parseIdentity(identity));
+    private attemptGetConnection(identity: Identity): AppConnection | null {
+        return this._model.getConnection(parseIdentity(identity));
     }
 }
 

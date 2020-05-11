@@ -1,6 +1,8 @@
 import * as React from 'react';
 
-import {Channel, defaultChannel, getCurrentChannel, getSystemChannels, SystemChannel} from '../../../client/contextChannels';
+import /* type */ {Channel, ChannelChangedEvent} from '../../../client/contextChannels';
+import {getId} from '../../../provider/utils/getId';
+import {fdc3} from '../../stub';
 
 import {ContextChannelView} from './ChannelMemberView';
 
@@ -16,23 +18,34 @@ ContextChannelSelector.defaultProps = {
 
 /**
  * Context channel ui
-*/
+ */
 export function ContextChannelSelector(props: ContextChannelSelectorProps): React.ReactElement {
     const {float} = props;
-    const [currentChannel, setCurrentChannel] = React.useState<Channel>(defaultChannel);
+    const [currentChannel, setCurrentChannel] = React.useState<Channel>(fdc3.defaultChannel);
     const [channels, setChannels] = React.useState<Channel[]>([]);
     React.useEffect(() => {
-        getCurrentChannel().then(channel => {
+        fdc3.getCurrentChannel().then((channel) => {
             setCurrentChannel(channel);
         });
-        getSystemChannels().then(channels => {
-            setChannels([defaultChannel, ...channels]);
+        fdc3.getSystemChannels().then((channelsLocal) => {
+            setChannels([fdc3.defaultChannel, ...channelsLocal]);
         });
+        fdc3.addEventListener('channel-changed', channelChanged);
+
+        return () => {
+            fdc3.removeEventListener('channel-changed', channelChanged);
+        };
     }, []);
+
+    const channelChanged = (event: ChannelChangedEvent) => {
+        if (getId(event.identity) === getId(fin.Window.me) && event.channel !== currentChannel) {
+            setCurrentChannel(event.channel!);
+        }
+    };
 
     const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const {value: id} = event.currentTarget;
-        const selectedChannel = channels.find(channel => channel.id === id);
+        const selectedChannel = channels.find((channel) => channel.id === id);
 
         if (selectedChannel) {
             selectedChannel
@@ -48,14 +61,14 @@ export function ContextChannelSelector(props: ContextChannelSelectorProps): Reac
 
     return (
         <div className={`context-channel ${float ? 'float' : ''}`}>
-            <div className='selector'>
+            <div className="selector">
                 <ContextChannelView channel={currentChannel} />
                 <select value={currentChannel.id} onChange={handleChange}>
                     {
                         channels.map((channel, index) => {
                             return (
                                 <option
-                                    key={channel.id + index}
+                                    key={`${channel.id}${index}`}
                                     value={channel.id}
                                 >
                                     {channel.type === 'system' ? channel.visualIdentity.name : 'Default'}

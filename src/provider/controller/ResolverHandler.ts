@@ -1,26 +1,24 @@
 import {_Window} from 'openfin/_v2/api/window/window';
 import {WindowOption} from 'openfin/_v2/api/window/windowOption';
 import {ChannelClient} from 'openfin/_v2/api/interappbus/channel/client';
-import {injectable, inject} from 'inversify';
+import {injectable} from 'inversify';
 
-import {Inject} from '../common/Injectables';
-import {AppDirectory} from '../model/AppDirectory';
-import {Model} from '../model/Model';
-import {Intent, Application} from '../../client/main';
+import {Application} from '../../client/main';
 import {RESOLVER_IDENTITY} from '../utils/constants';
+import {Intent} from '../intents';
 
 import {AsyncInit} from './AsyncInit';
 
 const RESOLVER_URL = (() => {
     let providerLocation = window.location.href;
 
-    if (providerLocation.indexOf('http://localhost') === 0) {
+    if (providerLocation.startsWith('http://localhost')) {
         // Work-around for fake provider used within test runner
         providerLocation = providerLocation.replace('/test', '/provider');
     }
 
     // Locate the default resolver HTML page, relative to the location of the provider
-    return providerLocation.replace('provider.html', 'ui/resolver');
+    return providerLocation.replace('provider.html', 'ui/resolver/index.html');
 })();
 
 /**
@@ -41,25 +39,42 @@ export interface ResolverResult {
 export interface ResolverHandlerBinding {
     initialized: Promise<void>;
 
-    handleIntent(intent: Intent): Promise<ResolverResult>;
+    handleIntent(intent: Intent, apps: Application[]): Promise<ResolverResult>;
     cancel(): Promise<void>;
 }
 
 @injectable()
 export class ResolverHandler extends AsyncInit implements ResolverHandlerBinding {
-    private readonly _directory: AppDirectory;
-    private readonly _model: Model;
-
     private _window!: _Window;
     private _channel!: ChannelClient;
 
-    constructor(
-        @inject(Inject.APP_DIRECTORY) directory: AppDirectory,
-        @inject(Inject.MODEL) model: Model,
-    ) {
-        super();
-        this._directory = directory;
-        this._model = model;
+    /**
+     * Instructs the resolver to prepare for a new intent.
+     *
+     * Resolver should refresh it's UI, and then show itself when ready.
+     *
+     * @param intent Intent that is about to be resolved
+     * @param applications The applications to present in the resolver
+     */
+    public async handleIntent(intent: Intent, applications: Application[]): Promise<ResolverResult> {
+        const msg: ResolverArgs = {intent, applications};
+
+        await this._window.show();
+        await this._window.setAsForeground();
+        const selection: ResolverResult = await this._channel.dispatch('resolve', msg).catch(console.error);
+        await this._window.hide();
+
+        return selection;
+    }
+
+    /**
+     * Instructs the resolver to hide itself.
+     *
+     * The resolver will be re-used if another intent needs to be resolved later. If there are queued intents, this
+     * could be immediately after the resolver is done cleaning-up.
+     */
+    public cancel(): Promise<void> {
+        return this._window.hide();
     }
 
     /**
@@ -88,36 +103,5 @@ export class ResolverHandler extends AsyncInit implements ResolverHandlerBinding
         this._window = await fin.Window.create(options);
         this._window.addListener('close-requested', () => false);
         this._channel = await fin.InterApplicationBus.Channel.connect('resolver');
-    }
-
-    /**
-     * Instructs the resolver to prepare for a new intent.
-     *
-     * Resolver should refresh it's UI, and then show itself when ready.
-     *
-     * @param intent Intent that is about to be resolved
-     */
-    public async handleIntent(intent: Intent): Promise<ResolverResult> {
-        const msg: ResolverArgs = {
-            intent,
-            applications: await this._model.getApplicationsForIntent(intent.type)
-        };
-
-        await this._window.show();
-        await this._window.setAsForeground();
-        const selection: ResolverResult = await this._channel.dispatch('resolve', msg).catch(console.error);
-        await this._window.hide();
-
-        return selection;
-    }
-
-    /**
-     * Instructs the resolver to hide itself.
-     *
-     * The resolver will be re-used if another intent needs to be resolved later. If there are queued intents, this
-     * could be immediately after the resolver is done cleaning-up.
-     */
-    public async cancel(): Promise<void> {
-        this._window.hide();
     }
 }

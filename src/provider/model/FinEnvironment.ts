@@ -1,324 +1,289 @@
-import {WindowEvent} from 'openfin/_v2/api/events/base';
-import {injectable} from 'inversify';
-import {Identity, Window} from 'openfin/_v2/main';
+import {injectable, inject} from 'inversify';
+import {ApplicationOption} from 'openfin/_v2/api/application/applicationOption';
+import {WindowEvent, ApplicationEvent} from 'openfin/_v2/api/events/base';
+import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
+import {withTimeout} from 'openfin-service-async';
 
 import {AsyncInit} from '../controller/AsyncInit';
-import {Application, IntentType, ChannelId} from '../../client/main';
-import {FDC3Error, OpenError} from '../../client/errors';
-import {withTimeout} from '../utils/async';
-import {Timeouts} from '../constants';
+import {FDC3Error, ApplicationError} from '../../client/errors';
+import {APIFromClientTopic, getServiceIdentity} from '../../client/internal';
+import {Application} from '../../client/main';
 import {parseIdentity} from '../../client/validation';
-import {DeferredPromise} from '../common/DeferredPromise';
-import {Events, ChannelEvents} from '../../client/internal';
+import {Timeouts} from '../constants';
 import {Injector} from '../common/Injector';
+import {getId} from '../utils/getId';
+import {SemVer} from '../utils/SemVer';
+import {Inject} from '../common/Injectables';
+import {APIHandler} from '../APIHandler';
 
-import {Environment} from './Environment';
-import {AppWindow} from './AppWindow';
+import {Environment, EntityType} from './Environment';
+import {AppConnection} from './AppConnection';
+import {AppDirectory} from './AppDirectory';
 import {ContextChannel} from './ContextChannel';
-import {getId} from './Model';
+import {FinAppConnection} from './FinAppConnection';
+import {FinAppWindow} from './FinAppWindow';
+import {LiveApp} from './LiveApp';
 
-interface SeenWindow {
-    creationTime: number | undefined;
-    index: number;
+interface KnownEntity {
+    entityNumber: number;
+    entityType: EntityType;
 }
-
-type IntentMap = Set<string>;
-
-type ContextMap = Set<string>;
-
-type ChannelEventMap = Map<string, Set<Events['type']>>;
 
 @injectable()
 export class FinEnvironment extends AsyncInit implements Environment {
-    /**
-     * Indicates that a window has been seen by the service.
-     *
-     * Unlike the `windowCreated` signal, this will be fired synchronously from the listener for the runtime window-created event,
-     * but does not provide all information provided by the `windowCreated` signal. For a given window, this will always be fired
-     * before the `windowCreated` signal.
-     *
-     * Arguments: (identity: Identity)
-     */
-    public readonly windowSeen: Signal<[Identity]> = new Signal();
+    public readonly onApplicationCreated: Signal<[Identity, LiveApp]> = new Signal();
+    public readonly onApplicationClosed: Signal<[Identity]> = new Signal();
+
+    public readonly onWindowCreated: Signal<[Identity, EntityType]> = new Signal();
+    public readonly onWindowClosed: Signal<[Identity, EntityType]> = new Signal();
+
+    private readonly _apiHandler: APIHandler<APIFromClientTopic>;
 
     /**
-     * Indicates that a new window has been created.
+     * Stores details of all known windows and IAB connections.
      *
-     * When the service first starts, this signal will also be fired for any pre-existing windows.
-     *
-     * Arguments: (identity: Identity, manifestUrl: string)
+     * Will include all OpenFin windows currently open, plus all active external connections to the service.
      */
-    public readonly windowCreated: Signal<[Identity, string]> = new Signal();
+    private readonly _knownEntities: Map<string, KnownEntity> = new Map<string, KnownEntity>();
+    private readonly _applications: Set<string> = new Set<string>();
 
-    /**
-     * Indicates that a window has been closed.
-     *
-     * Arguments: (identity: Identity)
-     */
-    public readonly windowClosed: Signal<[Identity]> = new Signal();
+    private _entityCount: number = 0;
 
-    private _windowsCreated: number = 0;
-    private readonly _seenWindows: {[id: string]: SeenWindow} = {};
+    constructor(@inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>) {
+        super();
 
-    public async createApplication(appInfo: Application, channel: ContextChannel): Promise<void> {
-        const [didTimeout] = await withTimeout(
+        this._apiHandler = apiHandler;
+        this._apiHandler.onDisconnection.add(this.onApiHandlerDisconnection, this);
+    }
+
+    public createApplication(appInfo: Application): void {
+        const uuid = AppDirectory.getUuidFromApp(appInfo);
+
+        const startPromise = withTimeout(
             Timeouts.APP_START_FROM_MANIFEST,
-            fin.Application.startFromManifest(appInfo.manifest).catch(e => {
-                throw new FDC3Error(OpenError.ErrorOnLaunch, (e as Error).message);
+            fin.Application.startFromManifest(appInfo.manifest).catch((e) => {
+                this.deregisterApplication({uuid});
+
+                throw new FDC3Error(ApplicationError.LaunchError, (e as Error).message);
             })
-        );
-        if (didTimeout) {
-            throw new FDC3Error(OpenError.AppTimeout, `Timeout waiting for app '${appInfo.name}' to start from manifest`);
+        ).then((result) => {
+            const [didTimeout] = result;
+
+            if (didTimeout) {
+                this.deregisterApplication({uuid});
+                throw new FDC3Error(ApplicationError.LaunchTimeout, `Timeout waiting for application '${appInfo.name}' to start from manifest`);
+            }
+        });
+
+        this.registerApplication({uuid}, startPromise);
+    }
+
+    public wrapConnection(liveApp: LiveApp, identity: Identity, entityType: EntityType, channel: ContextChannel): AppConnection {
+        identity = parseIdentity(identity);
+        const id = getId(identity);
+        const version: SemVer = this._apiHandler.getClientVersion(id);
+
+        // If `identity` is an adapter connection that hasn't yet connected to the service, there will not be a KnownEntity for this identity
+        // In these cases, we will register the entity now
+        const knownEntity: KnownEntity | undefined = this._knownEntities.get(id) || this.registerEntity(identity, entityType);
+
+        if (knownEntity) {
+            const {entityNumber} = knownEntity;
+
+            if (entityType === EntityType.EXTERNAL_CONNECTION) {
+                return new FinAppConnection(identity, entityType, version, liveApp, channel, entityNumber);
+            } else {
+                if (!isPagedEntity(entityType)) {
+                    console.warn(`Connection '${id}' has unexpected entity type '${entityType}'. Some functionality may be unavailable.`);
+                }
+
+                return new FinAppWindow(identity, entityType, version, liveApp, channel, entityNumber);
+            }
+        } else {
+            throw new Error('Cannot wrap entities belonging to the provider');
         }
     }
 
-    public wrapApplication(appInfo: Application, identity: Identity, channel: ContextChannel): AppWindow {
-        identity = parseIdentity(identity);
-        const id = getId(identity);
-
-        const {creationTime, index} = this._seenWindows[id];
-
-        return new FinAppWindow(identity, appInfo, channel, creationTime, index);
-    }
-
     public async inferApplication(identity: Identity): Promise<Application> {
-        if (this.isExternalWindow(identity)) {
-            const application = fin.ExternalApplication.wrapSync(identity.uuid);
-
+        if (await this.getEntityType(identity) === EntityType.EXTERNAL_CONNECTION) {
             return {
-                appId: application.identity.uuid,
-                name: application.identity.uuid,
+                appId: identity.uuid,
+                name: identity.uuid,
                 manifestType: 'openfin',
                 manifest: ''
             };
         } else {
-            type OFManifest = {
-                shortcut?: {name?: string, icon: string},
-                startup_app: {uuid: string, name?: string, icon?: string}
-            };
+            interface OFManifest {
+                shortcut?: {name?: string; icon: string};
+                // eslint-disable-next-line camelcase
+                startup_app?: {uuid: string; name?: string; icon?: string};
+            }
 
             const application = fin.Application.wrapSync(identity);
             const applicationInfo = await application.getInfo();
+            let {name: title, icon} = applicationInfo.initialOptions as ApplicationOption;
 
-            const {shortcut, startup_app} = applicationInfo.manifest as OFManifest;
-
-            const title = (shortcut && shortcut.name) || startup_app.name || startup_app.uuid;
-            const icon = (shortcut && shortcut.icon) || startup_app.icon;
+            // `manifest` is defined as required property but actually optional. Not present on programmatically-launched apps.
+            if (applicationInfo.manifest) {
+                const {shortcut, startup_app: startupApp} = applicationInfo.manifest as OFManifest;
+                title = (shortcut && shortcut.name) || (startupApp && (startupApp.name || startupApp.uuid));
+                icon = (shortcut && shortcut.icon) || (startupApp && startupApp.icon);
+            }
 
             return {
-                appId: application.identity.uuid,
-                name: application.identity.uuid,
-                title: title,
+                appId: identity.uuid,
+                name: identity.uuid,
+                title,
                 icons: icon ? [{icon}] : undefined,
                 manifestType: 'openfin',
-                manifest: applicationInfo.manifestUrl
+                // `manifestUrl` is defined as required property but actually optional. Not present on programmatically-launched apps.
+                manifest: applicationInfo.manifestUrl || ''
             };
         }
     }
 
-    public isWindowSeen(identity: Identity): boolean {
-        return !!this._seenWindows[getId(identity)];
+    public async getEntityType(identity: Identity): Promise<EntityType> {
+        const extendedIdentity = identity as (Identity & {entityType: string | undefined});
+
+        // Attempt to avoid async call if possible
+        if (extendedIdentity.entityType) {
+            return extendedIdentity.entityType as EntityType;
+        } else if (this._knownEntities.has(getId(identity))) {
+            return this._knownEntities.get(getId(identity))!.entityType;
+        } else {
+            const entityInfo = await fin.System.getEntityInfo(identity.uuid, identity.uuid);
+            return entityInfo.entityType as EntityType;
+        }
+    }
+
+    public isKnownEntity(identity: Identity): boolean {
+        return this._knownEntities.has(getId(identity));
     }
 
     protected async init(): Promise<void> {
-        // Register windows that were running before launching the FDC3 service
         const windowInfo = await fin.System.getAllWindows();
 
-        fin.System.addListener('window-created', async (event: WindowEvent<'system', 'window-created'>) => {
+        const appicationClosedHandler = async (event: {uuid: string}) => {
             await Injector.initialized;
-            const identity = {uuid: event.uuid, name: event.name};
-            this.registerWindow(identity, Date.now());
-        });
-        fin.System.addListener('window-closed', async (event: WindowEvent<'system', 'window-closed'>) => {
-            await Injector.initialized;
+            this.deregisterApplication({uuid: event.uuid});
+        };
+        const entityCreatedHandler = async <T>(entityType: EntityType, event: WindowEvent<'system', T>) => {
             const identity = {uuid: event.uuid, name: event.name};
 
-            delete this._seenWindows[getId(identity)];
+            await Injector.initialized;
+            this.registerApplication({uuid: event.uuid}, Promise.resolve());
+            this.registerEntity(identity, entityType);
+        };
+        const entityClosedHandler = async <T>(event: WindowEvent<'system', T>) => {
+            const identity = {uuid: event.uuid, name: event.name};
 
-            this.windowClosed.emit(identity);
+            await Injector.initialized;
+            this.deregisterEntity(identity);
+        };
+
+        fin.System.addListener('application-started', async (event: ApplicationEvent<'system', 'application-started'>) => {
+            await Injector.initialized;
+            this.registerApplication({uuid: event.uuid}, Promise.resolve());
         });
+        fin.System.addListener('application-closed', appicationClosedHandler);
+        fin.System.addListener('application-crashed', appicationClosedHandler);
+
+        fin.System.addListener('window-created', entityCreatedHandler.bind(this, EntityType.WINDOW));
+        fin.System.addListener('window-closed', entityClosedHandler);
+
+        fin.System.addListener('view-created', entityCreatedHandler.bind(this, EntityType.VIEW));
+        fin.System.addListener('view-destroyed', entityClosedHandler);
 
         // No await here otherwise the injector will never properly initialize - The injector awaits this init before completion!
         Injector.initialized.then(async () => {
-            windowInfo.forEach(info => {
+            // Register windows that were running before launching the FDC3 service
+            windowInfo.forEach((info) => {
                 const {uuid, mainWindow, childWindows} = info;
+                this.registerApplication({uuid: info.uuid}, undefined);
 
-                this.registerWindow({uuid, name: mainWindow.name}, undefined);
-                childWindows.forEach(child => this.registerWindow({uuid, name: child.name}, undefined));
+                this.registerEntity({uuid, name: mainWindow.name}, EntityType.WINDOW);
+                childWindows.forEach((child) => this.registerEntity({uuid, name: child.name}, EntityType.WINDOW));
             });
         });
     }
 
-    private async registerWindow(identity: Identity, creationTime: number | undefined): Promise<void> {
-        const seenWindow = {
-            creationTime,
-            index: this._windowsCreated
-        };
+    private onApiHandlerDisconnection(identity: Identity): void {
+        const id: string = getId(identity);
+        const connection: KnownEntity|undefined = this._knownEntities.get(id);
 
-        this._seenWindows[getId(identity)] = seenWindow;
-        this._windowsCreated++;
-
-        this.windowSeen.emit(identity);
-
-        const info = await fin.Application.wrapSync(identity).getInfo();
-        this.windowCreated.emit(identity, info.manifestUrl);
+        // Only retain knowledge of the entity if it's a window.
+        // Windows are removed when they are closed, all other entity types are removed when they disconnect.
+        if (connection && !isPagedEntity(connection.entityType)) {
+            this.deregisterEntity(identity);
+        }
     }
 
-    private async isExternalWindow(identity: Identity): Promise<boolean> {
-        const extendedIdentity = identity as (Identity & {entityType: string | undefined});
+    private registerEntity(identity: Identity, entityType: EntityType): KnownEntity|undefined {
+        if (identity.uuid !== getServiceIdentity().uuid) {
+            const entity: KnownEntity = {
+                entityNumber: this._entityCount,
+                entityType
+            };
 
-        const externalWindowType = 'external connection';
+            this._knownEntities.set(getId(identity), entity);
+            this._entityCount++;
 
-        if (extendedIdentity.entityType) {
-            return extendedIdentity.entityType === externalWindowType;
+            if (isPagedEntity(entityType)) {
+                this.onWindowCreated.emit(identity, entityType);
+            }
+
+            return entity;
         } else {
-            const entityInfo = await fin.System.getEntityInfo(identity.uuid, identity.uuid);
+            return undefined;
+        }
+    }
 
-            return entityInfo.entityType === externalWindowType;
+    private deregisterEntity(identity: Identity): void {
+        if (identity.uuid !== getServiceIdentity().uuid) {
+            const id = getId(identity);
+            const entity = this._knownEntities.get(id);
+
+            if (entity) {
+                this._knownEntities.delete(id);
+
+                if (isPagedEntity(entity.entityType)) {
+                    this.onWindowClosed.emit(identity, entity.entityType);
+                }
+            }
+        }
+    }
+
+    private registerApplication(identity: Identity, startedPromise: Promise<void> | undefined): void {
+        const {uuid} = identity;
+
+        if (uuid !== getServiceIdentity().uuid) {
+            if (!this._applications.has(uuid)) {
+                this._applications.add(uuid);
+                this.onApplicationCreated.emit(identity, new LiveApp(startedPromise));
+            }
+        }
+    }
+
+    private deregisterApplication(identity: Identity): void {
+        const {uuid} = identity;
+
+        if (uuid !== getServiceIdentity().uuid) {
+            if (this._applications.delete(uuid)) {
+                this.onApplicationClosed.emit(identity);
+            }
         }
     }
 }
 
-class FinAppWindow implements AppWindow {
-    public channel: ContextChannel;
-
-    private readonly _id: string;
-    private readonly _appInfo: Application;
-    private readonly _window: Window;
-    private readonly _appWindowNumber: number;
-
-    private readonly _creationTime: number | undefined;
-
-    private readonly _intentListeners: IntentMap;
-    private readonly _channelContextListeners: ContextMap;
-    private readonly _channelEventListeners: ChannelEventMap;
-
-    private readonly _onIntentListenerAdded: Signal<[IntentType]> = new Signal();
-
-    constructor(identity: Identity, appInfo: Application, channel: ContextChannel, creationTime: number | undefined, appWindowNumber: number) {
-        this._id = getId(identity);
-        this._window = fin.Window.wrapSync(identity);
-        this._appInfo = appInfo;
-        this._appWindowNumber = appWindowNumber;
-
-        this._creationTime = creationTime;
-
-        this._intentListeners = new Set();
-        this._channelContextListeners = new Set();
-        this._channelEventListeners = new Map();
-
-        this.channel = channel;
-    }
-
-    public get id(): string {
-        return this._id;
-    }
-
-    public get identity(): Readonly<Identity> {
-        return this._window.identity;
-    }
-
-    public get appInfo(): Readonly<Application> {
-        return this._appInfo;
-    }
-
-    public get appWindowNumber(): number {
-        return this._appWindowNumber;
-    }
-
-    public get channelContextListeners(): ReadonlyArray<ChannelId> {
-        return Object.keys(this._channelContextListeners);
-    }
-
-    public get intentListeners(): ReadonlyArray<string> {
-        return Object.keys(this._intentListeners);
-    }
-
-    public hasIntentListener(intentName: string): boolean {
-        return this._intentListeners.has(intentName);
-    }
-
-    public addIntentListener(intentName: string): void {
-        this._intentListeners.add(intentName);
-        this._onIntentListenerAdded.emit(intentName);
-    }
-
-    public removeIntentListener(intentName: string): void {
-        this._intentListeners.delete(intentName);
-    }
-
-    public hasChannelContextListener(channel: ContextChannel): boolean {
-        return this._channelContextListeners.has(channel.id);
-    }
-
-    public addChannelContextListener(channel: ContextChannel): void {
-        this._channelContextListeners.add(channel.id);
-    }
-
-    public removeChannelContextListener(channel: ContextChannel): void {
-        this._channelContextListeners.delete(channel.id);
-    }
-
-    public hasChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): boolean {
-        return this._channelEventListeners.has(channel.id) && (this._channelEventListeners.get(channel.id)!.has(eventType));
-    }
-
-    public addChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): void {
-        if (!this._channelEventListeners.has(channel.id)) {
-            this._channelEventListeners.set(channel.id, new Set());
-        }
-
-        this._channelEventListeners.get(channel.id)!.add(eventType);
-    }
-
-    public removeChannelEventListener(channel: ContextChannel, eventType: ChannelEvents['type']): void {
-        if (this._channelEventListeners.has(channel.id)) {
-            const events = this._channelEventListeners.get(channel.id)!;
-            events.delete(eventType);
-        }
-    }
-
-    public bringToFront(): Promise<void> {
-        return this._window.bringToFront();
-    }
-
-    public focus(): Promise<void> {
-        return this._window.focus();
-    }
-
-    public async isReadyToReceiveIntent(intent: IntentType): Promise<boolean> {
-        if (this.hasIntentListener(intent)) {
-            // App has already registered the intent listener
-            return true;
-        }
-
-        const age = this._creationTime === undefined ? undefined : Date.now() - this._creationTime;
-
-        if (age === undefined || age >= Timeouts.ADD_INTENT_LISTENER) {
-            // App has been running for a while
-            return false;
-        } else {
-            // App may be starting - Give it some time to initialize and call `addIntentListener()`, otherwise timeout
-            const deferredPromise = new DeferredPromise();
-
-            const slot = this._onIntentListenerAdded.add(intentAdded => {
-                if (intentAdded === intent) {
-                    deferredPromise.resolve();
-                }
-            });
-
-            const [didTimeout] = await withTimeout(Timeouts.ADD_INTENT_LISTENER - age, deferredPromise.promise);
-
-            slot.remove();
-
-            return !didTimeout;
-        }
-    }
-
-    public removeAllListeners(): void {
-        this._channelContextListeners.clear();
-        this._channelEventListeners.clear();
-        this._intentListeners.clear();
-    }
+/**
+ * Checks if an entity is of a "page-based" entity type. These are entities that are built using a
+ * webpage/browser/DOM/etc. This only includes entity types that both meet this definition, AND are supported by
+ * the service.
+ *
+ * These entity types have a more finely controlled handshake process, as the fin API provides better eventing
+ * and querying of these entity types.
+ */
+function isPagedEntity(entityType: EntityType): boolean {
+    return entityType === EntityType.WINDOW || entityType === EntityType.VIEW;
 }

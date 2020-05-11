@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-import * as fdc3 from '../../client/main';
 import {ContactsTable} from '../components/contacts/ContactsTable';
-import {Context, ContactContext, AppIntent, ResolveError, getCurrentChannel} from '../../client/main';
 import '../../../res/demo/css/w3.css';
 import {ContextChannelSelector} from '../components/ContextChannelSelector/ContextChannelSelector';
+import /* type */ {Context, ContactContext, AppIntent} from '../../client/main';
+import {fdc3} from '../stub';
 
 const initialContactsState: Contact[] = [
     {'name': 'Tailor D\'Angeli', 'email': 'tdangeli0@toplist.cz', 'phone': '4475836763'},
@@ -55,11 +55,11 @@ export function ContactsApp(): React.ReactElement {
             name: '',
             id: {}
         };
-        fdc3.findIntentsByContext(context).then(appIntents => {
-            console.log('setAppIntents', appIntents);
-            setAppIntents(appIntents);
+        fdc3.findIntentsByContext(context).then((appIntentsLocal) => {
+            console.log('setAppIntents', appIntentsLocal);
+            setAppIntents(appIntentsLocal);
         })
-            .catch(error => {
+            .catch((error) => {
                 console.warn('Error from fdc3.findIntentsByContext', error);
             });
     }, []);
@@ -69,21 +69,18 @@ export function ContactsApp(): React.ReactElement {
     }, []);
 
     React.useEffect(() => {
-        getCurrentChannel().then(async channel => {
+        fdc3.getCurrentChannel().then(async (channel) => {
             const context = await channel.getCurrentContext();
             if (context && context.type === 'fdc3.contact') {
                 handleIntent(context as ContactContext);
             }
         });
-        const intentListener = fdc3.addIntentListener(fdc3.Intents.SAVE_CONTACT, (context: Context): Promise<void> => {
-            return new Promise((resolve: () => void, reject: (reason?: Error) => void) => {
-                try {
-                    handleIntent(context as ContactContext);
-                    resolve();
-                } catch (e) {
-                    reject(new Error('SAVE_CONTACT intent requires a valid contact context'));
-                }
-            });
+        const intentListener = fdc3.addIntentListener(fdc3.Intents.SAVE_CONTACT, (context: Context): void => {
+            try {
+                handleIntent(context as ContactContext);
+            } catch (e) {
+                throw new Error('SAVE_CONTACT intent requires a valid contact context');
+            }
         });
         // Cleanup
         return () => {

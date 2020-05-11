@@ -1,18 +1,18 @@
 import * as React from 'react';
 
-import * as fdc3 from '../../../client/main';
-import {Application, AppName} from '../../../client/directory';
-import {Symbol} from '../../apps/BlotterApp';
+import /* type */ {Application, AppName} from '../../../client/directory';
+import {Instrument} from '../../apps/BlotterApp';
 import {IntentButton} from '../common/IntentButton';
 import {showContextMenu, ContextMenuItem} from '../common/ContextMenu';
+import {fdc3} from '../../stub';
 
 import './SymbolsRow.css';
 
 interface SymbolsRowProps {
-    item: Symbol;
+    item: Instrument;
     chartApps: Application[];
     selected?: boolean;
-    handleSelect?: (item: Symbol | null) => void;
+    handleSelect?: (item: Instrument | null) => void;
 }
 
 interface Payload {
@@ -24,13 +24,13 @@ const menuItems: ContextMenuItem<Payload>[] = [
     {
         text: 'View Quote',
         payload: {
-            intent: fdc3.Intents.VIEW_QUOTE
+            intent: 'ViewQuote' // fdc3.Intents.VIEW_QUOTE
         }
     },
     {
         text: 'View News',
         payload: {
-            intent: fdc3.Intents.VIEW_NEWS
+            intent: 'ViewNews' // fdc3.Intents.VIEW_NEWS
         }
     },
     {
@@ -42,7 +42,7 @@ const menuItems: ContextMenuItem<Payload>[] = [
 const viewChartsSubMenu: ContextMenuItem = {
     text: 'Use Default',
     payload: {
-        intent: fdc3.Intents.VIEW_CHART
+        intent: 'ViewChart' // fdc3.Intents.VIEW_CHART
     }
 };
 
@@ -50,9 +50,9 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     const {item, chartApps, selected, handleSelect} = props;
 
     React.useEffect(() => {
-        const appItems = chartApps.map(app => {
+        const appItems = chartApps.map((app) => {
             return {
-                text: 'View ' + app.title,
+                text: `View ${app.title}`,
                 payload: {
                     intent: fdc3.Intents.VIEW_CHART,
                     appName: app.name
@@ -83,7 +83,7 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
             type: 'fdc3.instrument',
             name: item.name,
             id: {
-                default: item.name
+                ticker: item.ticker
             }
         };
     };
@@ -103,8 +103,8 @@ export function SymbolsRow(props: SymbolsRowProps): React.ReactElement {
     };
 
     return (
-        <tr className={'symbols-row' + (selected ? ' w3-theme-l2' : '')} onClick={handleClick}>
-            <td>{item.name}</td>
+        <tr className={`symbols-row${selected ? ' w3-theme-l2' : ''}`} onClick={handleClick}>
+            <td><span title={item.ticker}>{item.name}</span></td>
             <td>##.##</td>
             <td>##.##</td>
             <td>##.##</td>

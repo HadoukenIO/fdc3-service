@@ -1,0 +1,15 @@
+{
+    "devtools_port": 9090,
+    "startup_app": {
+        "name": "test-app-delayed-preregister-short",
+        "url": "http://localhost:3923/test/test-app.html?registerListeners=true&listenerDelay=1000",
+        "uuid": "test-app-delayed-preregister-short",
+        "autoShow": true,
+        "showTaskbarIcon": false,
+        "defaultHeight": 400,
+        "defaultWidth": 500
+    },
+    "runtime": {
+        "version": "15.80.50.34"
+    }
+}

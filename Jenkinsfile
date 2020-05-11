@@ -24,7 +24,7 @@ pipeline {
                     steps {
                         sh "npm install"
                         sh "npm run test:unit -- --noColor -x \"--no-cache --verbose\""
-                        sh "npm run check"
+                        sh "npm run check -- --noCache"
                     }
                     post {
                         always {
@@ -75,7 +75,7 @@ def configure() {
 
     GIT_SHORT_SHA = GIT_COMMIT.substring(0, 7)
     PKG_VERSION = manifest.version
-    SERVICE_NAME = config.SERVICE_NAME
+    SERVICE_NAME = config.NAME
 
     if (env.BRANCH_NAME == 'master') {
         BUILD_VERSION = PKG_VERSION
@@ -98,7 +98,7 @@ def configure() {
 def buildProject() {
     sh "npm install"
     sh "npm run clean"
-    sh "SERVICE_VERSION=${BUILD_VERSION} npm run build"
+    sh "VERSION=${BUILD_VERSION} npm run build"
     sh "echo ${GIT_SHORT_SHA} > ./dist/SHA.txt"
 
     sh "npm run zip"

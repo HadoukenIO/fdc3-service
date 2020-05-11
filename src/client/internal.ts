@@ -9,16 +9,18 @@
  * This file is excluded from the public-facing TypeScript documentation.
  */
 import {Identity} from 'openfin/_v2/main';
+import {RuntimeInfo} from 'openfin/_v2/api/system/runtime-info';
+import {Signal} from 'openfin-service-signal';
 
 import {AppName} from './directory';
-import {AppIntent, Context, IntentResolution} from './main';
-import {ChannelId, DefaultChannel, SystemChannel, DisplayMetadata, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase} from './contextChannels';
+import {AppIntent, Context, IntentResolution, Listener} from './main';
+import {ChannelId, DefaultChannel, SystemChannel, ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent, ChannelBase, AppChannel, SystemChannelTransport, ChannelTransport, AppChannelTransport} from './contextChannels';
 import {FDC3Error} from './errors';
 
 /**
  * The identity of the main application window of the service provider
  */
-export const SERVICE_IDENTITY = {
+const serviceIdentity: Identity = {
     uuid: 'fdc3-service',
     name: 'fdc3-service'
 };
@@ -26,7 +28,17 @@ export const SERVICE_IDENTITY = {
 /**
  * Name of the IAB channel use to communicate between client and provider
  */
-export const SERVICE_CHANNEL = 'of-fdc3-service-v1';
+let serviceChannel: string = 'of-fdc3-service-v1';
+
+/**
+ * Event fired when the channel to the provider has been re-established.
+ */
+export const onReconnect = new Signal();
+
+/**
+ * ID of the channel all windows are placed in by default when first created
+ */
+export const DEFAULT_CHANNEL_ID: ChannelId = 'default';
 
 /**
  * Enum containing all and only actions that the provider can accept.
@@ -39,9 +51,12 @@ export enum APIFromClientTopic {
     RAISE_INTENT = 'RAISE-INTENT',
     ADD_INTENT_LISTENER = 'ADD-INTENT-LISTENER',
     REMOVE_INTENT_LISTENER = 'REMOVE-INTENT-LISTENER',
+    ADD_CONTEXT_LISTENER = 'ADD-CONTEXT-LISTENER',
+    REMOVE_CONTEXT_LISTENER = 'REMOVE-CONTEXT-LISTENER',
     GET_SYSTEM_CHANNELS = 'GET-SYSTEM-CHANNELS',
     GET_CHANNEL_BY_ID = 'GET-CHANNEL-BY-ID',
     GET_CURRENT_CHANNEL = 'GET-CURRENT-CHANNEL',
+    GET_OR_CREATE_APP_CHANNEL = 'GET-OR-CREATE-APP-CHANNEL',
     CHANNEL_GET_MEMBERS = 'CHANNEL-GET-MEMBERS',
     CHANNEL_JOIN = 'CHANNEL-JOIN',
     CHANNEL_BROADCAST = 'CHANNEL-BROADCAST',
@@ -61,7 +76,7 @@ export enum APIToClientTopic {
     CHANNEL_RECEIVE_CONTEXT = 'CHANNEL-RECEIVE-CONTEXT'
 }
 
-export type APIFromClient = {
+export interface APIFromClient {
     [APIFromClientTopic.OPEN]: [OpenPayload, void];
     [APIFromClientTopic.FIND_INTENT]: [FindIntentPayload, AppIntent];
     [APIFromClientTopic.FIND_INTENTS_BY_CONTEXT]: [FindIntentsByContextPayload, AppIntent[]];
@@ -69,9 +84,12 @@ export type APIFromClient = {
     [APIFromClientTopic.RAISE_INTENT]: [RaiseIntentPayload, IntentResolution];
     [APIFromClientTopic.ADD_INTENT_LISTENER]: [AddIntentListenerPayload, void];
     [APIFromClientTopic.REMOVE_INTENT_LISTENER]: [RemoveIntentListenerPayload, void];
+    [APIFromClientTopic.ADD_CONTEXT_LISTENER]: [AddContextListenerPayload, void];
+    [APIFromClientTopic.REMOVE_CONTEXT_LISTENER]: [AddContextListenerPayload, void];
     [APIFromClientTopic.GET_SYSTEM_CHANNELS]: [GetSystemChannelsPayload, SystemChannelTransport[]];
     [APIFromClientTopic.GET_CHANNEL_BY_ID]: [GetChannelByIdPayload, ChannelTransport];
     [APIFromClientTopic.GET_CURRENT_CHANNEL]: [GetCurrentChannelPayload, ChannelTransport];
+    [APIFromClientTopic.GET_OR_CREATE_APP_CHANNEL]: [GetOrCreateAppChannelPayload, AppChannelTransport];
     [APIFromClientTopic.CHANNEL_GET_MEMBERS]: [ChannelGetMembersPayload, Identity[]];
     [APIFromClientTopic.CHANNEL_JOIN]: [ChannelJoinPayload, void];
     [APIFromClientTopic.CHANNEL_BROADCAST]: [ChannelBroadcastPayload, void];
@@ -82,7 +100,7 @@ export type APIFromClient = {
     [APIFromClientTopic.CHANNEL_REMOVE_EVENT_LISTENER]: [ChannelRemoveEventListenerPayload, void];
 }
 
-export type APIToClient = {
+export interface APIToClient {
     [APIToClientTopic.RECEIVE_CONTEXT]: [ReceiveContextPayload, void];
     [APIToClientTopic.RECEIVE_INTENT]: [ReceiveIntentPayload, void];
     [APIToClientTopic.CHANNEL_RECEIVE_CONTEXT]: [ChannelReceiveContextPayload, void];
@@ -104,25 +122,17 @@ export type MainEvents = ChannelChangedEvent;
 export type ChannelEvents = ChannelWindowAddedEvent | ChannelWindowRemovedEvent;
 
 export type TransportMappings<T> =
-    T extends SystemChannel ? SystemChannelTransport :
     T extends DefaultChannel ? ChannelTransport :
-    T extends ChannelBase ? ChannelTransport :
-    never;
+        T extends SystemChannel ? SystemChannelTransport :
+            T extends AppChannel ? AppChannelTransport :
+                T extends ChannelBase ? ChannelTransport :
+                    never;
 export type TransportMemberMappings<T> =
-    T extends SystemChannel ? SystemChannelTransport :
     T extends DefaultChannel ? ChannelTransport :
-    T extends ChannelBase ? ChannelTransport :
-    T;
-
-export interface ChannelTransport {
-    id: ChannelId;
-    type: string;
-}
-
-export interface SystemChannelTransport extends ChannelTransport {
-    type: 'system';
-    visualIdentity: DisplayMetadata;
-}
+        T extends SystemChannel ? SystemChannelTransport :
+            T extends AppChannel ? AppChannelTransport :
+                T extends ChannelBase ? ChannelTransport :
+                    T;
 
 export interface OpenPayload {
     name: AppName;
@@ -160,6 +170,10 @@ export interface GetCurrentChannelPayload {
     identity?: Identity;
 }
 
+export interface GetOrCreateAppChannelPayload {
+    name: string;
+}
+
 export interface ChannelGetMembersPayload {
     id: ChannelId;
 }
@@ -170,12 +184,12 @@ export interface ChannelJoinPayload {
 }
 
 export interface ChannelBroadcastPayload {
-    id: ChannelId,
-    context: Context
+    id: ChannelId;
+    context: Context;
 }
 
 export interface ChannelGetCurrentContextPayload {
-    id: ChannelId,
+    id: ChannelId;
 }
 
 export interface ChannelAddContextListenerPayload {
@@ -204,6 +218,14 @@ export interface RemoveIntentListenerPayload {
     intent: string;
 }
 
+export interface AddContextListenerPayload {
+
+}
+
+export interface RemoveContextListenerPayload {
+
+}
+
 export interface ReceiveContextPayload {
     context: Context;
 }
@@ -214,13 +236,54 @@ export interface ReceiveIntentPayload {
 }
 
 export interface ChannelReceiveContextPayload {
-    channel: ChannelId,
-    context: Context
+    channel: ChannelId;
+    context: Context;
 }
 
 /**
- * If error is a type we explicitly handle (e.g., `TypeError`, `FDC3Error`) so it can be identified as the correct type at the client's end
- * Otherwise return the error itself
+ * Invokes an array of listeners with a given context, allowing us to apply consistent error handling. Will throw an error if > 0 listeners are given, and all
+ * fail. Otherwise the first *defined* value returned is returned, or undefined is no defined values are returned.
+ *
+ * @param listeners An array of listeners to invoke
+ * @param context The context to invoke the listeners with
+ * @param singleFailureHandler A function that will be called each time a listener throws an exception
+ * @param createAllFailuresError A function that will be called if all (and more than one) listeners fail.
+ * Should return an error, which `invokeListeners` will then throw.
+ */
+export async function invokeListeners<T = unknown>(
+    listeners: Listener[],
+    context: Context,
+    singleFailureHandler: (e: any) => void,
+    createAllFailuresError: () => Error
+): Promise<T> {
+    let successes = 0;
+    let failures = 0;
+
+    const result: T = await new Promise<T>(async (resolve) => {
+        await Promise.all(listeners.map(async (listener) => {
+            try {
+                const value = await listener.handler(context);
+                successes++;
+                if (value !== undefined) {
+                    resolve(value as T);
+                }
+            } catch (e) {
+                failures++;
+                singleFailureHandler(e);
+            }
+        }));
+        resolve(undefined);
+    });
+
+    if (failures > 0 && successes === 0) {
+        throw createAllFailuresError();
+    }
+    return result;
+}
+
+/**
+ * If error is a type we explicitly handle (e.g., `TypeError`, `FDC3Error`) so it can be identified as the correct type at the client's end. Otherwise return
+ * the error itself.
  * @param error The error
  */
 export function serializeError(error: Error | FDC3Error): Error {
@@ -241,8 +304,7 @@ export function serializeError(error: Error | FDC3Error): Error {
 }
 
 /**
- * Check if the error was a serialized error, and if so reconstruct as the correct type
- * Otherwise return the error itself
+ * Check if the error was a serialized error, and if so reconstruct as the correct type. Otherwise return the error itself.
  * @param error The error
  */
 export function deserializeError(error: Error): Error | FDC3Error {
@@ -260,4 +322,27 @@ export function deserializeError(error: Error): Error | FDC3Error {
     }
 
     return error;
+}
+
+export function getServiceChannel(): string {
+    return serviceChannel;
+}
+export function getServiceIdentity(): Identity {
+    return serviceIdentity;
+}
+
+export async function setServiceIdentity(runtimeVersion?: string) {
+    if (runtimeVersion === undefined) {
+        const info: RuntimeInfo = await fin.System.getRuntimeInfo();
+
+        if (info.fdc3AppUuid && info.fdc3ChannelName) {
+            serviceIdentity.uuid = info.fdc3AppUuid;
+            serviceIdentity.name = info.fdc3AppUuid;
+            serviceChannel = info.fdc3ChannelName;
+        }
+    } else if (runtimeVersion) {
+        serviceIdentity.uuid += `-${runtimeVersion}`;
+        serviceIdentity.name += `-${runtimeVersion}`;
+        serviceChannel += `-${runtimeVersion}`;
+    }
 }

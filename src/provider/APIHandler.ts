@@ -4,7 +4,10 @@ import {ChannelProvider} from 'openfin/_v2/api/interappbus/channel/provider';
 import {Identity} from 'openfin/_v2/main';
 import {Signal} from 'openfin-service-signal';
 
-import {SERVICE_CHANNEL, serializeError} from '../client/internal';
+import {getServiceChannel, serializeError} from '../client/internal';
+
+import {getId} from './utils/getId';
+import {SemVer} from './utils/SemVer';
 
 /**
  * Semantic type definition.
@@ -66,9 +69,10 @@ export class APIHandler<T extends Enum> {
     public readonly onDisconnection: Signal<[Identity]> = new Signal();
 
     private _providerChannel!: ChannelProvider;
+    private readonly _clientVersions: {[key: string]: SemVer};
 
-    public get channel(): ChannelProvider {
-        return this._providerChannel;
+    constructor() {
+        this._clientVersions = {};
     }
 
     public isClientConnection(identity: Identity): boolean {
@@ -81,11 +85,37 @@ export class APIHandler<T extends Enum> {
         return this._providerChannel.connections;
     }
 
-    public async registerListeners<S extends APISpecification<T>>(actionHandlerMap: APIImplementation<T, S>): Promise<void> {
-        const providerChannel: ChannelProvider = this._providerChannel = await fin.InterApplicationBus.Channel.create(SERVICE_CHANNEL);
+    public getClientVersion(id: string): SemVer {
+        return this._clientVersions[id] || SemVer.parse('');
+    }
 
-        providerChannel.onConnection(this.onConnectionHandler.bind(this));
-        providerChannel.onDisconnection(this.onDisconnectionHandler.bind(this));
+    public dispatch(to: Identity, action: string, payload: any): Promise<any> {
+        return this._providerChannel.dispatch(to, action, payload).catch((error) => {
+            // Log and re-throw
+            console.error(`Error when dispatching '${action}' to ${to.uuid}/${to.name}`, payload);
+            throw error;
+        });
+    }
+
+    public publish(action: string, payload: unknown): Promise<unknown>[] {
+        const connections = this._providerChannel.connections.slice();
+        return this._providerChannel.publish(action, payload).map((promise, index) => promise.catch((error) => {
+            const {message, stack} = error;
+
+            // We don't know which connection had the error, but assume that the indices of the promises match the indices of the channel connections.
+            const connectionInfo = `probably from connection ${index + 1}/${connections.length}: ${connections[index].uuid}/${connections[index].name}`;
+
+            // Log and re-throw
+            console.error(`Client-side error when publishing '${action}' (${connectionInfo})\n${message}\n`, stack, '\n', payload);
+            throw error;
+        }));
+    }
+
+    public async registerListeners<S extends APISpecification<T>>(actionHandlerMap: APIImplementation<T, S>): Promise<void> {
+        this._providerChannel = await fin.InterApplicationBus.Channel.create(getServiceChannel());
+
+        this._providerChannel.onConnection(this.onConnectionHandler.bind(this));
+        this._providerChannel.onDisconnection(this.onDisconnectionHandler.bind(this));
 
         for (const action in actionHandlerMap) {
             if (actionHandlerMap.hasOwnProperty(action)) {
@@ -97,6 +127,7 @@ export class APIHandler<T extends Enum> {
                         // We trust that ChannelProvider isn't going to modify the return result, so safe to return a readonly type
                         return result;
                     } catch (error) {
+                        console.error(`Error whilst handling '${action}' API call`, error);
                         throw serializeError(error);
                     }
                 });
@@ -105,22 +136,30 @@ export class APIHandler<T extends Enum> {
     }
 
     // TODO?: Remove the need for this any by defining connection payload type?
-    // tslint:disable-next-line:no-any
-    private onConnectionHandler(app: Identity, payload?: any): void {
-        if (payload && payload.version && payload.version.length > 0) {
-            console.log(`connection from client: ${app.name}, version: ${payload.version}`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private onConnectionHandler(identity: Identity, payload?: any): void {
+        const id = getId(identity);
+        const semVer: SemVer = SemVer.parse(payload && payload.version);
+
+        this._clientVersions[id] = semVer;
+
+        if (semVer.valid) {
+            console.log(`connection from client: ${identity.name}, version: ${semVer.version}`);
         } else {
-            console.log(`connection from client: ${app.name}, unable to determine version`);
+            console.log(`connection from client: ${identity.name}, unable to determine version`);
         }
 
         // The 'onConnection' callback fires *just before* the channel is ready.
         // Delaying the firing of our signal slightly, to ensure client is definitely contactable.
         setImmediate(() => {
-            this.onConnection.emit(app);
+            this.onConnection.emit(identity);
         });
     }
 
-    private onDisconnectionHandler(app:Identity): void {
-        this.onDisconnection.emit(app);
+    private onDisconnectionHandler(identity: Identity): void {
+        const id = getId(identity);
+        delete this._clientVersions[id];
+
+        this.onDisconnection.emit(identity);
     }
 }

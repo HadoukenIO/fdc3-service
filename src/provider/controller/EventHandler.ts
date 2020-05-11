@@ -1,13 +1,13 @@
 import {injectable, inject} from 'inversify';
-import _WindowModule from 'openfin/_v2/api/window/window';
 
-import {AppWindow} from '../model/AppWindow';
+import {AppConnection} from '../model/AppConnection';
 import {APIHandler} from '../APIHandler';
 import {APIFromClientTopic, Events} from '../../client/internal';
 import {Inject} from '../common/Injectables';
 import {ContextChannel} from '../model/ContextChannel';
 import {ChannelWindowAddedEvent, ChannelWindowRemovedEvent, ChannelChangedEvent} from '../../client/main';
 import {Transport, Targeted} from '../../client/EventRouter';
+import {collateClientCalls, ClientCallsResult} from '../utils/helpers';
 
 import {ChannelHandler} from './ChannelHandler';
 
@@ -17,6 +17,7 @@ export class EventHandler {
     private readonly _apiHandler: APIHandler<APIFromClientTopic>;
 
     constructor(
+    // eslint-disable-next-line @typescript-eslint/indent
         @inject(Inject.CHANNEL_HANDLER) channelHandler: ChannelHandler,
         @inject(Inject.API_HANDLER) apiHandler: APIHandler<APIFromClientTopic>
     ) {
@@ -24,9 +25,13 @@ export class EventHandler {
         this._apiHandler = apiHandler;
     }
 
-    public async dispatchEventOnChannelChanged(appWindow: AppWindow, channel: ContextChannel | null, previousChannel: ContextChannel | null): Promise<void> {
+    public async dispatchEventOnChannelChanged(
+        appConnection: AppConnection,
+        channel: ContextChannel | null,
+        previousChannel: ContextChannel | null
+    ): Promise<void> {
         const partialEvent = {
-            identity: appWindow.identity,
+            identity: appConnection.identity,
             channel: channel && channel.serialize(),
             previousChannel: previousChannel && previousChannel.serialize()
         };
@@ -41,9 +46,9 @@ export class EventHandler {
                 channel: channel.serialize()
             };
 
-            const addedListeningWindows = this._channelHandler.getWindowsListeningForEventsOnChannel(channel, 'window-added');
+            const addedListeningWindows = this._channelHandler.getConnectionsListeningForEventsOnChannel(channel, 'window-added');
 
-            promises.push(...addedListeningWindows.map(window => this.dispatchEvent(window, windowAddedEvent)));
+            promises.push(...addedListeningWindows.map((connection) => this.dispatchEvent(connection, windowAddedEvent)));
         }
 
         if (previousChannel) {
@@ -54,9 +59,9 @@ export class EventHandler {
                 previousChannel: previousChannel.serialize()
             };
 
-            const removedListeningWindows = this._channelHandler.getWindowsListeningForEventsOnChannel(previousChannel, 'window-removed');
+            const removedListeningWindows = this._channelHandler.getConnectionsListeningForEventsOnChannel(previousChannel, 'window-removed');
 
-            promises.push(...removedListeningWindows.map(window => this.dispatchEvent(window, windowRemovedEvent)));
+            promises.push(...removedListeningWindows.map((connection) => this.dispatchEvent(connection, windowRemovedEvent)));
         }
 
         const channelChangedEvent: Targeted<Transport<ChannelChangedEvent>> = {
@@ -70,11 +75,23 @@ export class EventHandler {
         return Promise.all(promises).then(() => {});
     }
 
-    private dispatchEvent<T extends Events>(targetWindow: AppWindow, eventTransport: Targeted<Transport<T>>): Promise<void> {
-        return this._apiHandler.channel.dispatch(targetWindow.identity, 'event', eventTransport);
+    private dispatchEvent<T extends Events>(target: AppConnection, eventTransport: Targeted<Transport<T>>): Promise<void> {
+        return collateClientCalls([this._apiHandler.dispatch(target.identity, 'event', eventTransport)]).then(([result]) => {
+            if (result === ClientCallsResult.ALL_FAILURE) {
+                console.warn(`Error thrown by client attempting to handle event ${eventTransport.type}, swallowing error`);
+            } else if (result === ClientCallsResult.TIMEOUT) {
+                console.warn(`Timeout waiting for client to handle event ${eventTransport.type}, swallowing error`);
+            }
+        });
     }
 
     private publishEvent<T extends Events>(eventTransport: Targeted<Transport<T>>): Promise<void> {
-        return Promise.all(this._apiHandler.channel.publish('event', eventTransport)).then(() => {});
+        return collateClientCalls(this._apiHandler.publish('event', eventTransport)).then(([result]) => {
+            if (result === ClientCallsResult.ALL_FAILURE) {
+                console.warn(`Error(s) thrown by client attempting to handle event ${eventTransport.type}, swallowing error(s)`);
+            } else if (result === ClientCallsResult.TIMEOUT) {
+                console.warn(`Timeout waiting for client to handle event ${eventTransport.type}, swallowing error`);
+            }
+        });
     }
 }
