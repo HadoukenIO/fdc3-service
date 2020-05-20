@@ -48,8 +48,8 @@ const environmentInitialized = new DeferredPromise<void>();
 let hasDisconnectListener = false;
 let reconnect = false;
 
-if (typeof document !== 'undefined' && document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
+if (typeof window !== 'undefined' && typeof document !== 'undefined' && document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', () => {
         environmentInitialized.resolve();
     });
 } else {
