@@ -102,10 +102,7 @@ export abstract class AppConnectionBase implements AppConnection {
         this._intentListeners = new Set();
         this._channelContextListeners = new Set();
         this._channelEventListeners = new Map();
-
-        // For any clients pre-0.2.1, there is no way for us to tell if they have a context listener.
-        // To maintain compatibility, assume all clients before this version are always listening to contexts
-        this._hasContextListener = clientVersion.compare(Operator.LESS_THAN, '0.2.1', false);
+        this._hasContextListener = this.shouldAssumeContextListener();
 
         if (clientVersion.type !== SemVerType.VALID) {
             console.warn(`Client version of connection ${this._id} not known (${clientVersion.type})`);
@@ -216,12 +213,21 @@ export abstract class AppConnectionBase implements AppConnection {
         this._channelContextListeners.clear();
         this._channelEventListeners.clear();
         this._intentListeners.clear();
-        this._hasContextListener = false;
+        this._hasContextListener = this.shouldAssumeContextListener();
     }
 
     public abstract identity: Readonly<Identity>;
     public abstract bringToFront(): Promise<void>;
     public abstract focus(): Promise<void>;
+
+    /**
+     * For any clients pre-0.2.1, there is no way for us to tell if they have a context listener.
+     *
+     * To maintain backward compatibility, assume all clients before this version are always listening to contexts.
+     */
+    private shouldAssumeContextListener(): boolean {
+        return this._clientVersion.compare(Operator.LESS_THAN, '0.2.1', false);
+    }
 
     private waitForListener<A extends any[]>(listenerAddedSignal: Signal<A>, hasListenerPredicate: () => boolean): Promise<void> {
         const rejectOnMaturePromise = allowReject(this._maturePromise.then(() => Promise.reject(new Error('Timeout waiting for listener'))));
