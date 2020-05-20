@@ -48,15 +48,14 @@ const environmentInitialized = new DeferredPromise<void>();
 let hasDisconnectListener = false;
 let reconnect = false;
 
-if (typeof window !== 'undefined' && typeof document !== 'undefined' && document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', () => {
+if (typeof fin !== 'undefined') {
+    fin.desktop.main(() => {
         environmentInitialized.resolve();
     });
+
+    getServicePromise();
 } else {
     environmentInitialized.resolve();
-}
-if (typeof fin !== 'undefined') {
-    getServicePromise();
 }
 
 export async function getServicePromise(): Promise<ChannelClient> {
